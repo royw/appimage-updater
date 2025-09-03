@@ -1,0 +1,67 @@
+version: '3'
+
+tasks:
+  install:
+    desc: Install project dependencies
+    cmds:
+      - uv sync
+
+  typecheck:
+    desc: Run type checking with mypy
+    cmds:
+      - uv run mypy src/
+
+  lint:
+    desc: Run linting with ruff
+    cmds:
+      - uv run ruff check src/
+
+  format:
+    desc: Format code with ruff
+    cmds:
+      - uv run ruff format src/
+
+  test:
+    desc: Run tests with pytest
+    cmds:
+      - uv run pytest
+
+  complexity:
+    desc: Analyze code complexity with radon
+    cmds:
+      - uv run radon cc src/ --min C
+
+  check:
+    desc: Run all code quality checks
+    deps:
+      - typecheck
+      - lint
+      - complexity
+      - test
+
+  run:
+    desc: Run the application
+    cmds:
+      - uv run python -m appimage_updater
+
+  clean:
+    desc: Clean up generated files
+    cmds:
+      - find . -type d -name "__pycache__" -exec rm -rf {} +
+      - find . -type f -name "*.pyc" -delete
+      - rm -rf .mypy_cache/
+      - rm -rf .pytest_cache/
+      - rm -rf dist/
+      - rm -rf build/
+
+  dev:
+    desc: Set up development environment
+    deps:
+      - install
+    cmds:
+      - echo "Development environment ready!"
+
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list

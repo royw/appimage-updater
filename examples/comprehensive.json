@@ -1,0 +1,93 @@
+{
+  "global_config": {
+    "concurrent_downloads": 3,
+    "timeout_seconds": 60,
+    "retry_attempts": 3
+  },
+  "applications": [
+    {
+      "name": "FreeCAD",
+      "source_type": "github", 
+      "url": "https://github.com/FreeCAD/FreeCAD",
+      "download_dir": "~/Applications/FreeCAD",
+      "pattern": ".*Linux-x86_64\\.AppImage$",
+      "frequency": {
+        "value": 1,
+        "unit": "weeks"
+      },
+      "enabled": true
+    },
+    {
+      "name": "BambuStudio",
+      "source_type": "github",
+      "url": "https://github.com/bambulab/BambuStudio",
+      "download_dir": "~/Applications/BambuStudio",
+      "pattern": ".*linux.*\\.AppImage$",
+      "frequency": {
+        "value": 1,
+        "unit": "weeks"
+      },
+      "enabled": true
+    },
+    {
+      "name": "OrcaSlicer",
+      "source_type": "github",
+      "url": "https://github.com/SoftFever/OrcaSlicer",
+      "download_dir": "~/Applications/OrcaSlicer",
+      "pattern": ".*Linux.*\\.AppImage$",
+      "frequency": {
+        "value": 1,
+        "unit": "weeks"
+      },
+      "enabled": true
+    },
+    {
+      "name": "GitHub Desktop",
+      "source_type": "github",
+      "url": "https://github.com/desktop/desktop",
+      "download_dir": "~/Applications/GitHubDesktop",
+      "pattern": ".*linux.*\\.AppImage$",
+      "frequency": {
+        "value": 2,
+        "unit": "weeks"
+      },
+      "enabled": true
+    },
+    {
+      "name": "LM Studio",
+      "source_type": "github",
+      "url": "https://github.com/lmstudio-ai/lmstudio.js",
+      "download_dir": "~/Applications/LMStudio",
+      "pattern": ".*\\.AppImage$",
+      "frequency": {
+        "value": 1,
+        "unit": "weeks"
+      },
+      "enabled": false
+    },
+    {
+      "name": "UltiMaker Cura",
+      "source_type": "github",
+      "url": "https://github.com/Ultimaker/Cura",
+      "download_dir": "~/Applications/Cura",
+      "pattern": ".*Linux.*\\.AppImage$",
+      "frequency": {
+        "value": 2,
+        "unit": "weeks"
+      },
+      "enabled": true
+    },
+    {
+      "name": "YubiKey Manager",
+      "source_type": "github",
+      "url": "https://github.com/Yubico/yubikey-manager-qt",
+      "download_dir": "~/Applications/YubiKeyManager",
+      "pattern": ".*linux.*\\.AppImage$",
+      "frequency": {
+        "value": 1,
+        "unit": "weeks"
+      },
+      "enabled": true
+    }
+  ]
+}
