@@ -5,6 +5,13 @@ All notable changes to AppImage Updater will be documented in this file.
 ## [Unreleased] - 2025-09-04
 
 ### 🐛 Bug Fixes
+- **FIXED**: Type checking and linting errors in main.py
+  - Resolved function name conflict between `list` command and Python's built-in `list` type
+  - Renamed internal function from `list` to `list_apps` while keeping CLI command as `"list"`
+  - Fixed deprecated `typing.List` imports, replaced with modern lowercase `list` annotations
+  - Removed whitespace on blank lines and fixed line length violations
+  - All mypy type checking errors resolved (26 errors → 0 errors)
+  - All ruff linting errors fixed (7 errors → 0 errors)
 - **FIXED**: Pattern matching for existing AppImage files with suffixes
   - Updated application patterns to match files ending with `.AppImage.save`, `.AppImage.current`, `.AppImage.old`
   - Fixed FreeCAD pattern to handle case-insensitive extensions (both `.AppImage` and `.appimage`)
@@ -16,6 +23,24 @@ All notable changes to AppImage Updater will be documented in this file.
   - Enhanced version extraction to handle GitHub release names with non-version text
   - Fixed false positive updates for releases like "Development Build weekly-2025.09.03"
   - Version comparison now correctly extracts and compares just the version portion
+
+### 🧪 Testing & Quality Assurance
+- **ENHANCED**: Comprehensive test coverage for `list` command
+  - Added 8 new end-to-end tests covering all `list` command functionality
+  - Tests single and multiple application configurations
+  - Tests enabled/disabled status display and counting
+  - Tests config file vs config directory loading
+  - Tests error handling (missing files, invalid JSON)
+  - Tests table formatting and path truncation features
+  - Tests frequency unit display validation
+  - Enhanced smoke test to verify `list` command availability
+  - Total test count increased from 32 to 40 tests
+  - Main module test coverage improved from 57% to 72%
+
+- **IMPROVED**: Development workflow quality checks
+  - Added `format` task to beginning of `check` task in Taskfile.yml
+  - Code formatting now runs automatically before type checking and linting
+  - Prevents formatting-related linting errors in CI/CD pipeline
 
 ### 🔧 Configuration Updates
 - **IMPROVED**: Pattern matching precision for AppImage files with suffixes

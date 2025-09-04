@@ -63,6 +63,7 @@ tasks:
   check:
     desc: Run all code quality checks including end-to-end tests
     deps:
+      - format
       - typecheck
       - lint
       - complexity

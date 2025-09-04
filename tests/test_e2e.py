@@ -327,6 +327,220 @@ class TestE2EFunctionality:
             
             # Debug mode should not cause failure and should include debug info
             assert result.exit_code == 0
+    
+    def test_list_command_with_single_application(self, runner, temp_config_dir, sample_config):
+        """Test list command with a single configured application."""
+        # Create config file
+        config_file = temp_config_dir / "test.json"
+        with config_file.open("w") as f:
+            json.dump(sample_config, f)
+        
+        result = runner.invoke(app, ["list", "--config", str(config_file)])
+        
+        assert result.exit_code == 0
+        assert "Configured Applications" in result.stdout
+        assert "TestApp" in result.stdout
+        assert "Enabled" in result.stdout
+        assert "Github:" in result.stdout
+        assert "https://github.com" in result.stdout
+        assert "Total: 1 applications (1 enabled, 0 disabled)" in result.stdout
+    
+    def test_list_command_with_multiple_applications(self, runner, temp_config_dir, temp_download_dir):
+        """Test list command with multiple applications (enabled and disabled)."""
+        # Create config with multiple apps
+        multi_app_config = {
+            "applications": [
+                {
+                    "name": "EnabledApp",
+                    "source_type": "github",
+                    "url": "https://github.com/test/enabledapp",
+                    "download_dir": str(temp_download_dir),
+                    "pattern": r"EnabledApp.*\.AppImage$",
+                    "frequency": {"value": 2, "unit": "weeks"},
+                    "enabled": True
+                },
+                {
+                    "name": "DisabledApp", 
+                    "source_type": "github",
+                    "url": "https://github.com/test/disabledapp",
+                    "download_dir": str(temp_download_dir),
+                    "pattern": r"DisabledApp.*\.AppImage$", 
+                    "frequency": {"value": 1, "unit": "days"},
+                    "enabled": False
+                }
+            ]
+        }
+        
+        config_file = temp_config_dir / "multi_app.json"
+        with config_file.open("w") as f:
+            json.dump(multi_app_config, f)
+        
+        result = runner.invoke(app, ["list", "--config", str(config_file)])
+        
+        assert result.exit_code == 0
+        assert "Configured Applications" in result.stdout
+        assert "EnabledApp" in result.stdout
+        assert "DisabledApp" in result.stdout
+        assert "Enabled" in result.stdout
+        assert "Disabled" in result.stdout
+        assert "2 weeks" in result.stdout
+        assert "1 days" in result.stdout
+        assert "Total: 2 applications (1 enabled, 1 disabled)" in result.stdout
+    
+    def test_list_command_with_no_applications(self, runner, temp_config_dir):
+        """Test list command with empty configuration."""
+        # Create empty config
+        empty_config = {"applications": []}
+        
+        config_file = temp_config_dir / "empty.json"
+        with config_file.open("w") as f:
+            json.dump(empty_config, f)
+        
+        result = runner.invoke(app, ["list", "--config", str(config_file)])
+        
+        assert result.exit_code == 0
+        assert "No applications configured" in result.stdout
+    
+    def test_list_command_with_config_directory(self, runner, temp_config_dir, temp_download_dir):
+        """Test list command with directory-based configuration."""
+        # Create multiple config files in directory
+        app1_config = {
+            "applications": [
+                {
+                    "name": "App1",
+                    "source_type": "github",
+                    "url": "https://github.com/test/app1",
+                    "download_dir": str(temp_download_dir),
+                    "pattern": r"App1.*\.AppImage$",
+                    "frequency": {"value": 1, "unit": "weeks"},
+                    "enabled": True
+                }
+            ]
+        }
+        
+        app2_config = {
+            "applications": [
+                {
+                    "name": "App2",
+                    "source_type": "github",
+                    "url": "https://github.com/test/app2",
+                    "download_dir": str(temp_download_dir),
+                    "pattern": r"App2.*\.AppImage$",
+                    "frequency": {"value": 3, "unit": "days"},
+                    "enabled": True
+                }
+            ]
+        }
+        
+        # Save configs to separate files in directory
+        app1_file = temp_config_dir / "app1.json"
+        with app1_file.open("w") as f:
+            json.dump(app1_config, f)
+        
+        app2_file = temp_config_dir / "app2.json"
+        with app2_file.open("w") as f:
+            json.dump(app2_config, f)
+        
+        result = runner.invoke(app, ["list", "--config-dir", str(temp_config_dir)])
+        
+        assert result.exit_code == 0
+        assert "Configured Applications" in result.stdout
+        assert "App1" in result.stdout
+        assert "App2" in result.stdout
+        assert "Total: 2 applications (2 enabled, 0 disabled)" in result.stdout
+    
+    def test_list_command_with_nonexistent_config(self, runner):
+        """Test list command with non-existent configuration file."""
+        nonexistent_config = Path("/tmp/nonexistent_list_config.json")
+        
+        result = runner.invoke(app, ["list", "--config", str(nonexistent_config)])
+        
+        assert result.exit_code == 1
+        assert "Configuration error" in result.stdout
+    
+    def test_list_command_with_invalid_json_config(self, runner, temp_config_dir):
+        """Test list command with invalid JSON configuration."""
+        config_file = temp_config_dir / "invalid_list.json" 
+        with config_file.open("w") as f:
+            f.write("{ invalid json for list test")
+        
+        result = runner.invoke(app, ["list", "--config", str(config_file)])
+        
+        assert result.exit_code == 1
+        assert "Configuration error" in result.stdout
+    
+    def test_list_command_truncates_long_paths(self, runner, temp_config_dir):
+        """Test that list command properly truncates very long download paths."""
+        # Create config with very long path
+        long_path = "/very/long/path/that/exceeds/forty/characters/and/should/be/truncated/download/dir"
+        long_path_config = {
+            "applications": [
+                {
+                    "name": "LongPathApp",
+                    "source_type": "github",
+                    "url": "https://github.com/test/longpathapp",
+                    "download_dir": long_path,
+                    "pattern": r"LongPathApp.*\.AppImage$",
+                    "frequency": {"value": 1, "unit": "weeks"},
+                    "enabled": True
+                }
+            ]
+        }
+        
+        config_file = temp_config_dir / "longpath.json"
+        with config_file.open("w") as f:
+            json.dump(long_path_config, f)
+        
+        result = runner.invoke(app, ["list", "--config", str(config_file)])
+        
+        assert result.exit_code == 0
+        assert "LongPathApp" in result.stdout
+        # Should show truncated path (starts with "...")
+        assert "..." in result.stdout
+        # Should not show the full very long path
+        lines = result.stdout.split('\n')
+        for line in lines:
+            if "LongPathApp" in line:
+                # No single line should contain the full long path
+                assert len(line) < 200  # Reasonable line length check
+    
+    def test_list_command_shows_frequency_units(self, runner, temp_config_dir, temp_download_dir):
+        """Test that list command properly displays different frequency units."""
+        # Create config with different frequency units
+        frequency_config = {
+            "applications": [
+                {
+                    "name": "DailyApp",
+                    "source_type": "github",
+                    "url": "https://github.com/test/dailyapp",
+                    "download_dir": str(temp_download_dir),
+                    "pattern": r"DailyApp.*\.AppImage$",
+                    "frequency": {"value": 2, "unit": "days"},
+                    "enabled": True
+                },
+                {
+                    "name": "WeeklyApp",
+                    "source_type": "github",
+                    "url": "https://github.com/test/weeklyapp",
+                    "download_dir": str(temp_download_dir),
+                    "pattern": r"WeeklyApp.*\.AppImage$",
+                    "frequency": {"value": 3, "unit": "weeks"},
+                    "enabled": True
+                }
+            ]
+        }
+        
+        config_file = temp_config_dir / "frequency.json"
+        with config_file.open("w") as f:
+            json.dump(frequency_config, f)
+        
+        result = runner.invoke(app, ["list", "--config", str(config_file)])
+        
+        assert result.exit_code == 0
+        assert "DailyApp" in result.stdout
+        assert "WeeklyApp" in result.stdout
+        assert "2 days" in result.stdout
+        assert "3 weeks" in result.stdout
 
 
 class TestPatternMatching:
@@ -444,6 +658,10 @@ def test_integration_smoke_test(runner):
     result = runner.invoke(app, ["init", "--help"])
     assert result.exit_code == 0
     assert "Initialize configuration directory" in result.stdout
+    
+    result = runner.invoke(app, ["list", "--help"])
+    assert result.exit_code == 0
+    assert "List all configured applications" in result.stdout
 
 
 if __name__ == "__main__":

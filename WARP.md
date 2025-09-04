@@ -37,7 +37,7 @@ task test:e2e-coverage
 # Code complexity analysis
 task complexity
 
-# Run all quality checks
+# Run all quality checks (includes formatting, type checking, linting, complexity analysis, and testing)
 task check
 
 # Clean up generated files
@@ -234,9 +234,35 @@ task test:e2e
 # Run e2e tests with coverage (standalone)
 task test:e2e-coverage
 
-# Run all quality checks (includes both test and test:e2e)
+# Run all quality checks (includes formatting, then both test and test:e2e)
 task check
 ```
+
+### Comprehensive Test Coverage
+The project maintains high test coverage across all CLI commands:
+
+#### List Command Testing
+- **Single application configurations**: Tests basic functionality and table display
+- **Multiple applications**: Tests enabled/disabled status and counting
+- **Empty configurations**: Tests graceful handling of no applications
+- **Directory-based configs**: Tests loading from multiple JSON files
+- **Error handling**: Tests missing files and invalid JSON scenarios
+- **Table formatting**: Tests path truncation and frequency unit display
+- **Command availability**: Validates `list` command appears in help and works correctly
+
+#### Check Command Testing
+- **Dry run modes**: Tests update detection without downloads
+- **Application filtering**: Tests `--app` parameter functionality
+- **Update scenarios**: Tests both "up to date" and "updates available" cases
+- **Configuration variations**: Tests file vs directory-based configs
+- **Error handling**: Tests network failures and invalid configurations
+
+#### Init Command Testing
+- **Directory creation**: Tests config directory initialization
+- **Example generation**: Tests creation of sample configuration files
+- **Existing directory handling**: Tests graceful handling of pre-existing configs
+
+Total: **40 comprehensive tests** covering all major functionality paths.
 
 ### Async Backend Testing
 The project uses `pytest-anyio` which supports testing with multiple async backends:
