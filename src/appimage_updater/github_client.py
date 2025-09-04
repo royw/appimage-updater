@@ -114,9 +114,7 @@ class GitHubClient:
                     name=asset_data["name"],
                     url=asset_data["browser_download_url"],
                     size=asset_data["size"],
-                    created_at=datetime.fromisoformat(
-                        asset_data["created_at"].replace("Z", "+00:00")
-                    ),
+                    created_at=datetime.fromisoformat(asset_data["created_at"].replace("Z", "+00:00")),
                 )
                 assets.append(asset)
 
@@ -127,9 +125,7 @@ class GitHubClient:
             return Release(
                 version=data["name"] or data["tag_name"],
                 tag_name=data["tag_name"],
-                published_at=datetime.fromisoformat(
-                    data["published_at"].replace("Z", "+00:00")
-                ),
+                published_at=datetime.fromisoformat(data["published_at"].replace("Z", "+00:00")),
                 assets=assets,
                 is_prerelease=data.get("prerelease", False),
                 is_draft=data.get("draft", False),
@@ -168,16 +164,12 @@ class GitHubClient:
                 if match:
                     base_name = match.group(1)
                     checksum_candidates[base_name] = asset
-                    logger.debug(
-                        f"Found checksum candidate: {asset.name} -> {base_name}"
-                    )
+                    logger.debug(f"Found checksum candidate: {asset.name} -> {base_name}")
                     break
 
         return checksum_candidates
 
-    def _associate_assets_with_checksums(
-        self, assets: list[Asset], checksum_candidates: dict[str, Asset]
-    ) -> None:
+    def _associate_assets_with_checksums(self, assets: list[Asset], checksum_candidates: dict[str, Asset]) -> None:
         """Associate each asset with its corresponding checksum file."""
         for asset in assets:
             if asset not in checksum_candidates.values():
@@ -186,18 +178,14 @@ class GitHubClient:
                 logger.debug(f"Looking for checksum for asset: {base_name}")
 
                 # Try to find checksum file for this asset
-                checksum_asset = self._find_checksum_for_asset(
-                    base_name, checksum_candidates
-                )
+                checksum_asset = self._find_checksum_for_asset(base_name, checksum_candidates)
                 if checksum_asset:
                     asset.checksum_asset = checksum_asset
                     logger.debug(f"Associated checksum: {checksum_asset.name}")
                 else:
                     logger.debug(f"No checksum found for {base_name}")
 
-    def _find_checksum_for_asset(
-        self, asset_name: str, checksum_candidates: dict[str, Asset]
-    ) -> Asset | None:
+    def _find_checksum_for_asset(self, asset_name: str, checksum_candidates: dict[str, Asset]) -> Asset | None:
         """Find checksum file for a specific asset."""
         # Try exact match first
         if asset_name in checksum_candidates:

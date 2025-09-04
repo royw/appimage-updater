@@ -120,6 +120,35 @@ Configuration files use JSON format with the following structure:
 - `global_config`: Timeout, concurrency, retry settings
 - `applications`: Array of app configurations with source URL, download directory, file patterns, update frequency, and checksum verification settings
 
+### File Pattern Matching
+
+The application uses regex patterns to identify and match AppImage files in download directories:
+
+#### Pattern Format
+Patterns follow the format: `base_pattern\.AppImage(suffix_pattern)?$`
+
+**Recommended suffix pattern**: `(\.(|current|old))?`
+- Matches files with no suffix: `app.AppImage`
+- Matches files with `.current` suffix: `app.AppImage.current`
+- Matches files with `.old` suffix: `app.AppImage.old`
+- Matches files with empty suffix: `app.AppImage.`
+- **Does NOT match** backup files: `app.AppImage.save`, `app.AppImage.backup`, `app.AppImage.bak`
+
+#### Pattern Examples
+```regex
+# Precise matching (recommended)
+OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.AppImage(\.(|current|old))?$
+
+# Legacy broad matching (not recommended)
+OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.AppImage(\..*)?$
+```
+
+#### Benefits of Precise Patterns
+1. **Prevents backup file conflicts**: Backup files won't interfere with version detection
+2. **Maintains rotation support**: Still works with file rotation systems (`.current`, `.old`)
+3. **Reduces false positives**: Eliminates incorrect "update available" status from backup files
+4. **Future-proof**: Won't match unexpected file extensions
+
 ### Version Detection Logic
 
 The version checker implements sophisticated version detection:

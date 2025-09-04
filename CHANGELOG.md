@@ -18,10 +18,17 @@ All notable changes to AppImage Updater will be documented in this file.
   - Version comparison now correctly extracts and compares just the version portion
 
 ### 🔧 Configuration Updates
+- **IMPROVED**: Pattern matching precision for AppImage files with suffixes
+  - **CHANGED**: Updated suffix patterns from `(\..*)?` to `(\.(|current|old))?` for better control
+  - **PREVENTS**: Backup files (`.save`, `.backup`, `.bak`) from interfering with version detection
+  - **MAINTAINS**: Support for rotation system files (`.current`, `.old`) and base AppImage files
+  - **EXAMPLE**: `OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.AppImage(\.(|current|old))?$`
+  - **RESOLVES**: False version detection from backup files causing incorrect "update available" status
+
 - **CHANGED**: Application pattern configurations to support file suffixes
   - FreeCAD: `.*Linux-x86_64.*\.[Aa]pp[Ii]mage(\..*)?$`
   - FreeCAD_weekly: `FreeCAD_weekly.*Linux-x86_64.*\.AppImage(\..*)?$`
-  - OrcaSlicer_nightly: `OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.AppImage(\..*)?$`
+  - OrcaSlicer_nightly: `OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.AppImage(\.(|current|old))?$`
 
 - **FIXED**: pytest-cov coverage conflicts in task check
   - Added `--no-cov` flag to `test:e2e` task to prevent coverage database conflicts

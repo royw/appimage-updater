@@ -42,11 +42,7 @@ class VersionChecker:
         try:
             # Choose appropriate method based on prerelease setting
             if app_config.prerelease:
-                release = (
-                    await self.github_client.get_latest_release_including_prerelease(
-                        app_config.url
-                    )
-                )
+                release = await self.github_client.get_latest_release_including_prerelease(app_config.url)
             else:
                 release = await self.github_client.get_latest_release(app_config.url)
         except GitHubClientError as e:

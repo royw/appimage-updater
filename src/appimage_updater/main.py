@@ -133,15 +133,11 @@ async def _check_updates(
 ) -> None:
     """Internal async function to check for updates."""
     logger.info("Starting update check process")
-    logger.debug(
-        f"Config file: {config_file}, Config dir: {config_dir}, Dry run: {dry_run}, App filter: {app_name}"
-    )
+    logger.debug(f"Config file: {config_file}, Config dir: {config_dir}, Dry run: {dry_run}, App filter: {app_name}")
 
     try:
         # Load and filter configuration
-        config, enabled_apps = await _load_and_filter_config(
-            config_file, config_dir, app_name
-        )
+        config, enabled_apps = await _load_and_filter_config(config_file, config_dir, app_name)
 
         if not enabled_apps:
             console.print("[yellow]No enabled applications found in configuration")
@@ -192,9 +188,7 @@ async def _load_and_filter_config(
         enabled_apps = _filter_apps_by_name(enabled_apps, app_name)
 
     filter_msg = " (filtered)" if app_name else ""
-    logger.info(
-        f"Found {len(config.applications)} total applications, {len(enabled_apps)} enabled{filter_msg}"
-    )
+    logger.info(f"Found {len(config.applications)} total applications, {len(enabled_apps)} enabled{filter_msg}")
     return config, enabled_apps
 
 
@@ -206,9 +200,7 @@ def _filter_apps_by_name(enabled_apps: list[Any], app_name: str) -> list[Any]:
 
     if not filtered_apps:
         available_apps = [app.name for app in enabled_apps]
-        console.print(
-            f"[red]Application '{app_name}' not found in enabled applications"
-        )
+        console.print(f"[red]Application '{app_name}' not found in enabled applications")
         console.print(f"[yellow]Available applications: {', '.join(available_apps)}")
         logger.error(f"Application '{app_name}' not found. Available: {available_apps}")
         return []
@@ -223,9 +215,7 @@ async def _perform_update_checks(config: Any, enabled_apps: list[Any]) -> list[A
     logger.info(f"Starting update checks for {len(enabled_apps)} applications")
 
     # Initialize clients
-    logger.debug(
-        f"Initializing GitHub client with timeout: {config.global_config.timeout_seconds}s"
-    )
+    logger.debug(f"Initializing GitHub client with timeout: {config.global_config.timeout_seconds}s")
     github_client = GitHubClient(
         timeout=config.global_config.timeout_seconds,
         user_agent=config.global_config.user_agent,
@@ -285,9 +275,7 @@ async def _handle_downloads(config: Any, candidates: list[Any]) -> None:
     logger.info("Initializing downloader")
     timeout_value = config.global_config.timeout_seconds * 10
     concurrent_value = config.global_config.concurrent_downloads
-    logger.debug(
-        f"Download settings: timeout={timeout_value}s, max_concurrent={concurrent_value}"
-    )
+    logger.debug(f"Download settings: timeout={timeout_value}s, max_concurrent={concurrent_value}")
     downloader = Downloader(
         timeout=config.global_config.timeout_seconds * 10,  # Longer for downloads
         user_agent=config.global_config.user_agent,
@@ -305,9 +293,7 @@ async def _handle_downloads(config: Any, candidates: list[Any]) -> None:
 
     successful_downloads = sum(1 for r in download_results if r.success)
     failed_downloads = len(download_results) - successful_downloads
-    logger.info(
-        f"Download summary: {successful_downloads} successful, {failed_downloads} failed"
-    )
+    logger.info(f"Download summary: {successful_downloads} successful, {failed_downloads} failed")
 
 
 def _load_config(config_file: Path | None, config_dir: Path | None) -> Any:
@@ -362,11 +348,7 @@ def _display_check_results(results: list[CheckResult]) -> None:
             )
         else:
             candidate = result.candidate
-            status = (
-                "[green]Up to date"
-                if not candidate.needs_update
-                else "[yellow]Update available"
-            )
+            status = "[green]Up to date" if not candidate.needs_update else "[yellow]Update available"
             current = candidate.current_version or "[dim]None"
             update_indicator = "✓" if candidate.needs_update else "-"
 

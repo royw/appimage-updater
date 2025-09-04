@@ -67,18 +67,14 @@ class Downloader:
             ) as progress:
                 tasks = []
                 for candidate in candidates:
-                    task = asyncio.create_task(
-                        self._download_with_semaphore(semaphore, candidate, progress)
-                    )
+                    task = asyncio.create_task(self._download_with_semaphore(semaphore, candidate, progress))
                     tasks.append(task)
 
                 return await asyncio.gather(*tasks)
         else:
             tasks = []
             for candidate in candidates:
-                task = asyncio.create_task(
-                    self._download_with_semaphore(semaphore, candidate)
-                )
+                task = asyncio.create_task(self._download_with_semaphore(semaphore, candidate))
                 tasks.append(task)
 
             return await asyncio.gather(*tasks)
@@ -105,9 +101,7 @@ class Downloader:
         last_error = None
         for attempt in range(max_retries):
             if attempt > 0:
-                logger.debug(
-                    f"Retry attempt {attempt + 1}/{max_retries} for {candidate.app_name}"
-                )
+                logger.debug(f"Retry attempt {attempt + 1}/{max_retries} for {candidate.app_name}")
 
             try:
                 # Setup for download
@@ -136,9 +130,7 @@ class Downloader:
 
             except Exception as e:
                 last_error = e
-                logger.debug(
-                    f"Download attempt {attempt + 1} failed for {candidate.app_name}: {e}"
-                )
+                logger.debug(f"Download attempt {attempt + 1} failed for {candidate.app_name}: {e}")
 
                 # Clean up partial download on failed attempt
                 if candidate.download_path.exists():
@@ -193,14 +185,17 @@ class Downloader:
             pool=self.timeout,  # Overall pool timeout
         )
 
-        async with httpx.AsyncClient(
-            timeout=timeout_config,
-            follow_redirects=True,
-        ) as client, client.stream(
-            "GET",
-            candidate.asset.url,
-            headers={"User-Agent": self.user_agent},
-        ) as response:
+        async with (
+            httpx.AsyncClient(
+                timeout=timeout_config,
+                follow_redirects=True,
+            ) as client,
+            client.stream(
+                "GET",
+                candidate.asset.url,
+                headers={"User-Agent": self.user_agent},
+            ) as response,
+        ):
             response.raise_for_status()
 
             with candidate.download_path.open("wb") as f:
@@ -210,9 +205,7 @@ class Downloader:
                     if progress and task_id is not None:
                         progress.update(task_id, advance=len(chunk))
 
-    async def _post_process_download(
-        self, candidate: UpdateCandidate
-    ) -> ChecksumResult | None:
+    async def _post_process_download(self, candidate: UpdateCandidate) -> ChecksumResult | None:
         """Post-process downloaded file (make executable, verify checksum)."""
         # Make AppImage executable
         if candidate.download_path.suffix.lower() == ".appimage":
@@ -224,14 +217,8 @@ class Downloader:
             checksum_result = await self._verify_download_checksum(candidate)
 
             # If checksum is required and verification failed, treat as error
-            if (
-                candidate.checksum_required
-                and checksum_result
-                and not checksum_result.verified
-            ):
-                raise Exception(
-                    f"Checksum verification failed: {checksum_result.error_message}"
-                )
+            if candidate.checksum_required and checksum_result and not checksum_result.verified:
+                raise Exception(f"Checksum verification failed: {checksum_result.error_message}")
 
         return checksum_result
 
@@ -248,14 +235,17 @@ class Downloader:
                 write=30.0,
                 pool=60.0,
             )
-            async with httpx.AsyncClient(
-                timeout=timeout_config,
-                follow_redirects=True,
-            ) as client, client.stream(
-                "GET",
-                checksum_url,
-                headers={"User-Agent": self.user_agent},
-            ) as response:
+            async with (
+                httpx.AsyncClient(
+                    timeout=timeout_config,
+                    follow_redirects=True,
+                ) as client,
+                client.stream(
+                    "GET",
+                    checksum_url,
+                    headers={"User-Agent": self.user_agent},
+                ) as response,
+            ):
                 response.raise_for_status()
 
                 with checksum_path.open("wb") as f:
@@ -308,9 +298,7 @@ class Downloader:
                 error_message=f"Checksum verification failed: {e}",
             )
 
-    def _parse_expected_checksum(
-        self, checksum_path: Path, filename: str
-    ) -> str | None:
+    def _parse_expected_checksum(self, checksum_path: Path, filename: str) -> str | None:
         """Parse expected checksum from checksum file."""
         checksum_content = checksum_path.read_text().strip()
 
@@ -351,10 +339,7 @@ class Downloader:
 
         try:
             # Download checksum file
-            checksum_path = (
-                candidate.download_path.parent
-                / f"{candidate.download_path.name}.checksum"
-            )
+            checksum_path = candidate.download_path.parent / f"{candidate.download_path.name}.checksum"
 
             success = await self._download_checksum_file(
                 candidate.asset.checksum_asset.url,
@@ -431,9 +416,7 @@ class Downloader:
         current_path = download_dir / f"{base_name}.current{extension}"
 
         # Step 1: Rotate existing files
-        await self._rotate_existing_files(
-            download_dir, base_name, extension, candidate.app_config.retain_count
-        )
+        await self._rotate_existing_files(download_dir, base_name, extension, candidate.app_config.retain_count)
 
         # Step 2: Move downloaded file to .current
         candidate.download_path.rename(current_path)
@@ -461,7 +444,7 @@ class Downloader:
                 new_path = download_dir / f"{base_name}.old2{extension}"
             else:
                 old_path = download_dir / f"{base_name}.old{i}{extension}"
-                new_path = download_dir / f"{base_name}.old{i+1}{extension}"
+                new_path = download_dir / f"{base_name}.old{i + 1}{extension}"
 
             if old_path.exists():
                 if new_path.exists():
