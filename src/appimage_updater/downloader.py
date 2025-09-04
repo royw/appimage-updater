@@ -119,13 +119,17 @@ class Downloader:
                 # Post-process the downloaded file
                 checksum_result = await self._post_process_download(candidate)
 
+                # Handle image rotation if enabled
+                final_path = await self._handle_rotation(candidate)
+
                 # Return successful result
                 duration = time.time() - start_time
+                file_size = final_path.stat().st_size if final_path.exists() else 0
                 return DownloadResult(
                     app_name=candidate.app_name,
                     success=True,
-                    file_path=candidate.download_path,
-                    download_size=candidate.download_path.stat().st_size,
+                    file_path=final_path,
+                    download_size=file_size,
                     duration_seconds=duration,
                     checksum_result=checksum_result,
                 )
@@ -396,3 +400,102 @@ class Downloader:
                 verified=False,
                 error_message=f"Checksum verification error: {e}",
             )
+
+    async def _handle_rotation(self, candidate: UpdateCandidate) -> Path:
+        """Handle image rotation if enabled in app config."""
+        # If rotation is not enabled, return original path
+        if (
+            not candidate.app_config
+            or not candidate.app_config.rotation_enabled
+            or not candidate.app_config.symlink_path
+        ):
+            return candidate.download_path
+
+        try:
+            return await self._perform_rotation(candidate)
+        except Exception as e:
+            logger.error(f"Rotation failed for {candidate.app_name}: {e}")
+            # Return original path if rotation fails
+            return candidate.download_path
+
+    async def _perform_rotation(self, candidate: UpdateCandidate) -> Path:
+        """Perform the actual image rotation and symlink update."""
+        if not candidate.app_config:
+            return candidate.download_path
+
+        download_dir = candidate.download_path.parent
+        base_name = candidate.download_path.stem  # filename without extension
+        extension = candidate.download_path.suffix  # .AppImage
+
+        # Define the current file path
+        current_path = download_dir / f"{base_name}.current{extension}"
+
+        # Step 1: Rotate existing files
+        await self._rotate_existing_files(
+            download_dir, base_name, extension, candidate.app_config.retain_count
+        )
+
+        # Step 2: Move downloaded file to .current
+        candidate.download_path.rename(current_path)
+        logger.info(f"Moved {candidate.download_path.name} to {current_path.name}")
+
+        # Step 3: Update symlink
+        if candidate.app_config.symlink_path:
+            await self._update_symlink(current_path, candidate.app_config.symlink_path)
+
+        return current_path
+
+    async def _rotate_existing_files(
+        self, download_dir: Path, base_name: str, extension: str, retain_count: int
+    ) -> None:
+        """Rotate existing files (.current -> .old, .old -> .old2, etc.)."""
+        current_path = download_dir / f"{base_name}.current{extension}"
+
+        if not current_path.exists():
+            return
+
+        # Rotate files in reverse order (.old2 -> .old3, .old -> .old2, .current -> .old)
+        for i in range(retain_count - 1, 0, -1):
+            if i == 1:
+                old_path = download_dir / f"{base_name}.old{extension}"
+                new_path = download_dir / f"{base_name}.old2{extension}"
+            else:
+                old_path = download_dir / f"{base_name}.old{i}{extension}"
+                new_path = download_dir / f"{base_name}.old{i+1}{extension}"
+
+            if old_path.exists():
+                if new_path.exists():
+                    new_path.unlink()  # Remove file that would be overwritten
+                old_path.rename(new_path)
+                logger.debug(f"Rotated {old_path.name} to {new_path.name}")
+
+        # Move .current to .old
+        old_path = download_dir / f"{base_name}.old{extension}"
+        if old_path.exists():
+            old_path.unlink()  # Remove existing .old
+        current_path.rename(old_path)
+        logger.info(f"Rotated {current_path.name} to {old_path.name}")
+
+        # Clean up files beyond retain count
+        for i in range(retain_count + 1, 20):  # Check up to .old19
+            excess_path = download_dir / f"{base_name}.old{i}{extension}"
+            if excess_path.exists():
+                excess_path.unlink()
+                logger.debug(f"Removed excess file: {excess_path.name}")
+            else:
+                break  # No more files to clean up
+
+    async def _update_symlink(self, current_path: Path, symlink_path: Path) -> None:
+        """Update symlink to point to the new current file."""
+        try:
+            # Remove existing symlink if it exists
+            if symlink_path.is_symlink() or symlink_path.exists():
+                symlink_path.unlink()
+
+            # Create new symlink
+            symlink_path.symlink_to(current_path)
+            logger.info(f"Updated symlink {symlink_path} -> {current_path}")
+
+        except Exception as e:
+            logger.error(f"Failed to update symlink {symlink_path}: {e}")
+            raise

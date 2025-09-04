@@ -30,6 +30,12 @@ All notable changes to AppImage Updater will be documented in this file.
   - Fixes "FileNotFoundError: No such file or directory" errors during coverage combining
 
 ### 🛠️ Development & Testing
+- **FIXED**: Test failures with missing trio dependency
+  - Added `trio` as development dependency to support anyio pytest plugin backends
+  - Resolves "ModuleNotFoundError: No module named 'trio'" in rotation tests
+  - All parametrized tests now run successfully with both asyncio and trio backends
+  - Added trio dependencies: trio==0.30.0, attrs==25.3.0, outcome==1.3.0.post0, sortedcontainers==2.4.0
+
 - **ENHANCED**: Taskfile with additional test tasks
   - `task test:e2e` - Run end-to-end tests (without coverage to avoid conflicts)
   - `task test:e2e-coverage` - Run E2E tests with coverage reporting

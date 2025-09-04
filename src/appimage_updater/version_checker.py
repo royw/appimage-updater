@@ -93,6 +93,7 @@ class VersionChecker:
             download_path=download_path,
             is_newer=is_newer,
             checksum_required=app_config.checksum.required,
+            app_config=app_config,
         )
 
         return CheckResult(

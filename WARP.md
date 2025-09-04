@@ -204,6 +204,13 @@ task test:e2e-coverage
 task check
 ```
 
+### Async Backend Testing
+The project uses `pytest-anyio` which supports testing with multiple async backends:
+- **asyncio**: The default Python async library (primary backend)
+- **trio**: Alternative async library for testing robustness
+
+Some tests are parametrized to run with both backends to ensure compatibility. The `trio` dependency is required for these parametrized tests to pass.
+
 ### Troubleshooting Coverage Issues
 If you encounter coverage database errors:
 ```bash
@@ -225,4 +232,11 @@ Key runtime dependencies:
 - `rich`: Terminal formatting and progress bars
 - `packaging`: Version parsing and comparison
 
-Development dependencies include mypy, pytest, ruff, and radon for code quality enforcement.
+Development dependencies include:
+- `mypy`: Static type checking
+- `pytest`: Testing framework with async support
+- `pytest-anyio`: Async testing support for both asyncio and trio backends
+- `trio`: Alternative async library (required for parametrized async tests)
+- `ruff`: Code formatting and linting
+- `radon`: Code complexity analysis
+- `pytest-cov`: Code coverage reporting

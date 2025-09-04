@@ -4,8 +4,19 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from .config import ApplicationConfig
+else:
+    # Import at runtime for model rebuilding
+    try:
+        from .config import ApplicationConfig
+    except ImportError:
+        # Handle circular import by deferring
+        ApplicationConfig = None
 
 
 class Asset(BaseModel):
@@ -51,6 +62,11 @@ class UpdateCandidate(BaseModel):
     checksum_required: bool = Field(
         default=False,
         description="Whether checksum verification is required",
+    )
+    # Adding app_config for access to rotation settings
+    app_config: ApplicationConfig | None = Field(
+        default=None,
+        description="Application configuration for rotation settings",
     )
 
     @property
@@ -100,3 +116,10 @@ class DownloadResult(BaseModel):
         default=None,
         description="Checksum verification result",
     )
+
+
+def rebuild_models() -> None:
+    """Rebuild models after all imports are resolved."""
+    if not TYPE_CHECKING and ApplicationConfig is not None:
+        UpdateCandidate.model_rebuild()
+        CheckResult.model_rebuild()

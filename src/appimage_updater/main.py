@@ -21,8 +21,11 @@ from .config_loader import (
 from .downloader import Downloader
 from .github_client import GitHubClient
 from .logging_config import configure_logging
-from .models import CheckResult
+from .models import CheckResult, rebuild_models
 from .version_checker import VersionChecker
+
+# Rebuild models to resolve forward references
+rebuild_models()
 
 app = typer.Typer(name="appimage-updater", help="AppImage update manager")
 console = Console()

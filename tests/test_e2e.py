@@ -13,7 +13,10 @@ import pytest
 from typer.testing import CliRunner
 
 from appimage_updater.main import app
-from appimage_updater.models import Asset, CheckResult, Release, UpdateCandidate
+from appimage_updater.models import Asset, CheckResult, Release, UpdateCandidate, rebuild_models
+
+# Rebuild models to resolve forward references for testing
+rebuild_models()
 
 
 @pytest.fixture

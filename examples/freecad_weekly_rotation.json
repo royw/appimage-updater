@@ -1,0 +1,26 @@
+{
+  "applications": [
+    {
+      "name": "FreeCAD_weekly",
+      "source_type": "github",
+      "url": "https://github.com/FreeCAD/FreeCAD",
+      "download_dir": "~/Applications/FreeCAD_weekly",
+      "pattern": "FreeCAD_weekly.*Linux-x86_64\\.AppImage$",
+      "frequency": {
+        "value": 1,
+        "unit": "weeks"
+      },
+      "enabled": true,
+      "prerelease": true,
+      "checksum": {
+        "enabled": true,
+        "pattern": "{filename}-SHA256.txt",
+        "algorithm": "sha256",
+        "required": false
+      },
+      "rotation_enabled": true,
+      "symlink_path": "~/Applications/FreeCAD_weekly.AppImage",
+      "retain_count": 3
+    }
+  ]
+}

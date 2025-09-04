@@ -66,6 +66,20 @@ class ApplicationConfig(BaseModel):
         default_factory=ChecksumConfig,
         description="Checksum verification settings",
     )
+    rotation_enabled: bool = Field(
+        default=False,
+        description="Enable image rotation (.current/.old/.old2, etc.) and symlink management",
+    )
+    symlink_path: Path | None = Field(
+        default=None,
+        description="Path to symlink that points to current image (required if rotation_enabled=True)",
+    )
+    retain_count: int = Field(
+        default=3,
+        ge=1,
+        le=10,
+        description="Number of old files to retain (1 = keep .old only, 2 = keep .old and .old2, etc.)",
+    )
 
     @field_validator("pattern")
     @classmethod
@@ -83,6 +97,20 @@ class ApplicationConfig(BaseModel):
     def validate_download_dir(cls, v: Path) -> Path:
         """Ensure download directory is absolute."""
         return v.expanduser().resolve()
+
+    @field_validator("symlink_path")
+    @classmethod
+    def validate_symlink_path(cls, v: Path | None) -> Path | None:
+        """Validate symlink path and ensure it's provided when rotation is enabled."""
+        if v is not None:
+            return v.expanduser().resolve()
+        return v
+
+    def model_post_init(self, __context: dict[str, object]) -> None:
+        """Post-initialization validation."""
+        if self.rotation_enabled and self.symlink_path is None:
+            msg = "symlink_path is required when rotation_enabled is True"
+            raise ValueError(msg)
 
 
 class GlobalConfig(BaseModel):
