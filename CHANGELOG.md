@@ -11,6 +11,12 @@ All notable changes to AppImage Updater will be documented in this file.
   - Resolves issue where symlinks pointing to rotation files (e.g., `app.AppImage.current`) were not detected
   - Now correctly displays symlinks in the `show` command for applications using file rotation systems
 
+- **ENHANCED**: Symlink search paths aligned with go-appimage's appimaged
+  - Updated symlink detection to use the same search paths as go-appimage's `appimaged` daemon
+  - **Search locations now include**: `/usr/local/bin`, `/opt`, `~/Applications`, `~/.local/bin`, `~/Downloads`, plus all `$PATH` directories
+  - **Improved compatibility**: Better integration with existing AppImage ecosystem tools
+  - **Expanded coverage**: Finds symlinks in all standard AppImage locations used by the community
+
 - **FIXED**: Type checking and linting errors in main.py
   - Resolved function name conflict between `list` command and Python's built-in `list` type
   - Renamed internal function from `list` to `list_apps` while keeping CLI command as `"list"`

@@ -298,13 +298,16 @@ Applications can specify a `symlink_path` for explicit symlink management:
 
 ### Symlink Detection
 
-The `show` command automatically detects symlinks in common locations:
-- Application download directory
-- `~/Applications` (commonly used for AppImages)
-- `~/bin`
-- `~/.local/bin`
+The `show` command automatically detects symlinks using the same search paths as go-appimage's `appimaged` daemon:
+- Application download directory (always included)
 - `/usr/local/bin`
-- `/usr/bin`
+- `/opt` 
+- `~/Applications`
+- `~/.local/bin`
+- `~/Downloads`
+- All directories in `$PATH` environment variable
+
+**AppImage Ecosystem Compatibility**: These search locations match exactly with go-appimage's `appimaged`, ensuring consistent behavior across AppImage tools.
 
 **Note**: Symlink detection properly handles AppImage files with suffixes like `.current` and `.old`, ensuring that symlinks pointing to rotation files are correctly identified and displayed.
 

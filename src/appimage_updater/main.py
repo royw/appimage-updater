@@ -660,7 +660,16 @@ def _check_configured_symlink(symlink_path: Path, download_dir: Path) -> tuple[P
 
 
 def _find_appimage_symlinks(download_dir: Path, configured_symlink_path: Path | None = None) -> list[tuple[Path, Path]]:
-    """Find symlinks pointing to AppImage files in the download directory."""
+    """Find symlinks pointing to AppImage files in the download directory.
+    
+    Uses the same search paths as go-appimage's appimaged:
+    - /usr/local/bin
+    - /opt
+    - ~/Applications
+    - ~/.local/bin
+    - ~/Downloads
+    - $PATH directories
+    """
     found_symlinks = []
 
     # First, check the configured symlink path if provided
@@ -669,17 +678,10 @@ def _find_appimage_symlinks(download_dir: Path, configured_symlink_path: Path | 
         if configured_symlink:
             found_symlinks.append(configured_symlink)
 
-    # Then scan common locations
-    symlink_locations = [
-        download_dir,
-        Path.home() / "Applications",  # Add ~/Applications
-        Path.home() / "bin",
-        Path("/usr/local/bin"),
-        Path("/usr/bin"),
-        Path.home() / ".local" / "bin",
-    ]
+    # Search locations matching go-appimage's appimaged search paths
+    search_locations = _get_appimage_search_locations(download_dir)
 
-    for location in symlink_locations:
+    for location in search_locations:
         if location.exists():
             found_symlinks.extend(_scan_directory_for_symlinks(location, download_dir))
 
@@ -692,6 +694,58 @@ def _find_appimage_symlinks(download_dir: Path, configured_symlink_path: Path | 
             unique_symlinks.append((symlink_path, target_path))
 
     return unique_symlinks
+
+
+def _get_appimage_search_locations(download_dir: Path) -> list[Path]:
+    """Get AppImage search locations matching go-appimage's appimaged search paths.
+    
+    Returns the same directories that go-appimage's appimaged watches:
+    - /usr/local/bin
+    - /opt
+    - ~/Applications
+    - ~/.local/bin
+    - ~/Downloads
+    - $PATH directories (common ones like /bin, /sbin, /usr/bin, /usr/sbin, etc.)
+    """
+    search_locations = [
+        download_dir,  # Always include the download directory
+        Path("/usr/local/bin"),
+        Path("/opt"),
+        Path.home() / "Applications",
+        Path.home() / ".local" / "bin",
+        Path.home() / "Downloads",
+    ]
+    
+    # Add common $PATH directories that frequently include AppImages
+    path_dirs = _get_path_directories()
+    search_locations.extend(path_dirs)
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_locations = []
+    for location in search_locations:
+        if location not in seen:
+            seen.add(location)
+            unique_locations.append(location)
+    
+    return unique_locations
+
+
+def _get_path_directories() -> list[Path]:
+    """Get directories from $PATH environment variable."""
+    path_env = os.environ.get("PATH", "")
+    if not path_env:
+        return []
+    
+    path_dirs = []
+    for path_str in path_env.split(os.pathsep):
+        if path_str.strip():
+            try:
+                path_dirs.append(Path(path_str.strip()))
+            except Exception:
+                pass  # Skip invalid paths
+    
+    return path_dirs
 
 
 def _scan_directory_for_symlinks(location: Path, download_dir: Path) -> list[tuple[Path, Path]]:
