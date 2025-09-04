@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 try:
-    from importlib.metadata import version
+    from importlib.metadata import version as _version
 except ImportError:
     # Python < 3.8 fallback
-    from importlib_metadata import version
+    from importlib_metadata import version as _version  # type: ignore[import-not-found,no-redef]
 
 
 def get_version() -> str:
     """Get the package version."""
     try:
-        return version("appimage-updater")
+        return _version("appimage-updater")
     except Exception:
         return "0.1.0"  # Fallback for development
 

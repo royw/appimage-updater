@@ -24,12 +24,12 @@ class UpdateFrequency(BaseModel):
 
     def to_timedelta(self) -> timedelta:
         """Convert to timedelta object."""
-        unit_map = {
-            "hours": lambda x: timedelta(hours=x),
-            "days": lambda x: timedelta(days=x),
-            "weeks": lambda x: timedelta(weeks=x),
-        }
-        return unit_map[self.unit](self.value)
+        if self.unit == "hours":
+            return timedelta(hours=self.value)
+        elif self.unit == "days":
+            return timedelta(days=self.value)
+        else:  # self.unit == "weeks"
+            return timedelta(weeks=self.value)
 
 
 class ChecksumConfig(BaseModel):
