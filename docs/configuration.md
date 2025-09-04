@@ -37,7 +37,13 @@ AppImage Updater uses JSON configuration files to define which applications to m
         "value": 1,
         "unit": "weeks"
       },
-      "enabled": true
+      "enabled": true,
+      "checksum": {
+        "enabled": true,
+        "pattern": "{filename}-SHA256.txt",
+        "algorithm": "sha256",
+        "required": false
+      }
     }
   ]
 }
@@ -54,6 +60,11 @@ AppImage Updater uses JSON configuration files to define which applications to m
   - `value`: Numeric frequency value
   - `unit`: Time unit ("hours", "days", "weeks")
 - `enabled`: Whether to check this application for updates
+- `checksum`: Checksum verification settings (optional)
+  - `enabled`: Whether to verify checksums (default: true)
+  - `pattern`: Pattern to find checksum files, use `{filename}` placeholder (default: "{filename}-SHA256.txt")
+  - `algorithm`: Hash algorithm - "sha256", "sha1", or "md5" (default: "sha256")
+  - `required`: Whether verification is mandatory - fails download if checksum missing (default: false)
 
 ## Configuration Locations
 
@@ -74,6 +85,48 @@ You can split your applications across multiple JSON files in a directory:
 ├── development.json        # GitHub Desktop, etc.
 └── 3d-printing.json       # BambuStudio, OrcaSlicer, Cura
 ```
+
+## Checksum Verification
+
+AppImage Updater automatically verifies downloaded files using checksums when available. This provides integrity verification to ensure downloads haven't been corrupted or tampered with.
+
+### Checksum Configuration
+
+```json
+{
+  "checksum": {
+    "enabled": true,
+    "pattern": "{filename}-SHA256.txt",
+    "algorithm": "sha256",
+    "required": false
+  }
+}
+```
+
+### Supported Patterns
+
+Checksum files are detected using configurable patterns:
+
+- `{filename}-SHA256.txt` - FreeCAD style (recommended)
+- `{filename}_SHA256.txt` - Underscore separator
+- `{filename}.sha256` - Extension-based
+- `{filename}-SHA1.txt` - SHA1 variant
+- `{filename}-MD5.txt` - MD5 variant (less secure)
+
+### Checksum File Formats
+
+Supported checksum file formats:
+
+- **Hash + filename**: `abc123def456... filename.AppImage`
+- **Hash only**: `abc123def456...` (single hash value)
+- **Multiple files**: One hash per line with filenames
+
+### Security Recommendations
+
+1. **Always enable**: Set `"enabled": true` for security
+2. **Use SHA256**: Preferred algorithm for security
+3. **Optional by default**: Set `"required": false` to handle projects without checksums gracefully
+4. **Monitor verification**: Check logs for verification status
 
 ## Pattern Examples
 

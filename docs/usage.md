@@ -46,6 +46,8 @@ appimage-updater check [OPTIONS]
 - `--config, -c PATH`: Use specific configuration file
 - `--config-dir, -d PATH`: Use specific configuration directory  
 - `--dry-run`: Check for updates without downloading
+- `--app, -a NAME`: Check only specific application (case-insensitive)
+- `--debug`: Enable debug logging for troubleshooting
 
 **Examples:**
 ```bash
@@ -60,6 +62,12 @@ appimage-updater check --config /path/to/config.json
 
 # Use custom config directory
 appimage-updater check --config-dir /path/to/configs/
+
+# Check specific application with debug logging
+appimage-updater --debug check --app freecad
+
+# Check specific application (dry run) with debug logging  
+appimage-updater --debug check --app freecad --dry-run
 ```
 
 ### `init`
@@ -126,7 +134,13 @@ task run
       "download_dir": "~/Applications/FreeCAD",
       "pattern": ".*Linux-x86_64\\.AppImage$",
       "frequency": {"value": 1, "unit": "weeks"},
-      "enabled": true
+      "enabled": true,
+      "checksum": {
+        "enabled": true,
+        "pattern": "{filename}-SHA256.txt",
+        "algorithm": "sha256",
+        "required": false
+      }
     }
   ]
 }
@@ -170,6 +184,8 @@ task run
 3. **Version checking**: The tool compares versions intelligently using semantic versioning when possible
 4. **Download locations**: Use absolute paths or ~ for home directory in download paths
 5. **Update frequency**: Balance between staying current and avoiding excessive API calls
+6. **Checksum verification**: Enable for security; use `--debug` to see verification details
+7. **Application filtering**: Use `--app name` to test specific applications quickly
 
 ## Troubleshooting
 
@@ -179,6 +195,8 @@ task run
 2. **Rate limiting**: GitHub has API rate limits; avoid checking too frequently
 3. **Permission errors**: Ensure download directories are writable
 4. **Version comparison**: Some projects use non-standard versioning that may not compare correctly
+5. **Checksum verification fails**: Check that checksum pattern matches actual checksum file names
+6. **Download interruptions**: The tool retries failed downloads automatically with exponential backoff
 
 ### Getting Help
 

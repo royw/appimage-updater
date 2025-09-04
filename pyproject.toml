@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [
-    { name = "Your Name", email = "your.email@example.com" }
+    { name = "Roy Wright", email = "roy@wright.org" }
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -23,6 +23,7 @@ classifiers = [
 ]
 dependencies = [
     "httpx>=0.25.0",
+    "loguru>=0.7.0",
     "packaging>=23.0",
     "pydantic>=2.5.0",
     "rich>=13.0.0",

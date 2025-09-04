@@ -42,7 +42,11 @@ class VersionChecker:
     async def _check_github_updates(self, app_config: ApplicationConfig) -> CheckResult:
         """Check for updates from GitHub releases."""
         try:
-            release = await self.github_client.get_latest_release(app_config.url)
+            # Choose appropriate method based on prerelease setting
+            if app_config.prerelease:
+                release = await self.github_client.get_latest_release_including_prerelease(app_config.url)
+            else:
+                release = await self.github_client.get_latest_release(app_config.url)
         except GitHubClientError as e:
             return CheckResult(
                 app_name=app_config.name,
@@ -50,8 +54,8 @@ class VersionChecker:
                 error_message=str(e),
             )
 
-        # Skip drafts and prereleases for now
-        if release.is_draft or release.is_prerelease:
+        # Skip drafts, and skip prereleases only if not explicitly requested
+        if release.is_draft or (release.is_prerelease and not app_config.prerelease):
             return CheckResult(
                 app_name=app_config.name,
                 success=True,
@@ -86,6 +90,7 @@ class VersionChecker:
             asset=asset,
             download_path=download_path,
             is_newer=is_newer,
+            checksum_required=app_config.checksum.required,
         )
 
         return CheckResult(

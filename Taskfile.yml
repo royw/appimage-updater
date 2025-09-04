@@ -9,27 +9,27 @@ tasks:
   typecheck:
     desc: Run type checking with mypy
     cmds:
-      - uv run mypy src/
+      - uv run mypy {{.CLI_ARGS | default "src/"}}
 
   lint:
     desc: Run linting with ruff
     cmds:
-      - uv run ruff check src/
+      - uv run ruff check {{.CLI_ARGS | default "src/"}}
 
   format:
     desc: Format code with ruff
     cmds:
-      - uv run ruff format src/
+      - uv run ruff format {{.CLI_ARGS | default "src/"}}
 
   test:
     desc: Run tests with pytest
     cmds:
-      - uv run pytest
+      - uv run pytest {{.CLI_ARGS}}
 
   complexity:
     desc: Analyze code complexity with radon
     cmds:
-      - uv run radon cc src/ --min C
+      - uv run radon cc {{.CLI_ARGS | default "src/ --min C"}}
 
   check:
     desc: Run all code quality checks
@@ -42,7 +42,7 @@ tasks:
   run:
     desc: Run the application
     cmds:
-      - uv run python -m appimage_updater
+      - uv run python -m appimage_updater {{.CLI_ARGS}}
 
   clean:
     desc: Clean up generated files

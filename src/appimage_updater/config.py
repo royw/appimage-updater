@@ -32,6 +32,24 @@ class UpdateFrequency(BaseModel):
         return unit_map[self.unit](self.value)
 
 
+class ChecksumConfig(BaseModel):
+    """Configuration for checksum verification."""
+
+    enabled: bool = Field(default=True, description="Whether to verify checksums")
+    pattern: str = Field(
+        default="{filename}-SHA256.txt",
+        description="Pattern to find checksum files (use {filename} as placeholder)",
+    )
+    algorithm: Literal["sha256", "sha1", "md5"] = Field(
+        default="sha256",
+        description="Hash algorithm used in checksum file",
+    )
+    required: bool = Field(
+        default=False,
+        description="Whether checksum verification is required (fail if no checksum file)",
+    )
+
+
 class ApplicationConfig(BaseModel):
     """Configuration for a single application."""
 
@@ -42,6 +60,11 @@ class ApplicationConfig(BaseModel):
     pattern: str = Field(description="File pattern to match")
     frequency: UpdateFrequency = Field(description="Update check frequency")
     enabled: bool = Field(default=True, description="Whether to check for updates")
+    prerelease: bool = Field(default=False, description="Include prerelease versions")
+    checksum: ChecksumConfig = Field(
+        default_factory=ChecksumConfig,
+        description="Checksum verification settings",
+    )
 
     @field_validator("pattern")
     @classmethod

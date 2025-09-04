@@ -61,6 +61,9 @@ uv run python -m appimage_updater check --config-dir /path/to/config/dir
 
 # Dry run (check only, no downloads)
 uv run python -m appimage_updater check --dry-run
+
+# Enable debug logging for troubleshooting
+uv run python -m appimage_updater --debug check --dry-run
 ```
 
 ## Architecture & Code Structure
@@ -76,14 +79,16 @@ The application follows a modular async architecture with clear separation of co
 
 2. **Data Models** (`models.py`):
    - `Release`: GitHub release information with assets
-   - `UpdateCandidate`: Represents available updates with version comparison
+   - `UpdateCandidate`: Represents available updates with version comparison and checksum requirements
    - `CheckResult`: Results from update checks 
-   - `DownloadResult`: Download operation results
+   - `DownloadResult`: Download operation results with checksum verification status
+   - `ChecksumResult`: Checksum verification results and status
+   - `Asset`: Download assets with associated checksum files
 
 3. **Service Layer**:
-   - `GitHubClient`: Async GitHub API client with rate limiting awareness
+   - `GitHubClient`: Async GitHub API client with rate limiting awareness and checksum file detection
    - `VersionChecker`: Orchestrates version comparison using `packaging` library
-   - `Downloader`: Concurrent download manager with progress tracking
+   - `Downloader`: Concurrent download manager with progress tracking, retry logic, and checksum verification
 
 4. **CLI Interface** (`main.py`):
    - Typer-based CLI with rich console output
@@ -107,7 +112,7 @@ The configuration system supports flexible deployment patterns:
 
 Configuration files use JSON format with the following structure:
 - `global_config`: Timeout, concurrency, retry settings
-- `applications`: Array of app configurations with source URL, download directory, file patterns, and update frequency
+- `applications`: Array of app configurations with source URL, download directory, file patterns, update frequency, and checksum verification settings
 
 ### Version Detection Logic
 
@@ -118,12 +123,34 @@ The version checker implements sophisticated version detection:
 3. **Version comparison**: Uses `packaging.version` for semantic version comparison, falls back to string comparison
 4. **Update determination**: Compares extracted current version with GitHub release version
 
+### Download System
+
+The download system provides robust, secure file downloading:
+
+1. **Redirect Handling**: Automatically follows HTTP redirects (302, 301) from GitHub releases
+2. **Retry Logic**: Exponential backoff retry mechanism (3 attempts by default)
+3. **Timeout Configuration**: Separate timeouts for connect, read, write, and pool operations
+4. **Progress Tracking**: Real-time progress bars with transfer speed and ETA
+5. **Concurrent Downloads**: Semaphore-limited concurrent downloading
+
+### Security Features
+
+Comprehensive security through checksum verification:
+
+1. **Automatic Detection**: Intelligently finds checksum files using configurable patterns
+2. **Multiple Algorithms**: Support for SHA256, SHA1, and MD5 verification
+3. **Flexible Patterns**: Configurable checksum file naming patterns
+4. **Format Support**: Handles various checksum file formats (hash+filename, standalone hash)
+5. **Verification Modes**: Optional or required verification per application
+6. **Visual Feedback**: Clear indicators showing verification status in results
+
 ### GitHub Integration
 
 The GitHub client handles:
 - Repository URL parsing (supports various GitHub URL formats)
 - Release fetching with proper error handling and rate limiting awareness
 - Asset filtering using regex patterns to match AppImage files
+- Automatic detection and association of checksum files with their corresponding assets
 - Datetime parsing for GitHub API responses
 
 ## Development Standards
@@ -136,10 +163,21 @@ The GitHub client handles:
 - **Error handling**: Custom exception classes for different error types
 - **Async patterns**: Proper use of asyncio with semaphores for concurrency control
 
+## Logging
+
+The application uses `loguru` for comprehensive logging:
+- **Console logging**: INFO level by default, DEBUG with `--debug` flag
+- **File logging**: All logs (DEBUG level) are written to `~/.local/share/appimage-updater/appimage-updater.log`
+- **Log rotation**: Automatic rotation at 10MB with 7-day retention
+- **Rich formatting**: Colored console output with timestamps and source information
+
+Use `--debug` flag to see detailed command flow and troubleshooting information.
+
 ## Dependencies
 
 Key runtime dependencies:
 - `httpx`: Async HTTP client for GitHub API and downloads
+- `loguru`: Structured logging with rich formatting
 - `pydantic`: Data validation and settings management
 - `typer`: CLI framework with rich integration
 - `rich`: Terminal formatting and progress bars

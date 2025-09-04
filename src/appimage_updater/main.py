@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import typer
+from loguru import logger
 from rich.console import Console
 from rich.table import Table
 
@@ -19,11 +20,24 @@ from .config_loader import (
 )
 from .downloader import Downloader
 from .github_client import GitHubClient
+from .logging_config import configure_logging
 from .models import CheckResult
 from .version_checker import VersionChecker
 
 app = typer.Typer(name="appimage-updater", help="AppImage update manager")
 console = Console()
+
+
+@app.callback()
+def main(
+    debug: bool = typer.Option(
+        False,
+        "--debug",
+        help="Enable debug logging",
+    ),
+) -> None:
+    """AppImage update manager with optional debug logging."""
+    configure_logging(debug=debug)
 
 
 @app.command()
@@ -45,9 +59,15 @@ def check(
         "--dry-run",
         help="Check for updates without downloading",
     ),
+    app_name: str | None = typer.Option(
+        None,
+        "--app",
+        "-a",
+        help="Check only the specified application (case-insensitive)",
+    ),
 ) -> None:
     """Check for and optionally download AppImage updates."""
-    asyncio.run(_check_updates(config_file, config_dir, dry_run))
+    asyncio.run(_check_updates(config_file, config_dir, dry_run, app_name))
 
 
 @app.command()
@@ -97,58 +117,106 @@ async def _check_updates(
     config_file: Path | None,
     config_dir: Path | None,
     dry_run: bool,
+    app_name: str | None = None,
 ) -> None:
     """Internal async function to check for updates."""
+    logger.info("Starting update check process")
+    logger.debug(f"Config file: {config_file}, Config dir: {config_dir}, Dry run: {dry_run}, App filter: {app_name}")
+    
     try:
         # Load configuration
+        logger.info("Loading configuration")
         config = _load_config(config_file, config_dir)
         enabled_apps = config.get_enabled_apps()
         
+        # Filter by app name if specified
+        if app_name:
+            logger.debug(f"Filtering applications for: {app_name} (case-insensitive)")
+            app_name_lower = app_name.lower()
+            filtered_apps = [
+                app for app in enabled_apps 
+                if app.name.lower() == app_name_lower
+            ]
+            
+            if not filtered_apps:
+                available_apps = [app.name for app in enabled_apps]
+                console.print(f"[red]Application '{app_name}' not found in enabled applications")
+                console.print(f"[yellow]Available applications: {', '.join(available_apps)}")
+                logger.error(f"Application '{app_name}' not found. Available: {available_apps}")
+                return
+            
+            enabled_apps = filtered_apps
+            logger.info(f"Filtered to single application: {enabled_apps[0].name}")
+        
+        logger.info(f"Found {len(config.applications)} total applications, {len(enabled_apps)} enabled{' (filtered)' if app_name else ''}")
+        
         if not enabled_apps:
             console.print("[yellow]No enabled applications found in configuration")
+            logger.warning("No enabled applications found, exiting")
             return
         
         console.print(f"[blue]Checking {len(enabled_apps)} applications for updates...")
+        logger.info(f"Starting update checks for {len(enabled_apps)} applications")
         
         # Initialize clients
+        logger.debug(f"Initializing GitHub client with timeout: {config.global_config.timeout_seconds}s")
         github_client = GitHubClient(
             timeout=config.global_config.timeout_seconds,
             user_agent=config.global_config.user_agent,
         )
         version_checker = VersionChecker(github_client)
+        logger.debug("GitHub client and version checker initialized")
         
         # Check for updates
+        logger.info("Creating update check tasks")
         check_tasks = [
             version_checker.check_for_updates(app) for app in enabled_apps
         ]
+        logger.debug(f"Created {len(check_tasks)} concurrent check tasks")
+        
+        logger.info("Executing update checks concurrently")
         check_results = await asyncio.gather(*check_tasks)
+        logger.info(f"Completed {len(check_results)} update checks")
         
         # Display results
+        logger.debug("Displaying check results")
         _display_check_results(check_results)
         
         # Filter successful results with updates
+        logger.debug("Filtering results for update candidates")
         candidates = [
             result.candidate
             for result in check_results
             if result.success and result.candidate and result.candidate.needs_update
         ]
         
+        successful_checks = sum(1 for r in check_results if r.success)
+        failed_checks = len(check_results) - successful_checks
+        logger.info(f"Check results: {successful_checks} successful, {failed_checks} failed, {len(candidates)} updates available")
+        
         if not candidates:
             console.print("[green]All applications are up to date!")
+            logger.info("No updates available, exiting")
             return
         
         console.print(f"\n[yellow]{len(candidates)} updates available")
+        logger.info(f"Found {len(candidates)} updates available")
         
         if dry_run:
             console.print("[blue]Dry run mode - no downloads performed")
+            logger.info("Dry run mode enabled, skipping downloads")
             return
         
         # Prompt for download
+        logger.debug("Prompting user for download confirmation")
         if not typer.confirm("Download all updates?"):
             console.print("[yellow]Download cancelled")
+            logger.info("User cancelled download")
             return
         
         # Download updates
+        logger.info("Initializing downloader")
+        logger.debug(f"Download settings: timeout={config.global_config.timeout_seconds * 10}s, max_concurrent={config.global_config.concurrent_downloads}")
         downloader = Downloader(
             timeout=config.global_config.timeout_seconds * 10,  # Longer for downloads
             user_agent=config.global_config.user_agent,
@@ -156,33 +224,49 @@ async def _check_updates(
         )
         
         console.print(f"\n[blue]Downloading {len(candidates)} updates...")
+        logger.info(f"Starting concurrent downloads of {len(candidates)} updates")
         download_results = await downloader.download_updates(candidates)
+        logger.info("Download process completed")
         
         # Display download results
+        logger.debug("Displaying download results")
         _display_download_results(download_results)
+        
+        successful_downloads = sum(1 for r in download_results if r.success)
+        failed_downloads = len(download_results) - successful_downloads
+        logger.info(f"Download summary: {successful_downloads} successful, {failed_downloads} failed")
         
     except ConfigLoadError as e:
         console.print(f"[red]Configuration error: {e}")
+        logger.error(f"Configuration error: {e}")
         raise typer.Exit(1) from e
     except Exception as e:
         console.print(f"[red]Unexpected error: {e}")
+        logger.error(f"Unexpected error: {e}")
+        logger.exception("Full exception details")
         raise typer.Exit(1) from e
 
 
 def _load_config(config_file: Path | None, config_dir: Path | None) -> Any:
     """Load configuration from file or directory."""
     if config_file:
+        logger.debug(f"Loading configuration from specified file: {config_file}")
         return load_config_from_file(config_file)
     
     target_dir = config_dir or get_default_config_dir()
+    logger.debug(f"Checking for configuration directory: {target_dir}")
     if target_dir.exists():
+        logger.debug(f"Loading configurations from directory: {target_dir}")
         return load_configs_from_directory(target_dir)
     
     # Try default config file
     default_file = get_default_config_path()
+    logger.debug(f"Checking for default configuration file: {default_file}")
     if default_file.exists():
+        logger.debug(f"Loading configuration from default file: {default_file}")
         return load_config_from_file(default_file)
     
+    logger.error("No configuration found in any expected location")
     msg = f"No configuration found. Run 'appimage-updater init' or provide --config"
     raise ConfigLoadError(msg)
 
@@ -241,7 +325,13 @@ def _display_download_results(results: list[Any]) -> None:
         console.print(f"\n[green]Successfully downloaded {len(successful)} updates:")
         for result in successful:
             size_mb = result.download_size / (1024 * 1024)
-            console.print(f"  ✓ {result.app_name} ({size_mb:.1f} MB)")
+            checksum_status = ""
+            if result.checksum_result:
+                if result.checksum_result.verified:
+                    checksum_status = " [green]✓[/green]"
+                else:
+                    checksum_status = " [yellow]⚠[/yellow]"
+            console.print(f"  ✓ {result.app_name} ({size_mb:.1f} MB){checksum_status}")
     
     if failed:
         console.print(f"\n[red]Failed to download {len(failed)} updates:")

@@ -10,9 +10,12 @@ This tool monitors configured applications (like FreeCAD) for new releases and p
 
 - Configure multiple applications to monitor
 - Check for updates at specified frequencies
-- Batch download multiple updates
+- Batch download multiple updates with retry logic
+- **Automatic checksum verification** for downloaded files (SHA256, SHA1, MD5)
 - Support for GitHub releases and other sources
 - Flexible configuration system
+- Robust error handling with automatic retries
+- Progress tracking with visual feedback
 
 ## Requirements
 
@@ -43,6 +46,7 @@ Each monitored application has its own configuration file specifying:
 - Target download directory
 - Update check frequency
 - File pattern matching for AppImage files
+- **Checksum verification settings** (optional, recommended for security)
 
 ## Development
 
@@ -69,22 +73,38 @@ task install
 
 # Type checking
 task typecheck
+task typecheck -- src/appimage_updater/main.py  # Check specific file
+task typecheck -- --strict src/                  # Pass mypy options
 
 # Linting and formatting
 task lint
+task lint -- src/appimage_updater/               # Lint specific directory
+task lint -- --fix src/                          # Auto-fix issues
+
 task format
+task format -- src/appimage_updater/main.py      # Format specific file
+task format -- --check src/                      # Check formatting only
 
 # Testing
 task test
+task test -- tests/test_specific.py              # Run specific test file
+task test -- tests/test_specific.py::test_name    # Run specific test
+task test -- -v --cov-report=html                # Pass pytest options
 
 # Complexity analysis
 task complexity
+task complexity -- src/ --min B                 # Set minimum complexity
+task complexity -- src/appimage_updater/ --show  # Show detailed output
 
 # Run all checks
 task check
 
 # Run the application
 task run
+task run -- --help                               # Show application help
+task run -- check --dry-run                      # Check for updates (dry run)
+task run -- --debug check --dry-run              # Check with debug logging
+task run -- init --config-dir /custom/path       # Initialize with custom config
 ```
 
 ## License

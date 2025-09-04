@@ -15,7 +15,13 @@
         "value": 1,
         "unit": "weeks"
       },
-      "enabled": true
+      "enabled": true,
+      "checksum": {
+        "enabled": true,
+        "pattern": "{filename}-SHA256.txt",
+        "algorithm": "sha256",
+        "required": false
+      }
     },
     {
       "name": "BambuStudio",

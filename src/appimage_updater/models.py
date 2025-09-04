@@ -16,6 +16,10 @@ class Asset(BaseModel):
     url: str = Field(description="Download URL")
     size: int = Field(description="File size in bytes")
     created_at: datetime = Field(description="Asset creation time")
+    checksum_asset: Asset | None = Field(
+        default=None,
+        description="Associated checksum file asset",
+    )
 
 
 class Release(BaseModel):
@@ -45,6 +49,10 @@ class UpdateCandidate(BaseModel):
     asset: Asset = Field(description="Asset to download")
     download_path: Path = Field(description="Local download path")
     is_newer: bool = Field(description="Whether this is actually newer")
+    checksum_required: bool = Field(
+        default=False,
+        description="Whether checksum verification is required",
+    )
 
     @property
     def needs_update(self) -> bool:
@@ -62,6 +70,16 @@ class CheckResult(BaseModel):
     checked_at: datetime = Field(default_factory=datetime.now, description="Check time")
 
 
+class ChecksumResult(BaseModel):
+    """Result of checksum verification."""
+
+    verified: bool = Field(description="Whether checksum was verified")
+    expected: str | None = Field(default=None, description="Expected checksum")
+    actual: str | None = Field(default=None, description="Actual checksum")
+    algorithm: str | None = Field(default=None, description="Hash algorithm used")
+    error_message: str | None = Field(default=None, description="Error if verification failed")
+
+
 class DownloadResult(BaseModel):
     """Result of downloading an update."""
 
@@ -71,3 +89,7 @@ class DownloadResult(BaseModel):
     error_message: str | None = Field(default=None, description="Error message if failed")
     download_size: int = Field(default=0, description="Downloaded bytes")
     duration_seconds: float = Field(default=0.0, description="Download duration")
+    checksum_result: ChecksumResult | None = Field(
+        default=None,
+        description="Checksum verification result",
+    )
