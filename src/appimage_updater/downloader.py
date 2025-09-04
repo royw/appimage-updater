@@ -6,7 +6,6 @@ import asyncio
 import hashlib
 import time
 from pathlib import Path
-from typing import Any
 
 import httpx
 from loguru import logger
@@ -38,7 +37,7 @@ class Downloader:
     ) -> None:
         """Initialize downloader."""
         from ._version import __version__
-        
+
         self.timeout = timeout
         self.user_agent = user_agent or f"AppImage-Updater/{__version__}"
         self.max_concurrent = max_concurrent
@@ -53,7 +52,7 @@ class Downloader:
             return []
 
         semaphore = asyncio.Semaphore(self.max_concurrent)
-        
+
         if show_progress:
             with Progress(
                 TextColumn("[bold blue]{task.description}", justify="right"),
@@ -69,12 +68,10 @@ class Downloader:
                 tasks = []
                 for candidate in candidates:
                     task = asyncio.create_task(
-                        self._download_with_semaphore(
-                            semaphore, candidate, progress
-                        )
+                        self._download_with_semaphore(semaphore, candidate, progress)
                     )
                     tasks.append(task)
-                
+
                 return await asyncio.gather(*tasks)
         else:
             tasks = []
@@ -83,7 +80,7 @@ class Downloader:
                     self._download_with_semaphore(semaphore, candidate)
                 )
                 tasks.append(task)
-            
+
             return await asyncio.gather(*tasks)
 
     async def _download_with_semaphore(
@@ -104,22 +101,24 @@ class Downloader:
     ) -> DownloadResult:
         """Download a single update with retry logic."""
         start_time = time.time()
-        
+
         last_error = None
         for attempt in range(max_retries):
             if attempt > 0:
-                logger.debug(f"Retry attempt {attempt + 1}/{max_retries} for {candidate.app_name}")
-            
+                logger.debug(
+                    f"Retry attempt {attempt + 1}/{max_retries} for {candidate.app_name}"
+                )
+
             try:
                 # Setup for download
                 task_id = self._setup_download(candidate, progress)
-                
+
                 # Perform the download
                 await self._perform_download(candidate, progress, task_id)
-                
+
                 # Post-process the downloaded file
                 checksum_result = await self._post_process_download(candidate)
-                
+
                 # Return successful result
                 duration = time.time() - start_time
                 return DownloadResult(
@@ -133,19 +132,21 @@ class Downloader:
 
             except Exception as e:
                 last_error = e
-                logger.debug(f"Download attempt {attempt + 1} failed for {candidate.app_name}: {e}")
-                
+                logger.debug(
+                    f"Download attempt {attempt + 1} failed for {candidate.app_name}: {e}"
+                )
+
                 # Clean up partial download on failed attempt
                 if candidate.download_path.exists():
                     candidate.download_path.unlink()
-                
+
                 # If not the last attempt, wait before retrying
                 if attempt < max_retries - 1:
-                    wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                    wait_time = 2**attempt  # Exponential backoff: 1s, 2s, 4s
                     logger.debug(f"Waiting {wait_time}s before retry...")
                     await asyncio.sleep(wait_time)
                     continue
-        
+
         # All retries failed
         duration = time.time() - start_time
         return DownloadResult(
@@ -154,10 +155,10 @@ class Downloader:
             error_message=str(last_error),
             duration_seconds=duration,
         )
-    
+
     def _setup_download(
-        self, 
-        candidate: UpdateCandidate, 
+        self,
+        candidate: UpdateCandidate,
         progress: Progress | None,
     ) -> TaskID | None:
         """Setup download directory and progress tracking."""
@@ -172,7 +173,7 @@ class Downloader:
                 total=candidate.asset.size,
             )
         return task_id
-    
+
     async def _perform_download(
         self,
         candidate: UpdateCandidate,
@@ -183,30 +184,31 @@ class Downloader:
         # Download file with appropriate timeouts for large files
         timeout_config = httpx.Timeout(
             connect=30.0,  # 30 seconds to establish connection
-            read=60.0,     # 60 seconds for each chunk read
-            write=30.0,    # 30 seconds for writes
+            read=60.0,  # 60 seconds for each chunk read
+            write=30.0,  # 30 seconds for writes
             pool=self.timeout,  # Overall pool timeout
         )
-        
+
         async with httpx.AsyncClient(
             timeout=timeout_config,
             follow_redirects=True,
-        ) as client:
-            async with client.stream(
-                "GET",
-                candidate.asset.url,
-                headers={"User-Agent": self.user_agent},
-            ) as response:
-                response.raise_for_status()
-                
-                with candidate.download_path.open("wb") as f:
-                    async for chunk in response.aiter_bytes(chunk_size=8192):
-                        f.write(chunk)
-                        
-                        if progress and task_id is not None:
-                            progress.update(task_id, advance=len(chunk))
-    
-    async def _post_process_download(self, candidate: UpdateCandidate) -> ChecksumResult | None:
+        ) as client, client.stream(
+            "GET",
+            candidate.asset.url,
+            headers={"User-Agent": self.user_agent},
+        ) as response:
+            response.raise_for_status()
+
+            with candidate.download_path.open("wb") as f:
+                async for chunk in response.aiter_bytes(chunk_size=8192):
+                    f.write(chunk)
+
+                    if progress and task_id is not None:
+                        progress.update(task_id, advance=len(chunk))
+
+    async def _post_process_download(
+        self, candidate: UpdateCandidate
+    ) -> ChecksumResult | None:
         """Post-process downloaded file (make executable, verify checksum)."""
         # Make AppImage executable
         if candidate.download_path.suffix.lower() == ".appimage":
@@ -216,14 +218,19 @@ class Downloader:
         checksum_result = None
         if candidate.asset.checksum_asset:
             checksum_result = await self._verify_download_checksum(candidate)
-            
+
             # If checksum is required and verification failed, treat as error
-            if (candidate.checksum_required and 
-                checksum_result and not checksum_result.verified):
-                raise Exception(f"Checksum verification failed: {checksum_result.error_message}")
-        
+            if (
+                candidate.checksum_required
+                and checksum_result
+                and not checksum_result.verified
+            ):
+                raise Exception(
+                    f"Checksum verification failed: {checksum_result.error_message}"
+                )
+
         return checksum_result
-    
+
     async def _download_checksum_file(
         self,
         checksum_url: str,
@@ -240,25 +247,24 @@ class Downloader:
             async with httpx.AsyncClient(
                 timeout=timeout_config,
                 follow_redirects=True,
-            ) as client:
-                async with client.stream(
-                    "GET",
-                    checksum_url,
-                    headers={"User-Agent": self.user_agent},
-                ) as response:
-                    response.raise_for_status()
-                    
-                    with checksum_path.open("wb") as f:
-                        async for chunk in response.aiter_bytes(chunk_size=8192):
-                            f.write(chunk)
-            
+            ) as client, client.stream(
+                "GET",
+                checksum_url,
+                headers={"User-Agent": self.user_agent},
+            ) as response:
+                response.raise_for_status()
+
+                with checksum_path.open("wb") as f:
+                    async for chunk in response.aiter_bytes(chunk_size=8192):
+                        f.write(chunk)
+
             return True
         except Exception as e:
             logger.debug(f"Failed to download checksum file: {e}")
             if checksum_path.exists():
                 checksum_path.unlink()
             return False
-    
+
     def _verify_checksum(
         self,
         file_path: Path,
@@ -269,20 +275,20 @@ class Downloader:
         try:
             # Parse expected checksum from file
             expected_hash = self._parse_expected_checksum(checksum_path, file_path.name)
-            
+
             if not expected_hash:
                 return ChecksumResult(
                     verified=False,
                     algorithm=algorithm,
                     error_message=f"Could not find checksum for {file_path.name} in checksum file",
                 )
-            
+
             # Calculate actual checksum
             actual_hash = self._calculate_file_hash(file_path, algorithm)
-            
+
             # Compare checksums
             verified = actual_hash == expected_hash
-            
+
             return ChecksumResult(
                 verified=verified,
                 expected=expected_hash,
@@ -290,37 +296,39 @@ class Downloader:
                 algorithm=algorithm,
                 error_message=None if verified else "Checksum mismatch",
             )
-            
+
         except Exception as e:
             return ChecksumResult(
                 verified=False,
                 algorithm=algorithm,
                 error_message=f"Checksum verification failed: {e}",
             )
-    
-    def _parse_expected_checksum(self, checksum_path: Path, filename: str) -> str | None:
+
+    def _parse_expected_checksum(
+        self, checksum_path: Path, filename: str
+    ) -> str | None:
         """Parse expected checksum from checksum file."""
         checksum_content = checksum_path.read_text().strip()
-        
+
         # Try different checksum file formats
-        for line in checksum_content.split('\n'):
+        for line in checksum_content.split("\n"):
             line = line.strip()
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue
-            
+
             # Format: hash filename
-            if ' ' in line:
-                hash_part, file_part = line.split(' ', 1)
-                file_part = file_part.strip().lstrip('*')  # Remove binary indicator
+            if " " in line:
+                hash_part, file_part = line.split(" ", 1)
+                file_part = file_part.strip().lstrip("*")  # Remove binary indicator
                 if file_part == filename or file_part.endswith(filename):
                     return hash_part.lower()
-            
+
             # Format: just the hash (single file)
             elif len(line) in [32, 40, 64]:  # MD5, SHA1, SHA256 lengths
                 return line.lower()
-        
+
         return None
-    
+
     def _calculate_file_hash(self, file_path: Path, algorithm: str) -> str:
         """Calculate hash of a file using the specified algorithm."""
         hasher = hashlib.new(algorithm)
@@ -328,7 +336,7 @@ class Downloader:
             while chunk := f.read(65536):  # 64KB chunks
                 hasher.update(chunk)
         return hasher.hexdigest().lower()
-    
+
     async def _verify_download_checksum(
         self,
         candidate: UpdateCandidate,
@@ -336,22 +344,25 @@ class Downloader:
         """Download and verify checksum for a candidate."""
         if not candidate.asset.checksum_asset:
             return None
-        
+
         try:
             # Download checksum file
-            checksum_path = candidate.download_path.parent / f"{candidate.download_path.name}.checksum"
-            
+            checksum_path = (
+                candidate.download_path.parent
+                / f"{candidate.download_path.name}.checksum"
+            )
+
             success = await self._download_checksum_file(
                 candidate.asset.checksum_asset.url,
                 checksum_path,
             )
-            
+
             if not success:
                 return ChecksumResult(
                     verified=False,
                     error_message="Failed to download checksum file",
                 )
-            
+
             # Determine algorithm from checksum filename
             algorithm = "sha256"  # Default
             checksum_name = candidate.asset.checksum_asset.name.lower()
@@ -359,26 +370,26 @@ class Downloader:
                 algorithm = "sha1"
             elif "md5" in checksum_name:
                 algorithm = "md5"
-            
+
             # Verify checksum
             result = self._verify_checksum(
                 candidate.download_path,
                 checksum_path,
                 algorithm,
             )
-            
+
             # Clean up checksum file
             if checksum_path.exists():
                 checksum_path.unlink()
-            
+
             logger.debug(
                 f"Checksum verification for {candidate.app_name}: "
                 f"{'✓ PASS' if result.verified else '✗ FAIL'} "
                 f"({algorithm.upper()})"
             )
-            
+
             return result
-            
+
         except Exception as e:
             logger.debug(f"Checksum verification error for {candidate.app_name}: {e}")
             return ChecksumResult(

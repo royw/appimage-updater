@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field, field_validator
 def _get_default_user_agent() -> str:
     """Get default user agent string."""
     from ._version import __version__
+
     return f"AppImage-Updater/{__version__}"
 
 

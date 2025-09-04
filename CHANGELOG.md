@@ -23,6 +23,25 @@ All notable changes to AppImage Updater will be documented in this file.
   - FreeCAD_weekly: `FreeCAD_weekly.*Linux-x86_64.*\.AppImage(\..*)?$`
   - OrcaSlicer_nightly: `OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.AppImage(\..*)?$`
 
+- **FIXED**: pytest-cov coverage conflicts in task check
+  - Added `--no-cov` flag to `test:e2e` task to prevent coverage database conflicts
+  - Configured `parallel = false` to avoid SQLite database conflicts during test runs
+  - Added `--cov-config=pyproject.toml` for consistent coverage configuration
+  - Fixes "FileNotFoundError: No such file or directory" errors during coverage combining
+
+### 🛠️ Development & Testing
+- **ENHANCED**: Taskfile with additional test tasks
+  - `task test:e2e` - Run end-to-end tests (without coverage to avoid conflicts)
+  - `task test:e2e-coverage` - Run E2E tests with coverage reporting
+  - `task test:smoke` - Quick smoke test for basic functionality validation
+  - `task test:pattern-matching` - Test specific pattern matching functionality
+  - `task test:all` - Run all tests including end-to-end validation
+
+- **IMPROVED**: Documentation for testing and coverage
+  - Updated WARP.md with comprehensive testing and coverage configuration section
+  - Added troubleshooting steps for coverage database conflicts
+  - Updated README.md with end-to-end testing commands
+
 ---
 
 ## [Previous] - 2025-01-04

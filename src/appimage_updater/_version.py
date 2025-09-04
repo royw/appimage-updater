@@ -6,7 +6,7 @@ try:
     from importlib.metadata import version as _version
 except ImportError:
     # Python < 3.8 fallback
-    from importlib_metadata import version as _version  # type: ignore[import-not-found,no-redef]
+    from importlib_metadata import version as _version
 
 
 def get_version() -> str:

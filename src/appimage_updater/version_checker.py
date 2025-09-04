@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import re
-from pathlib import Path
-from typing import Any
 
 from packaging import version
 
@@ -44,7 +42,11 @@ class VersionChecker:
         try:
             # Choose appropriate method based on prerelease setting
             if app_config.prerelease:
-                release = await self.github_client.get_latest_release_including_prerelease(app_config.url)
+                release = (
+                    await self.github_client.get_latest_release_including_prerelease(
+                        app_config.url
+                    )
+                )
             else:
                 release = await self.github_client.get_latest_release(app_config.url)
         except GitHubClientError as e:
@@ -118,8 +120,8 @@ class VersionChecker:
         # Common version patterns
         patterns = [
             r"v?(\d+\.\d+\.\d+(?:\.\d+)?)",  # v1.2.3 or 1.2.3.4
-            r"(\d{4}-\d{2}-\d{2})",         # 2023-12-01
-            r"(\d+\.\d+)",                  # 1.2
+            r"(\d{4}-\d{2}-\d{2})",  # 2023-12-01
+            r"(\d+\.\d+)",  # 1.2
         ]
 
         for pattern in patterns:
@@ -138,7 +140,7 @@ class VersionChecker:
         # Extract version numbers from both strings
         current_extracted = self._extract_version_from_filename(current)
         latest_extracted = self._extract_version_from_filename(latest)
-        
+
         try:
             current_ver = version.parse(current_extracted)
             latest_ver = version.parse(latest_extracted)

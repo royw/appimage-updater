@@ -7,9 +7,8 @@ from datetime import datetime
 from typing import Any
 
 import httpx
-from pydantic import ValidationError
-
 from loguru import logger
+from pydantic import ValidationError
 
 from .models import Asset, Release
 
@@ -24,7 +23,7 @@ class GitHubClient:
     def __init__(self, timeout: int = 30, user_agent: str | None = None) -> None:
         """Initialize GitHub client."""
         from ._version import __version__
-        
+
         self.timeout = timeout
         self.user_agent = user_agent or f"AppImage-Updater/{__version__}"
 
@@ -32,7 +31,7 @@ class GitHubClient:
         """Get the latest release for a repository."""
         owner, repo = self._parse_repo_url(repo_url)
         api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
-        
+
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
                 response = await client.get(
@@ -53,17 +52,14 @@ class GitHubClient:
         if not releases:
             msg = f"No releases found for repository: {repo_url}"
             raise GitHubClientError(msg)
-        
+
         # Filter out drafts but keep prereleases, sort by published date
-        valid_releases = [
-            release for release in releases 
-            if not release.is_draft
-        ]
-        
+        valid_releases = [release for release in releases if not release.is_draft]
+
         if not valid_releases:
             msg = f"No non-draft releases found for repository: {repo_url}"
             raise GitHubClientError(msg)
-            
+
         # Sort by published_at descending to get the most recent
         valid_releases.sort(key=lambda r: r.published_at, reverse=True)
         return valid_releases[0]
@@ -72,7 +68,7 @@ class GitHubClient:
         """Get recent releases for a repository."""
         owner, repo = self._parse_repo_url(repo_url)
         api_url = f"https://api.github.com/repos/{owner}/{repo}/releases"
-        
+
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
                 response = await client.get(
@@ -99,12 +95,12 @@ class GitHubClient:
             r"https?://github\.com/([^/]+)/([^/]+?)(?:\.git)?/?$",
             r"git@github\.com:([^/]+)/([^/]+?)(?:\.git)?$",
         ]
-        
+
         for pattern in patterns:
             match = re.match(pattern, url)
             if match:
                 return match.group(1), match.group(2)
-        
+
         msg = f"Invalid GitHub repository URL: {url}"
         raise GitHubClientError(msg)
 
@@ -123,7 +119,7 @@ class GitHubClient:
                     ),
                 )
                 assets.append(asset)
-            
+
             # Associate checksum files with their corresponding assets
             self._associate_checksum_files(assets)
 
@@ -141,30 +137,30 @@ class GitHubClient:
         except (KeyError, ValidationError, ValueError) as e:
             msg = f"Failed to parse release data: {e}"
             raise GitHubClientError(msg) from e
-    
+
     def _associate_checksum_files(self, assets: list[Asset]) -> None:
         """Associate checksum files with their corresponding assets."""
         # Find checksum files and create mapping
         checksum_candidates = self._find_checksum_candidates(assets)
         logger.debug(f"Total checksum candidates: {len(checksum_candidates)}")
-        
+
         # Associate each asset with its checksum file
         self._associate_assets_with_checksums(assets, checksum_candidates)
-    
+
     def _find_checksum_candidates(self, assets: list[Asset]) -> dict[str, Asset]:
         """Find potential checksum files and map them to their base names."""
         checksum_patterns = [
-            r"^(.+)-(?:SHA256|sha256)\.txt$",   # filename-SHA256.txt
-            r"^(.+)-(?:SHA1|sha1)\.txt$",     # filename-SHA1.txt
-            r"^(.+)-(?:MD5|md5)\.txt$",       # filename-MD5.txt
+            r"^(.+)-(?:SHA256|sha256)\.txt$",  # filename-SHA256.txt
+            r"^(.+)-(?:SHA1|sha1)\.txt$",  # filename-SHA1.txt
+            r"^(.+)-(?:MD5|md5)\.txt$",  # filename-MD5.txt
             r"^(.+)_(?:SHA256|sha256)\.txt$",  # filename_SHA256.txt
-            r"^(.+)_(?:SHA1|sha1)\.txt$",    # filename_SHA1.txt
-            r"^(.+)_(?:MD5|md5)\.txt$",      # filename_MD5.txt
-            r"^(.+)\.sha256$",                # filename.sha256
-            r"^(.+)\.sha1$",                  # filename.sha1
-            r"^(.+)\.md5$",                   # filename.md5
+            r"^(.+)_(?:SHA1|sha1)\.txt$",  # filename_SHA1.txt
+            r"^(.+)_(?:MD5|md5)\.txt$",  # filename_MD5.txt
+            r"^(.+)\.sha256$",  # filename.sha256
+            r"^(.+)\.sha1$",  # filename.sha1
+            r"^(.+)\.md5$",  # filename.md5
         ]
-        
+
         checksum_candidates = {}
         for asset in assets:
             for pattern in checksum_patterns:
@@ -172,15 +168,15 @@ class GitHubClient:
                 if match:
                     base_name = match.group(1)
                     checksum_candidates[base_name] = asset
-                    logger.debug(f"Found checksum candidate: {asset.name} -> {base_name}")
+                    logger.debug(
+                        f"Found checksum candidate: {asset.name} -> {base_name}"
+                    )
                     break
-        
+
         return checksum_candidates
-    
+
     def _associate_assets_with_checksums(
-        self, 
-        assets: list[Asset], 
-        checksum_candidates: dict[str, Asset]
+        self, assets: list[Asset], checksum_candidates: dict[str, Asset]
     ) -> None:
         """Associate each asset with its corresponding checksum file."""
         for asset in assets:
@@ -188,31 +184,31 @@ class GitHubClient:
                 # This is not a checksum file itself, look for its checksum
                 base_name = asset.name
                 logger.debug(f"Looking for checksum for asset: {base_name}")
-                
+
                 # Try to find checksum file for this asset
-                checksum_asset = self._find_checksum_for_asset(base_name, checksum_candidates)
+                checksum_asset = self._find_checksum_for_asset(
+                    base_name, checksum_candidates
+                )
                 if checksum_asset:
                     asset.checksum_asset = checksum_asset
                     logger.debug(f"Associated checksum: {checksum_asset.name}")
                 else:
                     logger.debug(f"No checksum found for {base_name}")
-    
+
     def _find_checksum_for_asset(
-        self, 
-        asset_name: str, 
-        checksum_candidates: dict[str, Asset]
+        self, asset_name: str, checksum_candidates: dict[str, Asset]
     ) -> Asset | None:
         """Find checksum file for a specific asset."""
         # Try exact match first
         if asset_name in checksum_candidates:
             return checksum_candidates[asset_name]
-        
+
         # Try removing common extensions and matching
         extensions = [".AppImage", ".tar.gz", ".zip", ".deb", ".rpm"]
         for ext in extensions:
             if asset_name.endswith(ext):
-                name_without_ext = asset_name[:-len(ext)]
+                name_without_ext = asset_name[: -len(ext)]
                 if name_without_ext in checksum_candidates:
                     return checksum_candidates[name_without_ext]
-        
+
         return None

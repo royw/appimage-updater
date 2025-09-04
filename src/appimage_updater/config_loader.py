@@ -42,14 +42,14 @@ def load_configs_from_directory(config_dir: Path) -> Config:
         raise ConfigLoadError(msg)
 
     config_files = list(config_dir.glob("*.json"))
-    
+
     if not config_files:
         msg = f"No JSON configuration files found in {config_dir}"
         raise ConfigLoadError(msg)
 
     # Start with empty config
     merged_data: dict[str, Any] = {"applications": []}
-    
+
     # Load and merge all config files
     for config_file in sorted(config_files):
         try:

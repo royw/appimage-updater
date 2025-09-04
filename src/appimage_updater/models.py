@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -35,7 +34,7 @@ class Release(BaseModel):
     def get_matching_assets(self, pattern: str) -> list[Asset]:
         """Get assets matching the given pattern."""
         import re
-        
+
         regex = re.compile(pattern)
         return [asset for asset in self.assets if regex.search(asset.name)]
 
@@ -65,8 +64,12 @@ class CheckResult(BaseModel):
 
     app_name: str = Field(description="Application name")
     success: bool = Field(description="Whether check was successful")
-    error_message: str | None = Field(default=None, description="Error message if failed")
-    candidate: UpdateCandidate | None = Field(default=None, description="Update candidate")
+    error_message: str | None = Field(
+        default=None, description="Error message if failed"
+    )
+    candidate: UpdateCandidate | None = Field(
+        default=None, description="Update candidate"
+    )
     checked_at: datetime = Field(default_factory=datetime.now, description="Check time")
 
 
@@ -77,7 +80,9 @@ class ChecksumResult(BaseModel):
     expected: str | None = Field(default=None, description="Expected checksum")
     actual: str | None = Field(default=None, description="Actual checksum")
     algorithm: str | None = Field(default=None, description="Hash algorithm used")
-    error_message: str | None = Field(default=None, description="Error if verification failed")
+    error_message: str | None = Field(
+        default=None, description="Error if verification failed"
+    )
 
 
 class DownloadResult(BaseModel):
@@ -86,7 +91,9 @@ class DownloadResult(BaseModel):
     app_name: str = Field(description="Application name")
     success: bool = Field(description="Whether download was successful")
     file_path: Path | None = Field(default=None, description="Downloaded file path")
-    error_message: str | None = Field(default=None, description="Error message if failed")
+    error_message: str | None = Field(
+        default=None, description="Error message if failed"
+    )
     download_size: int = Field(default=0, description="Downloaded bytes")
     duration_seconds: float = Field(default=0.0, description="Download duration")
     checksum_result: ChecksumResult | None = Field(
