@@ -28,6 +28,12 @@ task format
 # Testing
 task test
 
+# End-to-end testing (without coverage to avoid conflicts)
+task test:e2e
+
+# End-to-end testing with coverage
+task test:e2e-coverage
+
 # Code complexity analysis
 task complexity
 
@@ -172,6 +178,42 @@ The application uses `loguru` for comprehensive logging:
 - **Rich formatting**: Colored console output with timestamps and source information
 
 Use `--debug` flag to see detailed command flow and troubleshooting information.
+
+## Testing & Coverage Configuration
+
+The project uses pytest with coverage reporting configured to avoid common conflicts:
+
+### Coverage Setup
+- **Default coverage**: Enabled by default for `task test` with HTML and terminal reports
+- **Conflict prevention**: `task test:e2e` runs without coverage (`--no-cov`) when part of `task check` to prevent database conflicts
+- **Parallel mode**: Disabled (`parallel = false`) to avoid SQLite database conflicts when multiple test runs occur
+- **Coverage configuration**: Centralized in `pyproject.toml` with `--cov-config=pyproject.toml`
+
+### Test Commands
+```bash
+# Run tests with coverage (default)
+task test
+
+# Run e2e tests without coverage (used in task check)
+task test:e2e  
+
+# Run e2e tests with coverage (standalone)
+task test:e2e-coverage
+
+# Run all quality checks (includes both test and test:e2e)
+task check
+```
+
+### Troubleshooting Coverage Issues
+If you encounter coverage database errors:
+```bash
+# Clean up stale coverage files
+rm -f .coverage*
+rm -rf .pytest_cache/
+
+# Run tests again
+task test
+```
 
 ## Dependencies
 

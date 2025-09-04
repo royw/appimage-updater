@@ -91,6 +91,10 @@ task test -- tests/test_specific.py              # Run specific test file
 task test -- tests/test_specific.py::test_name    # Run specific test
 task test -- -v --cov-report=html                # Pass pytest options
 
+# End-to-end testing
+task test:e2e                                    # E2E tests (no coverage)
+task test:e2e-coverage                           # E2E tests with coverage
+
 # Complexity analysis
 task complexity
 task complexity -- src/ --min B                 # Set minimum complexity

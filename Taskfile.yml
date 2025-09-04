@@ -4,7 +4,7 @@ tasks:
   install:
     desc: Install project dependencies
     cmds:
-      - uv sync
+      - uv sync --extra dev
 
   typecheck:
     desc: Run type checking with mypy
@@ -26,18 +26,47 @@ tasks:
     cmds:
       - uv run pytest {{.CLI_ARGS}}
 
+  test:e2e:
+    desc: Run end-to-end tests to validate core functionality
+    cmds:
+      - uv run pytest tests/test_e2e.py -v --tb=short --color=yes --no-cov
+
+  test:e2e-coverage:
+    desc: Run end-to-end tests with coverage reporting
+    cmds:
+      - uv run pytest tests/test_e2e.py -v --tb=short --color=yes --cov=src/appimage_updater --cov-report=term-missing --cov-report=html:htmlcov
+      - echo "📊 Coverage report saved to htmlcov/index.html"
+
+  test:smoke:
+    desc: Run quick smoke test to validate basic functionality
+    cmds:
+      - uv run pytest tests/test_e2e.py::test_integration_smoke_test -v
+      - echo "✅ Basic functionality verified!"
+
+  test:pattern-matching:
+    desc: Test pattern matching functionality specifically
+    cmds:
+      - uv run pytest tests/test_e2e.py::TestPatternMatching -v
+      - uv run pytest tests/test_e2e.py::test_version_extraction_patterns -v
+
   complexity:
     desc: Analyze code complexity with radon
     cmds:
       - uv run radon cc {{.CLI_ARGS | default "src/ --min C"}}
 
+  test:all:
+    desc: Run all tests including end-to-end validation
+    deps:
+      - test
+      - test:e2e
+
   check:
-    desc: Run all code quality checks
+    desc: Run all code quality checks including end-to-end tests
     deps:
       - typecheck
       - lint
       - complexity
-      - test
+      - test:all
 
   run:
     desc: Run the application
