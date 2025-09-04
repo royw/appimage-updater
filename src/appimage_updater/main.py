@@ -125,6 +125,41 @@ def init(
     console.print("[blue]Edit the configuration files and run: appimage-updater check")
 
 
+@app.command()
+def list(
+    config_file: Path | None = _CONFIG_FILE_OPTION,
+    config_dir: Path | None = _CONFIG_DIR_OPTION,
+) -> None:
+    """List all configured applications."""
+    try:
+        logger.info("Loading configuration to list applications")
+        config = _load_config(config_file, config_dir)
+        
+        if not config.applications:
+            console.print("[yellow]No applications configured")
+            logger.info("No applications found in configuration")
+            return
+
+        _display_applications_list(config.applications)
+        
+        # Summary
+        total_apps = len(config.applications)
+        enabled_apps = len(config.get_enabled_apps())
+        console.print(f"\n[blue]Total: {total_apps} applications ({enabled_apps} enabled, {total_apps - enabled_apps} disabled)")
+        
+        logger.info(f"Listed {total_apps} applications ({enabled_apps} enabled)")
+        
+    except ConfigLoadError as e:
+        console.print(f"[red]Configuration error: {e}")
+        logger.error(f"Configuration error: {e}")
+        raise typer.Exit(1) from e
+    except Exception as e:
+        console.print(f"[red]Unexpected error: {e}")
+        logger.error(f"Unexpected error: {e}")
+        logger.exception("Full exception details")
+        raise typer.Exit(1) from e
+
+
 async def _check_updates(
     config_file: Path | None,
     config_dir: Path | None,
@@ -318,6 +353,36 @@ def _load_config(config_file: Path | None, config_dir: Path | None) -> Any:
     logger.error("No configuration found in any expected location")
     msg = "No configuration found. Run 'appimage-updater init' or provide --config"
     raise ConfigLoadError(msg)
+
+
+def _display_applications_list(applications: list[Any]) -> None:
+    """Display applications list in a table."""
+    table = Table(title="Configured Applications")
+    table.add_column("Application", style="cyan")
+    table.add_column("Status", style="green")
+    table.add_column("Source", style="yellow")
+    table.add_column("Download Directory", style="magenta")
+    table.add_column("Frequency", style="blue")
+
+    for app in applications:
+        status = "[green]Enabled" if app.enabled else "[red]Disabled"
+        source_display = f"{app.source_type.title()}: {app.url}"
+        frequency_display = f"{app.frequency.value} {app.frequency.unit}"
+        
+        # Truncate long paths for better display
+        download_dir = str(app.download_dir)
+        if len(download_dir) > 40:
+            download_dir = "..." + download_dir[-37:]
+        
+        table.add_row(
+            app.name,
+            status,
+            source_display,
+            download_dir,
+            frequency_display,
+        )
+
+    console.print(table)
 
 
 def _display_check_results(results: list[CheckResult]) -> None:

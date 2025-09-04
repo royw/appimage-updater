@@ -112,6 +112,13 @@ All notable changes to AppImage Updater will be documented in this file.
   - Progress tracking with transfer speed and ETA
 
 ### 📝 Configuration
+- **NEW**: `list` command for viewing configured applications
+  - **ADDED**: `appimage-updater list` command to display all configured applications
+  - **DISPLAYS**: Application name, enabled/disabled status, source repository, download directory, and update frequency
+  - **SUPPORTS**: Same configuration options as other commands (`--config`, `--config-dir`)
+  - **SHOWS**: Summary with total applications and enabled/disabled counts
+  - **EXAMPLE**: `appimage-updater list --config-dir ~/.config/appimage-updater/apps`
+
 - **NEW**: Checksum configuration block for applications
   ```json
   "checksum": {

@@ -53,13 +53,15 @@ uv run pytest tests/test_specific.py
 uv run pytest tests/test_specific.py::test_function_name
 ```
 
-### Initialize Configuration
+### Application Usage
 ```bash
-# Create default configuration directory with examples
+# Initialize configuration directory with examples
 uv run python -m appimage_updater init
-
-# Use custom config directory
 uv run python -m appimage_updater init --config-dir /path/to/config
+
+# List configured applications
+uv run python -m appimage_updater list
+uv run python -m appimage_updater list --config-dir /path/to/config/dir
 
 # Check for updates with specific config
 uv run python -m appimage_updater check --config /path/to/config.json
@@ -67,6 +69,9 @@ uv run python -m appimage_updater check --config-dir /path/to/config/dir
 
 # Dry run (check only, no downloads)
 uv run python -m appimage_updater check --dry-run
+
+# Check specific application
+uv run python -m appimage_updater check --app OrcaSlicer_nightly
 
 # Enable debug logging for troubleshooting
 uv run python -m appimage_updater --debug check --dry-run
