@@ -101,9 +101,9 @@ class ApplicationConfig(BaseModel):
     @field_validator("symlink_path")
     @classmethod
     def validate_symlink_path(cls, v: Path | None) -> Path | None:
-        """Validate symlink path and ensure it's provided when rotation is enabled."""
+        """Validate symlink path (expand user but don't resolve symlinks)."""
         if v is not None:
-            return v.expanduser().resolve()
+            return v.expanduser()
         return v
 
     def model_post_init(self, __context: dict[str, object]) -> None:

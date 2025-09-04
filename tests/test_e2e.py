@@ -541,6 +541,247 @@ class TestE2EFunctionality:
         assert "WeeklyApp" in result.stdout
         assert "2 days" in result.stdout
         assert "3 weeks" in result.stdout
+    
+    def test_show_command_with_valid_application(self, runner, temp_config_dir, temp_download_dir):
+        """Test show command with a valid application."""
+        # Create config with detailed application
+        detailed_config = {
+            "applications": [
+                {
+                    "name": "DetailedApp",
+                    "source_type": "github",
+                    "url": "https://github.com/test/detailedapp",
+                    "download_dir": str(temp_download_dir),
+                    "pattern": r"DetailedApp.*\.AppImage(\..*)?$",
+                    "frequency": {"value": 2, "unit": "weeks"},
+                    "enabled": True,
+                    "prerelease": False,
+                    "checksum": {
+                        "enabled": True,
+                        "pattern": "{filename}-SHA256.txt",
+                        "algorithm": "sha256",
+                        "required": False
+                    }
+                }
+            ]
+        }
+        
+        config_file = temp_config_dir / "detailed.json"
+        with config_file.open("w") as f:
+            json.dump(detailed_config, f)
+        
+        # Create some AppImage files
+        app_file1 = temp_download_dir / "DetailedApp-1.0.0-Linux.AppImage.current"
+        app_file2 = temp_download_dir / "DetailedApp-0.9.0-Linux.AppImage.old"
+        app_file1.touch()
+        app_file2.touch()
+        app_file1.chmod(0o755)  # Make executable
+        
+        result = runner.invoke(app, ["show", "--app", "DetailedApp", "--config", str(config_file)])
+        
+        assert result.exit_code == 0
+        # Check configuration section
+        assert "Application: DetailedApp" in result.stdout
+        assert "Configuration" in result.stdout
+        assert "Name: DetailedApp" in result.stdout
+        assert "Status: Enabled" in result.stdout
+        assert "Source: Github" in result.stdout
+        assert "https://github.com/test/detailedapp" in result.stdout
+        assert "2 weeks" in result.stdout
+        assert "Prerelease: No" in result.stdout
+        assert "Checksum Verification: Enabled" in result.stdout
+        assert "Algorithm: SHA256" in result.stdout
+        
+        # Check files section
+        assert "Files" in result.stdout
+        assert "DetailedApp-1.0.0-Linux.AppImage.current" in result.stdout
+        assert "DetailedApp-0.9.0-Linux.AppImage.old" in result.stdout
+        assert "Executable: ✓" in result.stdout  # Current file should be executable
+        assert "Executable: ✗" in result.stdout  # Old file should not be executable
+        
+        # Check symlinks section
+        assert "Symlinks" in result.stdout
+    
+    def test_show_command_with_nonexistent_application(self, runner, temp_config_dir, sample_config):
+        """Test show command with non-existent application."""
+        config_file = temp_config_dir / "test.json"
+        with config_file.open("w") as f:
+            json.dump(sample_config, f)
+        
+        result = runner.invoke(app, ["show", "--app", "NonExistentApp", "--config", str(config_file)])
+        
+        assert result.exit_code == 1
+        assert "Application 'NonExistentApp' not found in configuration" in result.stdout
+        assert "Available applications: TestApp" in result.stdout
+    
+    def test_show_command_case_insensitive(self, runner, temp_config_dir, sample_config):
+        """Test show command with case-insensitive application name matching."""
+        config_file = temp_config_dir / "test.json"
+        with config_file.open("w") as f:
+            json.dump(sample_config, f)
+        
+        result = runner.invoke(app, ["show", "--app", "testapp", "--config", str(config_file)])
+        
+        assert result.exit_code == 0
+        assert "Application: TestApp" in result.stdout
+        assert "Configuration" in result.stdout
+    
+    def test_show_command_with_missing_download_directory(self, runner, temp_config_dir):
+        """Test show command when download directory doesn't exist."""
+        config_with_missing_dir = {
+            "applications": [
+                {
+                    "name": "MissingDirApp",
+                    "source_type": "github",
+                    "url": "https://github.com/test/missingdirapp",
+                    "download_dir": "/nonexistent/directory",
+                    "pattern": r"MissingDirApp.*\.AppImage$",
+                    "frequency": {"value": 1, "unit": "weeks"},
+                    "enabled": True
+                }
+            ]
+        }
+        
+        config_file = temp_config_dir / "missing_dir.json"
+        with config_file.open("w") as f:
+            json.dump(config_with_missing_dir, f)
+        
+        result = runner.invoke(app, ["show", "--app", "MissingDirApp", "--config", str(config_file)])
+        
+        assert result.exit_code == 0
+        assert "Download directory does not exist" in result.stdout
+    
+    def test_show_command_with_disabled_application(self, runner, temp_config_dir, temp_download_dir):
+        """Test show command with a disabled application."""
+        disabled_config = {
+            "applications": [
+                {
+                    "name": "DisabledApp",
+                    "source_type": "github",
+                    "url": "https://github.com/test/disabledapp",
+                    "download_dir": str(temp_download_dir),
+                    "pattern": r"DisabledApp.*\.AppImage$",
+                    "frequency": {"value": 1, "unit": "days"},
+                    "enabled": False,
+                    "checksum": {
+                        "enabled": False
+                    }
+                }
+            ]
+        }
+        
+        config_file = temp_config_dir / "disabled.json"
+        with config_file.open("w") as f:
+            json.dump(disabled_config, f)
+        
+        result = runner.invoke(app, ["show", "--app", "DisabledApp", "--config", str(config_file)])
+        
+        assert result.exit_code == 0
+        assert "Status: Disabled" in result.stdout
+        assert "Checksum Verification: Disabled" in result.stdout
+        assert "1 days" in result.stdout
+    
+    def test_show_command_with_no_matching_files(self, runner, temp_config_dir, temp_download_dir):
+        """Test show command when no files match the pattern."""
+        no_files_config = {
+            "applications": [
+                {
+                    "name": "NoFilesApp",
+                    "source_type": "github",
+                    "url": "https://github.com/test/nofilesapp",
+                    "download_dir": str(temp_download_dir),
+                    "pattern": r"NoFilesApp.*\.AppImage$",
+                    "frequency": {"value": 1, "unit": "weeks"},
+                    "enabled": True
+                }
+            ]
+        }
+        
+        config_file = temp_config_dir / "no_files.json"
+        with config_file.open("w") as f:
+            json.dump(no_files_config, f)
+        
+        # Create a file that won't match the pattern
+        (temp_download_dir / "OtherApp-1.0.0.AppImage").touch()
+        
+        result = runner.invoke(app, ["show", "--app", "NoFilesApp", "--config", str(config_file)])
+        
+        assert result.exit_code == 0
+        assert "No AppImage files found matching the pattern" in result.stdout
+    
+    def test_show_command_with_symlinks(self, runner, temp_config_dir, temp_download_dir):
+        """Test show command with symlinks present."""
+        symlink_config = {
+            "applications": [
+                {
+                    "name": "SymlinkApp",
+                    "source_type": "github",
+                    "url": "https://github.com/test/symlinkapp",
+                    "download_dir": str(temp_download_dir),
+                    "pattern": r"SymlinkApp.*\.AppImage(\..*)?$",
+                    "frequency": {"value": 1, "unit": "weeks"},
+                    "enabled": True
+                }
+            ]
+        }
+        
+        config_file = temp_config_dir / "symlink.json"
+        with config_file.open("w") as f:
+            json.dump(symlink_config, f)
+        
+        # Create AppImage file and symlink
+        app_file = temp_download_dir / "SymlinkApp-1.0.0-Linux.AppImage.current"
+        symlink_file = temp_download_dir / "SymlinkApp-current.AppImage"
+        
+        app_file.touch()
+        app_file.chmod(0o755)
+        symlink_file.symlink_to(app_file.name)  # Relative symlink
+        
+        result = runner.invoke(app, ["show", "--app", "SymlinkApp", "--config", str(config_file)])
+        
+        assert result.exit_code == 0
+        assert "SymlinkApp-1.0.0-Linux.AppImage.current" in result.stdout
+        assert "SymlinkApp-current.AppImage ✓" in result.stdout
+        assert "→" in result.stdout  # Arrow showing symlink target
+    
+    def test_show_command_with_configured_symlink_path(self, runner, temp_config_dir, temp_download_dir):
+        """Test show command with configured symlink_path."""
+        configured_symlink_config = {
+            "applications": [
+                {
+                    "name": "ConfiguredSymlinkApp",
+                    "source_type": "github",
+                    "url": "https://github.com/test/configuredsymlinkapp",
+                    "download_dir": str(temp_download_dir),
+                    "pattern": r"ConfiguredSymlinkApp.*\.AppImage(\..*)?$",
+                    "frequency": {"value": 1, "unit": "weeks"},
+                    "enabled": True,
+                    "symlink_path": str(temp_config_dir / "ConfiguredApp.AppImage")
+                }
+            ]
+        }
+        
+        config_file = temp_config_dir / "configured_symlink.json"
+        with config_file.open("w") as f:
+            json.dump(configured_symlink_config, f)
+        
+        # Create AppImage file and configured symlink
+        app_file = temp_download_dir / "ConfiguredSymlinkApp-1.0.0-Linux.AppImage.current"
+        configured_symlink = temp_config_dir / "ConfiguredApp.AppImage"
+        
+        app_file.touch()
+        app_file.chmod(0o755)
+        configured_symlink.symlink_to(app_file)  # Absolute symlink to ensure it works
+        
+        result = runner.invoke(app, ["show", "--app", "ConfiguredSymlinkApp", "--config", str(config_file)])
+        
+        assert result.exit_code == 0
+        # Check that symlink_path is displayed in configuration
+        assert "Symlink Path:" in result.stdout
+        assert str(configured_symlink) in result.stdout or "ConfiguredApp.AppImage" in result.stdout
+        
+        # Check that the configured symlink appears in symlinks section
+        assert "ConfiguredApp.AppImage" in result.stdout or str(configured_symlink) in result.stdout
 
 
 class TestPatternMatching:
@@ -662,6 +903,10 @@ def test_integration_smoke_test(runner):
     result = runner.invoke(app, ["list", "--help"])
     assert result.exit_code == 0
     assert "List all configured applications" in result.stdout
+    
+    result = runner.invoke(app, ["show", "--help"])
+    assert result.exit_code == 0
+    assert "Show detailed information about a specific application" in result.stdout
 
 
 if __name__ == "__main__":

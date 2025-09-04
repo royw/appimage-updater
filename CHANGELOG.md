@@ -5,6 +5,12 @@ All notable changes to AppImage Updater will be documented in this file.
 ## [Unreleased] - 2025-09-04
 
 ### 🐛 Bug Fixes
+- **FIXED**: Symlink detection for AppImage files with suffixes
+  - Fixed `_get_valid_symlink_target()` function to properly detect symlinks pointing to files with suffixes like `.current` and `.old`
+  - Changed condition from `target.name.endswith(".AppImage")` to `".AppImage" in target.name` to handle suffixed files
+  - Resolves issue where symlinks pointing to rotation files (e.g., `app.AppImage.current`) were not detected
+  - Now correctly displays symlinks in the `show` command for applications using file rotation systems
+
 - **FIXED**: Type checking and linting errors in main.py
   - Resolved function name conflict between `list` command and Python's built-in `list` type
   - Renamed internal function from `list` to `list_apps` while keeping CLI command as `"list"`
@@ -24,7 +30,36 @@ All notable changes to AppImage Updater will be documented in this file.
   - Fixed false positive updates for releases like "Development Build weekly-2025.09.03"
   - Version comparison now correctly extracts and compares just the version portion
 
+### 🆕 New Features
+- **NEW**: `show` command for detailed application information
+  - **ADDED**: `appimage-updater show --app <name>` command to display comprehensive app details
+  - **DISPLAYS**: Configuration settings (source, URL, download directory, patterns, frequency, checksum settings)
+  - **SHOWS**: File information (size, modification time, executable status) for matching AppImage files
+  - **DETECTS**: Symlinks pointing to AppImage files with status validation
+  - **SUPPORTS**: Same configuration options as other commands (`--config`, `--config-dir`)
+  - **INCLUDES**: Rich formatted output with color-coded panels and status indicators
+  - **HANDLES**: Missing directories, permission errors, and broken symlinks gracefully
+  - **EXAMPLE**: `appimage-updater show --app FreeCAD --config-dir ~/.config/appimage-updater/`
+
+- **ENHANCED**: `symlink_path` configuration support
+  - **ADDED**: Optional `symlink_path` field in application configuration for explicit symlink management
+  - **DISPLAYS**: Configured symlink path in `show` command configuration section
+  - **DETECTS**: Configured symlinks in addition to automatically discovered ones
+  - **SEARCHES**: Added `~/Applications` to default symlink search locations
+  - **PREPARES**: Foundation for future download rotation improvements using explicit symlink paths
+  - **EXAMPLE**: `"symlink_path": "~/Applications/FreeCAD.AppImage"` in configuration
+
 ### 🧪 Testing & Quality Assurance
+- **ENHANCED**: Comprehensive test coverage for `show` command and symlink_path
+  - Added 8 new end-to-end tests covering all `show` command functionality and symlink_path
+  - Tests valid/invalid applications, case-insensitive matching, error handling
+  - Tests missing directories, disabled applications, symlink detection
+  - Tests file discovery, executable permissions, and display formatting
+  - Tests configured symlink_path display and detection
+  - Enhanced smoke test to verify `show` command availability
+  - Total test count increased from 40 to 48 tests
+  - Main module test coverage improved from 78% to 79%
+
 - **ENHANCED**: Comprehensive test coverage for `list` command
   - Added 8 new end-to-end tests covering all `list` command functionality
   - Tests single and multiple application configurations

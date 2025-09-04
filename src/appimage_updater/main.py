@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import os
+import re
+import time
 from pathlib import Path
 from typing import Any
 
@@ -59,6 +62,12 @@ _APP_NAME_OPTION = typer.Option(
     "-a",
     help="Check only the specified application (case-insensitive)",
 )
+_SHOW_APP_NAME_OPTION = typer.Option(
+    ...,
+    "--app",
+    "-a",
+    help="Application name to display information for (case-insensitive)",
+)
 _INIT_CONFIG_DIR_OPTION = typer.Option(
     None,
     "--config-dir",
@@ -111,6 +120,7 @@ def init(
                 "pattern": r".*Linux-x86_64\.AppImage$",
                 "frequency": {"value": 1, "unit": "weeks"},
                 "enabled": True,
+                "symlink_path": str(Path.home() / "Applications" / "FreeCAD.AppImage"),
             }
         ]
     }
@@ -150,6 +160,40 @@ def list_apps(
         )
 
         logger.info(f"Listed {total_apps} applications ({enabled_apps} enabled)")
+
+    except ConfigLoadError as e:
+        console.print(f"[red]Configuration error: {e}")
+        logger.error(f"Configuration error: {e}")
+        raise typer.Exit(1) from e
+    except Exception as e:
+        console.print(f"[red]Unexpected error: {e}")
+        logger.error(f"Unexpected error: {e}")
+        logger.exception("Full exception details")
+        raise typer.Exit(1) from e
+
+
+@app.command()
+def show(
+    app_name: str = _SHOW_APP_NAME_OPTION,
+    config_file: Path | None = _CONFIG_FILE_OPTION,
+    config_dir: Path | None = _CONFIG_DIR_OPTION,
+) -> None:
+    """Show detailed information about a specific application."""
+    try:
+        logger.info(f"Loading configuration to show application: {app_name}")
+        config = _load_config(config_file, config_dir)
+
+        # Find the application (case-insensitive)
+        app = _find_application_by_name(config.applications, app_name)
+        if not app:
+            available_apps = [a.name for a in config.applications]
+            console.print(f"[red]Application '{app_name}' not found in configuration")
+            console.print(f"[yellow]Available applications: {', '.join(available_apps)}")
+            logger.error(f"Application '{app_name}' not found. Available: {available_apps}")
+            raise typer.Exit(1)
+
+        logger.info(f"Displaying information for application: {app.name}")
+        _display_application_details(app)
 
     except ConfigLoadError as e:
         console.print(f"[red]Configuration error: {e}")
@@ -469,6 +513,244 @@ def _get_checksum_status(result: Any) -> str:
         return " [green]✓[/green]"
     else:
         return " [yellow]⚠[/yellow]"
+
+
+def _find_application_by_name(applications: list[Any], app_name: str) -> Any:
+    """Find an application by name (case-insensitive)."""
+    app_name_lower = app_name.lower()
+    for app in applications:
+        if app.name.lower() == app_name_lower:
+            return app
+    return None
+
+
+def _display_application_details(app: Any) -> None:
+    """Display detailed information about a specific application."""
+    from rich.panel import Panel
+
+    console.print(f"\n[bold cyan]Application: {app.name}[/bold cyan]")
+    console.print("=" * (len(app.name) + 14))
+
+    # Configuration section
+    config_info = _get_configuration_info(app)
+    config_panel = Panel(config_info, title="Configuration", border_style="blue")
+
+    # Files section
+    files_info = _get_files_info(app)
+    files_panel = Panel(files_info, title="Files", border_style="green")
+
+    # Symlinks section
+    symlinks_info = _get_symlinks_info(app)
+    symlinks_panel = Panel(symlinks_info, title="Symlinks", border_style="yellow")
+
+    console.print(config_panel)
+    console.print(files_panel)
+    console.print(symlinks_panel)
+
+
+def _get_configuration_info(app: Any) -> str:
+    """Get formatted configuration information for an application."""
+    config_lines = [
+        f"[bold]Name:[/bold] {app.name}",
+        f"[bold]Status:[/bold] {'[green]Enabled[/green]' if app.enabled else '[red]Disabled[/red]'}",
+        f"[bold]Source:[/bold] {app.source_type.title()}",
+        f"[bold]URL:[/bold] {app.url}",
+        f"[bold]Download Directory:[/bold] {app.download_dir}",
+        f"[bold]File Pattern:[/bold] {app.pattern}",
+        f"[bold]Update Frequency:[/bold] {app.frequency.value} {app.frequency.unit}",
+    ]
+
+    if hasattr(app, "prerelease"):
+        config_lines.append(f"[bold]Prerelease:[/bold] {'Yes' if app.prerelease else 'No'}")
+
+    if hasattr(app, "symlink_path") and app.symlink_path:
+        config_lines.append(f"[bold]Symlink Path:[/bold] {app.symlink_path}")
+
+    if hasattr(app, "checksum") and app.checksum:
+        checksum_status = "Enabled" if app.checksum.enabled else "Disabled"
+        config_lines.append(f"[bold]Checksum Verification:[/bold] {checksum_status}")
+        if app.checksum.enabled:
+            config_lines.append(f"  [dim]Algorithm:[/dim] {app.checksum.algorithm.upper()}")
+            config_lines.append(f"  [dim]Pattern:[/dim] {app.checksum.pattern}")
+            config_lines.append(f"  [dim]Required:[/dim] {'Yes' if app.checksum.required else 'No'}")
+
+    return "\n".join(config_lines)
+
+
+def _get_files_info(app: Any) -> str:
+    """Get information about AppImage files for an application."""
+    download_dir = Path(app.download_dir)
+
+    if not download_dir.exists():
+        return "[yellow]Download directory does not exist[/yellow]"
+
+    # Find files matching the pattern (excluding symlinks)
+    pattern = re.compile(app.pattern)
+    matching_files = []
+
+    try:
+        for file_path in download_dir.iterdir():
+            if file_path.is_file() and not file_path.is_symlink() and pattern.match(file_path.name):
+                matching_files.append(file_path)
+    except PermissionError:
+        return "[red]Permission denied accessing download directory[/red]"
+
+    if not matching_files:
+        return "[yellow]No AppImage files found matching the pattern[/yellow]"
+
+    # Sort files by modification time (newest first)
+    matching_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+
+    file_lines = []
+    for file_path in matching_files:
+        stat_info = file_path.stat()
+        size_mb = stat_info.st_size / (1024 * 1024)
+        mtime = os.path.getmtime(file_path)
+        mtime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(mtime))
+
+        # Check if file is executable
+        executable = "[green]✓[/green]" if os.access(file_path, os.X_OK) else "[red]✗[/red]"
+
+        file_lines.append(f"[bold]{file_path.name}[/bold]")
+        file_lines.append(f"  [dim]Size:[/dim] {size_mb:.1f} MB")
+        file_lines.append(f"  [dim]Modified:[/dim] {mtime_str}")
+        file_lines.append(f"  [dim]Executable:[/dim] {executable}")
+        file_lines.append("")  # Empty line between files
+
+    # Remove last empty line
+    if file_lines and file_lines[-1] == "":
+        file_lines.pop()
+
+    return "\n".join(file_lines)
+
+
+def _get_symlinks_info(app: Any) -> str:
+    """Get information about symlinks pointing to AppImage files."""
+    download_dir = Path(app.download_dir)
+
+    if not download_dir.exists():
+        return "[yellow]Download directory does not exist[/yellow]"
+
+    # Find symlinks including configured symlink_path
+    found_symlinks = _find_appimage_symlinks(download_dir, getattr(app, "symlink_path", None))
+
+    if not found_symlinks:
+        return "[yellow]No symlinks found pointing to AppImage files[/yellow]"
+
+    return _format_symlink_info(found_symlinks)
+
+
+def _check_configured_symlink(symlink_path: Path, download_dir: Path) -> tuple[Path, Path] | None:
+    """Check if the configured symlink exists and points to an AppImage in the download directory."""
+    if not symlink_path.exists():
+        return None
+
+    if not symlink_path.is_symlink():
+        return None
+
+    try:
+        target = symlink_path.resolve()
+        # Check if target is in download directory and is an AppImage
+        if target.parent == download_dir and target.name.endswith(".AppImage"):
+            return (symlink_path, target)
+    except (OSError, RuntimeError):
+        pass  # Broken symlink or resolution error
+
+    return None
+
+
+def _find_appimage_symlinks(download_dir: Path, configured_symlink_path: Path | None = None) -> list[tuple[Path, Path]]:
+    """Find symlinks pointing to AppImage files in the download directory."""
+    found_symlinks = []
+
+    # First, check the configured symlink path if provided
+    if configured_symlink_path:
+        configured_symlink = _check_configured_symlink(configured_symlink_path, download_dir)
+        if configured_symlink:
+            found_symlinks.append(configured_symlink)
+
+    # Then scan common locations
+    symlink_locations = [
+        download_dir,
+        Path.home() / "Applications",  # Add ~/Applications
+        Path.home() / "bin",
+        Path("/usr/local/bin"),
+        Path("/usr/bin"),
+        Path.home() / ".local" / "bin",
+    ]
+
+    for location in symlink_locations:
+        if location.exists():
+            found_symlinks.extend(_scan_directory_for_symlinks(location, download_dir))
+
+    # Remove duplicates (configured symlink might also be found in scanning)
+    seen = set()
+    unique_symlinks = []
+    for symlink_path, target_path in found_symlinks:
+        if symlink_path not in seen:
+            seen.add(symlink_path)
+            unique_symlinks.append((symlink_path, target_path))
+
+    return unique_symlinks
+
+
+def _scan_directory_for_symlinks(location: Path, download_dir: Path) -> list[tuple[Path, Path]]:
+    """Scan a directory for symlinks pointing to AppImage files."""
+    symlinks = []
+    try:
+        for item in location.iterdir():
+            if item.is_symlink():
+                symlink_target = _get_valid_symlink_target(item, download_dir)
+                if symlink_target:
+                    symlinks.append((item, symlink_target))
+    except PermissionError:
+        pass  # Skip directories we can't read
+    return symlinks
+
+
+def _get_valid_symlink_target(symlink: Path, download_dir: Path) -> Path | None:
+    """Check if symlink points to a valid AppImage file and return the target."""
+    try:
+        target = symlink.resolve()
+        # Check if symlink points to a file in our download directory
+        # Accept files that contain ".AppImage" (handles .current, .old suffixes)
+        if (target.parent == download_dir and ".AppImage" in target.name) or (
+            symlink.parent == download_dir and symlink.name.endswith(".AppImage")
+        ):
+            return target
+    except (OSError, RuntimeError):
+        pass  # Broken symlink or resolution error
+    return None
+
+
+def _format_symlink_info(found_symlinks: list[tuple[Path, Path]]) -> str:
+    """Format symlink information for display."""
+    symlink_lines = []
+    for symlink_path, target_path in found_symlinks:
+        symlink_lines.extend(_format_single_symlink(symlink_path, target_path))
+        symlink_lines.append("")  # Empty line between symlinks
+
+    # Remove last empty line
+    if symlink_lines and symlink_lines[-1] == "":
+        symlink_lines.pop()
+
+    return "\n".join(symlink_lines)
+
+
+def _format_single_symlink(symlink_path: Path, target_path: Path) -> list[str]:
+    """Format information for a single symlink."""
+    target_exists = target_path.exists()
+    target_executable = target_exists and os.access(target_path, os.X_OK)
+    status_icon = "[green]✓[/green]" if target_exists and target_executable else "[red]✗[/red]"
+
+    lines = [f"[bold]{symlink_path}[/bold] {status_icon}", f"  [dim]→[/dim] {target_path}"]
+
+    if not target_exists:
+        lines.append("  [red][dim]Target does not exist[/dim][/red]")
+    elif not target_executable:
+        lines.append("  [yellow][dim]Target not executable[/dim][/yellow]")
+
+    return lines
 
 
 if __name__ == "__main__":

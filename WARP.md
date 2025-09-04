@@ -63,6 +63,10 @@ uv run python -m appimage_updater init --config-dir /path/to/config
 uv run python -m appimage_updater list
 uv run python -m appimage_updater list --config-dir /path/to/config/dir
 
+# Show detailed information about a specific application
+uv run python -m appimage_updater show --app FreeCAD
+uv run python -m appimage_updater show --app FreeCAD --config-dir /path/to/config/dir
+
 # Check for updates with specific config
 uv run python -m appimage_updater check --config /path/to/config.json
 uv run python -m appimage_updater check --config-dir /path/to/config/dir
@@ -123,7 +127,7 @@ The configuration system supports flexible deployment patterns:
 
 Configuration files use JSON format with the following structure:
 - `global_config`: Timeout, concurrency, retry settings
-- `applications`: Array of app configurations with source URL, download directory, file patterns, update frequency, and checksum verification settings
+- `applications`: Array of app configurations with source URL, download directory, file patterns, update frequency, checksum verification settings, and optional symlink paths
 
 ### File Pattern Matching
 
@@ -262,7 +266,54 @@ The project maintains high test coverage across all CLI commands:
 - **Example generation**: Tests creation of sample configuration files
 - **Existing directory handling**: Tests graceful handling of pre-existing configs
 
-Total: **40 comprehensive tests** covering all major functionality paths.
+#### Show Command Testing
+- **Valid applications**: Tests detailed information display with configuration, files, and symlinks
+- **Invalid applications**: Tests error handling for non-existent applications
+- **Case-insensitive matching**: Tests application name matching flexibility
+- **Missing directories**: Tests graceful handling of non-existent download directories
+- **Disabled applications**: Tests proper display of disabled application status
+- **File discovery**: Tests pattern matching and file information display
+- **Symlink detection**: Tests symlink discovery and validation across multiple locations
+
+Total: **48 comprehensive tests** covering all major functionality paths.
+
+## Symlink Management
+
+### Symlink Path Configuration
+
+Applications can specify a `symlink_path` for explicit symlink management:
+
+```json
+{
+  "name": "FreeCAD_weekly",
+  "source_type": "github",
+  "url": "https://github.com/FreeCAD/FreeCAD",
+  "download_dir": "~/Applications/FreeCAD",
+  "pattern": "FreeCAD_weekly.*Linux-x86_64.*\\.AppImage(\\..*)?$",
+  "frequency": {"value": 1, "unit": "weeks"},
+  "enabled": true,
+  "symlink_path": "~/Applications/FreeCAD_weekly.AppImage"
+}
+```
+
+### Symlink Detection
+
+The `show` command automatically detects symlinks in common locations:
+- Application download directory
+- `~/Applications` (commonly used for AppImages)
+- `~/bin`
+- `~/.local/bin`
+- `/usr/local/bin`
+- `/usr/bin`
+
+**Note**: Symlink detection properly handles AppImage files with suffixes like `.current` and `.old`, ensuring that symlinks pointing to rotation files are correctly identified and displayed.
+
+### Future Integration
+
+The `symlink_path` configuration prepares for future download rotation improvements:
+- Automatic symlink creation/updates during downloads
+- File rotation with `.current`, `.old`, `.old2` suffixes
+- Seamless application launching through stable symlink paths
 
 ### Async Backend Testing
 The project uses `pytest-anyio` which supports testing with multiple async backends:
