@@ -2,7 +2,30 @@
 
 All notable changes to AppImage Updater will be documented in this file.
 
-## [Unreleased] - 2025-01-04
+## [Unreleased] - 2025-09-04
+
+### 🐛 Bug Fixes
+- **FIXED**: Pattern matching for existing AppImage files with suffixes
+  - Updated application patterns to match files ending with `.AppImage.save`, `.AppImage.current`, `.AppImage.old`
+  - Fixed FreeCAD pattern to handle case-insensitive extensions (both `.AppImage` and `.appimage`)
+  - Fixed OrcaSlicer pattern to be more flexible with versioned assets
+  - Resolved issue where all applications showed "Update available" with "Current: None"
+  - Now correctly detects existing versions: `FreeCAD 1.0.2`, `FreeCAD_weekly 2025.09.03`, `OrcaSlicer 2.3.0`
+
+- **FIXED**: Version comparison logic for releases with extra text
+  - Enhanced version extraction to handle GitHub release names with non-version text
+  - Fixed false positive updates for releases like "Development Build weekly-2025.09.03"
+  - Version comparison now correctly extracts and compares just the version portion
+
+### 🔧 Configuration Updates
+- **CHANGED**: Application pattern configurations to support file suffixes
+  - FreeCAD: `.*Linux-x86_64.*\.[Aa]pp[Ii]mage(\..*)?$`
+  - FreeCAD_weekly: `FreeCAD_weekly.*Linux-x86_64.*\.AppImage(\..*)?$`
+  - OrcaSlicer_nightly: `OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.AppImage(\..*)?$`
+
+---
+
+## [Previous] - 2025-01-04
 
 ### 🏗️ Code Quality
 - **IMPROVED**: Significantly reduced code complexity across the codebase

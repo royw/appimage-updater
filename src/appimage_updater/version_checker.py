@@ -135,10 +135,14 @@ class VersionChecker:
         if current is None:
             return True
 
+        # Extract version numbers from both strings
+        current_extracted = self._extract_version_from_filename(current)
+        latest_extracted = self._extract_version_from_filename(latest)
+        
         try:
-            current_ver = version.parse(current)
-            latest_ver = version.parse(latest)
+            current_ver = version.parse(current_extracted)
+            latest_ver = version.parse(latest_extracted)
             return latest_ver > current_ver
         except version.InvalidVersion:
-            # Fallback to string comparison
-            return current != latest
+            # Fallback to string comparison of extracted versions
+            return current_extracted != latest_extracted
