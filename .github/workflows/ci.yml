@@ -45,16 +45,17 @@ jobs:
         run: uv run radon cc src/ --min C
         
       - name: Run tests
-        run: uv run pytest --cov=src/appimage_updater --cov-report=xml --cov-report=term-missing
+        run: uv run pytest -v
         
       - name: Upload coverage reports to Codecov
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.11' && env.CODECOV_TOKEN != ''
         uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           file: ./coverage.xml
           fail_ci_if_error: false
+        continue-on-error: true
 
   build:
     runs-on: ubuntu-latest
