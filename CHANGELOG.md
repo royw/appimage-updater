@@ -36,6 +36,35 @@ All notable changes to AppImage Updater will be documented in this file.
 
 ## [Unreleased] - 2025-09-05
 
+### 🐛 Bug Fixes
+- **FIXED**: Edit command exception traceback display issue
+  - **PROBLEM**: Setting `--rotation` without symlink showed full exception traceback, creating messy error output
+  - **SOLUTION**: Added specific `ValueError` exception handling to display clean error messages without tracebacks
+  - **RESULT**: User-friendly error messages like "Error editing application: File rotation requires a symlink path. Use --symlink-path to specify one."
+  - **IMPACT**: Cleaner, more professional error output that doesn't overwhelm users with technical details
+
+- **FIXED**: Symlink path validation in edit command
+  - **PROBLEM**: `--symlink-path` accepted invalid paths without validation (empty strings, wrong extensions, malformed paths)
+  - **SOLUTION**: Added comprehensive symlink path validation with new `_validate_symlink_path()` function
+  - **VALIDATES**: Empty/whitespace paths, path structure, invalid characters, parent directory existence
+  - **ENFORCES**: `.AppImage` extension requirement for symlink paths
+  - **NORMALIZES**: Path expansion (`~` → home directory) and resolution (`..` segments)
+  - **EXAMPLES**: 
+    - Rejects empty paths: `"Symlink path cannot be empty. Provide a valid file path."`
+    - Rejects invalid extensions: `"Symlink path should end with '.AppImage': /tmp/invalid"`
+    - Properly expands: `~/bin/test.AppImage` → `/home/user/bin/test.AppImage`
+  - **IMPACT**: Prevents configuration errors and ensures valid symlink paths for file rotation
+
+### 🧪 Testing & Quality Assurance
+- **ENHANCED**: Comprehensive test coverage for edit command validation fixes
+  - Added 7 new tests in `tests/test_edit_validation_fixes.py` covering all validation scenarios
+  - Tests no traceback display for validation errors
+  - Tests empty, whitespace-only, and invalid extension symlink path validation
+  - Tests path expansion (`~` and `..` resolution) and normalization functionality
+  - Tests valid symlink paths work correctly with rotation
+  - All tests pass with proper text normalization to handle Rich console formatting
+  - **RESULT**: Total test coverage increased, all existing tests continue to pass
+
 ### 🏗️ Code Quality & Refactoring
 - **REFACTORED**: Reduced code complexity in main.py functions
   - Broke down `_get_files_info()` function (complexity 11→8) into smaller helper functions:

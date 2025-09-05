@@ -212,9 +212,35 @@ The `edit` command options map directly to the fields displayed by `show`:
 - **Field-by-field Updates**: Only specified fields are changed, others remain unchanged
 - **URL Normalization**: Automatically corrects GitHub download URLs to repository URLs
 - **Path Expansion**: Automatically expands `~` in directory and symlink paths
-- **Validation**: Validates regex patterns, URLs, and configuration consistency
+- **Comprehensive Validation**: 
+  - Validates regex patterns, URLs, and configuration consistency
+  - **Symlink Path Validation**: Ensures symlink paths end with `.AppImage`, are not empty, and can be resolved
+  - **Path Normalization**: Resolves `..` segments and expands `~` to home directory
+  - **Clean Error Messages**: Shows user-friendly validation errors without technical tracebacks
 - **Directory Creation**: Can automatically create download directories if they don't exist
 - **Clear Feedback**: Shows exactly what changed with before/after values
+
+### Validation Examples
+
+```bash
+# Empty symlink path validation
+$ appimage-updater edit MyApp --symlink-path ""
+Error editing application: Symlink path cannot be empty. Provide a valid file path.
+
+# Missing .AppImage extension validation
+$ appimage-updater edit MyApp --symlink-path "/tmp/invalid"
+Error editing application: Symlink path should end with '.AppImage': /tmp/invalid
+
+# Path normalization and expansion
+$ appimage-updater edit MyApp --symlink-path "~/bin/../apps/test.AppImage"
+✓ Successfully updated configuration for 'MyApp'
+Changes made:
+  • Symlink Path: None → /home/user/apps/test.AppImage
+
+# Clean rotation validation (no traceback)
+$ appimage-updater edit MyApp --rotation
+Error editing application: File rotation requires a symlink path. Use --symlink-path to specify one.
+```
 
 ## Architecture & Code Structure
 
@@ -410,7 +436,19 @@ The project maintains high test coverage across all CLI commands:
 - **File discovery**: Tests pattern matching and file information display
 - **Symlink detection**: Tests symlink discovery and validation across multiple locations
 
-Total: **48 comprehensive tests** covering all major functionality paths.
+#### Edit Command Testing
+- **Field editing**: Tests editing frequency, patterns, URLs, status, prerelease settings, and checksum configuration
+- **Rotation management**: Tests enabling/disabling file rotation with symlink path requirements
+- **Path validation**: Tests symlink path validation including empty paths, invalid extensions, and path normalization
+- **Directory creation**: Tests download directory creation with user confirmation
+- **Error handling**: Tests clean error messages without tracebacks for validation errors
+- **URL normalization**: Tests automatic GitHub URL correction and normalization
+- **Configuration persistence**: Tests changes are correctly saved to both file and directory-based configs
+- **Case-insensitive matching**: Tests application name matching flexibility
+- **Path expansion**: Tests proper expansion of `~` and `..` path segments
+- **Validation feedback**: Tests user-friendly error messages for invalid inputs
+
+Total: **72 comprehensive tests** covering all major functionality paths.
 
 ## Symlink Management
 
