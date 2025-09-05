@@ -40,6 +40,12 @@ task complexity
 # Dead code analysis (find unused code)
 task deadcode
 
+# Note: The deadcode task intelligently filters out false positives by ignoring:
+# - CLI command functions (Typer framework usage)
+# - Pydantic validators (framework-called methods)
+# - Model fields (used for serialization/API compatibility)
+# - Exception classes (kept for future error handling)
+
 # Run all quality checks (includes formatting, type checking, linting, complexity analysis, and testing)
 task check
 

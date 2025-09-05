@@ -100,10 +100,12 @@ task complexity
 task complexity -- src/ --min B                 # Set minimum complexity
 task complexity -- src/appimage_updater/ --show  # Show detailed output
 
-# Dead code analysis
+# Dead code analysis (with smart filtering)
 task deadcode
 task deadcode -- --count src/                    # Count unused code items
 task deadcode -- --only src/appimage_updater/    # Check specific directory
+
+# Note: deadcode task filters out framework-used code (CLI commands, validators, etc.)
 
 # Run all checks
 task check
