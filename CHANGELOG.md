@@ -36,6 +36,15 @@ All notable changes to AppImage Updater will be documented in this file.
 
 ## [Unreleased] - 2025-09-05
 
+### 🏗️ Build System
+- **NEW**: `build` task for creating distribution packages
+  - **ADDED**: `task build` command to create wheel and sdist packages using `uv build`
+  - **INTEGRATED**: Runs full quality checks (`task check`) before building to ensure package quality
+  - **AUTOMATED**: Cleans build artifacts before creating new packages
+  - **FEEDBACK**: Provides clear build progress and completion messages with package listing
+  - **OUTPUT**: Creates both wheel (`.whl`) and source distribution (`.tar.gz`) in `dist/` directory
+  - **USAGE**: `task build` - Build distribution packages ready for PyPI or local installation
+
 ### 📚 Documentation
 - **ENHANCED**: Documentation navigation with multiple ways to return home
   - **ADDED**: Clickable site title and logo that return to home page
@@ -48,6 +57,12 @@ All notable changes to AppImage Updater will be documented in this file.
   - **ENABLED**: Additional Material theme features including `navigation.prune` and `header.autohide`
   - **RESULT**: Users can now easily navigate back to home from any documentation page
   - **FILES**: `docs/stylesheets/extra.css`, `docs/javascripts/extra.js`, updated `mkdocs.yml`
+
+- **IMPROVED**: Documentation build tasks
+  - **ENHANCED**: `docs:build` task with clear progress messages and success feedback
+  - **ADDED**: `docs:serve` task for local development server with startup messages
+  - **MAINTAINED**: `docs` task as alias for `docs:serve` for backward compatibility
+  - **UPDATED**: Clean task now removes `site/` directory for documentation builds
 
 - **FIXED**: Missing MkDocs plugin installation issue
   - **INSTALLED**: `mkdocs-git-revision-date-localized-plugin==1.4.7` with dependency `pytz==2025.2`

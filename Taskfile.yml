@@ -87,12 +87,31 @@ tasks:
   docs:build:
     desc: Build documentation with MkDocs
     cmds:
+      - echo "📚 Building documentation..."
       - uv run mkdocs build {{.CLI_ARGS}}
+      - echo "✅ Documentation built successfully in site/"
+
+  docs:serve:
+    desc: Serve documentation locally for development
+    cmds:
+      - echo "🌍 Starting documentation server..."
+      - uv run mkdocs serve {{.CLI_ARGS}}
 
   docs:
-    desc: Build and serve documentation locally
+    desc: Build and serve documentation locally (alias for docs:serve)
+    deps:
+      - docs:serve
+
+  build:
+    desc: Build distribution packages (wheel and sdist)
+    deps:
+      - clean
+      - check
     cmds:
-      - uv run mkdocs serve {{.CLI_ARGS}}
+      - echo "🏗️  Building AppImage Updater distribution packages..."
+      - uv build {{.CLI_ARGS}}
+      - echo "✅ Build complete! Packages created in dist/"
+      - ls -la dist/
 
   clean:
     desc: Clean up generated files
@@ -103,6 +122,7 @@ tasks:
       - rm -rf .pytest_cache/
       - rm -rf dist/
       - rm -rf build/
+      - rm -rf site/
 
   dev:
     desc: Set up development environment
