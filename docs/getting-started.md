@@ -140,6 +140,100 @@ appimage-updater edit MyApp --rotation --symlink ~/bin/myapp.AppImage
 appimage-updater edit FreeCAD --download-dir ~/NewLocation/FreeCAD
 ```
 
+## File Rotation for Stable Application Access
+
+### What is File Rotation?
+
+File rotation is an advanced feature that maintains stable access to your AppImages while keeping previous versions for easy rollback. Instead of overwriting files, it creates a rotation system with symbolic links.
+
+### Quick Start with File Rotation
+
+```bash
+# Add an application with file rotation enabled
+appimage-updater add --rotation --symlink ~/bin/freecad.AppImage FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
+```
+
+This creates:
+- Download directory: `~/Applications/FreeCAD/`
+- Stable symlink: `~/bin/freecad.AppImage` ← Always points to current version
+- Automatic rotation when updates are downloaded
+
+### How It Works
+
+1. **First Download**:
+   ```
+   ~/Applications/FreeCAD/
+   └── FreeCAD_0.21.0_Linux.AppImage.current
+   
+   ~/bin/freecad.AppImage → ~/Applications/FreeCAD/FreeCAD_0.21.0_Linux.AppImage.current
+   ```
+
+2. **After First Update**:
+   ```
+   ~/Applications/FreeCAD/
+   ├── FreeCAD_0.21.1_Linux.AppImage.current  # ← Symlink now points here
+   └── FreeCAD_0.21.0_Linux.AppImage.old      # Previous version preserved
+   ```
+
+3. **After Second Update**:
+   ```
+   ~/Applications/FreeCAD/
+   ├── FreeCAD_0.21.2_Linux.AppImage.current  # ← Symlink points here
+   ├── FreeCAD_0.21.1_Linux.AppImage.old      # Previous version
+   └── FreeCAD_0.21.0_Linux.AppImage.old2     # Older version
+   ```
+
+### Benefits
+
+✅ **Always works**: `~/bin/freecad.AppImage` always launches the current version  
+✅ **Easy rollback**: Previous versions are preserved for quick rollback  
+✅ **Desktop integration**: Your `.desktop` files never need updating  
+✅ **Zero downtime**: Updates happen atomically  
+
+### Setting Up Desktop Integration
+
+Create a desktop entry that uses the stable symlink path:
+
+```bash
+# Create desktop entry
+cat > ~/.local/share/applications/freecad.desktop << 'EOF'
+[Desktop Entry]
+Name=FreeCAD
+Comment=Feature based parametric modeler
+Exec=/home/user/bin/freecad.AppImage %f
+Icon=freecad
+Terminal=false
+Type=Application
+Categories=Graphics;Science;Engineering;
+EOF
+```
+
+### Adding to PATH
+
+Add the symlink directory to your PATH for command-line access:
+
+```bash
+# Add to ~/.bashrc or ~/.zshrc
+echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+
+# Now you can run from anywhere
+freecad.AppImage --help
+```
+
+### Managing File Rotation
+
+```bash
+# Enable rotation for existing application
+appimage-updater edit MyApp --rotation --symlink ~/bin/myapp.AppImage
+
+# Set how many old versions to keep (default: 3)
+appimage-updater edit MyApp --retain-count 5
+
+# Disable rotation (removes symlink but keeps files)
+appimage-updater edit MyApp --no-rotation
+```
+
 ## Configuration Files
 
 ### Single File Configuration

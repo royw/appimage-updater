@@ -86,6 +86,145 @@ You can split your applications across multiple JSON files in a directory:
 └── 3d-printing.json       # BambuStudio, OrcaSlicer, Cura
 ```
 
+## File Rotation System
+
+AppImage Updater includes an advanced file rotation system that manages multiple versions of your AppImage files while maintaining stable access through symbolic links.
+
+### How File Rotation Works
+
+When file rotation is enabled:
+
+1. **First Download**: `MyApp.AppImage` → `MyApp.AppImage.current`
+2. **Symlink Creation**: `~/bin/myapp.AppImage` → `MyApp.AppImage.current`
+3. **Next Update**: 
+   - `MyApp.AppImage.current` → `MyApp.AppImage.old`
+   - New download → `MyApp.AppImage.current`
+   - Symlink automatically points to new `.current` file
+4. **Subsequent Updates**: Files rotate through the chain:
+   - `MyApp.AppImage.old` → `MyApp.AppImage.old2`
+   - `MyApp.AppImage.current` → `MyApp.AppImage.old`
+   - New download → `MyApp.AppImage.current`
+
+### File Naming Convention
+
+```
+Download Directory/
+├── MyApp_v2.1.0.AppImage.current    # ← Symlink points here (active version)
+├── MyApp_v2.0.5.AppImage.old         # Previous version
+├── MyApp_v1.9.8.AppImage.old2        # Older version
+└── MyApp_v1.9.0.AppImage.old3        # Oldest version (deleted when retain_count=3)
+```
+
+### Rotation Configuration
+
+```json
+{
+  "name": "MyApp",
+  "source_type": "github",
+  "url": "https://github.com/user/myapp",
+  "download_dir": "~/Applications/MyApp",
+  "pattern": "MyApp.*\\.AppImage$",
+  "rotation_enabled": true,
+  "symlink_path": "~/bin/myapp.AppImage",
+  "retain_count": 3,
+  "frequency": {"value": 1, "unit": "days"}
+}
+```
+
+#### Rotation Fields
+
+- **`rotation_enabled`**: Enable file rotation (requires `symlink_path`)
+- **`symlink_path`**: Path where stable symlink will be created
+- **`retain_count`**: Number of old versions to keep (default: 3)
+
+### Benefits of File Rotation
+
+✅ **Stable Access**: Applications always use the same symlink path  
+✅ **Easy Rollback**: Previous versions preserved if new version has issues  
+✅ **Automatic Cleanup**: Old versions automatically removed based on `retain_count`  
+✅ **Zero Downtime**: Symlink atomically switches to new version  
+✅ **Desktop Integration**: `.desktop` files can reference stable symlink path  
+
+### Pattern Matching with Rotation
+
+When using file rotation, your patterns should account for the suffixes:
+
+```json
+{
+  "pattern": "MyApp.*\\.AppImage(\\..*)?$"
+}
+```
+
+This pattern matches:
+- `MyApp.AppImage` (base file)
+- `MyApp.AppImage.current` (active rotation file)
+- `MyApp.AppImage.old` (previous rotation file)
+- `MyApp.AppImage.old2`, etc. (older rotation files)
+
+**Important**: The pattern `(\\..*)?$` is too broad and will match backup files like `.save`, `.backup`. Use the more precise `(\\.(|current|old[0-9]*))?$` pattern:
+
+```json
+{
+  "pattern": "MyApp.*\\.AppImage(\\.(|current|old[0-9]**))?$"
+}
+```
+
+### Desktop Integration Example
+
+Create a `.desktop` file that references the stable symlink:
+
+```ini
+[Desktop Entry]
+Name=MyApp
+Exec=/home/user/bin/myapp.AppImage %f
+Icon=myapp
+Type=Application
+Categories=Utility;
+```
+
+The symlink path `/home/user/bin/myapp.AppImage` always points to the current version, so your desktop entry never needs updates.
+
+### PATH Integration
+
+Add the symlink directory to your PATH:
+
+```bash
+# In ~/.bashrc or ~/.zshrc
+export PATH="$HOME/bin:$PATH"
+```
+
+Now you can run `myapp` from anywhere in the terminal, and it will always use the current version.
+
+### Rollback Process
+
+If you need to rollback to a previous version:
+
+```bash
+# Manual rollback by updating symlink
+ln -sf ~/Applications/MyApp/MyApp_v2.0.5.AppImage.old ~/bin/myapp.AppImage
+
+# Or restore the .current file
+mv ~/Applications/MyApp/MyApp_v2.1.0.AppImage.current ~/Applications/MyApp/MyApp_v2.1.0.AppImage.problematic
+mv ~/Applications/MyApp/MyApp_v2.0.5.AppImage.old ~/Applications/MyApp/MyApp_v2.0.5.AppImage.current
+ln -sf ~/Applications/MyApp/MyApp_v2.0.5.AppImage.current ~/bin/myapp.AppImage
+```
+
+### File Rotation Commands
+
+```bash
+# Enable rotation for an existing application
+appimage-updater edit MyApp --rotation --symlink ~/bin/myapp.AppImage
+
+# Set retention count
+appimage-updater edit MyApp --retain-count 5
+
+# Disable rotation
+appimage-updater edit MyApp --no-rotation
+
+# Add new app with rotation enabled
+appimage-updater add --rotation --symlink ~/bin/myapp.AppImage --retain-count 3 MyApp https://github.com/user/myapp ~/Apps/MyApp
+```
+
 ## Checksum Verification
 
 AppImage Updater automatically verifies downloaded files using checksums when available. This provides integrity verification to ensure downloads haven't been corrupted or tampered with.
