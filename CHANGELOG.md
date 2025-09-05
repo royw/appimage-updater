@@ -45,6 +45,26 @@ All notable changes to AppImage Updater will be documented in this file.
   - **OUTPUT**: Creates both wheel (`.whl`) and source distribution (`.tar.gz`) in `dist/` directory
   - **USAGE**: `task build` - Build distribution packages ready for PyPI or local installation
 
+### 🚀 CI/CD & GitHub Actions
+- **NEW**: Comprehensive GitHub Actions workflows for automated deployment
+  - **ADDED**: `docs.yml` workflow for automated GitHub Pages deployment
+    - **TRIGGERS**: Builds on push to main, PRs, and manual dispatch
+    - **FEATURES**: Uses `uv` for fast dependency installation, strict MkDocs build
+    - **DEPLOYMENT**: Automatic deployment to GitHub Pages on main branch pushes
+    - **URL**: Documentation available at `https://royw.github.io/appimage-updater/`
+  - **ADDED**: `ci.yml` workflow for comprehensive testing and package building
+    - **MATRIX TESTING**: Tests on Python 3.11 and 3.12
+    - **QUALITY GATES**: Formatting, linting, type checking, complexity analysis
+    - **COVERAGE**: Automated coverage reporting with Codecov integration
+    - **BUILD ARTIFACTS**: Stores built packages for distribution
+    - **PYPI PUBLISHING**: Automated PyPI publishing on releases (with trusted publishing)
+
+- **ENHANCED**: Repository presentation and management
+  - **ADDED**: README badges showing CI/CD status, documentation, Python version, and license
+  - **ADDED**: CODEOWNERS file for repository management and review assignments
+  - **ADDED**: Pull request template for consistent contribution workflow
+  - **FIXED**: Git revision date plugin configuration for CI environments
+
 ### 🎆 Code Quality
 - **FIXED**: Code complexity issues in main.py
   - **REFACTORED**: `_validate_symlink_path()` function to reduce cyclomatic complexity from C to acceptable levels

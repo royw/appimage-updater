@@ -53,10 +53,10 @@ plugins:
   - search:
       separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
   - git-revision-date-localized:
-      enabled_if_env: CI
       type: timeago
       timezone: America/Chicago
       locale: en
+      fallback_to_build_date: true
   - autorefs
   - gen-files:
       scripts:

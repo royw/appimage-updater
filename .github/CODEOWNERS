@@ -1,0 +1,17 @@
+# Global owner
+* @royw
+
+# Documentation
+/docs/ @royw
+/mkdocs.yml @royw
+*.md @royw
+
+# CI/CD and configuration
+/.github/ @royw
+/Taskfile.yml @royw
+/pyproject.toml @royw
+/uv.lock @royw
+
+# Source code
+/src/ @royw
+/tests/ @royw
