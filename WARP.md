@@ -2,6 +2,12 @@
 
 This file provides guidance to WARP (warp.dev) when working with code in this repository.
 
+## 📚 Live Documentation
+
+**Complete documentation is available at: https://royw.github.io/appimage-updater/**
+
+The documentation includes enhanced navigation with 🏠 home icons, clickable headers, keyboard shortcuts (Alt+H), and automatically updates on every commit to main branch.
+
 ## Project Overview
 
 AppImage Updater is a service for automating the finding and downloading of AppImage applications from their respective websites. It monitors configured applications (like FreeCAD) for new releases and provides an automated way to download updated AppImage files from GitHub releases and other sources.

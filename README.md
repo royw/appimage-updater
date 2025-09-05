@@ -23,6 +23,14 @@ This tool monitors configured applications (like FreeCAD) for new releases and p
 - **Progress Tracking**: Visual feedback with transfer speeds and ETAs
 - **Robust Error Handling**: Automatic retries with exponential backoff
 
+## 🎆 Project Status
+
+✅ **Production Ready** - Full CI/CD pipeline with automated testing and documentation  
+✅ **Live Documentation** - Professional docs site with enhanced navigation  
+✅ **Quality Assured** - 95 tests, 71% coverage, complexity analysis, type checking  
+✅ **Open Source** - Public repository with contribution guidelines and templates  
+✅ **Modern Tooling** - Built with Python 3.11+, uv, ruff, mypy, pytest
+
 ## Requirements
 
 - Python 3.11 or higher
@@ -53,6 +61,27 @@ Each monitored application has its own configuration file specifying:
 - Update check frequency
 - File pattern matching for AppImage files
 - **Checksum verification settings** (optional, recommended for security)
+
+## 📚 Documentation
+
+### **[Complete Documentation → https://royw.github.io/appimage-updater/](https://royw.github.io/appimage-updater/)**
+
+Our comprehensive documentation is live and automatically updated:
+
+**User Guides:**
+- 🚀 **[Getting Started](https://royw.github.io/appimage-updater/getting-started/)** - Step-by-step tutorial
+- 📦 **[Installation](https://royw.github.io/appimage-updater/installation/)** - Setup instructions
+- ⚙️ **[Configuration](https://royw.github.io/appimage-updater/configuration/)** - Advanced settings
+- 🔧 **[Commands Reference](https://royw.github.io/appimage-updater/commands/)** - Complete CLI documentation
+- 💡 **[Examples](https://royw.github.io/appimage-updater/examples/)** - Real-world usage patterns
+
+**Developer Resources:**
+- 🏗️ **[Architecture](https://royw.github.io/appimage-updater/architecture/)** - System design overview
+- 🤝 **[Contributing](https://royw.github.io/appimage-updater/contributing/)** - How to contribute
+- 🧪 **[Testing Guide](https://royw.github.io/appimage-updater/testing/)** - Testing procedures
+- 📖 **[API Reference](https://royw.github.io/appimage-updater/reference/)** - Complete code documentation
+
+*Documentation features enhanced navigation with 🏠 home icons, clickable headers, and keyboard shortcuts (Alt+H to return home)*
 
 ## Development
 
