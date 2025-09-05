@@ -907,6 +907,178 @@ def test_integration_smoke_test(runner):
     result = runner.invoke(app, ["show", "--help"])
     assert result.exit_code == 0
     assert "Show detailed information about a specific application" in result.stdout
+    
+    result = runner.invoke(app, ["add", "--help"])
+    assert result.exit_code == 0
+    assert "Add a new application to the configuration" in result.stdout
+
+
+class TestAddCommand:
+    """Test the add command functionality."""
+    
+    def test_add_command_with_github_url(self, runner, temp_config_dir):
+        """Test add command with valid GitHub URL."""
+        result = runner.invoke(app, [
+            "add", "TestApp", 
+            "https://github.com/user/testapp", 
+            "/tmp/test-download",
+            "--config-dir", str(temp_config_dir)
+        ])
+        
+        assert result.exit_code == 0
+        assert "Successfully added application 'TestApp'" in result.stdout
+        assert "https://github.com/user/testapp" in result.stdout
+        assert "/tmp/test-download" in result.stdout
+        assert "TestApp.*Linux.*\\.AppImage(\\.(|current|old))?$" in result.stdout
+        
+        # Check that config file was created
+        config_file = temp_config_dir / "testapp.json"
+        assert config_file.exists()
+        
+        # Verify config content
+        with config_file.open() as f:
+            config_data = json.load(f)
+        
+        assert len(config_data["applications"]) == 1
+        app_config = config_data["applications"][0]
+        assert app_config["name"] == "TestApp"
+        assert app_config["source_type"] == "github"
+        assert app_config["url"] == "https://github.com/user/testapp"
+        assert app_config["download_dir"] == "/tmp/test-download"
+        assert app_config["pattern"] == "TestApp.*Linux.*\\.AppImage(\\.(|current|old))?$"
+        assert app_config["enabled"] is True
+        assert app_config["prerelease"] is False
+        assert app_config["checksum"]["enabled"] is True
+    
+    def test_add_command_with_invalid_url(self, runner, temp_config_dir):
+        """Test add command with invalid (non-GitHub) URL."""
+        result = runner.invoke(app, [
+            "add", "TestApp", 
+            "https://example.com/invalid", 
+            "/tmp/test-download",
+            "--config-dir", str(temp_config_dir)
+        ])
+        
+        assert result.exit_code == 1
+        assert "Only GitHub repository URLs are currently supported" in result.stdout
+        assert "https://example.com/invalid" in result.stdout
+        assert "Expected format: https://github.com/owner/repo" in result.stdout
+        
+        # Verify no config file was created
+        config_files = list(temp_config_dir.glob("*.json"))
+        assert len(config_files) == 0
+    
+    def test_add_command_with_different_repo_name(self, runner, temp_config_dir):
+        """Test add command uses repo name when different from app name."""
+        result = runner.invoke(app, [
+            "add", "MyApp", 
+            "https://github.com/SoftFever/OrcaSlicer", 
+            "~/Applications/MyApp",
+            "--config-dir", str(temp_config_dir)
+        ])
+        
+        assert result.exit_code == 0
+        assert "Successfully added application 'MyApp'" in result.stdout
+        # Should use repo name 'OrcaSlicer' in pattern, not app name 'MyApp'
+        assert "OrcaSlicer.*Linux.*\\.AppImage(\\.(|current|old))?$" in result.stdout
+        
+        # Verify config content
+        config_file = temp_config_dir / "myapp.json"
+        assert config_file.exists()
+        
+        with config_file.open() as f:
+            config_data = json.load(f)
+        
+        app_config = config_data["applications"][0]
+        assert app_config["name"] == "MyApp"
+        assert app_config["pattern"] == "OrcaSlicer.*Linux.*\\.AppImage(\\.(|current|old))?$"
+    
+    def test_add_command_with_existing_config_file(self, runner, temp_config_dir):
+        """Test add command appends to existing config file."""
+        # Create initial config file
+        initial_config = {
+            "applications": [
+                {
+                    "name": "ExistingApp",
+                    "source_type": "github",
+                    "url": "https://github.com/existing/app",
+                    "download_dir": "/tmp/existing",
+                    "pattern": "Existing.*",
+                    "frequency": {"value": 1, "unit": "days"},
+                    "enabled": True
+                }
+            ]
+        }
+        
+        config_file = temp_config_dir / "config.json"
+        with config_file.open("w") as f:
+            json.dump(initial_config, f)
+        
+        # Add new app to existing config file
+        result = runner.invoke(app, [
+            "add", "NewApp", 
+            "https://github.com/user/newapp", 
+            "/tmp/new-download",
+            "--config", str(config_file)
+        ])
+        
+        assert result.exit_code == 0
+        assert "Successfully added application 'NewApp'" in result.stdout
+        
+        # Verify both apps are in the config
+        with config_file.open() as f:
+            config_data = json.load(f)
+        
+        assert len(config_data["applications"]) == 2
+        app_names = [app["name"] for app in config_data["applications"]]
+        assert "ExistingApp" in app_names
+        assert "NewApp" in app_names
+    
+    def test_add_command_duplicate_name_error(self, runner, temp_config_dir):
+        """Test add command prevents duplicate app names."""
+        # First, add an app
+        result1 = runner.invoke(app, [
+            "add", "DuplicateApp", 
+            "https://github.com/user/app1", 
+            "/tmp/app1",
+            "--config-dir", str(temp_config_dir)
+        ])
+        
+        assert result1.exit_code == 0
+        
+        # Try to add another app with the same name
+        result2 = runner.invoke(app, [
+            "add", "DuplicateApp", 
+            "https://github.com/user/app2", 
+            "/tmp/app2",
+            "--config-dir", str(temp_config_dir)
+        ])
+        
+        assert result2.exit_code == 1
+        assert "Error adding application" in result2.stdout
+    
+    def test_add_command_path_expansion(self, runner, temp_config_dir):
+        """Test add command expands user paths correctly."""
+        result = runner.invoke(app, [
+            "add", "PathTestApp", 
+            "https://github.com/user/pathtest", 
+            "~/Applications/PathTest",
+            "--config-dir", str(temp_config_dir)
+        ])
+        
+        assert result.exit_code == 0
+        
+        # Verify the path was expanded
+        config_file = temp_config_dir / "pathtestapp.json"
+        assert config_file.exists()
+        
+        with config_file.open() as f:
+            config_data = json.load(f)
+        
+        app_config = config_data["applications"][0]
+        # Should be expanded to full path
+        assert app_config["download_dir"].startswith("/")
+        assert "Applications/PathTest" in app_config["download_dir"]
 
 
 if __name__ == "__main__":

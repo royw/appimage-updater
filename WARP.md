@@ -59,6 +59,10 @@ uv run pytest tests/test_specific.py::test_function_name
 uv run python -m appimage_updater init
 uv run python -m appimage_updater init --config-dir /path/to/config
 
+# Add a new application (easiest way to get started)
+uv run python -m appimage_updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
+uv run python -m appimage_updater add MyApp https://github.com/user/repo ~/Apps/MyApp --config-dir ~/.config/appimage-updater
+
 # List configured applications
 uv run python -m appimage_updater list
 uv run python -m appimage_updater list --config-dir /path/to/config/dir
@@ -80,6 +84,66 @@ uv run python -m appimage_updater check --app OrcaSlicer_nightly
 # Enable debug logging for troubleshooting
 uv run python -m appimage_updater --debug check --dry-run
 ```
+
+## Easy Application Setup
+
+### `add` Command - Simplifying Configuration
+
+The `add` command provides the easiest way to configure new applications with minimal user input:
+
+```bash
+# Basic usage - just provide name, GitHub URL, and download directory
+appimage-updater add <app-name> <github-url> <download-directory>
+
+# Examples
+appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
+appimage-updater add VSCode https://github.com/microsoft/vscode ~/Apps/VSCode
+appimage-updater add MyTool https://github.com/author/my-tool ~/Downloads/MyTool
+```
+
+### Intelligent Defaults
+
+The `add` command automatically generates:
+
+- **Smart file patterns**: Based on repository name (e.g., `FreeCAD.*Linux.*\.AppImage(\.(|current|old))?$`)
+- **Sensible update frequency**: Daily checks by default
+- **Checksum verification**: Enabled with SHA256 verification
+- **Standard configuration**: GitHub source type, enabled by default, no prereleases
+
+### Configuration Examples
+
+When you run:
+```bash
+appimage-updater add OrcaSlicer https://github.com/SoftFever/OrcaSlicer ~/Applications/OrcaSlicer
+```
+
+It generates:
+```json
+{
+  "name": "OrcaSlicer",
+  "source_type": "github",
+  "url": "https://github.com/SoftFever/OrcaSlicer",
+  "download_dir": "/home/user/Applications/OrcaSlicer",
+  "pattern": "OrcaSlicer.*Linux.*\\.AppImage(\\.(|current|old))?$",
+  "frequency": {"value": 1, "unit": "days"},
+  "enabled": true,
+  "prerelease": false,
+  "checksum": {
+    "enabled": true,
+    "pattern": "{filename}-SHA256.txt",
+    "algorithm": "sha256",
+    "required": false
+  }
+}
+```
+
+### Features
+
+- **URL validation**: Ensures GitHub repository URLs are provided
+- **Path expansion**: Automatically expands `~` to user home directory
+- **Duplicate prevention**: Prevents adding applications with existing names
+- **Flexible storage**: Works with both single config files and directory-based configurations
+- **Helpful feedback**: Shows generated pattern and provides next-step suggestions
 
 ## Architecture & Code Structure
 

@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import re
 import time
+import urllib.parse
 from pathlib import Path
 from typing import Any
 
@@ -67,6 +69,15 @@ _SHOW_APP_NAME_OPTION = typer.Option(
     "--app",
     "-a",
     help="Application name to display information for (case-insensitive)",
+)
+_ADD_NAME_ARGUMENT = typer.Argument(
+    help="Name for the application (used for identification and pattern matching)"
+)
+_ADD_URL_ARGUMENT = typer.Argument(
+    help="URL to the application repository or release page (e.g., GitHub repository URL)"
+)
+_ADD_DOWNLOAD_DIR_ARGUMENT = typer.Argument(
+    help="Directory where AppImage files will be downloaded (e.g., ~/Applications/AppName)"
 )
 _INIT_CONFIG_DIR_OPTION = typer.Option(
     None,
@@ -168,6 +179,57 @@ def list_apps(
     except Exception as e:
         console.print(f"[red]Unexpected error: {e}")
         logger.error(f"Unexpected error: {e}")
+        logger.exception("Full exception details")
+        raise typer.Exit(1) from e
+
+
+@app.command()
+def add(
+    name: str = _ADD_NAME_ARGUMENT,
+    url: str = _ADD_URL_ARGUMENT,
+    download_dir: str = _ADD_DOWNLOAD_DIR_ARGUMENT,
+    config_file: Path | None = _CONFIG_FILE_OPTION,
+    config_dir: Path | None = _CONFIG_DIR_OPTION,
+) -> None:
+    """Add a new application to the configuration.
+    
+    Automatically generates intelligent defaults for pattern matching, update frequency,
+    and other settings based on the provided URL and name.
+    
+    Examples:
+        appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
+        appimage-updater add --config-dir ~/.config/appimage-updater MyApp https://github.com/user/myapp ~/Apps
+    """
+    try:
+        logger.info(f"Adding new application: {name}")
+        
+        # Validate inputs
+        if not _parse_github_url(url):
+            console.print(f"[red]Error: Only GitHub repository URLs are currently supported")
+            console.print(f"[yellow]URL provided: {url}")
+            console.print(f"[yellow]Expected format: https://github.com/owner/repo")
+            raise typer.Exit(1)
+        
+        # Expand user path in download directory
+        expanded_download_dir = str(Path(download_dir).expanduser())
+        
+        # Generate application configuration
+        app_config = _generate_default_config(name, url, expanded_download_dir)
+        
+        # Add the application to configuration
+        _add_application_to_config(app_config, config_file, config_dir)
+        
+        console.print(f"[green]✓ Successfully added application '{name}'")
+        console.print(f"[blue]Source: {url}")
+        console.print(f"[blue]Download Directory: {expanded_download_dir}")
+        console.print(f"[blue]Pattern: {app_config['pattern']}")
+        console.print(f"\n[yellow]💡 Tip: Use 'appimage-updater show --app {name}' to view full configuration")
+        
+        logger.info(f"Successfully added application '{name}' to configuration")
+        
+    except Exception as e:
+        console.print(f"[red]Error adding application: {e}")
+        logger.error(f"Error adding application '{name}': {e}")
         logger.exception("Full exception details")
         raise typer.Exit(1) from e
 
@@ -805,6 +867,146 @@ def _format_single_symlink(symlink_path: Path, target_path: Path) -> list[str]:
         lines.append("  [yellow][dim]Target not executable[/dim][/yellow]")
 
     return lines
+
+
+def _parse_github_url(url: str) -> tuple[str, str] | None:
+    """Parse GitHub URL and extract owner/repo information.
+    
+    Returns (owner, repo) tuple or None if not a GitHub URL.
+    """
+    try:
+        parsed = urllib.parse.urlparse(url)
+        if parsed.netloc.lower() not in ("github.com", "www.github.com"):
+            return None
+            
+        path_parts = parsed.path.strip("/").split("/")
+        if len(path_parts) >= 2:
+            return (path_parts[0], path_parts[1])
+    except Exception:
+        pass
+    return None
+
+
+def _generate_appimage_pattern(app_name: str, url: str) -> str:
+    """Generate a regex pattern for matching AppImage files.
+    
+    Uses intelligent defaults based on the app name and URL.
+    """
+    # Start with the app name as base
+    base_name = re.escape(app_name)
+    
+    # Check if it's a GitHub URL to make more specific patterns
+    github_info = _parse_github_url(url)
+    if github_info:
+        owner, repo = github_info
+        # Use the repo name if it's different from app_name
+        if repo.lower() != app_name.lower():
+            base_name = re.escape(repo)
+    
+    # Create a flexible pattern that handles common AppImage naming conventions
+    # Matches: AppName-version-Linux-arch.AppImage with optional suffixes
+    pattern = f"{base_name}.*Linux.*\\.AppImage(\\.(|current|old))?$"
+    
+    return pattern
+
+
+def _detect_source_type(url: str) -> str:
+    """Detect the source type based on the URL."""
+    if _parse_github_url(url):
+        return "github"
+    # Could add support for other sources in the future
+    return "github"  # Default to github for now
+
+
+def _generate_default_config(name: str, url: str, download_dir: str) -> dict[str, Any]:
+    """Generate a default application configuration."""
+    return {
+        "name": name,
+        "source_type": _detect_source_type(url),
+        "url": url,
+        "download_dir": download_dir,
+        "pattern": _generate_appimage_pattern(name, url),
+        "frequency": {"value": 1, "unit": "days"},
+        "enabled": True,
+        "prerelease": False,
+        "checksum": {
+            "enabled": True,
+            "pattern": "{filename}-SHA256.txt",
+            "algorithm": "sha256",
+            "required": False
+        }
+    }
+
+
+def _add_application_to_config(
+    app_config: dict[str, Any], 
+    config_file: Path | None, 
+    config_dir: Path | None
+) -> None:
+    """Add an application configuration to the config file or directory."""
+    from appimage_updater.config_loader import get_default_config_dir, get_default_config_path
+    
+    # Determine target configuration location
+    if config_file:
+        _add_to_config_file(app_config, config_file)
+    elif config_dir:
+        _add_to_config_directory(app_config, config_dir)
+    else:
+        # Use default location - prefer directory if it exists, otherwise create file
+        default_dir = get_default_config_dir()
+        default_file = get_default_config_path()
+        
+        if default_dir.exists():
+            _add_to_config_directory(app_config, default_dir)
+        elif default_file.exists():
+            _add_to_config_file(app_config, default_file)
+        else:
+            # Create new directory-based config (recommended)
+            default_dir.mkdir(parents=True, exist_ok=True)
+            _add_to_config_directory(app_config, default_dir)
+
+
+def _add_to_config_file(app_config: dict[str, Any], config_file: Path) -> None:
+    """Add application to a single JSON config file."""
+    if config_file.exists():
+        # Load existing configuration
+        with config_file.open() as f:
+            config_data = json.load(f)
+    else:
+        # Create new configuration
+        config_data = {"applications": []}
+        config_file.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Check for duplicate names
+    existing_names = [app.get("name", "").lower() for app in config_data.get("applications", [])]
+    if app_config["name"].lower() in existing_names:
+        raise ValueError(f"Application '{app_config['name']}' already exists in configuration")
+    
+    # Add the new application
+    config_data["applications"].append(app_config)
+    
+    # Write back to file
+    with config_file.open("w") as f:
+        json.dump(config_data, f, indent=2)
+
+
+def _add_to_config_directory(app_config: dict[str, Any], config_dir: Path) -> None:
+    """Add application to a directory-based config structure."""
+    config_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Create a filename based on the app name (sanitized)
+    filename = re.sub(r'[^a-zA-Z0-9_-]', '_', app_config["name"].lower()) + ".json"
+    config_file = config_dir / filename
+    
+    if config_file.exists():
+        raise ValueError(f"Configuration file '{config_file}' already exists for application '{app_config['name']}'")
+    
+    # Create configuration structure
+    config_data = {"applications": [app_config]}
+    
+    # Write to individual file
+    with config_file.open("w") as f:
+        json.dump(config_data, f, indent=2)
 
 
 if __name__ == "__main__":

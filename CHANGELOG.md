@@ -17,6 +17,16 @@ All notable changes to AppImage Updater will be documented in this file.
   - **Improved compatibility**: Better integration with existing AppImage ecosystem tools
   - **Expanded coverage**: Finds symlinks in all standard AppImage locations used by the community
 
+### 🆕 New Features
+- **NEW**: `add` command for easy application configuration
+  - **ADDED**: `appimage-updater add <name> <github_url> <download_dir>` for simple app addition
+  - **INTELLIGENT**: Automatically generates regex patterns based on GitHub repository names
+  - **SMART DEFAULTS**: Creates sensible configurations with checksum verification, daily updates, and proper file patterns
+  - **FLEXIBLE**: Supports both single config files and directory-based configurations
+  - **VALIDATED**: Ensures GitHub URLs and prevents duplicate application names
+  - **USER-FRIENDLY**: Expands `~` paths and provides helpful success messages with next steps
+  - **EXAMPLE**: `appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD`
+
 - **FIXED**: Type checking and linting errors in main.py
   - Resolved function name conflict between `list` command and Python's built-in `list` type
   - Renamed internal function from `list` to `list_apps` while keeping CLI command as `"list"`
