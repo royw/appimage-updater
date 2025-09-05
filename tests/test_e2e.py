@@ -251,7 +251,7 @@ class TestE2EFunctionality:
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
         
-        result = runner.invoke(app, ["check", "--config", str(config_file), "--app", "TestApp1", "--dry-run"])
+        result = runner.invoke(app, ["check", "TestApp1", "--config", str(config_file), "--dry-run"])
         
         assert result.exit_code == 0
         # Should only check TestApp1, not TestApp2
@@ -577,7 +577,7 @@ class TestE2EFunctionality:
         app_file2.touch()
         app_file1.chmod(0o755)  # Make executable
         
-        result = runner.invoke(app, ["show", "--app", "DetailedApp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "DetailedApp", "--config", str(config_file)])
         
         assert result.exit_code == 0
         # Check configuration section
@@ -608,7 +608,7 @@ class TestE2EFunctionality:
         with config_file.open("w") as f:
             json.dump(sample_config, f)
         
-        result = runner.invoke(app, ["show", "--app", "NonExistentApp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "NonExistentApp", "--config", str(config_file)])
         
         assert result.exit_code == 1
         assert "Application 'NonExistentApp' not found in configuration" in result.stdout
@@ -620,7 +620,7 @@ class TestE2EFunctionality:
         with config_file.open("w") as f:
             json.dump(sample_config, f)
         
-        result = runner.invoke(app, ["show", "--app", "testapp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "testapp", "--config", str(config_file)])
         
         assert result.exit_code == 0
         assert "Application: TestApp" in result.stdout
@@ -646,7 +646,7 @@ class TestE2EFunctionality:
         with config_file.open("w") as f:
             json.dump(config_with_missing_dir, f)
         
-        result = runner.invoke(app, ["show", "--app", "MissingDirApp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "MissingDirApp", "--config", str(config_file)])
         
         assert result.exit_code == 0
         assert "Download directory does not exist" in result.stdout
@@ -674,7 +674,7 @@ class TestE2EFunctionality:
         with config_file.open("w") as f:
             json.dump(disabled_config, f)
         
-        result = runner.invoke(app, ["show", "--app", "DisabledApp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "DisabledApp", "--config", str(config_file)])
         
         assert result.exit_code == 0
         assert "Status: Disabled" in result.stdout
@@ -704,7 +704,7 @@ class TestE2EFunctionality:
         # Create a file that won't match the pattern
         (temp_download_dir / "OtherApp-1.0.0.AppImage").touch()
         
-        result = runner.invoke(app, ["show", "--app", "NoFilesApp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "NoFilesApp", "--config", str(config_file)])
         
         assert result.exit_code == 0
         assert "No AppImage files found matching the pattern" in result.stdout
@@ -737,7 +737,7 @@ class TestE2EFunctionality:
         app_file.chmod(0o755)
         symlink_file.symlink_to(app_file.name)  # Relative symlink
         
-        result = runner.invoke(app, ["show", "--app", "SymlinkApp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "SymlinkApp", "--config", str(config_file)])
         
         assert result.exit_code == 0
         assert "SymlinkApp-1.0.0-Linux.AppImage.current" in result.stdout
@@ -773,7 +773,7 @@ class TestE2EFunctionality:
         app_file.chmod(0o755)
         configured_symlink.symlink_to(app_file)  # Absolute symlink to ensure it works
         
-        result = runner.invoke(app, ["show", "--app", "ConfiguredSymlinkApp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "ConfiguredSymlinkApp", "--config", str(config_file)])
         
         assert result.exit_code == 0
         # Check that symlink_path is displayed in configuration
@@ -1061,26 +1061,132 @@ class TestAddCommand:
     def test_add_command_path_expansion(self, runner, temp_config_dir):
         """Test add command expands user paths correctly."""
         result = runner.invoke(app, [
-            "add", "PathTestApp", 
-            "https://github.com/user/pathtest", 
-            "~/Applications/PathTest",
+            "add", "HomeApp", 
+            "https://github.com/user/homeapp", 
+            "~/Applications/HomeApp",
             "--config-dir", str(temp_config_dir)
         ])
         
         assert result.exit_code == 0
         
-        # Verify the path was expanded
-        config_file = temp_config_dir / "pathtestapp.json"
+        # Verify config content has expanded path
+        config_file = temp_config_dir / "homeapp.json"
         assert config_file.exists()
         
         with config_file.open() as f:
             config_data = json.load(f)
         
         app_config = config_data["applications"][0]
-        # Should be expanded to full path
+        # Should expand ~ to actual home directory
         assert app_config["download_dir"].startswith("/")
-        assert "Applications/PathTest" in app_config["download_dir"]
+        assert "~/" not in app_config["download_dir"]
+        assert app_config["download_dir"].endswith("/Applications/HomeApp")
 
+    def test_add_command_rotation_requires_symlink(self, runner, temp_config_dir):
+        """Test add command validates that --rotation requires a symlink path."""
+        result = runner.invoke(app, [
+            "add", "TestApp", 
+            "https://github.com/user/testapp", 
+            "/tmp/test-download",
+            "--rotation",
+            "--config-dir", str(temp_config_dir)
+        ])
+        
+        assert result.exit_code == 1
+        assert "Error: --rotation requires a symlink path" in result.stdout
+        assert "File rotation needs a managed symlink to work properly" in result.stdout
+        assert "Either provide --symlink PATH or use --no-rotation to disable rotation" in result.stdout
+        assert "Example: --rotation --symlink ~/bin/myapp.AppImage" in result.stdout
+        
+        # Verify no config file was created
+        config_files = list(temp_config_dir.glob("*.json"))
+        assert len(config_files) == 0
+
+    def test_add_command_rotation_with_symlink_works(self, runner, temp_config_dir):
+        """Test add command works correctly when --rotation is combined with --symlink."""
+        result = runner.invoke(app, [
+            "add", "TestApp", 
+            "https://github.com/user/testapp", 
+            "/tmp/test-download",
+            "--rotation",
+            "--symlink", "~/bin/testapp.AppImage",
+            "--config-dir", str(temp_config_dir)
+        ])
+        
+        assert result.exit_code == 0
+        assert "Successfully added application 'TestApp'" in result.stdout
+        
+        # Verify config content
+        config_file = temp_config_dir / "testapp.json"
+        assert config_file.exists()
+        
+        with config_file.open() as f:
+            config_data = json.load(f)
+        
+        app_config = config_data["applications"][0]
+        assert app_config["rotation_enabled"] is True
+        assert "symlink_path" in app_config
+        assert app_config["symlink_path"].endswith("/bin/testapp.AppImage")
+
+    def test_add_command_normalizes_download_url(self, runner, temp_config_dir):
+        """Test add command normalizes GitHub download URLs to repository URLs."""
+        download_url = "https://github.com/SoftFever/OrcaSlicer/releases/download/v2.3.1-alpha/OrcaSlicer_Linux_AppImage.AppImage"
+        
+        result = runner.invoke(app, [
+            "add", "TestNormalize", 
+            download_url,
+            "/tmp/test-normalize",
+            "--create-dir",
+            "--config-dir", str(temp_config_dir)
+        ])
+        
+        assert result.exit_code == 0
+        assert "Successfully added application 'TestNormalize'" in result.stdout
+        assert "Detected download URL, using repository URL instead" in result.stdout
+        assert "Original:" in result.stdout
+        # Check for key parts of the URL since it might be line-wrapped
+        assert "releases/download" in result.stdout
+        assert "Linux_AppImage.AppImage" in result.stdout
+        assert "Corrected: https://github.com/SoftFever/OrcaSlicer" in result.stdout
+        
+        # Verify config was saved with normalized URL
+        config_file = temp_config_dir / "testnormalize.json"
+        assert config_file.exists()
+        
+        with config_file.open() as f:
+            config_data = json.load(f)
+        
+        app_config = config_data["applications"][0]
+        assert app_config["name"] == "TestNormalize"
+        assert app_config["url"] == "https://github.com/SoftFever/OrcaSlicer"
+        assert app_config["source_type"] == "github"
+
+    def test_add_command_handles_releases_page_url(self, runner, temp_config_dir):
+        """Test add command normalizes GitHub releases page URLs to repository URLs."""
+        releases_url = "https://github.com/microsoft/vscode/releases"
+        
+        result = runner.invoke(app, [
+            "add", "TestReleases", 
+            releases_url,
+            "/tmp/test-releases",
+            "--create-dir",
+            "--config-dir", str(temp_config_dir)
+        ])
+        
+        assert result.exit_code == 0
+        assert "Successfully added application 'TestReleases'" in result.stdout
+        assert "Detected download URL, using repository URL instead" in result.stdout
+        assert "Corrected: https://github.com/microsoft/vscode" in result.stdout
+        
+        # Verify config was saved with normalized URL
+        config_file = temp_config_dir / "testreleases.json"
+        assert config_file.exists()
+        
+        with config_file.open() as f:
+            config_data = json.load(f)
+        
+        app_config = config_data["applications"][0]
+        assert app_config["url"] == "https://github.com/microsoft/vscode"
 
 class TestRemoveCommand:
     """Test the remove command functionality."""

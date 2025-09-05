@@ -58,18 +58,10 @@ _DRY_RUN_OPTION = typer.Option(
     "--dry-run",
     help="Check for updates without downloading",
 )
-_APP_NAME_OPTION = typer.Option(
-    None,
-    "--app",
-    "-a",
-    help="Check only the specified application (case-insensitive)",
+_CHECK_APP_NAME_ARGUMENT = typer.Argument(
+    default=None, help="Name of the application to check (case-insensitive). If not provided, checks all applications."
 )
-_SHOW_APP_NAME_OPTION = typer.Option(
-    ...,
-    "--app",
-    "-a",
-    help="Application name to display information for (case-insensitive)",
-)
+_SHOW_APP_NAME_ARGUMENT = typer.Argument(help="Name of the application to display information for (case-insensitive)")
 _REMOVE_APP_NAME_ARGUMENT = typer.Argument(
     help="Name of the application to remove from configuration (case-insensitive)"
 )
@@ -91,6 +83,29 @@ _INIT_CONFIG_DIR_OPTION = typer.Option(
     "-d",
     help="Configuration directory to create",
 )
+_ROTATION_OPTION = typer.Option(
+    None,
+    "--rotation/--no-rotation",
+    help="Enable or disable file rotation (default: disabled)",
+)
+_RETAIN_OPTION = typer.Option(
+    3,
+    "--retain",
+    help="Number of old files to retain when rotation is enabled (default: 3)",
+    min=1,
+    max=10,
+)
+_FREQUENCY_OPTION = typer.Option(
+    1,
+    "--frequency",
+    help="Update check frequency in days (default: 1)",
+    min=1,
+)
+_SYMLINK_OPTION = typer.Option(
+    None,
+    "--symlink",
+    help="Path for managed symlink (enables rotation if not explicitly disabled)",
+)
 
 
 @app.callback()
@@ -103,12 +118,19 @@ def main(
 
 @app.command()
 def check(
+    app_name: str | None = _CHECK_APP_NAME_ARGUMENT,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     dry_run: bool = _DRY_RUN_OPTION,
-    app_name: str | None = _APP_NAME_OPTION,
 ) -> None:
-    """Check for and optionally download AppImage updates."""
+    """Check for and optionally download AppImage updates.
+
+    Examples:
+        appimage-updater check                    # Check all applications
+        appimage-updater check GitHubDesktop     # Check specific application
+        appimage-updater check --dry-run         # Check all (dry run)
+        appimage-updater check GitHubDesktop --dry-run  # Check specific (dry run)
+    """
     asyncio.run(_check_updates(config_file, config_dir, dry_run, app_name))
 
 
@@ -182,6 +204,9 @@ def list_apps(
         console.print(f"[red]Configuration error: {e}")
         logger.error(f"Configuration error: {e}")
         raise typer.Exit(1) from e
+    except typer.Exit:
+        # Re-raise typer.Exit without logging - these are intentional exits
+        raise
     except Exception as e:
         console.print(f"[red]Unexpected error: {e}")
         logger.error(f"Unexpected error: {e}")
@@ -197,6 +222,10 @@ def add(
     create_dir: bool = _CREATE_DIR_OPTION,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
+    rotation: bool | None = _ROTATION_OPTION,
+    retain: int = _RETAIN_OPTION,
+    frequency: int = _FREQUENCY_OPTION,
+    symlink: str | None = _SYMLINK_OPTION,
 ) -> None:
     """Add a new application to the configuration.
 
@@ -204,19 +233,55 @@ def add(
     and other settings based on the provided URL and name. If the download directory
     does not exist, you will be prompted to create it (unless --create-dir is used).
 
+    Options:
+        --rotation/--no-rotation: Enable/disable file rotation (default: auto-detect from symlink)
+        --retain N: Number of old files to retain (1-10, default: 3)
+        --frequency N: Update frequency in days (default: 1)
+        --symlink PATH: Managed symlink path (auto-enables rotation)
+
+    Note: File rotation requires a symlink path to work properly. If you specify --rotation,
+    you must also provide --symlink PATH.
+
     Examples:
+        # Basic usage
         appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
-        appimage-updater add --create-dir MyApp https://github.com/user/myapp ~/Apps/MyApp
-        appimage-updater add --config-dir ~/.config/appimage-updater MyApp https://github.com/user/myapp ~/Apps
+
+        # With file rotation and symlink
+        appimage-updater add --rotation --symlink ~/bin/freecad.AppImage \\
+            FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
+
+        # Custom frequency and retention
+        appimage-updater add --frequency 7 --retain 5 --create-dir \\
+            MyApp https://github.com/user/myapp ~/Apps/MyApp
+
+        # Disable rotation explicitly
+        appimage-updater add --no-rotation MyTool https://github.com/user/tool ~/Tools
     """
     try:
         logger.info(f"Adding new application: {name}")
 
-        # Validate inputs
-        if not _parse_github_url(url):
+        # Normalize and validate URL
+        normalized_url, was_corrected = _normalize_github_url(url)
+        if not _parse_github_url(normalized_url):
             console.print("[red]Error: Only GitHub repository URLs are currently supported")
             console.print(f"[yellow]URL provided: {url}")
             console.print("[yellow]Expected format: https://github.com/owner/repo")
+            raise typer.Exit(1)
+            
+        # Inform user if we corrected the URL
+        if was_corrected:
+            console.print(f"[yellow]📝 Detected download URL, using repository URL instead:")
+            console.print(f"[dim]   Original: {url}")
+            console.print(f"[dim]   Corrected: {normalized_url}")
+            logger.info(f"Corrected download URL to repository URL: {url} → {normalized_url}")
+            url = normalized_url  # Use the corrected URL
+
+        # Validate rotation and symlink combination
+        if rotation is True and symlink is None:
+            console.print("[red]Error: --rotation requires a symlink path")
+            console.print("[yellow]File rotation needs a managed symlink to work properly.")
+            console.print("[yellow]Either provide --symlink PATH or use --no-rotation to disable rotation.")
+            console.print("[yellow]Example: --rotation --symlink ~/bin/myapp.AppImage")
             raise typer.Exit(1)
 
         # Expand user path in download directory
@@ -254,7 +319,7 @@ def add(
                 logger.info("User declined to create download directory")
 
         # Generate application configuration
-        app_config = _generate_default_config(name, url, expanded_download_dir)
+        app_config = _generate_default_config(name, url, expanded_download_dir, rotation, retain, frequency, symlink)
 
         # Add the application to configuration
         _add_application_to_config(app_config, config_file, config_dir)
@@ -263,10 +328,13 @@ def add(
         console.print(f"[blue]Source: {url}")
         console.print(f"[blue]Download Directory: {expanded_download_dir}")
         console.print(f"[blue]Pattern: {app_config['pattern']}")
-        console.print(f"\n[yellow]💡 Tip: Use 'appimage-updater show --app {name}' to view full configuration")
+        console.print(f"\n[yellow]💡 Tip: Use 'appimage-updater show {name}' to view full configuration")
 
         logger.info(f"Successfully added application '{name}' to configuration")
 
+    except typer.Exit:
+        # Re-raise typer.Exit without logging - these are intentional exits
+        raise
     except Exception as e:
         console.print(f"[red]Error adding application: {e}")
         logger.error(f"Error adding application '{name}': {e}")
@@ -276,11 +344,17 @@ def add(
 
 @app.command()
 def show(
-    app_name: str = _SHOW_APP_NAME_OPTION,
+    app_name: str = _SHOW_APP_NAME_ARGUMENT,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
 ) -> None:
-    """Show detailed information about a specific application."""
+    """Show detailed information about a specific application.
+
+    Examples:
+        appimage-updater show FreeCAD
+        appimage-updater show GitHubDesktop
+        appimage-updater show --config-dir ~/.config/appimage-updater OrcaSlicer
+    """
     try:
         logger.info(f"Loading configuration to show application: {app_name}")
         config = _load_config(config_file, config_dir)
@@ -301,6 +375,9 @@ def show(
         console.print(f"[red]Configuration error: {e}")
         logger.error(f"Configuration error: {e}")
         raise typer.Exit(1) from e
+    except typer.Exit:
+        # Re-raise typer.Exit without logging - these are intentional exits
+        raise
     except Exception as e:
         console.print(f"[red]Unexpected error: {e}")
         logger.error(f"Unexpected error: {e}")
@@ -371,6 +448,9 @@ def remove(
         console.print(f"[red]Configuration error: {e}")
         logger.error(f"Configuration error: {e}")
         raise typer.Exit(1) from e
+    except typer.Exit:
+        # Re-raise typer.Exit without logging - these are intentional exits
+        raise
     except Exception as e:
         console.print(f"[red]Error removing application: {e}")
         logger.error(f"Error removing application '{app_name}': {e}")
@@ -1144,6 +1224,43 @@ def _parse_github_url(url: str) -> tuple[str, str] | None:
     return None
 
 
+def _normalize_github_url(url: str) -> tuple[str, bool]:
+    """Normalize GitHub URL to repository format and detect if it was corrected.
+    
+    Detects GitHub download URLs (releases/download/...) and converts them to repository URLs.
+    Returns (normalized_url, was_corrected) tuple.
+    """
+    try:
+        parsed = urllib.parse.urlparse(url)
+        if parsed.netloc.lower() not in ("github.com", "www.github.com"):
+            return url, False
+            
+        path_parts = parsed.path.strip("/").split("/")
+        if len(path_parts) < 2:
+            return url, False
+            
+        owner, repo = path_parts[0], path_parts[1]
+        
+        # Check if this is a download URL
+        if len(path_parts) >= 4 and path_parts[2] == "releases" and path_parts[3] == "download":
+            # This is a download URL like: https://github.com/owner/repo/releases/download/tag/file.AppImage
+            repo_url = f"https://github.com/{owner}/{repo}"
+            return repo_url, True
+            
+        # Check if this has extra path components (not just owner/repo)
+        if len(path_parts) > 2:
+            # This might be a path like: https://github.com/owner/repo/releases or /issues
+            repo_url = f"https://github.com/{owner}/{repo}"
+            return repo_url, True
+            
+        # Already a clean repository URL
+        return url, False
+        
+    except Exception as e:
+        logger.debug(f"Failed to normalize GitHub URL {url}: {e}")
+        return url, False
+
+
 def _generate_appimage_pattern(app_name: str, url: str) -> str:
     """Generate a regex pattern for matching AppImage files.
 
@@ -1180,19 +1297,43 @@ def _detect_source_type(url: str) -> str:
     return "github"  # Default to github for now
 
 
-def _generate_default_config(name: str, url: str, download_dir: str) -> dict[str, Any]:
+def _generate_default_config(
+    name: str,
+    url: str,
+    download_dir: str,
+    rotation: bool | None = None,
+    retain: int = 3,
+    frequency: int = 1,
+    symlink: str | None = None,
+) -> dict[str, Any]:
     """Generate a default application configuration."""
-    return {
+    config = {
         "name": name,
         "source_type": _detect_source_type(url),
         "url": url,
         "download_dir": download_dir,
         "pattern": _generate_appimage_pattern(name, url),
-        "frequency": {"value": 1, "unit": "days"},
+        "frequency": {"value": frequency, "unit": "days"},
         "enabled": True,
         "prerelease": False,
         "checksum": {"enabled": True, "pattern": "{filename}-SHA256.txt", "algorithm": "sha256", "required": False},
     }
+
+    # Determine rotation settings
+    # If symlink is provided, enable rotation by default (unless explicitly disabled)
+    rotation_enabled = symlink is not None if rotation is None else rotation
+
+    # Add rotation settings if enabled
+    if rotation_enabled:
+        config["rotation_enabled"] = True
+        config["retain_count"] = retain
+
+        # Add symlink_path if provided
+        if symlink:
+            # Expand user path
+            config["symlink_path"] = str(Path(symlink).expanduser())
+
+    return config
 
 
 def _add_application_to_config(app_config: dict[str, Any], config_file: Path | None, config_dir: Path | None) -> None:

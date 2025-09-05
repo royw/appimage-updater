@@ -2,6 +2,38 @@
 
 All notable changes to AppImage Updater will be documented in this file.
 
+## [0.2.0] - 2025-01-09
+
+### 🆕 New Features
+- **NEW**: `check` command now supports optional positional argument for application name
+  - **USAGE**: `appimage-updater check [app-name]` instead of `--app` option
+  - **BACKWARD COMPATIBLE**: Still supports all existing `check` command functionality
+  - **EXAMPLE**: `appimage-updater check GitHubDesktop` to check a specific application
+  - **FLEXIBLE**: Can be used with or without the application name argument
+
+- **NEW**: Automatic GitHub URL normalization in `add` command
+  - **INTELLIGENT**: Automatically detects and converts GitHub download URLs to repository URLs
+  - **USER-FRIENDLY**: Warns users when URL correction is applied with clear feedback
+  - **PREVENTS ERRORS**: Fixes common mistake of providing release download links instead of repo URLs
+  - **EXAMPLES**: Converts `https://github.com/user/repo/releases/download/...` → `https://github.com/user/repo`
+  - **EXAMPLES**: Converts `https://github.com/user/repo/releases` → `https://github.com/user/repo`
+
+### 🐛 Bug Fixes
+- **FIXED**: GitHubDesktop configuration URL corrected from invalid release download URL to proper repository URL
+- **FIXED**: GitHubDesktop configuration removed invalid rotation settings that were causing configuration errors
+
+### 🧪 Testing & Quality Assurance
+- **ENHANCED**: Added comprehensive tests for GitHub URL normalization
+  - Tests normalization of release download URLs to repository URLs
+  - Tests normalization of releases page URLs to repository URLs
+  - Tests that valid repository URLs remain unchanged
+  - Verified all existing tests continue to pass
+
+### 🔧 Configuration Updates
+- **UPDATED**: Version bumped from 0.1.1 to 0.2.0 reflecting significant feature additions
+
+---
+
 ## [Unreleased] - 2025-09-05
 
 ### 🏗️ Code Quality & Refactoring

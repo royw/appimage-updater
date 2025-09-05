@@ -72,13 +72,19 @@ uv run python -m appimage_updater init --config-dir /path/to/config
 uv run python -m appimage_updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
 uv run python -m appimage_updater add MyApp https://github.com/user/repo ~/Apps/MyApp --config-dir ~/.config/appimage-updater
 
+# Add with file rotation and custom settings
+uv run python -m appimage_updater add --rotation --symlink ~/bin/myapp.AppImage --frequency 7 --retain 5 MyApp https://github.com/user/myapp ~/Apps/MyApp
+
+# Add with custom frequency only (no rotation)
+uv run python -m appimage_updater add --no-rotation --frequency 14 MyTool https://github.com/user/tool ~/Tools
+
 # List configured applications
 uv run python -m appimage_updater list
 uv run python -m appimage_updater list --config-dir /path/to/config/dir
 
 # Show detailed information about a specific application
-uv run python -m appimage_updater show --app FreeCAD
-uv run python -m appimage_updater show --app FreeCAD --config-dir /path/to/config/dir
+uv run python -m appimage_updater show FreeCAD
+uv run python -m appimage_updater show FreeCAD --config-dir /path/to/config/dir
 
 # Check for updates with specific config
 uv run python -m appimage_updater check --config /path/to/config.json
@@ -88,7 +94,7 @@ uv run python -m appimage_updater check --config-dir /path/to/config/dir
 uv run python -m appimage_updater check --dry-run
 
 # Check specific application
-uv run python -m appimage_updater check --app OrcaSlicer_nightly
+uv run python -m appimage_updater check OrcaSlicer_nightly
 
 # Enable debug logging for troubleshooting
 uv run python -m appimage_updater --debug check --dry-run

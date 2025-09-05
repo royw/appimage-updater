@@ -8,14 +8,14 @@ This tool monitors configured applications (like FreeCAD) for new releases and p
 
 ## Features
 
-- Configure multiple applications to monitor
-- Check for updates at specified frequencies
-- Batch download multiple updates with retry logic
-- **Automatic checksum verification** for downloaded files (SHA256, SHA1, MD5)
-- Support for GitHub releases and other sources
-- Flexible configuration system
-- Robust error handling with automatic retries
-- Progress tracking with visual feedback
+- **Easy Application Setup**: Simple `add` command with intelligent defaults
+- **File Rotation & Symlinks**: Automatic file management with configurable retention
+- **Flexible Configuration**: Custom update frequencies, rotation settings, and symlink management
+- **Automatic Checksum Verification**: SHA256, SHA1, MD5 support for download security
+- **Batch Operations**: Download multiple updates concurrently with retry logic
+- **GitHub Integration**: Full support for releases, prereleases, and asset detection
+- **Progress Tracking**: Visual feedback with transfer speeds and ETAs
+- **Robust Error Handling**: Automatic retries with exponential backoff
 
 ## Requirements
 
