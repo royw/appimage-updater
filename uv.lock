@@ -26,7 +26,7 @@ wheels = [
 
 [[package]]
 name = "appimage-updater"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
@@ -40,6 +40,7 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
+    { name = "deadcode" },
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -49,6 +50,7 @@ dev = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "deadcode" },
     { name = "mypy" },
     { name = "radon" },
     { name = "trio" },
@@ -56,6 +58,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "deadcode", marker = "extra == 'dev'", specifier = ">=2.4.0" },
     { name = "httpx", specifier = ">=0.25.0" },
     { name = "importlib-metadata", specifier = ">=8.7.0" },
     { name = "loguru", specifier = ">=0.7.0" },
@@ -72,6 +75,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "deadcode", specifier = ">=2.4.0" },
     { name = "mypy", specifier = ">=1.17.1" },
     { name = "radon", specifier = ">=6.0.1" },
     { name = "trio", specifier = ">=0.30.0" },
@@ -211,6 +215,18 @@ wheels = [
 [package.optional-dependencies]
 toml = [
     { name = "tomli", marker = "python_full_version <= '3.11'" },
+]
+
+[[package]]
+name = "deadcode"
+version = "2.4.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tomli" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c8/ab/1122e6d6392f7860718f16e931b1976d5e579433486a84b09333811e3a6b/deadcode-2.4.1.tar.gz", hash = "sha256:1ba1e22425cf53c4b3f5ddd46e62a86d98479b47f2ac3430ae60910ac8cb318d", size = 37734 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/46/cc/9c27bb3a1224a66740b25d8153cd41051240103fa9aaee119688362c32b6/deadcode-2.4.1-py3-none-any.whl", hash = "sha256:a16b28b601a82d5dc7ebfcab464a6f65e22a99d5684ec4c7907bdb75f8f64050", size = 44621 },
 ]
 
 [[package]]

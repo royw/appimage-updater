@@ -33,6 +33,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "deadcode>=2.4.0",
     "mypy>=1.7.0",
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
@@ -126,6 +127,7 @@ exclude_lines = [
 
 [dependency-groups]
 dev = [
+    "deadcode>=2.4.0",
     "mypy>=1.17.1",
     "radon>=6.0.1",
     "trio>=0.30.0",

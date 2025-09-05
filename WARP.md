@@ -37,6 +37,9 @@ task test:e2e-coverage
 # Code complexity analysis
 task complexity
 
+# Dead code analysis (find unused code)
+task deadcode
+
 # Run all quality checks (includes formatting, type checking, linting, complexity analysis, and testing)
 task check
 

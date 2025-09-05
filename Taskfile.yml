@@ -54,6 +54,11 @@ tasks:
     cmds:
       - uv run radon cc {{.CLI_ARGS | default "src/ --min C"}}
 
+  deadcode:
+    desc: Find dead (unreachable/unused) code with deadcode
+    cmds:
+      - uv run deadcode {{.CLI_ARGS | default "src/"}}
+
   test:all:
     desc: Run all tests including end-to-end validation
     deps:
