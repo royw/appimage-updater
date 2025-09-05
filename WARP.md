@@ -96,6 +96,12 @@ uv run python -m appimage_updater check --dry-run
 # Check specific application
 uv run python -m appimage_updater check OrcaSlicer_nightly
 
+# Edit application configuration
+uv run python -m appimage_updater edit FreeCAD --frequency 7 --unit days
+uv run python -m appimage_updater edit GitHubDesktop --prerelease --checksum-required
+uv run python -m appimage_updater edit MyApp --rotation --symlink-path ~/bin/myapp.AppImage
+uv run python -m appimage_updater edit OldApp --url https://github.com/newowner/newrepo
+
 # Enable debug logging for troubleshooting
 uv run python -m appimage_updater --debug check --dry-run
 ```
@@ -159,6 +165,56 @@ It generates:
 - **Duplicate prevention**: Prevents adding applications with existing names
 - **Flexible storage**: Works with both single config files and directory-based configurations
 - **Helpful feedback**: Shows generated pattern and provides next-step suggestions
+
+## Application Configuration Editing
+
+### `edit` Command - Modifying Existing Applications
+
+The `edit` command allows you to modify any configuration field for existing applications. It maps directly to what you see in the `show` command output, making it intuitive to use:
+
+```bash
+# Basic usage - edit any configuration field
+appimage-updater edit <app-name> [OPTIONS]
+
+# Common editing scenarios
+appimage-updater edit FreeCAD --frequency 7 --unit days
+appimage-updater edit GitHubDesktop --prerelease --checksum-required
+appimage-updater edit MyApp --rotation --symlink-path ~/bin/myapp.AppImage
+appimage-updater edit OldApp --url https://github.com/newowner/newrepo
+```
+
+### Perfect Mapping with `show` Command
+
+The `edit` command options map directly to the fields displayed by `show`:
+
+| **`show` Output Field** | **`edit` Option** | **Example** |
+|------------------------|-------------------|-------------|
+| `Status: Enabled/Disabled` | `--enable/--disable` | `--disable` |
+| `URL: https://github.com/...` | `--url URL` | `--url https://github.com/newowner/repo` |
+| `Download Directory: /path/...` | `--download-dir PATH` | `--download-dir ~/NewLocation` |
+| `File Pattern: regex...` | `--pattern REGEX` | `--pattern "MyApp.*\.AppImage$"` |
+| `Update Frequency: 1 weeks` | `--frequency N --unit UNIT` | `--frequency 2 --unit days` |
+| `Prerelease: No/Yes` | `--prerelease/--no-prerelease` | `--prerelease` |
+| `Checksum Verification: Enabled` | `--checksum/--no-checksum` | `--no-checksum` |
+| `Algorithm: SHA256` | `--checksum-algorithm ALG` | `--checksum-algorithm sha1` |
+| `Pattern: {filename}-SHA256.txt` | `--checksum-pattern PATTERN` | `--checksum-pattern "{filename}.sha256"` |
+| `Required: No/Yes` | `--checksum-required/--checksum-optional` | `--checksum-required` |
+| `File Rotation: Disabled` | `--rotation/--no-rotation` | `--rotation` |
+
+### Intuitive Workflow
+
+1. **Examine current config**: `appimage-updater show MyApp`
+2. **Make targeted changes**: `appimage-updater edit MyApp --frequency 7 --prerelease`
+3. **Verify changes**: `appimage-updater show MyApp`
+
+### Smart Features
+
+- **Field-by-field Updates**: Only specified fields are changed, others remain unchanged
+- **URL Normalization**: Automatically corrects GitHub download URLs to repository URLs
+- **Path Expansion**: Automatically expands `~` in directory and symlink paths
+- **Validation**: Validates regex patterns, URLs, and configuration consistency
+- **Directory Creation**: Can automatically create download directories if they don't exist
+- **Clear Feedback**: Shows exactly what changed with before/after values
 
 ## Architecture & Code Structure
 

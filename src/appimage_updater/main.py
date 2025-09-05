@@ -107,6 +107,23 @@ _SYMLINK_OPTION = typer.Option(
     help="Path for managed symlink (enables rotation if not explicitly disabled)",
 )
 
+# Edit command arguments and options
+_EDIT_APP_NAME_ARGUMENT = typer.Argument(help="Name of the application to edit (case-insensitive)")
+_EDIT_URL_OPTION = typer.Option(None, "--url", help="Update the repository URL")
+_EDIT_DOWNLOAD_DIR_OPTION = typer.Option(None, "--download-dir", help="Update the download directory")
+_EDIT_PATTERN_OPTION = typer.Option(None, "--pattern", help="Update the file pattern (regex)")
+_EDIT_FREQUENCY_OPTION = typer.Option(None, "--frequency", help="Update the frequency value", min=1)
+_EDIT_UNIT_OPTION = typer.Option(None, "--unit", help="Update the frequency unit")
+_EDIT_ENABLE_OPTION = typer.Option(None, "--enable/--disable", help="Enable or disable the application")
+_EDIT_PRERELEASE_OPTION = typer.Option(None, "--prerelease/--no-prerelease", help="Enable or disable prereleases")
+_EDIT_ROTATION_OPTION = typer.Option(None, "--rotation/--no-rotation", help="Enable or disable file rotation")
+_EDIT_SYMLINK_PATH_OPTION = typer.Option(None, "--symlink-path", help="Update the symlink path for rotation")
+_EDIT_RETAIN_COUNT_OPTION = typer.Option(None, "--retain-count", help="Update the number of old files to retain", min=1, max=10)
+_EDIT_CHECKSUM_OPTION = typer.Option(None, "--checksum/--no-checksum", help="Enable or disable checksum verification")
+_EDIT_CHECKSUM_ALGORITHM_OPTION = typer.Option(None, "--checksum-algorithm", help="Update the checksum algorithm")
+_EDIT_CHECKSUM_PATTERN_OPTION = typer.Option(None, "--checksum-pattern", help="Update the checksum file pattern")
+_EDIT_CHECKSUM_REQUIRED_OPTION = typer.Option(None, "--checksum-required/--checksum-optional", help="Make checksum verification required or optional")
+
 
 @app.callback()
 def main(
@@ -338,6 +355,126 @@ def add(
     except Exception as e:
         console.print(f"[red]Error adding application: {e}")
         logger.error(f"Error adding application '{name}': {e}")
+        logger.exception("Full exception details")
+        raise typer.Exit(1) from e
+
+
+@app.command()
+def edit(
+    app_name: str = _EDIT_APP_NAME_ARGUMENT,
+    config_file: Path | None = _CONFIG_FILE_OPTION,
+    config_dir: Path | None = _CONFIG_DIR_OPTION,
+    # Basic configuration options
+    url: str | None = _EDIT_URL_OPTION,
+    download_dir: str | None = _EDIT_DOWNLOAD_DIR_OPTION,
+    pattern: str | None = _EDIT_PATTERN_OPTION,
+    frequency: int | None = _EDIT_FREQUENCY_OPTION,
+    unit: str | None = _EDIT_UNIT_OPTION,
+    enable: bool | None = _EDIT_ENABLE_OPTION,
+    prerelease: bool | None = _EDIT_PRERELEASE_OPTION,
+    # Rotation options
+    rotation: bool | None = _EDIT_ROTATION_OPTION,
+    symlink_path: str | None = _EDIT_SYMLINK_PATH_OPTION,
+    retain_count: int | None = _EDIT_RETAIN_COUNT_OPTION,
+    # Checksum options
+    checksum: bool | None = _EDIT_CHECKSUM_OPTION,
+    checksum_algorithm: str | None = _EDIT_CHECKSUM_ALGORITHM_OPTION,
+    checksum_pattern: str | None = _EDIT_CHECKSUM_PATTERN_OPTION,
+    checksum_required: bool | None = _EDIT_CHECKSUM_REQUIRED_OPTION,
+    # Directory creation option
+    create_dir: bool = _CREATE_DIR_OPTION,
+) -> None:
+    """Edit configuration for an existing application.
+
+    Update any configuration field by specifying the corresponding option.
+    Only the specified fields will be changed - all other settings remain unchanged.
+
+    Basic Configuration:
+        --url URL                    Update repository URL
+        --download-dir PATH          Update download directory  
+        --pattern REGEX              Update file pattern
+        --frequency N --unit UNIT    Update check frequency (units: hours, days, weeks)
+        --enable/--disable           Enable or disable the application
+        --prerelease/--no-prerelease Enable or disable prerelease versions
+
+    File Rotation:
+        --rotation/--no-rotation     Enable or disable file rotation
+        --symlink-path PATH          Set symlink path for rotation
+        --retain-count N             Number of old files to retain (1-10)
+
+    Checksum Verification:
+        --checksum/--no-checksum     Enable or disable checksum verification
+        --checksum-algorithm ALG     Set algorithm (sha256, sha1, md5)
+        --checksum-pattern PATTERN   Set checksum file pattern
+        --checksum-required/--checksum-optional  Make verification required/optional
+
+    Examples:
+        # Change update frequency
+        appimage-updater edit GitHubDesktop --frequency 7 --unit days
+
+        # Enable rotation with symlink
+        appimage-updater edit FreeCAD --rotation --symlink-path ~/bin/freecad.AppImage
+
+        # Update download directory
+        appimage-updater edit MyApp --download-dir ~/NewLocation/MyApp --create-dir
+
+        # Disable prerelease and enable required checksums
+        appimage-updater edit OrcaSlicer --no-prerelease --checksum-required
+
+        # Update URL after repository move
+        appimage-updater edit OldApp --url https://github.com/newowner/newrepo
+    """
+    try:
+        logger.info(f"Editing configuration for application: {app_name}")
+
+        # Load current configuration
+        config = _load_config(config_file, config_dir)
+
+        # Find the application (case-insensitive)
+        app = _find_application_by_name(config.applications, app_name)
+        if not app:
+            available_apps = [a.name for a in config.applications]
+            console.print(f"[red]Application '{app_name}' not found in configuration")
+            console.print(f"[yellow]Available applications: {', '.join(available_apps)}")
+            logger.error(f"Application '{app_name}' not found. Available: {available_apps}")
+            raise typer.Exit(1)
+
+        # Collect all the updates to apply
+        updates = _collect_edit_updates(
+            url, download_dir, pattern, frequency, unit, enable, prerelease,
+            rotation, symlink_path, retain_count, checksum, checksum_algorithm,
+            checksum_pattern, checksum_required
+        )
+
+        if not updates:
+            console.print("[yellow]No changes specified. Use --help to see available options.")
+            logger.info("No updates specified for edit command")
+            return
+
+        # Validate the updates before applying them
+        _validate_edit_updates(app, updates, create_dir)
+
+        # Apply the updates
+        changes_made = _apply_configuration_updates(app, updates)
+
+        # Save the updated configuration
+        _save_updated_configuration(app, config, config_file, config_dir)
+
+        # Display what was changed
+        _display_edit_summary(app_name, changes_made)
+
+        logger.info(f"Successfully updated configuration for application '{app.name}'")
+
+    except ConfigLoadError as e:
+        console.print(f"[red]Configuration error: {e}")
+        logger.error(f"Configuration error: {e}")
+        raise typer.Exit(1) from e
+    except typer.Exit:
+        # Re-raise typer.Exit without logging - these are intentional exits
+        raise
+    except Exception as e:
+        console.print(f"[red]Error editing application: {e}")
+        logger.error(f"Error editing application '{app_name}': {e}")
         logger.exception("Full exception details")
         raise typer.Exit(1) from e
 
@@ -1520,6 +1657,343 @@ def _remove_from_config_directory(app_name: str, config_dir: Path) -> None:
 
     if not removed:
         raise ValueError(f"Application '{app_name}' not found in configuration directory")
+
+
+def _collect_edit_updates(
+    url: str | None,
+    download_dir: str | None,
+    pattern: str | None,
+    frequency: int | None,
+    unit: str | None,
+    enable: bool | None,
+    prerelease: bool | None,
+    rotation: bool | None,
+    symlink_path: str | None,
+    retain_count: int | None,
+    checksum: bool | None,
+    checksum_algorithm: str | None,
+    checksum_pattern: str | None,
+    checksum_required: bool | None,
+) -> dict[str, Any]:
+    """Collect all non-None update values into a dictionary."""
+    updates = {}
+    
+    if url is not None:
+        updates["url"] = url
+    if download_dir is not None:
+        updates["download_dir"] = download_dir
+    if pattern is not None:
+        updates["pattern"] = pattern
+    if frequency is not None:
+        updates["frequency_value"] = frequency
+    if unit is not None:
+        updates["frequency_unit"] = unit
+    if enable is not None:
+        updates["enabled"] = enable
+    if prerelease is not None:
+        updates["prerelease"] = prerelease
+    if rotation is not None:
+        updates["rotation_enabled"] = rotation
+    if symlink_path is not None:
+        updates["symlink_path"] = symlink_path
+    if retain_count is not None:
+        updates["retain_count"] = retain_count
+    if checksum is not None:
+        updates["checksum_enabled"] = checksum
+    if checksum_algorithm is not None:
+        updates["checksum_algorithm"] = checksum_algorithm
+    if checksum_pattern is not None:
+        updates["checksum_pattern"] = checksum_pattern
+    if checksum_required is not None:
+        updates["checksum_required"] = checksum_required
+    
+    return updates
+
+
+def _validate_edit_updates(app: Any, updates: dict[str, Any], create_dir: bool) -> None:
+    """Validate the proposed updates before applying them."""
+    from appimage_updater.config import ApplicationConfig
+    
+    # Validate URL if provided
+    if "url" in updates:
+        normalized_url, was_corrected = _normalize_github_url(updates["url"])
+        if not _parse_github_url(normalized_url):
+            raise ValueError(f"Invalid GitHub repository URL: {updates['url']}")
+        if was_corrected:
+            console.print(f"[yellow]📝 Detected download URL, using repository URL instead:")
+            console.print(f"[dim]   Original: {updates['url']}")
+            console.print(f"[dim]   Corrected: {normalized_url}")
+            updates["url"] = normalized_url
+    
+    # Validate pattern if provided
+    if "pattern" in updates:
+        try:
+            re.compile(updates["pattern"])
+        except re.error as e:
+            raise ValueError(f"Invalid regex pattern: {e}") from e
+    
+    # Validate frequency unit if provided
+    if "frequency_unit" in updates:
+        valid_units = ["hours", "days", "weeks"]
+        if updates["frequency_unit"] not in valid_units:
+            raise ValueError(f"Invalid frequency unit. Must be one of: {', '.join(valid_units)}")
+    
+    # Validate checksum algorithm if provided
+    if "checksum_algorithm" in updates:
+        valid_algorithms = ["sha256", "sha1", "md5"]
+        if updates["checksum_algorithm"] not in valid_algorithms:
+            raise ValueError(f"Invalid checksum algorithm. Must be one of: {', '.join(valid_algorithms)}")
+    
+    # Check rotation and symlink consistency
+    current_rotation = getattr(app, 'rotation_enabled', False)
+    new_rotation = updates.get("rotation_enabled", current_rotation)
+    current_symlink = getattr(app, 'symlink_path', None)
+    new_symlink = updates.get("symlink_path", current_symlink)
+    
+    if new_rotation and not new_symlink:
+        raise ValueError("File rotation requires a symlink path. Use --symlink-path to specify one.")
+    
+    # Handle download directory changes
+    if "download_dir" in updates:
+        expanded_path = Path(updates["download_dir"]).expanduser()
+        updates["download_dir"] = str(expanded_path)
+        
+        if not expanded_path.exists():
+            console.print(f"[yellow]Download directory does not exist: {expanded_path}")
+            should_create = create_dir
+            
+            if not should_create:
+                try:
+                    should_create = typer.confirm("Create this directory?")
+                except (EOFError, KeyboardInterrupt, typer.Abort):
+                    should_create = False
+                    console.print("[yellow]Directory creation cancelled. Configuration will still be updated.")
+            
+            if should_create:
+                try:
+                    expanded_path.mkdir(parents=True, exist_ok=True)
+                    console.print(f"[green]Created directory: {expanded_path}")
+                except OSError as e:
+                    raise ValueError(f"Failed to create directory {expanded_path}: {e}") from e
+            else:
+                console.print("[yellow]Directory will be created manually when needed.")
+    
+    # Handle symlink path expansion
+    if "symlink_path" in updates:
+        expanded_symlink = Path(updates["symlink_path"]).expanduser()
+        updates["symlink_path"] = str(expanded_symlink)
+
+
+def _apply_configuration_updates(app: Any, updates: dict[str, Any]) -> list[str]:
+    """Apply the updates to the application configuration object.
+    
+    Returns:
+        List of change descriptions for display.
+    """
+    changes = []
+    
+    # Basic configuration updates
+    if "url" in updates:
+        old_value = app.url
+        app.url = updates["url"]
+        changes.append(f"URL: {old_value} → {updates['url']}")
+    
+    if "download_dir" in updates:
+        old_value = str(app.download_dir)
+        app.download_dir = Path(updates["download_dir"])
+        changes.append(f"Download Directory: {old_value} → {updates['download_dir']}")
+    
+    if "pattern" in updates:
+        old_value = app.pattern
+        app.pattern = updates["pattern"]
+        changes.append(f"File Pattern: {old_value} → {updates['pattern']}")
+    
+    if "enabled" in updates:
+        old_value = "Enabled" if app.enabled else "Disabled"
+        app.enabled = updates["enabled"]
+        new_value = "Enabled" if updates["enabled"] else "Disabled"
+        changes.append(f"Status: {old_value} → {new_value}")
+    
+    if "prerelease" in updates:
+        old_value = "Yes" if app.prerelease else "No"
+        app.prerelease = updates["prerelease"]
+        new_value = "Yes" if updates["prerelease"] else "No"
+        changes.append(f"Prerelease: {old_value} → {new_value}")
+    
+    # Frequency updates
+    if "frequency_value" in updates or "frequency_unit" in updates:
+        old_freq = f"{app.frequency.value} {app.frequency.unit}"
+        if "frequency_value" in updates:
+            app.frequency.value = updates["frequency_value"]
+        if "frequency_unit" in updates:
+            app.frequency.unit = updates["frequency_unit"]
+        new_freq = f"{app.frequency.value} {app.frequency.unit}"
+        changes.append(f"Update Frequency: {old_freq} → {new_freq}")
+    
+    # Rotation updates
+    if "rotation_enabled" in updates:
+        old_value = "Enabled" if getattr(app, 'rotation_enabled', False) else "Disabled"
+        app.rotation_enabled = updates["rotation_enabled"]
+        new_value = "Enabled" if updates["rotation_enabled"] else "Disabled"
+        changes.append(f"File Rotation: {old_value} → {new_value}")
+    
+    if "symlink_path" in updates:
+        old_value = str(getattr(app, 'symlink_path', None)) if getattr(app, 'symlink_path', None) else "None"
+        app.symlink_path = Path(updates["symlink_path"])
+        changes.append(f"Symlink Path: {old_value} → {updates['symlink_path']}")
+    
+    if "retain_count" in updates:
+        old_value = getattr(app, 'retain_count', 3)
+        app.retain_count = updates["retain_count"]
+        changes.append(f"Retain Count: {old_value} → {updates['retain_count']}")
+    
+    # Checksum updates
+    if "checksum_enabled" in updates:
+        old_value = "Enabled" if app.checksum.enabled else "Disabled"
+        app.checksum.enabled = updates["checksum_enabled"]
+        new_value = "Enabled" if updates["checksum_enabled"] else "Disabled"
+        changes.append(f"Checksum Verification: {old_value} → {new_value}")
+    
+    if "checksum_algorithm" in updates:
+        old_value = app.checksum.algorithm.upper()
+        app.checksum.algorithm = updates["checksum_algorithm"]
+        new_value = updates["checksum_algorithm"].upper()
+        changes.append(f"Checksum Algorithm: {old_value} → {new_value}")
+    
+    if "checksum_pattern" in updates:
+        old_value = app.checksum.pattern
+        app.checksum.pattern = updates["checksum_pattern"]
+        changes.append(f"Checksum Pattern: {old_value} → {updates['checksum_pattern']}")
+    
+    if "checksum_required" in updates:
+        old_value = "Yes" if app.checksum.required else "No"
+        app.checksum.required = updates["checksum_required"]
+        new_value = "Yes" if updates["checksum_required"] else "No"
+        changes.append(f"Checksum Required: {old_value} → {new_value}")
+    
+    return changes
+
+
+def _save_updated_configuration(app: Any, config: Any, config_file: Path | None, config_dir: Path | None) -> None:
+    """Save the updated configuration back to file or directory."""
+    from appimage_updater.config_loader import get_default_config_dir, get_default_config_path
+    
+    # Convert the updated app back to dict format for JSON serialization
+    app_dict = {
+        "name": app.name,
+        "source_type": app.source_type,
+        "url": app.url,
+        "download_dir": str(app.download_dir),
+        "pattern": app.pattern,
+        "frequency": {"value": app.frequency.value, "unit": app.frequency.unit},
+        "enabled": app.enabled,
+        "prerelease": app.prerelease,
+        "checksum": {
+            "enabled": app.checksum.enabled,
+            "pattern": app.checksum.pattern,
+            "algorithm": app.checksum.algorithm,
+            "required": app.checksum.required,
+        },
+    }
+    
+    # Add optional fields if they exist
+    if hasattr(app, 'rotation_enabled'):
+        app_dict["rotation_enabled"] = app.rotation_enabled
+        if app.rotation_enabled:
+            app_dict["retain_count"] = getattr(app, 'retain_count', 3)
+    
+    if hasattr(app, 'symlink_path') and app.symlink_path:
+        app_dict["symlink_path"] = str(app.symlink_path)
+    
+    # Determine where to save
+    target_file = None
+    target_dir = None
+    
+    if config_file:
+        target_file = config_file
+    elif config_dir:
+        target_dir = config_dir
+    else:
+        # Use defaults
+        default_dir = get_default_config_dir()
+        default_file = get_default_config_path()
+        
+        if default_dir.exists():
+            target_dir = default_dir
+        elif default_file.exists():
+            target_file = default_file
+        else:
+            target_dir = default_dir  # Default to directory-based
+    
+    if target_file:
+        _update_app_in_config_file(app_dict, target_file)
+    elif target_dir:
+        _update_app_in_config_directory(app_dict, target_dir)
+    else:
+        raise ValueError("Could not determine where to save configuration")
+
+
+def _update_app_in_config_file(app_dict: dict[str, Any], config_file: Path) -> None:
+    """Update application in a single JSON config file."""
+    # Load existing configuration
+    with config_file.open() as f:
+        config_data = json.load(f)
+    
+    applications = config_data.get("applications", [])
+    app_name_lower = app_dict["name"].lower()
+    
+    # Find and update the application
+    updated = False
+    for i, app in enumerate(applications):
+        if app.get("name", "").lower() == app_name_lower:
+            applications[i] = app_dict
+            updated = True
+            break
+    
+    if not updated:
+        raise ValueError(f"Application '{app_dict['name']}' not found in configuration file")
+    
+    # Write back to file
+    with config_file.open("w") as f:
+        json.dump(config_data, f, indent=2)
+
+
+def _update_app_in_config_directory(app_dict: dict[str, Any], config_dir: Path) -> None:
+    """Update application in a directory-based config structure."""
+    app_name_lower = app_dict["name"].lower()
+    
+    # Find the config file containing this app
+    for config_file in config_dir.glob("*.json"):
+        try:
+            with config_file.open() as f:
+                config_data = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            continue
+        
+        applications = config_data.get("applications", [])
+        
+        # Check if this file contains our app
+        for i, app in enumerate(applications):
+            if app.get("name", "").lower() == app_name_lower:
+                # Update the app in this file
+                applications[i] = app_dict
+                config_data["applications"] = applications
+                
+                # Write back to file
+                with config_file.open("w") as f:
+                    json.dump(config_data, f, indent=2)
+                return
+    
+    raise ValueError(f"Application '{app_dict['name']}' not found in configuration directory")
+
+
+def _display_edit_summary(app_name: str, changes: list[str]) -> None:
+    """Display a summary of the changes that were made."""
+    console.print(f"[green]✓ Successfully updated configuration for '{app_name}'")
+    console.print("[blue]Changes made:")
+    for change in changes:
+        console.print(f"  [dim]• {change}")
+    console.print(f"\n[yellow]💡 Tip: Use 'appimage-updater show {app_name}' to view the updated configuration")
 
 
 if __name__ == "__main__":
