@@ -147,14 +147,5 @@ nav:
   - API Reference: reference/
   - Changelog: changelog.md
 
-  - Technical Documentation:
-    - Theme Files: theme-files.md
-    - Color Files: color-files.md
-
-  - Project Information:
-    - Project Overview: project-files/README.md
-    - Developer Guide: project-files/DEV-README.md
-    - License: license.md
-
 watch:
   - src/appimage_updater
