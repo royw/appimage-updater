@@ -57,7 +57,12 @@ tasks:
   deadcode:
     desc: Find dead (unreachable/unused) code with deadcode
     cmds:
-      - uv run deadcode {{.CLI_ARGS | default "src/"}}
+      - >
+        uv run deadcode {{.CLI_ARGS | default "src/"}}
+        --ignore-if-decorated-with "@app.command" "@app.callback" "@field_validator" 
+        --ignore-names "main" "check" "init" "list_apps" "show" "DownloadError" "model_post_init"
+        "validate_pattern" "validate_download_dir" "validate_symlink_path"
+        "created_at" "tag_name" "checked_at" "expected" "actual" "duration_seconds"
 
   test:all:
     desc: Run all tests including end-to-end validation

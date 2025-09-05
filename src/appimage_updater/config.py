@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from datetime import timedelta
 from pathlib import Path
 from typing import Literal
 
@@ -22,15 +21,6 @@ class UpdateFrequency(BaseModel):
 
     value: int = Field(gt=0, description="Frequency value")
     unit: Literal["hours", "days", "weeks"] = Field(description="Time unit")
-
-    def to_timedelta(self) -> timedelta:
-        """Convert to timedelta object."""
-        if self.unit == "hours":
-            return timedelta(hours=self.value)
-        elif self.unit == "days":
-            return timedelta(days=self.value)
-        else:  # self.unit == "weeks"
-            return timedelta(weeks=self.value)
 
 
 class ChecksumConfig(BaseModel):
@@ -118,7 +108,6 @@ class GlobalConfig(BaseModel):
 
     concurrent_downloads: int = Field(default=3, ge=1, le=10)
     timeout_seconds: int = Field(default=30, ge=5, le=300)
-    retry_attempts: int = Field(default=3, ge=1, le=10)
     user_agent: str = Field(
         default_factory=lambda: _get_default_user_agent(),
         description="User agent for HTTP requests",
