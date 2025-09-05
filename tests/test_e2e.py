@@ -929,7 +929,7 @@ class TestAddCommand:
         assert "Successfully added application 'TestApp'" in result.stdout
         assert "https://github.com/user/testapp" in result.stdout
         assert "/tmp/test-download" in result.stdout
-        assert "TestApp.*Linux.*\\.AppImage(\\.(|current|old))?$" in result.stdout
+        assert "TestApp.*[Ll]inux.*\\.AppImage(\\.(|current|old))?$" in result.stdout
         
         # Check that config file was created
         config_file = temp_config_dir / "testapp.json"
@@ -945,7 +945,7 @@ class TestAddCommand:
         assert app_config["source_type"] == "github"
         assert app_config["url"] == "https://github.com/user/testapp"
         assert app_config["download_dir"] == "/tmp/test-download"
-        assert app_config["pattern"] == "TestApp.*Linux.*\\.AppImage(\\.(|current|old))?$"
+        assert app_config["pattern"] == "TestApp.*[Ll]inux.*\\.AppImage(\\.(|current|old))?$"
         assert app_config["enabled"] is True
         assert app_config["prerelease"] is False
         assert app_config["checksum"]["enabled"] is True
@@ -979,8 +979,9 @@ class TestAddCommand:
         
         assert result.exit_code == 0
         assert "Successfully added application 'MyApp'" in result.stdout
-        # Should use repo name 'OrcaSlicer' in pattern, not app name 'MyApp'
-        assert "OrcaSlicer.*Linux.*\\.AppImage(\\.(|current|old))?$" in result.stdout
+        # With new logic, should use app name 'MyApp' instead of repo name 'OrcaSlicer'
+        # This is more accurate since 'MyApp' is not a generic name and pattern matching should be predictable
+        assert "MyApp.*[Ll]inux.*\\.AppImage(\\.(|current|old))?$" in result.stdout
         
         # Verify config content
         config_file = temp_config_dir / "myapp.json"
@@ -991,7 +992,7 @@ class TestAddCommand:
         
         app_config = config_data["applications"][0]
         assert app_config["name"] == "MyApp"
-        assert app_config["pattern"] == "OrcaSlicer.*Linux.*\\.AppImage(\\.(|current|old))?$"
+        assert app_config["pattern"] == "MyApp.*[Ll]inux.*\\.AppImage(\\.(|current|old))?$"
     
     def test_add_command_with_existing_config_file(self, runner, temp_config_dir):
         """Test add command appends to existing config file."""
@@ -1079,6 +1080,191 @@ class TestAddCommand:
         # Should be expanded to full path
         assert app_config["download_dir"].startswith("/")
         assert "Applications/PathTest" in app_config["download_dir"]
+
+
+class TestRemoveCommand:
+    """Test the remove command functionality."""
+    
+    def test_remove_command_with_confirmation_yes(self, runner, temp_config_dir):
+        """Test remove command with user confirmation (yes)."""
+        # First, add an application to remove
+        add_result = runner.invoke(app, [
+            "add", "TestRemoveApp",
+            "https://github.com/user/testremove",
+            "/tmp/test-remove",
+            "--create-dir",
+            "--config-dir", str(temp_config_dir)
+        ])
+        assert add_result.exit_code == 0
+        
+        # Verify it was added
+        config_file = temp_config_dir / "testremoveapp.json"
+        assert config_file.exists()
+        
+        # Remove with confirmation
+        result = runner.invoke(app, [
+            "remove", "TestRemoveApp", 
+            "--config-dir", str(temp_config_dir)
+        ], input="y\n")
+        
+        assert result.exit_code == 0
+        assert "Found application: TestRemoveApp" in result.stdout
+        assert "Successfully removed application 'TestRemoveApp' from configuration" in result.stdout
+        assert "Files in /tmp/test-remove were not deleted" in result.stdout
+        
+        # Verify the config file was removed (directory-based config)
+        assert not config_file.exists()
+    
+    def test_remove_command_with_confirmation_no(self, runner, temp_config_dir):
+        """Test remove command with user confirmation (no)."""
+        # First, add an application
+        add_result = runner.invoke(app, [
+            "add", "TestKeepApp",
+            "https://github.com/user/testkeep",
+            "/tmp/test-keep",
+            "--create-dir",
+            "--config-dir", str(temp_config_dir)
+        ])
+        assert add_result.exit_code == 0
+        
+        # Try to remove but cancel
+        result = runner.invoke(app, [
+            "remove", "TestKeepApp", 
+            "--config-dir", str(temp_config_dir)
+        ], input="n\n")
+        
+        assert result.exit_code == 0
+        assert "Removal cancelled" in result.stdout
+        
+        # Verify the app is still there
+        config_file = temp_config_dir / "testkeepapp.json"
+        assert config_file.exists()
+    
+    def test_remove_command_nonexistent_app(self, runner, temp_config_dir):
+        """Test remove command with non-existent application."""
+        # Add one app first
+        add_result = runner.invoke(app, [
+            "add", "ExistingApp",
+            "https://github.com/user/existing",
+            "/tmp/existing",
+            "--create-dir",
+            "--config-dir", str(temp_config_dir)
+        ])
+        assert add_result.exit_code == 0
+        
+        # Try to remove non-existent app
+        result = runner.invoke(app, [
+            "remove", "NonExistentApp", 
+            "--config-dir", str(temp_config_dir)
+        ])
+        
+        assert result.exit_code == 1
+        assert "Application 'NonExistentApp' not found in configuration" in result.stdout
+        assert "Available applications: ExistingApp" in result.stdout
+    
+    def test_remove_command_case_insensitive(self, runner, temp_config_dir):
+        """Test remove command is case-insensitive."""
+        # Add an application
+        add_result = runner.invoke(app, [
+            "add", "CaseTestApp",
+            "https://github.com/user/casetest",
+            "/tmp/case-test",
+            "--create-dir",
+            "--config-dir", str(temp_config_dir)
+        ])
+        assert add_result.exit_code == 0
+        
+        # Remove using different case
+        result = runner.invoke(app, [
+            "remove", "casetestapp",  # lowercase
+            "--config-dir", str(temp_config_dir)
+        ], input="y\n")
+        
+        assert result.exit_code == 0
+        assert "Found application: CaseTestApp" in result.stdout  # Should find the original case
+        assert "Successfully removed application 'CaseTestApp' from configuration" in result.stdout
+    
+    def test_remove_command_from_config_file(self, runner, temp_config_dir):
+        """Test remove command with single config file (not directory-based)."""
+        # Create a single config file with multiple apps
+        config_file = temp_config_dir / "config.json"
+        initial_config = {
+            "applications": [
+                {
+                    "name": "App1",
+                    "source_type": "github",
+                    "url": "https://github.com/user/app1",
+                    "download_dir": "/tmp/app1",
+                    "pattern": "App1.*",
+                    "frequency": {"value": 1, "unit": "days"},
+                    "enabled": True
+                },
+                {
+                    "name": "App2",
+                    "source_type": "github",
+                    "url": "https://github.com/user/app2",
+                    "download_dir": "/tmp/app2",
+                    "pattern": "App2.*",
+                    "frequency": {"value": 1, "unit": "days"},
+                    "enabled": True
+                }
+            ]
+        }
+        
+        with config_file.open("w") as f:
+            json.dump(initial_config, f)
+        
+        # Remove one app from the config file
+        result = runner.invoke(app, [
+            "remove", "App1",
+            "--config", str(config_file)
+        ], input="y\n")
+        
+        assert result.exit_code == 0
+        assert "Successfully removed application 'App1' from configuration" in result.stdout
+        
+        # Verify only App2 remains
+        with config_file.open() as f:
+            config_data = json.load(f)
+        
+        assert len(config_data["applications"]) == 1
+        assert config_data["applications"][0]["name"] == "App2"
+    
+    def test_remove_command_empty_config(self, runner, temp_config_dir):
+        """Test remove command with empty configuration."""
+        # Create empty config directory
+        result = runner.invoke(app, [
+            "remove", "AnyApp",
+            "--config-dir", str(temp_config_dir)
+        ])
+        
+        assert result.exit_code == 1
+        assert "No JSON configuration files found" in result.stdout
+    
+    def test_remove_command_non_interactive(self, runner, temp_config_dir):
+        """Test remove command in non-interactive environment."""
+        # Add an application first
+        add_result = runner.invoke(app, [
+            "add", "NonInteractiveApp",
+            "https://github.com/user/noninteractive",
+            "/tmp/non-interactive",
+            "--create-dir",
+            "--config-dir", str(temp_config_dir)
+        ])
+        assert add_result.exit_code == 0
+        
+        # Try to remove without providing input (simulates non-interactive)
+        result = runner.invoke(app, [
+            "remove", "NonInteractiveApp",
+            "--config-dir", str(temp_config_dir)
+        ])
+        
+        assert result.exit_code == 0  # Should exit cleanly
+        assert "Removal cancelled" in result.stdout
+        
+        # App should still exist
+        config_file = temp_config_dir / "noninteractiveapp.json"
+        assert config_file.exists()
 
 
 if __name__ == "__main__":
