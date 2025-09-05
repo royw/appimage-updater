@@ -128,7 +128,19 @@ exclude_lines = [
 [dependency-groups]
 dev = [
     "deadcode>=2.4.0",
+    "mkdocs>=1.6.1",
+    "mkdocs-gen-files>=0.5.0",
+    "mkdocs-git-revision-date-localized-plugin>=1.4.7",
+    "mkdocs-git-revision-date-plugin>=0.3.2",
+    "mkdocs-literate-nav>=0.6.2",
+    "mkdocs-material>=9.6.18",
+    "mkdocs-mermaid2-plugin>=1.2.2",
+    "mkdocstrings[python]>=0.30.0",
     "mypy>=1.17.1",
+    "pytest>=8.4.1",
+    "pytest-anyio>=0.0.0",
+    "pytest-cov>=6.2.1",
     "radon>=6.0.1",
+    "ruff>=0.12.11",
     "trio>=0.30.0",
 ]

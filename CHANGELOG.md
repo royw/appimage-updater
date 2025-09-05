@@ -36,6 +36,24 @@ All notable changes to AppImage Updater will be documented in this file.
 
 ## [Unreleased] - 2025-09-05
 
+### 📚 Documentation
+- **ENHANCED**: Documentation navigation with multiple ways to return home
+  - **ADDED**: Clickable site title and logo that return to home page
+  - **ADDED**: Home icon (`🏠`) to navigation breadcrumbs and home links
+  - **ADDED**: Custom CSS styling to enhance home navigation visibility
+  - **ADDED**: JavaScript functionality to make header elements clickable
+  - **ADDED**: Keyboard shortcut (Alt+H) to quickly return to home page
+  - **ADDED**: Enhanced "back to top" button styling and hover effects
+  - **ADDED**: Home breadcrumb navigation to key pages (Getting Started, Commands Reference)
+  - **ENABLED**: Additional Material theme features including `navigation.prune` and `header.autohide`
+  - **RESULT**: Users can now easily navigate back to home from any documentation page
+  - **FILES**: `docs/stylesheets/extra.css`, `docs/javascripts/extra.js`, updated `mkdocs.yml`
+
+- **FIXED**: Missing MkDocs plugin installation issue
+  - **INSTALLED**: `mkdocs-git-revision-date-localized-plugin==1.4.7` with dependency `pytz==2025.2`
+  - **RESOLVED**: "The 'git-revision-date-localized' plugin is not installed" error
+  - **RESULT**: Documentation now builds successfully with `task docs:build`
+
 ### 🐛 Bug Fixes
 - **FIXED**: Edit command exception traceback display issue
   - **PROBLEM**: Setting `--rotation` without symlink showed full exception traceback, creating messy error output

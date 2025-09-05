@@ -1,0 +1,43 @@
+/* Enhanced Home Navigation */
+.md-header__title {
+    cursor: pointer;
+}
+
+.md-header__title:hover {
+    opacity: 0.7;
+}
+
+/* Make the home icon more prominent in navigation */
+.md-nav__item--active > .md-nav__link[href="/"] {
+    background-color: var(--md-accent-fg-color--transparent);
+    border-radius: 0.1rem;
+}
+
+/* Add home breadcrumb styling */
+.md-nav__link[href="/"]::before {
+    content: "🏠 ";
+    margin-right: 0.2rem;
+}
+
+/* Enhance the "back to top" button */
+.md-top {
+    background-color: var(--md-primary-fg-color);
+    color: var(--md-primary-bg-color);
+}
+
+.md-top:hover {
+    background-color: var(--md-accent-fg-color);
+    transform: scale(1.1);
+}
+
+/* Make navigation tabs more prominent */
+.md-tabs__link--active {
+    background-color: var(--md-accent-fg-color--transparent);
+    border-radius: 0.1rem 0.1rem 0 0;
+}
+
+/* Add subtle animation for navigation */
+.md-nav__link:hover {
+    transform: translateX(0.1rem);
+    transition: transform 0.2s ease;
+}

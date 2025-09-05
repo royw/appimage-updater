@@ -84,6 +84,16 @@ tasks:
     cmds:
       - uv run python -m appimage_updater {{.CLI_ARGS}}
 
+  docs:build:
+    desc: Build documentation with MkDocs
+    cmds:
+      - uv run mkdocs build {{.CLI_ARGS}}
+
+  docs:
+    desc: Build and serve documentation locally
+    cmds:
+      - uv run mkdocs serve {{.CLI_ARGS}}
+
   clean:
     desc: Clean up generated files
     cmds:
