@@ -2,7 +2,32 @@
 
 All notable changes to AppImage Updater will be documented in this file.
 
-## [Unreleased] - 2025-09-04
+## [Unreleased] - 2025-09-05
+
+### 🏗️ Code Quality & Refactoring
+- **REFACTORED**: Reduced code complexity in main.py functions
+  - Broke down `_get_files_info()` function (complexity 11→8) into smaller helper functions:
+    - `_find_matching_appimage_files()` for file discovery and error handling
+    - `_format_file_groups()` for file group formatting
+    - `_format_single_file_info()` for individual file information formatting
+  - Broke down `_get_configuration_info()` function (complexity C→8) into focused helpers:
+    - `_get_basic_config_lines()` for basic configuration display
+    - `_add_optional_config_lines()` for prerelease and symlink path options
+    - `_add_checksum_config_lines()` for checksum configuration
+    - `_add_rotation_config_lines()` for file rotation configuration
+  - Broke down `_remove_from_config_directory()` function (complexity C→6) into:
+    - `_process_config_file_for_removal()` for individual config file processing
+    - `_update_or_remove_config_file()` for file updates and removal
+  - **IMPACT**: All functions now meet complexity standards (≤10 cyclomatic complexity)
+  - **BENEFIT**: Improved code maintainability, readability, and testability
+
+- **FIXED**: Code formatting and type annotation issues
+  - Removed whitespace from blank lines (fixed 10+ W293 violations)
+  - Fixed unused variable warning (B007) in `_group_files_by_rotation()`
+  - Added proper type annotation for `rotation_groups` variable
+  - **RESULT**: All ruff linting checks now pass
+  - **RESULT**: All mypy type checks now pass
+  - **RESULT**: All radon complexity checks now pass
 
 ### 🐛 Bug Fixes
 - **FIXED**: Symlink detection for AppImage files with suffixes

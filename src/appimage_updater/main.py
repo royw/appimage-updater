@@ -70,14 +70,20 @@ _SHOW_APP_NAME_OPTION = typer.Option(
     "-a",
     help="Application name to display information for (case-insensitive)",
 )
-_ADD_NAME_ARGUMENT = typer.Argument(
-    help="Name for the application (used for identification and pattern matching)"
+_REMOVE_APP_NAME_ARGUMENT = typer.Argument(
+    help="Name of the application to remove from configuration (case-insensitive)"
 )
+_ADD_NAME_ARGUMENT = typer.Argument(help="Name for the application (used for identification and pattern matching)")
 _ADD_URL_ARGUMENT = typer.Argument(
     help="URL to the application repository or release page (e.g., GitHub repository URL)"
 )
 _ADD_DOWNLOAD_DIR_ARGUMENT = typer.Argument(
     help="Directory where AppImage files will be downloaded (e.g., ~/Applications/AppName)"
+)
+_CREATE_DIR_OPTION = typer.Option(
+    False,
+    "--create-dir",
+    help="Automatically create download directory if it doesn't exist (no prompt)",
 )
 _INIT_CONFIG_DIR_OPTION = typer.Option(
     None,
@@ -188,45 +194,79 @@ def add(
     name: str = _ADD_NAME_ARGUMENT,
     url: str = _ADD_URL_ARGUMENT,
     download_dir: str = _ADD_DOWNLOAD_DIR_ARGUMENT,
+    create_dir: bool = _CREATE_DIR_OPTION,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
 ) -> None:
     """Add a new application to the configuration.
-    
+
     Automatically generates intelligent defaults for pattern matching, update frequency,
-    and other settings based on the provided URL and name.
-    
+    and other settings based on the provided URL and name. If the download directory
+    does not exist, you will be prompted to create it (unless --create-dir is used).
+
     Examples:
         appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
+        appimage-updater add --create-dir MyApp https://github.com/user/myapp ~/Apps/MyApp
         appimage-updater add --config-dir ~/.config/appimage-updater MyApp https://github.com/user/myapp ~/Apps
     """
     try:
         logger.info(f"Adding new application: {name}")
-        
+
         # Validate inputs
         if not _parse_github_url(url):
-            console.print(f"[red]Error: Only GitHub repository URLs are currently supported")
+            console.print("[red]Error: Only GitHub repository URLs are currently supported")
             console.print(f"[yellow]URL provided: {url}")
-            console.print(f"[yellow]Expected format: https://github.com/owner/repo")
+            console.print("[yellow]Expected format: https://github.com/owner/repo")
             raise typer.Exit(1)
-        
+
         # Expand user path in download directory
         expanded_download_dir = str(Path(download_dir).expanduser())
-        
+        download_path = Path(expanded_download_dir)
+
+        # Check if download directory exists and handle creation
+        if not download_path.exists():
+            console.print(f"[yellow]Download directory does not exist: {download_path}")
+            should_create = create_dir
+
+            if not should_create:
+                # Try to prompt if in interactive environment
+                try:
+                    should_create = typer.confirm("Create this directory?")
+                except (EOFError, KeyboardInterrupt, typer.Abort):
+                    # Non-interactive environment or user cancelled, don't create by default
+                    should_create = False
+                    console.print(
+                        "[yellow]Running in non-interactive mode. Use --create-dir to automatically create directories."
+                    )
+
+            if should_create:
+                try:
+                    download_path.mkdir(parents=True, exist_ok=True)
+                    console.print(f"[green]Created directory: {download_path}")
+                    logger.info(f"Created download directory: {download_path}")
+                except OSError as e:
+                    console.print(f"[red]Failed to create directory: {e}")
+                    logger.error(f"Failed to create download directory {download_path}: {e}")
+                    raise typer.Exit(1) from e
+            else:
+                console.print("[yellow]Directory creation cancelled. Application configuration will still be saved.")
+                console.print("[yellow]You will need to create the directory manually before downloading updates.")
+                logger.info("User declined to create download directory")
+
         # Generate application configuration
         app_config = _generate_default_config(name, url, expanded_download_dir)
-        
+
         # Add the application to configuration
         _add_application_to_config(app_config, config_file, config_dir)
-        
+
         console.print(f"[green]✓ Successfully added application '{name}'")
         console.print(f"[blue]Source: {url}")
         console.print(f"[blue]Download Directory: {expanded_download_dir}")
         console.print(f"[blue]Pattern: {app_config['pattern']}")
         console.print(f"\n[yellow]💡 Tip: Use 'appimage-updater show --app {name}' to view full configuration")
-        
+
         logger.info(f"Successfully added application '{name}' to configuration")
-        
+
     except Exception as e:
         console.print(f"[red]Error adding application: {e}")
         logger.error(f"Error adding application '{name}': {e}")
@@ -264,6 +304,76 @@ def show(
     except Exception as e:
         console.print(f"[red]Unexpected error: {e}")
         logger.error(f"Unexpected error: {e}")
+        logger.exception("Full exception details")
+        raise typer.Exit(1) from e
+
+
+@app.command()
+def remove(
+    app_name: str = _REMOVE_APP_NAME_ARGUMENT,
+    config_file: Path | None = _CONFIG_FILE_OPTION,
+    config_dir: Path | None = _CONFIG_DIR_OPTION,
+) -> None:
+    """Remove an application from the configuration.
+
+    This command will delete the application's configuration. It does NOT delete
+    downloaded AppImage files or symlinks - only the configuration entry.
+
+    Examples:
+        appimage-updater remove FreeCAD
+        appimage-updater remove --config-dir ~/.config/appimage-updater MyApp
+    """
+    try:
+        logger.info(f"Removing application: {app_name}")
+
+        # Load current configuration to find the app
+        config = _load_config(config_file, config_dir)
+
+        # Find the application (case-insensitive)
+        app = _find_application_by_name(config.applications, app_name)
+        if not app:
+            available_apps = [a.name for a in config.applications]
+            console.print(f"[red]Application '{app_name}' not found in configuration")
+            if available_apps:
+                console.print(f"[yellow]Available applications: {', '.join(available_apps)}")
+            else:
+                console.print("[yellow]No applications are currently configured")
+            logger.error(f"Application '{app_name}' not found. Available: {available_apps}")
+            raise typer.Exit(1)
+
+        # Confirm removal with user
+        console.print(f"[yellow]Found application: {app.name}")
+        console.print(f"[yellow]Source: {app.url}")
+        console.print(f"[yellow]Download Directory: {app.download_dir}")
+        console.print("[red]This will remove the application from your configuration.")
+        console.print("[red]Downloaded files and symlinks will NOT be deleted.")
+
+        try:
+            confirmed = typer.confirm("Are you sure you want to remove this application?")
+        except (EOFError, KeyboardInterrupt, typer.Abort):
+            console.print("[yellow]Removal cancelled.")
+            logger.info("User cancelled application removal")
+            return
+
+        if not confirmed:
+            console.print("[yellow]Removal cancelled.")
+            logger.info("User declined to remove application")
+            return
+
+        # Remove the application from configuration
+        _remove_application_from_config(app.name, config, config_file, config_dir)
+
+        console.print(f"[green]✓ Successfully removed application '{app.name}' from configuration")
+        console.print(f"[blue]Note: Files in {app.download_dir} were not deleted")
+        logger.info(f"Successfully removed application '{app.name}' from configuration")
+
+    except ConfigLoadError as e:
+        console.print(f"[red]Configuration error: {e}")
+        logger.error(f"Configuration error: {e}")
+        raise typer.Exit(1) from e
+    except Exception as e:
+        console.print(f"[red]Error removing application: {e}")
+        logger.error(f"Error removing application '{app_name}': {e}")
         logger.exception("Full exception details")
         raise typer.Exit(1) from e
 
@@ -612,7 +722,18 @@ def _display_application_details(app: Any) -> None:
 
 def _get_configuration_info(app: Any) -> str:
     """Get formatted configuration information for an application."""
-    config_lines = [
+    config_lines = _get_basic_config_lines(app)
+
+    _add_optional_config_lines(app, config_lines)
+    _add_checksum_config_lines(app, config_lines)
+    _add_rotation_config_lines(app, config_lines)
+
+    return "\n".join(config_lines)
+
+
+def _get_basic_config_lines(app: Any) -> list[str]:
+    """Get basic configuration lines for an application."""
+    return [
         f"[bold]Name:[/bold] {app.name}",
         f"[bold]Status:[/bold] {'[green]Enabled[/green]' if app.enabled else '[red]Disabled[/red]'}",
         f"[bold]Source:[/bold] {app.source_type.title()}",
@@ -622,12 +743,18 @@ def _get_configuration_info(app: Any) -> str:
         f"[bold]Update Frequency:[/bold] {app.frequency.value} {app.frequency.unit}",
     ]
 
+
+def _add_optional_config_lines(app: Any, config_lines: list[str]) -> None:
+    """Add optional configuration lines (prerelease, symlink_path)."""
     if hasattr(app, "prerelease"):
         config_lines.append(f"[bold]Prerelease:[/bold] {'Yes' if app.prerelease else 'No'}")
 
     if hasattr(app, "symlink_path") and app.symlink_path:
         config_lines.append(f"[bold]Symlink Path:[/bold] {app.symlink_path}")
 
+
+def _add_checksum_config_lines(app: Any, config_lines: list[str]) -> None:
+    """Add checksum configuration lines if applicable."""
     if hasattr(app, "checksum") and app.checksum:
         checksum_status = "Enabled" if app.checksum.enabled else "Disabled"
         config_lines.append(f"[bold]Checksum Verification:[/bold] {checksum_status}")
@@ -636,7 +763,17 @@ def _get_configuration_info(app: Any) -> str:
             config_lines.append(f"  [dim]Pattern:[/dim] {app.checksum.pattern}")
             config_lines.append(f"  [dim]Required:[/dim] {'Yes' if app.checksum.required else 'No'}")
 
-    return "\n".join(config_lines)
+
+def _add_rotation_config_lines(app: Any, config_lines: list[str]) -> None:
+    """Add file rotation configuration lines if applicable."""
+    if hasattr(app, "rotation_enabled"):
+        rotation_status = "Enabled" if app.rotation_enabled else "Disabled"
+        config_lines.append(f"[bold]File Rotation:[/bold] {rotation_status}")
+        if app.rotation_enabled:
+            if hasattr(app, "retain_count"):
+                config_lines.append(f"  [dim]Retain Count:[/dim] {app.retain_count} files")
+            if hasattr(app, "symlink_path") and app.symlink_path:
+                config_lines.append(f"  [dim]Managed Symlink:[/dim] {app.symlink_path}")
 
 
 def _get_files_info(app: Any) -> str:
@@ -646,44 +783,158 @@ def _get_files_info(app: Any) -> str:
     if not download_dir.exists():
         return "[yellow]Download directory does not exist[/yellow]"
 
-    # Find files matching the pattern (excluding symlinks)
-    pattern = re.compile(app.pattern)
-    matching_files = []
-
-    try:
-        for file_path in download_dir.iterdir():
-            if file_path.is_file() and not file_path.is_symlink() and pattern.match(file_path.name):
-                matching_files.append(file_path)
-    except PermissionError:
-        return "[red]Permission denied accessing download directory[/red]"
+    matching_files = _find_matching_appimage_files(download_dir, app.pattern)
+    if isinstance(matching_files, str):  # Error message
+        return matching_files
 
     if not matching_files:
         return "[yellow]No AppImage files found matching the pattern[/yellow]"
 
-    # Sort files by modification time (newest first)
-    matching_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+    # Group files by rotation status
+    rotation_groups = _group_files_by_rotation(matching_files)
 
+    return _format_file_groups(rotation_groups)
+
+
+def _find_matching_appimage_files(download_dir: Path, pattern: str) -> list[Path] | str:
+    """Find AppImage files matching the pattern in the download directory.
+
+    Returns:
+        List of matching files, or error message string if there was an error.
+    """
+    pattern_compiled = re.compile(pattern)
+    matching_files = []
+
+    try:
+        for file_path in download_dir.iterdir():
+            if file_path.is_file() and not file_path.is_symlink() and pattern_compiled.match(file_path.name):
+                matching_files.append(file_path)
+    except PermissionError:
+        return "[red]Permission denied accessing download directory[/red]"
+
+    return matching_files
+
+
+def _format_file_groups(rotation_groups: dict[str, list[Path]]) -> str:
+    """Format file groups into display strings."""
     file_lines = []
-    for file_path in matching_files:
-        stat_info = file_path.stat()
-        size_mb = stat_info.st_size / (1024 * 1024)
-        mtime = os.path.getmtime(file_path)
-        mtime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(mtime))
 
-        # Check if file is executable
-        executable = "[green]✓[/green]" if os.access(file_path, os.X_OK) else "[red]✗[/red]"
+    for group_name, files in rotation_groups.items():
+        # Sort files by modification time (newest first)
+        files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
 
-        file_lines.append(f"[bold]{file_path.name}[/bold]")
-        file_lines.append(f"  [dim]Size:[/dim] {size_mb:.1f} MB")
-        file_lines.append(f"  [dim]Modified:[/dim] {mtime_str}")
-        file_lines.append(f"  [dim]Executable:[/dim] {executable}")
-        file_lines.append("")  # Empty line between files
+        if group_name != "standalone":
+            file_lines.append(f"[bold blue]{group_name.title()} Files:[/bold blue]")
+
+        for file_path in files:
+            file_info_lines = _format_single_file_info(file_path)
+            file_lines.extend(file_info_lines)
+            file_lines.append("")  # Empty line between files
+
+        # Add separator between groups
+        if group_name != "standalone" and file_lines:
+            file_lines.append("")
 
     # Remove last empty line
-    if file_lines and file_lines[-1] == "":
+    while file_lines and file_lines[-1] == "":
         file_lines.pop()
 
     return "\n".join(file_lines)
+
+
+def _format_single_file_info(file_path: Path) -> list[str]:
+    """Format information for a single file."""
+    stat_info = file_path.stat()
+    size_mb = stat_info.st_size / (1024 * 1024)
+    mtime = os.path.getmtime(file_path)
+    mtime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(mtime))
+
+    # Check if file is executable
+    executable = "[green]✓[/green]" if os.access(file_path, os.X_OK) else "[red]✗[/red]"
+
+    # Identify rotation suffix for better display
+    rotation_indicator = _get_rotation_indicator(file_path.name)
+
+    return [
+        f"[bold]{file_path.name}[/bold]{rotation_indicator}",
+        f"  [dim]Size:[/dim] {size_mb:.1f} MB",
+        f"  [dim]Modified:[/dim] {mtime_str}",
+        f"  [dim]Executable:[/dim] {executable}",
+    ]
+
+
+def _group_files_by_rotation(files: list[Path]) -> dict[str, list[Path]]:
+    """Group files by their rotation status.
+
+    Groups files into:
+    - 'rotated': Files that are part of a rotation group (have .current, .old, etc.)
+    - 'standalone': Files that don't appear to be part of rotation
+    """
+    rotation_groups: dict[str, list[Path]] = {"rotated": [], "standalone": []}
+
+    # Create mapping of base names to files
+    base_name_groups: dict[str, list[Path]] = {}
+    for file_path in files:
+        base_name = _get_base_appimage_name(file_path.name)
+        if base_name not in base_name_groups:
+            base_name_groups[base_name] = []
+        base_name_groups[base_name].append(file_path)
+
+    # Classify each group
+    for _base_name, file_list in base_name_groups.items():
+        if len(file_list) > 1 or any(_has_rotation_suffix(f.name) for f in file_list):
+            rotation_groups["rotated"].extend(file_list)
+        else:
+            rotation_groups["standalone"].extend(file_list)
+
+    # Remove empty groups
+    return {k: v for k, v in rotation_groups.items() if v}
+
+
+def _get_base_appimage_name(filename: str) -> str:
+    """Extract the base name from an AppImage filename, removing rotation suffixes.
+
+    Examples:
+        'app.AppImage' -> 'app'
+        'app.AppImage.current' -> 'app'
+        'app.AppImage.old' -> 'app'
+        'MyApp-v1.0.AppImage.old2' -> 'MyApp-v1.0'
+    """
+    # Remove .AppImage and any rotation suffix
+    if ".AppImage" in filename:
+        base = filename.split(".AppImage")[0]
+        return base
+    return filename
+
+
+def _has_rotation_suffix(filename: str) -> bool:
+    """Check if filename has a rotation suffix like .current, .old, .old2, etc."""
+    rotation_suffixes = [".current", ".old"]
+
+    # Check for numbered old files (.old2, .old3, etc.)
+    if ".old" in filename:
+        parts = filename.split(".old")
+        if len(parts) > 1:
+            suffix = parts[-1]
+            # Check if it's just .old or .old followed by a number
+            if suffix == "" or (suffix.isdigit() and int(suffix) >= 2):
+                return True
+
+    return any(filename.endswith(suffix) for suffix in rotation_suffixes)
+
+
+def _get_rotation_indicator(filename: str) -> str:
+    """Get a visual indicator for rotation status."""
+    if filename.endswith(".current"):
+        return " [green](current)[/green]"
+    elif filename.endswith(".old"):
+        return " [yellow](previous)[/yellow]"
+    elif ".old" in filename and filename.split(".old")[-1].isdigit():
+        old_num = filename.split(".old")[-1]
+        return f" [dim](old-{old_num})[/dim]"
+    elif _has_rotation_suffix(filename):
+        return " [blue](rotated)[/blue]"
+    return ""
 
 
 def _get_symlinks_info(app: Any) -> str:
@@ -715,15 +966,17 @@ def _check_configured_symlink(symlink_path: Path, download_dir: Path) -> tuple[P
         # Check if target is in download directory and is an AppImage
         if target.parent == download_dir and target.name.endswith(".AppImage"):
             return (symlink_path, target)
-    except (OSError, RuntimeError):
-        pass  # Broken symlink or resolution error
+        # If we get here, symlink doesn't point to expected location
+        logger.debug(f"Symlink {symlink_path} points to {target}, not an AppImage in download directory")
+    except (OSError, RuntimeError) as e:
+        logger.debug(f"Failed to resolve configured symlink {symlink_path}: {e}")
 
     return None
 
 
 def _find_appimage_symlinks(download_dir: Path, configured_symlink_path: Path | None = None) -> list[tuple[Path, Path]]:
     """Find symlinks pointing to AppImage files in the download directory.
-    
+
     Uses the same search paths as go-appimage's appimaged:
     - /usr/local/bin
     - /opt
@@ -760,7 +1013,7 @@ def _find_appimage_symlinks(download_dir: Path, configured_symlink_path: Path | 
 
 def _get_appimage_search_locations(download_dir: Path) -> list[Path]:
     """Get AppImage search locations matching go-appimage's appimaged search paths.
-    
+
     Returns the same directories that go-appimage's appimaged watches:
     - /usr/local/bin
     - /opt
@@ -777,11 +1030,11 @@ def _get_appimage_search_locations(download_dir: Path) -> list[Path]:
         Path.home() / ".local" / "bin",
         Path.home() / "Downloads",
     ]
-    
+
     # Add common $PATH directories that frequently include AppImages
     path_dirs = _get_path_directories()
     search_locations.extend(path_dirs)
-    
+
     # Remove duplicates while preserving order
     seen = set()
     unique_locations = []
@@ -789,7 +1042,7 @@ def _get_appimage_search_locations(download_dir: Path) -> list[Path]:
         if location not in seen:
             seen.add(location)
             unique_locations.append(location)
-    
+
     return unique_locations
 
 
@@ -798,15 +1051,15 @@ def _get_path_directories() -> list[Path]:
     path_env = os.environ.get("PATH", "")
     if not path_env:
         return []
-    
+
     path_dirs = []
     for path_str in path_env.split(os.pathsep):
         if path_str.strip():
             try:
                 path_dirs.append(Path(path_str.strip()))
-            except Exception:
-                pass  # Skip invalid paths
-    
+            except Exception as e:
+                logger.debug(f"Skipping invalid PATH entry '{path_str.strip()}': {e}")
+
     return path_dirs
 
 
@@ -819,8 +1072,8 @@ def _scan_directory_for_symlinks(location: Path, download_dir: Path) -> list[tup
                 symlink_target = _get_valid_symlink_target(item, download_dir)
                 if symlink_target:
                     symlinks.append((item, symlink_target))
-    except PermissionError:
-        pass  # Skip directories we can't read
+    except PermissionError as e:
+        logger.debug(f"Permission denied reading directory {location}: {e}")
     return symlinks
 
 
@@ -834,8 +1087,10 @@ def _get_valid_symlink_target(symlink: Path, download_dir: Path) -> Path | None:
             symlink.parent == download_dir and symlink.name.endswith(".AppImage")
         ):
             return target
-    except (OSError, RuntimeError):
-        pass  # Broken symlink or resolution error
+        # If we get here, symlink doesn't point to expected location
+        logger.debug(f"Symlink {symlink} points to {target}, not a valid AppImage in download directory")
+    except (OSError, RuntimeError) as e:
+        logger.debug(f"Failed to resolve symlink {symlink}: {e}")
     return None
 
 
@@ -871,42 +1126,49 @@ def _format_single_symlink(symlink_path: Path, target_path: Path) -> list[str]:
 
 def _parse_github_url(url: str) -> tuple[str, str] | None:
     """Parse GitHub URL and extract owner/repo information.
-    
+
     Returns (owner, repo) tuple or None if not a GitHub URL.
     """
     try:
         parsed = urllib.parse.urlparse(url)
         if parsed.netloc.lower() not in ("github.com", "www.github.com"):
+            logger.debug(f"URL {url} is not a GitHub repository URL (netloc: {parsed.netloc})")
             return None
-            
+
         path_parts = parsed.path.strip("/").split("/")
         if len(path_parts) >= 2:
             return (path_parts[0], path_parts[1])
-    except Exception:
-        pass
+        logger.debug(f"URL {url} does not have enough path components for owner/repo")
+    except Exception as e:
+        logger.debug(f"Failed to parse URL {url}: {e}")
     return None
 
 
 def _generate_appimage_pattern(app_name: str, url: str) -> str:
     """Generate a regex pattern for matching AppImage files.
-    
+
     Uses intelligent defaults based on the app name and URL.
     """
-    # Start with the app name as base
+    # Start with the app name as base (prefer app name over repo name for better matching)
     base_name = re.escape(app_name)
-    
-    # Check if it's a GitHub URL to make more specific patterns
+
+    # Check if it's a GitHub URL - but prioritize app name since it's usually more accurate
     github_info = _parse_github_url(url)
     if github_info:
         owner, repo = github_info
-        # Use the repo name if it's different from app_name
-        if repo.lower() != app_name.lower():
+        # Only use repo name if app_name seems generic or is very different
+        # This prevents issues like "desktop" matching "GitHubDesktop"
+        if (
+            app_name.lower() in ["app", "application", "tool"]  # Generic app names
+            or (len(repo) > len(app_name) and app_name.lower() in repo.lower())  # App name is subset of repo
+        ):
             base_name = re.escape(repo)
-    
+
     # Create a flexible pattern that handles common AppImage naming conventions
-    # Matches: AppName-version-Linux-arch.AppImage with optional suffixes
-    pattern = f"{base_name}.*Linux.*\\.AppImage(\\.(|current|old))?$"
-    
+    # Use case-insensitive matching for "linux" since filenames vary
+    # Matches: AppName-version-linux-arch.AppImage with optional suffixes
+    pattern = f"{base_name}.*[Ll]inux.*\\.AppImage(\\.(|current|old))?$"
+
     return pattern
 
 
@@ -929,23 +1191,14 @@ def _generate_default_config(name: str, url: str, download_dir: str) -> dict[str
         "frequency": {"value": 1, "unit": "days"},
         "enabled": True,
         "prerelease": False,
-        "checksum": {
-            "enabled": True,
-            "pattern": "{filename}-SHA256.txt",
-            "algorithm": "sha256",
-            "required": False
-        }
+        "checksum": {"enabled": True, "pattern": "{filename}-SHA256.txt", "algorithm": "sha256", "required": False},
     }
 
 
-def _add_application_to_config(
-    app_config: dict[str, Any], 
-    config_file: Path | None, 
-    config_dir: Path | None
-) -> None:
+def _add_application_to_config(app_config: dict[str, Any], config_file: Path | None, config_dir: Path | None) -> None:
     """Add an application configuration to the config file or directory."""
     from appimage_updater.config_loader import get_default_config_dir, get_default_config_path
-    
+
     # Determine target configuration location
     if config_file:
         _add_to_config_file(app_config, config_file)
@@ -955,7 +1208,7 @@ def _add_application_to_config(
         # Use default location - prefer directory if it exists, otherwise create file
         default_dir = get_default_config_dir()
         default_file = get_default_config_path()
-        
+
         if default_dir.exists():
             _add_to_config_directory(app_config, default_dir)
         elif default_file.exists():
@@ -976,15 +1229,15 @@ def _add_to_config_file(app_config: dict[str, Any], config_file: Path) -> None:
         # Create new configuration
         config_data = {"applications": []}
         config_file.parent.mkdir(parents=True, exist_ok=True)
-    
+
     # Check for duplicate names
     existing_names = [app.get("name", "").lower() for app in config_data.get("applications", [])]
     if app_config["name"].lower() in existing_names:
         raise ValueError(f"Application '{app_config['name']}' already exists in configuration")
-    
+
     # Add the new application
     config_data["applications"].append(app_config)
-    
+
     # Write back to file
     with config_file.open("w") as f:
         json.dump(config_data, f, indent=2)
@@ -993,20 +1246,139 @@ def _add_to_config_file(app_config: dict[str, Any], config_file: Path) -> None:
 def _add_to_config_directory(app_config: dict[str, Any], config_dir: Path) -> None:
     """Add application to a directory-based config structure."""
     config_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Create a filename based on the app name (sanitized)
-    filename = re.sub(r'[^a-zA-Z0-9_-]', '_', app_config["name"].lower()) + ".json"
+    filename = re.sub(r"[^a-zA-Z0-9_-]", "_", app_config["name"].lower()) + ".json"
     config_file = config_dir / filename
-    
+
     if config_file.exists():
         raise ValueError(f"Configuration file '{config_file}' already exists for application '{app_config['name']}'")
-    
+
     # Create configuration structure
     config_data = {"applications": [app_config]}
-    
+
     # Write to individual file
     with config_file.open("w") as f:
         json.dump(config_data, f, indent=2)
+
+
+def _remove_application_from_config(
+    app_name: str, config: Any, config_file: Path | None, config_dir: Path | None
+) -> None:
+    """Remove an application configuration from the config file or directory."""
+    from appimage_updater.config_loader import get_default_config_dir, get_default_config_path
+
+    # Determine target configuration location
+    if config_file:
+        _remove_from_config_file(app_name, config_file)
+    elif config_dir:
+        _remove_from_config_directory(app_name, config_dir)
+    else:
+        # Use default location - check what exists
+        default_dir = get_default_config_dir()
+        default_file = get_default_config_path()
+
+        if default_dir.exists():
+            _remove_from_config_directory(app_name, default_dir)
+        elif default_file.exists():
+            _remove_from_config_file(app_name, default_file)
+        else:
+            raise ValueError("No configuration found to remove application from")
+
+
+def _remove_from_config_file(app_name: str, config_file: Path) -> None:
+    """Remove application from a single JSON config file."""
+    if not config_file.exists():
+        raise ValueError(f"Configuration file '{config_file}' does not exist")
+
+    # Load existing configuration
+    try:
+        with config_file.open() as f:
+            config_data = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        raise ValueError(f"Failed to read configuration file '{config_file}': {e}") from e
+
+    applications = config_data.get("applications", [])
+    app_name_lower = app_name.lower()
+
+    # Find and remove the application (case-insensitive)
+    original_count = len(applications)
+    applications[:] = [app for app in applications if app.get("name", "").lower() != app_name_lower]
+
+    if len(applications) == original_count:
+        raise ValueError(f"Application '{app_name}' not found in configuration file")
+
+    # Update config data
+    config_data["applications"] = applications
+
+    # Write back to file
+    try:
+        with config_file.open("w") as f:
+            json.dump(config_data, f, indent=2)
+    except OSError as e:
+        raise ValueError(f"Failed to write configuration file '{config_file}': {e}") from e
+
+
+def _process_config_file_for_removal(config_file: Path, app_name_lower: str) -> bool:
+    """Process a single config file for application removal.
+
+    Returns:
+        True if application was found and removed from this file, False otherwise.
+    """
+    try:
+        with config_file.open() as f:
+            config_data = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        logger.debug(f"Skipping invalid config file {config_file}: {e}")
+        return False
+
+    applications = config_data.get("applications", [])
+    original_count = len(applications)
+
+    # Remove matching applications from this file
+    applications[:] = [app for app in applications if app.get("name", "").lower() != app_name_lower]
+
+    if len(applications) < original_count:
+        # Application was found and removed
+        _update_or_remove_config_file(config_file, config_data, applications)
+        return True
+
+    return False
+
+
+def _update_or_remove_config_file(config_file: Path, config_data: dict[str, Any], applications: list[Any]) -> None:
+    """Update config file with remaining applications or remove if empty."""
+    if applications:
+        # Update the file with remaining applications
+        config_data["applications"] = applications
+        try:
+            with config_file.open("w") as f:
+                json.dump(config_data, f, indent=2)
+        except OSError as e:
+            raise ValueError(f"Failed to update configuration file '{config_file}': {e}") from e
+    else:
+        # File is now empty, remove it entirely
+        try:
+            config_file.unlink()
+            logger.debug(f"Removed empty configuration file: {config_file}")
+        except OSError as e:
+            raise ValueError(f"Failed to remove empty configuration file '{config_file}': {e}") from e
+
+
+def _remove_from_config_directory(app_name: str, config_dir: Path) -> None:
+    """Remove application from a directory-based config structure."""
+    if not config_dir.exists():
+        raise ValueError(f"Configuration directory '{config_dir}' does not exist")
+
+    app_name_lower = app_name.lower()
+    removed = False
+
+    for config_file in config_dir.glob("*.json"):
+        if _process_config_file_for_removal(config_file, app_name_lower):
+            removed = True
+
+    if not removed:
+        raise ValueError(f"Application '{app_name}' not found in configuration directory")
 
 
 if __name__ == "__main__":
