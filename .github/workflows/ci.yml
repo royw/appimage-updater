@@ -11,15 +11,18 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
           
       - name: Install uv
         uses: astral-sh/setup-uv@v3
@@ -42,7 +45,67 @@ jobs:
         run: uv run radon cc src/ --min C
         
       - name: Run tests
-        run: uv run pytest
+        run: uv run pytest --cov=src/appimage_updater --cov-report=xml --cov-report=term-missing
+        
+      - name: Upload coverage reports to Codecov
+        if: matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+        continue-on-error: true
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+          
+      - name: Install dependencies
+        run: uv sync --extra dev
+        
+      - name: Build package
+        run: uv build
+        
+      - name: Store build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+          
+  publish-to-pypi:
+    name: Publish to PyPI
+    if: github.event_name == 'release' && github.event.action == 'published'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: https://pypi.org/p/appimage-updater
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+      
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+          
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
 
   build:
     runs-on: ubuntu-latest
