@@ -1872,6 +1872,53 @@ def _handle_directory_creation(updates: dict[str, Any], create_dir: bool) -> Non
             console.print("[yellow]Directory will be created manually when needed.")
 
 
+def _validate_symlink_path_exists(symlink_path: str) -> None:
+    """Check if symlink path is not empty or whitespace-only."""
+    if not symlink_path or not symlink_path.strip():
+        raise ValueError("Symlink path cannot be empty. Provide a valid file path.")
+
+
+def _expand_symlink_path(symlink_path: str) -> Path:
+    """Expand and make symlink path absolute if needed."""
+    try:
+        expanded_path = Path(symlink_path).expanduser()
+    except (ValueError, OSError) as e:
+        raise ValueError(f"Invalid symlink path '{symlink_path}': {e}") from e
+
+    # Make it absolute if it's a relative path without explicit relative indicators
+    if not expanded_path.is_absolute() and not str(expanded_path).startswith(("./", "../", "~")):
+        expanded_path = Path.cwd() / expanded_path
+
+    return expanded_path
+
+
+def _validate_symlink_path_characters(expanded_path: Path, original_path: str) -> None:
+    """Check if path contains invalid characters."""
+    path_str = str(expanded_path)
+    if any(char in path_str for char in ["\x00", "\n", "\r"]):
+        raise ValueError(f"Symlink path contains invalid characters: {original_path}")
+
+
+def _normalize_and_validate_symlink_path(expanded_path: Path, original_path: str) -> Path:
+    """Normalize path and validate parent directory and extension."""
+    # Normalize path to remove redundant separators and resolve ..
+    try:
+        normalized_path = expanded_path.resolve()
+    except (OSError, ValueError) as e:
+        raise ValueError(f"Cannot resolve symlink path '{original_path}': {e}") from e
+
+    # Check if parent directory can be created (basic validation)
+    parent_dir = normalized_path.parent
+    if not parent_dir:
+        raise ValueError(f"Invalid symlink path - no parent directory: {original_path}")
+
+    # Check if the symlink path ends with .AppImage extension
+    if not normalized_path.name.endswith(".AppImage"):
+        raise ValueError(f"Symlink path should end with '.AppImage': {original_path}")
+
+    return normalized_path
+
+
 def _validate_symlink_path(updates: dict[str, Any]) -> None:
     """Validate symlink path if provided."""
     if "symlink_path" not in updates:
@@ -1879,40 +1926,10 @@ def _validate_symlink_path(updates: dict[str, Any]) -> None:
 
     symlink_path = updates["symlink_path"]
 
-    # Check for empty or whitespace-only paths
-    if not symlink_path or not symlink_path.strip():
-        raise ValueError("Symlink path cannot be empty. Provide a valid file path.")
-
-    # Expand the path
-    try:
-        expanded_path = Path(symlink_path).expanduser()
-    except (ValueError, OSError) as e:
-        raise ValueError(f"Invalid symlink path '{symlink_path}': {e}") from e
-
-    # Validate the path structure
-    if not expanded_path.is_absolute() and not str(expanded_path).startswith(("./", "../", "~")):
-        # Make it absolute if it's a relative path without explicit relative indicators
-        expanded_path = Path.cwd() / expanded_path
-
-    # Check if path contains invalid characters or patterns
-    path_str = str(expanded_path)
-    if any(char in path_str for char in ["\x00", "\n", "\r"]):
-        raise ValueError(f"Symlink path contains invalid characters: {symlink_path}")
-
-    # Normalize path to remove redundant separators and resolve ..
-    try:
-        normalized_path = expanded_path.resolve()
-    except (OSError, ValueError) as e:
-        raise ValueError(f"Cannot resolve symlink path '{symlink_path}': {e}") from e
-
-    # Check if parent directory can be created (basic validation)
-    parent_dir = normalized_path.parent
-    if not parent_dir:
-        raise ValueError(f"Invalid symlink path - no parent directory: {symlink_path}")
-
-    # Check if the symlink path ends with .AppImage extension
-    if not normalized_path.name.endswith(".AppImage"):
-        raise ValueError(f"Symlink path should end with '.AppImage': {symlink_path}")
+    _validate_symlink_path_exists(symlink_path)
+    expanded_path = _expand_symlink_path(symlink_path)
+    _validate_symlink_path_characters(expanded_path, symlink_path)
+    normalized_path = _normalize_and_validate_symlink_path(expanded_path, symlink_path)
 
     # Update with the normalized path
     updates["symlink_path"] = str(normalized_path)
@@ -2053,11 +2070,8 @@ def _apply_configuration_updates(app: Any, updates: dict[str, Any]) -> list[str]
     return changes
 
 
-def _save_updated_configuration(app: Any, config: Any, config_file: Path | None, config_dir: Path | None) -> None:
-    """Save the updated configuration back to file or directory."""
-    from appimage_updater.config_loader import get_default_config_dir, get_default_config_path
-
-    # Convert the updated app back to dict format for JSON serialization
+def _convert_app_to_dict(app: Any) -> dict[str, Any]:
+    """Convert application object to dictionary for JSON serialization."""
     app_dict = {
         "name": app.name,
         "source_type": app.source_type,
@@ -2084,25 +2098,34 @@ def _save_updated_configuration(app: Any, config: Any, config_file: Path | None,
     if hasattr(app, "symlink_path") and app.symlink_path:
         app_dict["symlink_path"] = str(app.symlink_path)
 
-    # Determine where to save
-    target_file = None
-    target_dir = None
+    return app_dict
 
+
+def _determine_save_target(config_file: Path | None, config_dir: Path | None) -> tuple[Path | None, Path | None]:
+    """Determine where to save the configuration (file or directory)."""
     if config_file:
-        target_file = config_file
+        return config_file, None
     elif config_dir:
-        target_dir = config_dir
+        return None, config_dir
     else:
         # Use defaults
+        from appimage_updater.config_loader import get_default_config_dir, get_default_config_path
+
         default_dir = get_default_config_dir()
         default_file = get_default_config_path()
 
         if default_dir.exists():
-            target_dir = default_dir
+            return None, default_dir
         elif default_file.exists():
-            target_file = default_file
+            return default_file, None
         else:
-            target_dir = default_dir  # Default to directory-based
+            return None, default_dir  # Default to directory-based
+
+
+def _save_updated_configuration(app: Any, config: Any, config_file: Path | None, config_dir: Path | None) -> None:
+    """Save the updated configuration back to file or directory."""
+    app_dict = _convert_app_to_dict(app)
+    target_file, target_dir = _determine_save_target(config_file, config_dir)
 
     if target_file:
         _update_app_in_config_file(app_dict, target_file)

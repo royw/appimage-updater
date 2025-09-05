@@ -45,6 +45,19 @@ All notable changes to AppImage Updater will be documented in this file.
   - **OUTPUT**: Creates both wheel (`.whl`) and source distribution (`.tar.gz`) in `dist/` directory
   - **USAGE**: `task build` - Build distribution packages ready for PyPI or local installation
 
+### 🎆 Code Quality
+- **FIXED**: Code complexity issues in main.py
+  - **REFACTORED**: `_validate_symlink_path()` function to reduce cyclomatic complexity from C to acceptable levels
+    - **EXTRACTED**: `_validate_symlink_path_exists()` for empty path validation
+    - **EXTRACTED**: `_expand_symlink_path()` for path expansion and absolutization
+    - **EXTRACTED**: `_validate_symlink_path_characters()` for invalid character checking
+    - **EXTRACTED**: `_normalize_and_validate_symlink_path()` for path normalization and validation
+  - **REFACTORED**: `_save_updated_configuration()` function to reduce cyclomatic complexity from C to acceptable levels
+    - **EXTRACTED**: `_convert_app_to_dict()` for application object to dictionary conversion
+    - **EXTRACTED**: `_determine_save_target()` for configuration save location determination
+  - **RESULT**: All functions now meet project complexity standards (≤10 cyclomatic complexity)
+  - **VERIFIED**: All 95 tests continue to pass after refactoring
+
 ### 📚 Documentation
 - **ENHANCED**: Documentation navigation with multiple ways to return home
   - **ADDED**: Clickable site title and logo that return to home page
