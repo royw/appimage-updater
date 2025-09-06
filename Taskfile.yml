@@ -131,6 +131,25 @@ tasks:
     cmds:
       - echo "Development environment ready!"
 
+  version:
+    desc: Display the current project version
+    cmds:
+      - python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(f'v{data[\"project\"][\"version\"]}')"
+
+  version:bump:
+    desc: Bump the patch version using version-bumper
+    cmds:
+      - uv run version_bumper bump patch
+      - echo "✅ Version bumped! New version:"
+      - task: version
+
+  version:tag:
+    desc: Create and push a git tag for the current version
+    deps:
+      - version
+    cmds:
+      - python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); version = data['project']['version']; print(f'Creating tag v{version}...'); import subprocess; subprocess.run(['git', 'tag', f'v{version}'], check=True); subprocess.run(['git', 'push', 'origin', f'v{version}'], check=True); print(f'✅ Tag v{version} created and pushed to origin!')"
+
   default:
     desc: Show available tasks
     cmds:

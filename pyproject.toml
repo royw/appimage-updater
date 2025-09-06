@@ -49,6 +49,7 @@ dev = [
     "radon>=6.0.1",
     "ruff>=0.12.11",
     "trio>=0.30.0",
+    "version-bumper>=0.1.2",
 ]
 
 [project.scripts]
@@ -153,4 +154,5 @@ dev = [
     "radon>=6.0.1",
     "ruff>=0.12.11",
     "trio>=0.30.0",
+    "version-bumper>=0.1.2",
 ]
