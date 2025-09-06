@@ -56,6 +56,7 @@ dev = [
     { name = "radon" },
     { name = "ruff" },
     { name = "trio" },
+    { name = "version-bumper" },
 ]
 
 [package.dev-dependencies]
@@ -76,6 +77,7 @@ dev = [
     { name = "radon" },
     { name = "ruff" },
     { name = "trio" },
+    { name = "version-bumper" },
 ]
 
 [package.metadata]
@@ -103,6 +105,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12.11" },
     { name = "trio", marker = "extra == 'dev'", specifier = ">=0.30.0" },
     { name = "typer", specifier = ">=0.9.0" },
+    { name = "version-bumper", marker = "extra == 'dev'", specifier = ">=0.1.2" },
 ]
 
 [package.metadata.requires-dev]
@@ -123,6 +126,7 @@ dev = [
     { name = "radon", specifier = ">=6.0.1" },
     { name = "ruff", specifier = ">=0.12.11" },
     { name = "trio", specifier = ">=0.30.0" },
+    { name = "version-bumper", specifier = ">=0.1.2" },
 ]
 
 [[package]]
@@ -899,6 +903,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pathvalidate"
+version = "3.3.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fa/2a/52a8da6fe965dea6192eb716b357558e103aea0a1e9a8352ad575a8406ca/pathvalidate-3.3.1.tar.gz", hash = "sha256:b18c07212bfead624345bb8e1d6141cdcf15a39736994ea0b94035ad2b1ba177", size = 63262 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9a/70/875f4a23bfc4731703a5835487d0d2fb999031bd415e7d17c0ae615c18b7/pathvalidate-3.3.1-py3-none-any.whl", hash = "sha256:5263baab691f8e1af96092fa5137ee17df5bdfbd6cff1fcac4d6ef4bc2e1735f", size = 24305 },
+]
+
+[[package]]
 name = "platformdirs"
 version = "4.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1308,6 +1321,15 @@ wheels = [
 ]
 
 [[package]]
+name = "tomlkit"
+version = "0.12.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2b/ab/18f4c8f2bec75eb1a7aebcc52cdb02ab04fd39ff7025bb1b1c7846cc45b8/tomlkit-0.12.5.tar.gz", hash = "sha256:eef34fba39834d4d6b73c9ba7f3e4d1c417a4e56f89a7e96e090dd0d24b8fb3c", size = 191420 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/73/6d/b5406752c4e4ba86692b22fab0afed8b48f16bdde8f92e1d852976b61dc6/tomlkit-0.12.5-py3-none-any.whl", hash = "sha256:af914f5a9c59ed9d0762c7b64d3b5d5df007448eb9cd2edc8a46b1eafead172f", size = 37685 },
+]
+
+[[package]]
 name = "trio"
 version = "0.30.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1367,6 +1389,20 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/15/22/9ee70a2574a4f4599c47dd506532914ce044817c7752a79b6a51286319bc/urllib3-2.5.0.tar.gz", hash = "sha256:3fc47733c7e419d4bc3f6b3dc2b4f890bb743906a30d56ba4a5bfa4bbff92760", size = 393185 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a7/c2/fe1e52489ae3122415c51f387e221dd0773709bad6c6cdaa599e8a2c5185/urllib3-2.5.0-py3-none-any.whl", hash = "sha256:e6b01673c0fa6a13e374b50871808eb3bf7046c4b125b216f6bf1cc604cff0dc", size = 129795 },
+]
+
+[[package]]
+name = "version-bumper"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "loguru" },
+    { name = "pathvalidate" },
+    { name = "tomlkit" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0e/a8/99c234b4db842e4d5eb183f6de4615b8866c8dfe70aa2c7a73da66753a83/version_bumper-0.1.2.tar.gz", hash = "sha256:8b265ed2f2623fb533a76bcf53a7220c64c6dd0bc0751b91e20cf8538ee20149", size = 78590 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/14/f3/8f0c53ac4686738de4830d7db782d2cae84edd64962cdcc5743a92de602d/version_bumper-0.1.2-py3-none-any.whl", hash = "sha256:71a12ca32012be43550fd54529efcafc929dad17069c2cc7c9439184486671df", size = 26416 },
 ]
 
 [[package]]
