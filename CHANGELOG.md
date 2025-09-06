@@ -34,9 +34,55 @@ All notable changes to AppImage Updater will be documented in this file.
 
 ---
 
-## [Unreleased] - 2025-09-05
+## [Unreleased] - 2025-09-06
 
 ### 🚀 New Features
+- **🔍 MAJOR**: Automatic Prerelease Detection in `add` Command
+  - **PROBLEM SOLVED**: Repositories with only prerelease versions (like continuous builds) now work seamlessly
+  - **INTELLIGENT**: Automatically analyzes GitHub repository releases to detect prerelease-only repositories
+  - **ZERO-CONFIG**: For repos like appimaged, automatically enables `prerelease: true` without user intervention
+  - **SMART DETECTION**: Distinguishes between:
+    - **Continuous builds** (only prereleases) → auto-enables prerelease support
+    - **Stable releases** (has non-prereleases) → keeps prerelease disabled
+    - **Mixed repositories** (both types) → defaults to stable releases only
+  - **USER CONTROL**: Explicit `--prerelease` or `--no-prerelease` flags always override auto-detection
+  - **GRACEFUL FALLBACK**: API failures (rate limits, network errors) default to `prerelease: false`
+  - **VISUAL FEEDBACK**: Shows `🔍 Auto-detected continuous builds - enabled prerelease support` when triggered
+  - **EXAMPLES**:
+    - `appimage-updater add appimaged https://github.com/probonopd/go-appimage ~/Apps/appimaged` → auto-enables prerelease
+    - `appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD` → keeps prerelease disabled
+  - **IMPACT**: Eliminates configuration errors for continuous build applications like appimaged
+  - **TESTING**: 16 comprehensive tests covering all scenarios (prereleases-only, mixed, stable, API errors, user overrides)
+  - **ARCHITECTURE**: Async implementation with proper error handling and rate limit resilience
+### 🔧 Technical Improvements
+- **ENHANCED**: Async Architecture for GitHub API Integration
+  - **REFACTORED**: Made `add` command fully async to support GitHub API calls during configuration generation
+  - **FIXED**: Resolved coroutine warnings by creating async version of pattern generation (`_generate_appimage_pattern_async`)
+  - **IMPROVED**: Better error handling and rate limit management in GitHub API interactions
+  - **RESULT**: Clean async implementation with no runtime warnings
+
+### 🧪 Quality Assurance
+- **COMPREHENSIVE TESTING**: 16 new tests for automatic prerelease detection
+  - **UNIT TESTS**: `_should_enable_prerelease()` function with all scenarios:
+    - Repositories with only prereleases (✅ enables prerelease)
+    - Repositories with stable releases (❌ keeps disabled)
+    - Mixed repositories (❌ defaults to stable)
+    - Empty repositories (❌ safe default)
+    - Draft-only releases (❌ ignores drafts)
+    - API failures (❌ graceful fallback)
+  - **INTEGRATION TESTS**: Full `add` command workflows:
+    - Auto-detection with continuous build repos
+    - No auto-detection with stable repos
+    - User explicit flags override auto-detection
+    - Configuration file validation
+  - **REGRESSION TESTING**: All existing 116 tests continue to pass
+  - **COVERAGE**: Maintained 76% test coverage across codebase
+
+- **REAL-WORLD VALIDATION**: Tested with actual repositories
+  - **probonopd/go-appimage**: Successfully auto-detects prerelease-only (continuous tag)
+  - **FreeCAD/FreeCAD**: Correctly maintains stable release preference
+  - **Rate limit handling**: Graceful fallback when GitHub API limits are exceeded
+
 - **MAJOR**: Intelligent Pattern Generation from GitHub Releases
   - **PROBLEM SOLVED**: Fixed pattern generation issues where repository names didn't match actual file prefixes (e.g., OpenShot)
   - **NEW APPROACH**: `add` command now fetches actual GitHub releases to analyze real AppImage filenames

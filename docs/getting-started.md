@@ -51,11 +51,31 @@ appimage-updater add VSCode-Insiders https://github.com/microsoft/vscode ~/Apps/
 
 When you run `add`, it automatically:
 
-- **Generates smart file patterns** based on the repository name
+- **🔍 Detects prerelease requirements** - analyzes repositories and auto-enables prerelease for continuous builds
+- **Generates smart file patterns** based on the repository name  
 - **Sets up checksum verification** with SHA256 validation
 - **Configures daily update checks** by default
 - **Enables the application** immediately
 - **Creates the download directory** if needed
+
+### 🔍 Smart Prerelease Detection
+
+The `add` command intelligently detects when repositories only provide prerelease versions:
+
+```bash
+# Continuous build apps are automatically detected
+appimage-updater add appimaged https://github.com/probonopd/go-appimage ~/Apps/appimaged
+# Output: 🔍 Auto-detected continuous builds - enabled prerelease support
+
+# Standard release apps keep prerelease disabled
+appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
+# No auto-detection message - uses stable releases
+```
+
+**How it works:**
+- **Continuous builds only** → Automatically enables `prerelease: true`
+- **Stable releases available** → Keeps `prerelease: false` 
+- **Your choice matters** → `--prerelease` or `--no-prerelease` always override detection
 
 ### Advanced Options
 

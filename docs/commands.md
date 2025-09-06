@@ -40,7 +40,7 @@ appimage-updater init --config-dir /custom/path
 
 ### `add`
 
-Add a new application configuration with intelligent defaults.
+Add a new application configuration with intelligent defaults and **automatic prerelease detection**.
 
 ```bash
 appimage-updater add [OPTIONS] NAME URL DOWNLOAD_DIR
@@ -51,11 +51,17 @@ appimage-updater add [OPTIONS] NAME URL DOWNLOAD_DIR
 - `URL` - GitHub repository URL
 - `DOWNLOAD_DIR` - Directory to download AppImages
 
+**🔍 Automatic Prerelease Detection:**
+The `add` command intelligently analyzes the repository to detect continuous build patterns:
+- **Auto-enables prerelease** for repositories with only prerelease versions (like `appimaged`)
+- **Keeps prerelease disabled** for repositories with stable releases
+- **User flags override** auto-detection when specified
+
 **Options:**
 - `--frequency INTEGER` - Update check frequency (default: 1)
 - `--unit [hours|days|weeks]` - Frequency unit (default: days)
-- `--prerelease` - Include prerelease versions
-- `--no-prerelease` - Exclude prerelease versions (default)
+- `--prerelease` - Force enable prerelease versions (overrides auto-detection)
+- `--no-prerelease` - Force disable prerelease versions (overrides auto-detection)
 - `--rotation` - Enable file rotation
 - `--no-rotation` - Disable file rotation (default)
 - `--symlink PATH` - Symlink path (required with --rotation)
@@ -63,17 +69,21 @@ appimage-updater add [OPTIONS] NAME URL DOWNLOAD_DIR
 
 **Examples:**
 ```bash
-# Basic usage
+# Basic usage (auto-detects prerelease if needed)
 appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
+
+# Continuous build (auto-enables prerelease)
+appimage-updater add appimaged https://github.com/probonopd/go-appimage ~/Apps/appimaged
+# Output: 🔍 Auto-detected continuous builds - enabled prerelease support
 
 # With custom frequency
 appimage-updater add --frequency 7 --unit days MyApp https://github.com/user/repo ~/Apps/MyApp
 
+# Force prerelease (overrides auto-detection)
+appimage-updater add --prerelease NightlyApp https://github.com/user/repo ~/Apps/NightlyApp
+
 # With file rotation
 appimage-updater add --rotation --symlink ~/bin/myapp.AppImage --retain 5 MyApp https://github.com/user/repo ~/Apps/MyApp
-
-# Include prereleases
-appimage-updater add --prerelease NightlyApp https://github.com/user/repo ~/Apps/NightlyApp
 ```
 
 ### `list`

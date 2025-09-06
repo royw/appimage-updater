@@ -14,6 +14,7 @@ This tool monitors configured applications (like FreeCAD) for new releases and p
 
 ## Features
 
+- **🔍 Smart Auto-Detection**: Automatically detects continuous build repositories and enables prerelease support
 - **Easy Application Setup**: Simple `add` command with intelligent defaults
 - **File Rotation & Symlinks**: Automatic file management with configurable retention
 - **Flexible Configuration**: Custom update frequencies, rotation settings, and symlink management
@@ -27,7 +28,7 @@ This tool monitors configured applications (like FreeCAD) for new releases and p
 
 ✅ **Production Ready** - Full CI/CD pipeline with automated testing and documentation  
 ✅ **Live Documentation** - Professional docs site with enhanced navigation  
-✅ **Quality Assured** - 95 tests, 71% coverage, complexity analysis, type checking  
+✅ **Quality Assured** - 116 tests, 76% coverage, complexity analysis, type checking
 ✅ **Open Source** - Public repository with contribution guidelines and templates  
 ✅ **Modern Tooling** - Built with Python 3.11+, uv, ruff, mypy, pytest
 

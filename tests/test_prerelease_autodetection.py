@@ -1,0 +1,319 @@
+"""Tests for automatic prerelease detection feature in add command."""
+
+import json
+from pathlib import Path
+from unittest.mock import AsyncMock, patch
+
+import pytest
+from typer.testing import CliRunner
+
+from appimage_updater.main import _should_enable_prerelease, app
+from appimage_updater.models import Asset, Release
+from datetime import datetime
+
+
+@pytest.fixture
+def runner():
+    """Create a CLI runner for testing."""
+    return CliRunner()
+
+
+@pytest.fixture
+def temp_config_dir(tmp_path):
+    """Create a temporary config directory."""
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    return config_dir
+
+
+class TestPrereleaseAutoDetection:
+    """Test automatic prerelease detection functionality."""
+
+    @pytest.mark.anyio
+    async def test_should_enable_prerelease_only_prereleases(self):
+        """Test that prerelease is enabled when repository only has prereleases."""
+        mock_releases = [
+            Release(
+                version="Continuous Build",
+                tag_name="continuous",
+                published_at=datetime.now(),
+                assets=[Asset(name="app.AppImage", url="http://test.com/app.AppImage", size=1000, created_at=datetime.now())],
+                is_prerelease=True,
+                is_draft=False,
+            )
+        ]
+
+        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.get_releases.return_value = mock_releases
+            mock_client_class.return_value = mock_client
+
+            result = await _should_enable_prerelease("https://github.com/test/repo")
+
+        assert result is True
+        mock_client.get_releases.assert_called_once_with("https://github.com/test/repo", limit=10)
+
+    @pytest.mark.anyio
+    async def test_should_enable_prerelease_mixed_releases(self):
+        """Test that prerelease is not enabled when repository has both stable and prerelease versions."""
+        mock_releases = [
+            Release(
+                version="v1.0.0",
+                tag_name="v1.0.0",
+                published_at=datetime.now(),
+                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000, created_at=datetime.now())],
+                is_prerelease=False,
+                is_draft=False,
+            ),
+            Release(
+                version="Continuous Build",
+                tag_name="continuous",
+                published_at=datetime.now(),
+                assets=[Asset(name="app.AppImage", url="http://test.com/app.AppImage", size=1000, created_at=datetime.now())],
+                is_prerelease=True,
+                is_draft=False,
+            ),
+        ]
+
+        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.get_releases.return_value = mock_releases
+            mock_client_class.return_value = mock_client
+
+            result = await _should_enable_prerelease("https://github.com/test/repo")
+
+        assert result is False
+
+    @pytest.mark.anyio
+    async def test_should_enable_prerelease_only_stable_releases(self):
+        """Test that prerelease is not enabled when repository only has stable releases."""
+        mock_releases = [
+            Release(
+                version="v1.0.0",
+                tag_name="v1.0.0",
+                published_at=datetime.now(),
+                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000, created_at=datetime.now())],
+                is_prerelease=False,
+                is_draft=False,
+            ),
+            Release(
+                version="v0.9.0",
+                tag_name="v0.9.0",
+                published_at=datetime.now(),
+                assets=[Asset(name="app-v0.9.0.AppImage", url="http://test.com/app-v0.9.0.AppImage", size=1000, created_at=datetime.now())],
+                is_prerelease=False,
+                is_draft=False,
+            ),
+        ]
+
+        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.get_releases.return_value = mock_releases
+            mock_client_class.return_value = mock_client
+
+            result = await _should_enable_prerelease("https://github.com/test/repo")
+
+        assert result is False
+
+    @pytest.mark.anyio
+    async def test_should_enable_prerelease_no_releases(self):
+        """Test that prerelease is not enabled when repository has no releases."""
+        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.get_releases.return_value = []
+            mock_client_class.return_value = mock_client
+
+            result = await _should_enable_prerelease("https://github.com/test/repo")
+
+        assert result is False
+
+    @pytest.mark.anyio
+    async def test_should_enable_prerelease_only_draft_releases(self):
+        """Test that prerelease is not enabled when repository only has draft releases."""
+        mock_releases = [
+            Release(
+                version="Draft v1.0.0",
+                tag_name="v1.0.0",
+                published_at=datetime.now(),
+                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000, created_at=datetime.now())],
+                is_prerelease=True,
+                is_draft=True,
+            )
+        ]
+
+        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.get_releases.return_value = mock_releases
+            mock_client_class.return_value = mock_client
+
+            result = await _should_enable_prerelease("https://github.com/test/repo")
+
+        assert result is False
+
+    @pytest.mark.anyio
+    async def test_should_enable_prerelease_api_error(self):
+        """Test that prerelease is not enabled when GitHub API fails."""
+        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.get_releases.side_effect = Exception("API Error")
+            mock_client_class.return_value = mock_client
+
+            result = await _should_enable_prerelease("https://github.com/test/repo")
+
+        assert result is False
+
+    def test_add_command_auto_enables_prerelease(self, runner, temp_config_dir):
+        """Test that add command automatically enables prerelease for continuous build repos."""
+        mock_releases = [
+            Release(
+                version="Continuous Build",
+                tag_name="continuous",
+                published_at=datetime.now(),
+                assets=[Asset(name="appimaged.AppImage", url="http://test.com/appimaged.AppImage", size=1000, created_at=datetime.now())],
+                is_prerelease=True,
+                is_draft=False,
+            )
+        ]
+
+        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.get_releases.return_value = mock_releases
+            mock_client_class.return_value = mock_client
+
+            result = runner.invoke(app, [
+                "add", "test_app", 
+                "https://github.com/test/continuous", 
+                str(temp_config_dir.parent / "downloads"),
+                "--config-dir", str(temp_config_dir),
+                "--create-dir"
+            ])
+
+        assert result.exit_code == 0
+        assert "Auto-detected continuous builds - enabled prerelease support" in result.stdout
+
+        # Check that the configuration file was created with prerelease enabled
+        config_file = temp_config_dir / "test_app.json"
+        assert config_file.exists()
+        
+        with config_file.open() as f:
+            config = json.load(f)
+        
+        app_config = config["applications"][0]
+        assert app_config["prerelease"] is True
+
+    def test_add_command_does_not_auto_enable_prerelease_for_stable(self, runner, temp_config_dir):
+        """Test that add command does not auto-enable prerelease for repos with stable releases."""
+        mock_releases = [
+            Release(
+                version="v1.0.0",
+                tag_name="v1.0.0",
+                published_at=datetime.now(),
+                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000, created_at=datetime.now())],
+                is_prerelease=False,
+                is_draft=False,
+            )
+        ]
+
+        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.get_releases.return_value = mock_releases
+            mock_client_class.return_value = mock_client
+
+            result = runner.invoke(app, [
+                "add", "test_stable", 
+                "https://github.com/test/stable", 
+                str(temp_config_dir.parent / "downloads"),
+                "--config-dir", str(temp_config_dir),
+                "--create-dir"
+            ])
+
+        assert result.exit_code == 0
+        assert "Auto-detected continuous builds" not in result.stdout
+
+        # Check that the configuration file was created with prerelease disabled
+        config_file = temp_config_dir / "test_stable.json"
+        assert config_file.exists()
+        
+        with config_file.open() as f:
+            config = json.load(f)
+        
+        app_config = config["applications"][0]
+        assert app_config["prerelease"] is False
+
+    def test_add_command_respects_explicit_prerelease_setting(self, runner, temp_config_dir):
+        """Test that add command respects explicitly set --prerelease flag even with auto-detection."""
+        mock_releases = [
+            Release(
+                version="v1.0.0",
+                tag_name="v1.0.0",
+                published_at=datetime.now(),
+                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000, created_at=datetime.now())],
+                is_prerelease=False,
+                is_draft=False,
+            )
+        ]
+
+        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.get_releases.return_value = mock_releases
+            mock_client_class.return_value = mock_client
+
+            result = runner.invoke(app, [
+                "add", "--prerelease", "test_explicit", 
+                "https://github.com/test/stable", 
+                str(temp_config_dir.parent / "downloads"),
+                "--config-dir", str(temp_config_dir),
+                "--create-dir"
+            ])
+
+        assert result.exit_code == 0
+        assert "Auto-detected continuous builds" not in result.stdout
+
+        # Check that the configuration file was created with prerelease enabled (explicit)
+        config_file = temp_config_dir / "test_explicit.json"
+        assert config_file.exists()
+        
+        with config_file.open() as f:
+            config = json.load(f)
+        
+        app_config = config["applications"][0]
+        assert app_config["prerelease"] is True
+
+    def test_add_command_respects_explicit_no_prerelease_setting(self, runner, temp_config_dir):
+        """Test that add command respects explicitly set --no-prerelease flag even with auto-detection."""
+        mock_releases = [
+            Release(
+                version="Continuous Build",
+                tag_name="continuous",
+                published_at=datetime.now(),
+                assets=[Asset(name="appimaged.AppImage", url="http://test.com/appimaged.AppImage", size=1000, created_at=datetime.now())],
+                is_prerelease=True,
+                is_draft=False,
+            )
+        ]
+
+        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.get_releases.return_value = mock_releases
+            mock_client_class.return_value = mock_client
+
+            result = runner.invoke(app, [
+                "add", "--no-prerelease", "test_explicit_no", 
+                "https://github.com/test/continuous", 
+                str(temp_config_dir.parent / "downloads"),
+                "--config-dir", str(temp_config_dir),
+                "--create-dir"
+            ])
+
+        assert result.exit_code == 0
+        assert "Auto-detected continuous builds" not in result.stdout
+
+        # Check that the configuration file was created with prerelease disabled (explicit)
+        config_file = temp_config_dir / "test_explicit_no.json"
+        assert config_file.exists()
+        
+        with config_file.open() as f:
+            config = json.load(f)
+        
+        app_config = config["applications"][0]
+        assert app_config["prerelease"] is False

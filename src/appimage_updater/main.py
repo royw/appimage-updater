@@ -357,10 +357,14 @@ def add(
     and other settings based on the provided URL and name. If the download directory
     does not exist, you will be prompted to create it (unless --create-dir is used).
 
+    Additionally, this command automatically detects if a repository only contains
+    prerelease versions (like continuous builds) and enables prerelease support
+    automatically when needed.
+
     Basic Options:
         --frequency N: Update check frequency (default: 1)
         --unit UNIT: Frequency unit - hours, days, weeks (default: days)
-        --prerelease/--no-prerelease: Enable/disable prerelease versions (default: disabled)
+        --prerelease/--no-prerelease: Enable/disable prerelease versions (default: auto-detect)
 
     File Rotation:
         --rotation/--no-rotation: Enable/disable file rotation (default: disabled)
@@ -377,10 +381,10 @@ def add(
     you must also provide --symlink PATH.
 
     Examples:
-        # Basic usage
+        # Basic usage with auto-detection
         appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
 
-        # With prerelease and weekly updates
+        # Force prerelease enabled
         appimage-updater add --prerelease --frequency 1 --unit weeks \\
             FreeCAD_weekly https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
 
@@ -395,6 +399,47 @@ def add(
         # Disable checksum verification
         appimage-updater add --no-checksum MyTool https://github.com/user/tool ~/Tools
     """
+    asyncio.run(
+        _add(
+            name,
+            url,
+            download_dir,
+            create_dir,
+            config_file,
+            config_dir,
+            rotation,
+            retain,
+            frequency,
+            unit,
+            symlink,
+            prerelease,
+            checksum,
+            checksum_algorithm,
+            checksum_pattern,
+            checksum_required,
+        )
+    )
+
+
+async def _add(
+    name: str,
+    url: str,
+    download_dir: str,
+    create_dir: bool,
+    config_file: Path | None,
+    config_dir: Path | None,
+    rotation: bool | None,
+    retain: int,
+    frequency: int,
+    unit: str,
+    symlink: str | None,
+    prerelease: bool | None,
+    checksum: bool | None,
+    checksum_algorithm: str,
+    checksum_pattern: str,
+    checksum_required: bool | None,
+) -> None:
+    """Async implementation of the add command."""
     try:
         logger.info(f"Adding new application: {name}")
 
@@ -408,7 +453,7 @@ def add(
         expanded_download_dir = _handle_add_directory_creation(download_dir, create_dir)
 
         # Generate application configuration
-        app_config = _generate_default_config(
+        app_config, prerelease_auto_enabled = await _generate_default_config(
             name,
             validated_url,
             expanded_download_dir,
@@ -431,6 +476,11 @@ def add(
         console.print(f"[blue]Source: {validated_url}")
         console.print(f"[blue]Download Directory: {expanded_download_dir}")
         console.print(f"[blue]Pattern: {app_config['pattern']}")
+
+        # Show prerelease auto-detection feedback
+        if prerelease_auto_enabled:
+            console.print("[cyan]🔍 Auto-detected continuous builds - enabled prerelease support")
+
         console.print(f"\n[yellow]💡 Tip: Use 'appimage-updater show {name}' to view full configuration")
 
         logger.info(f"Successfully added application '{name}' to configuration")
@@ -1521,6 +1571,27 @@ def _generate_appimage_pattern(app_name: str, url: str) -> str:
     return _generate_fallback_pattern(app_name, url)
 
 
+async def _generate_appimage_pattern_async(app_name: str, url: str) -> str:
+    """Async version of pattern generation for use in async contexts.
+
+    First attempts to fetch actual AppImage files from GitHub releases to create
+    an accurate pattern. Falls back to intelligent defaults if that fails.
+    """
+    try:
+        # Try to get pattern from actual GitHub releases
+        pattern = await _fetch_appimage_pattern_from_github(url)
+        if pattern:
+            logger.debug(f"Generated pattern from releases: {pattern}")
+            return pattern
+    except Exception as e:
+        logger.debug(f"Failed to generate pattern from releases: {e}")
+        # Fall through to fallback logic
+
+    # Fallback: Use intelligent defaults based on the app name and URL
+    logger.debug("Using fallback pattern generation")
+    return _generate_fallback_pattern(app_name, url)
+
+
 def _generate_pattern_from_releases(url: str) -> str | None:
     """Generate pattern by inspecting actual AppImage files in GitHub releases.
 
@@ -1658,7 +1729,56 @@ def _detect_source_type(url: str) -> str:
     return "github"  # Default to github for now
 
 
-def _generate_default_config(
+async def _should_enable_prerelease(url: str) -> bool:
+    """Check if prerelease should be automatically enabled for a repository.
+
+    Returns True if the repository only has prerelease versions (like continuous builds)
+    and no stable releases, indicating that prerelease support should be enabled.
+
+    Args:
+        url: GitHub repository URL
+
+    Returns:
+        bool: True if only prereleases are found, False if stable releases exist or on error
+    """
+    try:
+        from .github_client import GitHubClient
+
+        # Create GitHub client with shorter timeout for this check
+        client = GitHubClient(timeout=10)
+
+        # Get recent releases to analyze
+        releases = await client.get_releases(url, limit=10)
+
+        if not releases:
+            logger.debug(f"No releases found for {url}, not enabling prerelease")
+            return False
+
+        # Filter out drafts
+        valid_releases = [r for r in releases if not r.is_draft]
+
+        if not valid_releases:
+            logger.debug(f"No non-draft releases found for {url}, not enabling prerelease")
+            return False
+
+        # Check if we have any non-prerelease versions
+        stable_releases = [r for r in valid_releases if not r.is_prerelease]
+        prerelease_only = len(stable_releases) == 0
+
+        if prerelease_only:
+            logger.info(f"Repository {url} contains only prerelease versions, enabling prerelease support")
+        else:
+            logger.debug(f"Repository {url} has stable releases, not auto-enabling prerelease")
+
+        return prerelease_only
+
+    except Exception as e:
+        # Don't fail the add command if prerelease detection fails
+        logger.debug(f"Failed to check prerelease status for {url}: {e}")
+        return False
+
+
+async def _generate_default_config(
     name: str,
     url: str,
     download_dir: str,
@@ -1672,19 +1792,32 @@ def _generate_default_config(
     checksum_algorithm: str = "sha256",
     checksum_pattern: str = "{filename}-SHA256.txt",
     checksum_required: bool | None = None,
-) -> dict[str, Any]:
-    """Generate a default application configuration."""
+) -> tuple[dict[str, Any], bool]:
+    """Generate a default application configuration.
+
+    Returns:
+        tuple: (config_dict, prerelease_auto_enabled)
+    """
     # Determine checksum settings
     checksum_enabled = True if checksum is None else checksum
     checksum_required_final = False if checksum_required is None else checksum_required
-    prerelease_final = False if prerelease is None else prerelease
+
+    # Handle prerelease detection - if not explicitly set, check if repo only has prereleases
+    prerelease_auto_enabled = False
+    if prerelease is None:
+        # Auto-detect if we should enable prereleases for repositories with only continuous builds
+        should_enable = await _should_enable_prerelease(url)
+        prerelease_final = should_enable
+        prerelease_auto_enabled = should_enable
+    else:
+        prerelease_final = prerelease
 
     config = {
         "name": name,
         "source_type": _detect_source_type(url),
         "url": url,
         "download_dir": download_dir,
-        "pattern": _generate_appimage_pattern(name, url),
+        "pattern": await _generate_appimage_pattern_async(name, url),
         "frequency": {"value": frequency, "unit": unit},
         "enabled": True,
         "prerelease": prerelease_final,
@@ -1712,7 +1845,7 @@ def _generate_default_config(
             # Expand user path
             config["symlink_path"] = str(Path(symlink).expanduser())
 
-    return config
+    return config, prerelease_auto_enabled
 
 
 def _add_application_to_config(app_config: dict[str, Any], config_file: Path | None, config_dir: Path | None) -> None:

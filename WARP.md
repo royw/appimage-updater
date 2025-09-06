@@ -147,7 +147,7 @@ appimage-updater add --prerelease --frequency 3 --unit days --rotation --retain 
 The `add` command now supports ALL configuration options available in the `edit` command:
 
 **Basic Configuration:**
-- `--prerelease/--no-prerelease`: Enable/disable prerelease versions (default: disabled)
+- `--prerelease/--no-prerelease`: Enable/disable prerelease versions (default: auto-detect)
 - `--frequency N`: Update check frequency (default: 1)
 - `--unit UNIT`: Frequency unit - hours, days, weeks (default: days)
 
@@ -162,14 +162,41 @@ The `add` command now supports ALL configuration options available in the `edit`
 - `--checksum-pattern PATTERN`: Checksum file pattern (default: {filename}-SHA256.txt)
 - `--checksum-required/--checksum-optional`: Make verification required/optional (default: optional)
 
-### Intelligent Defaults
+### Intelligent Defaults & Auto-Detection
 
 When options are not specified, the `add` command automatically generates:
 
 - **Smart file patterns**: Uses intelligent pattern generation from actual GitHub releases when possible
 - **Sensible update frequency**: Daily checks by default
 - **Checksum verification**: Enabled with SHA256 verification (optional)
-- **Standard configuration**: GitHub source type, enabled by default, no prereleases
+- **Automatic prerelease detection**: Auto-enables prerelease support for continuous build repositories
+- **Standard configuration**: GitHub source type, enabled by default
+
+### 🔍 Automatic Prerelease Detection
+
+**NEW FEATURE**: The `add` command now intelligently detects when repositories only contain prerelease versions (like continuous builds) and automatically enables prerelease support:
+
+```bash
+# Adding a continuous build repository
+appimage-updater add appimaged https://github.com/probonopd/go-appimage ~/Applications/appimaged
+
+# Output shows auto-detection:
+# ✓ Successfully added application 'appimaged'
+# 🔍 Auto-detected continuous builds - enabled prerelease support
+```
+
+**How it works:**
+- Analyzes recent releases from the GitHub repository
+- If only prerelease versions exist (no stable releases), automatically enables `prerelease: true`
+- If stable releases exist, keeps `prerelease: false` (default behavior)
+- Respects explicit `--prerelease` or `--no-prerelease` flags (user choice overrides auto-detection)
+- Fails silently on API errors (defaults to `prerelease: false`)
+
+**Benefits:**
+- **Zero configuration** for continuous build apps like appimaged, nightly builds, etc.
+- **Works automatically** - no need to remember which repos need prerelease enabled
+- **User control preserved** - explicit flags always take precedence
+- **Safe defaults** - only enables prereleases when confident they're the only option
 
 ### Configuration Examples
 
