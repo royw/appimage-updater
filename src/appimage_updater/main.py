@@ -1441,7 +1441,129 @@ def _normalize_github_url(url: str) -> tuple[str, bool]:
 def _generate_appimage_pattern(app_name: str, url: str) -> str:
     """Generate a regex pattern for matching AppImage files.
 
-    Uses intelligent defaults based on the app name and URL.
+    First attempts to fetch actual AppImage files from GitHub releases to create
+    an accurate pattern. Falls back to intelligent defaults if that fails.
+    """
+    try:
+        # Try to get pattern from actual GitHub releases
+        pattern = _generate_pattern_from_releases(url)
+        if pattern:
+            logger.debug(f"Generated pattern from releases: {pattern}")
+            return pattern
+    except Exception as e:
+        logger.debug(f"Failed to generate pattern from releases: {e}")
+        # Fall through to fallback logic
+
+    # Fallback: Use intelligent defaults based on the app name and URL
+    logger.debug("Using fallback pattern generation")
+    return _generate_fallback_pattern(app_name, url)
+
+
+def _generate_pattern_from_releases(url: str) -> str | None:
+    """Generate pattern by inspecting actual AppImage files in GitHub releases.
+
+    Returns None if unable to fetch releases or no AppImage files found.
+    """
+    import asyncio
+
+    from .github_client import GitHubClientError
+
+    try:
+        # Run async GitHub API call in sync context
+        pattern = asyncio.run(_fetch_appimage_pattern_from_github(url))
+        return pattern
+    except (GitHubClientError, Exception) as e:
+        logger.debug(f"Could not fetch pattern from GitHub releases: {e}")
+        return None
+
+
+async def _fetch_appimage_pattern_from_github(url: str) -> str | None:
+    """Async function to fetch AppImage pattern from GitHub releases."""
+    client = GitHubClient()
+
+    try:
+        # Get recent releases to find AppImage files
+        releases = await client.get_releases(url, limit=5)
+        appimage_files = []
+
+        # Collect AppImage files from recent releases
+        for release in releases:
+            for asset in release.assets:
+                if asset.name.lower().endswith(".appimage"):
+                    appimage_files.append(asset.name)
+
+        if not appimage_files:
+            logger.debug("No AppImage files found in recent releases")
+            return None
+
+        # Generate pattern from actual filenames
+        return _create_pattern_from_filenames(appimage_files)
+
+    except Exception as e:
+        logger.debug(f"Error fetching releases: {e}")
+        return None
+
+
+def _create_pattern_from_filenames(filenames: list[str]) -> str:
+    """Create a regex pattern from actual AppImage filenames.
+
+    Analyzes the filenames to extract common prefixes and create a flexible,
+    case-insensitive pattern that matches the actual file naming convention.
+    """
+    if not filenames:
+        return ".*\\.AppImage(\\.(|current|old))?$"
+
+    # Find the common prefix among all filenames
+    common_prefix = _find_common_prefix(filenames)
+
+    if len(common_prefix) < 2:  # Too short to be useful
+        # Use the first filename's prefix up to the first non-letter character
+        first_file = filenames[0]
+        prefix_match = re.match(r"^([a-zA-Z]+)", first_file)
+        common_prefix = prefix_match.group(1) if prefix_match else first_file.split("-")[0]
+
+    # Create case-insensitive pattern with the common prefix
+    # Use (?i) flag for case-insensitive matching of the entire pattern
+    escaped_prefix = re.escape(common_prefix)
+    pattern = f"(?i){escaped_prefix}.*\\.AppImage(\\.(|current|old))?$"
+
+    logger.debug(f"Created pattern '{pattern}' from {len(filenames)} files: {filenames[:3]}...")
+    return pattern
+
+
+def _find_common_prefix(strings: list[str]) -> str:
+    """Find the longest common prefix among a list of strings."""
+    if not strings:
+        return ""
+
+    # Start with the first string
+    prefix = strings[0]
+
+    for string in strings[1:]:
+        # Find common prefix with current string
+        common_len = 0
+        min_len = min(len(prefix), len(string))
+
+        for i in range(min_len):
+            if prefix[i].lower() == string[i].lower():  # Case-insensitive comparison
+                common_len += 1
+            else:
+                break
+
+        prefix = prefix[:common_len]
+
+        # If prefix becomes too short, stop
+        if len(prefix) < 2:
+            break
+
+    return prefix
+
+
+def _generate_fallback_pattern(app_name: str, url: str) -> str:
+    """Generate a fallback pattern using app name and URL heuristics.
+
+    This is the original logic, kept as a fallback when we can't fetch
+    actual release data from GitHub.
     """
     # Start with the app name as base (prefer app name over repo name for better matching)
     base_name = re.escape(app_name)

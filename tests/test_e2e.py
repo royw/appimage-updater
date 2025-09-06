@@ -917,7 +917,7 @@ class TestAddCommand:
     """Test the add command functionality."""
     
     def test_add_command_with_github_url(self, runner, temp_config_dir):
-        """Test add command with valid GitHub URL."""
+        """Test add command with valid GitHub URL (uses fallback for non-existent repo)."""
         result = runner.invoke(app, [
             "add", "TestApp", 
             "https://github.com/user/testapp", 
@@ -929,6 +929,7 @@ class TestAddCommand:
         assert "Successfully added application 'TestApp'" in result.stdout
         assert "https://github.com/user/testapp" in result.stdout
         assert "/tmp/test-download" in result.stdout
+        # For non-existent repo, should fall back to heuristic pattern generation
         assert "TestApp.*[Ll]inux.*\\.AppImage(\\.(|current|old))?$" in result.stdout
         
         # Check that config file was created
@@ -945,6 +946,7 @@ class TestAddCommand:
         assert app_config["source_type"] == "github"
         assert app_config["url"] == "https://github.com/user/testapp"
         assert app_config["download_dir"] == "/tmp/test-download"
+        # Non-existent repo should use fallback heuristic pattern
         assert app_config["pattern"] == "TestApp.*[Ll]inux.*\\.AppImage(\\.(|current|old))?$"
         assert app_config["enabled"] is True
         assert app_config["prerelease"] is False
@@ -969,7 +971,7 @@ class TestAddCommand:
         assert len(config_files) == 0
     
     def test_add_command_with_different_repo_name(self, runner, temp_config_dir):
-        """Test add command uses repo name when different from app name."""
+        """Test add command now uses intelligent pattern generation from actual releases."""
         result = runner.invoke(app, [
             "add", "MyApp", 
             "https://github.com/SoftFever/OrcaSlicer", 
@@ -979,9 +981,11 @@ class TestAddCommand:
         
         assert result.exit_code == 0
         assert "Successfully added application 'MyApp'" in result.stdout
-        # With new logic, should use app name 'MyApp' instead of repo name 'OrcaSlicer'
-        # This is more accurate since 'MyApp' is not a generic name and pattern matching should be predictable
-        assert "MyApp.*[Ll]inux.*\\.AppImage(\\.(|current|old))?$" in result.stdout
+        # NEW BEHAVIOR: Uses intelligent pattern generation based on actual GitHub releases
+        # OrcaSlicer has files like "OrcaSlicer_Linux_AppImage_Ubuntu2404_..."
+        # So pattern should be based on actual file prefixes, not app/repo names
+        assert "(?i)OrcaSlicer" in result.stdout  # Should use actual file prefix
+        assert "OrcaSlicer_Linux_AppImage" in result.stdout  # Should match actual naming
         
         # Verify config content
         config_file = temp_config_dir / "myapp.json"
@@ -992,7 +996,9 @@ class TestAddCommand:
         
         app_config = config_data["applications"][0]
         assert app_config["name"] == "MyApp"
-        assert app_config["pattern"] == "MyApp.*[Ll]inux.*\\.AppImage(\\.(|current|old))?$"
+        # Pattern should be based on actual OrcaSlicer files, not the app name "MyApp"
+        assert "(?i)" in app_config["pattern"]  # Should be case-insensitive
+        assert "OrcaSlicer" in app_config["pattern"]  # Should use actual file prefix
     
     def test_add_command_with_existing_config_file(self, runner, temp_config_dir):
         """Test add command appends to existing config file."""

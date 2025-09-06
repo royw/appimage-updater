@@ -36,6 +36,19 @@ All notable changes to AppImage Updater will be documented in this file.
 
 ## [Unreleased] - 2025-09-05
 
+### 🚀 New Features
+- **MAJOR**: Intelligent Pattern Generation from GitHub Releases
+  - **PROBLEM SOLVED**: Fixed pattern generation issues where repository names didn't match actual file prefixes (e.g., OpenShot)
+  - **NEW APPROACH**: `add` command now fetches actual GitHub releases to analyze real AppImage filenames
+  - **SMART ANALYSIS**: Extracts common prefixes from actual files instead of guessing from repository names
+  - **CASE-INSENSITIVE**: Generates `(?i)` patterns that work regardless of filename casing
+  - **REAL-WORLD ACCURACY**: Patterns based on actual release data, not assumptions
+  - **FALLBACK SAFE**: Falls back to old heuristic method if GitHub API is unavailable
+  - **EXAMPLE**: For OpenShot (repo: `openshot-qt`, files: `OpenShot-v3.3.0-x86_64.AppImage`):
+    - **OLD**: `openshot\-qt.*[Ll]inux.*\.AppImage` (❌ doesn't match)
+    - **NEW**: `(?i)OpenShot\-v3\..*\.AppImage` (✅ matches perfectly)
+  - **IMPACT**: Dramatically improves accuracy for applications where repo names differ from file prefixes
+
 ### 🏗️ Build System
 - **NEW**: `build` task for creating distribution packages
   - **ADDED**: `task build` command to create wheel and sdist packages using `uv build`
