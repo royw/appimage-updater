@@ -192,7 +192,8 @@ def test_edit_download_directory_with_creation(runner, single_config_file, tmp_p
     assert result.exit_code == 0
     clean_output = normalize_text(result.stdout)
     assert "Created directory:" in clean_output
-    assert "new_download_locat" in clean_output  # Check for the directory name (may be wrapped)
+    # Check for the directory name - handle potential line wrapping
+    assert "new_download_location" in clean_output.replace("\n", "") or "new_download_locat" in clean_output
     assert "Download Directory:" in clean_output
     assert "downloads/TestApp" in clean_output
     assert "→" in clean_output
@@ -249,7 +250,8 @@ def test_edit_rotation_with_symlink(runner, single_config_file, tmp_path):
     clean_output = normalize_text(result.stdout)
     assert "File Rotation: Disabled → Enabled" in clean_output
     assert "Symlink Path: None →" in clean_output
-    assert "testapp.AppIma" in clean_output  # Check for the file name (may be wrapped)
+    # Check for the filename - handle potential line wrapping
+    assert "testapp.AppImage" in clean_output.replace("\n", "") or "testapp.AppIma" in clean_output
     assert "Retain Count: 3 → 7" in result.stdout
     
     # Verify the changes were saved
