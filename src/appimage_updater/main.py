@@ -443,6 +443,17 @@ async def _add(
     try:
         logger.info(f"Adding new application: {name}")
 
+        # Show GitHub API authentication status if debug logging is enabled
+        from .github_auth import get_github_auth
+
+        auth = get_github_auth()
+        # Always log auth status during add command with debug details
+        rate_info = auth.get_rate_limit_info()
+        if auth.is_authenticated:
+            logger.debug(f"GitHub API: Authenticated ({rate_info['limit']} req/hour via {auth.token_source})")
+        else:
+            logger.debug(f"GitHub API: Anonymous ({rate_info['limit']} req/hour) - Set GITHUB_TOKEN for higher limits")
+
         # Validate and normalize URL
         validated_url = _validate_and_normalize_add_url(url)
 
@@ -489,7 +500,16 @@ async def _add(
         # Re-raise typer.Exit without logging - these are intentional exits
         raise
     except Exception as e:
-        console.print(f"[red]Error adding application: {e}")
+        # Check for GitHub rate limit errors and provide helpful feedback
+        error_msg = str(e)
+        if "rate limit" in error_msg.lower():
+            console.print(f"[red]GitHub API rate limit exceeded: {e}")
+            console.print("[yellow]💡 To avoid rate limits, set a GitHub token:")
+            console.print("[yellow]   export GITHUB_TOKEN=your_token_here")
+            console.print("[yellow]   Get a token at: https://github.com/settings/tokens")
+            console.print("[yellow]   Only 'public_repo' permission is needed for public repositories")
+        else:
+            console.print(f"[red]Error adding application: {e}")
         logger.error(f"Error adding application '{name}': {e}")
         logger.exception("Full exception details")
         raise typer.Exit(1) from e
@@ -1612,7 +1632,11 @@ def _generate_pattern_from_releases(url: str) -> str | None:
 
 async def _fetch_appimage_pattern_from_github(url: str) -> str | None:
     """Async function to fetch AppImage pattern from GitHub releases."""
-    client = GitHubClient()
+    from .github_auth import get_github_auth
+
+    # Use authentication for better rate limits
+    auth = get_github_auth()
+    client = GitHubClient(auth=auth)
 
     try:
         # Get recent releases to find AppImage files
@@ -1742,10 +1766,12 @@ async def _should_enable_prerelease(url: str) -> bool:
         bool: True if only prereleases are found, False if stable releases exist or on error
     """
     try:
+        from .github_auth import get_github_auth
         from .github_client import GitHubClient
 
-        # Create GitHub client with shorter timeout for this check
-        client = GitHubClient(timeout=10)
+        # Create GitHub client with authentication and shorter timeout for this check
+        auth = get_github_auth()
+        client = GitHubClient(timeout=10, auth=auth)
 
         # Get recent releases to analyze
         releases = await client.get_releases(url, limit=10)

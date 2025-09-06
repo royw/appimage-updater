@@ -75,6 +75,120 @@ AppImage Updater looks for configuration in the following order:
 3. `~/.config/appimage-updater/apps/` (directory of JSON files)
 4. `~/.config/appimage-updater/config.json` (single file)
 
+## GitHub Authentication
+
+AppImage Updater supports GitHub Personal Access Token (PAT) authentication to increase API rate limits from 60 to 5,000 requests per hour, eliminating rate limit errors during normal usage.
+
+### Why Authentication is Recommended
+
+- **Anonymous**: 60 requests/hour (frequently exceeded)
+- **Authenticated**: 5,000 requests/hour (sufficient for intensive usage)
+- **Benefits**: Eliminates "rate limit exceeded" errors, improves reliability
+- **Security**: Uses minimal read-only permissions for public repositories only
+
+### Authentication Sources (Priority Order)
+
+AppImage Updater automatically discovers tokens from multiple sources:
+
+1. **`GITHUB_TOKEN`** environment variable (GitHub CLI compatible)
+2. **`APPIMAGE_UPDATER_GITHUB_TOKEN`** environment variable (app-specific)
+3. **Token files** in user config directory:
+   - `~/.config/appimage-updater/github-token.json`
+   - `~/.config/appimage-updater/github_token.json`
+   - `~/.appimage-updater-github-token`
+4. **Global config files**:
+   - `~/.config/appimage-updater/config.json`
+   - `~/.config/appimage-updater/global.json`
+
+### Personal Access Token Setup
+
+#### Required Permissions (Minimal Security)
+
+- **Classic PATs**: Only `public_repo` permission
+- **Fine-grained PATs**: Only `Contents: Read` and `Metadata: Read`
+- **Security**: Read-only access to public repositories only
+
+#### Token Creation Steps
+
+1. **Visit GitHub**: [Personal Access Tokens (Classic)](https://github.com/settings/tokens)
+2. **Generate Token**: Click "Generate new token (classic)"
+3. **Configure**:
+   - Name: `AppImage-Updater`
+   - Expiration: Your preference (90 days, 1 year, or no expiration)
+   - **Select ONLY**: ☑️ `public_repo` (under "repo" section)
+4. **Generate**: Click "Generate token"
+5. **Copy**: Save the token immediately (you won't see it again)
+
+### Token Storage Options
+
+Choose **one** of the following methods:
+
+#### Option 1: Environment Variable (Recommended)
+
+```bash
+# Add to ~/.bashrc, ~/.zshrc, or ~/.profile
+export GITHUB_TOKEN="ghp_your_token_here"
+
+# Or use app-specific variable
+export APPIMAGE_UPDATER_GITHUB_TOKEN="ghp_your_token_here"
+```
+
+#### Option 2: Plain Text Token File
+
+```bash
+echo "ghp_your_token_here" > ~/.appimage-updater-github-token
+chmod 600 ~/.appimage-updater-github-token  # Secure permissions
+```
+
+#### Option 3: JSON Token File
+
+```bash
+mkdir -p ~/.config/appimage-updater
+echo '{"github_token": "ghp_your_token_here"}' > ~/.config/appimage-updater/github-token.json
+chmod 600 ~/.config/appimage-updater/github-token.json
+```
+
+#### Option 4: Global Config Integration
+
+```json
+{
+  "github": {
+    "token": "ghp_your_token_here"
+  },
+  "global_config": {
+    "concurrent_downloads": 3,
+    "timeout_seconds": 60
+  },
+  "applications": []
+}
+```
+
+### Authentication Status
+
+```bash
+# Check authentication status with debug mode
+appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
+
+# Output examples:
+# "GitHub API: Authenticated (5000 req/hour via GITHUB_TOKEN environment variable)"
+# "GitHub API: Anonymous (60 req/hour) - Set GITHUB_TOKEN for higher limits"
+```
+
+### Security Best Practices
+
+1. **Minimal Permissions**: Only grant `public_repo` access
+2. **Secure Storage**: Use file permissions (600) for token files
+3. **Environment Priority**: Environment variables take precedence over files
+4. **No Token Exposure**: Tokens never appear in logs or debug output
+5. **Regular Rotation**: Consider rotating tokens periodically
+
+### Troubleshooting
+
+- **Rate Limits**: Set up authentication to avoid 60/hour anonymous limits
+- **Token Invalid**: Regenerate token if getting authentication errors
+- **File Permissions**: Ensure token files are readable (but secure)
+- **Priority**: Higher priority sources override lower ones
+
 ## Directory-Based Configuration
 
 You can split your applications across multiple JSON files in a directory:

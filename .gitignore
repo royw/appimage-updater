@@ -167,3 +167,10 @@ cython_debug/
 # Downloaded AppImages
 downloads/
 *.AppImage
+
+# GitHub tokens and credentials (NEVER COMMIT)
+*token*.json
+*github-token*
+*credentials*
+.github-token
+github_token.txt

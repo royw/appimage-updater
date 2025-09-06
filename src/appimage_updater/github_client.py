@@ -10,6 +10,7 @@ import httpx
 from loguru import logger
 from pydantic import ValidationError
 
+from .github_auth import GitHubAuth, get_github_auth
 from .models import Asset, Release
 
 
@@ -18,14 +19,38 @@ class GitHubClientError(Exception):
 
 
 class GitHubClient:
-    """Client for GitHub API operations."""
+    """Client for GitHub API operations with authentication support."""
 
-    def __init__(self, timeout: int = 30, user_agent: str | None = None) -> None:
-        """Initialize GitHub client."""
+    def __init__(
+        self,
+        timeout: int = 30,
+        user_agent: str | None = None,
+        auth: GitHubAuth | None = None,
+        token: str | None = None,
+    ) -> None:
+        """Initialize GitHub client.
+
+        Args:
+            timeout: Request timeout in seconds
+            user_agent: Custom user agent string
+            auth: GitHubAuth instance for authentication
+            token: Explicit GitHub token (creates auth if provided)
+        """
         from ._version import __version__
 
         self.timeout = timeout
         self.user_agent = user_agent or f"AppImage-Updater/{__version__}"
+
+        # Set up authentication
+        if auth:
+            self.auth = auth
+        elif token:
+            self.auth = get_github_auth(token=token)
+        else:
+            self.auth = get_github_auth()
+
+        # Log authentication status
+        self.auth.log_auth_status()
 
     async def get_latest_release(self, repo_url: str) -> Release:
         """Get the latest release for a repository."""
@@ -36,11 +61,16 @@ class GitHubClient:
             try:
                 response = await client.get(
                     api_url,
-                    headers={"User-Agent": self.user_agent},
+                    headers=self.auth.get_auth_headers(),
                 )
                 response.raise_for_status()
             except httpx.HTTPError as e:
                 msg = f"Failed to fetch latest release for {owner}/{repo}: {e}"
+                if "rate limit" in str(e).lower():
+                    rate_info = self.auth.get_rate_limit_info()
+                    msg += f" (Rate limit: {rate_info['limit']} requests/hour for {rate_info['type']} access)"
+                    if not self.auth.is_authenticated:
+                        msg += ". Consider setting GITHUB_TOKEN environment variable for higher limits."
                 raise GitHubClientError(msg) from e
 
         return self._parse_release(response.json())
@@ -73,12 +103,17 @@ class GitHubClient:
             try:
                 response = await client.get(
                     api_url,
-                    headers={"User-Agent": self.user_agent},
+                    headers=self.auth.get_auth_headers(),
                     params={"per_page": str(limit)},
                 )
                 response.raise_for_status()
             except httpx.HTTPError as e:
                 msg = f"Failed to fetch releases for {owner}/{repo}: {e}"
+                if "rate limit" in str(e).lower():
+                    rate_info = self.auth.get_rate_limit_info()
+                    msg += f" (Rate limit: {rate_info['limit']} requests/hour for {rate_info['type']} access)"
+                    if not self.auth.is_authenticated:
+                        msg += ". Consider setting GITHUB_TOKEN environment variable for higher limits."
                 raise GitHubClientError(msg) from e
 
         releases_data = response.json()

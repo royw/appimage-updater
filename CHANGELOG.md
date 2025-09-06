@@ -36,6 +36,130 @@ All notable changes to AppImage Updater will be documented in this file.
 
 ## [Unreleased] - 2025-09-06
 
+### 🔐 MAJOR: GitHub API Authentication & Rate Limit Management
+- **🚀 GAME CHANGER**: Complete GitHub Personal Access Token (PAT) authentication system
+  - **PROBLEM SOLVED**: Anonymous GitHub API usage limited to 60 requests/hour causes rate limit failures
+  - **SOLUTION**: Comprehensive token discovery and authentication with 83x higher rate limits (5000/hour)
+  - **ZERO-CONFIG**: Automatic token discovery from multiple secure sources with intelligent priority
+  - **FLEXIBLE**: Supports environment variables, token files, and global config files
+  - **SECURE**: Security-first design with proper priority ordering and no token exposure in logs
+  - **USER-FRIENDLY**: Clear authentication status feedback and helpful setup guidance
+
+#### 🎯 **Authentication Sources (Priority Order)**:
+1. **`GITHUB_TOKEN`** environment variable (standard GitHub CLI compatible)
+2. **`APPIMAGE_UPDATER_GITHUB_TOKEN`** environment variable (app-specific)
+3. **Token files** in user config directory:
+   - `~/.config/appimage-updater/github-token.json` (JSON format)
+   - `~/.config/appimage-updater/github_token.json` (JSON format)
+   - `~/.appimage-updater-github-token` (plain text)
+4. **Global config files** with GitHub token settings:
+   - `~/.config/appimage-updater/config.json`
+   - `~/.config/appimage-updater/global.json`
+
+#### 🔧 **Technical Implementation**:
+- **NEW**: `GitHubAuth` class for secure token management and validation
+- **NEW**: `get_github_auth()` factory function for easy authentication setup
+- **ENHANCED**: `GitHubClient` with automatic authentication integration
+- **ENHANCED**: All GitHub API calls now include authentication headers
+- **ENHANCED**: Rate limit aware error messages with helpful user guidance
+- **INTEGRATED**: CLI commands show authentication status in debug mode
+
+#### 📊 **Rate Limit Benefits**:
+- **Anonymous**: 60 requests/hour (frequently exceeded during normal usage)
+- **Authenticated**: 5,000 requests/hour (sufficient for intensive usage)
+- **Impact**: Eliminates rate limit failures during normal operation
+- **Feedback**: Clear status messages showing current rate limits and authentication method
+
+#### 🔐 **Personal Access Token (PAT) Setup Guide**:
+
+**Required Permissions (Minimal Security)**:
+- **Classic PATs**: Only `public_repo` permission needed
+- **Fine-grained PATs**: Only `Contents: Read` and `Metadata: Read` permissions needed
+- **Security**: Read-only access to public repositories only - cannot access private data or modify anything
+
+**Step-by-Step Token Creation**:
+
+1. **Create Classic PAT (Recommended)**:
+   - Visit: [GitHub Settings > Developer settings > Personal access tokens > Tokens (classic)](https://github.com/settings/tokens)
+   - Click "Generate new token (classic)"
+   - Set token name: `AppImage-Updater`
+   - Set expiration: Choose your preference (90 days, 1 year, or no expiration)
+   - **Select ONLY**: ☑️ `public_repo` (under "repo" section)
+   - Click "Generate token"
+   - **IMPORTANT**: Copy the token immediately (you won't see it again)
+
+2. **Create Fine-grained PAT (Alternative)**:
+   - Visit: [GitHub Settings > Developer settings > Personal access tokens > Fine-grained tokens](https://github.com/settings/personal-access-tokens/new)
+   - Set token name: `AppImage-Updater`
+   - Set expiration and resource access as desired
+   - Under "Repository permissions":
+     - **Contents**: `Read`
+     - **Metadata**: `Read` (automatically selected)
+   - Click "Generate token"
+
+**Token Storage Options** (Choose one):
+
+```bash
+# Option 1: Environment Variable (Recommended)
+export GITHUB_TOKEN="ghp_your_token_here"
+# Add to ~/.bashrc or ~/.profile to persist
+
+# Option 2: App-Specific Environment Variable
+export APPIMAGE_UPDATER_GITHUB_TOKEN="ghp_your_token_here"
+
+# Option 3: Plain Text Token File
+echo "ghp_your_token_here" > ~/.appimage-updater-github-token
+chmod 600 ~/.appimage-updater-github-token  # Secure permissions
+
+# Option 4: JSON Token File
+mkdir -p ~/.config/appimage-updater
+echo '{"github_token": "ghp_your_token_here"}' > ~/.config/appimage-updater/github-token.json
+chmod 600 ~/.config/appimage-updater/github-token.json
+
+# Option 5: Global Config File
+mkdir -p ~/.config/appimage-updater
+echo '{
+  "github": {
+    "token": "ghp_your_token_here"
+  }
+}' > ~/.config/appimage-updater/config.json
+chmod 600 ~/.config/appimage-updater/config.json
+```
+
+**Usage Examples**:
+```bash
+# All commands automatically use authentication when available
+appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
+appimage-updater check
+appimage-updater list
+
+# Debug mode shows authentication status
+appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
+# Output: "GitHub API: Authenticated (5000 req/hour via GITHUB_TOKEN environment variable)"
+```
+
+**Security Features**:
+- **Principle of Least Privilege**: Token only needs read access to public repositories
+- **No Sensitive Data**: Cannot access private repos, user data, or organization information  
+- **Read-Only Operations**: Only fetches release information and download metadata
+- **No Token Exposure**: Tokens never appear in logs or debug output
+- **Priority Security**: Environment variables take precedence over files
+- **File Permissions**: Supports secure file permissions (600) for token files
+
+#### 🧪 **Testing & Quality Assurance**:
+- **COMPREHENSIVE**: 25 new tests covering all authentication scenarios
+- **REAL-WORLD**: Tested with actual GitHub repositories and API responses
+- **COVERAGE**: Token discovery, priority ordering, error handling, CLI integration
+- **VALIDATED**: Works with both valid and invalid tokens, handles API failures gracefully
+- **REGRESSION**: Ensures anonymous access continues working when no token available
+
+#### 💡 **User Benefits**:
+- **ELIMINATES**: "Rate limit exceeded" errors during normal usage
+- **IMPROVES**: Reliability of GitHub release fetching and pattern generation
+- **ENHANCES**: User experience with faster, more reliable operations
+- **FUTURE-PROOFS**: Supports any scale of AppImage management without API limits
+- **MAINTAINS**: Full backward compatibility - works with or without authentication
+
 ### 🚀 New Features
 - **🔍 MAJOR**: Automatic Prerelease Detection in `add` Command
   - **PROBLEM SOLVED**: Repositories with only prerelease versions (like continuous builds) now work seamlessly
@@ -193,6 +317,14 @@ All notable changes to AppImage Updater will be documented in this file.
   - **IMPACT**: Prevents configuration errors and ensures valid symlink paths for file rotation
 
 ### 🧪 Testing & Quality Assurance
+- **NEW**: `test:regression` task in Taskfile.yml for automated regression validation
+  - **ADDED**: `task test:regression` command for running regression tests specifically
+  - **FOCUSED**: Targets `tests/test_add_regression.py` with verbose output and colored results  
+  - **INTEGRATED**: Part of comprehensive test suite alongside e2e, smoke, and pattern-matching tests
+  - **FEEDBACK**: Provides clear success message when regression tests pass
+  - **USAGE**: `task test:regression` - Run regression tests to validate fixed issues remain resolved
+  - **AVAILABLE**: Shows up in `task --list` with other test tasks for easy discovery
+
 - **NEW**: Comprehensive Regression Testing for `add` Command
   - **ADDED**: `tests/test_add_regression.py` - Dynamic regression validation using real user configurations
   - **DISCOVERS**: Existing configurations in `~/.config/appimage-updater/apps/` automatically

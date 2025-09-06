@@ -1,0 +1,219 @@
+"""GitHub authentication management for AppImage Updater.
+
+This module handles GitHub token discovery and authentication for API requests.
+Supports multiple token sources with security-first priority ordering.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+
+from loguru import logger
+
+
+class GitHubAuth:
+    """Manages GitHub authentication token discovery and validation."""
+
+    def __init__(self, token: str | None = None) -> None:
+        """Initialize GitHub authentication.
+
+        Args:
+            token: Optional explicit token to use (overrides discovery)
+        """
+        self._token = token
+        self._discovered_token: str | None = None
+        self._token_source: str | None = None
+
+    @property
+    def token(self) -> str | None:
+        """Get the GitHub token, discovering it if not already found.
+
+        Returns:
+            GitHub token string or None if no token found
+        """
+        if self._token:
+            return self._token
+
+        if self._discovered_token is None:
+            self._discover_token()
+
+        return self._discovered_token
+
+    @property
+    def is_authenticated(self) -> bool:
+        """Check if GitHub authentication is available.
+
+        Returns:
+            True if a valid token is available
+        """
+        return self.token is not None
+
+    @property
+    def token_source(self) -> str | None:
+        """Get the source of the current token for logging/debugging.
+
+        Returns:
+            String describing where the token was found
+        """
+        # Trigger token discovery if not done yet
+        _ = self.token
+        return self._token_source
+
+    def _discover_token(self) -> None:
+        """Discover GitHub token from various sources in priority order.
+
+        Priority order (most secure to least secure):
+        1. GITHUB_TOKEN environment variable
+        2. APPIMAGE_UPDATER_GITHUB_TOKEN environment variable
+        3. Token file in user config directory
+        4. Global config file setting
+        """
+        logger.debug("Starting GitHub token discovery")
+
+        # Priority 1: GITHUB_TOKEN environment variable (standard)
+        token = os.getenv("GITHUB_TOKEN")
+        if token:
+            self._discovered_token = token.strip()
+            self._token_source = "GITHUB_TOKEN environment variable"
+            logger.debug("Found token in GITHUB_TOKEN environment variable")
+            return
+
+        # Priority 2: APPIMAGE_UPDATER_GITHUB_TOKEN environment variable (app-specific)
+        token = os.getenv("APPIMAGE_UPDATER_GITHUB_TOKEN")
+        if token:
+            self._discovered_token = token.strip()
+            self._token_source = "APPIMAGE_UPDATER_GITHUB_TOKEN environment variable"
+            logger.debug("Found token in APPIMAGE_UPDATER_GITHUB_TOKEN environment variable")
+            return
+
+        # Priority 3: Dedicated token file (secure, app-specific)
+        token_file_paths = [
+            Path.home() / ".config" / "appimage-updater" / "github-token.json",
+            Path.home() / ".config" / "appimage-updater" / "github_token.json",
+            Path.home() / ".appimage-updater-github-token",
+        ]
+
+        for token_file in token_file_paths:
+            if token_file.exists():
+                try:
+                    if token_file.suffix == ".json":
+                        with token_file.open() as f:
+                            data = json.load(f)
+                        token = data.get("github_token") or data.get("token")
+                    else:
+                        # Plain text file
+                        token = token_file.read_text().strip()
+
+                    if token:
+                        self._discovered_token = token
+                        self._token_source = f"token file: {token_file}"
+                        logger.debug(f"Found token in file: {token_file}")
+                        return
+                except (json.JSONDecodeError, OSError) as e:
+                    logger.debug(f"Failed to read token from {token_file}: {e}")
+                    continue
+
+        # Priority 4: Global config file setting (least secure but convenient)
+        config_paths = [
+            Path.home() / ".config" / "appimage-updater" / "config.json",
+            Path.home() / ".config" / "appimage-updater" / "global.json",
+        ]
+
+        for config_path in config_paths:
+            if config_path.exists():
+                try:
+                    with config_path.open() as f:
+                        config = json.load(f)
+
+                    # Look for token in various places in config
+                    token = (
+                        config.get("github", {}).get("token")
+                        or config.get("github_token")
+                        or config.get("authentication", {}).get("github_token")
+                    )
+
+                    if token:
+                        self._discovered_token = token.strip()
+                        self._token_source = f"global config: {config_path}"
+                        logger.debug(f"Found token in global config: {config_path}")
+                        return
+                except (json.JSONDecodeError, OSError) as e:
+                    logger.debug(f"Failed to read token from config {config_path}: {e}")
+                    continue
+
+        # No token found
+        logger.debug("No GitHub token found in any source")
+        self._token_source = "no token found"
+
+    def get_auth_headers(self) -> dict[str, str]:
+        """Get HTTP headers for GitHub API authentication.
+
+        Returns:
+            Dictionary of headers to include in requests
+        """
+        headers = {
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": self._get_user_agent(),
+        }
+
+        if self.is_authenticated:
+            headers["Authorization"] = f"token {self.token}"
+
+        return headers
+
+    def _get_user_agent(self) -> str:
+        """Get User-Agent string for API requests.
+
+        Returns:
+            User-Agent string
+        """
+        try:
+            from ._version import __version__
+
+            return f"AppImage-Updater/{__version__}"
+        except ImportError:
+            return "AppImage-Updater/dev"
+
+    def get_rate_limit_info(self) -> dict[str, int | str]:
+        """Get information about API rate limits.
+
+        Returns:
+            Dictionary with rate limit information
+        """
+        if self.is_authenticated:
+            return {
+                "limit": 5000,  # Authenticated requests
+                "period_hours": 1,
+                "type": "authenticated",
+            }
+        else:
+            return {
+                "limit": 60,  # Anonymous requests
+                "period_hours": 1,
+                "type": "anonymous",
+            }
+
+    def log_auth_status(self) -> None:
+        """Log current authentication status for debugging."""
+        rate_info = self.get_rate_limit_info()
+
+        if self.is_authenticated:
+            logger.info(f"GitHub API: Authenticated via {self.token_source}")
+            logger.info(f"Rate limit: {rate_info['limit']} requests/hour")
+        else:
+            logger.debug("GitHub API: Anonymous access (rate limited to 60 requests/hour)")
+            logger.debug("Consider setting GITHUB_TOKEN environment variable for higher limits")
+
+
+def get_github_auth(token: str | None = None) -> GitHubAuth:
+    """Factory function to create GitHubAuth instance.
+
+    Args:
+        token: Optional explicit token to use
+
+    Returns:
+        Configured GitHubAuth instance
+    """
+    return GitHubAuth(token=token)

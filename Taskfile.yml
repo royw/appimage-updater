@@ -49,6 +49,12 @@ tasks:
       - uv run pytest tests/test_e2e.py::TestPatternMatching -v
       - uv run pytest tests/test_e2e.py::test_version_extraction_patterns -v
 
+  test:regression:
+    desc: Run regression tests to validate fixed issues
+    cmds:
+      - uv run pytest tests/test_add_regression.py -v --tb=short --color=yes
+      - echo "✅ Regression tests passed - fixed issues remain resolved!"
+
   complexity:
     desc: Analyze code complexity with radon
     cmds:
