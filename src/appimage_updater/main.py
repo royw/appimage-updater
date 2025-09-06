@@ -106,6 +106,36 @@ _SYMLINK_OPTION = typer.Option(
     "--symlink",
     help="Path for managed symlink (enables rotation if not explicitly disabled)",
 )
+_ADD_PRERELEASE_OPTION = typer.Option(
+    None,
+    "--prerelease/--no-prerelease",
+    help="Enable or disable prerelease versions (default: disabled)",
+)
+_ADD_UNIT_OPTION = typer.Option(
+    "days",
+    "--unit",
+    help="Frequency unit: hours, days, weeks (default: days)",
+)
+_ADD_CHECKSUM_OPTION = typer.Option(
+    None,
+    "--checksum/--no-checksum",
+    help="Enable or disable checksum verification (default: enabled)",
+)
+_ADD_CHECKSUM_ALGORITHM_OPTION = typer.Option(
+    "sha256",
+    "--checksum-algorithm",
+    help="Checksum algorithm: sha256, sha1, md5 (default: sha256)",
+)
+_ADD_CHECKSUM_PATTERN_OPTION = typer.Option(
+    "{filename}-SHA256.txt",
+    "--checksum-pattern",
+    help="Checksum file pattern (default: {filename}-SHA256.txt)",
+)
+_ADD_CHECKSUM_REQUIRED_OPTION = typer.Option(
+    None,
+    "--checksum-required/--checksum-optional",
+    help="Make checksum verification required or optional (default: optional)",
+)
 
 # Edit command arguments and options
 _EDIT_APP_NAME_ARGUMENT = typer.Argument(help="Name of the application to edit (case-insensitive)")
@@ -313,7 +343,13 @@ def add(
     rotation: bool | None = _ROTATION_OPTION,
     retain: int = _RETAIN_OPTION,
     frequency: int = _FREQUENCY_OPTION,
+    unit: str = _ADD_UNIT_OPTION,
     symlink: str | None = _SYMLINK_OPTION,
+    prerelease: bool | None = _ADD_PRERELEASE_OPTION,
+    checksum: bool | None = _ADD_CHECKSUM_OPTION,
+    checksum_algorithm: str = _ADD_CHECKSUM_ALGORITHM_OPTION,
+    checksum_pattern: str = _ADD_CHECKSUM_PATTERN_OPTION,
+    checksum_required: bool | None = _ADD_CHECKSUM_REQUIRED_OPTION,
 ) -> None:
     """Add a new application to the configuration.
 
@@ -321,11 +357,21 @@ def add(
     and other settings based on the provided URL and name. If the download directory
     does not exist, you will be prompted to create it (unless --create-dir is used).
 
-    Options:
-        --rotation/--no-rotation: Enable/disable file rotation (default: auto-detect from symlink)
+    Basic Options:
+        --frequency N: Update check frequency (default: 1)
+        --unit UNIT: Frequency unit - hours, days, weeks (default: days)
+        --prerelease/--no-prerelease: Enable/disable prerelease versions (default: disabled)
+
+    File Rotation:
+        --rotation/--no-rotation: Enable/disable file rotation (default: disabled)
         --retain N: Number of old files to retain (1-10, default: 3)
-        --frequency N: Update frequency in days (default: 1)
         --symlink PATH: Managed symlink path (auto-enables rotation)
+
+    Checksum Verification:
+        --checksum/--no-checksum: Enable/disable checksum verification (default: enabled)
+        --checksum-algorithm ALG: Algorithm - sha256, sha1, md5 (default: sha256)
+        --checksum-pattern PATTERN: Checksum file pattern (default: {filename}-SHA256.txt)
+        --checksum-required/--checksum-optional: Make verification required/optional (default: optional)
 
     Note: File rotation requires a symlink path to work properly. If you specify --rotation,
     you must also provide --symlink PATH.
@@ -334,16 +380,20 @@ def add(
         # Basic usage
         appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
 
+        # With prerelease and weekly updates
+        appimage-updater add --prerelease --frequency 1 --unit weeks \\
+            FreeCAD_weekly https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
+
         # With file rotation and symlink
         appimage-updater add --rotation --symlink ~/bin/freecad.AppImage \\
             FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
 
-        # Custom frequency and retention
-        appimage-updater add --frequency 7 --retain 5 --create-dir \\
+        # Custom frequency, required checksums, and directory creation
+        appimage-updater add --frequency 7 --unit days --checksum-required --create-dir \\
             MyApp https://github.com/user/myapp ~/Apps/MyApp
 
-        # Disable rotation explicitly
-        appimage-updater add --no-rotation MyTool https://github.com/user/tool ~/Tools
+        # Disable checksum verification
+        appimage-updater add --no-checksum MyTool https://github.com/user/tool ~/Tools
     """
     try:
         logger.info(f"Adding new application: {name}")
@@ -359,7 +409,19 @@ def add(
 
         # Generate application configuration
         app_config = _generate_default_config(
-            name, validated_url, expanded_download_dir, rotation, retain, frequency, symlink
+            name,
+            validated_url,
+            expanded_download_dir,
+            rotation,
+            retain,
+            frequency,
+            unit,
+            symlink,
+            prerelease,
+            checksum,
+            checksum_algorithm,
+            checksum_pattern,
+            checksum_required,
         )
 
         # Add the application to configuration
@@ -1603,28 +1665,46 @@ def _generate_default_config(
     rotation: bool | None = None,
     retain: int = 3,
     frequency: int = 1,
+    unit: str = "days",
     symlink: str | None = None,
+    prerelease: bool | None = None,
+    checksum: bool | None = None,
+    checksum_algorithm: str = "sha256",
+    checksum_pattern: str = "{filename}-SHA256.txt",
+    checksum_required: bool | None = None,
 ) -> dict[str, Any]:
     """Generate a default application configuration."""
+    # Determine checksum settings
+    checksum_enabled = True if checksum is None else checksum
+    checksum_required_final = False if checksum_required is None else checksum_required
+    prerelease_final = False if prerelease is None else prerelease
+
     config = {
         "name": name,
         "source_type": _detect_source_type(url),
         "url": url,
         "download_dir": download_dir,
         "pattern": _generate_appimage_pattern(name, url),
-        "frequency": {"value": frequency, "unit": "days"},
+        "frequency": {"value": frequency, "unit": unit},
         "enabled": True,
-        "prerelease": False,
-        "checksum": {"enabled": True, "pattern": "{filename}-SHA256.txt", "algorithm": "sha256", "required": False},
+        "prerelease": prerelease_final,
+        "checksum": {
+            "enabled": checksum_enabled,
+            "pattern": checksum_pattern,
+            "algorithm": checksum_algorithm,
+            "required": checksum_required_final,
+        },
     }
 
     # Determine rotation settings
     # If symlink is provided, enable rotation by default (unless explicitly disabled)
     rotation_enabled = symlink is not None if rotation is None else rotation
 
-    # Add rotation settings if enabled
+    # Always include rotation_enabled field for consistency
+    config["rotation_enabled"] = rotation_enabled
+
+    # Add additional rotation settings if enabled
     if rotation_enabled:
-        config["rotation_enabled"] = True
         config["retain_count"] = retain
 
         # Add symlink_path if provided

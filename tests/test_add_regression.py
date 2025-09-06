@@ -131,13 +131,64 @@ class TestAddRegression:
             temp_config_dir = Path(temp_dir) / "config"
             temp_config_dir.mkdir()
             
+            # Build add command arguments from original configuration
+            cmd_args = ["add", app_name, source_url, download_dir, "--config-dir", str(temp_config_dir)]
+            
+            # Extract and add optional parameters
+            frequency = original_config.get("frequency", {})
+            if isinstance(frequency, dict):
+                if "value" in frequency and frequency["value"] != 1:
+                    cmd_args.extend(["--frequency", str(frequency["value"])])
+                if "unit" in frequency and frequency["unit"] != "days":
+                    cmd_args.extend(["--unit", frequency["unit"]])
+            
+            # Add prerelease flag if enabled
+            if original_config.get("prerelease", False):
+                cmd_args.append("--prerelease")
+            elif original_config.get("prerelease") is False:
+                cmd_args.append("--no-prerelease")
+            
+            # Add rotation settings
+            if original_config.get("rotation_enabled", False):
+                cmd_args.append("--rotation")
+                if "retain_count" in original_config and original_config["retain_count"] != 3:
+                    cmd_args.extend(["--retain", str(original_config["retain_count"])])
+            else:
+                cmd_args.append("--no-rotation")
+            
+            # Add symlink path if present
+            if "symlink_path" in original_config:
+                cmd_args.extend(["--symlink", original_config["symlink_path"]])
+            
+            # Add checksum settings
+            checksum_config = original_config.get("checksum", {})
+            if isinstance(checksum_config, dict):
+                checksum_enabled = checksum_config.get("enabled", True)
+                if not checksum_enabled:
+                    cmd_args.append("--no-checksum")
+                else:
+                    cmd_args.append("--checksum")
+                    
+                    # Add checksum algorithm if not default
+                    algorithm = checksum_config.get("algorithm", "sha256")
+                    if algorithm != "sha256":
+                        cmd_args.extend(["--checksum-algorithm", algorithm])
+                    
+                    # Add checksum pattern if not default
+                    pattern = checksum_config.get("pattern", "{filename}-SHA256.txt")
+                    if pattern != "{filename}-SHA256.txt":
+                        cmd_args.extend(["--checksum-pattern", pattern])
+                    
+                    # Add checksum required setting
+                    if checksum_config.get("required", False):
+                        cmd_args.append("--checksum-required")
+                    else:
+                        cmd_args.append("--checksum-optional")
+            
+            print(f"    🔧 Command: {' '.join(cmd_args)}")
+            
             # Use add command to recreate the application
-            add_result = runner.invoke(app, [
-                "add", app_name,
-                source_url,
-                download_dir,
-                "--config-dir", str(temp_config_dir)
-            ])
+            add_result = runner.invoke(app, cmd_args)
             
             if add_result.exit_code != 0:
                 print(f"    ❌ Add command failed: {add_result.stdout}")
@@ -181,6 +232,13 @@ class TestAddRegression:
             "prerelease"
         ]
         
+        # Optional rotation fields that should match if present
+        optional_exact_fields = [
+            "rotation_enabled",
+            "retain_count", 
+            "symlink_path"
+        ]
+        
         for field in exact_match_fields:
             original_value = original.get(field)
             generated_value = generated.get(field)
@@ -188,6 +246,41 @@ class TestAddRegression:
             if original_value != generated_value:
                 print(f"    ❌ Field '{field}' mismatch: {original_value} != {generated_value}")
                 return False
+        
+        # Check optional fields - only compare if present in original
+        for field in optional_exact_fields:
+            if field in original:
+                original_value = original.get(field)
+                generated_value = generated.get(field)
+                
+                if original_value != generated_value:
+                    print(f"    ❌ Optional field '{field}' mismatch: {original_value} != {generated_value}")
+                    return False
+        
+        # Frequency field: Must match as dict
+        original_frequency = original.get("frequency", {})
+        generated_frequency = generated.get("frequency", {})
+        
+        if original_frequency != generated_frequency:
+            print(f"    ❌ Frequency mismatch: {original_frequency} != {generated_frequency}")
+            return False
+        
+        # Checksum field: Must match as dict (allowing for minor differences in optional fields)
+        original_checksum = original.get("checksum", {})
+        generated_checksum = generated.get("checksum", {})
+        
+        if isinstance(original_checksum, dict) and isinstance(generated_checksum, dict):
+            checksum_fields = ["enabled", "algorithm", "pattern", "required"]
+            for field in checksum_fields:
+                original_value = original_checksum.get(field)
+                generated_value = generated_checksum.get(field)
+                
+                if original_value != generated_value:
+                    print(f"    ❌ Checksum.{field} mismatch: {original_value} != {generated_value}")
+                    return False
+        elif original_checksum != generated_checksum:
+            print(f"    ❌ Checksum mismatch: {original_checksum} != {generated_checksum}")
+            return False
         
         # Pattern field: Allow improvement due to intelligent pattern generation
         original_pattern = original.get("pattern", "")
