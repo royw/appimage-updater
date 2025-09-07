@@ -58,12 +58,24 @@ _DRY_RUN_OPTION = typer.Option(
     "--dry-run",
     help="Check for updates without downloading",
 )
+_YES_OPTION = typer.Option(
+    False,
+    "--yes",
+    "-y",
+    help="Automatically answer yes to prompts (non-interactive mode)",
+)
 _CHECK_APP_NAME_ARGUMENT = typer.Argument(
     default=None, help="Name of the application to check (case-insensitive). If not provided, checks all applications."
 )
 _SHOW_APP_NAME_ARGUMENT = typer.Argument(help="Name of the application to display information for (case-insensitive)")
 _REMOVE_APP_NAME_ARGUMENT = typer.Argument(
     help="Name of the application to remove from configuration (case-insensitive)"
+)
+_FORCE_OPTION = typer.Option(
+    False,
+    "--force",
+    "-f",
+    help="Force operation without confirmation prompts (use with caution)",
 )
 _ADD_NAME_ARGUMENT = typer.Argument(help="Name for the application (used for identification and pattern matching)")
 _ADD_URL_ARGUMENT = typer.Argument(
@@ -173,6 +185,7 @@ def check(
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     dry_run: bool = _DRY_RUN_OPTION,
+    yes: bool = _YES_OPTION,
 ) -> None:
     """Check for and optionally download AppImage updates.
 
@@ -180,9 +193,11 @@ def check(
         appimage-updater check                    # Check all applications
         appimage-updater check GitHubDesktop     # Check specific application
         appimage-updater check --dry-run         # Check all (dry run)
+        appimage-updater check --yes             # Auto-confirm downloads
         appimage-updater check GitHubDesktop --dry-run  # Check specific (dry run)
+        appimage-updater check GitHubDesktop --yes      # Check specific and auto-confirm
     """
-    asyncio.run(_check_updates(config_file, config_dir, dry_run, app_name))
+    asyncio.run(_check_updates(config_file, config_dir, dry_run, app_name, yes))
 
 
 @app.command()
@@ -294,7 +309,7 @@ def _validate_add_rotation_config(rotation: bool | None, symlink: str | None) ->
         raise typer.Exit(1)
 
 
-def _handle_add_directory_creation(download_dir: str, create_dir: bool) -> str:
+def _handle_add_directory_creation(download_dir: str, create_dir: bool, yes: bool = False) -> str:
     """Handle download directory path expansion and creation for add command."""
     expanded_download_dir = str(Path(download_dir).expanduser())
     download_path = Path(expanded_download_dir)
@@ -302,7 +317,7 @@ def _handle_add_directory_creation(download_dir: str, create_dir: bool) -> str:
     # Check if download directory exists and handle creation
     if not download_path.exists():
         console.print(f"[yellow]Download directory does not exist: {download_path}")
-        should_create = create_dir
+        should_create = create_dir or yes
 
         if not should_create:
             # Try to prompt if in interactive environment
@@ -312,7 +327,8 @@ def _handle_add_directory_creation(download_dir: str, create_dir: bool) -> str:
                 # Non-interactive environment or user cancelled, don't create by default
                 should_create = False
                 console.print(
-                    "[yellow]Running in non-interactive mode. Use --create-dir to automatically create directories."
+                    "[yellow]Running in non-interactive mode. "
+                    "Use --create-dir or --yes to automatically create directories."
                 )
 
         if should_create:
@@ -338,6 +354,7 @@ def add(
     url: str = _ADD_URL_ARGUMENT,
     download_dir: str = _ADD_DOWNLOAD_DIR_ARGUMENT,
     create_dir: bool = _CREATE_DIR_OPTION,
+    yes: bool = _YES_OPTION,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     rotation: bool | None = _ROTATION_OPTION,
@@ -396,6 +413,9 @@ def add(
         appimage-updater add --frequency 7 --unit days --checksum-required --create-dir \\
             MyApp https://github.com/user/myapp ~/Apps/MyApp
 
+        # Non-interactive mode with auto-confirm directory creation
+        appimage-updater add --yes MyTool https://github.com/user/tool ~/Tools/MyTool
+
         # Disable checksum verification
         appimage-updater add --no-checksum MyTool https://github.com/user/tool ~/Tools
     """
@@ -405,6 +425,7 @@ def add(
             url,
             download_dir,
             create_dir,
+            yes,
             config_file,
             config_dir,
             rotation,
@@ -426,6 +447,7 @@ async def _add(
     url: str,
     download_dir: str,
     create_dir: bool,
+    yes: bool,
     config_file: Path | None,
     config_dir: Path | None,
     rotation: bool | None,
@@ -461,7 +483,7 @@ async def _add(
         _validate_add_rotation_config(rotation, symlink)
 
         # Handle directory path expansion and creation
-        expanded_download_dir = _handle_add_directory_creation(download_dir, create_dir)
+        expanded_download_dir = _handle_add_directory_creation(download_dir, create_dir, yes)
 
         # Generate application configuration
         app_config, prerelease_auto_enabled = await _generate_default_config(
@@ -539,6 +561,7 @@ def edit(
     checksum_required: bool | None = _EDIT_CHECKSUM_REQUIRED_OPTION,
     # Directory creation option
     create_dir: bool = _CREATE_DIR_OPTION,
+    yes: bool = _YES_OPTION,
 ) -> None:
     """Edit configuration for an existing application.
 
@@ -573,6 +596,9 @@ def edit(
 
         # Update download directory
         appimage-updater edit MyApp --download-dir ~/NewLocation/MyApp --create-dir
+
+        # Update download directory in non-interactive mode
+        appimage-updater edit MyApp --download-dir ~/NewLocation/MyApp --yes
 
         # Disable prerelease and enable required checksums
         appimage-updater edit OrcaSlicer --no-prerelease --checksum-required
@@ -619,7 +645,7 @@ def edit(
             return
 
         # Validate the updates before applying them
-        _validate_edit_updates(app, updates, create_dir)
+        _validate_edit_updates(app, updates, create_dir, yes)
 
         # Apply the updates
         changes_made = _apply_configuration_updates(app, updates)
@@ -699,6 +725,7 @@ def remove(
     app_name: str = _REMOVE_APP_NAME_ARGUMENT,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
+    force: bool = _FORCE_OPTION,
 ) -> None:
     """Remove an application from the configuration.
 
@@ -708,6 +735,7 @@ def remove(
     Examples:
         appimage-updater remove FreeCAD
         appimage-updater remove --config-dir ~/.config/appimage-updater MyApp
+        appimage-updater remove --force MyApp     # Skip confirmation prompt
     """
     try:
         logger.info(f"Removing application: {app_name}")
@@ -727,24 +755,26 @@ def remove(
             logger.error(f"Application '{app_name}' not found. Available: {available_apps}")
             raise typer.Exit(1)
 
-        # Confirm removal with user
-        console.print(f"[yellow]Found application: {app.name}")
-        console.print(f"[yellow]Source: {app.url}")
-        console.print(f"[yellow]Download Directory: {app.download_dir}")
-        console.print("[red]This will remove the application from your configuration.")
-        console.print("[red]Downloaded files and symlinks will NOT be deleted.")
+        # Confirm removal with user unless --force flag is used
+        if not force:
+            console.print(f"[yellow]Found application: {app.name}")
+            console.print(f"[yellow]Source: {app.url}")
+            console.print(f"[yellow]Download Directory: {app.download_dir}")
+            console.print("[red]This will remove the application from your configuration.")
+            console.print("[red]Downloaded files and symlinks will NOT be deleted.")
 
-        try:
-            confirmed = typer.confirm("Are you sure you want to remove this application?")
-        except (EOFError, KeyboardInterrupt, typer.Abort):
-            console.print("[yellow]Removal cancelled.")
-            logger.info("User cancelled application removal")
-            return
-
-        if not confirmed:
-            console.print("[yellow]Removal cancelled.")
-            logger.info("User declined to remove application")
-            return
+            try:
+                confirmed = typer.confirm("Are you sure you want to remove this application?")
+                if not confirmed:
+                    console.print("[yellow]Removal cancelled.")
+                    logger.info("User declined to remove application")
+                    return
+            except (EOFError, KeyboardInterrupt, typer.Abort):
+                console.print("[yellow]Running in non-interactive mode. Use --force to remove without confirmation.")
+                logger.info("Non-interactive mode detected, removal cancelled")
+                return
+        else:
+            logger.debug("Skipping confirmation due to --force flag")
 
         # Remove the application from configuration
         _remove_application_from_config(app.name, config, config_file, config_dir)
@@ -772,6 +802,7 @@ async def _check_updates(
     config_dir: Path | None,
     dry_run: bool,
     app_name: str | None = None,
+    yes: bool = False,
 ) -> None:
     """Internal async function to check for updates."""
     logger.info("Starting update check process")
@@ -799,7 +830,7 @@ async def _check_updates(
 
         # Handle downloads if not dry run
         if not dry_run:
-            await _handle_downloads(config, candidates)
+            await _handle_downloads(config, candidates, yes)
         else:
             console.print("[blue]Dry run mode - no downloads performed")
             logger.info("Dry run mode enabled, skipping downloads")
@@ -904,14 +935,22 @@ def _get_update_candidates(check_results: list[Any]) -> list[Any]:
     return candidates
 
 
-async def _handle_downloads(config: Any, candidates: list[Any]) -> None:
+async def _handle_downloads(config: Any, candidates: list[Any], yes: bool = False) -> None:
     """Handle the download process."""
-    # Prompt for download
-    logger.debug("Prompting user for download confirmation")
-    if not typer.confirm("Download all updates?"):
-        console.print("[yellow]Download cancelled")
-        logger.info("User cancelled download")
-        return
+    # Prompt for download unless --yes flag is used
+    if not yes:
+        logger.debug("Prompting user for download confirmation")
+        try:
+            if not typer.confirm("Download all updates?"):
+                console.print("[yellow]Download cancelled")
+                logger.info("User cancelled download")
+                return
+        except (EOFError, KeyboardInterrupt, typer.Abort):
+            console.print("[yellow]Running in non-interactive mode. Use --yes to automatically confirm downloads.")
+            logger.info("Non-interactive mode detected, download cancelled")
+            return
+    else:
+        logger.debug("Auto-confirming downloads due to --yes flag")
 
     # Download updates
     logger.info("Initializing downloader")
@@ -2204,7 +2243,7 @@ def _validate_rotation_consistency(app: Any, updates: dict[str, Any]) -> None:
         raise ValueError("File rotation requires a symlink path. Use --symlink-path to specify one.")
 
 
-def _handle_directory_creation(updates: dict[str, Any], create_dir: bool) -> None:
+def _handle_directory_creation(updates: dict[str, Any], create_dir: bool, yes: bool = False) -> None:
     """Handle download directory path expansion and creation."""
     if "download_dir" not in updates:
         return
@@ -2214,14 +2253,17 @@ def _handle_directory_creation(updates: dict[str, Any], create_dir: bool) -> Non
 
     if not expanded_path.exists():
         console.print(f"[yellow]Download directory does not exist: {expanded_path}")
-        should_create = create_dir
+        should_create = create_dir or yes
 
         if not should_create:
             try:
                 should_create = typer.confirm("Create this directory?")
             except (EOFError, KeyboardInterrupt, typer.Abort):
                 should_create = False
-                console.print("[yellow]Directory creation cancelled. Configuration will still be updated.")
+                console.print(
+                    "[yellow]Running in non-interactive mode. "
+                    "Use --create-dir or --yes to automatically create directories."
+                )
 
         if should_create:
             try:
@@ -2302,13 +2344,13 @@ def _handle_path_expansions(updates: dict[str, Any]) -> None:
     pass
 
 
-def _validate_edit_updates(app: Any, updates: dict[str, Any], create_dir: bool) -> None:
+def _validate_edit_updates(app: Any, updates: dict[str, Any], create_dir: bool, yes: bool = False) -> None:
     """Validate the proposed updates before applying them."""
     _validate_url_update(updates)
     _validate_basic_field_updates(updates)
     _validate_symlink_path(updates)
     _validate_rotation_consistency(app, updates)
-    _handle_directory_creation(updates, create_dir)
+    _handle_directory_creation(updates, create_dir, yes)
     _handle_path_expansions(updates)
 
 

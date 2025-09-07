@@ -193,10 +193,11 @@ class TestGitHubAuth:
         assert headers["Accept"] == "application/vnd.github.v3+json"
         assert "AppImage-Updater" in headers["User-Agent"]
 
-    def test_get_auth_headers_anonymous(self, monkeypatch):
+    def test_get_auth_headers_anonymous(self, monkeypatch, mock_home):
         """Test auth headers generation without authentication."""
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         monkeypatch.delenv("APPIMAGE_UPDATER_GITHUB_TOKEN", raising=False)
+        monkeypatch.setattr(Path, "home", lambda: mock_home)
         auth = GitHubAuth()
         
         headers = auth.get_auth_headers()
@@ -213,9 +214,11 @@ class TestGitHubAuth:
         assert rate_info["limit"] == 5000
         assert rate_info["type"] == "authenticated"
 
-    def test_rate_limit_info_anonymous(self, monkeypatch):
+    def test_rate_limit_info_anonymous(self, monkeypatch, mock_home):
         """Test rate limit information for anonymous requests."""
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        monkeypatch.delenv("APPIMAGE_UPDATER_GITHUB_TOKEN", raising=False)
+        monkeypatch.setattr(Path, "home", lambda: mock_home)
         auth = GitHubAuth()
         
         rate_info = auth.get_rate_limit_info()
@@ -298,9 +301,11 @@ class TestGitHubClientAuthentication:
             assert releases[0].version == "test-release"
 
     @pytest.mark.anyio
-    async def test_rate_limit_error_message_enhancement(self, monkeypatch):
+    async def test_rate_limit_error_message_enhancement(self, monkeypatch, mock_home):
         """Test enhanced error messages for rate limit errors."""
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        monkeypatch.delenv("APPIMAGE_UPDATER_GITHUB_TOKEN", raising=False)
+        monkeypatch.setattr(Path, "home", lambda: mock_home)
         
         with patch("httpx.AsyncClient") as mock_client_class:
             mock_client = AsyncMock()

@@ -72,80 +72,21 @@ class GitHubAuth:
         """
         logger.debug("Starting GitHub token discovery")
 
-        # Priority 1: GITHUB_TOKEN environment variable (standard)
-        token = os.getenv("GITHUB_TOKEN")
-        if token:
-            self._discovered_token = token.strip()
-            self._token_source = "GITHUB_TOKEN environment variable"
-            logger.debug("Found token in GITHUB_TOKEN environment variable")
+        # Try environment variables first
+        if self._try_environment_tokens():
             return
 
-        # Priority 2: APPIMAGE_UPDATER_GITHUB_TOKEN environment variable (app-specific)
-        token = os.getenv("APPIMAGE_UPDATER_GITHUB_TOKEN")
-        if token:
-            self._discovered_token = token.strip()
-            self._token_source = "APPIMAGE_UPDATER_GITHUB_TOKEN environment variable"
-            logger.debug("Found token in APPIMAGE_UPDATER_GITHUB_TOKEN environment variable")
+        # Try dedicated token files
+        if self._try_token_files():
             return
 
-        # Priority 3: Dedicated token file (secure, app-specific)
-        token_file_paths = [
-            Path.home() / ".config" / "appimage-updater" / "github-token.json",
-            Path.home() / ".config" / "appimage-updater" / "github_token.json",
-            Path.home() / ".appimage-updater-github-token",
-        ]
-
-        for token_file in token_file_paths:
-            if token_file.exists():
-                try:
-                    if token_file.suffix == ".json":
-                        with token_file.open() as f:
-                            data = json.load(f)
-                        token = data.get("github_token") or data.get("token")
-                    else:
-                        # Plain text file
-                        token = token_file.read_text().strip()
-
-                    if token:
-                        self._discovered_token = token
-                        self._token_source = f"token file: {token_file}"
-                        logger.debug(f"Found token in file: {token_file}")
-                        return
-                except (json.JSONDecodeError, OSError) as e:
-                    logger.debug(f"Failed to read token from {token_file}: {e}")
-                    continue
-
-        # Priority 4: Global config file setting (least secure but convenient)
-        config_paths = [
-            Path.home() / ".config" / "appimage-updater" / "config.json",
-            Path.home() / ".config" / "appimage-updater" / "global.json",
-        ]
-
-        for config_path in config_paths:
-            if config_path.exists():
-                try:
-                    with config_path.open() as f:
-                        config = json.load(f)
-
-                    # Look for token in various places in config
-                    token = (
-                        config.get("github", {}).get("token")
-                        or config.get("github_token")
-                        or config.get("authentication", {}).get("github_token")
-                    )
-
-                    if token:
-                        self._discovered_token = token.strip()
-                        self._token_source = f"global config: {config_path}"
-                        logger.debug(f"Found token in global config: {config_path}")
-                        return
-                except (json.JSONDecodeError, OSError) as e:
-                    logger.debug(f"Failed to read token from config {config_path}: {e}")
-                    continue
+        # Try global config files
+        if self._try_config_files():
+            return
 
         # No token found
         logger.debug("No GitHub token found in any source")
-        self._token_source = "no token found"
+        self._token_source = "no token found"  # noqa: S105
 
     def get_auth_headers(self) -> dict[str, str]:
         """Get HTTP headers for GitHub API authentication.
@@ -162,6 +103,125 @@ class GitHubAuth:
             headers["Authorization"] = f"token {self.token}"
 
         return headers
+
+    def _try_environment_tokens(self) -> bool:
+        """Try to find token in environment variables.
+
+        Returns:
+            True if token found, False otherwise
+        """
+        # Priority 1: GITHUB_TOKEN environment variable (standard)
+        token = os.getenv("GITHUB_TOKEN")
+        if token:
+            self._discovered_token = token.strip()
+            self._token_source = "GITHUB_TOKEN environment variable"  # noqa: S105
+            logger.debug("Found token in GITHUB_TOKEN environment variable")
+            return True
+
+        # Priority 2: APPIMAGE_UPDATER_GITHUB_TOKEN environment variable (app-specific)
+        token = os.getenv("APPIMAGE_UPDATER_GITHUB_TOKEN")
+        if token:
+            self._discovered_token = token.strip()
+            self._token_source = "APPIMAGE_UPDATER_GITHUB_TOKEN environment variable"  # noqa: S105
+            logger.debug("Found token in APPIMAGE_UPDATER_GITHUB_TOKEN environment variable")
+            return True
+
+        return False
+
+    def _try_token_files(self) -> bool:
+        """Try to find token in dedicated token files.
+
+        Returns:
+            True if token found, False otherwise
+        """
+        token_file_paths = [
+            Path.home() / ".config" / "appimage-updater" / "github-token.json",
+            Path.home() / ".config" / "appimage-updater" / "github_token.json",
+            Path.home() / ".appimage-updater-github-token",
+        ]
+
+        for token_file in token_file_paths:
+            if not token_file.exists():
+                continue
+
+            token = self._read_token_from_file(token_file)
+            if token:
+                self._discovered_token = token
+                self._token_source = f"token file: {token_file}"
+                logger.debug(f"Found token in file: {token_file}")
+                return True
+
+        return False
+
+    def _read_token_from_file(self, token_file: Path) -> str | None:
+        """Read token from a single file.
+
+        Args:
+            token_file: Path to the token file
+
+        Returns:
+            Token string if found, None otherwise
+        """
+        try:
+            if token_file.suffix == ".json":
+                with token_file.open() as f:
+                    data = json.load(f)
+                token = data.get("github_token") or data.get("token")
+                return token if isinstance(token, str) else None
+            else:
+                # Plain text file
+                return token_file.read_text().strip()
+        except (json.JSONDecodeError, OSError) as e:
+            logger.debug(f"Failed to read token from {token_file}: {e}")
+            return None
+
+    def _try_config_files(self) -> bool:
+        """Try to find token in global config files.
+
+        Returns:
+            True if token found, False otherwise
+        """
+        config_paths = [
+            Path.home() / ".config" / "appimage-updater" / "config.json",
+            Path.home() / ".config" / "appimage-updater" / "global.json",
+        ]
+
+        for config_path in config_paths:
+            if not config_path.exists():
+                continue
+
+            token = self._read_token_from_config(config_path)
+            if token:
+                self._discovered_token = token.strip()
+                self._token_source = f"global config: {config_path}"
+                logger.debug(f"Found token in global config: {config_path}")
+                return True
+
+        return False
+
+    def _read_token_from_config(self, config_path: Path) -> str | None:
+        """Read token from a single config file.
+
+        Args:
+            config_path: Path to the config file
+
+        Returns:
+            Token string if found, None otherwise
+        """
+        try:
+            with config_path.open() as f:
+                config = json.load(f)
+
+            # Look for token in various places in config
+            token = (
+                config.get("github", {}).get("token")
+                or config.get("github_token")
+                or config.get("authentication", {}).get("github_token")
+            )
+            return token if isinstance(token, str) else None
+        except (json.JSONDecodeError, OSError) as e:
+            logger.debug(f"Failed to read token from config {config_path}: {e}")
+            return None
 
     def _get_user_agent(self) -> str:
         """Get User-Agent string for API requests.
