@@ -16,6 +16,11 @@ tasks:
     cmds:
       - uv run ruff check {{.CLI_ARGS | default "src/"}}
 
+  fix:
+    desc: Automatically fix linting issues with ruff
+    cmds:
+      - uv run ruff check --fix {{.CLI_ARGS | default "src/"}}
+
   format:
     desc: Format code with ruff
     cmds:
@@ -78,12 +83,13 @@ tasks:
 
   check:
     desc: Run all code quality checks including end-to-end tests
-    deps:
-      - format
-      - typecheck
-      - lint
-      - complexity
-      - test:all
+    cmds:
+      - task: fix
+      - task: format
+      - task: typecheck
+      - task: lint
+      - task: complexity
+      - task: test:all
 
   run:
     desc: Run the application

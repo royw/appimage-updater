@@ -15,9 +15,11 @@ This tool monitors configured applications (like FreeCAD) for new releases and p
 ## Features
 
 - **🔍 Smart Auto-Detection**: Automatically detects continuous build repositories and enables prerelease support
+- **📊 Version Metadata System**: Accurate version tracking with `.info` files for complex release formats
 - **Easy Application Setup**: Simple `add` command with intelligent defaults
 - **File Rotation & Symlinks**: Automatic file management with configurable retention
 - **Flexible Configuration**: Custom update frequencies, rotation settings, and symlink management
+- **🔧 Multi-Format Support**: Works with `.zip`, `.AppImage`, and other release formats seamlessly
 - **Automatic Checksum Verification**: SHA256, SHA1, MD5 support for download security
 - **Batch Operations**: Download multiple updates concurrently with retry logic
 - **GitHub Integration**: Full support for releases, prereleases, and asset detection
@@ -115,7 +117,9 @@ task typecheck -- --strict src/                  # Pass mypy options
 # Linting and formatting
 task lint
 task lint -- src/appimage_updater/               # Lint specific directory
-task lint -- --fix src/                          # Auto-fix issues
+
+task fix                                          # Auto-fix linting issues
+task fix -- tests/                               # Fix specific directory
 
 task format
 task format -- src/appimage_updater/main.py      # Format specific file
@@ -143,7 +147,7 @@ task deadcode -- --only src/appimage_updater/    # Check specific directory
 
 # Note: deadcode task filters out framework-used code (CLI commands, validators, etc.)
 
-# Run all checks
+# Run all checks (includes auto-fix, formatting, type checking, linting, complexity, testing)
 task check
 
 # Run the application

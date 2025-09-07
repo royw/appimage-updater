@@ -113,6 +113,9 @@ class Downloader:
                 # Post-process the downloaded file
                 checksum_result = await self._post_process_download(candidate)
 
+                # Create version metadata file
+                await self._create_version_metadata(candidate)
+
                 # Handle image rotation if enabled
                 final_path = await self._handle_rotation(candidate)
 
@@ -221,6 +224,26 @@ class Downloader:
                 raise Exception(f"Checksum verification failed: {checksum_result.error_message}")
 
         return checksum_result
+
+    async def _create_version_metadata(self, candidate: UpdateCandidate) -> None:
+        """Create a .info metadata file with version information.
+
+        This creates a simple text file alongside the downloaded file
+        containing version information for accurate version tracking.
+        """
+        try:
+            info_file_path = candidate.download_path.with_suffix(candidate.download_path.suffix + ".info")
+
+            # Create metadata content
+            metadata_content = f"Version: v{candidate.latest_version}\n"
+
+            # Write metadata file
+            info_file_path.write_text(metadata_content)
+            logger.debug(f"Created version metadata file: {info_file_path.name}")
+
+        except Exception as e:
+            # Don't fail the download if metadata creation fails
+            logger.debug(f"Failed to create version metadata file: {e}")
 
     async def _download_checksum_file(
         self,
@@ -419,8 +442,17 @@ class Downloader:
         await self._rotate_existing_files(download_dir, base_name, extension, candidate.app_config.retain_count)
 
         # Step 2: Move downloaded file to .current
+        # Also move the associated metadata file if it exists
+        original_info_path = candidate.download_path.with_suffix(candidate.download_path.suffix + ".info")
+        current_info_path = current_path.with_suffix(current_path.suffix + ".info")
+
         candidate.download_path.rename(current_path)
         logger.info(f"Moved {candidate.download_path.name} to {current_path.name}")
+
+        # Move metadata file if it exists
+        if original_info_path.exists():
+            original_info_path.rename(current_info_path)
+            logger.debug(f"Moved {original_info_path.name} to {current_info_path.name}")
 
         # Step 3: Update symlink
         if candidate.app_config.symlink_path:
@@ -437,7 +469,17 @@ class Downloader:
         if not current_path.exists():
             return
 
-        # Rotate files in reverse order (.old2 -> .old3, .old -> .old2, .current -> .old)
+        # Step 1: Rotate numbered files in reverse order (.old2 -> .old3, .old -> .old2)
+        self._rotate_numbered_files(download_dir, base_name, extension, retain_count)
+
+        # Step 2: Move .current to .old
+        self._move_current_to_old(download_dir, base_name, extension)
+
+        # Step 3: Clean up excess files beyond retain count
+        self._cleanup_excess_files(download_dir, base_name, extension, retain_count)
+
+    def _rotate_numbered_files(self, download_dir: Path, base_name: str, extension: str, retain_count: int) -> None:
+        """Rotate numbered files in reverse order (.old2 -> .old3, .old -> .old2)."""
         for i in range(retain_count - 1, 0, -1):
             if i == 1:
                 old_path = download_dir / f"{base_name}.old{extension}"
@@ -447,26 +489,47 @@ class Downloader:
                 new_path = download_dir / f"{base_name}.old{i + 1}{extension}"
 
             if old_path.exists():
-                if new_path.exists():
-                    new_path.unlink()  # Remove file that would be overwritten
-                old_path.rename(new_path)
-                logger.debug(f"Rotated {old_path.name} to {new_path.name}")
+                self._remove_file_and_metadata(new_path)  # Remove target if exists
+                self._move_file_with_metadata(old_path, new_path)
 
-        # Move .current to .old
+    def _move_current_to_old(self, download_dir: Path, base_name: str, extension: str) -> None:
+        """Move .current file to .old."""
+        current_path = download_dir / f"{base_name}.current{extension}"
         old_path = download_dir / f"{base_name}.old{extension}"
-        if old_path.exists():
-            old_path.unlink()  # Remove existing .old
-        current_path.rename(old_path)
+        self._remove_file_and_metadata(old_path)  # Remove existing .old if exists
+        self._move_file_with_metadata(current_path, old_path)
         logger.info(f"Rotated {current_path.name} to {old_path.name}")
 
-        # Clean up files beyond retain count
+    def _cleanup_excess_files(self, download_dir: Path, base_name: str, extension: str, retain_count: int) -> None:
+        """Remove files beyond the retain count."""
         for i in range(retain_count + 1, 20):  # Check up to .old19
             excess_path = download_dir / f"{base_name}.old{i}{extension}"
             if excess_path.exists():
-                excess_path.unlink()
+                self._remove_file_and_metadata(excess_path)
                 logger.debug(f"Removed excess file: {excess_path.name}")
             else:
                 break  # No more files to clean up
+
+    def _remove_file_and_metadata(self, file_path: Path) -> None:
+        """Remove a file and its associated metadata file if they exist."""
+        if file_path.exists():
+            file_path.unlink()
+        # Also remove associated metadata file
+        info_path = file_path.with_suffix(file_path.suffix + ".info")
+        if info_path.exists():
+            info_path.unlink()
+
+    def _move_file_with_metadata(self, old_path: Path, new_path: Path) -> None:
+        """Move a file and its associated metadata file."""
+        # Move the main file
+        old_path.rename(new_path)
+        logger.debug(f"Rotated {old_path.name} to {new_path.name}")
+        # Move associated metadata file if it exists
+        old_info_path = old_path.with_suffix(old_path.suffix + ".info")
+        new_info_path = new_path.with_suffix(new_path.suffix + ".info")
+        if old_info_path.exists():
+            old_info_path.rename(new_info_path)
+            logger.debug(f"Rotated {old_info_path.name} to {new_info_path.name}")
 
     async def _update_symlink(self, current_path: Path, symlink_path: Path) -> None:
         """Update symlink to point to the new current file."""

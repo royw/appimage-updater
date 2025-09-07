@@ -31,6 +31,9 @@ task typecheck
 task lint
 task format
 
+# Automatic fixing of linting issues
+task fix
+
 # Testing
 task test
 
@@ -52,7 +55,7 @@ task deadcode
 # - Model fields (used for serialization/API compatibility)
 # - Exception classes (kept for future error handling)
 
-# Run all quality checks (includes formatting, type checking, linting, complexity analysis, and testing)
+# Run all quality checks (includes automatic fixing, formatting, type checking, linting, complexity analysis, and testing)
 task check
 
 # Clean up generated files
@@ -420,12 +423,59 @@ OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.AppImage(\..*)?$
 
 ### Version Detection Logic
 
-The version checker implements sophisticated version detection:
+The version checker implements sophisticated version detection with intelligent fallback strategies:
 
 1. **Current version detection**: Scans download directory for existing files matching the regex pattern
-2. **Version extraction**: Uses multiple regex patterns to extract version from filenames
+2. **Version extraction**: Uses a multi-layered approach:
+   - **Primary**: Reads version from `.info` metadata files (most accurate)
+   - **Fallback**: Extracts version from filenames using regex patterns
 3. **Version comparison**: Uses `packaging.version` for semantic version comparison, falls back to string comparison
 4. **Update determination**: Compares extracted current version with GitHub release version
+
+### Version Metadata System
+
+**NEW FEATURE**: The application now uses metadata files to track accurate version information, solving issues with complex filename patterns and release formats.
+
+#### How It Works
+
+**Metadata File Creation**: When downloads complete, the system automatically creates `.info` files alongside downloaded files:
+
+```bash
+# Example files in download directory:
+Bambu_Studio_ubuntu-24.04_PR-8017.zip                    # Downloaded file
+Bambu_Studio_ubuntu-24.04_PR-8017.zip.info               # Version metadata
+```
+
+**Metadata File Format**:
+```text
+Version: v02.02.01.60
+```
+
+#### Benefits
+
+1. **Accurate Version Tracking**: No more incorrect version parsing from Ubuntu version numbers (e.g., "24.04") in filenames
+2. **Multi-Format Support**: Works with both `.zip` and `.AppImage` releases seamlessly
+3. **Release Tag Accuracy**: Uses actual GitHub release tags instead of filename guessing
+4. **Rotation Compatible**: Metadata files are automatically rotated alongside main files during file rotation
+5. **Manual Creation**: For existing installations, you can manually create `.info` files:
+
+```bash
+# Create version metadata for existing file
+echo "Version: v02.02.00.85" > ~/Applications/BambuStudio/myapp.AppImage.info
+```
+
+#### Use Cases
+
+**Complex Filename Applications**: Perfect for applications like BambuStudio where:
+- Filenames contain OS version numbers ("ubuntu-24.04") that get misinterpreted as app versions
+- Latest releases are in different formats (zip vs AppImage)
+- Version information is in the GitHub release tag, not the filename
+
+**Pattern Configuration**: Enhanced pattern matching supports multiple file types:
+```regex
+# Supports both zip and AppImage formats
+(?i)Bambu_?Studio_.*\.(zip|AppImage)(\.(|current|old))?$
+```
 
 ### Download System
 

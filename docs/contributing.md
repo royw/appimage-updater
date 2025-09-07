@@ -41,6 +41,9 @@ task typecheck
 task lint
 task format
 
+# Automatic fixing of linting issues
+task fix
+
 # Testing
 task test
 
@@ -108,6 +111,7 @@ git checkout -b feature/my-new-feature
 task check
 
 # This runs:
+# - Automatic fixing (ruff check --fix)
 # - Code formatting (ruff format)
 # - Type checking (mypy)
 # - Linting (ruff lint)

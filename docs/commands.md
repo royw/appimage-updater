@@ -251,6 +251,42 @@ Checking for updates...
 Found 1 update available.
 ```
 
+## Version Tracking
+
+### Automatic Version Metadata
+
+AppImage Updater automatically creates `.info` metadata files alongside downloaded files to ensure accurate version tracking:
+
+```bash
+# Example files after download:
+~/Apps/BambuStudio/
+├── Bambu_Studio_ubuntu-24.04_PR-8017.zip           # Downloaded file
+└── Bambu_Studio_ubuntu-24.04_PR-8017.zip.info      # Version metadata
+```
+
+**Metadata file content:**
+```text
+Version: v02.02.01.60
+```
+
+### Benefits
+
+- **Accurate Detection**: Uses GitHub release tags instead of filename parsing
+- **Multi-Format Support**: Works with `.zip`, `.AppImage`, and other formats
+- **Complex Filename Handling**: Avoids parsing OS versions ("ubuntu-24.04") as app versions
+- **Rotation Compatible**: Metadata files rotate with their associated downloads
+
+### Manual Metadata Creation
+
+For existing installations without metadata files, create them manually:
+
+```bash
+# Create metadata for existing file
+echo "Version: v1.2.3" > ~/Apps/MyApp/myapp.AppImage.info
+```
+
+This ensures accurate version comparison for future update checks.
+
 ## Exit Codes
 
 | Code | Meaning |

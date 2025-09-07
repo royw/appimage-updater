@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 from packaging import version
 
@@ -99,16 +100,66 @@ class VersionChecker:
         )
 
     def _get_current_version(self, app_config: ApplicationConfig) -> str | None:
-        """Get currently installed version from download directory."""
+        """Get currently installed version from download directory.
+
+        Checks for version information in this order:
+        1. .info metadata files with version information
+        2. Fallback to filename parsing
+        """
         if not app_config.download_dir.exists():
             return None
 
         # Look for existing files matching the pattern
         pattern = re.compile(app_config.pattern)
+        matched_files = []
+
         for file_path in app_config.download_dir.iterdir():
             if file_path.is_file() and pattern.search(file_path.name):
-                # Try to extract version from filename
-                return self._extract_version_from_filename(file_path.name)
+                matched_files.append(file_path)
+
+        if not matched_files:
+            return None
+
+        # Sort by modification time (most recent first) to get the current version
+        matched_files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+        current_file = matched_files[0]
+
+        # First try to get version from metadata file
+        version_from_metadata = self._get_version_from_metadata(current_file)
+        if version_from_metadata:
+            return version_from_metadata
+
+        # Fallback to filename parsing
+        return self._extract_version_from_filename(current_file.name)
+
+    def _get_version_from_metadata(self, file_path: Path) -> str | None:
+        """Get version information from associated .info metadata file.
+
+        Args:
+            file_path: Path to the downloaded file
+
+        Returns:
+            Version string if found in metadata file, None otherwise
+        """
+        # Check for .info file alongside the downloaded file
+        info_file = file_path.with_suffix(file_path.suffix + ".info")
+        if not info_file.exists():
+            return None
+
+        try:
+            content = info_file.read_text().strip()
+            # Look for "Version: v02.02.01.60" or similar patterns
+            for line in content.split("\n"):
+                line = line.strip()
+                if line.lower().startswith("version:"):
+                    version = line.split(":", 1)[1].strip()
+                    # Remove 'v' prefix if present
+                    if version.startswith("v"):
+                        version = version[1:]
+                    return version
+        except (OSError, UnicodeDecodeError):
+            # Failed to read metadata file
+            pass
 
         return None
 

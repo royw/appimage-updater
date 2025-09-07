@@ -93,13 +93,27 @@ Async HTTP client for GitHub API interactions.
 
 ### Version Management (`version_checker.py`)
 
-Handles version detection and comparison logic.
+Handles version detection and comparison logic with intelligent fallback strategies.
 
 **Components:**
-- Version extraction from filenames using regex patterns
-- Semantic version parsing with `packaging.version`
-- Fallback to string comparison for non-semantic versions
-- Current version detection from local files
+- **Version Metadata System**: Reads version from `.info` metadata files for accurate tracking
+- **Fallback Version Extraction**: Regex-based filename parsing when metadata unavailable
+- **Semantic Version Parsing**: Uses `packaging.version` for proper version comparison
+- **Multi-Format Support**: Works with `.zip`, `.AppImage`, and other release formats
+- **Current Version Detection**: Scans local files with pattern matching
+
+**Version Metadata Features:**
+```bash
+# Automatically created during downloads
+Bambu_Studio_ubuntu-24.04_PR-8017.zip      # Downloaded file
+Bambu_Studio_ubuntu-24.04_PR-8017.zip.info # Metadata: "Version: v02.02.01.60"
+```
+
+**Benefits:**
+- Avoids incorrect parsing of OS versions ("ubuntu-24.04") as app versions
+- Uses actual GitHub release tags for accurate version tracking
+- Supports complex filename patterns and multi-format releases
+- Automatically rotates metadata files alongside main files
 
 ### Download Engine (`downloader.py`)
 
@@ -109,8 +123,9 @@ Concurrent download manager with comprehensive features.
 - Concurrent downloads with semaphore limiting
 - Progress tracking with rich progress bars
 - Automatic retry with exponential backoff
+- **Version metadata file creation** (`.info` files with release tags)
 - Checksum verification (SHA256, SHA1, MD5)
-- File rotation with configurable retention
+- File rotation with configurable retention (includes metadata files)
 - Symlink management
 
 ### Logging (`logging_config.py`)
