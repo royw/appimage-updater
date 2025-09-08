@@ -197,8 +197,9 @@ def test_edit_download_directory_with_creation(runner, single_config_file, tmp_p
     # Check for the directory name - handle potential line wrapping
     assert "new_download_location" in clean_output.replace("\n", "") or "new_download_locat" in clean_output
     assert "Download Directory:" in clean_output
-    # Check for the downloads/TestApp part in the output (more flexible matching)
-    assert "downloads" in clean_output and "TestApp" in clean_output
+    # Check for the downloads/TestApp part - handle line wrapping by removing line breaks
+    output_no_breaks = clean_output.replace("\n", "")
+    assert "downloads" in output_no_breaks and "TestApp" in output_no_breaks
     assert "→" in clean_output
     assert new_dir.exists()
 
@@ -380,8 +381,9 @@ def test_edit_path_expansion(runner, single_config_file):
     expected_path = Path.home() / "TestExpansion"
     clean_output = normalize_text(result.stdout)
     assert "Download Directory:" in clean_output
-    # Check for downloads/TestApp pattern (more flexible matching)
-    assert "downloads" in clean_output and "TestApp" in clean_output
+    # Check for downloads/TestApp pattern - handle line wrapping by removing line breaks
+    output_no_breaks = clean_output.replace("\n", "")
+    assert "downloads" in output_no_breaks and "TestApp" in output_no_breaks
     assert "→" in clean_output
     assert str(expected_path) in clean_output
 
