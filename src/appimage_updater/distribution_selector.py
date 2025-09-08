@@ -19,6 +19,7 @@ from rich.prompt import Prompt
 from rich.table import Table
 
 from .models import Asset
+from .system_info import get_system_info, is_compatible_architecture, is_compatible_platform, is_supported_format
 
 
 @dataclass
@@ -57,7 +58,11 @@ class DistributionSelector:
         self.console = console or Console()
         self.interactive = interactive
         self.current_dist = self._detect_current_distribution()
-        logger.debug(f"Detected current distribution: {self.current_dist.id} {self.current_dist.version}")
+        self.system_info = get_system_info()
+        logger.debug(
+            f"Detected current system: {self.current_dist.id} {self.current_dist.version}, "
+            f"arch: {self.system_info.architecture}, platform: {self.system_info.platform}"
+        )
 
     def select_best_asset(self, assets: list[Asset]) -> Asset:
         """Select the best asset for the current system.
@@ -90,11 +95,20 @@ class DistributionSelector:
         # Sort by score (highest first)
         asset_infos.sort(key=lambda x: x.score, reverse=True)
 
-        # Check if we have a clear winner or need user interaction
+        # Filter out incompatible assets (wrong architecture/platform)
+        compatible_assets = [info for info in asset_infos if info.score > 0.0]
+        
+        if not compatible_assets:
+            # No compatible assets - log warning and return best effort
+            logger.warning("No fully compatible assets found, using best available")
+            compatible_assets = asset_infos
+        
+        # Use compatible assets for selection
+        asset_infos = compatible_assets
         best_info = asset_infos[0]
 
         # If the best score is high enough, use it automatically
-        if best_info.score >= 100.0:  # Perfect or very good match
+        if best_info.score >= 150.0:  # Perfect or very good match (raised threshold due to new scoring)
             logger.info(f"Auto-selected asset: {best_info.asset.name} (score: {best_info.score:.1f})")
             return best_info.asset
 
@@ -297,55 +311,80 @@ class DistributionSelector:
     def _calculate_compatibility_score(self, info: AssetInfo) -> float:
         """Calculate compatibility score for an asset."""
         score = 0.0
+        
+        # Get asset properties for enhanced compatibility checking
+        asset = info.asset
+        asset_arch = asset.architecture or info.arch
+        asset_platform = asset.platform
+        asset_format = asset.file_extension or (f'.{info.format}' if info.format else None)
+        
+        # Architecture compatibility - CRITICAL (0 = incompatible)
+        if asset_arch:
+            is_compat, arch_score = is_compatible_architecture(asset_arch, self.system_info.architecture)
+            if not is_compat:
+                # Incompatible architecture - return very low score
+                return 0.0
+            score += arch_score  # 100=exact, 80=compatible
+        else:
+            # No architecture specified - assume compatible but lower preference
+            score += 60.0
+            
+        # Platform compatibility - CRITICAL (0 = incompatible)
+        if asset_platform:
+            is_compat, platform_score = is_compatible_platform(asset_platform, self.system_info.platform)
+            if not is_compat:
+                # Incompatible platform - return very low score
+                return 0.0
+            score += platform_score  # 100=exact
+        else:
+            # No platform specified - assume Linux for AppImages
+            if asset_format and asset_format.lower() == '.appimage':
+                if self.system_info.platform == 'linux':
+                    score += 80.0  # AppImages are Linux-specific
+                else:
+                    return 0.0  # AppImage on non-Linux = incompatible
+            else:
+                score += 50.0  # Generic - might work
+        
+        # File format compatibility and preference
+        if asset_format:
+            is_supported, format_score = is_supported_format(asset_format, self.system_info.platform)
+            if not is_supported:
+                # Unsupported format - heavily penalize but don't eliminate
+                score -= 50.0
+            else:
+                score += format_score  # Up to 100 points for preferred formats
+        else:
+            score += 30.0  # Unknown format
 
-        # Distribution match
+        # Distribution match (now less critical than arch/platform)
         if info.distribution:
             if info.distribution == self.current_dist.id:
-                score += 100.0  # Perfect distribution match
+                score += 50.0  # Perfect distribution match
             elif self._is_compatible_distribution(info.distribution):
-                score += 70.0  # Compatible distribution
+                score += 35.0  # Compatible distribution
             else:
-                score += 20.0  # Different distribution
+                score += 10.0  # Different distribution
         else:
-            score += 40.0  # Generic (no specific distribution)
+            score += 25.0  # Generic (no specific distribution)
 
-        # Version compatibility
+        # Version compatibility (now less critical)
         if info.version_numeric and self.current_dist.version_numeric > 0:
             version_diff = abs(info.version_numeric - self.current_dist.version_numeric)
 
             if info.version_numeric <= self.current_dist.version_numeric:
                 # Prefer older or same version (backward compatibility)
                 if version_diff == 0:
-                    score += 50.0  # Exact version match
+                    score += 30.0  # Exact version match
                 elif version_diff <= 2.0:
-                    score += 40.0 - (version_diff * 5)  # Close version
+                    score += 25.0 - (version_diff * 2.5)  # Close version
                 else:
-                    score += 20.0  # Older version
+                    score += 15.0  # Older version
             else:
                 # Newer version - less preferred but might work
-                score += max(10.0, 30.0 - (version_diff * 10))
+                score += max(5.0, 20.0 - (version_diff * 5))
 
-        # Architecture preference (assume x86_64/amd64 if not detected)
-        if info.arch:
-            if info.arch in ['x86_64', 'amd64']:
-                score += 20.0  # Most common architecture
-            else:
-                score += 10.0  # Other architecture
-        else:
-            score += 15.0  # Assume generic x86_64
-
-        # Format preference
-        if info.format:
-            if info.format == 'appimage':
-                score += 10.0  # Prefer AppImage format
-            elif info.format == 'zip':
-                score += 8.0   # ZIP is fine (can be extracted)
-            else:
-                score += 5.0   # Other formats
-        else:
-            score += 7.0  # Unknown format
-
-        return score
+        return max(0.0, score)  # Ensure non-negative score
 
     def _is_compatible_distribution(self, dist: str) -> bool:
         """Check if a distribution is compatible with the current one."""
@@ -390,31 +429,72 @@ class DistributionSelector:
         # Create a table showing available options
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("#", width=3, justify="right")
-        table.add_column("Distribution", width=15)
-        table.add_column("Version", width=10)
+        table.add_column("Distribution", width=12)
+        table.add_column("Version", width=8)
+        table.add_column("Arch", width=8)
+        table.add_column("Platform", width=8)
         table.add_column("Format", width=10)
-        table.add_column("Filename", min_width=30)
+        table.add_column("Filename", min_width=25)
         table.add_column("Score", width=8, justify="right")
 
         # Add rows for each option
         for i, info in enumerate(asset_infos, 1):
+            asset = info.asset
+            
+            # Extract and format display information
             dist_display = info.distribution.title() if info.distribution else "Generic"
             version_display = info.version or "N/A"
-            format_display = info.format.upper() if info.format else "Unknown"
+            
+            # Architecture display (prefer asset detection, fallback to info)
+            arch = asset.architecture or info.arch
+            arch_display = arch if arch else "Unknown"
+            
+            # Platform display
+            platform = asset.platform
+            platform_display = platform.title() if platform else "Unknown"
+            
+            # Format display (prefer asset detection, fallback to info)
+            asset_format = asset.file_extension or (f'.{info.format}' if info.format else None)
+            format_display = asset_format.upper() if asset_format else "Unknown"
+            
+            # Score display with enhanced color coding
             score_display = f"{info.score:.1f}"
-
-            # Color code the score
-            if info.score >= 100:
+            if info.score >= 200:
+                score_display = f"[bold green]{score_display}[/bold green]"
+            elif info.score >= 150:
                 score_display = f"[green]{score_display}[/green]"
-            elif info.score >= 70:
+            elif info.score >= 100:
                 score_display = f"[yellow]{score_display}[/yellow]"
+            elif info.score > 0:
+                score_display = f"[orange3]{score_display}[/orange3]"
             else:
                 score_display = f"[red]{score_display}[/red]"
+            
+            # Color code architecture compatibility
+            if arch:
+                is_arch_compat, _ = is_compatible_architecture(arch, self.system_info.architecture)
+                if is_arch_compat:
+                    if arch.lower() == self.system_info.architecture.lower():
+                        arch_display = f"[bold green]{arch_display}[/bold green]"  # Perfect match
+                    else:
+                        arch_display = f"[green]{arch_display}[/green]"  # Compatible
+                else:
+                    arch_display = f"[red]{arch_display}[/red]"  # Incompatible
+            
+            # Color code platform compatibility
+            if platform:
+                is_platform_compat, _ = is_compatible_platform(platform, self.system_info.platform)
+                if is_platform_compat:
+                    platform_display = f"[green]{platform_display}[/green]"
+                else:
+                    platform_display = f"[red]{platform_display}[/red]"
 
             table.add_row(
                 str(i),
                 dist_display,
                 version_display,
+                arch_display,
+                platform_display,
                 format_display,
                 info.asset.name,
                 score_display
@@ -422,7 +502,9 @@ class DistributionSelector:
 
         self.console.print(table)
         self.console.print()
+        self.console.print("[dim]Color coding: [green]Green[/green]=Compatible, [red]Red[/red]=Incompatible, [yellow]Yellow[/yellow]=Partial match[/dim]")
         self.console.print("[dim]Score explanation: Higher scores indicate better compatibility with your system.[/dim]")
+        self.console.print("[dim]Architecture and platform compatibility are critical for proper operation.[/dim]")
         self.console.print()
 
         # Prompt for selection

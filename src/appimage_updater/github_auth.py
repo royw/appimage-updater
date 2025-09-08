@@ -260,8 +260,8 @@ class GitHubAuth:
         rate_info = self.get_rate_limit_info()
 
         if self.is_authenticated:
-            logger.info(f"GitHub API: Authenticated via {self.token_source}")
-            logger.info(f"Rate limit: {rate_info['limit']} requests/hour")
+            logger.debug(f"GitHub API: Authenticated via {self.token_source}")
+            logger.debug(f"Rate limit: {rate_info['limit']} requests/hour")
         else:
             logger.debug("GitHub API: Anonymous access (rate limited to 60 requests/hour)")
             logger.debug("Consider setting GITHUB_TOKEN environment variable for higher limits")

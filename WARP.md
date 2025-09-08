@@ -34,9 +34,60 @@ The application now supports downloading and automatically extracting AppImage f
 (?i)Bambu_?Studio_.*\.(zip|AppImage)(\.(|current|old))?$
 ```
 
+### 🎯 Intelligent Architecture & Platform Filtering
+
+AppImage Updater now provides **comprehensive compatibility filtering** that automatically eliminates incompatible downloads based on your system's architecture, platform, and supported formats:
+
+```bash
+# Multi-architecture project example (e.g., BelenaEtcher):
+# Available assets:
+# - balenaEtcher-linux-x86_64-1.18.11.AppImage   ← Selected automatically
+# - balenaEtcher-linux-arm64-1.18.11.AppImage    ← Filtered out (wrong arch)
+# - balenaEtcher-darwin-x86_64-1.18.11.dmg       ← Filtered out (wrong platform) 
+# - balenaEtcher-win32-x86_64-1.18.11.exe        ← Filtered out (wrong platform)
+
+appimage-updater add BelenaEtcher https://github.com/balena-io/etcher ~/Apps/BelenaEtcher
+# System: Ubuntu 25.04, x86_64 → Automatically selects Linux x86_64 AppImage
+# No user interaction needed - perfect compatibility match!
+```
+
+**🔍 System Detection Features:**
+- **Architecture Detection**: x86_64, amd64, arm64, armv7l, i686 with intelligent aliasing
+- **Platform Detection**: Linux, macOS (darwin), Windows (win32) 
+- **Format Compatibility**: .AppImage, .deb, .rpm, .dmg, .exe, .msi based on platform/distribution
+- **Distribution Family Mapping**: Debian, Red Hat, SUSE, Arch families for package format support
+
+**🎯 Smart Filtering Capabilities:**
+- **Architecture Filtering**: Eliminates incompatible CPU architectures (ARM vs x86)
+- **Platform Filtering**: Removes cross-platform packages (macOS .dmg on Linux)
+- **Format Filtering**: Excludes unsupported formats (.rpm on Ubuntu, .deb on Fedora)
+- **Compatibility Scoring**: 300+ point system prioritizing perfect matches
+- **Automatic Selection**: Chooses best match without user intervention when score ≥ 150
+
+**📊 Enhanced Interactive Selection:**
+When multiple compatible options exist, users see a rich compatibility table:
+
+```
+┌─────┬──────────────┬─────────┬──────────┬──────────┬───────────┬─────────────────────────────────┬────────┐
+│  #  │ Distribution │ Version │   Arch   │ Platform │  Format   │            Filename             │ Score  │
+├─────┼──────────────┼─────────┼──────────┼──────────┼───────────┼─────────────────────────────────┼────────┤
+│  1  │ Generic      │ N/A     │  x86_64  │  Linux   │ APPIMAGE  │ MyApp-linux-x86_64.AppImage     │ 285.0  │
+│  2  │ Ubuntu       │ 22.04   │  x86_64  │  Linux   │ DEB       │ MyApp-ubuntu-22.04-amd64.deb    │ 245.0  │
+│  3  │ Generic      │ N/A     │  arm64   │  Linux   │ APPIMAGE  │ MyApp-linux-arm64.AppImage      │  0.0   │
+└─────┴──────────────┴─────────┴──────────┴──────────┴───────────┴─────────────────────────────────┴────────┘
+
+Color coding: Green=Compatible, Red=Incompatible, Yellow=Partial match
+```
+
+**🚫 Eliminated Download Errors:**
+- No more "cannot execute binary file: Exec format error" 
+- No more downloading macOS .dmg files on Linux
+- No more ARM binaries on x86_64 systems
+- No more unsupported package formats
+
 ### 🐧 Distribution-Aware Asset Selection
 
-AppImage Updater now intelligently selects the best compatible distribution when multiple distribution-specific releases are available:
+Building on the architecture/platform filtering, the system also provides intelligent distribution-specific selection:
 
 ```bash
 # BambuStudio example with multiple distributions:
@@ -418,16 +469,29 @@ The application follows a modular async architecture with clear separation of co
    - Global and per-application settings
 
 2. **Data Models** (`models.py`):
-   - `Release`: GitHub release information with assets
+   - `Release`: GitHub release information with assets and compatibility filtering
    - `UpdateCandidate`: Represents available updates with version comparison and checksum requirements
    - `CheckResult`: Results from update checks 
    - `DownloadResult`: Download operation results with checksum verification status
    - `ChecksumResult`: Checksum verification results and status
-   - `Asset`: Download assets with associated checksum files
+   - `Asset`: Download assets with automatic architecture, platform, and format detection
 
-3. **Service Layer**:
+3. **System Compatibility Layer** (`system_info.py`):
+   - `SystemInfo`: Comprehensive system information including architecture, platform, and supported formats
+   - `SystemDetector`: Detects current system capabilities and compatibility requirements
+   - **Compatibility Functions**: `is_compatible_architecture()`, `is_compatible_platform()`, `is_supported_format()`
+   - **Architecture Aliasing**: Intelligent mapping of x86_64↔amd64, arm64↔aarch64, etc.
+   - **Distribution Detection**: Linux distribution family detection for package format support
+
+4. **Asset Selection Layer** (`distribution_selector.py`):
+   - `DistributionSelector`: Enhanced with architecture and platform awareness
+   - **Compatibility Scoring**: 300+ point system considering arch, platform, format, and distribution
+   - **Automatic Filtering**: Removes incompatible assets before user selection
+   - **Rich Interactive Tables**: Color-coded compatibility display with detailed asset information
+
+5. **Service Layer**:
    - `GitHubClient`: Async GitHub API client with rate limiting awareness and checksum file detection
-   - `VersionChecker`: Orchestrates version comparison using `packaging` library
+   - `VersionChecker`: Orchestrates version comparison using `packaging` library with compatibility filtering
    - `Downloader`: Concurrent download manager with progress tracking, retry logic, and checksum verification
 
 4. **CLI Interface** (`main.py`):
@@ -565,6 +629,77 @@ Comprehensive security through checksum verification:
 5. **Verification Modes**: Optional or required verification per application
 6. **Visual Feedback**: Clear indicators showing verification status in results
 
+### System Compatibility Architecture
+
+**NEW FEATURE**: Advanced system compatibility detection and filtering prevents incompatible downloads:
+
+#### System Detection (`system_info.py`)
+1. **Architecture Detection**: 
+   - Auto-detects: x86_64, amd64, arm64, aarch64, armv7l, i686, etc.
+   - **Intelligent aliasing**: x86_64 ↔ amd64 ↔ x64, arm64 ↔ aarch64
+   - **Compatibility scoring**: 100=exact match, 80=compatible alias, 0=incompatible
+
+2. **Platform Detection**:
+   - Auto-detects: Linux, macOS (darwin), Windows (win32)
+   - **Strict compatibility**: Cross-platform packages are filtered out
+
+3. **Format Compatibility**:
+   - **Linux**: .AppImage (preferred), .deb/.rpm (distribution-specific), .tar.gz, .zip
+   - **macOS**: .dmg (preferred), .pkg, .zip, .tar.gz
+   - **Windows**: .exe (preferred), .msi, .zip
+   - **Distribution awareness**: .deb on Debian family, .rpm on Red Hat family
+
+#### Asset Intelligence (`models.py`)
+1. **Automatic Parsing**: 
+   - Extracts architecture from filenames: "app-linux-x86_64.AppImage" → x86_64
+   - Detects platform: "software-darwin.dmg" → darwin
+   - Identifies formats: Complex extensions like ".pkg.tar.xz"
+
+2. **Computed Properties**:
+   ```python
+   asset.architecture  # "x86_64", "arm64", etc.
+   asset.platform      # "linux", "darwin", "win32"
+   asset.file_extension # ".appimage", ".deb", ".dmg"
+   ```
+
+#### Enhanced Filtering (`distribution_selector.py`)
+1. **Compatibility Scoring System** (300+ points total):
+   - **Architecture**: 100 points (exact) or 80 points (compatible) or 0 (incompatible)
+   - **Platform**: 100 points (exact) or 0 (incompatible) 
+   - **Format**: Up to 100 points based on platform preferences
+   - **Distribution**: Up to 50 points for distribution family compatibility
+   - **Version**: Up to 30 points for version proximity
+
+2. **Automatic Selection**: 
+   - Score ≥ 150: Auto-select without user interaction
+   - Score < 150: Show interactive menu with compatibility indicators
+   - Score = 0: Filter out completely (incompatible)
+
+3. **Rich Interactive Display**:
+   ```
+   ┌─────┬──────────┬────────┬──────────┬──────────┬────────┐
+   │  #  │    Arch  │ Platform │  Format   │ Filename │ Score  │
+   ├─────┼──────────┼────────┼──────────┼────────┼────────┤
+   │  1  │ x86_64 │  Linux   │ APPIMAGE │ app.AppImage │ 285.0  │
+   │  2  │ arm64  │  Linux   │ APPIMAGE │ app-arm.AppImage │  0.0   │
+   └─────┴──────────┴────────┴──────────┴────────┴────────┘
+   ```
+   - **Color coding**: Green=compatible, Red=incompatible, Yellow=partial
+   - **Detailed info**: Shows all relevant compatibility factors
+
+#### Integration Points
+1. **Release Filtering**: `release.get_matching_assets(pattern, filter_compatible=True)`
+2. **Version Checking**: Automatic pre-filtering of incompatible assets
+3. **Distribution Selection**: Enhanced with full compatibility awareness
+4. **CLI Interface**: Users only see compatible options
+
+#### Benefits
+- **🚫 Eliminates Download Errors**: No more "cannot execute binary file" errors
+- **⚡ Faster Selection**: Reduced noise = quicker decisions  
+- **🎯 Better UX**: Clear visual compatibility indicators
+- **🔒 Future-Proof**: Handles new architectures automatically
+- **📊 Intelligent Scoring**: Prioritizes best compatibility matches
+
 ### GitHub Integration
 
 The GitHub client handles:
@@ -665,7 +800,17 @@ The project maintains high test coverage across all CLI commands:
 - **Path expansion**: Tests proper expansion of `~` and `..` path segments
 - **Validation feedback**: Tests user-friendly error messages for invalid inputs
 
-Total: **72 comprehensive tests** covering all major functionality paths.
+#### System Compatibility Testing
+- **Architecture Detection**: Tests x86_64, arm64, i686 detection and aliasing
+- **Platform Detection**: Tests Linux, macOS, Windows platform identification
+- **Format Compatibility**: Tests supported formats per platform/distribution
+- **Asset Parsing**: Tests architecture, platform, and format extraction from filenames
+- **Compatibility Functions**: Tests is_compatible_architecture(), is_compatible_platform(), is_supported_format()
+- **Release Filtering**: Tests compatible asset filtering and pattern matching
+- **Edge Cases**: Tests unknown architectures, empty strings, case sensitivity
+- **Integration**: Tests end-to-end compatibility workflows
+
+Total: **91+ comprehensive tests** covering all major functionality paths including new compatibility system.
 
 ## Symlink Management
 

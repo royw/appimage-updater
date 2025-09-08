@@ -14,6 +14,7 @@ This tool monitors configured applications (like FreeCAD) for new releases and p
 
 ## Features
 
+- **🎯 Intelligent Architecture & Platform Filtering**: Automatically eliminates incompatible downloads based on CPU architecture (x86_64, arm64, etc.), platform (Linux, macOS, Windows), and supported formats
 - **🐧 Distribution-Aware Selection**: Automatically selects the best compatible distribution (Ubuntu, Fedora, Debian, Arch, etc.)
 - **🔍 Smart Auto-Detection**: Automatically detects continuous build repositories and enables prerelease support
 - **📊 Version Metadata System**: Accurate version tracking with `.info` files for complex release formats
@@ -32,7 +33,7 @@ This tool monitors configured applications (like FreeCAD) for new releases and p
 
 ✅ **Production Ready** - Full CI/CD pipeline with automated testing and documentation  
 ✅ **Live Documentation** - Professional docs site with enhanced navigation  
-✅ **Quality Assured** - 116 tests, 76% coverage, complexity analysis, type checking
+✅ **Quality Assured** - 91+ tests including comprehensive architecture compatibility testing, 76% coverage, complexity analysis, type checking
 ✅ **Open Source** - Public repository with contribution guidelines and templates  
 ✅ **Modern Tooling** - Built with Python 3.11+, uv, ruff, mypy, pytest
 
@@ -58,12 +59,29 @@ uv sync
 uv run python -m appimage_updater
 ```
 
-### Distribution Support
+### Architecture & Distribution Support
 
-For applications with multiple distribution-specific releases (like BambuStudio):
+**NEW: Intelligent Compatibility Filtering**
+
+Automatically eliminates incompatible downloads:
 
 ```bash
-# Automatically selects best match for your system
+# Multi-architecture project (e.g., BelenaEtcher)
+# Available: linux-x86_64.AppImage, linux-arm64.AppImage, darwin.dmg, win32.exe
+uv run python -m appimage_updater add BelenaEtcher https://github.com/balena-io/etcher ~/Apps/BelenaEtcher
+# Ubuntu x86_64 Result: Automatically selects Linux x86_64 AppImage
+#                       Filters out: ARM64, macOS, Windows versions
+```
+
+**🔍 System Detection:**
+- **Architecture**: x86_64, amd64, arm64, armv7l, i686 (with intelligent aliasing)
+- **Platform**: Linux, macOS (darwin), Windows (win32)
+- **Format Support**: .AppImage, .deb/.rpm (distro-specific), .dmg, .exe, etc.
+
+**For Distribution-Specific Releases:**
+
+```bash
+# Automatically selects best distribution match
 uv run python -m appimage_updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio
 # Ubuntu 25.04 → Selects ubuntu-24.04 (closest compatible)
 # Fedora 38 → Selects fedora version  
@@ -96,6 +114,7 @@ Our comprehensive documentation is live and automatically updated:
 - 🚀 **[Getting Started](https://royw.github.io/appimage-updater/getting-started/)** - Step-by-step tutorial
 - 📦 **[Installation](https://royw.github.io/appimage-updater/installation/)** - Setup instructions
 - ⚙️ **[Configuration](https://royw.github.io/appimage-updater/configuration/)** - Advanced settings
+- 🎯 **[Compatibility System](https://royw.github.io/appimage-updater/compatibility/)** - Architecture & platform filtering
 - 🔧 **[Commands Reference](https://royw.github.io/appimage-updater/commands/)** - Complete CLI documentation
 - 💡 **[Examples](https://royw.github.io/appimage-updater/examples/)** - Real-world usage patterns
 
