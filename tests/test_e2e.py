@@ -913,6 +913,24 @@ def test_integration_smoke_test(runner):
     assert "Add a new application to the configuration" in result.stdout
 
 
+def test_version_option(runner):
+    """Test the --version option displays version and exits."""
+    # Test --version flag
+    result = runner.invoke(app, ["--version"])
+    assert result.exit_code == 0
+    assert "AppImage Updater" in result.stdout
+    assert "0.2.7" in result.stdout  # Current version from pyproject.toml
+
+    # Test -V short flag
+    result_short = runner.invoke(app, ["-V"])
+    assert result_short.exit_code == 0
+    assert "AppImage Updater" in result_short.stdout
+    assert "0.2.7" in result_short.stdout
+
+    # Version output should be identical for both flags
+    assert result.stdout == result_short.stdout
+
+
 class TestAddCommand:
     """Test the add command functionality."""
 

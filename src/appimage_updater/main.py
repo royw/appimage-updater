@@ -12,6 +12,7 @@ import typer
 from loguru import logger
 from rich.console import Console
 
+from ._version import __version__
 from .config_loader import (
     ConfigLoadError,
     get_default_config_dir,
@@ -185,9 +186,24 @@ _EDIT_CHECKSUM_REQUIRED_OPTION = typer.Option(
 )
 
 
+def version_callback(value: bool) -> None:
+    """Callback for --version option."""
+    if value:
+        console.print(f"AppImage Updater {__version__}")
+        raise typer.Exit()
+
+
 @app.callback()
 def main(
     debug: bool = _DEBUG_OPTION,
+    version: bool = typer.Option(
+        False,
+        "--version",
+        "-V",
+        help="Show version and exit",
+        callback=version_callback,
+        is_eager=True,
+    ),
 ) -> None:
     """AppImage update manager with optional debug logging."""
     configure_logging(debug=debug)
