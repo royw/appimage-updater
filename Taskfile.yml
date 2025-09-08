@@ -158,11 +158,33 @@ tasks:
       - python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(f'v{data[\"project\"][\"version\"]}')"
 
   version:bump:
-    desc: Bump the patch version using version-bumper
+    desc: Bump the patch version, build, commit, and deploy locally
     cmds:
+      - echo "🔍 Checking for uncommitted changes..."
+      - |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "❌ Error: There are uncommitted changes. Please commit or stash them first."
+          git status --short
+          exit 1
+        else
+          echo "✅ Working directory is clean"
+        fi
+      - echo "📈 Bumping version..."
       - uv run version_bumper bump patch
       - echo "✅ Version bumped! New version:"
       - task: version
+      - echo "🏗️  Building package..."
+      - task: build
+      - echo "📝 Committing version bump..."
+      - |
+        NEW_VERSION=$(python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data['project']['version'])")
+        git add pyproject.toml
+        git commit -m "chore: bump version to v$NEW_VERSION"
+        echo "✅ Committed version bump to v$NEW_VERSION"
+      - echo "🚀 Installing locally with pipx..."
+      - pipx install --force dist/*.whl
+      - echo "✅ Successfully deployed appimage-updater v$(task version) locally!"
+      - echo "🎉 Workflow complete! You can now use the updated version."
 
   version:tag:
     desc: Create and push a git tag for the current version

@@ -528,7 +528,7 @@ class Downloader:
         # For apps with varying filenames (like BambuStudio), we need to find ALL .current files
         # that match the app pattern, not just files with the exact same base name
         current_files = self._find_current_files_by_pattern(download_dir)
-        
+
         if not current_files:
             return
 
@@ -536,7 +536,7 @@ class Downloader:
         for current_file in current_files:
             current_base_name = self._extract_base_name_from_current(current_file)
             current_extension = ""  # Already handled in base name for AppImage files
-            
+
             # Step 1: Rotate numbered files in reverse order for this specific base name
             self._rotate_numbered_files(download_dir, current_base_name, current_extension, retain_count)
 
