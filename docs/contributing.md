@@ -70,6 +70,8 @@ task clean
 - **Type safety** - Full type annotations with Pydantic models
 - **Error handling** - Structured exceptions with user-friendly messages
 - **Separation of concerns** - Clear boundaries between layers
+- **Modular design** - Dedicated modules for specific functionality areas
+- **Single responsibility** - Each module has a focused, well-defined purpose
 
 ### Testing
 
@@ -144,7 +146,10 @@ git push origin feature/my-new-feature
 ```
 src/appimage_updater/
 ├── __init__.py          # Package initialization
-├── main.py              # CLI interface and commands
+├── main.py              # CLI interface and command orchestration
+├── display.py           # Console output formatting and display
+├── pattern_generator.py # GitHub URL parsing and pattern generation  
+├── config_operations.py # Configuration management and persistence
 ├── config.py            # Configuration models
 ├── config_loader.py     # Configuration loading logic
 ├── models.py            # Data models
@@ -160,7 +165,9 @@ src/appimage_updater/
 2. Use Typer for CLI interface
 3. Add comprehensive error handling
 4. Include help text and examples
-5. Add tests for the new command
+5. Extract display logic to `display.py` if complex
+6. Use `config_operations.py` for configuration management
+7. Add tests for the new command
 
 Example:
 ```python
@@ -181,10 +188,12 @@ def my_command(
 ### Adding New Features
 
 1. **Plan the feature** - Consider impact on existing code
-2. **Write tests first** - Test-driven development preferred
-3. **Implement incrementally** - Small, focused commits
-4. **Update documentation** - Keep docs current
-5. **Consider backwards compatibility** - Avoid breaking changes
+2. **Choose appropriate module** - Follow modular architecture patterns
+3. **Write tests first** - Test-driven development preferred
+4. **Implement incrementally** - Small, focused commits
+5. **Update documentation** - Keep docs current
+6. **Consider backwards compatibility** - Avoid breaking changes
+7. **Maintain module boundaries** - Keep functionality properly separated
 
 ### Error Handling
 

@@ -90,13 +90,18 @@ Our comprehensive documentation is live and automatically updated:
 
 This project follows modern Python practices:
 - Python 3.11+ with modern type hints
-- Code complexity kept under 10 (cyclomatic complexity)
+- **Modular architecture** with clear separation of concerns
+- Code complexity kept under 10 (cyclomatic complexity) 
 - Full type checking with mypy
 - Code formatting with ruff
 - Testing with pytest
 
 ### Project Structure
-- `src/appimage_updater/` - Main application code
+- `src/appimage_updater/` - Main application code with modular design:
+  - `main.py` - CLI interface and command orchestration
+  - `display.py` - Console output formatting and display functions
+  - `pattern_generator.py` - GitHub URL parsing and intelligent pattern generation
+  - `config_operations.py` - Configuration management and persistence
 - `config/` - Configuration files for monitored applications
 - `examples/` - Example configuration files
 - `docs/` - Documentation

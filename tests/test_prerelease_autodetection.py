@@ -7,7 +7,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from typer.testing import CliRunner
 
-from appimage_updater.main import _should_enable_prerelease, app
+from appimage_updater.main import app
+from appimage_updater.pattern_generator import should_enable_prerelease
 from appimage_updater.models import Asset, Release
 from datetime import datetime
 
@@ -43,12 +44,12 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.GitHubClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             mock_client_class.return_value = mock_client
 
-            result = await _should_enable_prerelease("https://github.com/test/repo")
+            result = await should_enable_prerelease("https://github.com/test/repo")
 
         assert result is True
         mock_client.get_releases.assert_called_once_with("https://github.com/test/repo", limit=10)
@@ -75,12 +76,12 @@ class TestPrereleaseAutoDetection:
             ),
         ]
 
-        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.GitHubClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             mock_client_class.return_value = mock_client
 
-            result = await _should_enable_prerelease("https://github.com/test/repo")
+            result = await should_enable_prerelease("https://github.com/test/repo")
 
         assert result is False
 
@@ -106,24 +107,24 @@ class TestPrereleaseAutoDetection:
             ),
         ]
 
-        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.GitHubClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             mock_client_class.return_value = mock_client
 
-            result = await _should_enable_prerelease("https://github.com/test/repo")
+            result = await should_enable_prerelease("https://github.com/test/repo")
 
         assert result is False
 
     @pytest.mark.anyio
     async def test_should_enable_prerelease_no_releases(self):
         """Test that prerelease is not enabled when repository has no releases."""
-        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.GitHubClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = []
             mock_client_class.return_value = mock_client
 
-            result = await _should_enable_prerelease("https://github.com/test/repo")
+            result = await should_enable_prerelease("https://github.com/test/repo")
 
         assert result is False
 
@@ -141,24 +142,24 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.GitHubClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             mock_client_class.return_value = mock_client
 
-            result = await _should_enable_prerelease("https://github.com/test/repo")
+            result = await should_enable_prerelease("https://github.com/test/repo")
 
         assert result is False
 
     @pytest.mark.anyio
     async def test_should_enable_prerelease_api_error(self):
         """Test that prerelease is not enabled when GitHub API fails."""
-        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.GitHubClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.get_releases.side_effect = Exception("API Error")
             mock_client_class.return_value = mock_client
 
-            result = await _should_enable_prerelease("https://github.com/test/repo")
+            result = await should_enable_prerelease("https://github.com/test/repo")
 
         assert result is False
 
@@ -175,7 +176,7 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.GitHubClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             mock_client_class.return_value = mock_client

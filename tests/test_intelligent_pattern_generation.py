@@ -18,7 +18,7 @@ The new pattern '(?i)OpenShot.*\\.AppImage' matches perfectly.
 """
 import re
 import pytest
-from appimage_updater.main import _generate_appimage_pattern
+from appimage_updater.pattern_generator import generate_appimage_pattern
 
 
 def test_openshot_pattern_generation_is_now_fixed():
@@ -26,7 +26,7 @@ def test_openshot_pattern_generation_is_now_fixed():
     app_name = "OpenShot"
     url = "https://github.com/OpenShot/openshot-qt"
     
-    pattern = _generate_appimage_pattern(app_name, url)
+    pattern = generate_appimage_pattern(app_name, url)
     
     # The improvement: handles both intelligent (from releases) and fallback modes
     if "(?i)" in pattern:
@@ -56,7 +56,7 @@ def test_openshot_pattern_now_works_correctly():
     url = "https://github.com/OpenShot/openshot-qt"
     
     # Generate pattern using the improved method
-    pattern = _generate_appimage_pattern(app_name, url)
+    pattern = generate_appimage_pattern(app_name, url)
     
     # The improvement: now properly handles both scenarios
     if "(?i)" in pattern:
@@ -94,7 +94,7 @@ def test_intelligent_pattern_generation_success():
     url = "https://github.com/OpenShot/openshot-qt"
     
     # Generate pattern using the improved method
-    pattern = _generate_appimage_pattern(app_name, url)
+    pattern = generate_appimage_pattern(app_name, url)
     
     # The improved approach attempts to:
     # 1. Fetch actual releases from GitHub (when API is available)

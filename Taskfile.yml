@@ -71,8 +71,8 @@ tasks:
       - >
         uv run deadcode {{.CLI_ARGS | default "src/"}}
         --ignore-if-decorated-with "@app.command" "@app.callback" "@field_validator" 
-        --ignore-names "main" "check" "init" "list_apps" "show" "DownloadError" "model_post_init"
-        "validate_pattern" "validate_download_dir" "validate_symlink_path"
+        --ignore-names "main" "check" "init" "list_apps" "show" "edit" "DownloadError" "model_post_init"
+        "validate_pattern" "validate_download_dir" "validate_symlink_path" "generate_appimage_pattern"
         "created_at" "tag_name" "checked_at" "expected" "actual" "duration_seconds"
 
   test:all:
@@ -118,12 +118,21 @@ tasks:
     desc: Build distribution packages (wheel and sdist)
     deps:
       - clean
-      - check
     cmds:
       - echo "🏗️  Building AppImage Updater distribution packages..."
       - uv build {{.CLI_ARGS}}
       - echo "✅ Build complete! Packages created in dist/"
       - ls -la dist/
+
+  ci:
+    desc: Complete CI pipeline - run all checks, build, docs, and show version before pushing to GitHub
+    cmds:
+      - echo "🚀 Starting CI pipeline..."
+      - task: check
+      - task: build
+      - task: docs:build
+      - task: version
+      - echo "✅ CI pipeline completed successfully! Ready to push to GitHub 🎉"
 
   clean:
     desc: Clean up generated files

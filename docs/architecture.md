@@ -35,14 +35,38 @@ The entry point for all user interactions, built with [Typer](https://typer.tian
 
 **Responsibilities:**
 - Parse command-line arguments and options
-- Provide user-friendly help and error messages
 - Coordinate between different components
 - Handle global error handling and logging
+- Orchestrate CLI command execution
 
 **Key Features:**
 - Rich console output with colors and progress bars
 - Async command execution
 - Structured error handling with clean user messages
+- **Modular architecture** with extracted functionality:
+  - `display.py` - Console output formatting and display functions
+  - `pattern_generator.py` - GitHub URL parsing and intelligent pattern generation
+  - `config_operations.py` - Configuration management and persistence operations
+
+#### Supporting Modules
+
+**Display Module (`display.py`)**
+- Console output formatting and styling
+- Table generation and data presentation
+- Progress indicators and status messages
+- Rich console integration for enhanced UX
+
+**Pattern Generation (`pattern_generator.py`)**
+- GitHub repository URL parsing and validation
+- Intelligent AppImage pattern generation from actual releases
+- Async GitHub API integration for pattern discovery
+- Fallback pattern generation strategies
+
+**Configuration Operations (`config_operations.py`)**
+- Application configuration loading and saving
+- Configuration file and directory management
+- Application addition and removal operations
+- Configuration validation and error handling
 
 ### Configuration System
 

@@ -58,6 +58,9 @@ task deadcode
 # Run all quality checks (includes automatic fixing, formatting, type checking, linting, complexity analysis, and testing)
 task check
 
+# Run complete CI pipeline (check + build + docs + version)
+task ci
+
 # Clean up generated files
 task clean
 
@@ -371,6 +374,10 @@ The application follows a modular async architecture with clear separation of co
 4. **CLI Interface** (`main.py`):
    - Typer-based CLI with rich console output
    - Async command handling with proper error management
+   - Modular design with extracted functionality:
+     - `display.py`: Console output formatting and user interface functions
+     - `pattern_generator.py`: GitHub URL parsing and AppImage pattern generation
+     - `config_operations.py`: Configuration loading, saving, and management operations
 
 ### Key Architectural Patterns
 
@@ -379,6 +386,7 @@ The application follows a modular async architecture with clear separation of co
 - **Type safety**: Full type annotations with strict mypy configuration
 - **Pydantic validation**: Configuration and data models use Pydantic for validation
 - **Error handling**: Structured exception hierarchy with user-friendly error messages
+- **Modular architecture**: Clean separation of concerns with dedicated modules for different responsibilities
 
 ### Configuration System
 
@@ -516,6 +524,7 @@ The GitHub client handles:
 - **Testing** with pytest and coverage reporting
 - **Error handling**: Custom exception classes for different error types
 - **Async patterns**: Proper use of asyncio with semaphores for concurrency control
+- **Modular design**: Clear separation of concerns with dedicated modules for different functionality areas
 
 ## Logging
 
