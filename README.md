@@ -18,11 +18,13 @@ This tool monitors configured applications (like FreeCAD) for new releases and p
 - **🐧 Distribution-Aware Selection**: Automatically selects the best compatible distribution (Ubuntu, Fedora, Debian, Arch, etc.)
 - **🔍 Smart Auto-Detection**: Automatically detects continuous build repositories and enables prerelease support
 - **📊 Version Metadata System**: Accurate version tracking with `.info` files for complex release formats
-- **📦 Automatic ZIP Extraction**: Seamlessly extracts AppImages from ZIP archives (perfect for BambuStudio, etc.)
+- **📦 Enhanced ZIP Support**: Automatically extracts AppImages from ZIP files with intelligent error handling
+- **🎯 Universal Pattern Generation**: All patterns support both ZIP and AppImage formats automatically
 - **Easy Application Setup**: Simple `add` command with intelligent defaults
 - **File Rotation & Symlinks**: Automatic file management with configurable retention (fixed naming)
 - **Flexible Configuration**: Custom update frequencies, rotation settings, and symlink management
 - **🔧 Multi-Format Support**: Works with `.zip`, `.AppImage`, and other release formats seamlessly
+- **🤖 Smart Pattern Matching**: Handles naming variations (underscore/hyphen) and character substitutions
 - **Automatic Checksum Verification**: SHA256, SHA1, MD5 support for download security
 - **Batch Operations**: Download multiple updates concurrently with retry logic
 - **GitHub Integration**: Full support for releases, prereleases, and asset detection
@@ -57,6 +59,36 @@ uv sync
 
 ```bash
 uv run python -m appimage_updater
+```
+
+### 📦 Enhanced ZIP Support
+
+**NEW**: Comprehensive support for applications that distribute AppImage files inside ZIP archives:
+
+```bash
+# Applications like EdgeTX Companion that provide ZIP files containing AppImages
+appimage-updater add EdgeTX_Companion https://github.com/EdgeTX/edgetx-companion ~/Apps/EdgeTX
+
+# Automatic ZIP extraction workflow:
+# 1. Downloads: EdgeTX-Companion-2.9.4-x64.zip
+# 2. Extracts: EdgeTX-Companion-2.9.4-x64.AppImage (made executable)
+# 3. Creates: EdgeTX-Companion-2.9.4-x64.AppImage.info (version metadata)
+# 4. Removes: Original ZIP file
+```
+
+**Features:**
+- **Universal Patterns**: All generated patterns support both `.zip` and `.AppImage` formats automatically
+- **Smart Character Handling**: Handles naming variations like `EdgeTX_Companion` ↔ `EdgeTX-Companion`
+- **Intelligent Error Messages**: Clear guidance when ZIP files don't contain AppImages
+- **Seamless Experience**: ZIP extraction is completely transparent to users
+- **Future-Proof**: Works if projects switch between ZIP and AppImage formats
+
+**Example Error Handling:**
+```
+No AppImage files found in zip: EdgeTX-Companion.zip. 
+Contains: companion.exe, companion.dll, readme.txt...
+This project may have stopped providing AppImage format. 
+Check the project's releases page for alternative download options.
 ```
 
 ### Architecture & Distribution Support
@@ -115,6 +147,7 @@ Our comprehensive documentation is live and automatically updated:
 - 📦 **[Installation](https://royw.github.io/appimage-updater/installation/)** - Setup instructions
 - ⚙️ **[Configuration](https://royw.github.io/appimage-updater/configuration/)** - Advanced settings
 - 🎯 **[Compatibility System](https://royw.github.io/appimage-updater/compatibility/)** - Architecture & platform filtering
+- 💾 **[ZIP Support](docs/zip-support.md)** - ZIP extraction and universal pattern generation
 - 🔧 **[Commands Reference](https://royw.github.io/appimage-updater/commands/)** - Complete CLI documentation
 - 💡 **[Examples](https://royw.github.io/appimage-updater/examples/)** - Real-world usage patterns
 

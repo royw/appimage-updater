@@ -916,6 +916,14 @@ def test_integration_smoke_test(runner):
 def test_version_option(runner):
     """Test the --version option displays version and exits."""
     import re
+    import tomllib
+    from pathlib import Path
+    
+    # Read version from pyproject.toml
+    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+    with open(pyproject_path, "rb") as f:
+        pyproject = tomllib.load(f)
+    expected_version = pyproject["project"]["version"]
     
     # Test --version flag
     result = runner.invoke(app, ["--version"])
@@ -924,7 +932,7 @@ def test_version_option(runner):
     
     # Strip ANSI color codes to check version
     clean_output = re.sub(r'\x1b\[[0-9;]*m', '', result.stdout)
-    assert "0.2.10" in clean_output  # Current version from pyproject.toml
+    assert expected_version in clean_output
 
     # Test -V short flag
     result_short = runner.invoke(app, ["-V"])
@@ -933,7 +941,7 @@ def test_version_option(runner):
     
     # Strip ANSI color codes to check version
     clean_output_short = re.sub(r'\x1b\[[0-9;]*m', '', result_short.stdout)
-    assert "0.2.10" in clean_output_short
+    assert expected_version in clean_output_short
 
     # Version output should be identical for both flags
     assert result.stdout == result_short.stdout
@@ -956,8 +964,8 @@ class TestAddCommand:
         assert "TestApp" in result.stdout
         assert "https://github.com/user/testapp" in result.stdout
         assert "/tmp/test-download" in result.stdout
-        # For non-existent repo, should fall back to heuristic pattern generation
-        assert "TestApp.*[Ll]inux.*\\.AppImage(\\.(|current|old))?$" in result.stdout
+        # For non-existent repo, should fall back to heuristic universal pattern generation
+        assert "TestApp.*\\.(?:zip|AppImage)(\\.(|current|old))?$" in result.stdout
 
         # Check that config file was created
         config_file = temp_config_dir / "testapp.json"
@@ -973,8 +981,8 @@ class TestAddCommand:
         assert app_config["source_type"] == "github"
         assert app_config["url"] == "https://github.com/user/testapp"
         assert app_config["download_dir"] == "/tmp/test-download"
-        # Non-existent repo should use fallback heuristic pattern
-        assert app_config["pattern"] == "TestApp.*[Ll]inux.*\\.AppImage(\\.(|current|old))?$"
+        # Non-existent repo should use universal pattern as fallback
+        assert app_config["pattern"] == "(?i)TestApp.*\\.(?:zip|AppImage)(\\.(|current|old))?$"
         assert app_config["enabled"] is True
         assert app_config["prerelease"] is False
         assert app_config["checksum"]["enabled"] is True

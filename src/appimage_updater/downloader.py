@@ -247,7 +247,17 @@ class Downloader:
                 ]
 
                 if not appimage_files:
-                    raise Exception(f"No AppImage files found in zip: {candidate.download_path.name}")
+                    # List what files are actually in the zip for context
+                    zip_contents = [name for name in zip_ref.namelist() if not name.endswith("/")][:5]  # First 5 files
+                    contents_info = f"Contains: {', '.join(zip_contents)}" + (
+                        "..." if len(zip_ref.namelist()) > 5 else ""
+                    )
+
+                    raise Exception(
+                        f"No AppImage files found in zip: {candidate.download_path.name}. "
+                        f"{contents_info}. This project may have stopped providing AppImage format. "
+                        f"Check the project's releases page for alternative download options."
+                    )
 
                 if len(appimage_files) > 1:
                     logger.warning(f"Multiple AppImage files found in zip, using first: {appimage_files[0]}")

@@ -12,27 +12,59 @@ The documentation includes enhanced navigation with 🏠 home icons, clickable h
 
 AppImage Updater is a service for automating the finding and downloading of AppImage applications from their respective websites. It monitors configured applications (like FreeCAD) for new releases and provides an automated way to download updated AppImage files from GitHub releases and other sources.
 
-### 📦 Multi-Format Download Support
+### 📦 Enhanced Multi-Format Download Support
 
-The application now supports downloading and automatically extracting AppImage files from multiple formats:
+The application now provides **comprehensive support** for downloading and automatically extracting AppImage files from multiple formats:
 
-- **Direct AppImage downloads**: Traditional `.AppImage` files are downloaded directly
-- **ZIP archive extraction**: ZIP files containing AppImage files are automatically extracted
-  - Automatically detects and extracts `.AppImage` files from within ZIP archives
-  - Removes the ZIP file after successful extraction
-  - Handles subdirectories within ZIP files (extracts to download directory root)
-  - Creates `.info` metadata files for the extracted AppImage, not the original ZIP
-  - Works seamlessly with file rotation and symlink management
+#### **Direct AppImage Downloads**
+- **Traditional `.AppImage` files**: Downloaded directly and made executable
+- **Optimal experience**: No extraction needed, immediate execution
+
+#### **ZIP Archive Extraction** 
+- **Automatic Detection**: Scans ZIP files for contained AppImage files
+- **Smart Extraction**: Extracts AppImage files to download directory root
+- **Clean Handling**: Removes ZIP file after successful extraction
+- **Subdirectory Support**: Handles AppImages nested in ZIP subdirectories
+- **Metadata Integration**: Creates `.info` metadata files for extracted AppImages
+- **Rotation Compatible**: Works seamlessly with file rotation and symlink management
+
+#### **Intelligent Error Handling**
+- **Informative Messages**: When ZIP doesn't contain AppImage files, shows actual contents
+- **Project Guidance**: Suggests project may have stopped providing AppImage format
+- **User-Friendly**: Provides actionable next steps and alternative options
+
+**Example error when ZIP contains non-AppImage files:**
+```
+No AppImage files found in zip: EdgeTX-Companion.zip. 
+Contains: companion.exe, companion.dll, readme.txt...
+This project may have stopped providing AppImage format. 
+Check the project's releases page for alternative download options.
+```
 
 **Example applications that benefit from ZIP support:**
 - **BambuStudio**: Releases AppImages inside ZIP files
+- **EdgeTX Companion**: Provides both ZIP and AppImage releases
 - Any application that packages AppImages in compressed archives
 
-**Pattern Configuration for ZIP files:**
+#### **Universal Pattern Generation**
+
+**NEW**: All generated patterns now support both ZIP and AppImage formats automatically:
+
 ```regex
-# Match both zip and AppImage files with rotation support
-(?i)Bambu_?Studio_.*\.(zip|AppImage)(\.(|current|old))?$
+# Modern universal patterns (generated automatically)
+(?i)BambuStudio.*\.(zip|AppImage)(\.(|current|old))?$
+(?i)EdgeTX[_-]Companion.*\.(zip|AppImage)(\.(|current|old))?$
+(?i)FreeCAD.*\.(zip|AppImage)(\.(|current|old))?$
+
+# Legacy AppImage-only patterns (no longer generated)
+(?i)BambuStudio.*\.AppImage(\.(|current|old))?$ 
 ```
+
+**Benefits of Universal Patterns:**
+- **Future-Proof**: Works if projects switch between formats
+- **Backwards Compatible**: Still works with traditional AppImage releases  
+- **Zero Configuration**: No manual pattern editing required
+- **Format Flexibility**: Handles projects that provide multiple formats
 
 ### 🎯 Intelligent Architecture & Platform Filtering
 
@@ -525,32 +557,59 @@ Configuration files use JSON format with the following structure:
 
 ### File Pattern Matching
 
-The application uses regex patterns to identify and match AppImage files in download directories:
+The application uses regex patterns to identify and match both AppImage and ZIP files in download directories:
 
-#### Pattern Format
-Patterns follow the format: `base_pattern\.AppImage(suffix_pattern)?$`
+#### Modern Universal Pattern Format
+**NEW**: All patterns now support both ZIP and AppImage formats automatically:
 
-**Recommended suffix pattern**: `(\.(|current|old))?`
-- Matches files with no suffix: `app.AppImage`
-- Matches files with `.current` suffix: `app.AppImage.current`
-- Matches files with `.old` suffix: `app.AppImage.old`
-- Matches files with empty suffix: `app.AppImage.`
-- **Does NOT match** backup files: `app.AppImage.save`, `app.AppImage.backup`, `app.AppImage.bak`
+```regex
+# Universal format (generated automatically)
+base_pattern\.(zip|AppImage)(suffix_pattern)?$
+```
+
+**Enhanced suffix pattern**: `(\.(|current|old))?`
+- Matches files with no suffix: `app.AppImage`, `app.zip`
+- Matches files with `.current` suffix: `app.AppImage.current`, `app.zip.current`
+- Matches files with `.old` suffix: `app.AppImage.old`, `app.zip.old` 
+- Matches files with empty suffix: `app.AppImage.`, `app.zip.`
+- **Does NOT match** backup files: `app.AppImage.save`, `app.zip.backup`, etc.
 
 #### Pattern Examples
+
+**Modern Universal Patterns (automatically generated):**
 ```regex
-# Precise matching (recommended)
+# Supports both ZIP and AppImage formats
+(?i)OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.(zip|AppImage)(\.(|current|old))?$
+(?i)EdgeTX[_-]Companion.*\.(zip|AppImage)(\.(|current|old))?$
+(?i)BambuStudio.*\.(zip|AppImage)(\.(|current|old))?$
+```
+
+**Legacy AppImage-only patterns (no longer generated):**
+```regex
+# Old format - AppImage only
 OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.AppImage(\.(|current|old))?$
 
 # Legacy broad matching (not recommended)
 OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.AppImage(\..*)?$
 ```
 
-#### Benefits of Precise Patterns
-1. **Prevents backup file conflicts**: Backup files won't interfere with version detection
-2. **Maintains rotation support**: Still works with file rotation systems (`.current`, `.old`)
-3. **Reduces false positives**: Eliminates incorrect "update available" status from backup files
-4. **Future-proof**: Won't match unexpected file extensions
+#### Intelligent Pattern Generation Features
+
+1. **Dual Format Support**: Automatically includes both ZIP and AppImage extensions
+2. **Smart GitHub Analysis**: Scans actual releases to create accurate patterns
+3. **Flexible Naming**: Handles character variations (underscore ↔ hyphen)
+4. **Case Insensitive**: Uses `(?i)` flag for robust matching
+5. **Extension Stripping**: Removes extensions before prefix analysis for cleaner patterns
+
+#### Benefits of Universal Patterns
+
+1. **Future-Proof**: Works if projects switch between ZIP and AppImage formats
+2. **Zero Configuration**: No manual pattern editing when formats change
+3. **Backwards Compatible**: Still works with traditional AppImage-only releases
+4. **Format Flexibility**: Handles projects providing multiple download options
+5. **Prevents backup conflicts**: Precise suffix matching avoids backup files
+6. **Rotation Support**: Works seamlessly with file rotation systems
+7. **Character Flexibility**: Adapts to naming variations automatically
 
 ### Version Detection Logic
 
@@ -702,12 +761,58 @@ Comprehensive security through checksum verification:
 
 ### GitHub Integration
 
-The GitHub client handles:
-- Repository URL parsing (supports various GitHub URL formats)
-- Release fetching with proper error handling and rate limiting awareness
-- Asset filtering using regex patterns to match AppImage files
-- Automatic detection and association of checksum files with their corresponding assets
-- Datetime parsing for GitHub API responses
+The GitHub client provides comprehensive integration with GitHub releases:
+
+#### **Core Functionality**
+- **Repository URL parsing**: Supports various GitHub URL formats and normalizes them
+- **Release fetching**: Proper error handling and rate limiting awareness
+- **Enhanced asset filtering**: Uses regex patterns to match both AppImage and ZIP files
+- **Checksum detection**: Automatic detection and association of checksum files with their corresponding assets
+- **Datetime parsing**: Robust parsing of GitHub API responses
+
+#### **Intelligent Pattern Generation**
+
+**Enhanced Algorithm**:
+1. **Dual Format Analysis**: Scans releases for both AppImage and ZIP files
+2. **Smart Prioritization**: Prefers AppImage files but includes ZIP files if no AppImages found
+3. **Common Prefix Extraction**: Analyzes actual filenames to find consistent naming patterns
+4. **Extension Stripping**: Removes file extensions before prefix analysis for cleaner patterns
+5. **Universal Pattern Creation**: Generates patterns supporting both `.(zip|AppImage)` formats
+
+**Pattern Generation Flow**:
+```python
+# Step 1: Fetch recent releases
+releases = await client.get_releases(url, limit=5)
+
+# Step 2: Collect both AppImage and ZIP files
+appimage_files = [asset.name for asset in assets if asset.name.endswith('.AppImage')]
+zip_files = [asset.name for asset in assets if asset.name.endswith('.zip')]
+
+# Step 3: Prioritize AppImage files, fallback to ZIP
+target_files = appimage_files if appimage_files else zip_files
+
+# Step 4: Generate universal pattern
+pattern = create_pattern_from_filenames(target_files, include_both_formats=True)
+# Result: (?i)AppName.*\.(zip|AppImage)(\.(|current|old))?$
+```
+
+#### **Fallback Pattern Generation**
+
+When GitHub API is unavailable, the system uses enhanced heuristic patterns:
+
+**Features**:
+- **Flexible character matching**: Handles underscore ↔ hyphen variations
+- **Universal format support**: Always includes both ZIP and AppImage extensions
+- **Case insensitive**: Uses `(?i)` flag for robust matching
+
+**Example transformations**:
+```python
+# Input: EdgeTX_Companion
+# Output: (?i)EdgeTX[_-]Companion.*\.(?:zip|AppImage)(\.(|current|old))?$
+
+# Input: BambuStudio  
+# Output: (?i)BambuStudio.*\.(?:zip|AppImage)(\.(|current|old))?$
+```
 
 ## Development Standards
 

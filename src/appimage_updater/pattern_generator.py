@@ -94,7 +94,10 @@ async def generate_appimage_pattern_async(app_name: str, url: str) -> str:
 
 
 async def fetch_appimage_pattern_from_github(url: str) -> str | None:
-    """Async function to fetch AppImage pattern from GitHub releases."""
+    """Async function to fetch AppImage pattern from GitHub releases.
+
+    Looks for both direct AppImage files and ZIP files that might contain AppImages.
+    """
     from .github_auth import get_github_auth
 
     # Use authentication for better rate limits
@@ -102,52 +105,79 @@ async def fetch_appimage_pattern_from_github(url: str) -> str | None:
     client = GitHubClient(auth=auth)
 
     try:
-        # Get recent releases to find AppImage files
+        # Get recent releases to find AppImage and ZIP files
         releases = await client.get_releases(url, limit=5)
         appimage_files = []
+        zip_files = []
 
-        # Collect AppImage files from recent releases
+        # Collect AppImage and ZIP files from recent releases
         for release in releases:
             for asset in release.assets:
-                if asset.name.lower().endswith(".appimage"):
+                name_lower = asset.name.lower()
+                if name_lower.endswith(".appimage"):
                     appimage_files.append(asset.name)
+                elif name_lower.endswith(".zip"):
+                    zip_files.append(asset.name)
 
-        if not appimage_files:
-            logger.debug("No AppImage files found in recent releases")
+        # Prefer AppImage files but include ZIP files if no AppImages found
+        target_files = appimage_files if appimage_files else zip_files
+
+        if not target_files:
+            logger.debug("No AppImage or ZIP files found in recent releases")
             return None
 
-        # Generate pattern from actual filenames
-        return create_pattern_from_filenames(appimage_files)
+        # Generate pattern from actual filenames (supports both .zip and .AppImage)
+        return create_pattern_from_filenames(target_files, include_both_formats=True)
 
     except Exception as e:
         logger.debug(f"Error fetching releases: {e}")
         return None
 
 
-def create_pattern_from_filenames(filenames: list[str]) -> str:
-    """Create a regex pattern from actual AppImage filenames.
+def create_pattern_from_filenames(filenames: list[str], include_both_formats: bool = False) -> str:
+    """Create a regex pattern from actual AppImage/ZIP filenames.
 
     Analyzes the filenames to extract common prefixes and create a flexible,
     case-insensitive pattern that matches the actual file naming convention.
+
+    Args:
+        filenames: List of filenames to analyze
+        include_both_formats: If True, pattern will match both .zip and .AppImage extensions
     """
     if not filenames:
-        return ".*\\.AppImage(\\.(|current|old))?$"
+        extension_pattern = "\\.(zip|AppImage)" if include_both_formats else "\\.AppImage"
+        return f".*{extension_pattern}(\\.(|current|old))?$"
 
-    # Find the common prefix among all filenames
-    common_prefix = find_common_prefix(filenames)
+    # Strip extensions from filenames before finding common prefix
+    base_filenames = []
+    for filename in filenames:
+        # Remove common extensions (.AppImage, .zip, etc.)
+        base_name = filename
+        for ext in [".AppImage", ".appimage", ".zip", ".ZIP"]:
+            if base_name.endswith(ext):
+                base_name = base_name[: -len(ext)]
+                break
+        base_filenames.append(base_name)
+
+    # Find the common prefix among the base filenames (without extensions)
+    common_prefix = find_common_prefix(base_filenames)
 
     if len(common_prefix) < 2:  # Too short to be useful
         # Use the first filename's prefix up to the first non-letter character
-        first_file = filenames[0]
+        first_file = base_filenames[0] if base_filenames else filenames[0]
         prefix_match = re.match(r"^([a-zA-Z]+)", first_file)
         common_prefix = prefix_match.group(1) if prefix_match else first_file.split("-")[0]
 
     # Create case-insensitive pattern with the common prefix
     # Use (?i) flag for case-insensitive matching of the entire pattern
     escaped_prefix = re.escape(common_prefix)
-    pattern = f"(?i){escaped_prefix}.*\\.AppImage(\\.(|current|old))?$"
 
-    logger.debug(f"Created pattern '{pattern}' from {len(filenames)} files: {filenames[:3]}...")
+    # Support both ZIP and AppImage extensions
+    extension_pattern = "\\.(zip|AppImage)" if include_both_formats else "\\.AppImage"
+    pattern = f"(?i){escaped_prefix}.*{extension_pattern}(\\.(|current|old))?$"
+
+    format_info = "both ZIP and AppImage" if include_both_formats else "AppImage"
+    logger.debug(f"Created {format_info} pattern '{pattern}' from {len(filenames)} files: {filenames[:3]}...")
     return pattern
 
 
@@ -183,7 +213,8 @@ def generate_fallback_pattern(app_name: str, url: str) -> str:
     """Generate a fallback pattern using app name and URL heuristics.
 
     This is the original logic, kept as a fallback when we can't fetch
-    actual release data from GitHub.
+    actual release data from GitHub. Now includes both ZIP and AppImage formats
+    to handle projects that package AppImages inside ZIP files.
     """
     # Start with the app name as base (prefer app name over repo name for better matching)
     base_name = re.escape(app_name)
@@ -200,10 +231,12 @@ def generate_fallback_pattern(app_name: str, url: str) -> str:
         ):
             base_name = re.escape(repo)
 
-    # Create a flexible pattern that handles common AppImage naming conventions
-    # Use case-insensitive matching for "linux" since filenames vary
-    # Matches: AppName-version-linux-arch.AppImage with optional suffixes
-    pattern = f"{base_name}.*[Ll]inux.*\\.AppImage(\\.(|current|old))?$"
+    # Create a flexible pattern that handles common naming conventions
+    # Support both ZIP and AppImage formats to handle projects that package AppImages in ZIP files
+    # Make pattern flexible for common character substitutions (underscore/hyphen, etc.)
+    # Replace both underscores and hyphens with character class allowing either
+    flexible_name = re.sub(r"[_-]", "[_-]", base_name)
+    pattern = f"(?i){flexible_name}.*\\.(?:zip|AppImage)(\\.(|current|old))?$"
 
     return pattern
 

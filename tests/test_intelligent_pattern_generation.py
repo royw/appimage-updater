@@ -62,7 +62,8 @@ def test_openshot_pattern_now_works_correctly():
     if "(?i)" in pattern:
         # SUCCESS: Intelligent mode worked - uses actual release data
         assert pattern.startswith("(?i)OpenShot")
-        assert "\\.AppImage(\\.(|current|old))?$" in pattern
+        # New behavior: pattern supports both ZIP and AppImage formats
+        assert "\\.(zip|AppImage)(\\.(|current|old))?$" in pattern
 
         # Should match actual OpenShot filenames
         actual_filenames = [
@@ -77,9 +78,11 @@ def test_openshot_pattern_now_works_correctly():
             assert pattern_compiled.match(filename), \
                 f"Intelligent pattern {pattern} should match {filename}"
     else:
-        # FALLBACK: API unavailable, using heuristic method
+        # FALLBACK: API unavailable, using heuristic method  
         # Still an improvement over the original broken logic
-        assert "\\.AppImage(\\.(|current|old))?$" in pattern
+        # New behavior: fallback also supports both ZIP and AppImage formats
+        assert "\\.(zip|AppImage)(\\.(|current|old))?$" in pattern or \
+               "\\.(?:zip|AppImage)(\\.(|current|old))?$" in pattern
         # Verify it's a valid regex
         re.compile(pattern)
 
@@ -114,7 +117,9 @@ def test_intelligent_pattern_generation_success():
     else:
         # FALLBACK CASE: API unavailable, using heuristic method
         # This is still better than the completely broken original logic
-        assert "\\.AppImage(\\.(|current|old))?$" in pattern, "Should still be valid AppImage pattern"
+        # New behavior: fallback also supports both ZIP and AppImage formats  
+        assert ("\\.(zip|AppImage)(\\.(|current|old))?$" in pattern or 
+                "\\.(?:zip|AppImage)(\\.(|current|old))?$" in pattern), "Should be valid pattern for both formats"
 
         # Verify fallback produces valid regex
         re.compile(pattern)  # Should not raise exception
