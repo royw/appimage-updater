@@ -247,12 +247,12 @@ def list_apps(
 ) -> None:
     """List all configured applications."""
     try:
-        logger.info("Loading configuration to list applications")
+        logger.debug("Loading configuration to list applications")
         config = _load_config(config_file, config_dir)
 
         if not config.applications:
             console.print("[yellow]No applications configured")
-            logger.info("No applications found in configuration")
+            logger.debug("No applications found in configuration")
             return
 
         _display_applications_list(config.applications)
@@ -264,7 +264,7 @@ def list_apps(
             f"\n[blue]Total: {total_apps} applications ({enabled_apps} enabled, {total_apps - enabled_apps} disabled)"
         )
 
-        logger.info(f"Listed {total_apps} applications ({enabled_apps} enabled)")
+        logger.debug(f"Listed {total_apps} applications ({enabled_apps} enabled)")
 
     except ConfigLoadError as e:
         console.print(f"[red]Configuration error: {e}")
@@ -294,7 +294,7 @@ def _validate_and_normalize_add_url(url: str) -> str:
         console.print("[yellow]📝 Detected download URL, using repository URL instead:")
         console.print(f"[dim]   Original: {url}")
         console.print(f"[dim]   Corrected: {normalized_url}")
-        logger.info(f"Corrected download URL to repository URL: {url} → {normalized_url}")
+        logger.debug(f"Corrected download URL to repository URL: {url} → {normalized_url}")
 
     return normalized_url
 
@@ -335,7 +335,7 @@ def _handle_add_directory_creation(download_dir: str, create_dir: bool, yes: boo
             try:
                 download_path.mkdir(parents=True, exist_ok=True)
                 console.print(f"[green]Created directory: {download_path}")
-                logger.info(f"Created download directory: {download_path}")
+                logger.debug(f"Created download directory: {download_path}")
             except OSError as e:
                 console.print(f"[red]Failed to create directory: {e}")
                 logger.error(f"Failed to create download directory {download_path}: {e}")
@@ -343,7 +343,7 @@ def _handle_add_directory_creation(download_dir: str, create_dir: bool, yes: boo
         else:
             console.print("[yellow]Directory creation cancelled. Application configuration will still be saved.")
             console.print("[yellow]You will need to create the directory manually before downloading updates.")
-            logger.info("User declined to create download directory")
+            logger.debug("User declined to create download directory")
 
     return expanded_download_dir
 
@@ -691,7 +691,7 @@ def show(
         appimage-updater show --config-dir ~/.config/appimage-updater OrcaSlicer
     """
     try:
-        logger.info(f"Loading configuration to show application: {app_name}")
+        logger.debug(f"Loading configuration to show application: {app_name}")
         config = _load_config(config_file, config_dir)
 
         # Find the application (case-insensitive)
@@ -703,7 +703,7 @@ def show(
             logger.error(f"Application '{app_name}' not found. Available: {available_apps}")
             raise typer.Exit(1)
 
-        logger.info(f"Displaying information for application: {app.name}")
+        logger.debug(f"Displaying information for application: {app.name}")
         _display_application_details(app)
 
     except ConfigLoadError as e:
@@ -738,7 +738,7 @@ def remove(
         appimage-updater remove --force MyApp     # Skip confirmation prompt
     """
     try:
-        logger.info(f"Removing application: {app_name}")
+        logger.debug(f"Removing application: {app_name}")
 
         # Load current configuration to find the app
         config = _load_config(config_file, config_dir)
@@ -767,11 +767,11 @@ def remove(
                 confirmed = typer.confirm("Are you sure you want to remove this application?")
                 if not confirmed:
                     console.print("[yellow]Removal cancelled.")
-                    logger.info("User declined to remove application")
+                    logger.debug("User declined to remove application")
                     return
             except (EOFError, KeyboardInterrupt, typer.Abort):
                 console.print("[yellow]Running in non-interactive mode. Use --force to remove without confirmation.")
-                logger.info("Non-interactive mode detected, removal cancelled")
+                logger.debug("Non-interactive mode detected, removal cancelled")
                 return
         else:
             logger.debug("Skipping confirmation due to --force flag")
@@ -781,7 +781,7 @@ def remove(
 
         console.print(f"[green]✓ Successfully removed application '{app.name}' from configuration")
         console.print(f"[blue]Note: Files in {app.download_dir} were not deleted")
-        logger.info(f"Successfully removed application '{app.name}' from configuration")
+        logger.debug(f"Successfully removed application '{app.name}' from configuration")
 
     except ConfigLoadError as e:
         console.print(f"[red]Configuration error: {e}")
@@ -805,7 +805,7 @@ async def _check_updates(
     yes: bool = False,
 ) -> None:
     """Internal async function to check for updates."""
-    logger.info("Starting update check process")
+    logger.debug("Starting update check process")
     logger.debug(f"Config file: {config_file}, Config dir: {config_dir}, Dry run: {dry_run}, App filter: {app_name}")
 
     try:
@@ -825,7 +825,7 @@ async def _check_updates(
 
         if not candidates:
             console.print("[green]All applications are up to date!")
-            logger.info("No updates available, exiting")
+            logger.debug("No updates available, exiting")
             return
 
         # Handle downloads if not dry run
@@ -833,7 +833,7 @@ async def _check_updates(
             await _handle_downloads(config, candidates, yes)
         else:
             console.print("[blue]Dry run mode - no downloads performed")
-            logger.info("Dry run mode enabled, skipping downloads")
+            logger.debug("Dry run mode enabled, skipping downloads")
 
     except ConfigLoadError as e:
         console.print(f"[red]Configuration error: {e}")
@@ -852,7 +852,7 @@ async def _load_and_filter_config(
     app_name: str | None,
 ) -> tuple[Any, list[Any]]:
     """Load configuration and filter applications."""
-    logger.info("Loading configuration")
+    logger.debug("Loading configuration")
     config = _load_config(config_file, config_dir)
     enabled_apps = config.get_enabled_apps()
 
@@ -861,7 +861,7 @@ async def _load_and_filter_config(
         enabled_apps = _filter_apps_by_name(enabled_apps, app_name)
 
     filter_msg = " (filtered)" if app_name else ""
-    logger.info(f"Found {len(config.applications)} total applications, {len(enabled_apps)} enabled{filter_msg}")
+    logger.debug(f"Found {len(config.applications)} total applications, {len(enabled_apps)} enabled{filter_msg}")
     return config, enabled_apps
 
 
@@ -878,14 +878,14 @@ def _filter_apps_by_name(enabled_apps: list[Any], app_name: str) -> list[Any]:
         logger.error(f"Application '{app_name}' not found. Available: {available_apps}")
         return []
 
-    logger.info(f"Filtered to single application: {filtered_apps[0].name}")
+    logger.debug(f"Filtered to single application: {filtered_apps[0].name}")
     return filtered_apps
 
 
 async def _perform_update_checks(config: Any, enabled_apps: list[Any]) -> list[Any]:
     """Initialize clients and perform update checks."""
     console.print(f"[blue]Checking {len(enabled_apps)} applications for updates...")
-    logger.info(f"Starting update checks for {len(enabled_apps)} applications")
+    logger.debug(f"Starting update checks for {len(enabled_apps)} applications")
 
     # Initialize clients
     logger.debug(f"Initializing GitHub client with timeout: {config.global_config.timeout_seconds}s")
@@ -897,13 +897,13 @@ async def _perform_update_checks(config: Any, enabled_apps: list[Any]) -> list[A
     logger.debug("GitHub client and version checker initialized")
 
     # Check for updates
-    logger.info("Creating update check tasks")
+    logger.debug("Creating update check tasks")
     check_tasks = [version_checker.check_for_updates(app) for app in enabled_apps]
     logger.debug(f"Created {len(check_tasks)} concurrent check tasks")
 
-    logger.info("Executing update checks concurrently")
+    logger.debug("Executing update checks concurrently")
     check_results = await asyncio.gather(*check_tasks)
-    logger.info(f"Completed {len(check_results)} update checks")
+    logger.debug(f"Completed {len(check_results)} update checks")
 
     return check_results
 
@@ -924,13 +924,13 @@ def _get_update_candidates(check_results: list[Any]) -> list[Any]:
 
     successful_checks = sum(1 for r in check_results if r.success)
     failed_checks = len(check_results) - successful_checks
-    logger.info(
+    logger.debug(
         f"Check results: {successful_checks} successful, {failed_checks} failed, {len(candidates)} updates available"
     )
 
     if candidates:
         console.print(f"\n[yellow]{len(candidates)} updates available")
-        logger.info(f"Found {len(candidates)} updates available")
+        logger.debug(f"Found {len(candidates)} updates available")
 
     return candidates
 
@@ -943,17 +943,17 @@ async def _handle_downloads(config: Any, candidates: list[Any], yes: bool = Fals
         try:
             if not typer.confirm("Download all updates?"):
                 console.print("[yellow]Download cancelled")
-                logger.info("User cancelled download")
+                logger.debug("User cancelled download")
                 return
         except (EOFError, KeyboardInterrupt, typer.Abort):
             console.print("[yellow]Running in non-interactive mode. Use --yes to automatically confirm downloads.")
-            logger.info("Non-interactive mode detected, download cancelled")
+            logger.debug("Non-interactive mode detected, download cancelled")
             return
     else:
         logger.debug("Auto-confirming downloads due to --yes flag")
 
     # Download updates
-    logger.info("Initializing downloader")
+    logger.debug("Initializing downloader")
     timeout_value = config.global_config.timeout_seconds * 10
     concurrent_value = config.global_config.concurrent_downloads
     logger.debug(f"Download settings: timeout={timeout_value}s, max_concurrent={concurrent_value}")
@@ -964,9 +964,9 @@ async def _handle_downloads(config: Any, candidates: list[Any], yes: bool = Fals
     )
 
     console.print(f"\n[blue]Downloading {len(candidates)} updates...")
-    logger.info(f"Starting concurrent downloads of {len(candidates)} updates")
+    logger.debug(f"Starting concurrent downloads of {len(candidates)} updates")
     download_results = await downloader.download_updates(candidates)
-    logger.info("Download process completed")
+    logger.debug("Download process completed")
 
     # Display download results
     logger.debug("Displaying download results")
@@ -974,7 +974,7 @@ async def _handle_downloads(config: Any, candidates: list[Any], yes: bool = Fals
 
     successful_downloads = sum(1 for r in download_results if r.success)
     failed_downloads = len(download_results) - successful_downloads
-    logger.info(f"Download summary: {successful_downloads} successful, {failed_downloads} failed")
+    logger.debug(f"Download summary: {successful_downloads} successful, {failed_downloads} failed")
 
 
 def _load_config(config_file: Path | None, config_dir: Path | None) -> Any:

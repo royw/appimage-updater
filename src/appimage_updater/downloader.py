@@ -447,7 +447,7 @@ class Downloader:
         current_info_path = current_path.with_suffix(current_path.suffix + ".info")
 
         candidate.download_path.rename(current_path)
-        logger.info(f"Moved {candidate.download_path.name} to {current_path.name}")
+        logger.debug(f"Moved {candidate.download_path.name} to {current_path.name}")
 
         # Move metadata file if it exists
         if original_info_path.exists():
@@ -498,7 +498,7 @@ class Downloader:
         old_path = download_dir / f"{base_name}.old{extension}"
         self._remove_file_and_metadata(old_path)  # Remove existing .old if exists
         self._move_file_with_metadata(current_path, old_path)
-        logger.info(f"Rotated {current_path.name} to {old_path.name}")
+        logger.debug(f"Rotated {current_path.name} to {old_path.name}")
 
     def _cleanup_excess_files(self, download_dir: Path, base_name: str, extension: str, retain_count: int) -> None:
         """Remove files beyond the retain count."""
@@ -540,7 +540,7 @@ class Downloader:
 
             # Create new symlink
             symlink_path.symlink_to(current_path)
-            logger.info(f"Updated symlink {symlink_path} -> {current_path}")
+            logger.debug(f"Updated symlink {symlink_path} -> {current_path}")
 
         except Exception as e:
             logger.error(f"Failed to update symlink {symlink_path}: {e}")
