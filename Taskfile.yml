@@ -44,12 +44,12 @@ tasks:
   test:e2e:
     desc: Run end-to-end tests to validate core functionality
     cmds:
-      - uv run pytest tests/test_e2e.py -v --tb=short --color=yes --no-cov
+      - uv run pytest tests/test_e2e.py -v --tb=short --color=yes --no-cov -n auto
 
   test:e2e-coverage:
     desc: Run end-to-end tests with coverage reporting
     cmds:
-      - uv run pytest tests/test_e2e.py -v --tb=short --color=yes --cov=src/appimage_updater --cov-report=term-missing --cov-report=html:htmlcov
+      - uv run pytest tests/test_e2e.py -v --tb=short --color=yes --cov=src/appimage_updater --cov-report=term-missing --cov-report=html:htmlcov -n auto
       - echo "📊 Coverage report saved to htmlcov/index.html"
 
   test:smoke:
