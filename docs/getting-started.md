@@ -47,7 +47,7 @@ Add VS Code Insiders:
 appimage-updater add VSCode-Insiders https://github.com/microsoft/vscode ~/Apps/VSCode
 ```
 
-Add BambuStudio (automatically handles ZIP files):
+Add BambuStudio (automatically handles ZIP files and distribution selection):
 ```bash
 appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Applications/BambuStudio
 ```
@@ -58,6 +58,7 @@ When you run `add`, it automatically:
 
 - **🔍 Detects prerelease requirements** - analyzes repositories and auto-enables prerelease for continuous builds
 - **📦 Handles ZIP files automatically** - detects and extracts AppImages from ZIP archives (perfect for BambuStudio, etc.)
+- **🐧 Selects compatible distributions** - automatically chooses the best match for your Linux distribution
 - **Generates smart file patterns** based on the repository name  
 - **Sets up checksum verification** with SHA256 validation
 - **Configures daily update checks** by default
@@ -82,6 +83,34 @@ appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
 - **Continuous builds only** → Automatically enables `prerelease: true`
 - **Stable releases available** → Keeps `prerelease: false` 
 - **Your choice matters** → `--prerelease` or `--no-prerelease` always override detection
+
+### 🐧 Intelligent Distribution Selection
+
+When applications provide multiple distribution-specific releases (like BambuStudio's Ubuntu, Fedora variants), AppImage Updater automatically selects the best match for your system:
+
+```bash
+# BambuStudio example with multiple distributions:
+# - BambuStudio_ubuntu-22.04_PR-8017.zip
+# - BambuStudio_ubuntu-24.04_PR-8017.zip  
+# - Bambu_Studio_linux_fedora-v02.02.01.60.AppImage
+
+appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio
+# On Ubuntu 25.04 → Automatically selects ubuntu-24.04 (closest compatible)
+# On Fedora 38 → Automatically selects fedora version
+# On Gentoo → Shows interactive menu for user selection
+```
+
+**Smart Selection Logic:**
+- **Perfect Match** → Same distribution and version (Score: 100+)
+- **Compatible Family** → Ubuntu/Debian, Fedora/CentOS families (Score: 70+)
+- **Version Proximity** → Prefers older/same versions for backward compatibility
+- **Interactive Fallback** → Unknown distributions get user-friendly selection menu
+
+**Non-Interactive Mode:**
+For automation scenarios, disable interactive selection:
+```bash
+appimage-updater check --no-interactive
+```
 
 ### Advanced Options
 
@@ -126,6 +155,16 @@ For troubleshooting, enable debug logging:
 
 ```bash
 appimage-updater --debug check --dry-run
+```
+
+### Version Information
+
+Check your AppImage Updater version:
+
+```bash
+appimage-updater --version
+# or
+appimage-updater -V
 ```
 
 ## Managing Applications

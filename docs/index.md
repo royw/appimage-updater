@@ -7,13 +7,16 @@ AppImage Updater monitors configured applications (like FreeCAD, OrcaSlicer, etc
 ## Features
 
 - **Automated Updates** - Monitor GitHub repositories for new releases
+- **Distribution-Aware Selection** - Intelligent selection of best compatible distribution package
 - **Smart Pattern Matching** - Flexible regex patterns to identify correct AppImage files
 - **ZIP Archive Support** - Automatic extraction of AppImages from ZIP files
+- **Multi-Distribution Support** - Handle Ubuntu, Fedora, Debian, Arch, and other distributions
 - **Checksum Verification** - SHA256, SHA1, and MD5 checksum validation for security
-- **File Rotation** - Keep multiple versions with automatic cleanup
+- **File Rotation** - Keep multiple versions with automatic cleanup (fixed naming)
 - **Symlink Management** - Stable paths for applications through symbolic links  
 - **Concurrent Downloads** - Fast, parallel downloading with progress tracking
 - **Rich CLI** - Beautiful terminal interface with colors and progress bars
+- **Interactive Selection** - User-friendly menus for uncommon distributions
 - **Flexible Configuration** - JSON-based configuration with global and per-app settings
 
 ## Quick Start
@@ -50,16 +53,22 @@ graph TD
     B --> F[JSON Config Files]
     C --> G[GitHub API]
     D --> H[Version Comparison]
+    D --> M[Distribution Selector]
     E --> I[Concurrent Downloads]
     E --> J[ZIP Extraction]
     E --> K[Checksum Verification]
     E --> L[File Rotation]
+    
+    M --> N[System Detection]
+    M --> O[Compatibility Scoring]
+    M --> P[Interactive Selection]
 ```
 
 ## Key Components
 
 - **Configuration System** - Flexible JSON-based configuration supporting both single files and directory structures
 - **GitHub Integration** - Robust GitHub API client with rate limiting and error handling
+- **Distribution Selector** - Intelligent selection of compatible distribution packages with interactive fallback
 - **Version Management** - Sophisticated version detection and comparison using semantic versioning
 - **Download Engine** - Concurrent downloads with automatic ZIP extraction, progress tracking, and checksum verification
 - **File Management** - Optional file rotation with configurable retention policies and symlink management

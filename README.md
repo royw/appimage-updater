@@ -14,11 +14,12 @@ This tool monitors configured applications (like FreeCAD) for new releases and p
 
 ## Features
 
+- **🐧 Distribution-Aware Selection**: Automatically selects the best compatible distribution (Ubuntu, Fedora, Debian, Arch, etc.)
 - **🔍 Smart Auto-Detection**: Automatically detects continuous build repositories and enables prerelease support
 - **📊 Version Metadata System**: Accurate version tracking with `.info` files for complex release formats
 - **📦 Automatic ZIP Extraction**: Seamlessly extracts AppImages from ZIP archives (perfect for BambuStudio, etc.)
 - **Easy Application Setup**: Simple `add` command with intelligent defaults
-- **File Rotation & Symlinks**: Automatic file management with configurable retention
+- **File Rotation & Symlinks**: Automatic file management with configurable retention (fixed naming)
 - **Flexible Configuration**: Custom update frequencies, rotation settings, and symlink management
 - **🔧 Multi-Format Support**: Works with `.zip`, `.AppImage`, and other release formats seamlessly
 - **Automatic Checksum Verification**: SHA256, SHA1, MD5 support for download security
@@ -56,6 +57,25 @@ uv sync
 ```bash
 uv run python -m appimage_updater
 ```
+
+### Distribution Support
+
+For applications with multiple distribution-specific releases (like BambuStudio):
+
+```bash
+# Automatically selects best match for your system
+uv run python -m appimage_updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio
+# Ubuntu 25.04 → Selects ubuntu-24.04 (closest compatible)
+# Fedora 38 → Selects fedora version  
+# Gentoo → Shows interactive selection menu
+```
+
+**Supported Distributions:**
+- Ubuntu/Debian family (automatic compatibility)
+- Fedora/CentOS/RHEL family (automatic compatibility)
+- openSUSE/SUSE family (automatic compatibility)
+- Arch/Manjaro family (automatic compatibility)
+- Other distributions (interactive selection)
 
 ## Configuration
 

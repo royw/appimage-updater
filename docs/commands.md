@@ -14,7 +14,7 @@ These options can be used with any command:
 | `--config-dir DIR` | Use specific config directory |
 | `--debug` | Enable debug logging |
 | `--help` | Show help and exit |
-| `--version` | Show version and exit |
+|| `--version`, `-V` | Show version and exit |
 
 ## Commands
 
@@ -75,6 +75,14 @@ AppImage Updater automatically detects and extracts AppImage files from ZIP arch
 - **Subdirectory Support**: Handles AppImages nested in ZIP subdirectories
 - **Full Integration**: Works with rotation, checksums, and metadata systems
 - **Pattern Support**: Use patterns like `"(?i)App.*\\.(zip|AppImage)$"` for dual format support
+
+**🐧 Distribution-Aware Selection:**
+When multiple distribution-specific releases are available, AppImage Updater intelligently selects the best match:
+
+- **Automatic Selection**: Chooses compatible distributions (Ubuntu 25.04 → ubuntu-24.04)
+- **Smart Scoring**: Considers distribution family, version proximity, architecture
+- **Interactive Fallback**: Shows selection menu for uncommon distributions (Gentoo, NixOS)
+- **Pattern Recognition**: Detects ubuntu-22.04, fedora-38, debian-11, etc. in filenames
 
 **Examples:**
 ```bash
@@ -240,6 +248,8 @@ appimage-updater check [OPTIONS] [APP_NAME]
 
 **Options:**
 - `--dry-run` - Check for updates without downloading
+- `--no-interactive` - Disable interactive distribution selection (use best match automatically)
+- `--yes`, `-y` - Automatically confirm downloads
 - `--config FILE` - Use specific config file
 - `--config-dir PATH` - Use specific config directory
 
@@ -253,6 +263,12 @@ appimage-updater check --dry-run
 
 # Check specific application
 appimage-updater check FreeCAD
+
+# Non-interactive mode (for automation)
+appimage-updater check --no-interactive
+
+# Auto-confirm downloads
+appimage-updater check --yes
 
 # Check with debug output
 appimage-updater --debug check --dry-run

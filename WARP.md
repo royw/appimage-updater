@@ -34,6 +34,36 @@ The application now supports downloading and automatically extracting AppImage f
 (?i)Bambu_?Studio_.*\.(zip|AppImage)(\.(|current|old))?$
 ```
 
+### 🐧 Distribution-Aware Asset Selection
+
+AppImage Updater now intelligently selects the best compatible distribution when multiple distribution-specific releases are available:
+
+```bash
+# BambuStudio example with multiple distributions:
+# - BambuStudio_ubuntu-22.04_PR-8017.zip
+# - BambuStudio_ubuntu-24.04_PR-8017.zip  
+# - Bambu_Studio_linux_fedora-v02.02.01.60.AppImage
+
+appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio
+# Ubuntu 25.04 → Automatically selects ubuntu-24.04 (closest compatible)
+# Fedora 38 → Automatically selects fedora version
+# Gentoo → Shows interactive selection menu
+```
+
+**Smart Selection Features:**
+- **Automatic Selection**: Chooses compatible distributions based on system detection
+- **Compatibility Scoring**: Considers distribution family, version proximity, architecture
+- **Interactive Fallback**: Shows user-friendly selection menu for uncommon distributions
+- **Non-Interactive Mode**: `--no-interactive` flag for automation scenarios
+- **Pattern Recognition**: Detects ubuntu-22.04, fedora-38, debian-11, etc. in filenames
+
+**Supported Distribution Families:**
+- Ubuntu/Debian family (automatic compatibility detection)
+- Fedora/CentOS/RHEL family (automatic compatibility detection)  
+- openSUSE/SUSE family (automatic compatibility detection)
+- Arch/Manjaro family (automatic compatibility detection)
+- Other distributions (interactive selection with compatibility scores)
+
 ## Key Development Commands
 
 This project uses [Task](https://taskfile.dev) for development commands and `uv` for package management:
@@ -139,6 +169,13 @@ uv run python -m appimage_updater edit FreeCAD --frequency 7 --unit days
 uv run python -m appimage_updater edit GitHubDesktop --prerelease --checksum-required
 uv run python -m appimage_updater edit MyApp --rotation --symlink-path ~/bin/myapp.AppImage
 uv run python -m appimage_updater edit OldApp --url https://github.com/newowner/newrepo
+
+# Show version information
+uv run python -m appimage_updater --version
+uv run python -m appimage_updater -V
+
+# Non-interactive mode (for automation)
+uv run python -m appimage_updater check --no-interactive
 
 # Enable debug logging for troubleshooting
 uv run python -m appimage_updater --debug check --dry-run
