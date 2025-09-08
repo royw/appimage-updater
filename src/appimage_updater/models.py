@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from .config import ApplicationConfig
@@ -31,78 +31,93 @@ class Asset(BaseModel):
         default=None,
         description="Associated checksum file asset",
     )
-    
-    @computed_field
+
     @property
     def architecture(self) -> str | None:
         """Extract architecture from filename."""
         return self._parse_architecture()
-    
-    @computed_field
+
     @property
     def platform(self) -> str | None:
         """Extract platform from filename."""
         return self._parse_platform()
-    
-    @computed_field
+
     @property
     def file_extension(self) -> str | None:
         """Extract file extension from filename."""
         return self._parse_file_extension()
-    
+
     def _parse_architecture(self) -> str | None:
         """Parse architecture from asset filename."""
         filename = self.name.lower()
-        
+
         # Architecture patterns (ordered by specificity)
         arch_patterns = [
-            r'x86_64', r'amd64', r'x64',
-            r'aarch64', r'arm64',
-            r'armv7l', r'armv7', r'armhf',
-            r'i386', r'i686', r'x86'
+            r"x86_64",
+            r"amd64",
+            r"x64",
+            r"aarch64",
+            r"arm64",
+            r"armv7l",
+            r"armv7",
+            r"armhf",
+            r"i386",
+            r"i686",
+            r"x86",
         ]
-        
+
         for pattern in arch_patterns:
-            if re.search(rf'\b{pattern}\b', filename):
+            if re.search(rf"\b{pattern}\b", filename):
                 return pattern
-        
+
         return None
-    
+
     def _parse_platform(self) -> str | None:
         """Parse platform from asset filename."""
         filename = self.name.lower()
-        
+
         # Platform patterns
         platform_patterns = [
-            (r'\blinux\b', 'linux'),
-            (r'\bdarwin\b|\bmacos\b', 'darwin'),
-            (r'\bwindows?\b|\bwin32\b|\bwin64\b', 'win32'),
+            (r"\blinux\b", "linux"),
+            (r"\bdarwin\b|\bmacos\b", "darwin"),
+            (r"\bwindows?\b|\bwin32\b|\bwin64\b", "win32"),
         ]
-        
+
         for pattern, platform_name in platform_patterns:
             if re.search(pattern, filename):
                 return platform_name
-        
+
         return None
-    
+
     def _parse_file_extension(self) -> str | None:
         """Parse file extension from asset filename."""
         filename = self.name.lower()
-        
+
         # Complex extension patterns (check longer patterns first)
         extensions = [
-            '.pkg.tar.zst', '.pkg.tar.xz', '.tar.gz', '.tar.xz', '.tar.bz2',
-            '.appimage', '.deb', '.rpm', '.dmg', '.pkg', '.exe', '.msi', '.zip'
+            ".pkg.tar.zst",
+            ".pkg.tar.xz",
+            ".tar.gz",
+            ".tar.xz",
+            ".tar.bz2",
+            ".appimage",
+            ".deb",
+            ".rpm",
+            ".dmg",
+            ".pkg",
+            ".exe",
+            ".msi",
+            ".zip",
         ]
-        
+
         for ext in extensions:
             if filename.endswith(ext):
                 return ext
-        
+
         # Fallback to simple extension
-        if '.' in filename:
-            return '.' + filename.split('.')[-1]
-        
+        if "." in filename:
+            return "." + filename.split(".")[-1]
+
         return None
 
 
@@ -118,11 +133,11 @@ class Release(BaseModel):
 
     def get_matching_assets(self, pattern: str, filter_compatible: bool = False) -> list[Asset]:
         """Get assets matching the given pattern.
-        
+
         Args:
             pattern: Regex pattern to match asset names
             filter_compatible: If True, filter out incompatible architectures/platforms
-            
+
         Returns:
             List of matching assets, optionally filtered for compatibility
         """
@@ -130,54 +145,62 @@ class Release(BaseModel):
 
         regex = re.compile(pattern)
         matching_assets = [asset for asset in self.assets if regex.search(asset.name)]
-        
+
         if filter_compatible:
             return self._filter_compatible_assets(matching_assets)
-        
+
         return matching_assets
-    
+
     def _filter_compatible_assets(self, assets: list[Asset]) -> list[Asset]:
         """Filter assets for system compatibility.
-        
+
         Args:
             assets: List of assets to filter
-            
+
         Returns:
             List of compatible assets (empty list if no compatibility module available)
         """
         try:
-            from .system_info import get_system_info, is_compatible_architecture, is_compatible_platform, is_supported_format
+            from .system_info import (
+                get_system_info,
+                is_compatible_architecture,
+                is_compatible_platform,
+                is_supported_format,
+            )
         except ImportError:
             # System info module not available, return all assets
             return assets
-        
+
         system_info = get_system_info()
         compatible_assets = []
-        
+
         for asset in assets:
             is_compatible = True
-            
+
             # Check architecture compatibility
-            if asset.architecture:
-                arch_compatible, _ = is_compatible_architecture(asset.architecture, system_info.architecture)
+            arch_value = asset.architecture
+            if arch_value:
+                arch_compatible, _ = is_compatible_architecture(arch_value, system_info.architecture)
                 if not arch_compatible:
                     is_compatible = False
-            
+
             # Check platform compatibility
-            if asset.platform:
-                platform_compatible, _ = is_compatible_platform(asset.platform, system_info.platform)
+            platform_value = asset.platform
+            if platform_value:
+                platform_compatible, _ = is_compatible_platform(platform_value, system_info.platform)
                 if not platform_compatible:
                     is_compatible = False
-            
+
             # Check format compatibility
-            if asset.file_extension:
-                format_compatible, _ = is_supported_format(asset.file_extension, system_info.platform)
+            format_value = asset.file_extension
+            if format_value:
+                format_compatible, _ = is_supported_format(format_value, system_info.platform)
                 if not format_compatible:
                     is_compatible = False
-            
+
             if is_compatible:
                 compatible_assets.append(asset)
-        
+
         return compatible_assets
 
 

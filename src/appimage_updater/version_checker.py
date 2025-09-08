@@ -18,7 +18,7 @@ class VersionChecker:
 
     def __init__(self, github_client: GitHubClient, interactive: bool = True) -> None:
         """Initialize version checker.
-        
+
         Args:
             github_client: GitHub client instance
             interactive: Whether to allow interactive distribution selection

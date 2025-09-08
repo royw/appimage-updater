@@ -915,17 +915,25 @@ def test_integration_smoke_test(runner):
 
 def test_version_option(runner):
     """Test the --version option displays version and exits."""
+    import re
+    
     # Test --version flag
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
     assert "AppImage Updater" in result.stdout
-    assert "0.2.7" in result.stdout  # Current version from pyproject.toml
+    
+    # Strip ANSI color codes to check version
+    clean_output = re.sub(r'\x1b\[[0-9;]*m', '', result.stdout)
+    assert "0.2.10" in clean_output  # Current version from pyproject.toml
 
     # Test -V short flag
     result_short = runner.invoke(app, ["-V"])
     assert result_short.exit_code == 0
     assert "AppImage Updater" in result_short.stdout
-    assert "0.2.7" in result_short.stdout
+    
+    # Strip ANSI color codes to check version
+    clean_output_short = re.sub(r'\x1b\[[0-9;]*m', '', result_short.stdout)
+    assert "0.2.10" in clean_output_short
 
     # Version output should be identical for both flags
     assert result.stdout == result_short.stdout

@@ -50,7 +50,7 @@ class DistributionSelector:
 
     def __init__(self, console: Console | None = None, interactive: bool = True):
         """Initialize with current system information.
-        
+
         Args:
             console: Rich console for user interaction (optional)
             interactive: Whether to allow interactive selection (default: True)
@@ -66,13 +66,13 @@ class DistributionSelector:
 
     def select_best_asset(self, assets: list[Asset]) -> Asset:
         """Select the best asset for the current system.
-        
+
         Args:
             assets: List of available assets
-            
+
         Returns:
             The best matching asset for the current system
-            
+
         Raises:
             ValueError: If no assets provided or user cancels selection
         """
@@ -97,12 +97,12 @@ class DistributionSelector:
 
         # Filter out incompatible assets (wrong architecture/platform)
         compatible_assets = [info for info in asset_infos if info.score > 0.0]
-        
+
         if not compatible_assets:
             # No compatible assets - log warning and return best effort
             logger.warning("No fully compatible assets found, using best available")
             compatible_assets = asset_infos
-        
+
         # Use compatible assets for selection
         asset_infos = compatible_assets
         best_info = asset_infos[0]
@@ -161,22 +161,19 @@ class DistributionSelector:
         try:
             content = os_release_path.read_text()
             info = {}
-            for line in content.strip().split('\n'):
-                if '=' in line:
-                    key, value = line.split('=', 1)
-                    info[key] = value.strip('"\'')
+            for line in content.strip().split("\n"):
+                if "=" in line:
+                    key, value = line.split("=", 1)
+                    info[key] = value.strip("\"'")
 
-            dist_id = info.get('ID', '').lower()
-            version_id = info.get('VERSION_ID', '')
-            version_codename = info.get('VERSION_CODENAME', '')
+            dist_id = info.get("ID", "").lower()
+            version_id = info.get("VERSION_ID", "")
+            version_codename = info.get("VERSION_CODENAME", "")
 
             if dist_id and version_id:
                 version_numeric = self._parse_version_number(version_id)
                 return DistributionInfo(
-                    id=dist_id,
-                    version=version_id,
-                    version_numeric=version_numeric,
-                    codename=version_codename or None
+                    id=dist_id, version=version_id, version_numeric=version_numeric, codename=version_codename or None
                 )
 
         except (OSError, ValueError) as e:
@@ -187,29 +184,20 @@ class DistributionSelector:
     def _parse_lsb_release(self) -> DistributionInfo | None:
         """Parse output from lsb_release command."""
         try:
-            result = subprocess.run(
-                ['lsb_release', '-d'],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
+            result = subprocess.run(["/usr/bin/lsb_release", "-d"], capture_output=True, text=True, timeout=5)
 
             if result.returncode != 0:
                 return None
 
             # Example: "Description:	Ubuntu 25.04"
             description = result.stdout.strip()
-            match = re.search(r'(\w+)\s+([\d.]+)', description)
+            match = re.search(r"(\w+)\s+([\d.]+)", description)
             if match:
                 dist_name = match.group(1).lower()
                 version = match.group(2)
                 version_numeric = self._parse_version_number(version)
 
-                return DistributionInfo(
-                    id=dist_name,
-                    version=version,
-                    version_numeric=version_numeric
-                )
+                return DistributionInfo(id=dist_name, version=version, version_numeric=version_numeric)
 
         except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError) as e:
             logger.debug(f"Failed to run lsb_release: {e}")
@@ -225,17 +213,13 @@ class DistributionSelector:
         try:
             content = issue_path.read_text().strip()
             # Example: "Ubuntu 25.04 \\n \\l"
-            match = re.search(r'(\w+)\s+([\d.]+)', content)
+            match = re.search(r"(\w+)\s+([\d.]+)", content)
             if match:
                 dist_name = match.group(1).lower()
                 version = match.group(2)
                 version_numeric = self._parse_version_number(version)
 
-                return DistributionInfo(
-                    id=dist_name,
-                    version=version,
-                    version_numeric=version_numeric
-                )
+                return DistributionInfo(id=dist_name, version=version, version_numeric=version_numeric)
 
         except (OSError, ValueError) as e:
             logger.debug(f"Failed to parse /etc/issue: {e}")
@@ -246,7 +230,7 @@ class DistributionSelector:
         """Parse version string to numeric value for comparison."""
         try:
             # Handle versions like "24.04", "38", "11.4"
-            parts = version_str.split('.')
+            parts = version_str.split(".")
             if len(parts) == 1:
                 return float(parts[0])
             elif len(parts) == 2:
@@ -265,13 +249,13 @@ class DistributionSelector:
 
         # Extract distribution information
         distrib_patterns = [
-            (r'ubuntu[-_](\d+\.?\d*)', 'ubuntu'),
-            (r'fedora[-_]?v?([\d.]+)', 'fedora'),  # Match fedora with optional version like fedora-v02.02.01.60
-            (r'debian[-_](\d+)', 'debian'),
-            (r'centos[-_](\d+)', 'centos'),
-            (r'rhel[-_](\d+)', 'rhel'),
-            (r'opensuse[-_](\d+\.?\d*)', 'opensuse'),
-            (r'arch', 'arch'),  # Arch Linux doesn't typically have versions in filenames
+            (r"ubuntu[-_](\d+\.?\d*)", "ubuntu"),
+            (r"fedora[-_]?v?([\d.]+)", "fedora"),  # Match fedora with optional version like fedora-v02.02.01.60
+            (r"debian[-_](\d+)", "debian"),
+            (r"centos[-_](\d+)", "centos"),
+            (r"rhel[-_](\d+)", "rhel"),
+            (r"opensuse[-_](\d+\.?\d*)", "opensuse"),
+            (r"arch", "arch"),  # Arch Linux doesn't typically have versions in filenames
         ]
 
         for pattern, dist_name in distrib_patterns:
@@ -285,10 +269,15 @@ class DistributionSelector:
 
         # Extract architecture
         arch_patterns = [
-            r'x86_64', r'amd64', r'x64',
-            r'aarch64', r'arm64',
-            r'armv7', r'armhf',
-            r'i386', r'i686',
+            r"x86_64",
+            r"amd64",
+            r"x64",
+            r"aarch64",
+            r"arm64",
+            r"armv7",
+            r"armhf",
+            r"i386",
+            r"i686",
         ]
 
         for arch_pattern in arch_patterns:
@@ -297,12 +286,12 @@ class DistributionSelector:
                 break
 
         # Extract format
-        if filename.endswith('.appimage'):
-            info.format = 'appimage'
-        elif filename.endswith('.zip'):
-            info.format = 'zip'
-        elif filename.endswith('.tar.gz'):
-            info.format = 'tar.gz'
+        if filename.endswith(".appimage"):
+            info.format = "appimage"
+        elif filename.endswith(".zip"):
+            info.format = "zip"
+        elif filename.endswith(".tar.gz"):
+            info.format = "tar.gz"
 
         logger.debug(f"Parsed {asset.name}: dist={info.distribution}, version={info.version}, arch={info.arch}")
 
@@ -310,81 +299,98 @@ class DistributionSelector:
 
     def _calculate_compatibility_score(self, info: AssetInfo) -> float:
         """Calculate compatibility score for an asset."""
-        score = 0.0
-        
         # Get asset properties for enhanced compatibility checking
         asset = info.asset
         asset_arch = asset.architecture or info.arch
         asset_platform = asset.platform
-        asset_format = asset.file_extension or (f'.{info.format}' if info.format else None)
-        
-        # Architecture compatibility - CRITICAL (0 = incompatible)
-        if asset_arch:
-            is_compat, arch_score = is_compatible_architecture(asset_arch, self.system_info.architecture)
-            if not is_compat:
-                # Incompatible architecture - return very low score
-                return 0.0
-            score += arch_score  # 100=exact, 80=compatible
-        else:
-            # No architecture specified - assume compatible but lower preference
-            score += 60.0
-            
-        # Platform compatibility - CRITICAL (0 = incompatible)
+        asset_format = asset.file_extension or (f".{info.format}" if info.format else None)
+
+        # Check critical compatibility first
+        if not self._is_architecture_compatible(asset_arch):
+            return 0.0
+        if not self._is_platform_compatible(asset_platform, asset_format):
+            return 0.0
+
+        # Calculate score components
+        score = 0.0
+        score += self._score_architecture(asset_arch)
+        score += self._score_platform(asset_platform, asset_format)
+        score += self._score_format(asset_format)
+        score += self._score_distribution(info)
+        score += self._score_version(info)
+
+        return max(0.0, score)
+
+    def _is_architecture_compatible(self, asset_arch: str | None) -> bool:
+        """Check if architecture is compatible."""
+        if not asset_arch:
+            return True  # Unknown arch assumed compatible
+        is_compat, _ = is_compatible_architecture(asset_arch, self.system_info.architecture)
+        return is_compat
+
+    def _is_platform_compatible(self, asset_platform: str | None, asset_format: str | None) -> bool:
+        """Check if platform is compatible."""
         if asset_platform:
-            is_compat, platform_score = is_compatible_platform(asset_platform, self.system_info.platform)
-            if not is_compat:
-                # Incompatible platform - return very low score
-                return 0.0
-            score += platform_score  # 100=exact
-        else:
-            # No platform specified - assume Linux for AppImages
-            if asset_format and asset_format.lower() == '.appimage':
-                if self.system_info.platform == 'linux':
-                    score += 80.0  # AppImages are Linux-specific
-                else:
-                    return 0.0  # AppImage on non-Linux = incompatible
-            else:
-                score += 50.0  # Generic - might work
-        
-        # File format compatibility and preference
+            is_compat, _ = is_compatible_platform(asset_platform, self.system_info.platform)
+            return is_compat
+        # Special case for AppImages
+        if asset_format and asset_format.lower() == ".appimage":
+            return self.system_info.platform == "linux"
+        return True  # Unknown platform assumed compatible
+
+    def _score_architecture(self, asset_arch: str | None) -> float:
+        """Score architecture compatibility."""
+        if asset_arch:
+            _, arch_score = is_compatible_architecture(asset_arch, self.system_info.architecture)
+            return arch_score
+        return 60.0  # No architecture specified
+
+    def _score_platform(self, asset_platform: str | None, asset_format: str | None) -> float:
+        """Score platform compatibility."""
+        if asset_platform:
+            _, platform_score = is_compatible_platform(asset_platform, self.system_info.platform)
+            return platform_score
+        # No platform specified - assume Linux for AppImages
+        if asset_format and asset_format.lower() == ".appimage":
+            return 80.0 if self.system_info.platform == "linux" else 0.0
+        return 50.0  # Generic
+
+    def _score_format(self, asset_format: str | None) -> float:
+        """Score format preference."""
         if asset_format:
             is_supported, format_score = is_supported_format(asset_format, self.system_info.platform)
-            if not is_supported:
-                # Unsupported format - heavily penalize but don't eliminate
-                score -= 50.0
-            else:
-                score += format_score  # Up to 100 points for preferred formats
-        else:
-            score += 30.0  # Unknown format
+            return format_score if is_supported else -50.0
+        return 30.0  # Unknown format
 
-        # Distribution match (now less critical than arch/platform)
+    def _score_distribution(self, info: AssetInfo) -> float:
+        """Score distribution compatibility."""
         if info.distribution:
             if info.distribution == self.current_dist.id:
-                score += 50.0  # Perfect distribution match
+                return 80.0  # Perfect match (increased priority)
             elif self._is_compatible_distribution(info.distribution):
-                score += 35.0  # Compatible distribution
+                return 55.0  # Compatible (increased)
             else:
-                score += 10.0  # Different distribution
+                return 20.0  # Different (slightly increased)
+        return 40.0  # Generic (increased)
+
+    def _score_version(self, info: AssetInfo) -> float:
+        """Score version compatibility."""
+        if not (info.version_numeric and self.current_dist.version_numeric > 0):
+            return 0.0
+
+        version_diff = abs(info.version_numeric - self.current_dist.version_numeric)
+
+        if info.version_numeric <= self.current_dist.version_numeric:
+            # Prefer older or same version (backward compatibility)
+            if version_diff == 0:
+                return 30.0  # Exact version match
+            elif version_diff <= 2.0:
+                return 25.0 - (version_diff * 2.5)  # Close version
+            else:
+                return 15.0  # Older version
         else:
-            score += 25.0  # Generic (no specific distribution)
-
-        # Version compatibility (now less critical)
-        if info.version_numeric and self.current_dist.version_numeric > 0:
-            version_diff = abs(info.version_numeric - self.current_dist.version_numeric)
-
-            if info.version_numeric <= self.current_dist.version_numeric:
-                # Prefer older or same version (backward compatibility)
-                if version_diff == 0:
-                    score += 30.0  # Exact version match
-                elif version_diff <= 2.0:
-                    score += 25.0 - (version_diff * 2.5)  # Close version
-                else:
-                    score += 15.0  # Older version
-            else:
-                # Newer version - less preferred but might work
-                score += max(5.0, 20.0 - (version_diff * 5))
-
-        return max(0.0, score)  # Ensure non-negative score
+            # Newer version - less preferred but might work
+            return max(5.0, 20.0 - (version_diff * 5))
 
     def _is_compatible_distribution(self, dist: str) -> bool:
         """Check if a distribution is compatible with the current one."""
@@ -392,10 +398,10 @@ class DistributionSelector:
         dist = dist.lower()
 
         # Define compatibility groups
-        debian_family = {'ubuntu', 'debian', 'mint', 'elementary'}
-        redhat_family = {'fedora', 'centos', 'rhel', 'rocky', 'almalinux'}
-        suse_family = {'opensuse', 'suse', 'sled', 'sles'}
-        arch_family = {'arch', 'manjaro', 'endeavouros'}
+        debian_family = {"ubuntu", "debian", "mint", "elementary"}
+        redhat_family = {"fedora", "centos", "rhel", "rocky", "almalinux"}
+        suse_family = {"opensuse", "suse", "sled", "sles"}
+        arch_family = {"arch", "manjaro", "endeavouros"}
 
         compatibility_groups = [
             debian_family,
@@ -404,29 +410,42 @@ class DistributionSelector:
             arch_family,
         ]
 
-        for group in compatibility_groups:
-            if current in group and dist in group:
-                return True
-
-        return False
+        return any(current in group and dist in group for group in compatibility_groups)
 
     def _is_uncommon_distribution(self) -> bool:
         """Check if the current distribution is uncommon and might need user selection."""
         common_distributions = {
-            'ubuntu', 'debian', 'fedora', 'centos', 'rhel', 'opensuse',
-            'arch', 'manjaro', 'mint', 'elementary'
+            "ubuntu",
+            "debian",
+            "fedora",
+            "centos",
+            "rhel",
+            "opensuse",
+            "arch",
+            "manjaro",
+            "mint",
+            "elementary",
         }
 
         return self.current_dist.id.lower() not in common_distributions
 
     def _prompt_user_selection(self, asset_infos: list[AssetInfo]) -> AssetInfo:
         """Prompt user to select from available distribution options."""
+        self._display_selection_header()
+        table = self._create_asset_table(asset_infos)
+        self.console.print(table)
+        self._display_selection_footer()
+        return self._get_user_choice(asset_infos)
+
+    def _display_selection_header(self) -> None:
+        """Display header information for asset selection."""
         self.console.print()
         self.console.print("[yellow]Multiple distribution options available![/yellow]")
         self.console.print(f"Your system: [bold]{self.current_dist.id.title()} {self.current_dist.version}[/bold]")
         self.console.print()
 
-        # Create a table showing available options
+    def _create_asset_table(self, asset_infos: list[AssetInfo]) -> Table:
+        """Create a formatted table of asset options."""
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("#", width=3, justify="right")
         table.add_column("Distribution", width=12)
@@ -437,86 +456,108 @@ class DistributionSelector:
         table.add_column("Filename", min_width=25)
         table.add_column("Score", width=8, justify="right")
 
-        # Add rows for each option
         for i, info in enumerate(asset_infos, 1):
-            asset = info.asset
-            
-            # Extract and format display information
-            dist_display = info.distribution.title() if info.distribution else "Generic"
-            version_display = info.version or "N/A"
-            
-            # Architecture display (prefer asset detection, fallback to info)
-            arch = asset.architecture or info.arch
-            arch_display = arch if arch else "Unknown"
-            
-            # Platform display
-            platform = asset.platform
-            platform_display = platform.title() if platform else "Unknown"
-            
-            # Format display (prefer asset detection, fallback to info)
-            asset_format = asset.file_extension or (f'.{info.format}' if info.format else None)
-            format_display = asset_format.upper() if asset_format else "Unknown"
-            
-            # Score display with enhanced color coding
-            score_display = f"{info.score:.1f}"
-            if info.score >= 200:
-                score_display = f"[bold green]{score_display}[/bold green]"
-            elif info.score >= 150:
-                score_display = f"[green]{score_display}[/green]"
-            elif info.score >= 100:
-                score_display = f"[yellow]{score_display}[/yellow]"
-            elif info.score > 0:
-                score_display = f"[orange3]{score_display}[/orange3]"
+            row_data = self._format_asset_row(i, info)
+            table.add_row(*row_data)
+
+        return table
+
+    def _format_asset_row(self, index: int, info: AssetInfo) -> tuple[str, ...]:
+        """Format a single asset row for the table."""
+        asset = info.asset
+
+        # Basic information
+        dist_display = info.distribution.title() if info.distribution else "Generic"
+        version_display = info.version or "N/A"
+
+        # Architecture information
+        arch = asset.architecture or info.arch
+        arch_display = self._format_architecture_display(arch)
+
+        # Platform information
+        platform = asset.platform
+        platform_display = self._format_platform_display(platform)
+
+        # Format information
+        asset_format = asset.file_extension or (f".{info.format}" if info.format else None)
+        format_display = asset_format.upper() if asset_format else "Unknown"
+
+        # Score information
+        score_display = self._format_score_display(info.score)
+
+        return (
+            str(index),
+            dist_display,
+            version_display,
+            arch_display,
+            platform_display,
+            format_display,
+            asset.name,
+            score_display,
+        )
+
+    def _format_architecture_display(self, arch: str | None) -> str:
+        """Format architecture display with color coding."""
+        if not arch:
+            return "Unknown"
+
+        is_compat, _ = is_compatible_architecture(arch, self.system_info.architecture)
+        if is_compat:
+            if arch.lower() == self.system_info.architecture.lower():
+                return f"[bold green]{arch}[/bold green]"  # Perfect match
             else:
-                score_display = f"[red]{score_display}[/red]"
-            
-            # Color code architecture compatibility
-            if arch:
-                is_arch_compat, _ = is_compatible_architecture(arch, self.system_info.architecture)
-                if is_arch_compat:
-                    if arch.lower() == self.system_info.architecture.lower():
-                        arch_display = f"[bold green]{arch_display}[/bold green]"  # Perfect match
-                    else:
-                        arch_display = f"[green]{arch_display}[/green]"  # Compatible
-                else:
-                    arch_display = f"[red]{arch_display}[/red]"  # Incompatible
-            
-            # Color code platform compatibility
-            if platform:
-                is_platform_compat, _ = is_compatible_platform(platform, self.system_info.platform)
-                if is_platform_compat:
-                    platform_display = f"[green]{platform_display}[/green]"
-                else:
-                    platform_display = f"[red]{platform_display}[/red]"
+                return f"[green]{arch}[/green]"  # Compatible
+        else:
+            return f"[red]{arch}[/red]"  # Incompatible
 
-            table.add_row(
-                str(i),
-                dist_display,
-                version_display,
-                arch_display,
-                platform_display,
-                format_display,
-                info.asset.name,
-                score_display
-            )
+    def _format_platform_display(self, platform: str | None) -> str:
+        """Format platform display with color coding."""
+        if not platform:
+            return "Unknown"
 
-        self.console.print(table)
+        platform_display = platform.title()
+        is_compat, _ = is_compatible_platform(platform, self.system_info.platform)
+        if is_compat:
+            return f"[green]{platform_display}[/green]"
+        else:
+            return f"[red]{platform_display}[/red]"
+
+    def _format_score_display(self, score: float) -> str:
+        """Format score display with color coding."""
+        score_text = f"{score:.1f}"
+        if score >= 200:
+            return f"[bold green]{score_text}[/bold green]"
+        elif score >= 150:
+            return f"[green]{score_text}[/green]"
+        elif score >= 100:
+            return f"[yellow]{score_text}[/yellow]"
+        elif score > 0:
+            return f"[orange3]{score_text}[/orange3]"
+        else:
+            return f"[red]{score_text}[/red]"
+
+    def _display_selection_footer(self) -> None:
+        """Display footer information for asset selection."""
         self.console.print()
-        self.console.print("[dim]Color coding: [green]Green[/green]=Compatible, [red]Red[/red]=Incompatible, [yellow]Yellow[/yellow]=Partial match[/dim]")
-        self.console.print("[dim]Score explanation: Higher scores indicate better compatibility with your system.[/dim]")
+        self.console.print(
+            "[dim]Color coding: [green]Green[/green]=Compatible, "
+            "[red]Red[/red]=Incompatible, [yellow]Yellow[/yellow]=Partial match[/dim]"
+        )
+        self.console.print(
+            "[dim]Score explanation: Higher scores indicate better compatibility with your system.[/dim]"
+        )
         self.console.print("[dim]Architecture and platform compatibility are critical for proper operation.[/dim]")
         self.console.print()
 
-        # Prompt for selection
+    def _get_user_choice(self, asset_infos: list[AssetInfo]) -> AssetInfo:
+        """Get user's selection from the available options."""
         while True:
             try:
                 choice = Prompt.ask(
-                    f"Select an option [1-{len(asset_infos)}] (or 'q' to quit)",
-                    default=str(1),
-                    console=self.console
+                    f"Select an option [1-{len(asset_infos)}] (or 'q' to quit)", default=str(1), console=self.console
                 )
 
-                if choice.lower() == 'q':
+                if choice.lower() == "q":
                     raise ValueError("User cancelled asset selection")
 
                 choice_num = int(choice)
@@ -533,17 +574,19 @@ class DistributionSelector:
                 self.console.print("[red]Please enter a valid number or 'q' to quit[/red]")
 
 
-def select_best_distribution_asset(assets: list[Asset], console: Console | None = None, interactive: bool = True) -> Asset:
+def select_best_distribution_asset(
+    assets: list[Asset], console: Console | None = None, interactive: bool = True
+) -> Asset:
     """Convenience function to select the best asset for the current distribution.
-    
+
     Args:
         assets: List of available assets
         console: Rich console for user interaction (optional)
         interactive: Whether to allow interactive selection (default: True)
-        
+
     Returns:
         The best matching asset
-        
+
     Raises:
         ValueError: If no assets provided or user cancels selection
     """
