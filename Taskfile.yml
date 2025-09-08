@@ -27,9 +27,19 @@ tasks:
       - uv run ruff format {{.CLI_ARGS | default "src/"}}
 
   test:
-    desc: Run tests with pytest
+    desc: Run tests with pytest (sequential)
     cmds:
       - uv run pytest {{.CLI_ARGS}}
+
+  test:parallel:
+    desc: Run tests with pytest using multiple CPU cores (faster)
+    cmds:
+      - uv run pytest -n auto {{.CLI_ARGS}}
+
+  test:parallel-fast:
+    desc: Run tests using 8 cores (good balance of speed and reliability)
+    cmds:
+      - uv run pytest -n 8 {{.CLI_ARGS}}
 
   test:e2e:
     desc: Run end-to-end tests to validate core functionality
@@ -90,6 +100,17 @@ tasks:
       - task: lint
       - task: complexity
       - task: test:all
+
+  check:parallel:
+    desc: Run all code quality checks with parallel tests (faster)
+    cmds:
+      - task: fix
+      - task: format
+      - task: typecheck
+      - task: lint
+      - task: complexity
+      - task: test:parallel-fast
+      - task: test:e2e
 
   run:
     desc: Run the application
