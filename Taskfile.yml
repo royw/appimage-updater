@@ -109,7 +109,7 @@ tasks:
       - task: typecheck
       - task: lint
       - task: complexity
-      - task: test:parallel-fast
+      - task: test:parallel
       - task: test:e2e
 
   run:
@@ -149,7 +149,7 @@ tasks:
     desc: Complete CI pipeline - run all checks, build, docs, and show version before pushing to GitHub
     cmds:
       - echo "🚀 Starting CI pipeline..."
-      - task: check
+      - task: check:parallel
       - task: build
       - task: docs:build
       - task: version
