@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import time
+import zipfile
 from pathlib import Path
 
 import httpx
@@ -209,7 +210,10 @@ class Downloader:
                         progress.update(task_id, advance=len(chunk))
 
     async def _post_process_download(self, candidate: UpdateCandidate) -> ChecksumResult | None:
-        """Post-process downloaded file (make executable, verify checksum)."""
+        """Post-process downloaded file (extract if zip, make executable, verify checksum)."""
+        # Handle zip extraction first
+        await self._extract_if_zip(candidate)
+
         # Make AppImage executable
         if candidate.download_path.suffix.lower() == ".appimage":
             candidate.download_path.chmod(0o755)
@@ -224,6 +228,57 @@ class Downloader:
                 raise Exception(f"Checksum verification failed: {checksum_result.error_message}")
 
         return checksum_result
+
+    async def _extract_if_zip(self, candidate: UpdateCandidate) -> None:
+        """Extract AppImage file from zip if the downloaded file is a zip.
+
+        Updates candidate.download_path to point to the extracted AppImage file.
+        """
+        if candidate.download_path.suffix.lower() != ".zip":
+            return
+
+        logger.debug(f"Extracting zip file: {candidate.download_path.name}")
+
+        try:
+            with zipfile.ZipFile(candidate.download_path, "r") as zip_ref:
+                # Find AppImage files in the zip
+                appimage_files = [
+                    name for name in zip_ref.namelist() if name.lower().endswith(".appimage") and not name.endswith("/")
+                ]
+
+                if not appimage_files:
+                    raise Exception(f"No AppImage files found in zip: {candidate.download_path.name}")
+
+                if len(appimage_files) > 1:
+                    logger.warning(f"Multiple AppImage files found in zip, using first: {appimage_files[0]}")
+
+                # Extract the first AppImage file
+                appimage_filename = appimage_files[0]
+                # Get just the filename without any directory path
+                appimage_basename = Path(appimage_filename).name
+
+                # Extract to the same directory as the zip file
+                extract_path = candidate.download_path.parent / appimage_basename
+
+                # Extract the file
+                with zip_ref.open(appimage_filename) as source, extract_path.open("wb") as target:
+                    target.write(source.read())
+
+                logger.debug(f"Extracted AppImage: {appimage_basename}")
+
+                # Remove the zip file
+                candidate.download_path.unlink()
+                logger.debug(f"Removed zip file: {candidate.download_path.name}")
+
+                # Update the candidate's download path to point to the extracted file
+                candidate.download_path = extract_path
+                logger.debug(f"Updated download path to: {extract_path.name}")
+
+        except zipfile.BadZipFile:
+            raise Exception(f"Invalid zip file: {candidate.download_path.name}") from None
+        except Exception as e:
+            logger.error(f"Failed to extract zip file {candidate.download_path.name}: {e}")
+            raise Exception(f"Zip extraction failed: {e}") from e
 
     async def _create_version_metadata(self, candidate: UpdateCandidate) -> None:
         """Create a .info metadata file with version information.
@@ -432,8 +487,14 @@ class Downloader:
             return candidate.download_path
 
         download_dir = candidate.download_path.parent
-        base_name = candidate.download_path.stem  # filename without extension
-        extension = candidate.download_path.suffix  # .AppImage
+        # For AppImage files, treat the full filename as the base (including .AppImage)
+        # so rotation suffixes go AFTER .AppImage: filename.AppImage.current
+        if candidate.download_path.suffix.lower() == ".appimage":
+            base_name = candidate.download_path.name  # Full filename including .AppImage
+            extension = ""  # No additional extension
+        else:
+            base_name = candidate.download_path.stem  # filename without extension
+            extension = candidate.download_path.suffix  # original extension
 
         # Define the current file path
         current_path = download_dir / f"{base_name}.current{extension}"

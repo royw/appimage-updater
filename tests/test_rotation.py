@@ -4,12 +4,10 @@ These tests verify both rotation-disabled and rotation-enabled scenarios,
 including symlink management, file rotation, and cleanup behavior.
 """
 
-import json
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import patch
 
-import anyio
 import pytest
 
 from appimage_updater.config import ApplicationConfig, ChecksumConfig, UpdateFrequency
@@ -22,7 +20,7 @@ rebuild_models()
 # Configure anyio to use only asyncio backend
 pytest_plugins = ('anyio',)
 
-# Use only asyncio backend for anyio tests  
+# Use only asyncio backend for anyio tests
 anyio_backends = ['asyncio']
 
 
@@ -112,7 +110,7 @@ class TestRotationDisabled:
 
         # Test the rotation handling directly
         result_path = await downloader._handle_rotation(candidate)
-        
+
         # Should return the original path when rotation is disabled
         assert result_path == candidate.download_path
 
@@ -121,7 +119,7 @@ class TestRotationDisabled:
         """Test that no symlink operations occur when rotation is disabled."""
         candidate = UpdateCandidate(
             app_name="TestApp",
-            current_version="1.0.0", 
+            current_version="1.0.0",
             latest_version="2.0.0",
             asset=sample_asset,
             download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
@@ -134,13 +132,13 @@ class TestRotationDisabled:
         candidate.download_path.touch()
 
         result_path = await downloader._handle_rotation(candidate)
-        
+
         # Original file should still exist
         assert candidate.download_path.exists()
         assert result_path == candidate.download_path
-        
+
         # No .current file should be created
-        current_file = temp_download_dir / "TestApp-2.0.0-Linux-x86_64.current.AppImage"
+        current_file = temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.current"
         assert not current_file.exists()
 
 
@@ -153,7 +151,7 @@ class TestRotationEnabled:
         candidate = UpdateCandidate(
             app_name="TestApp",
             current_version="1.0.0",
-            latest_version="2.0.0", 
+            latest_version="2.0.0",
             asset=sample_asset,
             download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
             is_newer=True,
@@ -165,12 +163,12 @@ class TestRotationEnabled:
         candidate.download_path.touch()
 
         result_path = await downloader._perform_rotation(candidate)
-        
+
         # Should create .current file
-        expected_current = temp_download_dir / "TestApp-2.0.0-Linux-x86_64.current.AppImage"
+        expected_current = temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.current"
         assert result_path == expected_current
         assert expected_current.exists()
-        
+
         # Original download file should be moved
         assert not candidate.download_path.exists()
 
@@ -181,7 +179,7 @@ class TestRotationEnabled:
             app_name="TestApp",
             current_version="1.0.0",
             latest_version="2.0.0",
-            asset=sample_asset, 
+            asset=sample_asset,
             download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
             is_newer=True,
             checksum_required=False,
@@ -192,7 +190,7 @@ class TestRotationEnabled:
         candidate.download_path.touch()
 
         result_path = await downloader._perform_rotation(candidate)
-        
+
         # Should create symlink
         symlink_path = rotation_app_config.symlink_path
         assert symlink_path.is_symlink()
@@ -202,15 +200,15 @@ class TestRotationEnabled:
     async def test_rotation_moves_existing_current_to_old(self, downloader, rotation_app_config, sample_asset, temp_download_dir):
         """Test that existing .current file is moved to .old during rotation."""
         # Create existing .current file with SAME base name as the new download
-        existing_current = temp_download_dir / "TestApp-2.0.0-Linux-x86_64.current.AppImage"
+        existing_current = temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.current"
         existing_current.write_text("old current content")  # Add content to distinguish from new file
-        
+
         candidate = UpdateCandidate(
             app_name="TestApp",
             current_version="2.0.0",
             latest_version="2.0.0",
             asset=sample_asset,
-            download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage", 
+            download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
             is_newer=True,
             checksum_required=False,
             app_config=rotation_app_config
@@ -220,14 +218,14 @@ class TestRotationEnabled:
         candidate.download_path.write_text("new download content")
 
         result_path = await downloader._perform_rotation(candidate)
-        
+
         # Old .current should be moved to .old (with same base name)
-        expected_old = temp_download_dir / "TestApp-2.0.0-Linux-x86_64.old.AppImage"
+        expected_old = temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old"
         assert expected_old.exists()
         assert expected_old.read_text() == "old current content"  # Verify it's the old file
-        
+
         # New .current should exist with new content
-        new_current = temp_download_dir / "TestApp-2.0.0-Linux-x86_64.current.AppImage"
+        new_current = temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.current"
         assert new_current.exists()
         assert new_current.read_text() == "new download content"  # Verify it's the new file
         assert result_path == new_current
@@ -237,17 +235,17 @@ class TestRotationEnabled:
         """Test full rotation sequence: .current -> .old -> .old2 -> .old3 (with retain_count=3)."""
         # Create existing files in rotation chain (all with SAME base name)
         files_to_create = [
-            "TestApp-2.0.0-Linux-x86_64.current.AppImage",
-            "TestApp-2.0.0-Linux-x86_64.old.AppImage", 
-            "TestApp-2.0.0-Linux-x86_64.old2.AppImage",
+            "TestApp-2.0.0-Linux-x86_64.AppImage.current",
+            "TestApp-2.0.0-Linux-x86_64.AppImage.old",
+            "TestApp-2.0.0-Linux-x86_64.AppImage.old2",
         ]
-        
+
         for filename in files_to_create:
             (temp_download_dir / filename).touch()
-        
+
         candidate = UpdateCandidate(
             app_name="TestApp",
-            current_version="2.0.0", 
+            current_version="2.0.0",
             latest_version="2.0.0",
             asset=sample_asset,
             download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
@@ -260,12 +258,12 @@ class TestRotationEnabled:
         candidate.download_path.touch()
 
         result_path = await downloader._perform_rotation(candidate)
-        
+
         # Verify rotation sequence
-        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.current.AppImage").exists()  # New current
-        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.old.AppImage").exists()     # Old current -> .old
-        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.old2.AppImage").exists()    # Old .old -> .old2
-        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.old3.AppImage").exists()    # Old .old2 -> .old3
+        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.current").exists()  # New current
+        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old").exists()     # Old current -> .old
+        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old2").exists()    # Old .old -> .old2
+        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old3").exists()    # Old .old2 -> .old3
 
     @pytest.mark.anyio
     async def test_rotation_respects_retain_count(self, downloader, temp_download_dir, temp_symlink_dir, sample_asset):
@@ -273,7 +271,7 @@ class TestRotationEnabled:
         # Create config with retain_count=2
         rotation_config = ApplicationConfig(
             name="TestApp",
-            source_type="github", 
+            source_type="github",
             url="https://github.com/test/testapp",
             download_dir=temp_download_dir,
             pattern=r"TestApp.*\.AppImage$",
@@ -284,19 +282,19 @@ class TestRotationEnabled:
             retain_count=2,  # Only keep .old and .old2
             checksum=ChecksumConfig()
         )
-        
+
         # Create existing files beyond retain count (all with SAME base name)
         files_to_create = [
-            "TestApp-2.0.0-Linux-x86_64.current.AppImage",
-            "TestApp-2.0.0-Linux-x86_64.old.AppImage",
-            "TestApp-2.0.0-Linux-x86_64.old2.AppImage", 
-            "TestApp-2.0.0-Linux-x86_64.old3.AppImage",  # Should be cleaned up
-            "TestApp-2.0.0-Linux-x86_64.old4.AppImage",  # Should be cleaned up
+            "TestApp-2.0.0-Linux-x86_64.AppImage.current",
+            "TestApp-2.0.0-Linux-x86_64.AppImage.old",
+            "TestApp-2.0.0-Linux-x86_64.AppImage.old2",
+            "TestApp-2.0.0-Linux-x86_64.AppImage.old3",  # Should be cleaned up
+            "TestApp-2.0.0-Linux-x86_64.AppImage.old4",  # Should be cleaned up
         ]
-        
+
         for filename in files_to_create:
             (temp_download_dir / filename).touch()
-            
+
         candidate = UpdateCandidate(
             app_name="TestApp",
             current_version="2.0.0",
@@ -312,15 +310,15 @@ class TestRotationEnabled:
         candidate.download_path.touch()
 
         result_path = await downloader._perform_rotation(candidate)
-        
+
         # Should only keep files within retain_count
-        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.current.AppImage").exists()
-        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.old.AppImage").exists()
-        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.old2.AppImage").exists()
-        
+        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.current").exists()
+        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old").exists()
+        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old2").exists()
+
         # Files beyond retain_count should be cleaned up
-        assert not (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.old3.AppImage").exists()
-        assert not (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.old4.AppImage").exists()
+        assert not (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old3").exists()
+        assert not (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old4").exists()
 
     @pytest.mark.anyio
     async def test_symlink_update_replaces_existing(self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir):
@@ -329,7 +327,7 @@ class TestRotationEnabled:
         old_target = temp_download_dir / "old-target.AppImage"
         old_target.touch()
         rotation_app_config.symlink_path.symlink_to(old_target)
-        
+
         candidate = UpdateCandidate(
             app_name="TestApp",
             current_version="1.0.0",
@@ -345,7 +343,7 @@ class TestRotationEnabled:
         candidate.download_path.touch()
 
         result_path = await downloader._perform_rotation(candidate)
-        
+
         # Symlink should now point to the new current file
         assert rotation_app_config.symlink_path.is_symlink()
         assert rotation_app_config.symlink_path.resolve() == result_path.resolve()
@@ -357,23 +355,23 @@ class TestRotationEnabled:
         """Test that rotation errors are handled gracefully and fallback to original path."""
         # Create a scenario that would cause rotation to fail (e.g., permission issues)
         candidate = UpdateCandidate(
-            app_name="TestApp", 
+            app_name="TestApp",
             current_version="1.0.0",
             latest_version="2.0.0",
             asset=sample_asset,
             download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
-            is_newer=True, 
+            is_newer=True,
             checksum_required=False,
             app_config=rotation_app_config
         )
 
         # Create the "downloaded" file
         candidate.download_path.touch()
-        
+
         # Mock the rotation method to raise an exception
         with patch.object(downloader, '_perform_rotation', side_effect=Exception("Rotation failed")):
             result_path = await downloader._handle_rotation(candidate)
-            
+
             # Should fallback to original path when rotation fails
             assert result_path == candidate.download_path
             assert candidate.download_path.exists()
@@ -383,7 +381,7 @@ class TestRotationValidation:
     """Test validation of rotation configuration."""
 
     def test_rotation_enabled_requires_symlink_path(self, temp_download_dir):
-        """Test that rotation_enabled=True requires symlink_path to be set.""" 
+        """Test that rotation_enabled=True requires symlink_path to be set."""
         with pytest.raises(ValueError, match="symlink_path is required when rotation_enabled is True"):
             ApplicationConfig(
                 name="TestApp",
@@ -404,7 +402,7 @@ class TestRotationValidation:
         config = ApplicationConfig(
             name="TestApp",
             source_type="github",
-            url="https://github.com/test/testapp", 
+            url="https://github.com/test/testapp",
             download_dir=temp_download_dir,
             pattern=r"TestApp.*\.AppImage$",
             frequency=UpdateFrequency(value=1, unit="weeks"),

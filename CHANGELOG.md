@@ -2,6 +2,49 @@
 
 All notable changes to AppImage Updater will be documented in this file.
 
+## [Unreleased]
+
+### 🆕 New Features
+- **📦 MAJOR**: Automatic ZIP File Extraction Support
+  - **PROBLEM SOLVED**: Applications like BambuStudio that distribute AppImages inside ZIP files now work seamlessly
+  - **ZERO-CONFIG**: ZIP files are automatically detected and extracted with no configuration needed
+  - **INTELLIGENT**: Scans ZIP contents for `.AppImage` files and extracts them to download directory
+  - **CLEANUP**: Original ZIP file is automatically removed after successful extraction
+  - **MULTI-FILE**: Handles ZIP files with multiple AppImages (uses first found, logs warning)
+  - **SUBDIRECTORY SUPPORT**: Extracts AppImages from subdirectories within ZIP files
+  - **ERROR HANDLING**: Clear error messages for invalid ZIP files or missing AppImages
+  - **FULL INTEGRATION**: Works seamlessly with:
+    - File rotation and symlink management
+    - Checksum verification (applied to extracted AppImage)
+    - Version metadata creation (`.info` files for extracted AppImage)
+    - Progress tracking and retry logic
+  - **EXAMPLES**:
+    - **BambuStudio**: `appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio`
+    - **Pattern Support**: `"(?i)Bambu_?Studio_.*\\.(zip|AppImage)(\\.(|current|old))?$"` for both formats
+  - **ARCHITECTURE**: 
+    - New `_extract_if_zip()` method in `Downloader` class
+    - Post-download processing pipeline automatically handles ZIP extraction
+    - Updates `candidate.download_path` to point to extracted AppImage for downstream processing
+  - **TESTING**: 14 comprehensive tests covering all scenarios:
+    - Successful extraction from ZIP files
+    - Multiple AppImages (uses first, warns)
+    - No AppImages found (clear error)
+    - Invalid ZIP files (error handling)
+    - Non-ZIP files (skipped)
+    - Subdirectories in ZIP
+    - Directory entries ignored
+
+### 🐛 Bug Fixes
+- **FIXED**: AppImage rotation naming issue for extracted ZIP files
+  - **PROBLEM**: Rotation suffix (`.current`, `.old`) was incorrectly added before `.AppImage` extension
+  - **SOLUTION**: Modified rotation logic to treat `.AppImage` as part of the base filename
+  - **RESULT**: Rotation suffixes now correctly added after `.AppImage` (e.g., `filename.AppImage.current`)
+  - **CONSISTENCY**: Ensures consistent naming for both directly downloaded and ZIP-extracted AppImages
+  - **TESTING**: Updated rotation tests to verify correct naming format
+  - **BACKWARD COMPATIBLE**: Handles both naming styles during version detection
+
+---
+
 ## [0.2.0] - 2025-01-09
 
 ### 🆕 New Features
