@@ -79,6 +79,11 @@ _YES_OPTION = typer.Option(
     "-y",
     help="Automatically answer yes to prompts (non-interactive mode)",
 )
+_NO_INTERACTIVE_OPTION = typer.Option(
+    False,
+    "--no-interactive",
+    help="Disable interactive distribution selection (use best match automatically)",
+)
 _CHECK_APP_NAME_ARGUMENT = typer.Argument(
     default=None, help="Name of the application to check (case-insensitive). If not provided, checks all applications."
 )
@@ -216,6 +221,7 @@ def check(
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     dry_run: bool = _DRY_RUN_OPTION,
     yes: bool = _YES_OPTION,
+    no_interactive: bool = _NO_INTERACTIVE_OPTION,
 ) -> None:
     """Check for and optionally download AppImage updates.
 
@@ -227,7 +233,7 @@ def check(
         appimage-updater check GitHubDesktop --dry-run  # Check specific (dry run)
         appimage-updater check GitHubDesktop --yes      # Check specific and auto-confirm
     """
-    asyncio.run(_check_updates(config_file, config_dir, dry_run, app_name, yes))
+    asyncio.run(_check_updates(config_file, config_dir, dry_run, app_name, yes, no_interactive))
 
 
 @app.command()
@@ -764,6 +770,7 @@ async def _check_updates(
     dry_run: bool,
     app_name: str | None = None,
     yes: bool = False,
+    no_interactive: bool = False,
 ) -> None:
     """Internal async function to check for updates."""
     logger.debug("Starting update check process")
@@ -779,7 +786,7 @@ async def _check_updates(
             return
 
         # Perform update checks
-        check_results = await _perform_update_checks(config, enabled_apps)
+        check_results = await _perform_update_checks(config, enabled_apps, no_interactive)
 
         # Process results and get update candidates
         candidates = _get_update_candidates(check_results)
@@ -843,7 +850,7 @@ def _filter_apps_by_name(enabled_apps: list[Any], app_name: str) -> list[Any]:
     return filtered_apps
 
 
-async def _perform_update_checks(config: Any, enabled_apps: list[Any]) -> list[Any]:
+async def _perform_update_checks(config: Any, enabled_apps: list[Any], no_interactive: bool = False) -> list[Any]:
     """Initialize clients and perform update checks."""
     console.print(f"[blue]Checking {len(enabled_apps)} applications for updates...")
     logger.debug(f"Starting update checks for {len(enabled_apps)} applications")
@@ -854,7 +861,7 @@ async def _perform_update_checks(config: Any, enabled_apps: list[Any]) -> list[A
         timeout=config.global_config.timeout_seconds,
         user_agent=config.global_config.user_agent,
     )
-    version_checker = VersionChecker(github_client)
+    version_checker = VersionChecker(github_client, interactive=not no_interactive)
     logger.debug("GitHub client and version checker initialized")
 
     # Check for updates

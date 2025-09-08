@@ -8,6 +8,7 @@ from pathlib import Path
 from packaging import version
 
 from .config import ApplicationConfig
+from .distribution_selector import select_best_distribution_asset
 from .github_client import GitHubClient, GitHubClientError
 from .models import CheckResult, UpdateCandidate
 
@@ -15,9 +16,15 @@ from .models import CheckResult, UpdateCandidate
 class VersionChecker:
     """Handles version checking for applications."""
 
-    def __init__(self, github_client: GitHubClient) -> None:
-        """Initialize version checker."""
+    def __init__(self, github_client: GitHubClient, interactive: bool = True) -> None:
+        """Initialize version checker.
+        
+        Args:
+            github_client: GitHub client instance
+            interactive: Whether to allow interactive distribution selection
+        """
         self.github_client = github_client
+        self.interactive = interactive
 
     async def check_for_updates(self, app_config: ApplicationConfig) -> CheckResult:
         """Check for updates for a single application."""
@@ -70,8 +77,15 @@ class VersionChecker:
                 error_message=f"No assets match pattern: {app_config.pattern}",
             )
 
-        # Use the first matching asset
-        asset = matching_assets[0]
+        # Use distribution-aware asset selection
+        try:
+            asset = select_best_distribution_asset(matching_assets, interactive=self.interactive)
+        except ValueError as e:
+            return CheckResult(
+                app_name=app_config.name,
+                success=False,
+                error_message=f"Asset selection failed: {e}",
+            )
 
         # Get current version
         current_version = self._get_current_version(app_config)
