@@ -67,14 +67,35 @@ The `add` command intelligently analyzes the repository to detect continuous bui
 - `--symlink PATH` - Symlink path (required with --rotation)
 - `--retain INTEGER` - Files to retain with rotation (default: 3)
 
+**📦 ZIP File Support:**
+AppImage Updater automatically detects and extracts AppImage files from ZIP archives. This works seamlessly for applications like BambuStudio that distribute AppImages inside ZIP files.
+
+- **Automatic Detection**: ZIP files are detected by extension and automatically extracted
+- **Intelligent Extraction**: Scans ZIP contents for `.AppImage` files
+- **Subdirectory Support**: Handles AppImages nested in ZIP subdirectories
+- **Full Integration**: Works with rotation, checksums, and metadata systems
+- **Pattern Support**: Use patterns like `"(?i)App.*\\.(zip|AppImage)$"` for dual format support
+
 **Examples:**
 ```bash
 # Basic usage (auto-detects prerelease if needed)
 appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
 
+# ZIP file application (BambuStudio releases AppImages in ZIP files)
+appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio
+
 # Continuous build (auto-enables prerelease)
 appimage-updater add appimaged https://github.com/probonopd/go-appimage ~/Apps/appimaged
 # Output: 🔍 Auto-detected continuous builds - enabled prerelease support
+
+# ZIP with custom pattern (both ZIP and AppImage formats)
+appimage-updater add --pattern "(?i)Bambu_?Studio_.*\\.(zip|AppImage)(\\.(|current|old))?$" \
+  BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio
+
+# ZIP with file rotation
+appimage-updater add --rotation --symlink ~/bin/bambustudio.AppImage \
+  --pattern "(?i)Bambu_?Studio_.*\\.(zip|AppImage)(\\.(|current|old))?$" \
+  BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio
 
 # With custom frequency
 appimage-updater add --frequency 7 --unit days MyApp https://github.com/user/repo ~/Apps/MyApp

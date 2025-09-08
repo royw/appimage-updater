@@ -12,6 +12,28 @@ The documentation includes enhanced navigation with 🏠 home icons, clickable h
 
 AppImage Updater is a service for automating the finding and downloading of AppImage applications from their respective websites. It monitors configured applications (like FreeCAD) for new releases and provides an automated way to download updated AppImage files from GitHub releases and other sources.
 
+### 📦 Multi-Format Download Support
+
+The application now supports downloading and automatically extracting AppImage files from multiple formats:
+
+- **Direct AppImage downloads**: Traditional `.AppImage` files are downloaded directly
+- **ZIP archive extraction**: ZIP files containing AppImage files are automatically extracted
+  - Automatically detects and extracts `.AppImage` files from within ZIP archives
+  - Removes the ZIP file after successful extraction
+  - Handles subdirectories within ZIP files (extracts to download directory root)
+  - Creates `.info` metadata files for the extracted AppImage, not the original ZIP
+  - Works seamlessly with file rotation and symlink management
+
+**Example applications that benefit from ZIP support:**
+- **BambuStudio**: Releases AppImages inside ZIP files
+- Any application that packages AppImages in compressed archives
+
+**Pattern Configuration for ZIP files:**
+```regex
+# Match both zip and AppImage files with rotation support
+(?i)Bambu_?Studio_.*\.(zip|AppImage)(\.(|current|old))?$
+```
+
 ## Key Development Commands
 
 This project uses [Task](https://taskfile.dev) for development commands and `uv` for package management:

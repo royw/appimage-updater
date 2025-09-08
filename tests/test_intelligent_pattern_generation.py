@@ -17,7 +17,7 @@ The old pattern 'openshot-qt.*[Ll]inux.*\\.AppImage' would not match.
 The new pattern '(?i)OpenShot.*\\.AppImage' matches perfectly.
 """
 import re
-import pytest
+
 from appimage_updater.pattern_generator import generate_appimage_pattern
 
 
@@ -25,15 +25,15 @@ def test_openshot_pattern_generation_is_now_fixed():
     """Test that OpenShot pattern generation is improved (handles both intelligent and fallback)."""
     app_name = "OpenShot"
     url = "https://github.com/OpenShot/openshot-qt"
-    
+
     pattern = generate_appimage_pattern(app_name, url)
-    
+
     # The improvement: handles both intelligent (from releases) and fallback modes
     if "(?i)" in pattern:
         # INTELLIGENT MODE: Uses actual GitHub releases data
         assert pattern.startswith("(?i)OpenShot")
         assert "openshot-qt" not in pattern  # Should NOT use repo name
-        
+
         # Should match actual files
         actual_filename = "OpenShot-v3.3.0-x86_64.AppImage"
         pattern_compiled = re.compile(pattern)
@@ -54,24 +54,24 @@ def test_openshot_pattern_now_works_correctly():
     """Test that the improved pattern generation works for OpenShot."""
     app_name = "OpenShot"
     url = "https://github.com/OpenShot/openshot-qt"
-    
+
     # Generate pattern using the improved method
     pattern = generate_appimage_pattern(app_name, url)
-    
+
     # The improvement: now properly handles both scenarios
     if "(?i)" in pattern:
         # SUCCESS: Intelligent mode worked - uses actual release data
         assert pattern.startswith("(?i)OpenShot")
         assert "\\.AppImage(\\.(|current|old))?$" in pattern
-        
+
         # Should match actual OpenShot filenames
         actual_filenames = [
             "OpenShot-v3.3.0-x86_64.AppImage",
-            "OpenShot-v3.2.1-x86_64.AppImage", 
+            "OpenShot-v3.2.1-x86_64.AppImage",
             "OpenShot-v3.2.0-x86_64.AppImage",
             "OpenShot-v3.1.1-x86_64.AppImage"
         ]
-        
+
         pattern_compiled = re.compile(pattern)
         for filename in actual_filenames:
             assert pattern_compiled.match(filename), \
@@ -92,21 +92,21 @@ def test_intelligent_pattern_generation_success():
     """
     app_name = "OpenShot"
     url = "https://github.com/OpenShot/openshot-qt"
-    
+
     # Generate pattern using the improved method
     pattern = generate_appimage_pattern(app_name, url)
-    
+
     # The improved approach attempts to:
     # 1. Fetch actual releases from GitHub (when API is available)
     # 2. Extract common prefix from real AppImage filenames
     # 3. Create case-insensitive pattern based on actual naming
     # 4. Fall back to heuristics when GitHub API is unavailable
-    
+
     if "(?i)" in pattern:
         # SUCCESS CASE: Intelligent pattern generation worked
         assert "OpenShot" in pattern, "Pattern should include the actual file prefix"
         assert "openshot-qt" not in pattern, "Pattern should not use repo name when files differ"
-        
+
         # Verify it matches real files
         pattern_compiled = re.compile(pattern)
         assert pattern_compiled.match("OpenShot-v3.3.0-x86_64.AppImage"), \
@@ -115,9 +115,9 @@ def test_intelligent_pattern_generation_success():
         # FALLBACK CASE: API unavailable, using heuristic method
         # This is still better than the completely broken original logic
         assert "\\.AppImage(\\.(|current|old))?$" in pattern, "Should still be valid AppImage pattern"
-        
+
         # Verify fallback produces valid regex
         re.compile(pattern)  # Should not raise exception
-        
+
         # Document that fallback occurred (for debugging)
         print(f"API fallback used, generated pattern: {pattern}")

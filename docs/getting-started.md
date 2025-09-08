@@ -47,11 +47,17 @@ Add VS Code Insiders:
 appimage-updater add VSCode-Insiders https://github.com/microsoft/vscode ~/Apps/VSCode
 ```
 
+Add BambuStudio (automatically handles ZIP files):
+```bash
+appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Applications/BambuStudio
+```
+
 ### What the `add` Command Does
 
 When you run `add`, it automatically:
 
 - **🔍 Detects prerelease requirements** - analyzes repositories and auto-enables prerelease for continuous builds
+- **📦 Handles ZIP files automatically** - detects and extracts AppImages from ZIP archives (perfect for BambuStudio, etc.)
 - **Generates smart file patterns** based on the repository name  
 - **Sets up checksum verification** with SHA256 validation
 - **Configures daily update checks** by default

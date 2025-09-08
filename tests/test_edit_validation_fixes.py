@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 import re
-import pytest
 from pathlib import Path
+
+import pytest
 from typer.testing import CliRunner
+
 from appimage_updater.main import app
 
 
@@ -71,7 +73,7 @@ def test_rotation_without_symlink_no_traceback(runner, test_config_file):
         app,
         ["edit", "TestApp", "--rotation", "--config", str(test_config_file)]
     )
-    
+
     assert result.exit_code == 1
     clean_output = normalize_text(result.stdout)
     assert "Error editing application: File rotation requires a symlink path" in clean_output
@@ -88,7 +90,7 @@ def test_empty_symlink_path_validation(runner, test_config_file):
         app,
         ["edit", "TestApp", "--symlink-path", "", "--config", str(test_config_file)]
     )
-    
+
     assert result.exit_code == 1
     clean_output = normalize_text(result.stdout)
     assert "Symlink path cannot be empty" in clean_output
@@ -103,7 +105,7 @@ def test_symlink_path_without_appimage_extension(runner, test_config_file):
         app,
         ["edit", "TestApp", "--symlink-path", "/tmp/invalid_path", "--config", str(test_config_file)]
     )
-    
+
     assert result.exit_code == 1
     assert "Symlink path should end with '.AppImage'" in result.stdout
     assert "Traceback" not in result.stdout
@@ -112,7 +114,7 @@ def test_symlink_path_without_appimage_extension(runner, test_config_file):
 def test_valid_symlink_path_with_rotation(runner, test_config_file, tmp_path):
     """Test that valid symlink paths with rotation work correctly."""
     symlink_path = tmp_path / "bin" / "testapp.AppImage"
-    
+
     result = runner.invoke(
         app,
         [
@@ -122,16 +124,16 @@ def test_valid_symlink_path_with_rotation(runner, test_config_file, tmp_path):
             "--config", str(test_config_file)
         ]
     )
-    
+
     assert result.exit_code == 0
     assert "Successfully updated configuration" in result.stdout
     assert "File Rotation: Disabled → Enabled" in result.stdout
     assert "Symlink Path: None →" in result.stdout
-    
+
     # Verify the changes were saved
     with test_config_file.open() as f:
         config_data = json.load(f)
-    
+
     app_config = config_data["applications"][0]
     assert app_config["rotation_enabled"] is True
     assert app_config["symlink_path"] == str(symlink_path)
@@ -147,41 +149,41 @@ def test_symlink_path_expansion(runner, test_config_file):
             "--config", str(test_config_file)
         ]
     )
-    
+
     assert result.exit_code == 0
     assert "Successfully updated configuration" in result.stdout
-    
+
     # Verify path was expanded
     with test_config_file.open() as f:
         config_data = json.load(f)
-    
+
     app_config = config_data["applications"][0]
     expected_path = str(Path.home() / "testapp.AppImage")
     assert app_config["symlink_path"] == expected_path
 
 
 def test_symlink_path_normalization(runner, test_config_file, tmp_path):
-    """Test that symlink paths with .. are properly normalized.""" 
+    """Test that symlink paths with .. are properly normalized."""
     # Create a path with redundant .. segments
     complex_path = tmp_path / "subdir" / ".." / "normalized.AppImage"
     expected_path = tmp_path / "normalized.AppImage"
-    
+
     result = runner.invoke(
         app,
         [
-            "edit", "TestApp", 
+            "edit", "TestApp",
             "--symlink-path", str(complex_path),
             "--config", str(test_config_file)
         ]
     )
-    
+
     assert result.exit_code == 0
     assert "Successfully updated configuration" in result.stdout
-    
+
     # Verify path was normalized
     with test_config_file.open() as f:
         config_data = json.load(f)
-    
+
     app_config = config_data["applications"][0]
     assert app_config["symlink_path"] == str(expected_path)
 
@@ -192,7 +194,7 @@ def test_whitespace_only_symlink_path(runner, test_config_file):
         app,
         ["edit", "TestApp", "--symlink-path", "   ", "--config", str(test_config_file)]
     )
-    
+
     assert result.exit_code == 1
     clean_output = normalize_text(result.stdout)
     assert "Symlink path cannot be empty" in clean_output
@@ -207,7 +209,7 @@ def test_symlink_path_with_invalid_characters(runner, test_config_file):
         app,
         ["edit", "TestApp", "--symlink-path", "/tmp/invalid\x00chars.AppImage", "--config", str(test_config_file)]
     )
-    
+
     assert result.exit_code == 1
     clean_output = normalize_text(result.stdout)
     assert "Symlink path contains invalid characters" in clean_output
@@ -222,7 +224,7 @@ def test_symlink_path_with_double_extension(runner, test_config_file):
         app,
         ["edit", "TestApp", "--symlink-path", "/tmp/app.AppImage.old", "--config", str(test_config_file)]
     )
-    
+
     assert result.exit_code == 1
     clean_output = normalize_text(result.stdout)
     assert "Symlink path should end with '.AppImage'" in clean_output
@@ -233,12 +235,12 @@ def test_symlink_path_normalization_preserves_appimage_extension(runner, test_co
     """Test that symlink path normalization preserves .AppImage extension."""
     # Test with a path containing both uppercase/lowercase in extension
     mixed_case_path = tmp_path / "test.aPpImAgE"
-    
+
     result = runner.invoke(
         app,
         ["edit", "TestApp", "--symlink-path", str(mixed_case_path), "--config", str(test_config_file)]
     )
-    
+
     # Should fail validation since we require exact .AppImage spelling
     assert result.exit_code == 1
     clean_output = normalize_text(result.stdout)
@@ -252,7 +254,7 @@ def test_symlink_path_with_newline_characters(runner, test_config_file):
         app,
         ["edit", "TestApp", "--symlink-path", "/tmp/invalid\npath.AppImage", "--config", str(test_config_file)]
     )
-    
+
     assert result.exit_code == 1
     clean_output = normalize_text(result.stdout)
     assert "Symlink path contains invalid characters" in clean_output
@@ -265,7 +267,7 @@ def test_symlink_path_with_carriage_return(runner, test_config_file):
         app,
         ["edit", "TestApp", "--symlink-path", "/tmp/invalid\rpath.AppImage", "--config", str(test_config_file)]
     )
-    
+
     assert result.exit_code == 1
     clean_output = normalize_text(result.stdout)
     assert "Symlink path contains invalid characters" in clean_output
@@ -276,19 +278,19 @@ def test_symlink_path_validation_comprehensive(runner, test_config_file, tmp_pat
     """Test comprehensive symlink path validation scenarios."""
     # Test that a valid, normalized path works
     valid_path = tmp_path / "apps" / "myapp.AppImage"
-    
+
     result = runner.invoke(
         app,
         ["edit", "TestApp", "--symlink-path", str(valid_path), "--config", str(test_config_file)]
     )
-    
+
     assert result.exit_code == 0
     assert "Successfully updated configuration" in result.stdout
-    
+
     # Verify the path was normalized and saved
     with test_config_file.open() as f:
         config_data = json.load(f)
-    
+
     app_config = config_data["applications"][0]
     # The path should be normalized to absolute form
     assert app_config["symlink_path"].endswith("myapp.AppImage")

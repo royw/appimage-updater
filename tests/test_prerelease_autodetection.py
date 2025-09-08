@@ -1,16 +1,15 @@
 """Tests for automatic prerelease detection feature in add command."""
 
 import json
-from pathlib import Path
+from datetime import datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from typer.testing import CliRunner
 
 from appimage_updater.main import app
-from appimage_updater.pattern_generator import should_enable_prerelease
 from appimage_updater.models import Asset, Release
-from datetime import datetime
+from appimage_updater.pattern_generator import should_enable_prerelease
 
 
 @pytest.fixture
@@ -182,8 +181,8 @@ class TestPrereleaseAutoDetection:
             mock_client_class.return_value = mock_client
 
             result = runner.invoke(app, [
-                "add", "test_app", 
-                "https://github.com/test/continuous", 
+                "add", "test_app",
+                "https://github.com/test/continuous",
                 str(temp_config_dir.parent / "downloads"),
                 "--config-dir", str(temp_config_dir),
                 "--create-dir"
@@ -195,10 +194,10 @@ class TestPrereleaseAutoDetection:
         # Check that the configuration file was created with prerelease enabled
         config_file = temp_config_dir / "test_app.json"
         assert config_file.exists()
-        
+
         with config_file.open() as f:
             config = json.load(f)
-        
+
         app_config = config["applications"][0]
         assert app_config["prerelease"] is True
 
@@ -221,8 +220,8 @@ class TestPrereleaseAutoDetection:
             mock_client_class.return_value = mock_client
 
             result = runner.invoke(app, [
-                "add", "test_stable", 
-                "https://github.com/test/stable", 
+                "add", "test_stable",
+                "https://github.com/test/stable",
                 str(temp_config_dir.parent / "downloads"),
                 "--config-dir", str(temp_config_dir),
                 "--create-dir"
@@ -234,10 +233,10 @@ class TestPrereleaseAutoDetection:
         # Check that the configuration file was created with prerelease disabled
         config_file = temp_config_dir / "test_stable.json"
         assert config_file.exists()
-        
+
         with config_file.open() as f:
             config = json.load(f)
-        
+
         app_config = config["applications"][0]
         assert app_config["prerelease"] is False
 
@@ -260,8 +259,8 @@ class TestPrereleaseAutoDetection:
             mock_client_class.return_value = mock_client
 
             result = runner.invoke(app, [
-                "add", "--prerelease", "test_explicit", 
-                "https://github.com/test/stable", 
+                "add", "--prerelease", "test_explicit",
+                "https://github.com/test/stable",
                 str(temp_config_dir.parent / "downloads"),
                 "--config-dir", str(temp_config_dir),
                 "--create-dir"
@@ -273,10 +272,10 @@ class TestPrereleaseAutoDetection:
         # Check that the configuration file was created with prerelease enabled (explicit)
         config_file = temp_config_dir / "test_explicit.json"
         assert config_file.exists()
-        
+
         with config_file.open() as f:
             config = json.load(f)
-        
+
         app_config = config["applications"][0]
         assert app_config["prerelease"] is True
 
@@ -299,8 +298,8 @@ class TestPrereleaseAutoDetection:
             mock_client_class.return_value = mock_client
 
             result = runner.invoke(app, [
-                "add", "--no-prerelease", "test_explicit_no", 
-                "https://github.com/test/continuous", 
+                "add", "--no-prerelease", "test_explicit_no",
+                "https://github.com/test/continuous",
                 str(temp_config_dir.parent / "downloads"),
                 "--config-dir", str(temp_config_dir),
                 "--create-dir"
@@ -312,9 +311,9 @@ class TestPrereleaseAutoDetection:
         # Check that the configuration file was created with prerelease disabled (explicit)
         config_file = temp_config_dir / "test_explicit_no.json"
         assert config_file.exists()
-        
+
         with config_file.open() as f:
             config = json.load(f)
-        
+
         app_config = config["applications"][0]
         assert app_config["prerelease"] is False

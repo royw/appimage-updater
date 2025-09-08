@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 import re
-import pytest
 from pathlib import Path
+
+import pytest
 from typer.testing import CliRunner
+
 from appimage_updater.main import app
 
 
@@ -70,7 +72,7 @@ def config_directory(tmp_path):
     """Create a config directory for testing."""
     config_dir = tmp_path / "config"
     config_dir.mkdir()
-    
+
     # Create a test app config
     app_config = {
         "applications": [
@@ -95,29 +97,29 @@ def config_directory(tmp_path):
             }
         ]
     }
-    
+
     config_file = config_dir / "directoryapp.json"
     with config_file.open("w") as f:
         json.dump(app_config, f, indent=2)
-    
+
     return config_dir
 
 
 def test_edit_frequency_single_file(runner, single_config_file):
     """Test editing frequency in a single config file."""
     result = runner.invoke(
-        app, 
+        app,
         ["edit", "TestApp", "--frequency", "14", "--unit", "days", "--config", str(single_config_file)]
     )
-    
+
     assert result.exit_code == 0
     assert "Update Frequency: 1 days → 14 days" in result.stdout
     assert "Successfully updated configuration for 'TestApp'" in result.stdout
-    
+
     # Verify the change was saved
     with single_config_file.open() as f:
         config_data = json.load(f)
-    
+
     app_config = config_data["applications"][0]
     assert app_config["frequency"]["value"] == 14
     assert app_config["frequency"]["unit"] == "days"
@@ -136,17 +138,17 @@ def test_edit_multiple_fields(runner, single_config_file):
             "--config", str(single_config_file)
         ]
     )
-    
+
     assert result.exit_code == 0
     assert "Prerelease: No → Yes" in result.stdout
     assert "Checksum Required: No → Yes" in result.stdout
     assert "Checksum Algorithm: SHA256 → SHA1" in result.stdout
     assert "Status: Enabled → Disabled" in result.stdout
-    
+
     # Verify all changes were saved
     with single_config_file.open() as f:
         config_data = json.load(f)
-    
+
     app_config = config_data["applications"][0]
     assert app_config["prerelease"] is True
     assert app_config["checksum"]["required"] is True
@@ -157,22 +159,22 @@ def test_edit_multiple_fields(runner, single_config_file):
 def test_edit_url_with_normalization(runner, single_config_file):
     """Test editing URL with automatic normalization."""
     download_url = "https://github.com/newowner/newrepo/releases/download/v1.0/app.AppImage"
-    
+
     result = runner.invoke(
         app,
         ["edit", "TestApp", "--url", download_url, "--config", str(single_config_file)]
     )
-    
+
     assert result.exit_code == 0
     assert "Detected download URL, using repository URL instead" in result.stdout
     assert download_url in result.stdout  # URL should be in output somewhere
     assert "https://github.com/newowner/newrepo" in result.stdout
     assert "URL: https://github.com/test/testapp → https://github.com/newowner/newrepo" in result.stdout
-    
+
     # Verify the normalized URL was saved
     with single_config_file.open() as f:
         config_data = json.load(f)
-    
+
     app_config = config_data["applications"][0]
     assert app_config["url"] == "https://github.com/newowner/newrepo"
 
@@ -180,15 +182,15 @@ def test_edit_url_with_normalization(runner, single_config_file):
 def test_edit_download_directory_with_creation(runner, single_config_file, tmp_path, monkeypatch):
     """Test editing download directory with automatic creation."""
     new_dir = tmp_path / "new_download_location"
-    
+
     # Mock user confirmation to create directory
     monkeypatch.setattr("typer.confirm", lambda x: True)
-    
+
     result = runner.invoke(
         app,
         ["edit", "TestApp", "--download-dir", str(new_dir), "--config", str(single_config_file)]
     )
-    
+
     assert result.exit_code == 0
     clean_output = normalize_text(result.stdout)
     assert "Created directory:" in clean_output
@@ -198,11 +200,11 @@ def test_edit_download_directory_with_creation(runner, single_config_file, tmp_p
     assert "downloads/TestApp" in clean_output
     assert "→" in clean_output
     assert new_dir.exists()
-    
+
     # Verify the change was saved
     with single_config_file.open() as f:
         config_data = json.load(f)
-    
+
     app_config = config_data["applications"][0]
     assert app_config["download_dir"] == str(new_dir)
 
@@ -210,12 +212,12 @@ def test_edit_download_directory_with_creation(runner, single_config_file, tmp_p
 def test_edit_pattern_validation(runner, single_config_file):
     """Test pattern validation for invalid regex."""
     invalid_pattern = "TestApp.*[unclosed"  # Invalid regex - unclosed bracket
-    
+
     result = runner.invoke(
         app,
         ["edit", "TestApp", "--pattern", invalid_pattern, "--config", str(single_config_file)]
     )
-    
+
     assert result.exit_code == 1
     assert "Invalid regex pattern" in result.stdout
 
@@ -226,7 +228,7 @@ def test_edit_rotation_requires_symlink(runner, single_config_file):
         app,
         ["edit", "TestApp", "--rotation", "--config", str(single_config_file)]
     )
-    
+
     assert result.exit_code == 1
     assert "File rotation requires a symlink path" in result.stdout
 
@@ -234,7 +236,7 @@ def test_edit_rotation_requires_symlink(runner, single_config_file):
 def test_edit_rotation_with_symlink(runner, single_config_file, tmp_path):
     """Test enabling rotation with symlink path."""
     symlink_path = tmp_path / "bin" / "testapp.AppImage"
-    
+
     result = runner.invoke(
         app,
         [
@@ -245,7 +247,7 @@ def test_edit_rotation_with_symlink(runner, single_config_file, tmp_path):
             "--config", str(single_config_file)
         ]
     )
-    
+
     assert result.exit_code == 0
     clean_output = normalize_text(result.stdout)
     assert "File Rotation: Disabled → Enabled" in clean_output
@@ -253,11 +255,11 @@ def test_edit_rotation_with_symlink(runner, single_config_file, tmp_path):
     # Check for the filename - handle potential line wrapping
     assert "testapp.AppImage" in clean_output.replace("\n", "") or "testapp.AppIma" in clean_output
     assert "Retain Count: 3 → 7" in result.stdout
-    
+
     # Verify the changes were saved
     with single_config_file.open() as f:
         config_data = json.load(f)
-    
+
     app_config = config_data["applications"][0]
     assert app_config["rotation_enabled"] is True
     assert app_config["symlink_path"] == str(symlink_path)
@@ -276,17 +278,17 @@ def test_edit_directory_based_config(runner, config_directory):
             "--config-dir", str(config_directory)
         ]
     )
-    
+
     assert result.exit_code == 0
     assert "Update Frequency: 7 days → 3 weeks" in result.stdout
     assert "Prerelease: Yes → No" in result.stdout
     assert "Checksum Verification: Disabled → Enabled" in result.stdout
-    
+
     # Verify the changes were saved to the directory config
     config_file = config_directory / "directoryapp.json"
     with config_file.open() as f:
         config_data = json.load(f)
-    
+
     app_config = config_data["applications"][0]
     assert app_config["frequency"]["value"] == 3
     assert app_config["frequency"]["unit"] == "weeks"
@@ -300,14 +302,14 @@ def test_edit_case_insensitive_app_name(runner, single_config_file):
         app,
         ["edit", "testapp", "--frequency", "2", "--config", str(single_config_file)]  # lowercase
     )
-    
+
     assert result.exit_code == 0
     assert "Update Frequency: 1 days → 2 days" in result.stdout
-    
+
     # Verify the change was applied to the correct app
     with single_config_file.open() as f:
         config_data = json.load(f)
-    
+
     app_config = config_data["applications"][0]
     assert app_config["name"] == "TestApp"  # Original case preserved
     assert app_config["frequency"]["value"] == 2
@@ -319,7 +321,7 @@ def test_edit_nonexistent_app(runner, single_config_file):
         app,
         ["edit", "NonExistentApp", "--frequency", "5", "--config", str(single_config_file)]
     )
-    
+
     assert result.exit_code == 1
     assert "Application 'NonExistentApp' not found in configuration" in result.stdout
     assert "Available applications: TestApp" in result.stdout
@@ -331,7 +333,7 @@ def test_edit_no_changes_specified(runner, single_config_file):
         app,
         ["edit", "TestApp", "--config", str(single_config_file)]
     )
-    
+
     assert result.exit_code == 0
     assert "No changes specified" in result.stdout
     assert "Use --help to see available options" in result.stdout
@@ -343,7 +345,7 @@ def test_edit_invalid_frequency_unit(runner, single_config_file):
         app,
         ["edit", "TestApp", "--unit", "invalid", "--config", str(single_config_file)]
     )
-    
+
     assert result.exit_code == 1
     clean_output = normalize_text(result.stdout)
     assert "Invalid frequency unit" in clean_output
@@ -358,7 +360,7 @@ def test_edit_invalid_checksum_algorithm(runner, single_config_file):
         app,
         ["edit", "TestApp", "--checksum-algorithm", "invalid", "--config", str(single_config_file)]
     )
-    
+
     assert result.exit_code == 1
     assert "Invalid checksum algorithm" in result.stdout
     assert "sha256" in result.stdout
@@ -372,7 +374,7 @@ def test_edit_path_expansion(runner, single_config_file):
         app,
         ["edit", "TestApp", "--download-dir", "~/TestExpansion", "--create-dir", "--config", str(single_config_file)]
     )
-    
+
     assert result.exit_code == 0
     expected_path = Path.home() / "TestExpansion"
     clean_output = normalize_text(result.stdout)
@@ -380,11 +382,11 @@ def test_edit_path_expansion(runner, single_config_file):
     assert str(single_config_file.parent / 'downloads' / 'TestApp') in clean_output
     assert "→" in clean_output
     assert str(expected_path) in clean_output
-    
+
     # Verify the expanded path was saved
     with single_config_file.open() as f:
         config_data = json.load(f)
-    
+
     app_config = config_data["applications"][0]
     assert app_config["download_dir"] == str(expected_path)
 
@@ -392,19 +394,19 @@ def test_edit_path_expansion(runner, single_config_file):
 def test_edit_checksum_pattern_update(runner, single_config_file):
     """Test updating checksum pattern."""
     new_pattern = "{filename}.hash"
-    
+
     result = runner.invoke(
         app,
         ["edit", "TestApp", "--checksum-pattern", new_pattern, "--config", str(single_config_file)]
     )
-    
+
     assert result.exit_code == 0
     assert f"Checksum Pattern: {{filename}}-SHA256.txt → {new_pattern}" in result.stdout
-    
+
     # Verify the change was saved
     with single_config_file.open() as f:
         config_data = json.load(f)
-    
+
     app_config = config_data["applications"][0]
     assert app_config["checksum"]["pattern"] == new_pattern
 
@@ -415,15 +417,15 @@ def test_edit_disable_rotation(runner, config_directory):
         app,
         ["edit", "DirectoryApp", "--no-rotation", "--config-dir", str(config_directory)]
     )
-    
+
     assert result.exit_code == 0
     assert "File Rotation: Enabled → Disabled" in result.stdout
-    
+
     # Verify the change was saved
     config_file = config_directory / "directoryapp.json"
     with config_file.open() as f:
         config_data = json.load(f)
-    
+
     app_config = config_data["applications"][0]
     assert app_config["rotation_enabled"] is False
 
@@ -434,20 +436,20 @@ def test_edit_preserve_unmodified_fields(runner, single_config_file):
     with single_config_file.open() as f:
         original_config = json.load(f)
     original_app = original_config["applications"][0]
-    
+
     # Change only one field
     result = runner.invoke(
         app,
         ["edit", "TestApp", "--frequency", "3", "--config", str(single_config_file)]
     )
-    
+
     assert result.exit_code == 0
-    
+
     # Verify only the frequency changed, everything else preserved
     with single_config_file.open() as f:
         updated_config = json.load(f)
     updated_app = updated_config["applications"][0]
-    
+
     assert updated_app["frequency"]["value"] == 3  # Changed
     assert updated_app["name"] == original_app["name"]  # Preserved
     assert updated_app["url"] == original_app["url"]  # Preserved

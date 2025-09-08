@@ -8,6 +8,7 @@ AppImage Updater monitors configured applications (like FreeCAD, OrcaSlicer, etc
 
 - **Automated Updates** - Monitor GitHub repositories for new releases
 - **Smart Pattern Matching** - Flexible regex patterns to identify correct AppImage files
+- **ZIP Archive Support** - Automatic extraction of AppImages from ZIP files
 - **Checksum Verification** - SHA256, SHA1, and MD5 checksum validation for security
 - **File Rotation** - Keep multiple versions with automatic cleanup
 - **Symlink Management** - Stable paths for applications through symbolic links  
@@ -50,8 +51,9 @@ graph TD
     C --> G[GitHub API]
     D --> H[Version Comparison]
     E --> I[Concurrent Downloads]
-    E --> J[Checksum Verification]
-    E --> K[File Rotation]
+    E --> J[ZIP Extraction]
+    E --> K[Checksum Verification]
+    E --> L[File Rotation]
 ```
 
 ## Key Components
@@ -59,8 +61,8 @@ graph TD
 - **Configuration System** - Flexible JSON-based configuration supporting both single files and directory structures
 - **GitHub Integration** - Robust GitHub API client with rate limiting and error handling
 - **Version Management** - Sophisticated version detection and comparison using semantic versioning
-- **Download Engine** - Concurrent, resumable downloads with progress tracking and checksum verification
-- **File Management** - Optional file rotation with configurable retention policies
+- **Download Engine** - Concurrent downloads with automatic ZIP extraction, progress tracking, and checksum verification
+- **File Management** - Optional file rotation with configurable retention policies and symlink management
 
 ## Getting Started
 

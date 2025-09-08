@@ -381,14 +381,93 @@ Supported checksum file formats:
 3. **Optional by default**: Set `"required": false` to handle projects without checksums gracefully
 4. **Monitor verification**: Check logs for verification status
 
+## ZIP File Support
+
+AppImage Updater automatically extracts AppImage files from ZIP archives. This is particularly useful for applications like BambuStudio that distribute AppImages inside ZIP files.
+
+### How ZIP Extraction Works
+
+1. **Download Detection**: When a `.zip` file is downloaded, it's automatically identified
+2. **Automatic Extraction**: The ZIP file is opened and scanned for `.AppImage` files
+3. **AppImage Extraction**: Any found AppImage files are extracted to the download directory
+4. **Cleanup**: The original ZIP file is removed after successful extraction
+5. **Normal Processing**: The extracted AppImage continues through normal processing (permissions, checksum, rotation)
+
+### ZIP-Compatible Pattern Examples
+
+Pattern configurations that work with both ZIP and AppImage formats:
+
+```json
+{
+  "name": "BambuStudio",
+  "pattern": "(?i)Bambu_?Studio_.*\\.(zip|AppImage)(\\.(|current|old))?$"
+}
+```
+
+```json
+{
+  "name": "MyApp",
+  "pattern": "(?i)MyApp.*\\.(zip|AppImage)(\\.(|current|old))?$"
+}
+```
+
+### Key Features
+
+- **Automatic Detection**: No configuration needed - ZIP files are processed automatically
+- **Multi-File Support**: Handles ZIP files containing multiple AppImages (uses first found)
+- **Subdirectory Support**: Extracts AppImages from within subdirectories in ZIP files
+- **Error Handling**: Clear error messages for invalid ZIP files or missing AppImages
+- **Metadata Creation**: Version metadata (`.info` files) are created for extracted AppImages
+- **Rotation Compatibility**: Works seamlessly with file rotation and symlink management
+- **Checksum Support**: Checksum verification works on the extracted AppImage file
+
+### Example Applications Using ZIP
+
+- **BambuStudio**: Releases AppImages inside ZIP archives
+- **Some CI builds**: Continuous integration systems that package AppImages in ZIP files
+- **Custom distributions**: Projects that choose ZIP packaging for AppImages
+
+### ZIP Extraction Behavior
+
+**Single AppImage in ZIP:**
+```
+download.zip → MyApp-1.2.3.AppImage
+                (ZIP file deleted, AppImage processed normally)
+```
+
+**Multiple AppImages in ZIP:**
+```
+download.zip → MyApp-x86_64.AppImage  ← First one extracted and used
+               MyApp-arm64.AppImage   ← Ignored (warning logged)
+                (ZIP file deleted, first AppImage processed)
+```
+
+**AppImage in Subdirectory:**
+```
+download.zip/release/linux/MyApp.AppImage → MyApp.AppImage
+                                            (Extracted to download root)
+```
+
+### Error Scenarios
+
+- **No AppImage Found**: Clear error message, ZIP file preserved for debugging
+- **Invalid ZIP**: Error reported, no changes made to download directory
+- **Multiple AppImages**: Warning logged, first AppImage used, others ignored
+
 ## Pattern Examples
 
-Common regex patterns for matching AppImage files:
+Common regex patterns for matching files:
 
+### AppImage Files Only
 - Linux x86_64: `.*Linux-x86_64\\.AppImage$`
 - Any Linux: `.*[Ll]inux.*\\.AppImage$`
 - Any AppImage: `.*\\.AppImage$`
 - Specific architecture: `.*amd64\\.AppImage$`
+
+### ZIP and AppImage Support
+- Both formats: `.*\\.(zip|AppImage)$`
+- With rotation: `(?i)MyApp.*\\.(zip|AppImage)(\\.(|current|old))?$`
+- Case insensitive: `(?i).*[Ll]inux.*\\.(zip|AppImage)$`
 
 ## Supported Applications
 

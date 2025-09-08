@@ -16,8 +16,9 @@ graph TB
     D --> H[GitHub API]
     E --> I[Version Comparison]
     F --> J[Concurrent Downloads]
-    F --> K[Checksum Verification]
-    F --> L[File Rotation]
+    F --> K[ZIP Extraction]
+    F --> L[Checksum Verification]
+    F --> M[File Rotation]
     
     style A fill:#e1f5fe
     style B fill:#f3e5f5
@@ -147,10 +148,20 @@ Concurrent download manager with comprehensive features.
 - Concurrent downloads with semaphore limiting
 - Progress tracking with rich progress bars
 - Automatic retry with exponential backoff
+- **Automatic ZIP extraction** - Extracts AppImages from ZIP archives
 - **Version metadata file creation** (`.info` files with release tags)
 - Checksum verification (SHA256, SHA1, MD5)
 - File rotation with configurable retention (includes metadata files)
 - Symlink management
+
+**ZIP Extraction Features:**
+- Automatic detection of ZIP files by extension
+- Scans ZIP contents for `.AppImage` files
+- Extracts AppImages from subdirectories within ZIP files
+- Removes original ZIP file after successful extraction
+- Handles multiple AppImages (uses first found, logs warning)
+- Comprehensive error handling for invalid ZIP files
+- Seamless integration with rotation and checksum systems
 
 ### Logging (`logging_config.py`)
 

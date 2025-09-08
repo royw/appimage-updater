@@ -50,7 +50,7 @@
       "source_type": "github",
       "url": "https://github.com/bambulab/BambuStudio",
       "download_dir": "~/Applications/BambuStudio",
-      "pattern": ".*linux.*\\.AppImage$",
+      "pattern": "(?i)Bambu_?Studio_.*\\.(zip|AppImage)(\\.(|current|old))?$",
       "frequency": {
         "value": 1,
         "unit": "weeks"

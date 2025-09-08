@@ -13,6 +13,9 @@ appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/F
 # Add OrcaSlicer (3D printing slicer)
 appimage-updater add OrcaSlicer https://github.com/SoftFever/OrcaSlicer ~/Applications/OrcaSlicer
 
+# Add BambuStudio (3D printing slicer - ZIP format)
+appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Applications/BambuStudio
+
 # Add Krita (digital painting)
 appimage-updater add Krita https://github.com/KDE/krita ~/Applications/Krita
 
@@ -30,6 +33,28 @@ appimage-updater add --prerelease --frequency 4 --unit hours \
 # Add nightly build with prerelease tracking
 appimage-updater add --prerelease --frequency 1 --unit days \
   Blender-Nightly https://github.com/blender/blender ~/Applications/Blender-Nightly
+```
+
+### ZIP File Examples
+
+Some applications distribute AppImages inside ZIP files. AppImage Updater automatically handles ZIP extraction:
+
+```bash
+# BambuStudio releases AppImages in ZIP files
+appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Applications/BambuStudio
+
+# Manual pattern for ZIP + AppImage support
+appimage-updater add --pattern "(?i)Bambu_?Studio_.*\.(zip|AppImage)(\.(|current|old))?$" \
+  BambuStudio https://github.com/bambulab/BambuStudio ~/Applications/BambuStudio
+
+# ZIP file with rotation support
+appimage-updater add --rotation --symlink ~/bin/bambustudio.AppImage \
+  --pattern "(?i)Bambu_?Studio_.*\.(zip|AppImage)(\.(|current|old))?$" \
+  BambuStudio https://github.com/bambulab/BambuStudio ~/Applications/BambuStudio
+
+# Generic app that might release in either ZIP or AppImage format
+appimage-updater add --pattern "(?i)MyApp.*\.(zip|AppImage)$" \
+  MyApp https://github.com/user/myapp ~/Applications/MyApp
 ```
 
 ### File Rotation Examples
@@ -77,6 +102,24 @@ appimage-updater add --prerelease --rotation --frequency 2 --unit hours \
       "rotation_enabled": true,
       "symlink_path": "/home/user/bin/freecad.AppImage",
       "retain_count": 3
+    },
+    {
+      "name": "BambuStudio",
+      "source_type": "github",
+      "url": "https://github.com/bambulab/BambuStudio",
+      "download_dir": "/home/user/Applications/BambuStudio",
+      "pattern": "(?i)Bambu_?Studio_.*\\.(zip|AppImage)(\\.(|current|old))?$",
+      "frequency": {"value": 1, "unit": "weeks"},
+      "enabled": true,
+      "prerelease": false,
+      "checksum": {
+        "enabled": false,
+        "algorithm": "sha256",
+        "required": false
+      },
+      "rotation_enabled": true,
+      "symlink_path": "/home/user/bin/bambustudio.AppImage",
+      "retain_count": 2
     },
     {
       "name": "OrcaSlicer",

@@ -16,6 +16,7 @@ This tool monitors configured applications (like FreeCAD) for new releases and p
 
 - **🔍 Smart Auto-Detection**: Automatically detects continuous build repositories and enables prerelease support
 - **📊 Version Metadata System**: Accurate version tracking with `.info` files for complex release formats
+- **📦 Automatic ZIP Extraction**: Seamlessly extracts AppImages from ZIP archives (perfect for BambuStudio, etc.)
 - **Easy Application Setup**: Simple `add` command with intelligent defaults
 - **File Rotation & Symlinks**: Automatic file management with configurable retention
 - **Flexible Configuration**: Custom update frequencies, rotation settings, and symlink management

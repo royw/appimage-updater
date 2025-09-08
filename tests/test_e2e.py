@@ -32,7 +32,7 @@ def temp_config_dir():
         yield Path(tmp_dir)
 
 
-@pytest.fixture  
+@pytest.fixture
 def temp_download_dir():
     """Create a temporary download directory."""
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -46,7 +46,7 @@ def sample_config(temp_download_dir):
         "applications": [
             {
                 "name": "TestApp",
-                "source_type": "github", 
+                "source_type": "github",
                 "url": "https://github.com/test/testapp",
                 "download_dir": str(temp_download_dir),
                 "pattern": r"TestApp.*Linux.*\.AppImage(\\..*)?$",
@@ -68,7 +68,7 @@ def sample_config(temp_download_dir):
 def mock_release():
     """Create a mock GitHub release."""
     from datetime import datetime
-    
+
     return Release(
         version="1.0.1",
         tag_name="v1.0.1",
@@ -88,7 +88,7 @@ def mock_release():
 
 class TestE2EFunctionality:
     """Test end-to-end functionality."""
-    
+
     def test_init_command_creates_config_directory(self, runner):
         """Test that init command creates configuration directory and example files."""
         import tempfile
@@ -96,31 +96,31 @@ class TestE2EFunctionality:
         with tempfile.TemporaryDirectory() as tmp_dir:
             config_dir = Path(tmp_dir) / "config"
             result = runner.invoke(app, ["init", "--config-dir", str(config_dir)])
-            
+
             assert result.exit_code == 0
             assert config_dir.exists()
             assert (config_dir / "freecad.json").exists()
-            
+
             # Verify example config content
             with (config_dir / "freecad.json").open() as f:
                 config = json.load(f)
             assert "applications" in config
             assert len(config["applications"]) == 1
             assert config["applications"][0]["name"] == "FreeCAD"
-    
+
     def test_init_command_skips_existing_directory(self, runner, temp_config_dir):
         """Test that init command skips creation if directory already exists."""
         temp_config_dir.mkdir(exist_ok=True)
-        
+
         result = runner.invoke(app, ["init", "--config-dir", str(temp_config_dir)])
-        
+
         assert result.exit_code == 0
         assert "already exists" in result.stdout
-    
+
     @patch('appimage_updater.main.GitHubClient')
     @patch('appimage_updater.main.VersionChecker')
     def test_check_command_dry_run_no_updates_needed(
-        self, mock_version_checker_class, mock_github_client_class, 
+        self, mock_version_checker_class, mock_github_client_class,
         runner, temp_config_dir, sample_config, temp_download_dir
     ):
         """Test check command with dry-run when no updates are needed."""
@@ -128,11 +128,11 @@ class TestE2EFunctionality:
         config_file = temp_config_dir / "test.json"
         with config_file.open("w") as f:
             json.dump(sample_config, f)
-        
-        # Create existing AppImage file 
+
+        # Create existing AppImage file
         existing_file = temp_download_dir / "TestApp-1.0.1-Linux-x86_64.AppImage.current"
         existing_file.touch()
-        
+
         # Mock version checker to return no update needed
         mock_version_checker = Mock()
         mock_check_result = CheckResult(
@@ -141,7 +141,7 @@ class TestE2EFunctionality:
             candidate=UpdateCandidate(
                 app_name="TestApp",
                 current_version="1.0.1",
-                latest_version="1.0.1", 
+                latest_version="1.0.1",
                 asset=Asset(
                     name="TestApp-1.0.1-Linux-x86_64.AppImage",
                     url="https://example.com/test.AppImage",
@@ -155,12 +155,12 @@ class TestE2EFunctionality:
         )
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
-        
+
         result = runner.invoke(app, ["check", "--config", str(config_file), "--dry-run"])
-        
+
         assert result.exit_code == 0
         assert "Up to date" in result.stdout or "All applications are up to date" in result.stdout
-    
+
     @patch('appimage_updater.main.GitHubClient')
     @patch('appimage_updater.main.VersionChecker')
     def test_check_command_dry_run_with_updates_available(
@@ -172,11 +172,11 @@ class TestE2EFunctionality:
         config_file = temp_config_dir / "test.json"
         with config_file.open("w") as f:
             json.dump(sample_config, f)
-        
+
         # Create existing AppImage file (older version)
         existing_file = temp_download_dir / "TestApp-1.0.0-Linux-x86_64.AppImage.current"
         existing_file.touch()
-        
+
         # Mock version checker to return update available
         mock_version_checker = Mock()
         mock_check_result = CheckResult(
@@ -188,7 +188,7 @@ class TestE2EFunctionality:
                 latest_version="1.0.1",
                 asset=Asset(
                     name="TestApp-1.0.1-Linux-x86_64.AppImage",
-                    url="https://example.com/test.AppImage", 
+                    url="https://example.com/test.AppImage",
                     size=1024000,
                     created_at="2024-01-01T00:00:00Z"
                 ),
@@ -199,14 +199,14 @@ class TestE2EFunctionality:
         )
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
-        
+
         result = runner.invoke(app, ["check", "--config", str(config_file), "--dry-run"])
-        
+
         assert result.exit_code == 0
         assert "Update available" in result.stdout or "updates available" in result.stdout
         assert "Dry run mode" in result.stdout
-    
-    @patch('appimage_updater.main.GitHubClient')  
+
+    @patch('appimage_updater.main.GitHubClient')
     @patch('appimage_updater.main.VersionChecker')
     def test_check_command_with_app_filter(
         self, mock_version_checker_class, mock_github_client_class,
@@ -226,21 +226,21 @@ class TestE2EFunctionality:
                     "enabled": True
                 },
                 {
-                    "name": "TestApp2", 
+                    "name": "TestApp2",
                     "source_type": "github",
                     "url": "https://github.com/test/testapp2",
                     "download_dir": str(temp_download_dir),
-                    "pattern": r"TestApp2.*\.AppImage$", 
+                    "pattern": r"TestApp2.*\.AppImage$",
                     "frequency": {"value": 1, "unit": "weeks"},
                     "enabled": True
                 }
             ]
         }
-        
+
         config_file = temp_config_dir / "multi_app.json"
         with config_file.open("w") as f:
             json.dump(multi_app_config, f)
-        
+
         # Mock version checker
         mock_version_checker = Mock()
         mock_check_result = CheckResult(
@@ -250,33 +250,33 @@ class TestE2EFunctionality:
         )
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
-        
+
         result = runner.invoke(app, ["check", "TestApp1", "--config", str(config_file), "--dry-run"])
-        
+
         assert result.exit_code == 0
         # Should only check TestApp1, not TestApp2
         mock_version_checker.check_for_updates.assert_called_once()
-    
+
     def test_check_command_with_nonexistent_config(self, runner):
         """Test check command with non-existent configuration file."""
         nonexistent_config = Path("/tmp/nonexistent_config.json")
-        
+
         result = runner.invoke(app, ["check", "--config", str(nonexistent_config), "--dry-run"])
-        
+
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
-    
+
     def test_check_command_with_invalid_json_config(self, runner, temp_config_dir):
         """Test check command with invalid JSON configuration."""
-        config_file = temp_config_dir / "invalid.json" 
+        config_file = temp_config_dir / "invalid.json"
         with config_file.open("w") as f:
             f.write("{ invalid json content")
-        
+
         result = runner.invoke(app, ["check", "--config", str(config_file), "--dry-run"])
-        
+
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
-    
+
     @patch('appimage_updater.main.GitHubClient')
     @patch('appimage_updater.main.VersionChecker')
     def test_check_command_with_failed_version_check(
@@ -288,7 +288,7 @@ class TestE2EFunctionality:
         config_file = temp_config_dir / "test.json"
         with config_file.open("w") as f:
             json.dump(sample_config, f)
-        
+
         # Mock version checker to return failed check
         mock_version_checker = Mock()
         mock_check_result = CheckResult(
@@ -299,44 +299,44 @@ class TestE2EFunctionality:
         )
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
-        
+
         result = runner.invoke(app, ["check", "--config", str(config_file), "--dry-run"])
-        
+
         assert result.exit_code == 0  # Should not fail, just report the error
         assert "Error" in result.stdout or "failed" in result.stdout.lower()
-    
+
     def test_debug_flag_enables_verbose_output(self, runner, temp_config_dir, sample_config):
         """Test that debug flag enables verbose logging output."""
         # Create config file
         config_file = temp_config_dir / "test.json"
         with config_file.open("w") as f:
             json.dump(sample_config, f)
-        
+
         # Mock to prevent actual network calls
         with patch('appimage_updater.main.GitHubClient'), \
              patch('appimage_updater.main.VersionChecker') as mock_vc:
-            
+
             mock_check_result = CheckResult(
-                app_name="TestApp", 
+                app_name="TestApp",
                 success=True,
                 candidate=None
             )
             mock_vc.return_value.check_for_updates = AsyncMock(return_value=mock_check_result)
-            
+
             result = runner.invoke(app, ["--debug", "check", "--config", str(config_file), "--dry-run"])
-            
+
             # Debug mode should not cause failure and should include debug info
             assert result.exit_code == 0
-    
+
     def test_list_command_with_single_application(self, runner, temp_config_dir, sample_config):
         """Test list command with a single configured application."""
         # Create config file
         config_file = temp_config_dir / "test.json"
         with config_file.open("w") as f:
             json.dump(sample_config, f)
-        
+
         result = runner.invoke(app, ["list", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "Configured Applications" in result.stdout
         assert "TestApp" in result.stdout
@@ -344,7 +344,7 @@ class TestE2EFunctionality:
         assert "Github:" in result.stdout
         assert "https://github.com" in result.stdout
         assert "Total: 1 applications (1 enabled, 0 disabled)" in result.stdout
-    
+
     def test_list_command_with_multiple_applications(self, runner, temp_config_dir, temp_download_dir):
         """Test list command with multiple applications (enabled and disabled)."""
         # Create config with multiple apps
@@ -360,23 +360,23 @@ class TestE2EFunctionality:
                     "enabled": True
                 },
                 {
-                    "name": "DisabledApp", 
+                    "name": "DisabledApp",
                     "source_type": "github",
                     "url": "https://github.com/test/disabledapp",
                     "download_dir": str(temp_download_dir),
-                    "pattern": r"DisabledApp.*\.AppImage$", 
+                    "pattern": r"DisabledApp.*\.AppImage$",
                     "frequency": {"value": 1, "unit": "days"},
                     "enabled": False
                 }
             ]
         }
-        
+
         config_file = temp_config_dir / "multi_app.json"
         with config_file.open("w") as f:
             json.dump(multi_app_config, f)
-        
+
         result = runner.invoke(app, ["list", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "Configured Applications" in result.stdout
         assert "EnabledApp" in result.stdout
@@ -386,21 +386,21 @@ class TestE2EFunctionality:
         assert "2 weeks" in result.stdout
         assert "1 days" in result.stdout
         assert "Total: 2 applications (1 enabled, 1 disabled)" in result.stdout
-    
+
     def test_list_command_with_no_applications(self, runner, temp_config_dir):
         """Test list command with empty configuration."""
         # Create empty config
         empty_config = {"applications": []}
-        
+
         config_file = temp_config_dir / "empty.json"
         with config_file.open("w") as f:
             json.dump(empty_config, f)
-        
+
         result = runner.invoke(app, ["list", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "No applications configured" in result.stdout
-    
+
     def test_list_command_with_config_directory(self, runner, temp_config_dir, temp_download_dir):
         """Test list command with directory-based configuration."""
         # Create multiple config files in directory
@@ -417,7 +417,7 @@ class TestE2EFunctionality:
                 }
             ]
         }
-        
+
         app2_config = {
             "applications": [
                 {
@@ -431,44 +431,44 @@ class TestE2EFunctionality:
                 }
             ]
         }
-        
+
         # Save configs to separate files in directory
         app1_file = temp_config_dir / "app1.json"
         with app1_file.open("w") as f:
             json.dump(app1_config, f)
-        
+
         app2_file = temp_config_dir / "app2.json"
         with app2_file.open("w") as f:
             json.dump(app2_config, f)
-        
+
         result = runner.invoke(app, ["list", "--config-dir", str(temp_config_dir)])
-        
+
         assert result.exit_code == 0
         assert "Configured Applications" in result.stdout
         assert "App1" in result.stdout
         assert "App2" in result.stdout
         assert "Total: 2 applications (2 enabled, 0 disabled)" in result.stdout
-    
+
     def test_list_command_with_nonexistent_config(self, runner):
         """Test list command with non-existent configuration file."""
         nonexistent_config = Path("/tmp/nonexistent_list_config.json")
-        
+
         result = runner.invoke(app, ["list", "--config", str(nonexistent_config)])
-        
+
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
-    
+
     def test_list_command_with_invalid_json_config(self, runner, temp_config_dir):
         """Test list command with invalid JSON configuration."""
-        config_file = temp_config_dir / "invalid_list.json" 
+        config_file = temp_config_dir / "invalid_list.json"
         with config_file.open("w") as f:
             f.write("{ invalid json for list test")
-        
+
         result = runner.invoke(app, ["list", "--config", str(config_file)])
-        
+
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
-    
+
     def test_list_command_truncates_long_paths(self, runner, temp_config_dir):
         """Test that list command properly truncates very long download paths."""
         # Create config with very long path
@@ -486,13 +486,13 @@ class TestE2EFunctionality:
                 }
             ]
         }
-        
+
         config_file = temp_config_dir / "longpath.json"
         with config_file.open("w") as f:
             json.dump(long_path_config, f)
-        
+
         result = runner.invoke(app, ["list", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "LongPathApp" in result.stdout
         # Should show truncated path (starts with "...")
@@ -503,7 +503,7 @@ class TestE2EFunctionality:
             if "LongPathApp" in line:
                 # No single line should contain the full long path
                 assert len(line) < 200  # Reasonable line length check
-    
+
     def test_list_command_shows_frequency_units(self, runner, temp_config_dir, temp_download_dir):
         """Test that list command properly displays different frequency units."""
         # Create config with different frequency units
@@ -529,19 +529,19 @@ class TestE2EFunctionality:
                 }
             ]
         }
-        
+
         config_file = temp_config_dir / "frequency.json"
         with config_file.open("w") as f:
             json.dump(frequency_config, f)
-        
+
         result = runner.invoke(app, ["list", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "DailyApp" in result.stdout
         assert "WeeklyApp" in result.stdout
         assert "2 days" in result.stdout
         assert "3 weeks" in result.stdout
-    
+
     def test_show_command_with_valid_application(self, runner, temp_config_dir, temp_download_dir):
         """Test show command with a valid application."""
         # Create config with detailed application
@@ -565,20 +565,20 @@ class TestE2EFunctionality:
                 }
             ]
         }
-        
+
         config_file = temp_config_dir / "detailed.json"
         with config_file.open("w") as f:
             json.dump(detailed_config, f)
-        
+
         # Create some AppImage files
         app_file1 = temp_download_dir / "DetailedApp-1.0.0-Linux.AppImage.current"
         app_file2 = temp_download_dir / "DetailedApp-0.9.0-Linux.AppImage.old"
         app_file1.touch()
         app_file2.touch()
         app_file1.chmod(0o755)  # Make executable
-        
+
         result = runner.invoke(app, ["show", "DetailedApp", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         # Check configuration section
         assert "Application: DetailedApp" in result.stdout
@@ -591,41 +591,41 @@ class TestE2EFunctionality:
         assert "Prerelease: No" in result.stdout
         assert "Checksum Verification: Enabled" in result.stdout
         assert "Algorithm: SHA256" in result.stdout
-        
+
         # Check files section
         assert "Files" in result.stdout
         assert "DetailedApp-1.0.0-Linux.AppImage.current" in result.stdout
         assert "DetailedApp-0.9.0-Linux.AppImage.old" in result.stdout
         assert "Executable: ✓" in result.stdout  # Current file should be executable
         assert "Executable: ✗" in result.stdout  # Old file should not be executable
-        
+
         # Check symlinks section
         assert "Symlinks" in result.stdout
-    
+
     def test_show_command_with_nonexistent_application(self, runner, temp_config_dir, sample_config):
         """Test show command with non-existent application."""
         config_file = temp_config_dir / "test.json"
         with config_file.open("w") as f:
             json.dump(sample_config, f)
-        
+
         result = runner.invoke(app, ["show", "NonExistentApp", "--config", str(config_file)])
-        
+
         assert result.exit_code == 1
         assert "Application 'NonExistentApp' not found in configuration" in result.stdout
         assert "Available applications: TestApp" in result.stdout
-    
+
     def test_show_command_case_insensitive(self, runner, temp_config_dir, sample_config):
         """Test show command with case-insensitive application name matching."""
         config_file = temp_config_dir / "test.json"
         with config_file.open("w") as f:
             json.dump(sample_config, f)
-        
+
         result = runner.invoke(app, ["show", "testapp", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "Application: TestApp" in result.stdout
         assert "Configuration" in result.stdout
-    
+
     def test_show_command_with_missing_download_directory(self, runner, temp_config_dir):
         """Test show command when download directory doesn't exist."""
         config_with_missing_dir = {
@@ -641,16 +641,16 @@ class TestE2EFunctionality:
                 }
             ]
         }
-        
+
         config_file = temp_config_dir / "missing_dir.json"
         with config_file.open("w") as f:
             json.dump(config_with_missing_dir, f)
-        
+
         result = runner.invoke(app, ["show", "MissingDirApp", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "Download directory does not exist" in result.stdout
-    
+
     def test_show_command_with_disabled_application(self, runner, temp_config_dir, temp_download_dir):
         """Test show command with a disabled application."""
         disabled_config = {
@@ -669,18 +669,18 @@ class TestE2EFunctionality:
                 }
             ]
         }
-        
+
         config_file = temp_config_dir / "disabled.json"
         with config_file.open("w") as f:
             json.dump(disabled_config, f)
-        
+
         result = runner.invoke(app, ["show", "DisabledApp", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "Status: Disabled" in result.stdout
         assert "Checksum Verification: Disabled" in result.stdout
         assert "1 days" in result.stdout
-    
+
     def test_show_command_with_no_matching_files(self, runner, temp_config_dir, temp_download_dir):
         """Test show command when no files match the pattern."""
         no_files_config = {
@@ -696,19 +696,19 @@ class TestE2EFunctionality:
                 }
             ]
         }
-        
+
         config_file = temp_config_dir / "no_files.json"
         with config_file.open("w") as f:
             json.dump(no_files_config, f)
-        
+
         # Create a file that won't match the pattern
         (temp_download_dir / "OtherApp-1.0.0.AppImage").touch()
-        
+
         result = runner.invoke(app, ["show", "NoFilesApp", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "No AppImage files found matching the pattern" in result.stdout
-    
+
     def test_show_command_with_symlinks(self, runner, temp_config_dir, temp_download_dir):
         """Test show command with symlinks present."""
         symlink_config = {
@@ -724,26 +724,26 @@ class TestE2EFunctionality:
                 }
             ]
         }
-        
+
         config_file = temp_config_dir / "symlink.json"
         with config_file.open("w") as f:
             json.dump(symlink_config, f)
-        
+
         # Create AppImage file and symlink
         app_file = temp_download_dir / "SymlinkApp-1.0.0-Linux.AppImage.current"
         symlink_file = temp_download_dir / "SymlinkApp-current.AppImage"
-        
+
         app_file.touch()
         app_file.chmod(0o755)
         symlink_file.symlink_to(app_file.name)  # Relative symlink
-        
+
         result = runner.invoke(app, ["show", "SymlinkApp", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "SymlinkApp-1.0.0-Linux.AppImage.current" in result.stdout
         assert "SymlinkApp-current.AppImage ✓" in result.stdout
         assert "→" in result.stdout  # Arrow showing symlink target
-    
+
     def test_show_command_with_configured_symlink_path(self, runner, temp_config_dir, temp_download_dir):
         """Test show command with configured symlink_path."""
         configured_symlink_config = {
@@ -760,38 +760,38 @@ class TestE2EFunctionality:
                 }
             ]
         }
-        
+
         config_file = temp_config_dir / "configured_symlink.json"
         with config_file.open("w") as f:
             json.dump(configured_symlink_config, f)
-        
+
         # Create AppImage file and configured symlink
         app_file = temp_download_dir / "ConfiguredSymlinkApp-1.0.0-Linux.AppImage.current"
         configured_symlink = temp_config_dir / "ConfiguredApp.AppImage"
-        
+
         app_file.touch()
         app_file.chmod(0o755)
         configured_symlink.symlink_to(app_file)  # Absolute symlink to ensure it works
-        
+
         result = runner.invoke(app, ["show", "ConfiguredSymlinkApp", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         # Check that symlink_path is displayed in configuration
         assert "Symlink Path:" in result.stdout
         assert str(configured_symlink) in result.stdout or "ConfiguredApp.AppImage" in result.stdout
-        
+
         # Check that the configured symlink appears in symlinks section
         assert "ConfiguredApp.AppImage" in result.stdout or str(configured_symlink) in result.stdout
 
 
 class TestPatternMatching:
     """Test pattern matching functionality specifically."""
-    
+
     def create_test_files(self, directory: Path, filenames: list[str]):
         """Helper to create test files."""
         for filename in filenames:
             (directory / filename).touch()
-    
+
     @patch('appimage_updater.main.GitHubClient')
     @patch('appimage_updater.main.VersionChecker')
     def test_pattern_matching_with_suffixes(
@@ -806,37 +806,37 @@ class TestPatternMatching:
                     "name": "TestApp",
                     "source_type": "github",
                     "url": "https://github.com/test/testapp",
-                    "download_dir": str(temp_download_dir), 
+                    "download_dir": str(temp_download_dir),
                     "pattern": r"TestApp.*\.AppImage(\..*)?$",
                     "frequency": {"value": 1, "unit": "weeks"},
                     "enabled": True
                 }
             ]
         }
-        
+
         config_file = temp_config_dir / "test.json"
         with config_file.open("w") as f:
             json.dump(config, f)
-        
+
         # Create test files with various suffixes
         test_files = [
             "TestApp-1.0.0-Linux.AppImage.current",
-            "TestApp-1.0.1-Linux.AppImage.save", 
+            "TestApp-1.0.1-Linux.AppImage.save",
             "TestApp-1.0.2-Linux.AppImage.old",
             "TestApp-1.0.3-Linux.AppImage",  # No suffix
             "SomeOtherApp.AppImage.current",  # Should not match pattern
         ]
         self.create_test_files(temp_download_dir, test_files)
-        
+
         # Mock version checker to verify it finds existing version
         mock_version_checker = Mock()
-        
+
         # This should simulate finding the current version from existing files
         def mock_check_for_updates(config):
             # The version checker should have found one of the TestApp files
             return CheckResult(
                 app_name="TestApp",
-                success=True, 
+                success=True,
                 candidate=UpdateCandidate(
                     app_name="TestApp",
                     current_version="1.0.3",  # Should extract this from the files
@@ -852,12 +852,12 @@ class TestPatternMatching:
                     checksum_required=False
                 )
             )
-        
+
         mock_version_checker.check_for_updates = AsyncMock(side_effect=mock_check_for_updates)
         mock_version_checker_class.return_value = mock_version_checker
-        
+
         result = runner.invoke(app, ["check", "--config", str(config_file), "--dry-run"])
-        
+
         assert result.exit_code == 0
         # Should detect that we have a current version (not show "None")
         # This validates our pattern matching fix
@@ -866,19 +866,19 @@ class TestPatternMatching:
 
 def test_version_extraction_patterns():
     """Test version extraction from various filename formats."""
-    from appimage_updater.version_checker import VersionChecker
     from appimage_updater.github_client import GitHubClient
-    
+    from appimage_updater.version_checker import VersionChecker
+
     checker = VersionChecker(GitHubClient())
-    
+
     test_cases = [
         ("FreeCAD_1.0.2-conda-Linux-x86_64-py311.AppImage.save", "1.0.2"),
-        ("TestApp-V2.3.1-alpha-Linux.AppImage.current", "2.3.1"),  
+        ("TestApp-V2.3.1-alpha-Linux.AppImage.current", "2.3.1"),
         ("SomeApp_2025.09.03-Linux.AppImage.old", "2025.09.03"),
         ("App-1.0-Linux.AppImage", "1.0"),
         ("NoVersionApp-Linux.AppImage", "NoVersionApp-Linux.AppImage"),  # Fallback
     ]
-    
+
     for filename, expected_version in test_cases:
         extracted = checker._extract_version_from_filename(filename)
         assert extracted == expected_version, f"Expected {expected_version} from {filename}, got {extracted}"
@@ -890,24 +890,24 @@ def test_integration_smoke_test(runner):
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
     assert "AppImage update manager" in result.stdout
-    
+
     # Test that commands are available
-    result = runner.invoke(app, ["check", "--help"])  
+    result = runner.invoke(app, ["check", "--help"])
     assert result.exit_code == 0
     assert "Check for and optionally download AppImage updates" in result.stdout
-    
+
     result = runner.invoke(app, ["init", "--help"])
     assert result.exit_code == 0
     assert "Initialize configuration directory" in result.stdout
-    
+
     result = runner.invoke(app, ["list", "--help"])
     assert result.exit_code == 0
     assert "List all configured applications" in result.stdout
-    
+
     result = runner.invoke(app, ["show", "--help"])
     assert result.exit_code == 0
     assert "Show detailed information about a specific application" in result.stdout
-    
+
     result = runner.invoke(app, ["add", "--help"])
     assert result.exit_code == 0
     assert "Add a new application to the configuration" in result.stdout
@@ -915,16 +915,16 @@ def test_integration_smoke_test(runner):
 
 class TestAddCommand:
     """Test the add command functionality."""
-    
+
     def test_add_command_with_github_url(self, runner, temp_config_dir):
         """Test add command with valid GitHub URL (uses fallback for non-existent repo)."""
         result = runner.invoke(app, [
-            "add", "TestApp", 
-            "https://github.com/user/testapp", 
+            "add", "TestApp",
+            "https://github.com/user/testapp",
             "/tmp/test-download",
             "--config-dir", str(temp_config_dir)
         ])
-        
+
         assert result.exit_code == 0
         assert "Successfully added application" in result.stdout
         assert "TestApp" in result.stdout
@@ -932,15 +932,15 @@ class TestAddCommand:
         assert "/tmp/test-download" in result.stdout
         # For non-existent repo, should fall back to heuristic pattern generation
         assert "TestApp.*[Ll]inux.*\\.AppImage(\\.(|current|old))?$" in result.stdout
-        
+
         # Check that config file was created
         config_file = temp_config_dir / "testapp.json"
         assert config_file.exists()
-        
+
         # Verify config content
         with config_file.open() as f:
             config_data = json.load(f)
-        
+
         assert len(config_data["applications"]) == 1
         app_config = config_data["applications"][0]
         assert app_config["name"] == "TestApp"
@@ -952,46 +952,46 @@ class TestAddCommand:
         assert app_config["enabled"] is True
         assert app_config["prerelease"] is False
         assert app_config["checksum"]["enabled"] is True
-    
+
     def test_add_command_with_invalid_url(self, runner, temp_config_dir):
         """Test add command with invalid (non-GitHub) URL."""
         result = runner.invoke(app, [
-            "add", "TestApp", 
-            "https://example.com/invalid", 
+            "add", "TestApp",
+            "https://example.com/invalid",
             "/tmp/test-download",
             "--config-dir", str(temp_config_dir)
         ])
-        
+
         assert result.exit_code == 1
         assert "Only GitHub repository URLs are currently supported" in result.stdout
         assert "https://example.com/invalid" in result.stdout
         assert "Expected format: https://github.com/owner/repo" in result.stdout
-        
+
         # Verify no config file was created
         config_files = list(temp_config_dir.glob("*.json"))
         assert len(config_files) == 0
-    
+
     def test_add_command_with_different_repo_name(self, runner, temp_config_dir):
         """Test add command now uses intelligent pattern generation from actual releases."""
         result = runner.invoke(app, [
-            "add", "MyApp", 
-            "https://github.com/SoftFever/OrcaSlicer", 
+            "add", "MyApp",
+            "https://github.com/SoftFever/OrcaSlicer",
             "~/Applications/MyApp",
             "--config-dir", str(temp_config_dir),
             "--create-dir"  # Avoid directory creation prompts
         ])
-        
+
         assert result.exit_code == 0
         assert "Successfully added application" in result.stdout
         assert "MyApp" in result.stdout
         # NEW BEHAVIOR: Uses intelligent pattern generation based on actual GitHub releases
         # OrcaSlicer has files like "OrcaSlicer_Linux_AppImage_Ubuntu2404_..."
         # However, if GitHub API is unavailable, falls back to heuristic pattern
-        
+
         # Check if intelligent pattern generation worked
         # Look for the pattern in the output to determine which method was used
         pattern_output = result.stdout
-        
+
         if "(?i)OrcaSlicer" in pattern_output or "OrcaSlicer_Linux_AppImage" in pattern_output:
             # Intelligent pattern generation succeeded - got OrcaSlicer-based pattern
             print("✅ Intelligent pattern generation worked")
@@ -1003,17 +1003,17 @@ class TestAddCommand:
             # Unexpected pattern - show what we got for debugging
             print(f"❓ Unexpected pattern: {result.stdout}")
             assert False, f"Unexpected pattern in output: {result.stdout}"
-        
+
         # Verify config content
         config_file = temp_config_dir / "myapp.json"
         assert config_file.exists()
-        
+
         with config_file.open() as f:
             config_data = json.load(f)
-        
+
         app_config = config_data["applications"][0]
         assert app_config["name"] == "MyApp"
-        
+
         # Check pattern based on which generation method was used
         if "(?i)OrcaSlicer" in pattern_output or "OrcaSlicer_Linux_AppImage" in pattern_output:
             # Intelligent pattern generation - should contain OrcaSlicer and be case-insensitive
@@ -1021,7 +1021,7 @@ class TestAddCommand:
         else:
             # Fallback heuristic pattern - should use MyApp and be valid
             assert "MyApp" in app_config["pattern"] and "AppImage" in app_config["pattern"]
-    
+
     def test_add_command_with_existing_config_file(self, runner, temp_config_dir):
         """Test add command appends to existing config file."""
         # Create initial config file
@@ -1038,73 +1038,73 @@ class TestAddCommand:
                 }
             ]
         }
-        
+
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
             json.dump(initial_config, f)
-        
+
         # Add new app to existing config file
         result = runner.invoke(app, [
-            "add", "NewApp", 
-            "https://github.com/user/newapp", 
+            "add", "NewApp",
+            "https://github.com/user/newapp",
             "/tmp/new-download",
             "--config", str(config_file)
         ])
-        
+
         assert result.exit_code == 0
         assert "Successfully added application" in result.stdout
         assert "NewApp" in result.stdout
-        
+
         # Verify both apps are in the config
         with config_file.open() as f:
             config_data = json.load(f)
-        
+
         assert len(config_data["applications"]) == 2
         app_names = [app["name"] for app in config_data["applications"]]
         assert "ExistingApp" in app_names
         assert "NewApp" in app_names
-    
+
     def test_add_command_duplicate_name_error(self, runner, temp_config_dir):
         """Test add command prevents duplicate app names."""
         # First, add an app
         result1 = runner.invoke(app, [
-            "add", "DuplicateApp", 
-            "https://github.com/user/app1", 
+            "add", "DuplicateApp",
+            "https://github.com/user/app1",
             "/tmp/app1",
             "--config-dir", str(temp_config_dir)
         ])
-        
+
         assert result1.exit_code == 0
-        
+
         # Try to add another app with the same name
         result2 = runner.invoke(app, [
-            "add", "DuplicateApp", 
-            "https://github.com/user/app2", 
+            "add", "DuplicateApp",
+            "https://github.com/user/app2",
             "/tmp/app2",
             "--config-dir", str(temp_config_dir)
         ])
-        
+
         assert result2.exit_code == 1
         assert "Error adding application" in result2.stdout
-    
+
     def test_add_command_path_expansion(self, runner, temp_config_dir):
         """Test add command expands user paths correctly."""
         result = runner.invoke(app, [
-            "add", "HomeApp", 
-            "https://github.com/user/homeapp", 
+            "add", "HomeApp",
+            "https://github.com/user/homeapp",
             "~/Applications/HomeApp",
             "--config-dir", str(temp_config_dir)
         ])
-        
+
         assert result.exit_code == 0
-        
+
         # Verify config content has expanded path
         config_file = temp_config_dir / "homeapp.json"
         assert config_file.exists()
-        
+
         with config_file.open() as f:
             config_data = json.load(f)
-        
+
         app_config = config_data["applications"][0]
         # Should expand ~ to actual home directory
         assert app_config["download_dir"].startswith("/")
@@ -1114,19 +1114,19 @@ class TestAddCommand:
     def test_add_command_rotation_requires_symlink(self, runner, temp_config_dir):
         """Test add command validates that --rotation requires a symlink path."""
         result = runner.invoke(app, [
-            "add", "TestApp", 
-            "https://github.com/user/testapp", 
+            "add", "TestApp",
+            "https://github.com/user/testapp",
             "/tmp/test-download",
             "--rotation",
             "--config-dir", str(temp_config_dir)
         ])
-        
+
         assert result.exit_code == 1
         assert "Error: --rotation requires a symlink path" in result.stdout
         assert "File rotation needs a managed symlink to work properly" in result.stdout
         assert "Either provide --symlink PATH or use --no-rotation to disable rotation" in result.stdout
         assert "Example: --rotation --symlink ~/bin/myapp.AppImage" in result.stdout
-        
+
         # Verify no config file was created
         config_files = list(temp_config_dir.glob("*.json"))
         assert len(config_files) == 0
@@ -1134,24 +1134,24 @@ class TestAddCommand:
     def test_add_command_rotation_with_symlink_works(self, runner, temp_config_dir):
         """Test add command works correctly when --rotation is combined with --symlink."""
         result = runner.invoke(app, [
-            "add", "TestApp", 
-            "https://github.com/user/testapp", 
+            "add", "TestApp",
+            "https://github.com/user/testapp",
             "/tmp/test-download",
             "--rotation",
             "--symlink", "~/bin/testapp.AppImage",
             "--config-dir", str(temp_config_dir)
         ])
-        
+
         assert result.exit_code == 0
         assert "Successfully added application 'TestApp'" in result.stdout
-        
+
         # Verify config content
         config_file = temp_config_dir / "testapp.json"
         assert config_file.exists()
-        
+
         with config_file.open() as f:
             config_data = json.load(f)
-        
+
         app_config = config_data["applications"][0]
         assert app_config["rotation_enabled"] is True
         assert "symlink_path" in app_config
@@ -1160,15 +1160,15 @@ class TestAddCommand:
     def test_add_command_normalizes_download_url(self, runner, temp_config_dir):
         """Test add command normalizes GitHub download URLs to repository URLs."""
         download_url = "https://github.com/SoftFever/OrcaSlicer/releases/download/v2.3.1-alpha/OrcaSlicer_Linux_AppImage.AppImage"
-        
+
         result = runner.invoke(app, [
-            "add", "TestNormalize", 
+            "add", "TestNormalize",
             download_url,
             "/tmp/test-normalize",
             "--create-dir",
             "--config-dir", str(temp_config_dir)
         ])
-        
+
         assert result.exit_code == 0
         assert "Successfully added application 'TestNormalize'" in result.stdout
         assert "Detected download URL, using repository URL instead" in result.stdout
@@ -1177,14 +1177,14 @@ class TestAddCommand:
         assert "releases/download" in result.stdout
         assert "Linux_AppImage.AppImage" in result.stdout
         assert "Corrected: https://github.com/SoftFever/OrcaSlicer" in result.stdout
-        
+
         # Verify config was saved with normalized URL
         config_file = temp_config_dir / "testnormalize.json"
         assert config_file.exists()
-        
+
         with config_file.open() as f:
             config_data = json.load(f)
-        
+
         app_config = config_data["applications"][0]
         assert app_config["name"] == "TestNormalize"
         assert app_config["url"] == "https://github.com/SoftFever/OrcaSlicer"
@@ -1193,33 +1193,33 @@ class TestAddCommand:
     def test_add_command_handles_releases_page_url(self, runner, temp_config_dir):
         """Test add command normalizes GitHub releases page URLs to repository URLs."""
         releases_url = "https://github.com/microsoft/vscode/releases"
-        
+
         result = runner.invoke(app, [
-            "add", "TestReleases", 
+            "add", "TestReleases",
             releases_url,
             "/tmp/test-releases",
             "--create-dir",
             "--config-dir", str(temp_config_dir)
         ])
-        
+
         assert result.exit_code == 0
         assert "Successfully added application 'TestReleases'" in result.stdout
         assert "Detected download URL, using repository URL instead" in result.stdout
         assert "Corrected: https://github.com/microsoft/vscode" in result.stdout
-        
+
         # Verify config was saved with normalized URL
         config_file = temp_config_dir / "testreleases.json"
         assert config_file.exists()
-        
+
         with config_file.open() as f:
             config_data = json.load(f)
-        
+
         app_config = config_data["applications"][0]
         assert app_config["url"] == "https://github.com/microsoft/vscode"
 
 class TestRemoveCommand:
     """Test the remove command functionality."""
-    
+
     def test_remove_command_with_confirmation_yes(self, runner, temp_config_dir):
         """Test remove command with user confirmation (yes)."""
         # First, add an application to remove
@@ -1231,25 +1231,25 @@ class TestRemoveCommand:
             "--config-dir", str(temp_config_dir)
         ])
         assert add_result.exit_code == 0
-        
+
         # Verify it was added
         config_file = temp_config_dir / "testremoveapp.json"
         assert config_file.exists()
-        
+
         # Remove with confirmation
         result = runner.invoke(app, [
-            "remove", "TestRemoveApp", 
+            "remove", "TestRemoveApp",
             "--config-dir", str(temp_config_dir)
         ], input="y\n")
-        
+
         assert result.exit_code == 0
         assert "Found application: TestRemoveApp" in result.stdout
         assert "Successfully removed application 'TestRemoveApp' from configuration" in result.stdout
         assert "Files in /tmp/test-remove were not deleted" in result.stdout
-        
+
         # Verify the config file was removed (directory-based config)
         assert not config_file.exists()
-    
+
     def test_remove_command_with_confirmation_no(self, runner, temp_config_dir):
         """Test remove command with user confirmation (no)."""
         # First, add an application
@@ -1261,20 +1261,20 @@ class TestRemoveCommand:
             "--config-dir", str(temp_config_dir)
         ])
         assert add_result.exit_code == 0
-        
+
         # Try to remove but cancel
         result = runner.invoke(app, [
-            "remove", "TestKeepApp", 
+            "remove", "TestKeepApp",
             "--config-dir", str(temp_config_dir)
         ], input="n\n")
-        
+
         assert result.exit_code == 0
         assert "Removal cancelled" in result.stdout
-        
+
         # Verify the app is still there
         config_file = temp_config_dir / "testkeepapp.json"
         assert config_file.exists()
-    
+
     def test_remove_command_nonexistent_app(self, runner, temp_config_dir):
         """Test remove command with non-existent application."""
         # Add one app first
@@ -1286,17 +1286,17 @@ class TestRemoveCommand:
             "--config-dir", str(temp_config_dir)
         ])
         assert add_result.exit_code == 0
-        
+
         # Try to remove non-existent app
         result = runner.invoke(app, [
-            "remove", "NonExistentApp", 
+            "remove", "NonExistentApp",
             "--config-dir", str(temp_config_dir)
         ])
-        
+
         assert result.exit_code == 1
         assert "Application 'NonExistentApp' not found in configuration" in result.stdout
         assert "Available applications: ExistingApp" in result.stdout
-    
+
     def test_remove_command_case_insensitive(self, runner, temp_config_dir):
         """Test remove command is case-insensitive."""
         # Add an application
@@ -1308,17 +1308,17 @@ class TestRemoveCommand:
             "--config-dir", str(temp_config_dir)
         ])
         assert add_result.exit_code == 0
-        
+
         # Remove using different case
         result = runner.invoke(app, [
             "remove", "casetestapp",  # lowercase
             "--config-dir", str(temp_config_dir)
         ], input="y\n")
-        
+
         assert result.exit_code == 0
         assert "Found application: CaseTestApp" in result.stdout  # Should find the original case
         assert "Successfully removed application 'CaseTestApp' from configuration" in result.stdout
-    
+
     def test_remove_command_from_config_file(self, runner, temp_config_dir):
         """Test remove command with single config file (not directory-based)."""
         # Create a single config file with multiple apps
@@ -1345,26 +1345,26 @@ class TestRemoveCommand:
                 }
             ]
         }
-        
+
         with config_file.open("w") as f:
             json.dump(initial_config, f)
-        
+
         # Remove one app from the config file
         result = runner.invoke(app, [
             "remove", "App1",
             "--config", str(config_file)
         ], input="y\n")
-        
+
         assert result.exit_code == 0
         assert "Successfully removed application 'App1' from configuration" in result.stdout
-        
+
         # Verify only App2 remains
         with config_file.open() as f:
             config_data = json.load(f)
-        
+
         assert len(config_data["applications"]) == 1
         assert config_data["applications"][0]["name"] == "App2"
-    
+
     def test_remove_command_empty_config(self, runner, temp_config_dir):
         """Test remove command with empty configuration."""
         # Create empty config directory
@@ -1372,10 +1372,10 @@ class TestRemoveCommand:
             "remove", "AnyApp",
             "--config-dir", str(temp_config_dir)
         ])
-        
+
         assert result.exit_code == 1
         assert "No JSON configuration files found" in result.stdout
-    
+
     def test_remove_command_non_interactive(self, runner, temp_config_dir):
         """Test remove command in non-interactive environment."""
         # Add an application first
@@ -1387,16 +1387,16 @@ class TestRemoveCommand:
             "--config-dir", str(temp_config_dir)
         ])
         assert add_result.exit_code == 0
-        
+
         # Try to remove without providing input (simulates non-interactive)
         result = runner.invoke(app, [
             "remove", "NonInteractiveApp",
             "--config-dir", str(temp_config_dir)
         ])
-        
+
         assert result.exit_code == 0  # Should exit cleanly
         assert "Running in non-interactive mode. Use --force to remove without confirmation." in result.stdout
-        
+
         # App should still exist
         config_file = temp_config_dir / "noninteractiveapp.json"
         assert config_file.exists()
