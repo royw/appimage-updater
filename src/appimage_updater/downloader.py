@@ -525,19 +525,44 @@ class Downloader:
         self, download_dir: Path, base_name: str, extension: str, retain_count: int
     ) -> None:
         """Rotate existing files (.current -> .old, .old -> .old2, etc.)."""
-        current_path = download_dir / f"{base_name}.current{extension}"
-
-        if not current_path.exists():
+        # For apps with varying filenames (like BambuStudio), we need to find ALL .current files
+        # that match the app pattern, not just files with the exact same base name
+        current_files = self._find_current_files_by_pattern(download_dir)
+        
+        if not current_files:
             return
 
-        # Step 1: Rotate numbered files in reverse order (.old2 -> .old3, .old -> .old2)
-        self._rotate_numbered_files(download_dir, base_name, extension, retain_count)
+        # Process each current file found
+        for current_file in current_files:
+            current_base_name = self._extract_base_name_from_current(current_file)
+            current_extension = ""  # Already handled in base name for AppImage files
+            
+            # Step 1: Rotate numbered files in reverse order for this specific base name
+            self._rotate_numbered_files(download_dir, current_base_name, current_extension, retain_count)
 
-        # Step 2: Move .current to .old
-        self._move_current_to_old(download_dir, base_name, extension)
+            # Step 2: Move this .current to .old
+            self._move_current_to_old(download_dir, current_base_name, current_extension)
 
-        # Step 3: Clean up excess files beyond retain count
-        self._cleanup_excess_files(download_dir, base_name, extension, retain_count)
+            # Step 3: Clean up excess files beyond retain count for this base name
+            self._cleanup_excess_files(download_dir, current_base_name, current_extension, retain_count)
+
+    def _find_current_files_by_pattern(self, download_dir: Path) -> list[Path]:
+        """Find all .current files in the download directory."""
+        current_files = []
+        if download_dir.exists():
+            # Look for all files ending with .current (AppImage files)
+            for file_path in download_dir.glob("*.AppImage.current"):
+                current_files.append(file_path)
+        return current_files
+
+    def _extract_base_name_from_current(self, current_file: Path) -> str:
+        """Extract base name from a .current file path."""
+        # For files like "Bambu_Studio_ubuntu-24.04_PR-7829.AppImage.current"
+        # we want "Bambu_Studio_ubuntu-24.04_PR-7829.AppImage"
+        file_name = current_file.name
+        if file_name.endswith(".AppImage.current"):
+            return file_name[:-8]  # Remove ".current" suffix
+        return file_name
 
     def _rotate_numbered_files(self, download_dir: Path, base_name: str, extension: str, retain_count: int) -> None:
         """Rotate numbered files in reverse order (.old2 -> .old3, .old -> .old2)."""
