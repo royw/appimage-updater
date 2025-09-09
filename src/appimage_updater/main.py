@@ -430,7 +430,7 @@ async def _add(
 ) -> None:
     """Async implementation of the add command."""
     try:
-        logger.info(f"Adding new application: {name}")
+        logger.debug(f"Adding new application: {name}")
 
         # Show GitHub API authentication status if debug logging is enabled
         from .github_auth import get_github_auth
@@ -483,7 +483,7 @@ async def _add(
 
         console.print(f"\n[yellow]💡 Tip: Use 'appimage-updater show {name}' to view full configuration")
 
-        logger.info(f"Successfully added application '{name}' to configuration")
+        logger.debug(f"Successfully added application '{name}' to configuration")
 
     except typer.Exit:
         # Re-raise typer.Exit without logging - these are intentional exits
@@ -574,7 +574,7 @@ def edit(
         appimage-updater edit OldApp --url https://github.com/newowner/newrepo
     """
     try:
-        logger.info(f"Editing configuration for application: {app_name}")
+        logger.debug(f"Editing configuration for application: {app_name}")
 
         # Load current configuration
         config = load_config(config_file, config_dir)
@@ -608,7 +608,7 @@ def edit(
 
         if not updates:
             console.print("[yellow]No changes specified. Use --help to see available options.")
-            logger.info("No updates specified for edit command")
+            logger.debug("No updates specified for edit command")
             return
 
         # Validate the updates before applying them
@@ -623,7 +623,7 @@ def edit(
         # Display what was changed
         display_edit_summary(app_name, changes_made)
 
-        logger.info(f"Successfully updated configuration for application '{app.name}'")
+        logger.debug(f"Successfully updated configuration for application '{app.name}'")
 
     except ConfigLoadError as e:
         console.print(f"[red]Configuration error: {e}")

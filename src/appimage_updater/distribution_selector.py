@@ -109,7 +109,7 @@ class DistributionSelector:
 
         # If the best score is high enough, use it automatically
         if best_info.score >= 150.0:  # Perfect or very good match (raised threshold due to new scoring)
-            logger.info(f"Auto-selected asset: {best_info.asset.name} (score: {best_info.score:.1f})")
+            logger.debug(f"Auto-selected asset: {best_info.asset.name} (score: {best_info.score:.1f})")
             return best_info.asset
 
         # Check if we have multiple options with similar scores
@@ -126,7 +126,7 @@ class DistributionSelector:
                 return best_info.asset
 
         # Use the best scored asset
-        logger.info(f"Selected asset: {best_info.asset.name} (score: {best_info.score:.1f})")
+        logger.debug(f"Selected asset: {best_info.asset.name} (score: {best_info.score:.1f})")
         return best_info.asset
 
     def _detect_current_distribution(self) -> DistributionInfo:

@@ -298,7 +298,7 @@ async def should_enable_prerelease(url: str) -> bool:
         prerelease_only = len(stable_releases) == 0
 
         if prerelease_only:
-            logger.info(f"Repository {url} contains only prerelease versions, enabling prerelease support")
+            logger.debug(f"Repository {url} contains only prerelease versions, enabling prerelease support")
         else:
             logger.debug(f"Repository {url} has stable releases, not auto-enabling prerelease")
 
