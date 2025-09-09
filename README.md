@@ -39,6 +39,14 @@ This tool monitors configured applications (like FreeCAD) for new releases and p
 ✅ **Open Source** - Public repository with contribution guidelines and templates  
 ✅ **Modern Tooling** - Built with Python 3.11+, uv, ruff, mypy, pytest
 
+## What's Missing
+
+- support for non-github repositories, for example:
+  - OpenRGB: https://openrgb.org/releases/release_candidate_1.0rc1/OpenRGB_1.0rc1_x86_64_1fbacde.AppImage
+  - YubiKey_Manager: https://www.yubico.com/support/download/yubikey-manager/
+  - LM-Studio: https://lmstudio.ai/download
+  - gitlab
+
 ## Requirements
 
 - Python 3.11 or higher
