@@ -50,7 +50,6 @@ def sample_config(temp_download_dir):
                 "url": "https://github.com/test/testapp",
                 "download_dir": str(temp_download_dir),
                 "pattern": r"TestApp.*Linux.*\.AppImage(\\..*)?$",
-                "frequency": {"value": 1, "unit": "weeks"},
                 "enabled": True,
                 "prerelease": False,
                 "checksum": {
@@ -222,7 +221,6 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/testapp1",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"TestApp1.*\.AppImage$",
-                    "frequency": {"value": 1, "unit": "weeks"},
                     "enabled": True
                 },
                 {
@@ -231,7 +229,6 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/testapp2",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"TestApp2.*\.AppImage$",
-                    "frequency": {"value": 1, "unit": "weeks"},
                     "enabled": True
                 }
             ]
@@ -356,7 +353,6 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/enabledapp",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"EnabledApp.*\.AppImage$",
-                    "frequency": {"value": 2, "unit": "weeks"},
                     "enabled": True
                 },
                 {
@@ -365,7 +361,6 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/disabledapp",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"DisabledApp.*\.AppImage$",
-                    "frequency": {"value": 1, "unit": "days"},
                     "enabled": False
                 }
             ]
@@ -383,8 +378,6 @@ class TestE2EFunctionality:
         assert "DisabledApp" in result.stdout
         assert "Enabled" in result.stdout
         assert "Disabled" in result.stdout
-        assert "2 weeks" in result.stdout
-        assert "1 days" in result.stdout
         assert "Total: 2 applications (1 enabled, 1 disabled)" in result.stdout
 
     def test_list_command_with_no_applications(self, runner, temp_config_dir):
@@ -412,7 +405,6 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/app1",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"App1.*\.AppImage$",
-                    "frequency": {"value": 1, "unit": "weeks"},
                     "enabled": True
                 }
             ]
@@ -426,7 +418,6 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/app2",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"App2.*\.AppImage$",
-                    "frequency": {"value": 3, "unit": "days"},
                     "enabled": True
                 }
             ]
@@ -481,7 +472,6 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/longpathapp",
                     "download_dir": long_path,
                     "pattern": r"LongPathApp.*\.AppImage$",
-                    "frequency": {"value": 1, "unit": "weeks"},
                     "enabled": True
                 }
             ]
@@ -504,44 +494,6 @@ class TestE2EFunctionality:
                 # No single line should contain the full long path
                 assert len(line) < 200  # Reasonable line length check
 
-    def test_list_command_shows_frequency_units(self, runner, temp_config_dir, temp_download_dir):
-        """Test that list command properly displays different frequency units."""
-        # Create config with different frequency units
-        frequency_config = {
-            "applications": [
-                {
-                    "name": "DailyApp",
-                    "source_type": "github",
-                    "url": "https://github.com/test/dailyapp",
-                    "download_dir": str(temp_download_dir),
-                    "pattern": r"DailyApp.*\.AppImage$",
-                    "frequency": {"value": 2, "unit": "days"},
-                    "enabled": True
-                },
-                {
-                    "name": "WeeklyApp",
-                    "source_type": "github",
-                    "url": "https://github.com/test/weeklyapp",
-                    "download_dir": str(temp_download_dir),
-                    "pattern": r"WeeklyApp.*\.AppImage$",
-                    "frequency": {"value": 3, "unit": "weeks"},
-                    "enabled": True
-                }
-            ]
-        }
-
-        config_file = temp_config_dir / "frequency.json"
-        with config_file.open("w") as f:
-            json.dump(frequency_config, f)
-
-        result = runner.invoke(app, ["list", "--config", str(config_file)])
-
-        assert result.exit_code == 0
-        assert "DailyApp" in result.stdout
-        assert "WeeklyApp" in result.stdout
-        assert "2 days" in result.stdout
-        assert "3 weeks" in result.stdout
-
     def test_show_command_with_valid_application(self, runner, temp_config_dir, temp_download_dir):
         """Test show command with a valid application."""
         # Create config with detailed application
@@ -553,7 +505,6 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/detailedapp",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"DetailedApp.*\.AppImage(\..*)?$",
-                    "frequency": {"value": 2, "unit": "weeks"},
                     "enabled": True,
                     "prerelease": False,
                     "checksum": {
@@ -587,7 +538,6 @@ class TestE2EFunctionality:
         assert "Status: Enabled" in result.stdout
         assert "Source: Github" in result.stdout
         assert "https://github.com/test/detailedapp" in result.stdout
-        assert "2 weeks" in result.stdout
         assert "Prerelease: No" in result.stdout
         assert "Checksum Verification: Enabled" in result.stdout
         assert "Algorithm: SHA256" in result.stdout
@@ -636,7 +586,6 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/missingdirapp",
                     "download_dir": "/nonexistent/directory",
                     "pattern": r"MissingDirApp.*\.AppImage$",
-                    "frequency": {"value": 1, "unit": "weeks"},
                     "enabled": True
                 }
             ]
@@ -661,7 +610,6 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/disabledapp",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"DisabledApp.*\.AppImage$",
-                    "frequency": {"value": 1, "unit": "days"},
                     "enabled": False,
                     "checksum": {
                         "enabled": False
@@ -679,7 +627,6 @@ class TestE2EFunctionality:
         assert result.exit_code == 0
         assert "Status: Disabled" in result.stdout
         assert "Checksum Verification: Disabled" in result.stdout
-        assert "1 days" in result.stdout
 
     def test_show_command_with_no_matching_files(self, runner, temp_config_dir, temp_download_dir):
         """Test show command when no files match the pattern."""
@@ -691,7 +638,6 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/nofilesapp",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"NoFilesApp.*\.AppImage$",
-                    "frequency": {"value": 1, "unit": "weeks"},
                     "enabled": True
                 }
             ]
@@ -719,7 +665,6 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/symlinkapp",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"SymlinkApp.*\.AppImage(\..*)?$",
-                    "frequency": {"value": 1, "unit": "weeks"},
                     "enabled": True
                 }
             ]
@@ -754,7 +699,6 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/configuredsymlinkapp",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"ConfiguredSymlinkApp.*\.AppImage(\..*)?$",
-                    "frequency": {"value": 1, "unit": "weeks"},
                     "enabled": True,
                     "symlink_path": str(temp_config_dir / "ConfiguredApp.AppImage")
                 }
@@ -808,7 +752,6 @@ class TestPatternMatching:
                     "url": "https://github.com/test/testapp",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"TestApp.*\.AppImage(\..*)?$",
-                    "frequency": {"value": 1, "unit": "weeks"},
                     "enabled": True
                 }
             ]
@@ -1067,7 +1010,7 @@ class TestAddCommand:
                     "url": "https://github.com/existing/app",
                     "download_dir": "/tmp/existing",
                     "pattern": "Existing.*",
-                    "frequency": {"value": 1, "unit": "days"},
+                    
                     "enabled": True
                 }
             ]
@@ -1365,7 +1308,7 @@ class TestRemoveCommand:
                     "url": "https://github.com/user/app1",
                     "download_dir": "/tmp/app1",
                     "pattern": "App1.*",
-                    "frequency": {"value": 1, "unit": "days"},
+                    
                     "enabled": True
                 },
                 {
@@ -1374,7 +1317,7 @@ class TestRemoveCommand:
                     "url": "https://github.com/user/app2",
                     "download_dir": "/tmp/app2",
                     "pattern": "App2.*",
-                    "frequency": {"value": 1, "unit": "days"},
+                    
                     "enabled": True
                 }
             ]

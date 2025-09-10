@@ -6,10 +6,6 @@
       "url": "https://github.com/FreeCAD/FreeCAD",
       "download_dir": "~/Applications/FreeCAD_weekly",
       "pattern": "FreeCAD_weekly.*Linux-x86_64\\.AppImage$",
-      "frequency": {
-        "value": 1,
-        "unit": "weeks"
-      },
       "enabled": true,
       "prerelease": true,
       "checksum": {

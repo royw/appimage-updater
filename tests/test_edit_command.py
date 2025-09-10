@@ -50,7 +50,6 @@ def single_config_file(tmp_path):
                 "url": "https://github.com/test/testapp",
                 "download_dir": str(tmp_path / "downloads" / "TestApp"),
                 "pattern": "TestApp.*\\.AppImage$",
-                "frequency": {"value": 1, "unit": "days"},
                 "enabled": True,
                 "prerelease": False,
                 "checksum": {
@@ -82,7 +81,6 @@ def config_directory(tmp_path):
                 "url": "https://github.com/test/directoryapp",
                 "download_dir": str(tmp_path / "downloads" / "DirectoryApp"),
                 "pattern": "DirectoryApp.*\\.AppImage$",
-                "frequency": {"value": 7, "unit": "days"},
                 "enabled": True,
                 "prerelease": True,
                 "checksum": {
@@ -103,26 +101,6 @@ def config_directory(tmp_path):
         json.dump(app_config, f, indent=2)
 
     return config_dir
-
-
-def test_edit_frequency_single_file(runner, single_config_file):
-    """Test editing frequency in a single config file."""
-    result = runner.invoke(
-        app,
-        ["edit", "TestApp", "--frequency", "14", "--unit", "days", "--config", str(single_config_file)]
-    )
-
-    assert result.exit_code == 0
-    assert "Update Frequency: 1 days → 14 days" in result.stdout
-    assert "Successfully updated configuration for 'TestApp'" in result.stdout
-
-    # Verify the change was saved
-    with single_config_file.open() as f:
-        config_data = json.load(f)
-
-    app_config = config_data["applications"][0]
-    assert app_config["frequency"]["value"] == 14
-    assert app_config["frequency"]["unit"] == "days"
 
 
 def test_edit_multiple_fields(runner, single_config_file):
@@ -274,7 +252,6 @@ def test_edit_directory_based_config(runner, config_directory):
         app,
         [
             "edit", "DirectoryApp",
-            "--frequency", "3", "--unit", "weeks",
             "--no-prerelease",
             "--checksum",
             "--config-dir", str(config_directory)
@@ -282,7 +259,6 @@ def test_edit_directory_based_config(runner, config_directory):
     )
 
     assert result.exit_code == 0
-    assert "Update Frequency: 7 days → 3 weeks" in result.stdout
     assert "Prerelease: Yes → No" in result.stdout
     assert "Checksum Verification: Disabled → Enabled" in result.stdout
 
@@ -292,8 +268,6 @@ def test_edit_directory_based_config(runner, config_directory):
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
-    assert app_config["frequency"]["value"] == 3
-    assert app_config["frequency"]["unit"] == "weeks"
     assert app_config["prerelease"] is False
     assert app_config["checksum"]["enabled"] is True
 
@@ -302,11 +276,11 @@ def test_edit_case_insensitive_app_name(runner, single_config_file):
     """Test that app names are case-insensitive."""
     result = runner.invoke(
         app,
-        ["edit", "testapp", "--frequency", "2", "--config", str(single_config_file)]  # lowercase
+        ["edit", "testapp", "--prerelease", "--config", str(single_config_file)]  # lowercase
     )
 
     assert result.exit_code == 0
-    assert "Update Frequency: 1 days → 2 days" in result.stdout
+    assert "Prerelease: No → Yes" in result.stdout
 
     # Verify the change was applied to the correct app
     with single_config_file.open() as f:
@@ -314,14 +288,14 @@ def test_edit_case_insensitive_app_name(runner, single_config_file):
 
     app_config = config_data["applications"][0]
     assert app_config["name"] == "TestApp"  # Original case preserved
-    assert app_config["frequency"]["value"] == 2
+    assert app_config["prerelease"] is True
 
 
 def test_edit_nonexistent_app(runner, single_config_file):
     """Test editing a non-existent application."""
     result = runner.invoke(
         app,
-        ["edit", "NonExistentApp", "--frequency", "5", "--config", str(single_config_file)]
+        ["edit", "NonExistentApp", "--prerelease", "--config", str(single_config_file)]
     )
 
     assert result.exit_code == 1
@@ -339,21 +313,6 @@ def test_edit_no_changes_specified(runner, single_config_file):
     assert result.exit_code == 0
     assert "No changes specified" in result.stdout
     assert "Use --help to see available options" in result.stdout
-
-
-def test_edit_invalid_frequency_unit(runner, single_config_file):
-    """Test invalid frequency unit validation."""
-    result = runner.invoke(
-        app,
-        ["edit", "TestApp", "--unit", "invalid", "--config", str(single_config_file)]
-    )
-
-    assert result.exit_code == 1
-    clean_output = normalize_text(result.stdout)
-    assert "Invalid frequency unit" in clean_output
-    assert "hours" in clean_output
-    assert "days" in clean_output
-    assert "weeks" in clean_output
 
 
 def test_edit_invalid_checksum_algorithm(runner, single_config_file):
@@ -444,20 +403,19 @@ def test_edit_preserve_unmodified_fields(runner, single_config_file):
     # Change only one field
     result = runner.invoke(
         app,
-        ["edit", "TestApp", "--frequency", "3", "--config", str(single_config_file)]
+        ["edit", "TestApp", "--prerelease", "--config", str(single_config_file)]
     )
 
     assert result.exit_code == 0
 
-    # Verify only the frequency changed, everything else preserved
+    # Verify only the prerelease changed, everything else preserved
     with single_config_file.open() as f:
         updated_config = json.load(f)
     updated_app = updated_config["applications"][0]
 
-    assert updated_app["frequency"]["value"] == 3  # Changed
+    assert updated_app["prerelease"] is True  # Changed
     assert updated_app["name"] == original_app["name"]  # Preserved
     assert updated_app["url"] == original_app["url"]  # Preserved
     assert updated_app["pattern"] == original_app["pattern"]  # Preserved
     assert updated_app["enabled"] == original_app["enabled"]  # Preserved
-    assert updated_app["prerelease"] == original_app["prerelease"]  # Preserved
     assert updated_app["checksum"] == original_app["checksum"]  # Preserved

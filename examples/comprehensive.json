@@ -11,10 +11,6 @@
       "url": "https://github.com/FreeCAD/FreeCAD",
       "download_dir": "~/Applications/FreeCAD",
       "pattern": ".*Linux-x86_64\\.AppImage$",
-      "frequency": {
-        "value": 1,
-        "unit": "weeks"
-      },
       "enabled": true,
       "checksum": {
         "enabled": true,
@@ -29,10 +25,6 @@
       "url": "https://github.com/FreeCAD/FreeCAD",
       "download_dir": "~/Applications/FreeCAD_weekly",
       "pattern": "FreeCAD_weekly.*Linux-x86_64\\.AppImage$",
-      "frequency": {
-        "value": 1,
-        "unit": "weeks"
-      },
       "enabled": true,
       "prerelease": true,
       "checksum": {
@@ -51,10 +43,6 @@
       "url": "https://github.com/bambulab/BambuStudio",
       "download_dir": "~/Applications/BambuStudio",
       "pattern": "(?i)Bambu_?Studio_.*\\.(zip|AppImage)(\\.(|current|old))?$",
-      "frequency": {
-        "value": 1,
-        "unit": "weeks"
-      },
       "enabled": true
     },
     {
@@ -63,10 +51,6 @@
       "url": "https://github.com/SoftFever/OrcaSlicer",
       "download_dir": "~/Applications/OrcaSlicer",
       "pattern": ".*Linux.*\\.AppImage$",
-      "frequency": {
-        "value": 1,
-        "unit": "weeks"
-      },
       "enabled": true
     },
     {
@@ -75,10 +59,6 @@
       "url": "https://github.com/desktop/desktop",
       "download_dir": "~/Applications/GitHubDesktop",
       "pattern": ".*linux.*\\.AppImage$",
-      "frequency": {
-        "value": 2,
-        "unit": "weeks"
-      },
       "enabled": true
     },
     {
@@ -87,10 +67,6 @@
       "url": "https://github.com/lmstudio-ai/lmstudio.js",
       "download_dir": "~/Applications/LMStudio",
       "pattern": ".*\\.AppImage$",
-      "frequency": {
-        "value": 1,
-        "unit": "weeks"
-      },
       "enabled": false
     },
     {
@@ -99,10 +75,6 @@
       "url": "https://github.com/Ultimaker/Cura",
       "download_dir": "~/Applications/Cura",
       "pattern": ".*Linux.*\\.AppImage$",
-      "frequency": {
-        "value": 2,
-        "unit": "weeks"
-      },
       "enabled": true
     },
     {
@@ -111,10 +83,6 @@
       "url": "https://github.com/Yubico/yubikey-manager-qt",
       "download_dir": "~/Applications/YubiKeyManager",
       "pattern": ".*linux.*\\.AppImage$",
-      "frequency": {
-        "value": 1,
-        "unit": "weeks"
-      },
       "enabled": true
     }
   ]

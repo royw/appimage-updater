@@ -131,8 +131,6 @@ async def generate_default_config(
     download_dir: str,
     rotation: bool | None = None,
     retain: int = 3,
-    frequency: int = 1,
-    unit: str = "days",
     symlink: str | None = None,
     prerelease: bool | None = None,
     checksum: bool | None = None,
@@ -165,7 +163,6 @@ async def generate_default_config(
         "url": url,
         "download_dir": download_dir,
         "pattern": await generate_appimage_pattern_async(name, url),
-        "frequency": {"value": frequency, "unit": unit},
         "enabled": True,
         "prerelease": prerelease_final,
         "checksum": {
@@ -381,8 +378,6 @@ def collect_basic_edit_updates(
     url: str | None,
     download_dir: str | None,
     pattern: str | None,
-    frequency: int | None,
-    unit: str | None,
     enable: bool | None,
     prerelease: bool | None,
 ) -> dict[str, Any]:
@@ -395,10 +390,6 @@ def collect_basic_edit_updates(
         updates["download_dir"] = download_dir
     if pattern is not None:
         updates["pattern"] = pattern
-    if frequency is not None:
-        updates["frequency_value"] = frequency
-    if unit is not None:
-        updates["frequency_unit"] = unit
     if enable is not None:
         updates["enabled"] = enable
     if prerelease is not None:
@@ -450,8 +441,6 @@ def collect_edit_updates(
     url: str | None,
     download_dir: str | None,
     pattern: str | None,
-    frequency: int | None,
-    unit: str | None,
     enable: bool | None,
     prerelease: bool | None,
     rotation: bool | None,
@@ -466,7 +455,7 @@ def collect_edit_updates(
     updates = {}
 
     # Collect basic updates
-    updates.update(collect_basic_edit_updates(url, download_dir, pattern, frequency, unit, enable, prerelease))
+    updates.update(collect_basic_edit_updates(url, download_dir, pattern, enable, prerelease))
 
     # Collect rotation updates
     updates.update(collect_rotation_edit_updates(rotation, symlink_path, retain_count))
@@ -509,12 +498,6 @@ def validate_basic_field_updates(updates: dict[str, Any]) -> None:
             regex_module.compile(updates["pattern"])
         except regex_module.error as e:
             raise ValueError(f"Invalid regex pattern: {e}") from e
-
-    # Validate frequency unit if provided
-    if "frequency_unit" in updates:
-        valid_units = ["hours", "days", "weeks"]
-        if updates["frequency_unit"] not in valid_units:
-            raise ValueError(f"Invalid frequency unit. Must be one of: {', '.join(valid_units)}")
 
     # Validate checksum algorithm if provided
     if "checksum_algorithm" in updates:
@@ -683,22 +666,6 @@ def apply_basic_config_updates(app: Any, updates: dict[str, Any]) -> list[str]:
     return changes
 
 
-def apply_frequency_updates(app: Any, updates: dict[str, Any]) -> list[str]:
-    """Apply frequency-related updates."""
-    changes = []
-
-    if "frequency_value" in updates or "frequency_unit" in updates:
-        old_freq = f"{app.frequency.value} {app.frequency.unit}"
-        if "frequency_value" in updates:
-            app.frequency.value = updates["frequency_value"]
-        if "frequency_unit" in updates:
-            app.frequency.unit = updates["frequency_unit"]
-        new_freq = f"{app.frequency.value} {app.frequency.unit}"
-        changes.append(f"Update Frequency: {old_freq} → {new_freq}")
-
-    return changes
-
-
 def apply_rotation_updates(app: Any, updates: dict[str, Any]) -> list[str]:
     """Apply rotation-related updates."""
     changes = []
@@ -761,7 +728,6 @@ def apply_configuration_updates(app: Any, updates: dict[str, Any]) -> list[str]:
     # Apply different categories of updates
     changes = []
     changes.extend(apply_basic_config_updates(app, updates))
-    changes.extend(apply_frequency_updates(app, updates))
     changes.extend(apply_rotation_updates(app, updates))
     changes.extend(apply_checksum_updates(app, updates))
 
@@ -776,7 +742,6 @@ def convert_app_to_dict(app: Any) -> dict[str, Any]:
         "url": app.url,
         "download_dir": str(app.download_dir),
         "pattern": app.pattern,
-        "frequency": {"value": app.frequency.value, "unit": app.frequency.unit},
         "enabled": app.enabled,
         "prerelease": app.prerelease,
         "checksum": {

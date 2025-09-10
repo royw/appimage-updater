@@ -16,13 +16,6 @@ def _get_default_user_agent() -> str:
     return f"AppImage-Updater/{__version__}"
 
 
-class UpdateFrequency(BaseModel):
-    """Represents update check frequency."""
-
-    value: int = Field(gt=0, description="Frequency value")
-    unit: Literal["hours", "days", "weeks"] = Field(description="Time unit")
-
-
 class ChecksumConfig(BaseModel):
     """Configuration for checksum verification."""
 
@@ -49,7 +42,6 @@ class ApplicationConfig(BaseModel):
     url: str = Field(description="Source URL")
     download_dir: Path = Field(description="Download directory")
     pattern: str = Field(description="File pattern to match")
-    frequency: UpdateFrequency = Field(description="Update check frequency")
     enabled: bool = Field(default=True, description="Whether to check for updates")
     prerelease: bool = Field(default=False, description="Include prerelease versions")
     checksum: ChecksumConfig = Field(

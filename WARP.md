@@ -220,14 +220,14 @@ uv run python -m appimage_updater add FreeCAD https://github.com/FreeCAD/FreeCAD
 uv run python -m appimage_updater add MyApp https://github.com/user/repo ~/Apps/MyApp --config-dir ~/.config/appimage-updater
 
 # Add with comprehensive configuration options - ALL OPTIONS NOW AVAILABLE
-# Prerelease with weekly updates and rotation
-uv run python -m appimage_updater add --prerelease --frequency 1 --unit weeks --rotation --symlink ~/bin/freecad-weekly.AppImage FreeCAD_weekly https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
+# Prerelease with rotation
+uv run python -m appimage_updater add --prerelease --rotation --symlink ~/bin/freecad-weekly.AppImage FreeCAD_weekly https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
 
-# Required checksums with custom algorithm and daily updates
-uv run python -m appimage_updater add --checksum-required --checksum-algorithm sha1 --frequency 1 --unit days SecureApp https://github.com/user/secureapp ~/Apps/SecureApp
+# Required checksums with custom algorithm
+uv run python -m appimage_updater add --checksum-required --checksum-algorithm sha1 SecureApp https://github.com/user/secureapp ~/Apps/SecureApp
 
-# Disable checksums completely with custom frequency
-uv run python -m appimage_updater add --no-checksum --frequency 2 --unit weeks MyTool https://github.com/user/tool ~/Tools
+# Disable checksums completely
+uv run python -m appimage_updater add --no-checksum MyTool https://github.com/user/tool ~/Tools
 
 # List configured applications
 uv run python -m appimage_updater list
@@ -248,7 +248,6 @@ uv run python -m appimage_updater check --dry-run
 uv run python -m appimage_updater check OrcaSlicer_nightly
 
 # Edit application configuration
-uv run python -m appimage_updater edit FreeCAD --frequency 7 --unit days
 uv run python -m appimage_updater edit GitHubDesktop --prerelease --checksum-required
 uv run python -m appimage_updater edit MyApp --rotation --symlink-path ~/bin/myapp.AppImage
 uv run python -m appimage_updater edit OldApp --url https://github.com/newowner/newrepo
@@ -280,14 +279,14 @@ appimage-updater add <app-name> <github-url> <download-directory>
 appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
 appimage-updater add VSCode https://github.com/microsoft/vscode ~/Apps/VSCode
 
-# Prerelease with weekly updates and file rotation
-appimage-updater add --prerelease --frequency 1 --unit weeks --rotation --symlink ~/bin/freecad-weekly.AppImage FreeCAD_weekly https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
+# Prerelease with file rotation
+appimage-updater add --prerelease --rotation --symlink ~/bin/freecad-weekly.AppImage FreeCAD_weekly https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
 
 # Required checksums with custom algorithm
-appimage-updater add --checksum-required --checksum-algorithm sha1 --frequency 7 --unit days SecureApp https://github.com/user/secureapp ~/Apps/SecureApp
+appimage-updater add --checksum-required --checksum-algorithm sha1 SecureApp https://github.com/user/secureapp ~/Apps/SecureApp
 
 # Complex configuration with all options
-appimage-updater add --prerelease --frequency 3 --unit days --rotation --retain 5 --symlink ~/bin/myapp.AppImage --checksum --checksum-algorithm sha256 --checksum-pattern "{filename}.sha256" --checksum-required MyComplexApp https://github.com/user/complex ~/Apps/Complex
+appimage-updater add --prerelease --rotation --retain 5 --symlink ~/bin/myapp.AppImage --checksum --checksum-algorithm sha256 --checksum-pattern "{filename}.sha256" --checksum-required MyComplexApp https://github.com/user/complex ~/Apps/Complex
 ```
 
 ### Complete Configuration Options
@@ -296,8 +295,6 @@ The `add` command now supports ALL configuration options available in the `edit`
 
 **Basic Configuration:**
 - `--prerelease/--no-prerelease`: Enable/disable prerelease versions (default: auto-detect)
-- `--frequency N`: Update check frequency (default: 1)
-- `--unit UNIT`: Frequency unit - hours, days, weeks (default: days)
 
 **File Rotation:**
 - `--rotation/--no-rotation`: Enable/disable file rotation (default: disabled)
@@ -315,7 +312,6 @@ The `add` command now supports ALL configuration options available in the `edit`
 When options are not specified, the `add` command automatically generates:
 
 - **Smart file patterns**: Uses intelligent pattern generation from actual GitHub releases when possible
-- **Sensible update frequency**: Daily checks by default
 - **Checksum verification**: Enabled with SHA256 verification (optional)
 - **Automatic prerelease detection**: Auto-enables prerelease support for continuous build repositories
 - **Standard configuration**: GitHub source type, enabled by default
@@ -356,7 +352,7 @@ Generates basic configuration with intelligent defaults.
 
 **Complex Example:**
 ```bash
-appimage-updater add --prerelease --frequency 1 --unit weeks --rotation --symlink ~/bin/freecad-weekly.AppImage --checksum-required FreeCAD_weekly https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
+appimage-updater add --prerelease --rotation --symlink ~/bin/freecad-weekly.AppImage --checksum-required FreeCAD_weekly https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
 ```
 
 Generates complete configuration:
@@ -367,7 +363,6 @@ Generates complete configuration:
   "url": "https://github.com/FreeCAD/FreeCAD",
   "download_dir": "/home/user/Apps/FreeCAD",
   "pattern": "(?i)FreeCAD_weekly.*\\.AppImage(\\.(|current|old))?$",
-  "frequency": {"value": 1, "unit": "weeks"},
   "enabled": true,
   "prerelease": true,
   "checksum": {
@@ -406,7 +401,6 @@ The `edit` command allows you to modify any configuration field for existing app
 appimage-updater edit <app-name> [OPTIONS]
 
 # Common editing scenarios
-appimage-updater edit FreeCAD --frequency 7 --unit days
 appimage-updater edit GitHubDesktop --prerelease --checksum-required
 appimage-updater edit MyApp --rotation --symlink-path ~/bin/myapp.AppImage
 appimage-updater edit OldApp --url https://github.com/newowner/newrepo
@@ -418,7 +412,7 @@ The `add` and `edit` commands now have **perfect feature parity**. Every option 
 
 | **Configuration Area** | **Shared Options** | **Usage** |
 |----------------------|-------------------|----------|
-| **Basic Config** | `--prerelease/--no-prerelease`<br>`--frequency N --unit UNIT` | Same in both commands |
+| **Basic Config** | `--prerelease/--no-prerelease` | Same in both commands |
 | **File Rotation** | `--rotation/--no-rotation`<br>`--retain N`<br>`--symlink PATH` | Same in both commands |
 | **Checksum** | `--checksum/--no-checksum`<br>`--checksum-algorithm ALG`<br>`--checksum-pattern PATTERN`<br>`--checksum-required/--checksum-optional` | Same in both commands |
 | **Directories** | `--download-dir PATH` | `edit` only (can't change in add) |
@@ -440,7 +434,6 @@ The `edit` command options map directly to the fields displayed by `show`:
 | `URL: https://github.com/...` | `--url URL` | `--url https://github.com/newowner/repo` |
 | `Download Directory: /path/...` | `--download-dir PATH` | `--download-dir ~/NewLocation` |
 | `File Pattern: regex...` | `--pattern REGEX` | `--pattern "MyApp.*\.AppImage$"` |
-| `Update Frequency: 1 weeks` | `--frequency N --unit UNIT` | `--frequency 2 --unit days` |
 | `Prerelease: No/Yes` | `--prerelease/--no-prerelease` | `--prerelease` |
 | `Checksum Verification: Enabled` | `--checksum/--no-checksum` | `--no-checksum` |
 | `Algorithm: SHA256` | `--checksum-algorithm ALG` | `--checksum-algorithm sha1` |
@@ -451,7 +444,7 @@ The `edit` command options map directly to the fields displayed by `show`:
 ### Intuitive Workflow
 
 1. **Examine current config**: `appimage-updater show MyApp`
-2. **Make targeted changes**: `appimage-updater edit MyApp --frequency 7 --prerelease`
+2. **Make targeted changes**: `appimage-updater edit MyApp --prerelease`
 3. **Verify changes**: `appimage-updater show MyApp`
 
 ### Smart Features
@@ -553,7 +546,7 @@ The configuration system supports flexible deployment patterns:
 
 Configuration files use JSON format with the following structure:
 - `global_config`: Timeout, concurrency, retry settings
-- `applications`: Array of app configurations with source URL, download directory, file patterns, update frequency, checksum verification settings, and optional symlink paths
+- `applications`: Array of app configurations with source URL, download directory, file patterns, checksum verification settings, and optional symlink paths
 
 ### File Pattern Matching
 

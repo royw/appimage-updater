@@ -127,12 +127,6 @@ _RETAIN_OPTION = typer.Option(
     min=1,
     max=10,
 )
-_FREQUENCY_OPTION = typer.Option(
-    1,
-    "--frequency",
-    help="Update check frequency in days (default: 1)",
-    min=1,
-)
 _SYMLINK_OPTION = typer.Option(
     None,
     "--symlink",
@@ -142,11 +136,6 @@ _ADD_PRERELEASE_OPTION = typer.Option(
     None,
     "--prerelease/--no-prerelease",
     help="Enable or disable prerelease versions (default: disabled)",
-)
-_ADD_UNIT_OPTION = typer.Option(
-    "days",
-    "--unit",
-    help="Frequency unit: hours, days, weeks (default: days)",
 )
 _ADD_CHECKSUM_OPTION = typer.Option(
     None,
@@ -174,8 +163,6 @@ _EDIT_APP_NAME_ARGUMENT = typer.Argument(help="Name of the application to edit (
 _EDIT_URL_OPTION = typer.Option(None, "--url", help="Update the repository URL")
 _EDIT_DOWNLOAD_DIR_OPTION = typer.Option(None, "--download-dir", help="Update the download directory")
 _EDIT_PATTERN_OPTION = typer.Option(None, "--pattern", help="Update the file pattern (regex)")
-_EDIT_FREQUENCY_OPTION = typer.Option(None, "--frequency", help="Update the frequency value", min=1)
-_EDIT_UNIT_OPTION = typer.Option(None, "--unit", help="Update the frequency unit")
 _EDIT_ENABLE_OPTION = typer.Option(None, "--enable/--disable", help="Enable or disable the application")
 _EDIT_PRERELEASE_OPTION = typer.Option(None, "--prerelease/--no-prerelease", help="Enable or disable prereleases")
 _EDIT_ROTATION_OPTION = typer.Option(None, "--rotation/--no-rotation", help="Enable or disable file rotation")
@@ -259,7 +246,6 @@ def init(
                 "url": "https://github.com/FreeCAD/FreeCAD",
                 "download_dir": str(Path.home() / "Applications" / "FreeCAD"),
                 "pattern": r".*Linux-x86_64\.AppImage$",
-                "frequency": {"value": 1, "unit": "weeks"},
                 "enabled": True,
                 "symlink_path": str(Path.home() / "Applications" / "FreeCAD.AppImage"),
             }
@@ -326,8 +312,6 @@ def add(
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     rotation: bool | None = _ROTATION_OPTION,
     retain: int = _RETAIN_OPTION,
-    frequency: int = _FREQUENCY_OPTION,
-    unit: str = _ADD_UNIT_OPTION,
     symlink: str | None = _SYMLINK_OPTION,
     prerelease: bool | None = _ADD_PRERELEASE_OPTION,
     checksum: bool | None = _ADD_CHECKSUM_OPTION,
@@ -346,8 +330,6 @@ def add(
     automatically when needed.
 
     Basic Options:
-        --frequency N: Update check frequency (default: 1)
-        --unit UNIT: Frequency unit - hours, days, weeks (default: days)
         --prerelease/--no-prerelease: Enable/disable prerelease versions (default: auto-detect)
 
     File Rotation:
@@ -369,15 +351,15 @@ def add(
         appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
 
         # Force prerelease enabled
-        appimage-updater add --prerelease --frequency 1 --unit weeks \\
+        appimage-updater add --prerelease \\
             FreeCAD_weekly https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
 
         # With file rotation and symlink
         appimage-updater add --rotation --symlink ~/bin/freecad.AppImage \\
             FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
 
-        # Custom frequency, required checksums, and directory creation
-        appimage-updater add --frequency 7 --unit days --checksum-required --create-dir \\
+        # Required checksums and directory creation
+        appimage-updater add --checksum-required --create-dir \\
             MyApp https://github.com/user/myapp ~/Apps/MyApp
 
         # Non-interactive mode with auto-confirm directory creation
@@ -397,8 +379,6 @@ def add(
             config_dir,
             rotation,
             retain,
-            frequency,
-            unit,
             symlink,
             prerelease,
             checksum,
@@ -419,8 +399,6 @@ async def _add(
     config_dir: Path | None,
     rotation: bool | None,
     retain: int,
-    frequency: int,
-    unit: str,
     symlink: str | None,
     prerelease: bool | None,
     checksum: bool | None,
@@ -459,8 +437,6 @@ async def _add(
             expanded_download_dir,
             rotation,
             retain,
-            frequency,
-            unit,
             symlink,
             prerelease,
             checksum,
@@ -513,8 +489,6 @@ def edit(
     url: str | None = _EDIT_URL_OPTION,
     download_dir: str | None = _EDIT_DOWNLOAD_DIR_OPTION,
     pattern: str | None = _EDIT_PATTERN_OPTION,
-    frequency: int | None = _EDIT_FREQUENCY_OPTION,
-    unit: str | None = _EDIT_UNIT_OPTION,
     enable: bool | None = _EDIT_ENABLE_OPTION,
     prerelease: bool | None = _EDIT_PRERELEASE_OPTION,
     # Rotation options
@@ -539,7 +513,6 @@ def edit(
         --url URL                    Update repository URL
         --download-dir PATH          Update download directory
         --pattern REGEX              Update file pattern
-        --frequency N --unit UNIT    Update check frequency (units: hours, days, weeks)
         --enable/--disable           Enable or disable the application
         --prerelease/--no-prerelease Enable or disable prerelease versions
 
@@ -555,9 +528,6 @@ def edit(
         --checksum-required/--checksum-optional  Make verification required/optional
 
     Examples:
-        # Change update frequency
-        appimage-updater edit GitHubDesktop --frequency 7 --unit days
-
         # Enable rotation with symlink
         appimage-updater edit FreeCAD --rotation --symlink-path ~/bin/freecad.AppImage
 
@@ -593,8 +563,6 @@ def edit(
             url,
             download_dir,
             pattern,
-            frequency,
-            unit,
             enable,
             prerelease,
             rotation,

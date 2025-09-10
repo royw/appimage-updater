@@ -46,8 +46,9 @@ points to a old release.
 Cool.  Works nicely except you have to manually check the github repository, download updates, verify checksums,
 and rotate the extensions and symbolic link.  This is where appimage-updater comes in.
 
+Check what appimage-updater is currently managing:
 ```bash
-~/Applications ➤ appimage-updater list                                                                                                                                     Python 3.13.3 royw@roy-kubuntu2504
+~/Applications ➤ appimage-updater list
                                                         Configured Applications                                                         
 ┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
 ┃ Application        ┃ Status  ┃ Source                                           ┃ Download Directory                     ┃ Frequency ┃
@@ -63,6 +64,78 @@ and rotate the extensions and symbolic link.  This is where appimage-updater com
 └────────────────────┴─────────┴──────────────────────────────────────────────────┴────────────────────────────────────────┴───────────┘
 
 Total: 8 applications (8 enabled, 0 disabled)
+```
+
+Add FreeCAD official releases:
+```bash
+~/Applications ➤ appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD/releases ~/Applications/FreeCAD
+📝 Detected download URL, using repository URL instead:
+   Original: https://github.com/FreeCAD/FreeCAD/releases
+   Corrected: https://github.com/FreeCAD/FreeCAD
+✓ Successfully added application 'FreeCAD'
+Source: https://github.com/FreeCAD/FreeCAD
+Download Directory: /home/royw/Applications/FreeCAD
+Pattern: (?i)FreeCAD.*\.(zip|AppImage)(\.(|current|old))?$
+
+💡 Tip: Use 'appimage-updater show FreeCAD' to view full configuration
+```
+
+Add FreeCAD weekly releases:
+```bash
+~/Applications ➤ appimage-updater add FreeCAD_weekly https://github.com/FreeCAD/FreeCAD/releases ~/Applications/FreeCAD_weekly --prerelease --rotation --symlink ~/Applications/FreeCAD_weekly.AppImage
+📝 Detected download URL, using repository URL instead:
+   Original: https://github.com/FreeCAD/FreeCAD/releases
+   Corrected: https://github.com/FreeCAD/FreeCAD
+✓ Successfully added application 'FreeCAD_weekly'
+Source: https://github.com/FreeCAD/FreeCAD
+Download Directory: /home/royw/Applications/FreeCAD_weekly
+Pattern: (?i)FreeCAD.*\.(zip|AppImage)(\.(|current|old))?$
+
+💡 Tip: Use 'appimage-updater show FreeCAD_weekly' to view full configuration
+```
+
+See that the two new apps are being managed:
+```bash
+~/Applications ➤ appimage-updater list
+                                                        Configured Applications                                                         
+┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
+┃ Application        ┃ Status  ┃ Source                                           ┃ Download Directory                     ┃ Frequency ┃
+┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
+│ appimaged          │ Enabled │ Github: https://github.com/probonopd/go-appimage │ /home/royw/Applications/appimaged      │ 1 days    │
+│ appimagetool       │ Enabled │ Github: https://github.com/AppImage/appimagetool │ /home/royw/Applications/appimagetool   │ 1 days    │
+│ BambuStudio        │ Enabled │ Github: https://github.com/bambulab/BambuStudio  │ /home/royw/Applications/BambuStudio    │ 1 days    │
+│ EdgeTX_Companion   │ Enabled │ Github: https://github.com/EdgeTX/edgetx         │ /home/royw/Applications/EdgeTX         │ 1 days    │
+│ FreeCAD            │ Enabled │ Github: https://github.com/FreeCAD/FreeCAD       │ /home/royw/Applications/FreeCAD        │ 1 days    │
+│ FreeCAD_weekly     │ Enabled │ Github: https://github.com/FreeCAD/FreeCAD       │ /home/royw/Applications/FreeCAD_weekly │ 1 days    │
+│ GitHubDesktop      │ Enabled │ Github: https://github.com/shiftkey/desktop      │ /home/royw/Applications/GitHubDesktop  │ 1 days    │
+│ OpenShot           │ Enabled │ Github: https://github.com/OpenShot/openshot-qt  │ /home/royw/Applications/OpenShot       │ 1 days    │
+│ OrcaSlicer_nightly │ Enabled │ Github: https://github.com/SoftFever/OrcaSlicer  │ /home/royw/Applications/OrcaSlicer     │ 1 days    │
+│ UltiMaker-Cura     │ Enabled │ Github: https://github.com/Ultimaker/Cura        │ /home/royw/Applications/UltiMaker-Cura │ 1 days    │
+└────────────────────┴─────────┴──────────────────────────────────────────────────┴────────────────────────────────────────┴───────────┘
+
+Total: 10 applications (10 enabled, 0 disabled)
+```
+
+Check for any updates:
+```bash
+~/Applications ➤ appimage-updater check
+Checking 10 applications for updates...
+                                                  Update Check Results                                                  
+┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃ Application        ┃ Status     ┃ Current                             ┃ Latest                              ┃ Update ┃
+┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│ appimaged          │ Up to date │ Continuous Build                    │ Continuous Build                    │ -      │
+│ appimagetool       │ Up to date │ Continuous build                    │ Continuous build                    │ -      │
+│ BambuStudio        │ Up to date │ 2.2.1.60 Public Release (Hotfix)    │ 2.2.1.60 Public Release (Hotfix)    │ -      │
+│ EdgeTX_Companion   │ Up to date │ 2.11.3                              │ EdgeTX "Jolly Mon" v2.11.3          │ -      │
+│ FreeCAD            │ Up to date │ 1.0.2                               │ FreeCAD 1.0.2                       │ -      │
+│ FreeCAD_weekly     │ Up to date │ Development Build weekly-2025.09.10 │ Development Build weekly-2025.09.10 │ -      │
+│ GitHubDesktop      │ Up to date │ 3.4.13                              │ 3.4.13 Linux RC1                    │ -      │
+│ OpenShot           │ Up to date │ 3.3.0                               │ v3.3.0                              │ -      │
+│ OrcaSlicer_nightly │ Up to date │ 2.3.1                               │ OrcaSlicer V2.3.1-alpha Release     │ -      │
+│ UltiMaker-Cura     │ Up to date │ UltiMaker Cura 5.10.2               │ UltiMaker Cura 5.10.2               │ -      │
+└────────────────────┴────────────┴─────────────────────────────────────┴─────────────────────────────────────┴────────┘
+All applications are up to date!
 ```
 
 ## Features

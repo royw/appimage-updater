@@ -134,12 +134,6 @@ class TestAddRegression:
             cmd_args = ["add", app_name, source_url, download_dir, "--config-dir", str(temp_config_dir)]
 
             # Extract and add optional parameters
-            frequency = original_config.get("frequency", {})
-            if isinstance(frequency, dict):
-                if "value" in frequency and frequency["value"] != 1:
-                    cmd_args.extend(["--frequency", str(frequency["value"])])
-                if "unit" in frequency and frequency["unit"] != "days":
-                    cmd_args.extend(["--unit", frequency["unit"]])
 
             # Add prerelease flag if enabled
             if original_config.get("prerelease", False):
@@ -256,13 +250,6 @@ class TestAddRegression:
                     print(f"    ❌ Optional field '{field}' mismatch: {original_value} != {generated_value}")
                     return False
 
-        # Frequency field: Must match as dict
-        original_frequency = original.get("frequency", {})
-        generated_frequency = generated.get("frequency", {})
-
-        if original_frequency != generated_frequency:
-            print(f"    ❌ Frequency mismatch: {original_frequency} != {generated_frequency}")
-            return False
 
         # Checksum field: Must match as dict (allowing for minor differences in optional fields)
         original_checksum = original.get("checksum", {})
@@ -290,13 +277,6 @@ class TestAddRegression:
             # Don't fail the test for pattern differences - intelligent generation is an improvement
             print("    ✅ Allowing pattern improvement due to intelligent generation")
 
-        # Frequency field: Should be equivalent
-        original_freq = original.get("frequency", {})
-        generated_freq = generated.get("frequency", {})
-
-        if original_freq != generated_freq:
-            print(f"    ❌ Frequency mismatch: {original_freq} != {generated_freq}")
-            return False
 
         # Checksum field: Allow reasonable defaults
         if not self._checksum_configs_equivalent(original.get("checksum", {}), generated.get("checksum", {})):

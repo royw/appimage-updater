@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import pytest
 
-from appimage_updater.config import ApplicationConfig, ChecksumConfig, UpdateFrequency
+from appimage_updater.config import ApplicationConfig, ChecksumConfig
 from appimage_updater.downloader import Downloader
 from appimage_updater.models import Asset, UpdateCandidate, rebuild_models
 
@@ -47,7 +47,6 @@ def basic_app_config(temp_download_dir):
         url="https://github.com/test/testapp",
         download_dir=temp_download_dir,
         pattern=r"TestApp.*\.AppImage$",
-        frequency=UpdateFrequency(value=1, unit="weeks"),
         enabled=True,
         rotation_enabled=False,
         checksum=ChecksumConfig()
@@ -64,7 +63,6 @@ def rotation_app_config(temp_download_dir, temp_symlink_dir):
         url="https://github.com/test/testapp",
         download_dir=temp_download_dir,
         pattern=r"TestApp.*\.AppImage$",
-        frequency=UpdateFrequency(value=1, unit="weeks"),
         enabled=True,
         rotation_enabled=True,
         symlink_path=symlink_path,
@@ -275,7 +273,6 @@ class TestRotationEnabled:
             url="https://github.com/test/testapp",
             download_dir=temp_download_dir,
             pattern=r"TestApp.*\.AppImage$",
-            frequency=UpdateFrequency(value=1, unit="weeks"),
             enabled=True,
             rotation_enabled=True,
             symlink_path=temp_symlink_dir / "testapp.AppImage",
@@ -389,7 +386,6 @@ class TestRotationValidation:
                 url="https://github.com/test/testapp",
                 download_dir=temp_download_dir,
                 pattern=r"TestApp.*\.AppImage$",
-                frequency=UpdateFrequency(value=1, unit="weeks"),
                 enabled=True,
                 rotation_enabled=True,  # This should require symlink_path
                 symlink_path=None,  # Missing required symlink_path
@@ -405,7 +401,6 @@ class TestRotationValidation:
             url="https://github.com/test/testapp",
             download_dir=temp_download_dir,
             pattern=r"TestApp.*\.AppImage$",
-            frequency=UpdateFrequency(value=1, unit="weeks"),
             enabled=True,
             rotation_enabled=False,
             symlink_path=None,

@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from appimage_updater.config import ApplicationConfig, ChecksumConfig, UpdateFrequency
+from appimage_updater.config import ApplicationConfig, ChecksumConfig
 from appimage_updater.downloader import Downloader
 from appimage_updater.models import Asset, UpdateCandidate, rebuild_models
 
@@ -57,7 +57,6 @@ class TestRotationVaryingFilenames:
             url="https://github.com/bambulab/BambuStudio",
             download_dir=temp_download_dir,
             pattern=r"(?i)Bambu_?Studio_.*\.(zip|AppImage)(\..*)?$",
-            frequency=UpdateFrequency(value=1, unit="weeks"),
             enabled=True,
             rotation_enabled=True,
             symlink_path=symlink_path,

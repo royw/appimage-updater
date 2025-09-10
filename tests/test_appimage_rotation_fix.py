@@ -8,7 +8,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from appimage_updater.config import ApplicationConfig, ChecksumConfig, UpdateFrequency
+from appimage_updater.config import ApplicationConfig, ChecksumConfig
 from appimage_updater.downloader import Downloader
 from appimage_updater.models import Asset, UpdateCandidate
 
@@ -22,7 +22,6 @@ def rotation_app_config():
         url="https://github.com/test/testapp",
         download_dir=Path("/tmp/test"),
         pattern=r"TestApp.*\.AppImage$",
-        frequency=UpdateFrequency(value=1, unit="days"),
         enabled=True,
         rotation_enabled=True,
         symlink_path=Path("/tmp/testapp.AppImage"),

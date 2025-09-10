@@ -50,7 +50,6 @@ def test_config_file(tmp_path):
                 "url": "https://github.com/test/testapp",
                 "download_dir": str(tmp_path / "downloads" / "TestApp"),
                 "pattern": "TestApp.*\\.AppImage$",
-                "frequency": {"value": 1, "unit": "days"},
                 "enabled": True,
                 "prerelease": False,
                 "checksum": {

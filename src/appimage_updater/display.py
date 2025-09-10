@@ -31,12 +31,10 @@ def display_applications_list(applications: list[Any]) -> None:
     table.add_column("Status", style="green")
     table.add_column("Source", style="yellow")
     table.add_column("Download Directory", style="magenta")
-    table.add_column("Frequency", style="blue")
 
     for app in applications:
         status = "[green]Enabled" if app.enabled else "[red]Disabled"
         source_display = f"{app.source_type.title()}: {app.url}"
-        frequency_display = f"{app.frequency.value} {app.frequency.unit}"
 
         # Truncate long paths for better display
         download_dir = str(app.download_dir)
@@ -47,7 +45,6 @@ def display_applications_list(applications: list[Any]) -> None:
             status,
             source_display,
             download_dir,
-            frequency_display,
         )
 
     console.print(table)
@@ -188,7 +185,6 @@ def get_basic_config_lines(app: Any) -> list[str]:
         f"[bold]URL:[/bold] {app.url}",
         f"[bold]Download Directory:[/bold] {app.download_dir}",
         f"[bold]File Pattern:[/bold] {app.pattern}",
-        f"[bold]Update Frequency:[/bold] {app.frequency.value} {app.frequency.unit}",
     ]
 
 
