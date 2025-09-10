@@ -22,7 +22,7 @@ the latest weekly release integrated into your system, and a few previous releas
 development issue.  Here is a possible directory structure:
 
 ```bash aiignore
-~/Applications ➤ ls -l Free*                                                                                                                                               Python 3.13.3 royw@roy-kubuntu2504
+~/Applications $ ls -l Free*                                                                                                                                               Python 3.13.3 royw@roy-kubuntu2504
 -rw-rw-r-- 1 royw royw 2361 Oct 31  2023 FreeCAD.readme
 lrwxrwxrwx 1 royw royw  100 Sep 10 13:58 FreeCAD_weekly.AppImage -> /home/royw/Applications/FreeCAD_weekly/FreeCAD_weekly-2025.09.10-Linux-x86_64-py311.AppImage.current
 
@@ -48,7 +48,7 @@ and rotate the extensions and symbolic link.  This is where appimage-updater com
 
 Check what appimage-updater is currently managing:
 ```bash
-~/Applications ➤ appimage-updater list
+~/Applications $ appimage-updater list
                                                         Configured Applications                                                         
 ┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
 ┃ Application        ┃ Status  ┃ Source                                           ┃ Download Directory                     ┃ Frequency ┃
@@ -68,35 +68,35 @@ Total: 8 applications (8 enabled, 0 disabled)
 
 Add FreeCAD official releases:
 ```bash
-~/Applications ➤ appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD/releases ~/Applications/FreeCAD
-📝 Detected download URL, using repository URL instead:
+~/Applications $ appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD/releases ~/Applications/FreeCAD
+Detected download URL, using repository URL instead:
    Original: https://github.com/FreeCAD/FreeCAD/releases
    Corrected: https://github.com/FreeCAD/FreeCAD
-✓ Successfully added application 'FreeCAD'
+Successfully added application 'FreeCAD'
 Source: https://github.com/FreeCAD/FreeCAD
 Download Directory: /home/royw/Applications/FreeCAD
 Pattern: (?i)FreeCAD.*\.(zip|AppImage)(\.(|current|old))?$
 
-💡 Tip: Use 'appimage-updater show FreeCAD' to view full configuration
+Tip: Use 'appimage-updater show FreeCAD' to view full configuration
 ```
 
 Add FreeCAD weekly releases:
 ```bash
-~/Applications ➤ appimage-updater add FreeCAD_weekly https://github.com/FreeCAD/FreeCAD/releases ~/Applications/FreeCAD_weekly --prerelease --rotation --symlink ~/Applications/FreeCAD_weekly.AppImage
-📝 Detected download URL, using repository URL instead:
+~/Applications $ appimage-updater add FreeCAD_weekly https://github.com/FreeCAD/FreeCAD/releases ~/Applications/FreeCAD_weekly --prerelease --rotation --symlink ~/Applications/FreeCAD_weekly.AppImage
+Detected download URL, using repository URL instead:
    Original: https://github.com/FreeCAD/FreeCAD/releases
    Corrected: https://github.com/FreeCAD/FreeCAD
-✓ Successfully added application 'FreeCAD_weekly'
+Successfully added application 'FreeCAD_weekly'
 Source: https://github.com/FreeCAD/FreeCAD
 Download Directory: /home/royw/Applications/FreeCAD_weekly
 Pattern: (?i)FreeCAD.*\.(zip|AppImage)(\.(|current|old))?$
 
-💡 Tip: Use 'appimage-updater show FreeCAD_weekly' to view full configuration
+Tip: Use 'appimage-updater show FreeCAD_weekly' to view full configuration
 ```
 
 See that the two new apps are being managed:
 ```bash
-~/Applications ➤ appimage-updater list
+~/Applications $ appimage-updater list
                                                         Configured Applications                                                         
 ┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
 ┃ Application        ┃ Status  ┃ Source                                           ┃ Download Directory                     ┃ Frequency ┃
@@ -118,7 +118,7 @@ Total: 10 applications (10 enabled, 0 disabled)
 
 Check for any updates:
 ```bash
-~/Applications ➤ appimage-updater check
+~/Applications $ appimage-updater check
 Checking 10 applications for updates...
                                                   Update Check Results                                                  
 ┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
@@ -140,30 +140,30 @@ All applications are up to date!
 
 ## Features
 
-- **🎯 Intelligent Architecture & Platform Filtering**: Automatically eliminates incompatible downloads based on CPU architecture (x86_64, arm64, etc.), platform (Linux, macOS, Windows), and supported formats
-- **🐧 Distribution-Aware Selection**: Automatically selects the best compatible distribution (Ubuntu, Fedora, Debian, Arch, etc.)
-- **🔍 Smart Auto-Detection**: Automatically detects continuous build repositories and enables prerelease support
-- **📊 Version Metadata System**: Accurate version tracking with `.info` files for complex release formats
-- **📦 Enhanced ZIP Support**: Automatically extracts AppImages from ZIP files with intelligent error handling
-- **🎯 Universal Pattern Generation**: All patterns support both ZIP and AppImage formats automatically
+- **Intelligent Architecture & Platform Filtering**: Automatically eliminates incompatible downloads based on CPU architecture (x86_64, arm64, etc.), platform (Linux, macOS, Windows), and supported formats
+- **Distribution-Aware Selection**: Automatically selects the best compatible distribution (Ubuntu, Fedora, Debian, Arch, etc.)
+- **Smart Auto-Detection**: Automatically detects continuous build repositories and enables prerelease support
+- **Version Metadata System**: Accurate version tracking with `.info` files for complex release formats
+- **Enhanced ZIP Support**: Automatically extracts AppImages from ZIP files with intelligent error handling
+- **Universal Pattern Generation**: All patterns support both ZIP and AppImage formats automatically
 - **Easy Application Setup**: Simple `add` command with intelligent defaults
 - **File Rotation & Symlinks**: Automatic file management with configurable retention (fixed naming)
 - **Flexible Configuration**: Custom update frequencies, rotation settings, and symlink management
-- **🔧 Multi-Format Support**: Works with `.zip`, `.AppImage`, and other release formats seamlessly
-- **🤖 Smart Pattern Matching**: Handles naming variations (underscore/hyphen) and character substitutions
+- **Multi-Format Support**: Works with `.zip`, `.AppImage`, and other release formats seamlessly
+- **Smart Pattern Matching**: Handles naming variations (underscore/hyphen) and character substitutions
 - **Automatic Checksum Verification**: SHA256, SHA1, MD5 support for download security
 - **Batch Operations**: Download multiple updates concurrently with retry logic
 - **GitHub Integration**: Full support for releases, prereleases, and asset detection
 - **Progress Tracking**: Visual feedback with transfer speeds and ETAs
 - **Robust Error Handling**: Automatic retries with exponential backoff
 
-## 🎆 Project Status
+## Project Status
 
-✅ **Production Ready** - Full CI/CD pipeline with automated testing and documentation  
-✅ **Live Documentation** - Professional docs site with enhanced navigation  
-✅ **Quality Assured** - 91+ tests including comprehensive architecture compatibility testing, 76% coverage, complexity analysis, type checking
-✅ **Open Source** - Public repository with contribution guidelines and templates  
-✅ **Modern Tooling** - Built with Python 3.11+, uv, ruff, mypy, pytest
+**Production Ready** - Full CI/CD pipeline with automated testing and documentation  
+**Live Documentation** - Professional docs site with enhanced navigation  
+**Quality Assured** - 91+ tests including comprehensive architecture compatibility testing, 76% coverage, complexity analysis, type checking
+**Open Source** - Public repository with contribution guidelines and templates  
+**Modern Tooling** - Built with Python 3.11+, uv, ruff, mypy, pytest
 
 ## What's Missing
 
@@ -195,7 +195,7 @@ uv sync
 uv run python -m appimage_updater
 ```
 
-### 📦 Enhanced ZIP Support
+### Enhanced ZIP Support
 
 **NEW**: Comprehensive support for applications that distribute AppImage files inside ZIP archives:
 
@@ -239,7 +239,7 @@ uv run python -m appimage_updater add BalenaEtcher https://github.com/balena-io/
 #                       Filters out: ARM64, macOS, Windows versions
 ```
 
-**🔍 System Detection:**
+**System Detection:**
 - **Architecture**: x86_64, amd64, arm64, armv7l, i686 (with intelligent aliasing)
 - **Platform**: Linux, macOS (darwin), Windows (win32)
 - **Format Support**: .AppImage, .deb/.rpm (distro-specific), .dmg, .exe, etc.
@@ -270,17 +270,17 @@ Each monitored application has its own configuration file specifying:
 - File pattern matching for AppImage files
 - **Checksum verification settings** (optional, recommended for security)
 
-## 📚 Documentation
+## Documentation
 
 ### **[Complete Documentation → https://royw.github.io/appimage-updater/](https://royw.github.io/appimage-updater/)**
 
 Our comprehensive documentation is live and automatically updated:
 
 **User Guides:**
-- 🚀 **[Getting Started](https://royw.github.io/appimage-updater/getting-started/)** - Step-by-step tutorial
-- 📦 **[Installation](https://royw.github.io/appimage-updater/installation/)** - Setup instructions
-- ⚙️ **[Configuration](https://royw.github.io/appimage-updater/configuration/)** - Advanced settings
-- 🎯 **[Compatibility System](https://royw.github.io/appimage-updater/compatibility/)** - Architecture & platform filtering
+- **[Getting Started](https://royw.github.io/appimage-updater/getting-started/)** - Step-by-step tutorial
+- **[Installation](https://royw.github.io/appimage-updater/installation/)** - Setup instructions
+- **[Configuration](https://royw.github.io/appimage-updater/configuration/)** - Advanced settings
+- **[Compatibility System](https://royw.github.io/appimage-updater/compatibility/)** - Architecture & platform filtering
 - 💾 **[ZIP Support](docs/zip-support.md)** - ZIP extraction and universal pattern generation
 - 🔧 **[Commands Reference](https://royw.github.io/appimage-updater/commands/)** - Complete CLI documentation
 - 💡 **[Examples](https://royw.github.io/appimage-updater/examples/)** - Real-world usage patterns
