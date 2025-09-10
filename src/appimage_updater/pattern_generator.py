@@ -9,10 +9,12 @@ from __future__ import annotations
 
 import re
 import urllib.parse
+from typing import TypedDict
 
 from loguru import logger
 
 from .github_client import GitHubClient
+from .models import Release
 
 
 def parse_github_url(url: str) -> tuple[str, str] | None:
@@ -93,6 +95,13 @@ async def generate_appimage_pattern_async(app_name: str, url: str) -> str:
     return generate_fallback_pattern(app_name, url)
 
 
+class ReleaseGroups(TypedDict):
+    stable_app: list[str]
+    stable_zip: list[str]
+    pre_app: list[str]
+    pre_zip: list[str]
+
+
 async def fetch_appimage_pattern_from_github(url: str) -> str | None:
     """Async function to fetch AppImage pattern from GitHub releases.
 
@@ -101,102 +110,101 @@ async def fetch_appimage_pattern_from_github(url: str) -> str | None:
     """
     from .github_auth import get_github_auth
 
-    # Use authentication for better rate limits
     auth = get_github_auth()
     client = GitHubClient(auth=auth)
 
     try:
-        # Get more releases to find both stable and prerelease files
         releases = await client.get_releases(url, limit=20)
-        stable_appimage_files = []
-        stable_zip_files = []
-        prerelease_appimage_files = []
-        prerelease_zip_files = []
-
-        # Collect AppImage and ZIP files, separating stable from prerelease
-        for release in releases:
-            for asset in release.assets:
-                name_lower = asset.name.lower()
-                if name_lower.endswith(".appimage"):
-                    if release.is_prerelease:
-                        prerelease_appimage_files.append(asset.name)
-                    else:
-                        stable_appimage_files.append(asset.name)
-                elif name_lower.endswith(".zip"):
-                    if release.is_prerelease:
-                        prerelease_zip_files.append(asset.name)
-                    else:
-                        stable_zip_files.append(asset.name)
-
-        # Prioritize stable releases for pattern generation
-        # Only use prereleases if no stable releases have AppImages/ZIPs
-        if stable_appimage_files or stable_zip_files:
-            target_files = stable_appimage_files if stable_appimage_files else stable_zip_files
-            logger.debug(f"Using stable releases for pattern generation: {len(target_files)} files")
-        elif prerelease_appimage_files or prerelease_zip_files:
-            target_files = prerelease_appimage_files if prerelease_appimage_files else prerelease_zip_files
-            logger.debug(f"No stable releases found, using prerelease files for pattern: {len(target_files)} files")
-        else:
+        groups = _collect_release_files(releases)
+        target_files = _select_target_files(groups)
+        if not target_files:
             logger.debug("No AppImage or ZIP files found in any releases")
             return None
-
-        # Generate pattern from actual filenames (supports both .zip and .AppImage)
         return create_pattern_from_filenames(target_files, include_both_formats=True)
-
     except Exception as e:
         logger.debug(f"Error fetching releases: {e}")
         return None
 
 
+def _collect_release_files(releases: list[Release]) -> ReleaseGroups:
+    """Collect filenames grouped by stability and extension."""
+    stable_app: list[str] = []
+    stable_zip: list[str] = []
+    pre_app: list[str] = []
+    pre_zip: list[str] = []
+    for release in releases:
+        for asset in release.assets:
+            name_lower = asset.name.lower()
+            is_pre = release.is_prerelease
+            if name_lower.endswith(".appimage"):
+                (pre_app if is_pre else stable_app).append(asset.name)
+            elif name_lower.endswith(".zip"):
+                (pre_zip if is_pre else stable_zip).append(asset.name)
+    return ReleaseGroups(
+        stable_app=stable_app,
+        stable_zip=stable_zip,
+        pre_app=pre_app,
+        pre_zip=pre_zip,
+    )
+
+
+def _select_target_files(groups: ReleaseGroups) -> list[str] | None:
+    """Choose best filenames: prefer stable, prefer AppImage over ZIP."""
+    if groups["stable_app"] or groups["stable_zip"]:
+        target: list[str] = groups["stable_app"] if groups["stable_app"] else groups["stable_zip"]
+        logger.debug(f"Using stable releases for pattern generation: {len(target)} files")
+        return target
+    if groups["pre_app"] or groups["pre_zip"]:
+        target = groups["pre_app"] if groups["pre_app"] else groups["pre_zip"]
+        logger.debug(f"No stable releases found, using prerelease files for pattern: {len(target)} files")
+        return target
+    return None
+
+
 def create_pattern_from_filenames(filenames: list[str], include_both_formats: bool = False) -> str:
-    """Create a regex pattern from actual AppImage/ZIP filenames.
-
-    Analyzes the filenames to extract common prefixes and create a flexible,
-    case-insensitive pattern that matches the actual file naming convention.
-
-    Args:
-        filenames: List of filenames to analyze
-        include_both_formats: If True, pattern will match both .zip and .AppImage extensions
-    """
+    """Create a regex pattern from actual AppImage/ZIP filenames."""
     if not filenames:
-        extension_pattern = "\\.(zip|AppImage)" if include_both_formats else "\\.AppImage"
-        return f".*{extension_pattern}(\\.(|current|old))?$"
+        return _build_pattern("", include_both_formats, empty_ok=True)
 
-    # Strip extensions from filenames before finding common prefix
-    base_filenames = []
-    for filename in filenames:
-        # Remove common extensions (.AppImage, .zip, etc.)
-        base_name = filename
-        for ext in [".AppImage", ".appimage", ".zip", ".ZIP"]:
-            if base_name.endswith(ext):
-                base_name = base_name[: -len(ext)]
-                break
-        base_filenames.append(base_name)
-
-    # Find the common prefix among the base filenames (without extensions)
-    common_prefix = find_common_prefix(base_filenames)
-
-    if len(common_prefix) < 2:  # Too short to be useful
-        # Use the first filename's prefix up to the first non-letter character
-        first_file = base_filenames[0] if base_filenames else filenames[0]
-        prefix_match = re.match(r"^([a-zA-Z]+)", first_file)
-        common_prefix = prefix_match.group(1) if prefix_match else first_file.split("-")[0]
-
-    # Additional cleanup: Remove version numbers and overly specific details from prefix
-    # This helps create more general patterns that work across releases
+    base_filenames = _strip_extensions_list(filenames)
+    common_prefix = _derive_common_prefix(base_filenames, filenames)
     common_prefix = _generalize_pattern_prefix(common_prefix)
+    pattern = _build_pattern(common_prefix, include_both_formats)
 
-    # Create case-insensitive pattern with the common prefix
-    # Use (?i) flag for case-insensitive matching of the entire pattern
-    escaped_prefix = re.escape(common_prefix)
-
-    # Support both ZIP and AppImage extensions
-    extension_pattern = "\\.(zip|AppImage)" if include_both_formats else "\\.AppImage"
-    pattern = f"(?i){escaped_prefix}.*{extension_pattern}(\\.(|current|old))?$"
-
-    format_info = "both ZIP and AppImage" if include_both_formats else "AppImage"
-    logger.debug(f"Created {format_info} pattern '{pattern}' from {len(filenames)} files: {filenames[:3]}...")
+    fmt = "both ZIP and AppImage" if include_both_formats else "AppImage"
+    logger.debug(f"Created {fmt} pattern '{pattern}' from {len(filenames)} files: {filenames[:3]}...")
     return pattern
+
+
+def _strip_extensions_list(filenames: list[str]) -> list[str]:
+    exts = (".AppImage", ".appimage", ".zip", ".ZIP")
+    result = []
+    for name in filenames:
+        base = name
+        for ext in exts:
+            if base.endswith(ext):
+                base = base[: -len(ext)]
+                break
+        result.append(base)
+    return result
+
+
+def _derive_common_prefix(base_filenames: list[str], original: list[str]) -> str:
+    common = find_common_prefix(base_filenames)
+    if len(common) >= 2:
+        return common
+    first_file = base_filenames[0] if base_filenames else original[0]
+    match = re.match(r"^([a-zA-Z]+)", first_file)
+    return match.group(1) if match else first_file.split("-")[0]
+
+
+def _build_pattern(prefix: str, include_both_formats: bool, empty_ok: bool = False) -> str:
+    if not prefix and empty_ok:
+        ext = "\\.(zip|AppImage)" if include_both_formats else "\\.AppImage"
+        return f".*{ext}(\\.(|current|old))?$"
+    escaped = re.escape(prefix)
+    ext = "\\.(zip|AppImage)" if include_both_formats else "\\.AppImage"
+    return f"(?i){escaped}.*{ext}(\\.(|current|old))?$"
 
 
 def _generalize_pattern_prefix(prefix: str) -> str:

@@ -65,69 +65,48 @@ class DistributionSelector:
         )
 
     def select_best_asset(self, assets: list[Asset]) -> Asset:
-        """Select the best asset for the current system.
-
-        Args:
-            assets: List of available assets
-
-        Returns:
-            The best matching asset for the current system
-
-        Raises:
-            ValueError: If no assets provided or user cancels selection
-        """
+        """Select the best asset for the current system or prompt the user."""
         if not assets:
             raise ValueError("No assets provided")
-
         if len(assets) == 1:
             return assets[0]
 
-        # Parse asset information
-        asset_infos = []
-        for asset in assets:
-            info = self._parse_asset_info(asset)
-            asset_infos.append(info)
+        asset_infos = self._parse_assets(assets)
+        asset_infos = self._score_and_sort(asset_infos)
+        asset_infos = self._filter_compatible(asset_infos) or asset_infos
 
-        # Calculate compatibility scores
-        for info in asset_infos:
-            info.score = self._calculate_compatibility_score(info)
-
-        # Sort by score (highest first)
-        asset_infos.sort(key=lambda x: x.score, reverse=True)
-
-        # Filter out incompatible assets (wrong architecture/platform)
-        compatible_assets = [info for info in asset_infos if info.score > 0.0]
-
-        if not compatible_assets:
-            # No compatible assets - log warning and return best effort
-            logger.warning("No fully compatible assets found, using best available")
-            compatible_assets = asset_infos
-
-        # Use compatible assets for selection
-        asset_infos = compatible_assets
         best_info = asset_infos[0]
-
-        # If the best score is high enough, use it automatically
-        if best_info.score >= 150.0:  # Perfect or very good match (raised threshold due to new scoring)
+        if best_info.score >= 150.0:
             logger.debug(f"Auto-selected asset: {best_info.asset.name} (score: {best_info.score:.1f})")
             return best_info.asset
 
-        # Check if we have multiple options with similar scores
-        similar_scores = [info for info in asset_infos if abs(info.score - best_info.score) < 20.0]
-
-        # If we have multiple similar options or the current distribution is uncommon, ask user
-        if len(similar_scores) > 1 or self._is_uncommon_distribution():
+        if self._needs_user_input(asset_infos, best_info):
             if self.interactive:
-                selected_info = self._prompt_user_selection(asset_infos)
-                return selected_info.asset
-            else:
-                # Non-interactive mode - use best score
-                logger.warning(f"Multiple distribution options available, using best match: {best_info.asset.name}")
-                return best_info.asset
+                return self._prompt_user_selection(asset_infos).asset
+            logger.warning(f"Multiple distribution options available, using best match: {best_info.asset.name}")
+            return best_info.asset
 
-        # Use the best scored asset
         logger.debug(f"Selected asset: {best_info.asset.name} (score: {best_info.score:.1f})")
         return best_info.asset
+
+    def _parse_assets(self, assets: list[Asset]) -> list[AssetInfo]:
+        return [self._parse_asset_info(a) for a in assets]
+
+    def _score_and_sort(self, asset_infos: list[AssetInfo]) -> list[AssetInfo]:
+        for info in asset_infos:
+            info.score = self._calculate_compatibility_score(info)
+        asset_infos.sort(key=lambda x: x.score, reverse=True)
+        return asset_infos
+
+    def _filter_compatible(self, asset_infos: list[AssetInfo]) -> list[AssetInfo]:
+        compatible = [i for i in asset_infos if i.score > 0.0]
+        if not compatible:
+            logger.warning("No fully compatible assets found, using best available")
+        return compatible
+
+    def _needs_user_input(self, asset_infos: list[AssetInfo], best_info: AssetInfo) -> bool:
+        similar = [i for i in asset_infos if abs(i.score - best_info.score) < 20.0]
+        return len(similar) > 1 or self._is_uncommon_distribution()
 
     def _detect_current_distribution(self) -> DistributionInfo:
         """Detect the current Linux distribution."""

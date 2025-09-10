@@ -230,9 +230,10 @@ class Downloader:
         return checksum_result
 
     async def _extract_if_zip(self, candidate: UpdateCandidate) -> None:
-        """Extract AppImage file from zip if the downloaded file is a zip.
+        """Extract an AppImage from a downloaded ZIP, updating download_path.
 
-        Updates candidate.download_path to point to the extracted AppImage file.
+        If the file is not a ZIP, this is a no-op. On success, replaces the ZIP
+        with the extracted AppImage file at the same directory.
         """
         if candidate.download_path.suffix.lower() != ".zip":
             return
@@ -241,46 +242,18 @@ class Downloader:
 
         try:
             with zipfile.ZipFile(candidate.download_path, "r") as zip_ref:
-                # Find AppImage files in the zip
-                appimage_files = [
-                    name for name in zip_ref.namelist() if name.lower().endswith(".appimage") and not name.endswith("/")
-                ]
-
+                appimage_files = self._list_appimages_in_zip(zip_ref)
                 if not appimage_files:
-                    # List what files are actually in the zip for context
-                    zip_contents = [name for name in zip_ref.namelist() if not name.endswith("/")][:5]  # First 5 files
-                    contents_info = f"Contains: {', '.join(zip_contents)}" + (
-                        "..." if len(zip_ref.namelist()) > 5 else ""
-                    )
-
-                    raise Exception(
-                        f"No AppImage files found in zip: {candidate.download_path.name}. "
-                        f"{contents_info}. This project may have stopped providing AppImage format. "
-                        f"Check the project's releases page for alternative download options."
-                    )
+                    self._raise_no_appimage_error(zip_ref, candidate)
 
                 if len(appimage_files) > 1:
                     logger.warning(f"Multiple AppImage files found in zip, using first: {appimage_files[0]}")
 
-                # Extract the first AppImage file
-                appimage_filename = appimage_files[0]
-                # Get just the filename without any directory path
-                appimage_basename = Path(appimage_filename).name
+                extract_path = self._extract_appimage(zip_ref, appimage_files[0], candidate)
 
-                # Extract to the same directory as the zip file
-                extract_path = candidate.download_path.parent / appimage_basename
-
-                # Extract the file
-                with zip_ref.open(appimage_filename) as source, extract_path.open("wb") as target:
-                    target.write(source.read())
-
-                logger.debug(f"Extracted AppImage: {appimage_basename}")
-
-                # Remove the zip file
+                # Remove the zip file and update path
                 candidate.download_path.unlink()
                 logger.debug(f"Removed zip file: {candidate.download_path.name}")
-
-                # Update the candidate's download path to point to the extracted file
                 candidate.download_path = extract_path
                 logger.debug(f"Updated download path to: {extract_path.name}")
 
@@ -289,6 +262,30 @@ class Downloader:
         except Exception as e:
             logger.error(f"Failed to extract zip file {candidate.download_path.name}: {e}")
             raise Exception(f"Zip extraction failed: {e}") from e
+
+    def _list_appimages_in_zip(self, zip_ref: zipfile.ZipFile) -> list[str]:
+        """Return AppImage file entries (exclude directories)."""
+        return [n for n in zip_ref.namelist() if n.lower().endswith(".appimage") and not n.endswith("/")]
+
+    def _zip_contents_summary(self, zip_ref: zipfile.ZipFile, max_items: int = 5) -> str:
+        files = [n for n in zip_ref.namelist() if not n.endswith("/")][:max_items]
+        return f"Contains: {', '.join(files)}" + ("..." if len(zip_ref.namelist()) > max_items else "")
+
+    def _raise_no_appimage_error(self, zip_ref: zipfile.ZipFile, candidate: UpdateCandidate) -> None:
+        contents_info = self._zip_contents_summary(zip_ref)
+        raise Exception(
+            f"No AppImage files found in zip: {candidate.download_path.name}. "
+            f"{contents_info}. This project may have stopped providing AppImage format. "
+            f"Check the project's releases page for alternative download options."
+        )
+
+    def _extract_appimage(self, zip_ref: zipfile.ZipFile, appimage_filename: str, candidate: UpdateCandidate) -> Path:
+        appimage_basename = Path(appimage_filename).name
+        extract_path = candidate.download_path.parent / appimage_basename
+        with zip_ref.open(appimage_filename) as source, extract_path.open("wb") as target:
+            target.write(source.read())
+        logger.debug(f"Extracted AppImage: {appimage_basename}")
+        return extract_path
 
     async def _create_version_metadata(self, candidate: UpdateCandidate) -> None:
         """Create a .info metadata file with version information.
