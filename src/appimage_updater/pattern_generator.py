@@ -97,6 +97,7 @@ async def fetch_appimage_pattern_from_github(url: str) -> str | None:
     """Async function to fetch AppImage pattern from GitHub releases.
 
     Looks for both direct AppImage files and ZIP files that might contain AppImages.
+    Prioritizes stable releases over prereleases for better pattern generation.
     """
     from .github_auth import get_github_auth
 
@@ -105,25 +106,38 @@ async def fetch_appimage_pattern_from_github(url: str) -> str | None:
     client = GitHubClient(auth=auth)
 
     try:
-        # Get recent releases to find AppImage and ZIP files
-        releases = await client.get_releases(url, limit=5)
-        appimage_files = []
-        zip_files = []
+        # Get more releases to find both stable and prerelease files
+        releases = await client.get_releases(url, limit=20)
+        stable_appimage_files = []
+        stable_zip_files = []
+        prerelease_appimage_files = []
+        prerelease_zip_files = []
 
-        # Collect AppImage and ZIP files from recent releases
+        # Collect AppImage and ZIP files, separating stable from prerelease
         for release in releases:
             for asset in release.assets:
                 name_lower = asset.name.lower()
                 if name_lower.endswith(".appimage"):
-                    appimage_files.append(asset.name)
+                    if release.is_prerelease:
+                        prerelease_appimage_files.append(asset.name)
+                    else:
+                        stable_appimage_files.append(asset.name)
                 elif name_lower.endswith(".zip"):
-                    zip_files.append(asset.name)
+                    if release.is_prerelease:
+                        prerelease_zip_files.append(asset.name)
+                    else:
+                        stable_zip_files.append(asset.name)
 
-        # Prefer AppImage files but include ZIP files if no AppImages found
-        target_files = appimage_files if appimage_files else zip_files
-
-        if not target_files:
-            logger.debug("No AppImage or ZIP files found in recent releases")
+        # Prioritize stable releases for pattern generation
+        # Only use prereleases if no stable releases have AppImages/ZIPs
+        if stable_appimage_files or stable_zip_files:
+            target_files = stable_appimage_files if stable_appimage_files else stable_zip_files
+            logger.debug(f"Using stable releases for pattern generation: {len(target_files)} files")
+        elif prerelease_appimage_files or prerelease_zip_files:
+            target_files = prerelease_appimage_files if prerelease_appimage_files else prerelease_zip_files
+            logger.debug(f"No stable releases found, using prerelease files for pattern: {len(target_files)} files")
+        else:
+            logger.debug("No AppImage or ZIP files found in any releases")
             return None
 
         # Generate pattern from actual filenames (supports both .zip and .AppImage)
@@ -168,6 +182,10 @@ def create_pattern_from_filenames(filenames: list[str], include_both_formats: bo
         prefix_match = re.match(r"^([a-zA-Z]+)", first_file)
         common_prefix = prefix_match.group(1) if prefix_match else first_file.split("-")[0]
 
+    # Additional cleanup: Remove version numbers and overly specific details from prefix
+    # This helps create more general patterns that work across releases
+    common_prefix = _generalize_pattern_prefix(common_prefix)
+
     # Create case-insensitive pattern with the common prefix
     # Use (?i) flag for case-insensitive matching of the entire pattern
     escaped_prefix = re.escape(common_prefix)
@@ -179,6 +197,68 @@ def create_pattern_from_filenames(filenames: list[str], include_both_formats: bo
     format_info = "both ZIP and AppImage" if include_both_formats else "AppImage"
     logger.debug(f"Created {format_info} pattern '{pattern}' from {len(filenames)} files: {filenames[:3]}...")
     return pattern
+
+
+def _generalize_pattern_prefix(prefix: str) -> str:
+    """Generalize a pattern prefix by removing version numbers and overly specific details.
+
+    This helps create patterns that work across multiple releases rather than being
+    tied to specific version numbers or build configurations.
+    """
+    if not prefix:
+        return prefix
+
+    # Remove version numbers and date patterns
+    # Handle standard versions: "_1.0.2" or "_v1.0.2" or "-1.0.2"
+    prefix = re.sub(r"[_-]v?\d+(\.\d+)*", "", prefix)
+
+    # Handle weekly date patterns: "-2025.09.10" (year.month.day)
+    prefix = re.sub(r"[_-]\d{4}\.\d{2}\.\d{2}", "", prefix)
+
+    # Remove any trailing periods left behind from date/version removal
+    prefix = re.sub(r"\.$", "", prefix)
+
+    # More aggressive cleanup - remove platform/build specific parts
+    # These patterns often appear in the middle or at the end
+    platform_patterns = [
+        r"[_-]conda[_-]Linux[_-]",  # -conda-Linux- or _conda_Linux_
+        r"[_-]conda[_-]",  # -conda- or _conda_
+        r"[_-]Linux[_-]",  # -Linux- or _Linux_
+        r"[_-]Windows[_-]",  # -Windows- or _Windows_
+        r"[_-]macOS[_-]",  # -macOS- or _macOS_
+        r"[_-]darwin[_-]",  # -darwin- or _darwin_
+    ]
+
+    # Remove platform patterns that appear in the middle
+    for pattern in platform_patterns:
+        prefix = re.sub(pattern, "-", prefix, flags=re.IGNORECASE)
+
+    # Clean up trailing separators and platform terms
+    suffix_patterns = [
+        r"[_-]conda$",
+        r"[_-]Linux$",
+        r"[_-]Windows$",
+        r"[_-]macOS$",
+        r"[_-]darwin$",
+        r"[_-]x86_64$",
+        r"[_-]aarch64$",
+        r"[_-]arm64$",
+        r"[_-]py\d+$",
+        r"[_-]+$",  # Remove trailing separators
+    ]
+
+    for pattern in suffix_patterns:
+        prefix = re.sub(pattern, "", prefix, flags=re.IGNORECASE)
+
+    # Ensure we have at least something meaningful left
+    if len(prefix) < 2:
+        # If we've over-generalized, try to extract just the app name
+        # Look for the first sequence of letters before any special characters
+        match = re.match(r"^([a-zA-Z]{2,})", prefix)
+        if match:
+            prefix = match.group(1)
+
+    return prefix
 
 
 def find_common_prefix(strings: list[str]) -> str:

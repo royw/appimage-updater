@@ -10,7 +10,60 @@ A service for automating the finding and downloading of AppImage applications fr
 
 ## Overview
 
-This tool monitors configured applications (like FreeCAD) for new releases and provides an automated way to download updated AppImage files. It supports checking GitHub releases and other sources at configurable intervals.
+This tool monitors configured applications (like FreeCAD) for new releases and provides an automated way to download 
+updated AppImage files. It currently supports checking GitHub releases, downloading with .AppImage and zip files that
+contain .AppImage files, verifying checksums, and managing file rotation and symlinks.
+
+For example, you want to keep current of both [FreeCAD](https://github.com/FreeCAD/FreeCAD) official releases and 
+their weekly releases.  You use [appimaged](https://github.com/probonopd/go-appimage) to integrate your AppImages 
+into your system.  You do not want the official releases integrated into your system (i.e., you are ok with
+manually running them from the terminal) so you do not want them on appimaged's search path.  However you do want
+the latest weekly release integrated into your system, and a few previous releases if you need to track down a
+development issue.  Here is a possible directory structure:
+
+```bash aiignore
+~/Applications ➤ ls -l Free*                                                                                                                                               Python 3.13.3 royw@roy-kubuntu2504
+-rw-rw-r-- 1 royw royw 2361 Oct 31  2023 FreeCAD.readme
+lrwxrwxrwx 1 royw royw  100 Sep 10 13:58 FreeCAD_weekly.AppImage -> /home/royw/Applications/FreeCAD_weekly/FreeCAD_weekly-2025.09.10-Linux-x86_64-py311.AppImage.current
+
+FreeCAD:
+total 1441024
+-rwxr-xr-x 1 royw royw 679702928 Nov 30  2024 FreeCAD-1.0.0-conda-Linux-x86_64-py311.appimage
+-rwxr-xr-x 1 royw royw 795892216 Sep  3 23:34 FreeCAD_1.0.2-conda-Linux-x86_64-py311.AppImage
+
+FreeCAD_weekly:
+total 2378292
+-rwxr-xr-x 1 royw royw 811510264 Aug 28 14:42 FreeCAD_weekly-2025.08.27-Linux-x86_64-py311.AppImage.old
+-rwxr-xr-x 1 royw royw 811846136 Sep  3 22:46 FreeCAD_weekly-2025.09.03-Linux-x86_64-py311.AppImage.old
+-rwxr-xr-x 1 royw royw 811993592 Sep 10 13:58 FreeCAD_weekly-2025.09.10-Linux-x86_64-py311.AppImage.current
+-rw-rw-r-- 1 royw royw        46 Sep 10 13:58 FreeCAD_weekly-2025.09.10-Linux-x86_64-py311.AppImage.current.info
+```
+Official Releases go into ~/Applications/FreeCAD/ while the weekly releases go into ~/Applications/FreeCAD_weekly/.
+A symbolic link, ~/Applications/FreeCAD_weekly.AppImage is on appimaged's search path and points to the current
+weekly release.  If you hit an issue with the current release, simply replace the symbolic link with one that
+points to a old release.
+
+Cool.  Works nicely except you have to manually check the github repository, download updates, verify checksums,
+and rotate the extensions and symbolic link.  This is where appimage-updater comes in.
+
+```bash
+~/Applications ➤ appimage-updater list                                                                                                                                     Python 3.13.3 royw@roy-kubuntu2504
+                                                        Configured Applications                                                         
+┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
+┃ Application        ┃ Status  ┃ Source                                           ┃ Download Directory                     ┃ Frequency ┃
+┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
+│ appimaged          │ Enabled │ Github: https://github.com/probonopd/go-appimage │ /home/royw/Applications/appimaged      │ 1 days    │
+│ appimagetool       │ Enabled │ Github: https://github.com/AppImage/appimagetool │ /home/royw/Applications/appimagetool   │ 1 days    │
+│ BambuStudio        │ Enabled │ Github: https://github.com/bambulab/BambuStudio  │ /home/royw/Applications/BambuStudio    │ 1 days    │
+│ EdgeTX_Companion   │ Enabled │ Github: https://github.com/EdgeTX/edgetx         │ /home/royw/Applications/EdgeTX         │ 1 days    │
+│ GitHubDesktop      │ Enabled │ Github: https://github.com/shiftkey/desktop      │ /home/royw/Applications/GitHubDesktop  │ 1 days    │
+│ OpenShot           │ Enabled │ Github: https://github.com/OpenShot/openshot-qt  │ /home/royw/Applications/OpenShot       │ 1 days    │
+│ OrcaSlicer_nightly │ Enabled │ Github: https://github.com/SoftFever/OrcaSlicer  │ /home/royw/Applications/OrcaSlicer     │ 1 days    │
+│ UltiMaker-Cura     │ Enabled │ Github: https://github.com/Ultimaker/Cura        │ /home/royw/Applications/UltiMaker-Cura │ 1 days    │
+└────────────────────┴─────────┴──────────────────────────────────────────────────┴────────────────────────────────────────┴───────────┘
+
+Total: 8 applications (8 enabled, 0 disabled)
+```
 
 ## Features
 
@@ -106,9 +159,9 @@ Check the project's releases page for alternative download options.
 Automatically eliminates incompatible downloads:
 
 ```bash
-# Multi-architecture project (e.g., BelenaEtcher)
+# Multi-architecture project (e.g., BalenaEtcher)
 # Available: linux-x86_64.AppImage, linux-arm64.AppImage, darwin.dmg, win32.exe
-uv run python -m appimage_updater add BelenaEtcher https://github.com/balena-io/etcher ~/Apps/BelenaEtcher
+uv run python -m appimage_updater add BalenaEtcher https://github.com/balena-io/etcher ~/Apps/BalenaEtcher
 # Ubuntu x86_64 Result: Automatically selects Linux x86_64 AppImage
 #                       Filters out: ARM64, macOS, Windows versions
 ```

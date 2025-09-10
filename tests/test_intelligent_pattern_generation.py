@@ -126,3 +126,90 @@ def test_intelligent_pattern_generation_success():
 
         # Document that fallback occurred (for debugging)
         print(f"API fallback used, generated pattern: {pattern}")
+
+
+def test_freecad_stable_vs_prerelease_prioritization():
+    """Test that FreeCAD pattern generation prioritizes stable releases over prereleases.
+    
+    FreeCAD has both stable releases (like 1.0.2) and weekly prerelease builds.
+    The pattern should be based on stable releases, not weekly builds.
+    """
+    app_name = "FreeCAD"
+    url = "https://github.com/FreeCAD/FreeCAD"
+    
+    pattern = generate_appimage_pattern(app_name, url)
+    
+    # The pattern should be general enough to match both stable and prerelease versions
+    if "(?i)" in pattern:  # API-generated pattern
+        # Should start with FreeCAD but not include version-specific details
+        assert pattern.startswith("(?i)FreeCAD")
+        
+        # Should NOT be specific to weekly builds
+        assert "weekly" not in pattern.lower()
+        assert "2025" not in pattern  # No specific year
+        assert "1.0.2" not in pattern  # No specific version
+        
+        # Should support both formats
+        assert "\\.(zip|AppImage)(\\.(|current|old))?$" in pattern
+        
+        # Test that it matches various FreeCAD file types
+        import re
+        pattern_compiled = re.compile(pattern)
+        test_files = [
+            "FreeCAD_1.0.2-conda-Linux-x86_64-py311.AppImage",  # Stable
+            "FreeCAD_weekly-2025.09.10-Linux-x86_64-py311.AppImage",  # Weekly
+            "FreeCAD_2.0.0-Linux-x86_64.AppImage",  # Future stable
+            "FreeCAD-Windows-x64.zip",  # ZIP format
+        ]
+        
+        for filename in test_files:
+            assert pattern_compiled.match(filename), \
+                f"Pattern {pattern} should match {filename}"
+    else:
+        # Fallback mode - should still be reasonable
+        assert "FreeCAD" in pattern
+        # Verify it's a valid regex
+        re.compile(pattern)
+
+
+def test_pattern_generation_mixed_releases():
+    """Test that pattern generation handles repositories with both stable and prerelease versions.
+    
+    This test documents the improvement where stable releases are prioritized
+    for pattern generation over prerelease versions.
+    """
+    # This would ideally be a mock test, but for now we document the expected behavior
+    from appimage_updater.pattern_generator import create_pattern_from_filenames
+    
+    # Simulate stable release files (should be used for pattern)
+    stable_files = [
+        "FreeCAD_1.0.2-conda-Linux-x86_64-py311.AppImage",
+        "FreeCAD_1.0.2-conda-Linux-aarch64-py311.AppImage"
+    ]
+    
+    # Simulate prerelease files (should be ignored when stable files exist)
+    prerelease_files = [
+        "FreeCAD_weekly-2025.09.10-Linux-x86_64-py311.AppImage",
+        "FreeCAD_weekly-2025.09.03-Linux-x86_64-py311.AppImage"
+    ]
+    
+    # Generate pattern from stable files
+    stable_pattern = create_pattern_from_filenames(stable_files, include_both_formats=True)
+    
+    # Generate pattern from prerelease files
+    prerelease_pattern = create_pattern_from_filenames(prerelease_files, include_both_formats=True)
+    
+    # The stable pattern should be more general (not include weekly)
+    assert "weekly" not in stable_pattern.lower()
+    assert "(?i)FreeCAD.*\\.(zip|AppImage)(\\.(|current|old))?$" == stable_pattern
+    
+    # The prerelease pattern would be specific to weekly builds
+    # The actual pattern escapes special characters and might generalize dates
+    assert "FreeCAD_weekly" in prerelease_pattern
+    assert "\\.(zip|AppImage)(\\.(|current|old))?$" in prerelease_pattern
+    
+    # Verify it's a valid pattern that would match weekly files
+    import re
+    prerelease_compiled = re.compile(prerelease_pattern)
+    assert prerelease_compiled.match("FreeCAD_weekly-2025.09.10-Linux-x86_64-py311.AppImage")
+    assert prerelease_compiled.match("FreeCAD_weekly-2025.12.31-Linux-x86_64-py311.AppImage")
