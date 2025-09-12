@@ -25,10 +25,9 @@ from .config_loader import (
 from .pattern_generator import (
     detect_source_type,
     generate_appimage_pattern_async,
-    normalize_github_url,
-    parse_github_url,
     should_enable_prerelease,
 )
+from .repositories import get_repository_client
 
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 
@@ -59,12 +58,17 @@ def load_config(config_file: Path | None, config_dir: Path | None) -> Any:
 
 def validate_and_normalize_add_url(url: str) -> str:
     """Validate and normalize URL for add command."""
-    normalized_url, was_corrected = normalize_github_url(url)
-    if not parse_github_url(normalized_url):
-        console.print("[red]Error: Only GitHub repository URLs are currently supported")
-        console.print(f"[yellow]URL provided: {url}")
-        console.print("[yellow]Expected format: https://github.com/owner/repo")
-        raise typer.Exit(1)
+    try:
+        repo_client = get_repository_client(url)
+        normalized_url, was_corrected = repo_client.normalize_repo_url(url)
+
+        # Validate that we can parse the normalized URL
+        repo_client.parse_repo_url(normalized_url)
+
+    except Exception as e:
+        console.print(f"[red]Error: Invalid repository URL: {url}")
+        console.print(f"[yellow]Error details: {e}")
+        raise typer.Exit(1) from e
 
     # Inform user if we corrected the URL
     if was_corrected:
@@ -472,13 +476,17 @@ def validate_url_update(updates: dict[str, Any]) -> None:
         return
 
     url = updates["url"]
-    normalized_url, was_corrected = normalize_github_url(url)
+    try:
+        repo_client = get_repository_client(url)
+        normalized_url, was_corrected = repo_client.normalize_repo_url(url)
 
-    if not parse_github_url(normalized_url):
-        raise ValueError("Only GitHub repository URLs are currently supported")
+        # Validate that we can parse the normalized URL
+        repo_client.parse_repo_url(normalized_url)
 
-    # Update with normalized URL
-    updates["url"] = normalized_url
+        # Update with normalized URL
+        updates["url"] = normalized_url
+    except Exception as e:
+        raise ValueError(f"Invalid repository URL: {url} - {e}") from e
 
     # Show correction to user if URL was corrected
     if was_corrected:

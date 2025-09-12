@@ -13,8 +13,8 @@ from typing import TypedDict
 
 from loguru import logger
 
-from .github_client import GitHubClient
 from .models import Release
+from .repositories import get_repository_client
 
 
 def parse_github_url(url: str) -> tuple[str, str] | None:
@@ -103,17 +103,13 @@ class ReleaseGroups(TypedDict):
 
 
 async def fetch_appimage_pattern_from_github(url: str) -> str | None:
-    """Async function to fetch AppImage pattern from GitHub releases.
+    """Async function to fetch AppImage pattern from repository releases.
 
     Looks for both direct AppImage files and ZIP files that might contain AppImages.
     Prioritizes stable releases over prereleases for better pattern generation.
     """
-    from .github_auth import get_github_auth
-
-    auth = get_github_auth()
-    client = GitHubClient(auth=auth)
-
     try:
+        client = get_repository_client(url)
         releases = await client.get_releases(url, limit=20)
         groups = _collect_release_files(releases)
         target_files = _select_target_files(groups)
@@ -331,10 +327,9 @@ def generate_fallback_pattern(app_name: str, url: str) -> str:
 
 def detect_source_type(url: str) -> str:
     """Detect the source type based on the URL."""
-    if parse_github_url(url):
-        return "github"
-    # Could add support for other sources in the future
-    return "github"  # Default to github for now
+    from .repositories import detect_repository_type
+
+    return detect_repository_type(url)
 
 
 def generate_appimage_pattern(app_name: str, url: str) -> str:
@@ -355,17 +350,14 @@ async def should_enable_prerelease(url: str) -> bool:
     and no stable releases, indicating that prerelease support should be enabled.
 
     Args:
-        url: GitHub repository URL
+        url: Repository URL
 
     Returns:
         bool: True if only prereleases are found, False if stable releases exist or on error
     """
     try:
-        from .github_auth import get_github_auth
-
-        # Create GitHub client with authentication and shorter timeout for this check
-        auth = get_github_auth()
-        client = GitHubClient(timeout=10, auth=auth)
+        # Create repository client with shorter timeout for this check
+        client = get_repository_client(url, timeout=10)
 
         # Get recent releases to analyze
         releases = await client.get_releases(url, limit=10)

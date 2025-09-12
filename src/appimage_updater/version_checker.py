@@ -9,35 +9,27 @@ from packaging import version
 
 from .config import ApplicationConfig
 from .distribution_selector import select_best_distribution_asset
-from .github_client import GitHubClient, GitHubClientError
 from .models import CheckResult, UpdateCandidate
+from .repositories import RepositoryClient, RepositoryError, get_repository_client
 
 
 class VersionChecker:
     """Handles version checking for applications."""
 
-    def __init__(self, github_client: GitHubClient, interactive: bool = True) -> None:
+    def __init__(self, repository_client: RepositoryClient | None = None, interactive: bool = True) -> None:
         """Initialize version checker.
 
         Args:
-            github_client: GitHub client instance
+            repository_client: Repository client instance (optional, will be created per-app if not provided)
             interactive: Whether to allow interactive distribution selection
         """
-        self.github_client = github_client
+        self.repository_client = repository_client
         self.interactive = interactive
 
     async def check_for_updates(self, app_config: ApplicationConfig) -> CheckResult:
         """Check for updates for a single application."""
         try:
-            if app_config.source_type == "github":
-                return await self._check_github_updates(app_config)
-            else:
-                msg = f"Unsupported source type: {app_config.source_type}"
-                return CheckResult(
-                    app_name=app_config.name,
-                    success=False,
-                    error_message=msg,
-                )
+            return await self._check_repository_updates(app_config)
         except Exception as e:
             return CheckResult(
                 app_name=app_config.name,
@@ -45,15 +37,18 @@ class VersionChecker:
                 error_message=str(e),
             )
 
-    async def _check_github_updates(self, app_config: ApplicationConfig) -> CheckResult:
-        """Check for updates from GitHub releases."""
+    async def _check_repository_updates(self, app_config: ApplicationConfig) -> CheckResult:
+        """Check for updates from repository releases."""
         try:
+            # Get or create repository client for this app
+            repo_client = self.repository_client or get_repository_client(app_config.url)
+
             # Choose appropriate method based on prerelease setting
             if app_config.prerelease:
-                release = await self.github_client.get_latest_release_including_prerelease(app_config.url)
+                release = await repo_client.get_latest_release_including_prerelease(app_config.url)
             else:
-                release = await self.github_client.get_latest_release(app_config.url)
-        except GitHubClientError as e:
+                release = await repo_client.get_latest_release(app_config.url)
+        except RepositoryError as e:
             return CheckResult(
                 app_name=app_config.name,
                 success=False,

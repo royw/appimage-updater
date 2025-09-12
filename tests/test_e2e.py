@@ -116,10 +116,10 @@ class TestE2EFunctionality:
         assert result.exit_code == 0
         assert "already exists" in result.stdout
 
-    @patch('appimage_updater.main.GitHubClient')
+    @patch('appimage_updater.repositories.get_repository_client')
     @patch('appimage_updater.main.VersionChecker')
     def test_check_command_dry_run_no_updates_needed(
-        self, mock_version_checker_class, mock_github_client_class,
+        self, mock_version_checker_class, mock_repo_client_factory,
         runner, temp_config_dir, sample_config, temp_download_dir
     ):
         """Test check command with dry-run when no updates are needed."""
@@ -160,10 +160,10 @@ class TestE2EFunctionality:
         assert result.exit_code == 0
         assert "Up to date" in result.stdout or "All applications are up to date" in result.stdout
 
-    @patch('appimage_updater.main.GitHubClient')
+    @patch('appimage_updater.repositories.get_repository_client')
     @patch('appimage_updater.main.VersionChecker')
     def test_check_command_dry_run_with_updates_available(
-        self, mock_version_checker_class, mock_github_client_class,
+        self, mock_version_checker_class, mock_repo_client_factory,
         runner, temp_config_dir, sample_config, temp_download_dir
     ):
         """Test check command with dry-run when updates are available."""
@@ -205,11 +205,11 @@ class TestE2EFunctionality:
         assert "Update available" in result.stdout or "updates available" in result.stdout
         assert "Dry run mode" in result.stdout
 
-    @patch('appimage_updater.main.GitHubClient')
+    @patch('appimage_updater.repositories.get_repository_client')
     @patch('appimage_updater.main.VersionChecker')
     def test_check_command_with_app_filter(
-        self, mock_version_checker_class, mock_github_client_class,
-        runner, temp_config_dir, temp_download_dir
+        self, mock_version_checker_class, mock_repo_client_factory,
+        runner, temp_config_dir, sample_config, temp_download_dir
     ):
         """Test check command with specific app filtering."""
         # Create config with multiple apps
@@ -274,10 +274,10 @@ class TestE2EFunctionality:
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
 
-    @patch('appimage_updater.main.GitHubClient')
+    @patch('appimage_updater.repositories.get_repository_client')
     @patch('appimage_updater.main.VersionChecker')
     def test_check_command_with_failed_version_check(
-        self, mock_version_checker_class, mock_github_client_class,
+        self, mock_version_checker_class, mock_repo_client_factory,
         runner, temp_config_dir, sample_config
     ):
         """Test check command when version check fails."""
@@ -310,7 +310,7 @@ class TestE2EFunctionality:
             json.dump(sample_config, f)
 
         # Mock to prevent actual network calls
-        with patch('appimage_updater.main.GitHubClient'), \
+        with patch('appimage_updater.repositories.get_repository_client'), \
              patch('appimage_updater.main.VersionChecker') as mock_vc:
 
             mock_check_result = CheckResult(
@@ -736,10 +736,10 @@ class TestPatternMatching:
         for filename in filenames:
             (directory / filename).touch()
 
-    @patch('appimage_updater.main.GitHubClient')
+    @patch('appimage_updater.repositories.get_repository_client')
     @patch('appimage_updater.main.VersionChecker')
     def test_pattern_matching_with_suffixes(
-        self, mock_version_checker_class, mock_github_client_class,
+        self, mock_version_checker_class, mock_repo_client_factory,
         runner, temp_config_dir, temp_download_dir
     ):
         """Test that patterns correctly match files with various suffixes."""
@@ -809,10 +809,9 @@ class TestPatternMatching:
 
 def test_version_extraction_patterns():
     """Test version extraction from various filename formats."""
-    from appimage_updater.github_client import GitHubClient
     from appimage_updater.version_checker import VersionChecker
 
-    checker = VersionChecker(GitHubClient())
+    checker = VersionChecker()
 
     test_cases = [
         ("FreeCAD_1.0.2-conda-Linux-x86_64-py311.AppImage.save", "1.0.2"),
@@ -940,9 +939,8 @@ class TestAddCommand:
         ])
 
         assert result.exit_code == 1
-        assert "Only GitHub repository URLs are currently supported" in result.stdout
-        assert "https://example.com/invalid" in result.stdout
-        assert "Expected format: https://github.com/owner/repo" in result.stdout
+        assert "Error: Invalid repository URL: https://example.com/invalid" in result.stdout
+        assert "No repository client available for URL:" in result.stdout
 
         # Verify no config file was created
         config_files = list(temp_config_dir.glob("*.json"))

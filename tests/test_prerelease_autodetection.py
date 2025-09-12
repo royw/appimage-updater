@@ -2,7 +2,7 @@
 
 import json
 from datetime import datetime
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -43,10 +43,10 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.pattern_generator.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_client_factory:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
-            mock_client_class.return_value = mock_client
+            mock_client_factory.return_value = mock_client
 
             result = await should_enable_prerelease("https://github.com/test/repo")
 
@@ -75,10 +75,10 @@ class TestPrereleaseAutoDetection:
             ),
         ]
 
-        with patch("appimage_updater.pattern_generator.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_client_factory:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
-            mock_client_class.return_value = mock_client
+            mock_client_factory.return_value = mock_client
 
             result = await should_enable_prerelease("https://github.com/test/repo")
 
@@ -106,10 +106,10 @@ class TestPrereleaseAutoDetection:
             ),
         ]
 
-        with patch("appimage_updater.pattern_generator.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_client_factory:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
-            mock_client_class.return_value = mock_client
+            mock_client_factory.return_value = mock_client
 
             result = await should_enable_prerelease("https://github.com/test/repo")
 
@@ -118,10 +118,10 @@ class TestPrereleaseAutoDetection:
     @pytest.mark.anyio
     async def test_should_enable_prerelease_no_releases(self):
         """Test that prerelease is not enabled when repository has no releases."""
-        with patch("appimage_updater.pattern_generator.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_client_factory:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = []
-            mock_client_class.return_value = mock_client
+            mock_client_factory.return_value = mock_client
 
             result = await should_enable_prerelease("https://github.com/test/repo")
 
@@ -141,10 +141,10 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.pattern_generator.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_client_factory:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
-            mock_client_class.return_value = mock_client
+            mock_client_factory.return_value = mock_client
 
             result = await should_enable_prerelease("https://github.com/test/repo")
 
@@ -153,10 +153,10 @@ class TestPrereleaseAutoDetection:
     @pytest.mark.anyio
     async def test_should_enable_prerelease_api_error(self):
         """Test that prerelease is not enabled when GitHub API fails."""
-        with patch("appimage_updater.pattern_generator.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_client_factory:
             mock_client = AsyncMock()
             mock_client.get_releases.side_effect = Exception("API Error")
-            mock_client_class.return_value = mock_client
+            mock_client_factory.return_value = mock_client
 
             result = await should_enable_prerelease("https://github.com/test/repo")
 
@@ -175,10 +175,20 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.pattern_generator.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
+             patch("appimage_updater.config_operations.get_repository_client") as mock_config_client, \
+             patch("appimage_updater.config_operations.should_enable_prerelease") as mock_should_enable:
+            
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
-            mock_client_class.return_value = mock_client
+            # Synchronous methods need regular return values, not async
+            mock_client.normalize_repo_url = Mock(return_value=("https://github.com/test/continuous", False))
+            mock_client.parse_repo_url = Mock(return_value=("test", "continuous"))
+            mock_client.detect_repository_type = Mock(return_value=True)
+            mock_client.repository_type = "github"
+            mock_pattern_client.return_value = mock_client
+            mock_config_client.return_value = mock_client
+            mock_should_enable.return_value = True
 
             result = runner.invoke(app, [
                 "add", "test_app",
@@ -214,10 +224,20 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
+             patch("appimage_updater.config_operations.get_repository_client") as mock_config_client, \
+             patch("appimage_updater.config_operations.should_enable_prerelease") as mock_should_enable:
+            
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
-            mock_client_class.return_value = mock_client
+            # Synchronous methods need regular return values, not async
+            mock_client.normalize_repo_url = Mock(return_value=("https://github.com/test/stable", False))
+            mock_client.parse_repo_url = Mock(return_value=("test", "stable"))
+            mock_client.detect_repository_type = Mock(return_value=True)
+            mock_client.repository_type = "github"
+            mock_pattern_client.return_value = mock_client
+            mock_config_client.return_value = mock_client
+            mock_should_enable.return_value = False
 
             result = runner.invoke(app, [
                 "add", "test_stable",
@@ -253,10 +273,18 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
+             patch("appimage_updater.config_operations.get_repository_client") as mock_config_client:
+            
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
-            mock_client_class.return_value = mock_client
+            # Synchronous methods need regular return values, not async
+            mock_client.normalize_repo_url = Mock(return_value=("https://github.com/test/stable", False))
+            mock_client.parse_repo_url = Mock(return_value=("test", "stable"))
+            mock_client.detect_repository_type = Mock(return_value=True)
+            mock_client.repository_type = "github"
+            mock_pattern_client.return_value = mock_client
+            mock_config_client.return_value = mock_client
 
             result = runner.invoke(app, [
                 "add", "--prerelease", "test_explicit",
@@ -292,10 +320,18 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.github_client.GitHubClient") as mock_client_class:
+        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
+             patch("appimage_updater.config_operations.get_repository_client") as mock_config_client:
+            
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
-            mock_client_class.return_value = mock_client
+            # Synchronous methods need regular return values, not async
+            mock_client.normalize_repo_url = Mock(return_value=("https://github.com/test/stable", False))
+            mock_client.parse_repo_url = Mock(return_value=("test", "stable"))
+            mock_client.detect_repository_type = Mock(return_value=True)
+            mock_client.repository_type = "github"
+            mock_pattern_client.return_value = mock_client
+            mock_config_client.return_value = mock_client
 
             result = runner.invoke(app, [
                 "add", "--no-prerelease", "test_explicit_no",

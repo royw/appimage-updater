@@ -86,6 +86,10 @@ strict_equality = true
 target-version = "py311"
 line-length = 120
 
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 80
+
 [tool.ruff.lint]
 select = [
     "E",    # pycodestyle errors

@@ -39,9 +39,9 @@ from .display import (
     find_application_by_name,
 )
 from .downloader import Downloader
-from .github_client import GitHubClient
 from .logging_config import configure_logging
 from .models import rebuild_models
+from .repositories import get_repository_client
 from .version_checker import VersionChecker
 
 # Rebuild models to resolve forward references
@@ -410,16 +410,25 @@ async def _add(
     try:
         logger.debug(f"Adding new application: {name}")
 
-        # Show GitHub API authentication status if debug logging is enabled
-        from .github_auth import get_github_auth
+        # Show repository authentication status if debug logging is enabled
+        try:
+            repo_client = get_repository_client(url)
+            if hasattr(repo_client, "github_client"):
+                # This is a GitHub repository, show GitHub-specific auth info
+                from .github_auth import get_github_auth
 
-        auth = get_github_auth()
-        # Always log auth status during add command with debug details
-        rate_info = auth.get_rate_limit_info()
-        if auth.is_authenticated:
-            logger.debug(f"GitHub API: Authenticated ({rate_info['limit']} req/hour via {auth.token_source})")
-        else:
-            logger.debug(f"GitHub API: Anonymous ({rate_info['limit']} req/hour) - Set GITHUB_TOKEN for higher limits")
+                auth = get_github_auth()
+                rate_info = auth.get_rate_limit_info()
+                if auth.is_authenticated:
+                    logger.debug(f"GitHub API: Authenticated ({rate_info['limit']} req/hour via {auth.token_source})")
+                else:
+                    logger.debug(
+                        f"GitHub API: Anonymous ({rate_info['limit']} req/hour) - Set GITHUB_TOKEN for higher limits"
+                    )
+            else:
+                logger.debug(f"Repository type: {repo_client.repository_type}")
+        except Exception as e:
+            logger.debug(f"Could not determine repository authentication status: {e}")
 
         # Validate and normalize URL
         validated_url = validate_and_normalize_add_url(url)
@@ -465,14 +474,17 @@ async def _add(
         # Re-raise typer.Exit without logging - these are intentional exits
         raise
     except Exception as e:
-        # Check for GitHub rate limit errors and provide helpful feedback
+        # Check for repository rate limit errors and provide helpful feedback
         error_msg = str(e)
         if "rate limit" in error_msg.lower():
-            console.print(f"[red]GitHub API rate limit exceeded: {e}")
-            console.print("[yellow]💡 To avoid rate limits, set a GitHub token:")
-            console.print("[yellow]   export GITHUB_TOKEN=your_token_here")
-            console.print("[yellow]   Get a token at: https://github.com/settings/tokens")
-            console.print("[yellow]   Only 'public_repo' permission is needed for public repositories")
+            if "github" in error_msg.lower():
+                console.print(f"[red]GitHub API rate limit exceeded: {e}")
+                console.print("[yellow]💡 To avoid rate limits, set a GitHub token:")
+                console.print("[yellow]   export GITHUB_TOKEN=your_token_here")
+                console.print("[yellow]   Get a token at: https://github.com/settings/tokens")
+                console.print("[yellow]   Only 'public_repo' permission is needed for public repositories")
+            else:
+                console.print(f"[red]Repository API rate limit exceeded: {e}")
         else:
             console.print(f"[red]Error adding application: {e}")
         logger.error(f"Error adding application '{name}': {e}")
@@ -823,14 +835,10 @@ async def _perform_update_checks(config: Any, enabled_apps: list[Any], no_intera
     console.print(f"[blue]Checking {len(enabled_apps)} applications for updates...")
     logger.debug(f"Starting update checks for {len(enabled_apps)} applications")
 
-    # Initialize clients
-    logger.debug(f"Initializing GitHub client with timeout: {config.global_config.timeout_seconds}s")
-    github_client = GitHubClient(
-        timeout=config.global_config.timeout_seconds,
-        user_agent=config.global_config.user_agent,
-    )
-    version_checker = VersionChecker(github_client, interactive=not no_interactive)
-    logger.debug("GitHub client and version checker initialized")
+    # Initialize version checker (repository clients will be created per-app as needed)
+    logger.debug(f"Initializing version checker with timeout: {config.global_config.timeout_seconds}s")
+    version_checker = VersionChecker(interactive=not no_interactive)
+    logger.debug("Version checker initialized")
 
     # Check for updates
     logger.debug("Creating update check tasks")
