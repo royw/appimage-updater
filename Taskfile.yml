@@ -135,7 +135,7 @@ tasks:
     desc: Build documentation with MkDocs
     cmds:
       - echo "📚 Building documentation..."
-      - uv run mkdocs build {{.CLI_ARGS}}
+      - uv run mkdocs build {{.CLI_ARGS}} 2>&1 | grep -v "MERMAID2.*Found superfences config" | grep -v "MERMAID2.*Initialization arguments" | grep -v "MERMAID2.*Using javascript library" || true
       - echo "✅ Documentation built successfully in site/"
 
   docs:serve:
