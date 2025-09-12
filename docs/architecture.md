@@ -8,31 +8,38 @@ This document describes the architecture and design principles of AppImage Updat
 graph TB
     A[CLI Interface] --> B[Command Layer]
     B --> C[Configuration Manager]
-    B --> D[GitHub Client]
+    B --> D[Repository Factory]
     B --> E[Version Checker]
     B --> F[Downloader]
     B --> G[Distribution Selector]
     B --> H[System Info]
     
     C --> I[JSON Config Files]
-    D --> J[GitHub API]
-    D --> K[GitHub Auth]
-    E --> L[Version Comparison]
-    F --> M[Concurrent Downloads]
-    F --> N[ZIP Extraction]
-    F --> O[Checksum Verification]
-    F --> P[File Rotation]
-    G --> Q[Platform Detection]
-    H --> R[Architecture Detection]
+    D --> J[GitHub Repository]
+    D --> K[GitLab Repository]
+    D --> L[Other Repositories]
+    J --> M[GitHub Client]
+    J --> N[GitHub Auth]
+    M --> O[GitHub API]
+    E --> P[Version Comparison]
+    F --> Q[Concurrent Downloads]
+    F --> R[ZIP Extraction]
+    F --> S[Checksum Verification]
+    F --> T[File Rotation]
+    G --> U[Platform Detection]
+    H --> V[Architecture Detection]
     
     style A fill:#e1f5fe
     style B fill:#f3e5f5
     style C fill:#e8f5e8
-    style D fill:#e8f5e8
+    style D fill:#ffeb3b
     style E fill:#e8f5e8
     style F fill:#e8f5e8
     style G fill:#fff3e0
     style H fill:#fff3e0
+    style J fill:#4caf50
+    style K fill:#4caf50
+    style L fill:#4caf50
 ```
 
 ## Core Components
@@ -150,9 +157,64 @@ Core data structures used throughout the application.
 - `DownloadResult` - Download operation results
 - `ChecksumResult` - Checksum verification results
 
-### GitHub Integration (`github_client.py`)
+### Repository Abstraction Layer (`repositories/`)
 
-Async HTTP client for GitHub API interactions with comprehensive release and asset management.
+Extensible abstraction layer supporting multiple repository platforms with a unified interface.
+
+**Architecture:**
+
+- **Abstract Base Class** (`base.py`) - Common interface for all repository types
+- **Factory Pattern** (`factory.py`) - Automatic client instantiation based on URL detection
+- **GitHub Implementation** (`github_repository.py`) - Wrapper around existing GitHub client
+- **Example Implementation** (`example_gitlab_repository.py`) - Template for adding new platforms
+
+**Key Components:**
+
+#### Repository Client Interface (`repositories/base.py`)
+
+Abstract base class defining the common interface for all repository clients:
+
+```python
+class RepositoryClient(ABC):
+    @abstractmethod
+    async def get_latest_release(self, url: str) -> Release:
+        """Get the latest release from repository."""
+    
+    @abstractmethod
+    async def get_releases(self, url: str, limit: int = 10) -> list[Release]:
+        """Get recent releases from repository."""
+    
+    @abstractmethod
+    def parse_repo_url(self, url: str) -> tuple[str, str]:
+        """Parse repository URL to extract owner and repo name."""
+    
+    @abstractmethod
+    def normalize_repo_url(self, url: str) -> tuple[str, bool]:
+        """Normalize repository URL and detect corrections."""
+```
+
+#### Repository Factory (`repositories/factory.py`)
+
+Factory pattern implementation for automatic client creation:
+
+```python
+def get_repository_client(url: str, **kwargs) -> RepositoryClient:
+    """Create appropriate repository client based on URL pattern."""
+    
+def detect_repository_type(url: str) -> str:
+    """Detect repository type from URL (github, gitlab, etc.)."""
+```
+
+**Features:**
+
+- **URL-based Detection** - Automatically selects appropriate client
+- **Extensible Design** - Easy addition of new repository types
+- **Error Handling** - Graceful fallback and error reporting
+- **Configuration Support** - Repository-specific options
+
+#### GitHub Repository Implementation (`repositories/github_repository.py`)
+
+Wrapper around the existing GitHub client maintaining full compatibility:
 
 **Features:**
 
@@ -170,6 +232,12 @@ Async HTTP client for GitHub API interactions with comprehensive release and ass
 - `associate_assets_with_checksums()` - Link download assets to checksums
 - `filter_assets_by_pattern()` - Pattern-based asset filtering
 - `get_release_by_tag()` - Fetch specific release by tag
+
+### Legacy GitHub Integration (`github_client.py`)
+
+Direct GitHub API client used internally by the GitHub repository implementation.
+
+**Note:** This module is now wrapped by `GitHubRepository` and accessed through the repository abstraction layer.
 
 ### Version Management (`version_checker.py`)
 
@@ -392,7 +460,7 @@ All downloads support checksum verification:
 
 ### Test Organization
 
-```
+```text
 tests/
 ├── test_e2e.py              # End-to-end integration tests
 ├── test_edit_command.py     # CLI command testing
@@ -414,15 +482,120 @@ tests/
 - Network request mocking
 - Time-based operation mocking
 
+## Repository Factory Pattern
+
+The repository abstraction layer uses the factory pattern to automatically select and instantiate the appropriate repository client based on URL analysis.
+
+### Factory Implementation
+
+```python
+def get_repository_client(url: str, **kwargs) -> RepositoryClient:
+    """Create appropriate repository client based on URL detection."""
+    repository_types = [
+        GitHubRepository,
+        # Future repository types added here
+    ]
+    
+    for repo_class in repository_types:
+        temp_client = repo_class(**kwargs)
+        if temp_client.detect_repository_type(url):
+            return temp_client
+    
+    raise RepositoryError(f"No repository client available for URL: {url}")
+```
+
+### URL Detection Strategy
+
+Each repository implementation provides URL detection logic:
+
+- **GitHub**: Detects `github.com` and `www.github.com` domains
+- **GitLab**: Would detect `gitlab.com` and self-hosted GitLab instances
+- **Bitbucket**: Would detect `bitbucket.org` domains
+
+### Benefits
+
+- **Automatic Selection** - No manual client specification required
+- **Extensible** - New repository types integrate seamlessly
+- **Backward Compatible** - Existing configurations work unchanged
+- **Error Handling** - Clear error messages for unsupported URLs
+
+### Direct Download Repository Handlers
+
+The system now supports applications that don't use traditional repository APIs through specialized handlers:
+
+#### DirectDownloadRepository
+
+Handles applications with static download URLs or "latest" symlinks:
+
+- **Use Cases**: YubiKey Manager, OpenRGB with direct AppImage links
+- **Detection Patterns**:
+  - URLs ending with `-latest*.AppImage`
+  - Direct `.AppImage` file URLs
+  - Generic `/download/` endpoints
+- **Version Detection**: Extracts versions from URLs using regex patterns
+- **Limitations**: No historical release information, single release per check
+
+#### DynamicDownloadRepository
+
+Handles applications with JavaScript-generated or dynamic download pages:
+
+- **Use Cases**: LM Studio, applications with dynamic download generation
+- **Detection Patterns**:
+  - `lmstudio.ai/download` URLs
+  - Generic download pages requiring content parsing
+- **Content Parsing**: Scrapes HTML for AppImage download links
+- **Version Extraction**: Attempts to find version information in page content or URLs
+
+#### Repository Handler Selection
+
+The factory uses a priority-based selection system:
+
+1. **GitHubRepository** - Highest priority for GitHub URLs
+1. **DynamicDownloadRepository** - Checks for dynamic patterns first
+1. **DirectDownloadRepository** - Fallback for direct download patterns
+
+This ordering ensures more specific handlers are tried before generic ones.
+
 ## Extensibility
 
-### Adding New Source Types
+### Adding New Repository Types
 
-1. Define new source type in `models.py`
-1. Implement client class (e.g., `GitLabClient`)
-1. Add configuration validation
-1. Implement release fetching logic
-1. Add comprehensive tests
+The repository abstraction layer makes adding new platforms straightforward:
+
+1. **Create Repository Implementation**
+
+   ```python
+   class GitLabRepository(RepositoryClient):
+       def detect_repository_type(self, url: str) -> bool:
+           return "gitlab.com" in url.lower()
+       
+       async def get_releases(self, url: str, limit: int = 10) -> list[Release]:
+           # GitLab API implementation
+   ```
+
+1. **Register in Factory**
+
+   ```python
+   # Add to repository_types list in factory.py
+   repository_types = [
+       GitHubRepository,
+       DynamicDownloadRepository,  # Check dynamic before direct (more specific)
+       DirectDownloadRepository,
+       GitLabRepository,  # New addition
+   ]
+   ```
+
+1. **Add Configuration Support**
+
+   - Update URL validation patterns
+   - Add repository-specific configuration options
+   - Update documentation and examples
+
+1. **Implement Tests**
+
+   - Unit tests for repository implementation
+   - Integration tests with factory
+   - End-to-end tests with real URLs
 
 ### Plugin Architecture (Planned)
 

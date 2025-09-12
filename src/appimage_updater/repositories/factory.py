@@ -9,6 +9,8 @@ from __future__ import annotations
 from typing import Any
 
 from .base import RepositoryClient, RepositoryError
+from .direct_download_repository import DirectDownloadRepository
+from .dynamic_download_repository import DynamicDownloadRepository
 from .github_repository import GitHubRepository
 
 
@@ -33,14 +35,16 @@ def get_repository_client(
         RepositoryError: If no suitable repository client is found
     """
     # Try each repository type in order of preference
+    # Order matters: more specific types should come first
     repository_types = [
         GitHubRepository,
-        # Future repository types can be added here
+        DynamicDownloadRepository,  # Check dynamic before direct (more specific)
+        DirectDownloadRepository,
     ]
 
     for repo_class in repository_types:
         # Create a temporary instance to test URL compatibility
-        temp_client = repo_class(timeout=timeout, user_agent=user_agent, **kwargs)
+        temp_client: RepositoryClient = repo_class(timeout=timeout, user_agent=user_agent, **kwargs)
         if temp_client.detect_repository_type(url):
             return temp_client
 
@@ -62,12 +66,13 @@ def detect_repository_type(url: str) -> str:
     """
     repository_types = [
         GitHubRepository,
-        # Future repository types can be added here
+        DynamicDownloadRepository,  # Check dynamic before direct (more specific)
+        DirectDownloadRepository,
     ]
 
     for repo_class in repository_types:
         # Create a temporary instance to test URL compatibility
-        temp_client = repo_class()
+        temp_client: RepositoryClient = repo_class()
         if temp_client.detect_repository_type(url):
             return temp_client.repository_type
 
@@ -82,4 +87,4 @@ def get_supported_repository_types() -> list[str]:
     Returns:
         List of supported repository type strings
     """
-    return ["github"]  # Can be expanded as more types are added
+    return ["github", "dynamic_download", "direct_download"]
