@@ -137,15 +137,24 @@ nav:
   - User Guide:
     - Installation: installation.md
     - Getting Started: getting-started.md
+    - Usage Guide: usage.md
     - Configuration: configuration.md
-    - Commands: commands.md
     - Examples: examples.md
+  - Feature Guides:
+    - ZIP Support: zip-support.md
+    - File Rotation: rotation.md
+    - Compatibility: compatibility.md
+  - Support & Maintenance:
+    - Security Guide: security.md
+    - Troubleshooting: troubleshooting.md
+    - Changelog: changelog.md
   - Development:
-    - Contributing: contributing.md
     - Architecture: architecture.md
+    - Developer Commands: commands.md
+    - Development Setup: development.md
     - Testing: testing.md
+    - Contributing: contributing.md
   - API Reference: reference/
-  - Changelog: changelog.md
 
 watch:
   - src/appimage_updater
