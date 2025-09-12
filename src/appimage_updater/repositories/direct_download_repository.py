@@ -35,6 +35,9 @@ class DirectDownloadRepository(RepositoryClient):
             r".*-latest.*\.AppImage$",  # YubiKey Manager pattern
             r".*\.AppImage$",  # Direct AppImage links
             r".*/download/?$",  # Generic download pages
+            r".*openrgb\.org/releases.*",  # OpenRGB releases page
+            r".*/releases\.html?$",  # Generic releases pages
+            r".*/releases/?$",  # Generic releases directories
         ]
 
         return any(re.match(pattern, url, re.IGNORECASE) for pattern in direct_patterns)
@@ -50,40 +53,105 @@ class DirectDownloadRepository(RepositoryClient):
         """Get releases for direct download URL."""
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                # Follow redirects to get actual download URL
-                response = await client.head(url, follow_redirects=True)
-                response.raise_for_status()
-
-                # Extract version from final URL or headers
-                final_url = str(response.url)
-                version = self._extract_version_from_url(final_url)
-
-                # Get file size from headers
-                file_size = int(response.headers.get("content-length", 0))
-
-                # Create asset from the download URL
-                asset = Asset(
-                    name=self._extract_filename_from_url(final_url),
-                    url=final_url,
-                    size=file_size,
-                    created_at=datetime.now(),  # Use current time for direct downloads
-                )
-
-                # Create release object
-                release = Release(
-                    version=version,
-                    tag_name=version,
-                    published_at=datetime.now(),  # Use current time for direct downloads
-                    assets=[asset],
-                    is_prerelease=False,
-                    is_draft=False,
-                )
-
-                return [release]
+                # Check if this is a releases page that needs parsing
+                if any(pattern in url.lower() for pattern in ["releases.html", "releases/", "openrgb.org/releases"]):
+                    return await self._handle_releases_page(client, url)
+                else:
+                    # Handle direct download URLs
+                    return await self._handle_direct_download(client, url)
 
         except Exception as e:
             logger.error(f"Failed to get releases for {url}: {e}")
             raise RepositoryError(f"Failed to fetch release information: {e}") from e
+
+    async def _handle_direct_download(self, client: httpx.AsyncClient, url: str) -> list[Release]:
+        """Handle direct download URLs."""
+        # Follow redirects to get actual download URL
+        response = await client.head(url, follow_redirects=True)
+        response.raise_for_status()
+
+        # Extract version from final URL or headers
+        final_url = str(response.url)
+        version = self._extract_version_from_url(final_url)
+
+        # Get file size from headers
+        file_size = int(response.headers.get("content-length", 0))
+
+        # Create asset from the download URL
+        asset = Asset(
+            name=self._extract_filename_from_url(final_url),
+            url=final_url,
+            size=file_size,
+            created_at=datetime.now(),  # Use current time for direct downloads
+        )
+
+        # Create release object
+        release = Release(
+            version=version,
+            tag_name=version,
+            published_at=datetime.now(),  # Use current time for direct downloads
+            assets=[asset],
+            is_prerelease=False,
+            is_draft=False,
+        )
+
+        return [release]
+
+    async def _handle_releases_page(self, client: httpx.AsyncClient, url: str) -> list[Release]:
+        """Handle releases pages that contain links to AppImage files."""
+        # Get the releases page content
+        response = await client.get(url)
+        response.raise_for_status()
+        content = response.text
+
+        # Look for AppImage download links in both HTML and markdown formats
+        html_quoted_pattern = r'href="([^"]*\.AppImage[^"]*)"'
+        html_unquoted_pattern = r"href=([^\s>]*\.AppImage[^\s>]*)"
+        markdown_pattern = r"\]\(([^)]*\.AppImage[^)]*)\)"
+
+        html_quoted_matches = re.findall(html_quoted_pattern, content, re.IGNORECASE)
+        html_unquoted_matches = re.findall(html_unquoted_pattern, content, re.IGNORECASE)
+        markdown_matches = re.findall(markdown_pattern, content, re.IGNORECASE)
+
+        matches = html_quoted_matches + html_unquoted_matches + markdown_matches
+
+        if not matches:
+            raise RepositoryError(f"No AppImage downloads found on {url}")
+
+        # Use the first match (most recent/latest)
+        download_url = matches[0]
+        if not download_url.startswith("http"):
+            from urllib.parse import urljoin
+
+            download_url = urljoin(url, download_url)
+
+        # Extract version from the download URL
+        version = self._extract_version_from_url(download_url)
+
+        # Try to get file size
+        try:
+            head_response = await client.head(download_url, follow_redirects=True)
+            file_size = int(head_response.headers.get("content-length", 0))
+        except Exception:
+            file_size = 0  # Size unknown
+
+        asset = Asset(
+            name=self._extract_filename_from_url(download_url),
+            url=download_url,
+            size=file_size,
+            created_at=datetime.now(),
+        )
+
+        release = Release(
+            version=version,
+            tag_name=version,
+            published_at=datetime.now(),
+            assets=[asset],
+            is_prerelease=False,
+            is_draft=False,
+        )
+
+        return [release]
 
     def parse_repo_url(self, url: str) -> tuple[str, str]:
         """Parse direct download URL to extract meaningful components."""
@@ -155,16 +223,22 @@ class DirectDownloadRepository(RepositoryClient):
                 return None
 
             # Generate pattern based on common structure
-            # For direct downloads, often the filename is consistent
+            # For direct downloads, create a flexible pattern
             first_name = asset_names[0]
 
-            # Replace version-like patterns with regex
+            # Extract the base application name (everything before version/architecture info)
             import re
 
-            pattern = re.sub(r"\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?", r"[\\d\\.\\-\\w]+", first_name)
-            pattern = pattern.replace(".", "\\.")
+            # Remove version patterns, architecture, and hash info
+            base_name = re.sub(r"_\d+\.\d+(?:\.\d+)?(?:rc\d+)?", "", first_name)  # Remove version
+            base_name = re.sub(r"_x86_64|_i386|_arm64|_armhf", "", base_name)  # Remove architecture
+            base_name = re.sub(r"_[a-f0-9]{7,}", "", base_name)  # Remove hash
+            base_name = re.sub(r"\.AppImage$", "", base_name)  # Remove extension
 
-            return f"^{pattern}$"
+            # Create a flexible pattern that matches the base name with any version/arch/hash
+            pattern = f"{re.escape(base_name)}.*\\.AppImage"
+
+            return f"(?i){pattern}$"
 
         except Exception as e:
             logger.error(f"Failed to generate pattern for {url}: {e}")
