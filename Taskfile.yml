@@ -64,13 +64,15 @@ tasks:
     desc: Run end-to-end tests with coverage reporting
     cmds:
       - uv run pytest tests/test_e2e.py -v --tb=short --color=yes --cov=src/appimage_updater --cov-report=term-missing --cov-report=html:htmlcov -n auto
-      - echo "📊 Coverage report saved to htmlcov/index.html"
+      - cmd: echo "📊 Coverage report saved to htmlcov/index.html"
+        silent: true
 
   test:smoke:
     desc: Run quick smoke test to validate basic functionality
     cmds:
       - uv run pytest tests/test_e2e.py::test_integration_smoke_test -v
-      - echo "✅ Basic functionality verified!"
+      - cmd: echo "✅ Basic functionality verified!"
+        silent: true
 
   test:pattern-matching:
     desc: Test pattern matching functionality specifically
@@ -82,7 +84,8 @@ tasks:
     desc: Run regression tests to validate fixed issues
     cmds:
       - uv run pytest tests/test_add_regression.py -v --tb=short --color=yes
-      - echo "✅ Regression tests passed - fixed issues remain resolved!"
+      - cmd: echo "✅ Regression tests passed - fixed issues remain resolved!"
+        silent: true
 
   complexity:
     desc: Analyze code complexity with radon
@@ -134,14 +137,17 @@ tasks:
   docs:build:
     desc: Build documentation with MkDocs
     cmds:
-      - echo "📚 Building documentation..."
+      - cmd: echo "📚 Building documentation..."
+        silent: true
       - uv run mkdocs build {{.CLI_ARGS}} 2>&1 | grep -v "MERMAID2.*Found superfences config" | grep -v "MERMAID2.*Initialization arguments" | grep -v "MERMAID2.*Using javascript library" || true
-      - echo "✅ Documentation built successfully in site/"
+      - cmd: echo "✅ Documentation built successfully in site/"
+        silent: true
 
   docs:serve:
     desc: Serve documentation locally for development
     cmds:
-      - echo "🌍 Starting documentation server..."
+      - cmd: echo "🌍 Starting documentation server..."
+        silent: true
       - uv run mkdocs serve {{.CLI_ARGS}}
 
   docs:
@@ -150,24 +156,28 @@ tasks:
       - docs:serve
 
   build:
-    desc: Build distribution packages (wheel and sdist)
+    desc: Build distribution packages
     deps:
       - clean
     cmds:
-      - echo "🏗️  Building AppImage Updater distribution packages..."
+      - cmd: echo "🏗️  Building AppImage Updater distribution packages..."
+        silent: true
       - uv build {{.CLI_ARGS}}
-      - echo "✅ Build complete! Packages created in dist/"
+      - cmd: echo "✅ Build complete! Packages created in dist/"
+        silent: true
       - ls -la dist/
 
   ci:
     desc: Complete CI pipeline - run all checks, build, docs, and show version before pushing to GitHub
     cmds:
-      - echo "🚀 Starting CI pipeline..."
+      - cmd: echo "🚀 Starting CI pipeline..."
+        silent: true
       - task: check:parallel
       - task: build
       - task: docs:build
       - task: version
-      - echo "✅ CI pipeline completed successfully! Ready to push to GitHub 🎉"
+      - cmd: echo "✅ CI pipeline completed successfully! Ready to push to GitHub 🎉"
+        silent: true
 
   clean:
     desc: Clean up generated files
@@ -185,7 +195,16 @@ tasks:
     deps:
       - install
     cmds:
-      - echo "Development environment ready!"
+      - cmd: echo "Development environment ready!"
+        silent: true
+
+  install:dev:
+    desc: Install development environment
+    deps:
+      - install
+    cmds:
+      - cmd: echo "Development environment ready!"
+        silent: true
 
   version:
     desc: Display the current project version
@@ -195,7 +214,8 @@ tasks:
   version:bump:
     desc: Bump the patch version, build, commit, and deploy locally
     cmds:
-      - echo "🔍 Checking for uncommitted changes..."
+      - cmd: echo "🔍 Checking for uncommitted changes..."
+        silent: true
       - |
         if [ -n "$(git status --porcelain)" ]; then
           echo "❌ Error: There are uncommitted changes. Please commit or stash them first."
@@ -204,22 +224,29 @@ tasks:
         else
           echo "✅ Working directory is clean"
         fi
-      - echo "📈 Bumping version..."
+      - cmd: echo "📈 Bumping version..."
+        silent: true
       - uv run version_bumper bump patch
-      - echo "✅ Version bumped! New version:"
+      - cmd: echo "✅ Version bumped! New version:"
+        silent: true
       - task: version
-      - echo "🏗️  Building package..."
+      - cmd: echo "🏗️  Building package..."
+        silent: true
       - task: build
-      - echo "📝 Committing version bump..."
+      - cmd: echo "📝 Committing version bump..."
+        silent: true
       - |
         NEW_VERSION=$(python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data['project']['version'])")
         git add pyproject.toml
         git commit -m "chore: bump version to v$NEW_VERSION"
         echo "✅ Committed version bump to v$NEW_VERSION"
-      - echo "🚀 Installing locally with pipx..."
+      - cmd: echo "🚀 Installing locally with pipx..."
+        silent: true
       - pipx install --force dist/*.whl
-      - echo "✅ Successfully deployed appimage-updater v$(task version) locally!"
-      - echo "🎉 Workflow complete! You can now use the updated version."
+      - cmd: echo "✅ Successfully deployed appimage-updater v$(task version) locally!"
+        silent: true
+      - cmd: echo "🎉 Workflow complete! You can now use the updated version."
+        silent: true
 
   version:tag:
     desc: Create and push a git tag for the current version
