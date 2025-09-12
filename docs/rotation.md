@@ -219,11 +219,11 @@ appimage-updater --debug check MyApp
 ## Best Practices
 
 1. **Consistent symlink locations**: Use a dedicated directory like `~/bin/` for all symlinks
-2. **Meaningful names**: Use lowercase, descriptive symlink names (e.g., `freecad.AppImage`)
-3. **PATH integration**: Add your symlink directory to PATH for easy access
-4. **Desktop files**: Always use symlink paths in `.desktop` files
-5. **Backup important versions**: Consider manual backups before major updates
-6. **Monitor disk usage**: Adjust retention counts based on available space
+1. **Meaningful names**: Use lowercase, descriptive symlink names (e.g., `freecad.AppImage`)
+1. **PATH integration**: Add your symlink directory to PATH for easy access
+1. **Desktop files**: Always use symlink paths in `.desktop` files
+1. **Backup important versions**: Consider manual backups before major updates
+1. **Monitor disk usage**: Adjust retention counts based on available space
 
 ## Integration Examples
 

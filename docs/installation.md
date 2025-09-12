@@ -100,14 +100,14 @@ appimage-updater, version 0.2.0
 Once installed, you can:
 
 1. [Initialize your configuration](getting-started.md#initialization)
-2. [Add your first application](getting-started.md#adding-applications)
-3. [Start checking for updates](getting-started.md#checking-updates)
+1. [Add your first application](getting-started.md#adding-applications)
+1. [Start checking for updates](getting-started.md#checking-updates)
 
 For developers:
 
 1. See [Development Guide](development.md) for workflow and contribution guidelines
-2. Review [Architecture](architecture.md) for codebase understanding
-3. Check [Testing](testing.md) for running tests
+1. Review [Architecture](architecture.md) for codebase understanding
+1. Check [Testing](testing.md) for running tests
 
 ## Alternative Installation Methods
 

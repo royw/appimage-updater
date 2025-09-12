@@ -56,9 +56,9 @@ Format support is determined by platform and Linux distribution family:
 #### Format Preferences (Linux)
 
 1. **`.AppImage`**: 70 points (preferred for AppImage Updater)
-2. **`.deb`/`.rpm`**: 65 points (native package formats)
-3. **`.tar.gz`/`.tar.xz`**: 50 points (generic archives)
-4. **`.zip`**: 45 points (generic archive)
+1. **`.deb`/`.rpm`**: 65 points (native package formats)
+1. **`.tar.gz`/`.tar.xz`**: 50 points (generic archives)
+1. **`.zip`**: 45 points (generic archive)
 
 ## Asset Intelligence
 

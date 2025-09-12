@@ -141,10 +141,10 @@ task version:tag
 **task version:bump** workflow:
 
 1. Increments patch version (e.g., 0.2.0 → 0.2.1)
-2. Runs complete CI pipeline
-3. Builds distribution packages
-4. Commits version changes
-5. Performs local deployment verification
+1. Runs complete CI pipeline
+1. Builds distribution packages
+1. Commits version changes
+1. Performs local deployment verification
 
 ## Test Coverage
 

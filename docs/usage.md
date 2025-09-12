@@ -144,6 +144,7 @@ appimage-updater list [OPTIONS]
 ```
 
 **Options:**
+
 - `--config, -c PATH`: Configuration file path
 - `--config-dir, -d PATH`: Configuration directory path
 
@@ -389,13 +390,13 @@ done
 ## Tips and Best Practices
 
 1. **Test patterns**: Use `--dry-run` to verify regex patterns match expected files
-2. **Organize configs**: Use directory-based configuration to organize by category
-3. **Version checking**: Tool uses intelligent semantic versioning when possible
-4. **Download locations**: Use absolute paths or `~` for home directory
-5. **Checksum verification**: Enable for security; use `--debug` for verification details
-6. **Application filtering**: Use specific app names to test individual applications
-7. **Rotation setup**: Always specify symlink path when enabling rotation
-8. **Non-interactive mode**: Use `--yes` for automation and scripts
+1. **Organize configs**: Use directory-based configuration to organize by category
+1. **Version checking**: Tool uses intelligent semantic versioning when possible
+1. **Download locations**: Use absolute paths or `~` for home directory
+1. **Checksum verification**: Enable for security; use `--debug` for verification details
+1. **Application filtering**: Use specific app names to test individual applications
+1. **Rotation setup**: Always specify symlink path when enabling rotation
+1. **Non-interactive mode**: Use `--yes` for automation and scripts
 
 ## Troubleshooting
 

@@ -14,6 +14,7 @@ GitHub API has rate limits that can affect update checking:
 - **Authenticated**: 5,000 requests per hour per user
 
 Authentication is recommended for:
+
 - Frequent update checks
 - Multiple applications
 - Avoiding rate limit errors
@@ -22,12 +23,13 @@ Authentication is recommended for:
 ### Setting Up GitHub Token
 
 1. **Create Personal Access Token**:
+
    - Go to GitHub Settings > Developer settings > Personal access tokens
    - Generate new token (classic)
    - Select scopes: `public_repo` (for public repos) or `repo` (for private repos)
    - Copy the generated token
 
-2. **Configure Token**:
+1. **Configure Token**:
 
 ```bash
 # Set environment variable (recommended)
@@ -45,6 +47,7 @@ appimage-updater --debug check --dry-run
 ```
 
 Look for authentication status in debug output:
+
 ```
 GitHub API authenticated: True
 Rate limit remaining: 4999/5000
@@ -216,6 +219,7 @@ Avoid storing sensitive data in configs:
 ```
 
 **Do NOT store**:
+
 - API tokens in config files
 - Passwords or credentials
 - Private repository URLs with embedded tokens
@@ -260,30 +264,33 @@ Set up monitoring for security updates:
 If GitHub token is compromised:
 
 1. **Revoke token immediately** in GitHub settings
-2. **Generate new token** with minimal permissions
-3. **Update environment variable**
-4. **Review recent API usage** in GitHub settings
+1. **Generate new token** with minimal permissions
+1. **Update environment variable**
+1. **Review recent API usage** in GitHub settings
 
 ### Suspicious Downloads
 
 If downloads seem suspicious:
 
 1. **Stop automatic updates**:
+
    ```bash
    appimage-updater edit MyApp --disable
    ```
 
-2. **Verify checksums manually**
-3. **Check release authenticity** on GitHub
-4. **Scan downloaded files** with antivirus
+1. **Verify checksums manually**
+
+1. **Check release authenticity** on GitHub
+
+1. **Scan downloaded files** with antivirus
 
 ### Configuration Compromise
 
 If config files are compromised:
 
 1. **Backup current config**
-2. **Review all application entries**
-3. **Regenerate config** if needed:
+1. **Review all application entries**
+1. **Regenerate config** if needed:
    ```bash
    mv ~/.config/appimage-updater ~/.config/appimage-updater.backup
    appimage-updater init
@@ -292,12 +299,14 @@ If config files are compromised:
 ## Security Checklist
 
 ### Initial Setup
+
 - [ ] Create GitHub personal access token
 - [ ] Set token as environment variable
 - [ ] Verify authentication works
 - [ ] Set secure directory permissions
 
 ### Regular Maintenance
+
 - [ ] Rotate GitHub tokens quarterly
 - [ ] Review application configurations
 - [ ] Monitor rate limit usage
@@ -305,6 +314,7 @@ If config files are compromised:
 - [ ] Update security documentation
 
 ### Before Adding New Apps
+
 - [ ] Verify repository authenticity
 - [ ] Check for checksum availability
 - [ ] Review release signing practices
@@ -318,6 +328,7 @@ If config files are compromised:
 - [File System Permissions](https://wiki.archlinux.org/title/File_permissions_and_attributes)
 
 For implementation details, see:
+
 - [Usage Guide](usage.md) - Command-line options and examples
 - [Configuration Guide](configuration.md) - Config file security
 - [Troubleshooting Guide](troubleshooting.md) - Security-related issues

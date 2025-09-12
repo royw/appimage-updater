@@ -425,6 +425,7 @@ task check
 ```
 
 For complete development setup, testing procedures, and contribution guidelines, see:
+
 - [Development Guide](https://royw.github.io/appimage-updater/development/)
 - [Developer Commands](https://royw.github.io/appimage-updater/commands/)
 - [Contributing Guide](https://royw.github.io/appimage-updater/contributing/)

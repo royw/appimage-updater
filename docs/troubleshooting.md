@@ -37,24 +37,28 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Verify installation**:
+
    ```bash
    pip show appimage-updater
    pipx list | grep appimage-updater
    ```
 
-2. **Check PATH**:
+1. **Check PATH**:
+
    ```bash
    echo $PATH
    which appimage-updater
    ```
 
-3. **Reinstall with pipx** (recommended):
+1. **Reinstall with pipx** (recommended):
+
    ```bash
    pipx install appimage-updater
    pipx ensurepath
    ```
 
-4. **Add to PATH manually**:
+1. **Add to PATH manually**:
+
    ```bash
    export PATH="$HOME/.local/bin:$PATH"
    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
@@ -67,12 +71,14 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Check file permissions**:
+
    ```bash
    ls -la ~/.local/bin/appimage-updater
    chmod +x ~/.local/bin/appimage-updater
    ```
 
-2. **Verify directory permissions**:
+1. **Verify directory permissions**:
+
    ```bash
    ls -la ~/.config/appimage-updater/
    chmod 755 ~/.config/appimage-updater/
@@ -87,16 +93,19 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Initialize configuration**:
+
    ```bash
    appimage-updater init
    ```
 
-2. **Specify config location**:
+1. **Specify config location**:
+
    ```bash
    appimage-updater --config-dir ~/.config/appimage-updater check
    ```
 
-3. **Create minimal config**:
+1. **Create minimal config**:
+
    ```bash
    mkdir -p ~/.config/appimage-updater
    echo '{"applications": []}' > ~/.config/appimage-updater/config.json
@@ -109,17 +118,20 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Validate JSON syntax**:
+
    ```bash
    python -m json.tool ~/.config/appimage-updater/config.json
    ```
 
-2. **Common JSON issues**:
+1. **Common JSON issues**:
+
    - Missing commas between objects
    - Trailing commas (not allowed in JSON)
    - Unescaped quotes in strings
    - Missing closing brackets/braces
 
-3. **Backup and regenerate**:
+1. **Backup and regenerate**:
+
    ```bash
    cp ~/.config/appimage-updater/config.json ~/.config/appimage-updater/config.json.backup
    appimage-updater init
@@ -132,17 +144,20 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **List all applications**:
+
    ```bash
    appimage-updater list
    ```
 
-2. **Check case sensitivity**:
+1. **Check case sensitivity**:
+
    ```bash
    # Application names are case-insensitive
    appimage-updater show freecad  # Works for "FreeCAD"
    ```
 
-3. **Add missing application**:
+1. **Add missing application**:
+
    ```bash
    appimage-updater add MyApp https://github.com/user/app ~/Apps/MyApp
    ```
@@ -156,19 +171,21 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Set up GitHub authentication**:
+
    ```bash
    export GITHUB_TOKEN="your_token_here"
    appimage-updater --debug check --dry-run
    ```
 
-2. **Check current rate limit**:
+1. **Check current rate limit**:
+
    ```bash
    curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/rate_limit
    ```
 
-3. **Wait for rate limit reset** (shown in error message)
+1. **Wait for rate limit reset** (shown in error message)
 
-4. **Reduce check frequency** temporarily
+1. **Reduce check frequency** temporarily
 
 ### Connection Timeouts
 
@@ -177,22 +194,26 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Increase timeout**:
+
    ```bash
    appimage-updater add --timeout 120 MyApp https://github.com/user/app ~/Apps/MyApp
    ```
 
-2. **Check network connectivity**:
+1. **Check network connectivity**:
+
    ```bash
    curl -I https://api.github.com
    ping github.com
    ```
 
-3. **Configure proxy** if needed:
+1. **Configure proxy** if needed:
+
    ```bash
    export HTTPS_PROXY="http://proxy.example.com:8080"
    ```
 
-4. **Retry with exponential backoff**:
+1. **Retry with exponential backoff**:
+
    ```bash
    appimage-updater add --retry-attempts 5 MyApp https://github.com/user/app ~/Apps/MyApp
    ```
@@ -204,21 +225,24 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Update certificates**:
+
    ```bash
    # Ubuntu/Debian
    sudo apt update && sudo apt install ca-certificates
-   
+
    # CentOS/RHEL
    sudo yum update ca-certificates
    ```
 
-2. **Check system time**:
+1. **Check system time**:
+
    ```bash
    date
    sudo ntpdate -s time.nist.gov  # If time is wrong
    ```
 
-3. **Verify GitHub connectivity**:
+1. **Verify GitHub connectivity**:
+
    ```bash
    openssl s_client -connect api.github.com:443 -servername api.github.com
    ```
@@ -232,37 +256,41 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Check available assets**:
+
    ```bash
    curl -s https://api.github.com/repos/USER/REPO/releases/latest | jq '.assets[].name'
    ```
 
-2. **Test pattern manually**:
+1. **Test pattern manually**:
+
    ```bash
    appimage-updater --debug add --dry-run MyApp https://github.com/user/app ~/Apps/MyApp
    ```
 
-3. **Use custom pattern**:
+1. **Use custom pattern**:
+
    ```bash
    # For specific OS/architecture
    appimage-updater add --pattern "(?i).*linux.*x86_64.*\.AppImage$" \
      MyApp https://github.com/user/app ~/Apps/MyApp
-   
+
    # For ZIP files
    appimage-updater add --pattern "(?i).*linux.*\.zip$" \
      MyApp https://github.com/user/app ~/Apps/MyApp
    ```
 
-4. **Common pattern examples**:
+1. **Common pattern examples**:
+
    ```bash
    # Case-insensitive AppImage
    --pattern "(?i).*\.AppImage$"
-   
+
    # Specific architecture
    --pattern "(?i).*x86_64.*\.AppImage$"
-   
+
    # Exclude specific terms
    --pattern "(?i)(?!.*debug).*\.AppImage$"
-   
+
    # Multiple formats
    --pattern "(?i).*(\.AppImage|\.zip)$"
    ```
@@ -274,20 +302,23 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Use non-interactive mode**:
+
    ```bash
    appimage-updater check --no-interactive
    ```
 
-2. **Refine pattern** to be more specific:
+1. **Refine pattern** to be more specific:
+
    ```bash
    # Too broad
    --pattern "(?i).*\.AppImage$"
-   
+
    # More specific
    --pattern "(?i)MyApp.*linux.*x86_64.*\.AppImage$"
    ```
 
-3. **Check what's being matched**:
+1. **Check what's being matched**:
+
    ```bash
    appimage-updater --debug show MyApp
    ```
@@ -301,17 +332,20 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Create directory automatically**:
+
    ```bash
    appimage-updater add --create-dir MyApp https://github.com/user/app ~/Apps/MyApp
    ```
 
-2. **Create manually with correct permissions**:
+1. **Create manually with correct permissions**:
+
    ```bash
    mkdir -p ~/Apps/MyApp
    chmod 755 ~/Apps/MyApp
    ```
 
-3. **Check parent directory permissions**:
+1. **Check parent directory permissions**:
+
    ```bash
    ls -la ~/Apps/
    chmod 755 ~/Apps/
@@ -324,21 +358,25 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Check if checksums are available**:
+
    ```bash
    curl -s https://api.github.com/repos/USER/REPO/releases/latest | jq '.assets[] | select(.name | contains("SHA256"))'
    ```
 
-2. **Disable checksum verification** (not recommended):
+1. **Disable checksum verification** (not recommended):
+
    ```bash
    appimage-updater edit MyApp --no-checksum
    ```
 
-3. **Use different checksum algorithm**:
+1. **Use different checksum algorithm**:
+
    ```bash
    appimage-updater edit MyApp --checksum-algorithm sha1
    ```
 
-4. **Manual verification**:
+1. **Manual verification**:
+
    ```bash
    sha256sum ~/Apps/MyApp/downloaded_file.AppImage
    # Compare with published checksum
@@ -351,16 +389,19 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Check available space**:
+
    ```bash
    df -h ~/Apps/
    ```
 
-2. **Clean old files** (if rotation enabled):
+1. **Clean old files** (if rotation enabled):
+
    ```bash
    appimage-updater edit MyApp --retain 2  # Keep fewer old versions
    ```
 
-3. **Move to different location**:
+1. **Move to different location**:
+
    ```bash
    appimage-updater edit MyApp --download-dir /path/with/more/space
    ```
@@ -374,23 +415,27 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Check symlink status**:
+
    ```bash
    ls -la ~/bin/myapp.AppImage
    readlink ~/bin/myapp.AppImage
    ```
 
-2. **Remove broken symlink**:
+1. **Remove broken symlink**:
+
    ```bash
    rm ~/bin/myapp.AppImage
    appimage-updater check MyApp  # Recreates symlink
    ```
 
-3. **Verify symlink path**:
+1. **Verify symlink path**:
+
    ```bash
    appimage-updater show MyApp  # Check symlink_path setting
    ```
 
-4. **Update symlink path**:
+1. **Update symlink path**:
+
    ```bash
    appimage-updater edit MyApp --symlink-path ~/bin/myapp.AppImage
    ```
@@ -402,20 +447,23 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Check retention setting**:
+
    ```bash
    appimage-updater show MyApp
    ```
 
-2. **Adjust retention count**:
+1. **Adjust retention count**:
+
    ```bash
    appimage-updater edit MyApp --retain 3
    ```
 
-3. **Manual cleanup**:
+1. **Manual cleanup**:
+
    ```bash
    # List files by date
    ls -lt ~/Apps/MyApp/
-   
+
    # Remove old files manually (keep newest)
    rm ~/Apps/MyApp/old_version.AppImage
    rm ~/Apps/MyApp/old_version.AppImage.info
@@ -430,22 +478,26 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Check metadata files**:
+
    ```bash
    ls -la ~/Apps/MyApp/*.info
    cat ~/Apps/MyApp/current_file.AppImage.info
    ```
 
-2. **Create missing metadata**:
+1. **Create missing metadata**:
+
    ```bash
    echo "Version: v1.2.3" > ~/Apps/MyApp/current_file.AppImage.info
    ```
 
-3. **Force update check**:
+1. **Force update check**:
+
    ```bash
    appimage-updater check MyApp --dry-run
    ```
 
-4. **Check GitHub release tags**:
+1. **Check GitHub release tags**:
+
    ```bash
    curl -s https://api.github.com/repos/USER/REPO/releases/latest | jq '.tag_name'
    ```
@@ -459,22 +511,26 @@ Look for these key indicators in debug output:
 **Solutions**:
 
 1. **Use parallel checking** (if multiple apps):
+
    ```bash
    # Built-in parallel processing for multiple apps
    appimage-updater check
    ```
 
-2. **Reduce timeout for faster failure**:
+1. **Reduce timeout for faster failure**:
+
    ```bash
    appimage-updater edit MyApp --timeout 30
    ```
 
-3. **Check specific apps only**:
+1. **Check specific apps only**:
+
    ```bash
    appimage-updater check MyApp
    ```
 
-4. **Monitor rate limits**:
+1. **Monitor rate limits**:
+
    ```bash
    appimage-updater --debug check --dry-run | grep -i rate
    ```
@@ -510,10 +566,10 @@ curl -I https://api.github.com
 When reporting bugs, include:
 
 1. **Debug output** (with sensitive info removed)
-2. **System information** (OS, Python version)
-3. **Configuration** (sanitized)
-4. **Steps to reproduce**
-5. **Expected vs actual behavior**
+1. **System information** (OS, Python version)
+1. **Configuration** (sanitized)
+1. **Steps to reproduce**
+1. **Expected vs actual behavior**
 
 ### Community Resources
 
