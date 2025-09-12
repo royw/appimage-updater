@@ -1,10 +1,12 @@
 # Examples
 
-This page provides practical examples for common AppImage Updater use cases.
+This document provides practical examples for common AppImage Updater usage patterns.
 
-## Basic Usage Examples
+For complete CLI command documentation including all options and syntax, see the [Usage Guide](usage.md).
 
-### Adding Popular Applications
+## Basic Application Setup
+
+### Popular Applications
 
 ```bash
 # Add FreeCAD (CAD software)
@@ -26,12 +28,12 @@ appimage-updater add Kdenlive https://github.com/KDE/kdenlive ~/Applications/Kde
 ### Development and Nightly Builds
 
 ```bash
-# Add development version with frequent checks
-appimage-updater add --prerelease --frequency 4 --unit hours \
+# Add development version with prerelease tracking
+appimage-updater add --prerelease \
   VSCode-Insiders https://github.com/microsoft/vscode ~/Dev/VSCode-Insiders
 
 # Add nightly build with prerelease tracking
-appimage-updater add --prerelease --frequency 1 --unit days \
+appimage-updater add --prerelease \
   Blender-Nightly https://github.com/blender/blender ~/Applications/Blender-Nightly
 ```
 
@@ -64,8 +66,8 @@ appimage-updater add --pattern "(?i)MyApp.*\.(zip|AppImage)$" \
 appimage-updater add --rotation --symlink ~/bin/freecad.AppImage --retain 5 \
   FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
 
-# Add development app with frequent updates and rotation
-appimage-updater add --prerelease --rotation --frequency 2 --unit hours \
+# Add development app with prerelease and rotation
+appimage-updater add --prerelease --rotation \
   --symlink ~/bin/myapp.AppImage --retain 10 \
   MyDevApp https://github.com/me/myapp ~/Dev/MyApp
 ```
@@ -90,7 +92,6 @@ appimage-updater add --prerelease --rotation --frequency 2 --unit hours \
       "url": "https://github.com/FreeCAD/FreeCAD",
       "download_dir": "/home/user/Applications/FreeCAD",
       "pattern": "FreeCAD_weekly.*Linux-x86_64.*\\.AppImage(\\\\..*)?$",
-      "frequency": {"value": 1, "unit": "weeks"},
       "enabled": true,
       "prerelease": true,
       "checksum": {
@@ -109,7 +110,6 @@ appimage-updater add --prerelease --rotation --frequency 2 --unit hours \
       "url": "https://github.com/bambulab/BambuStudio",
       "download_dir": "/home/user/Applications/BambuStudio",
       "pattern": "(?i)Bambu_?Studio_.*\\.(zip|AppImage)(\\.(|current|old))?$",
-      "frequency": {"value": 1, "unit": "weeks"},
       "enabled": true,
       "prerelease": false,
       "checksum": {
@@ -127,7 +127,6 @@ appimage-updater add --prerelease --rotation --frequency 2 --unit hours \
       "url": "https://github.com/SoftFever/OrcaSlicer",
       "download_dir": "/home/user/Applications/OrcaSlicer",
       "pattern": "OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\\.AppImage(\\\\..*)?$",
-      "frequency": {"value": 2, "unit": "days"},
       "enabled": true,
       "prerelease": false,
       "checksum": {
@@ -145,6 +144,7 @@ appimage-updater add --prerelease --rotation --frequency 2 --unit hours \
 ### Directory-Based Configuration
 
 `~/.config/appimage-updater/global.json`:
+
 ```json
 {
   "global_config": {
@@ -157,6 +157,7 @@ appimage-updater add --prerelease --rotation --frequency 2 --unit hours \
 ```
 
 `~/.config/appimage-updater/graphics.json`:
+
 ```json
 {
   "applications": [
@@ -166,7 +167,6 @@ appimage-updater add --prerelease --rotation --frequency 2 --unit hours \
       "url": "https://github.com/KDE/krita",
       "download_dir": "/home/user/Applications/Krita",
       "pattern": "krita.*linux.*\\.AppImage(\\\\..*)?$",
-      "frequency": {"value": 1, "unit": "weeks"},
       "enabled": true,
       "prerelease": false
     },
@@ -176,7 +176,6 @@ appimage-updater add --prerelease --rotation --frequency 2 --unit hours \
       "url": "https://github.com/GNOME/gimp",
       "download_dir": "/home/user/Applications/GIMP",
       "pattern": "GIMP.*linux.*\\.AppImage(\\\\..*)?$",
-      "frequency": {"value": 2, "unit": "weeks"},
       "enabled": true,
       "prerelease": false
     }
@@ -205,6 +204,7 @@ crontab -e
 ### Systemd Timer
 
 Create `/etc/systemd/system/appimage-updater.service`:
+
 ```ini
 [Unit]
 Description=AppImage Updater Service
@@ -219,6 +219,7 @@ StandardError=journal
 ```
 
 Create `/etc/systemd/system/appimage-updater.timer`:
+
 ```ini
 [Unit]
 Description=Run AppImage Updater daily
@@ -233,6 +234,7 @@ WantedBy=timers.target
 ```
 
 Enable and start:
+
 ```bash
 sudo systemctl enable appimage-updater.timer
 sudo systemctl start appimage-updater.timer
@@ -241,6 +243,7 @@ sudo systemctl start appimage-updater.timer
 ### Shell Script with Notifications
 
 `~/bin/appimage-update.sh`:
+
 ```bash
 #!/bin/bash
 
@@ -310,9 +313,9 @@ appimage-updater edit MyApp --checksum-algorithm md5 --checksum-pattern "{filena
 # List all applications
 appimage-updater list
 
-# Update frequency for all graphics applications
+# Check status for all graphics applications
 for app in Krita GIMP Inkscape Blender; do
-    appimage-updater edit "$app" --frequency 1 --unit weeks
+    appimage-updater show "$app"
 done
 
 # Enable rotation for development applications
@@ -346,7 +349,6 @@ for app_info in "${APPS[@]}"; do
     
     echo "Setting up $app_name..."
     appimage-updater add \
-        --frequency 1 --unit weeks \
         --checksum \
         "$app_name" "$app_url" "$BASE_DIR/$app_name"
 done
@@ -361,6 +363,7 @@ echo "Graphics applications setup complete!"
 Create `.desktop` files that use symlinked AppImages:
 
 `~/.local/share/applications/freecad.desktop`:
+
 ```ini
 [Desktop Entry]
 Name=FreeCAD
@@ -376,6 +379,7 @@ MimeType=application/x-extension-fcstd;
 ### PATH Integration
 
 Add symlink directory to PATH in `~/.bashrc`:
+
 ```bash
 # Add AppImage symlinks to PATH
 export PATH="$HOME/bin:$PATH"
@@ -384,6 +388,7 @@ export PATH="$HOME/bin:$PATH"
 ### IDE Integration
 
 Configure your IDE to use symlinked AppImages:
+
 ```json
 // VS Code settings.json
 {

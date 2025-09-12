@@ -9,37 +9,54 @@ AppImage Updater monitors configured applications (like FreeCAD, OrcaSlicer, etc
 - **Automated Updates** - Monitor GitHub repositories for new releases
 - **Distribution-Aware Selection** - Intelligent selection of best compatible distribution package
 - **Smart Pattern Matching** - Flexible regex patterns to identify correct AppImage files
+- **Intelligent Pattern Generation** - Smart regex creation from actual GitHub releases
 - **ZIP Archive Support** - Automatic extraction of AppImages from ZIP files
+- **Prerelease Detection** - Automatic detection of continuous build repositories
 - **Multi-Distribution Support** - Handle Ubuntu, Fedora, Debian, Arch, and other distributions
 - **Checksum Verification** - SHA256, SHA1, and MD5 checksum validation for security
 - **File Rotation** - Keep multiple versions with automatic cleanup (fixed naming)
-- **Symlink Management** - Stable paths for applications through symbolic links  
+- **Symlink Management** - Stable paths for applications through symbolic links
 - **Concurrent Downloads** - Fast, parallel downloading with progress tracking
+- **GitHub Authentication** - Token support for increased API rate limits
+- **Retry Logic** - Exponential backoff for robust error handling
+- **Debug Mode** - Comprehensive logging for troubleshooting
 - **Rich CLI** - Beautiful terminal interface with colors and progress bars
 - **Interactive Selection** - User-friendly menus for uncommon distributions
 - **Flexible Configuration** - JSON-based configuration with global and per-app settings
 
+## Requirements
+
+- **Python 3.8+** - Required for async/await support
+- **Linux/macOS** - Primary supported platforms
+- **Internet Connection** - For GitHub API access and downloads
+
 ## Quick Start
 
-1. **Install** the application:
+1. **Install** the application (see [Installation Guide](installation.md) for all methods):
+
    ```bash
-   pip install appimage-updater
+   pipx install appimage-updater
    ```
 
-2. **Initialize** configuration:
+1. **Initialize** configuration:
+
    ```bash
    appimage-updater init
    ```
 
-3. **Add** an application:
+1. **Add** an application:
+
    ```bash
    appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
    ```
 
-4. **Check** for updates:
+1. **Check** for updates:
+
    ```bash
    appimage-updater check
    ```
+
+For complete command documentation and advanced usage, see the [Usage Guide](usage.md).
 
 ## Architecture Overview
 
@@ -73,8 +90,36 @@ graph TD
 - **Download Engine** - Concurrent downloads with automatic ZIP extraction, progress tracking, and checksum verification
 - **File Management** - Optional file rotation with configurable retention policies and symlink management
 
+## Documentation
+
+### User Guides
+
+- **[Installation](installation.md)** - Complete installation methods and troubleshooting
+- **[Getting Started](getting-started.md)** - Step-by-step tutorial and basic usage
+- **[Usage Guide](usage.md)** - Complete CLI command reference
+- **[Examples](examples.md)** - Practical usage patterns and workflows
+- **[Configuration](configuration.md)** - Advanced configuration options
+
+### Feature Guides
+
+- **[ZIP Support](zip-support.md)** - Handling applications distributed in ZIP files
+- **[Rotation Guide](rotation.md)** - File rotation and symlink management
+- **[Compatibility](compatibility.md)** - Distribution compatibility and selection
+
+### Support & Maintenance
+
+- **[Security Guide](security.md)** - Authentication, checksums, and security best practices
+- **[Troubleshooting](troubleshooting.md)** - Common issues, solutions, and diagnostics
+- **[Changelog](changelog.md)** - Version history and release notes
+
+### Developer Resources
+
+- **[Architecture](architecture.md)** - System design and component overview
+- **[Developer Commands](commands.md)** - Task automation and development tools
+- **[Development](development.md)** - Setting up development environment
+- **[Testing](testing.md)** - Running tests and quality checks
+- **[Contributing](contributing.md)** - Guidelines for contributing to the project
+
 ## Getting Started
 
 Ready to automate your AppImage updates? Head over to the [Installation](installation.md) guide to get started, or check out the [Getting Started](getting-started.md) tutorial for a walkthrough of the basic features.
-
-For developers interested in contributing or understanding the codebase, see the [Architecture](architecture.md) and [API Reference](reference/appimage_updater/index.md) documentation.

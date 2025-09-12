@@ -4,8 +4,9 @@ All notable changes to AppImage Updater will be documented in this file.
 
 ## [Unreleased]
 
-### 🆕 New Features
-- **📦 MAJOR**: Automatic ZIP File Extraction Support
+### New Features
+
+- **MAJOR**: Automatic ZIP File Extraction Support
   - **PROBLEM SOLVED**: Applications like BambuStudio that distribute AppImages inside ZIP files now work seamlessly
   - **ZERO-CONFIG**: ZIP files are automatically detected and extracted with no configuration needed
   - **INTELLIGENT**: Scans ZIP contents for `.AppImage` files and extracts them to download directory
@@ -21,7 +22,7 @@ All notable changes to AppImage Updater will be documented in this file.
   - **EXAMPLES**:
     - **BambuStudio**: `appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio`
     - **Pattern Support**: `"(?i)Bambu_?Studio_.*\\.(zip|AppImage)(\\.(|current|old))?$"` for both formats
-  - **ARCHITECTURE**: 
+  - **ARCHITECTURE**:
     - New `_extract_if_zip()` method in `Downloader` class
     - Post-download processing pipeline automatically handles ZIP extraction
     - Updates `candidate.download_path` to point to extracted AppImage for downstream processing
@@ -34,7 +35,8 @@ All notable changes to AppImage Updater will be documented in this file.
     - Subdirectories in ZIP
     - Directory entries ignored
 
-### 🐛 Bug Fixes
+### Bug Fixes
+
 - **FIXED**: AppImage rotation naming issue for extracted ZIP files
   - **PROBLEM**: Rotation suffix (`.current`, `.old`) was incorrectly added before `.AppImage` extension
   - **SOLUTION**: Modified rotation logic to treat `.AppImage` as part of the base filename
@@ -43,44 +45,51 @@ All notable changes to AppImage Updater will be documented in this file.
   - **TESTING**: Updated rotation tests to verify correct naming format
   - **BACKWARD COMPATIBLE**: Handles both naming styles during version detection
 
----
+______________________________________________________________________
 
 ## [0.2.0] - 2025-01-09
 
 ### 🆕 New Features
+
 - **NEW**: `check` command now supports optional positional argument for application name
+
   - **USAGE**: `appimage-updater check [app-name]` instead of `--app` option
   - **BACKWARD COMPATIBLE**: Still supports all existing `check` command functionality
   - **EXAMPLE**: `appimage-updater check GitHubDesktop` to check a specific application
   - **FLEXIBLE**: Can be used with or without the application name argument
 
 - **NEW**: Automatic GitHub URL normalization in `add` command
+
   - **INTELLIGENT**: Automatically detects and converts GitHub download URLs to repository URLs
   - **USER-FRIENDLY**: Warns users when URL correction is applied with clear feedback
   - **PREVENTS ERRORS**: Fixes common mistake of providing release download links instead of repo URLs
   - **EXAMPLES**: Converts `https://github.com/user/repo/releases/download/...` → `https://github.com/user/repo`
   - **EXAMPLES**: Converts `https://github.com/user/repo/releases` → `https://github.com/user/repo`
 
-### 🐛 Bug Fixes
+### Bug Fixes
+
 - **FIXED**: GitHubDesktop configuration URL corrected from invalid release download URL to proper repository URL
 - **FIXED**: GitHubDesktop configuration removed invalid rotation settings that were causing configuration errors
 
-### 🧪 Testing & Quality Assurance
+### Testing & Quality Assurance
+
 - **ENHANCED**: Added comprehensive tests for GitHub URL normalization
   - Tests normalization of release download URLs to repository URLs
   - Tests normalization of releases page URLs to repository URLs
   - Tests that valid repository URLs remain unchanged
   - Verified all existing tests continue to pass
 
-### 🔧 Configuration Updates
+### Configuration Updates
+
 - **UPDATED**: Version bumped from 0.1.1 to 0.2.0 reflecting significant feature additions
 
----
+______________________________________________________________________
 
 ## [Unreleased] - 2025-09-06
 
-### 🔐 MAJOR: GitHub API Authentication & Rate Limit Management
-- **🚀 GAME CHANGER**: Complete GitHub Personal Access Token (PAT) authentication system
+### MAJOR: GitHub API Authentication & Rate Limit Management
+
+- **GAME CHANGER**: Complete GitHub Personal Access Token (PAT) authentication system
   - **PROBLEM SOLVED**: Anonymous GitHub API usage limited to 60 requests/hour causes rate limit failures
   - **SOLUTION**: Comprehensive token discovery and authentication with 83x higher rate limits (5000/hour)
   - **ZERO-CONFIG**: Automatic token discovery from multiple secure sources with intelligent priority
@@ -88,18 +97,20 @@ All notable changes to AppImage Updater will be documented in this file.
   - **SECURE**: Security-first design with proper priority ordering and no token exposure in logs
   - **USER-FRIENDLY**: Clear authentication status feedback and helpful setup guidance
 
-#### 🎯 **Authentication Sources (Priority Order)**:
+#### **Authentication Sources (Priority Order)**:
+
 1. **`GITHUB_TOKEN`** environment variable (standard GitHub CLI compatible)
-2. **`APPIMAGE_UPDATER_GITHUB_TOKEN`** environment variable (app-specific)
-3. **Token files** in user config directory:
+1. **`APPIMAGE_UPDATER_GITHUB_TOKEN`** environment variable (app-specific)
+1. **Token files** in user config directory:
    - `~/.config/appimage-updater/github-token.json` (JSON format)
    - `~/.config/appimage-updater/github_token.json` (JSON format)
    - `~/.appimage-updater-github-token` (plain text)
-4. **Global config files** with GitHub token settings:
+1. **Global config files** with GitHub token settings:
    - `~/.config/appimage-updater/config.json`
    - `~/.config/appimage-updater/global.json`
 
-#### 🔧 **Technical Implementation**:
+#### **Technical Implementation**:
+
 - **NEW**: `GitHubAuth` class for secure token management and validation
 - **NEW**: `get_github_auth()` factory function for easy authentication setup
 - **ENHANCED**: `GitHubClient` with automatic authentication integration
@@ -107,15 +118,17 @@ All notable changes to AppImage Updater will be documented in this file.
 - **ENHANCED**: Rate limit aware error messages with helpful user guidance
 - **INTEGRATED**: CLI commands show authentication status in debug mode
 
-#### 📊 **Rate Limit Benefits**:
+#### **Rate Limit Benefits**:
+
 - **Anonymous**: 60 requests/hour (frequently exceeded during normal usage)
 - **Authenticated**: 5,000 requests/hour (sufficient for intensive usage)
 - **Impact**: Eliminates rate limit failures during normal operation
 - **Feedback**: Clear status messages showing current rate limits and authentication method
 
-#### 🔐 **Personal Access Token (PAT) Setup Guide**:
+#### **Personal Access Token (PAT) Setup Guide**:
 
 **Required Permissions (Minimal Security)**:
+
 - **Classic PATs**: Only `public_repo` permission needed
 - **Fine-grained PATs**: Only `Contents: Read` and `Metadata: Read` permissions needed
 - **Security**: Read-only access to public repositories only - cannot access private data or modify anything
@@ -123,15 +136,17 @@ All notable changes to AppImage Updater will be documented in this file.
 **Step-by-Step Token Creation**:
 
 1. **Create Classic PAT (Recommended)**:
+
    - Visit: [GitHub Settings > Developer settings > Personal access tokens > Tokens (classic)](https://github.com/settings/tokens)
    - Click "Generate new token (classic)"
    - Set token name: `AppImage-Updater`
    - Set expiration: Choose your preference (90 days, 1 year, or no expiration)
-   - **Select ONLY**: ☑️ `public_repo` (under "repo" section)
+   - **Select ONLY**: `public_repo` (under "repo" section)
    - Click "Generate token"
    - **IMPORTANT**: Copy the token immediately (you won't see it again)
 
-2. **Create Fine-grained PAT (Alternative)**:
+1. **Create Fine-grained PAT (Alternative)**:
+
    - Visit: [GitHub Settings > Developer settings > Personal access tokens > Fine-grained tokens](https://github.com/settings/personal-access-tokens/new)
    - Set token name: `AppImage-Updater`
    - Set expiration and resource access as desired
@@ -170,6 +185,7 @@ chmod 600 ~/.config/appimage-updater/config.json
 ```
 
 **Usage Examples**:
+
 ```bash
 # All commands automatically use authentication when available
 appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
@@ -182,14 +198,16 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
 ```
 
 **Security Features**:
+
 - **Principle of Least Privilege**: Token only needs read access to public repositories
-- **No Sensitive Data**: Cannot access private repos, user data, or organization information  
+- **No Sensitive Data**: Cannot access private repos, user data, or organization information
 - **Read-Only Operations**: Only fetches release information and download metadata
 - **No Token Exposure**: Tokens never appear in logs or debug output
 - **Priority Security**: Environment variables take precedence over files
 - **File Permissions**: Supports secure file permissions (600) for token files
 
 #### 🧪 **Testing & Quality Assurance**:
+
 - **COMPREHENSIVE**: 25 new tests covering all authentication scenarios
 - **REAL-WORLD**: Tested with actual GitHub repositories and API responses
 - **COVERAGE**: Token discovery, priority ordering, error handling, CLI integration
@@ -197,6 +215,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
 - **REGRESSION**: Ensures anonymous access continues working when no token available
 
 #### 💡 **User Benefits**:
+
 - **ELIMINATES**: "Rate limit exceeded" errors during normal usage
 - **IMPROVES**: Reliability of GitHub release fetching and pattern generation
 - **ENHANCES**: User experience with faster, more reliable operations
@@ -204,6 +223,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
 - **MAINTAINS**: Full backward compatibility - works with or without authentication
 
 ### 🚀 New Features
+
 - **🔍 MAJOR**: Automatic Prerelease Detection in `add` Command
   - **PROBLEM SOLVED**: Repositories with only prerelease versions (like continuous builds) now work seamlessly
   - **INTELLIGENT**: Automatically analyzes GitHub repository releases to detect prerelease-only repositories
@@ -221,7 +241,9 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **IMPACT**: Eliminates configuration errors for continuous build applications like appimaged
   - **TESTING**: 16 comprehensive tests covering all scenarios (prereleases-only, mixed, stable, API errors, user overrides)
   - **ARCHITECTURE**: Async implementation with proper error handling and rate limit resilience
+
 ### 🔧 Technical Improvements
+
 - **ENHANCED**: Async Architecture for GitHub API Integration
   - **REFACTORED**: Made `add` command fully async to support GitHub API calls during configuration generation
   - **FIXED**: Resolved coroutine warnings by creating async version of pattern generation (`_generate_appimage_pattern_async`)
@@ -229,7 +251,9 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **RESULT**: Clean async implementation with no runtime warnings
 
 ### 🧪 Quality Assurance
+
 - **COMPREHENSIVE TESTING**: 16 new tests for automatic prerelease detection
+
   - **UNIT TESTS**: `_should_enable_prerelease()` function with all scenarios:
     - Repositories with only prereleases (✅ enables prerelease)
     - Repositories with stable releases (❌ keeps disabled)
@@ -246,11 +270,13 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **COVERAGE**: Maintained 76% test coverage across codebase
 
 - **REAL-WORLD VALIDATION**: Tested with actual repositories
+
   - **probonopd/go-appimage**: Successfully auto-detects prerelease-only (continuous tag)
   - **FreeCAD/FreeCAD**: Correctly maintains stable release preference
   - **Rate limit handling**: Graceful fallback when GitHub API limits are exceeded
 
 - **MAJOR**: Intelligent Pattern Generation from GitHub Releases
+
   - **PROBLEM SOLVED**: Fixed pattern generation issues where repository names didn't match actual file prefixes (e.g., OpenShot)
   - **NEW APPROACH**: `add` command now fetches actual GitHub releases to analyze real AppImage filenames
   - **SMART ANALYSIS**: Extracts common prefixes from actual files instead of guessing from repository names
@@ -263,6 +289,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **IMPACT**: Dramatically improves accuracy for applications where repo names differ from file prefixes
 
 ### 🏗️ Build System
+
 - **NEW**: `build` task for creating distribution packages
   - **ADDED**: `task build` command to create wheel and sdist packages using `uv build`
   - **INTEGRATED**: Runs full quality checks (`task check`) before building to ensure package quality
@@ -272,7 +299,9 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **USAGE**: `task build` - Build distribution packages ready for PyPI or local installation
 
 ### 🚀 CI/CD & GitHub Actions - COMPLETE SUCCESS
+
 - **NEW**: Full GitHub Actions CI/CD pipeline with automated deployment
+
   - **ADDED**: `docs.yml` workflow for automated GitHub Pages deployment
     - **LIVE DOCUMENTATION**: Successfully deployed at `https://royw.github.io/appimage-updater/`
     - **AUTO-DEPLOYMENT**: Updates automatically on every push to main branch
@@ -289,6 +318,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
     - **MODERN ACTIONS**: Latest versions (setup-python@v5, upload-artifact@v4, etc.)
 
 - **ACHIEVED**: Repository professionalization and management
+
   - **MADE PUBLIC**: Successfully converted private repository to public
   - **ENABLED**: GitHub Pages with workflow-based deployment
   - **ADDED**: Professional README badges (CI/CD status, docs, Python version, license)
@@ -297,6 +327,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **RESOLVED**: All dependency conflicts and CI environment compatibility issues
 
 - **FIXED**: Critical CI/CD dependency and configuration issues
+
   - **RESOLVED**: `pytest-anyio` version constraint compatibility (>=0.0.0 for CI)
   - **FIXED**: MkDocs navigation references to non-existent files (strict mode)
   - **CORRECTED**: GitHub Actions dependency installation (`--extra dev` syntax)
@@ -304,6 +335,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **RESULT**: Documentation deployment working perfectly, CI/CD infrastructure complete
 
 ### 🎆 Code Quality
+
 - **FIXED**: Code complexity issues in main.py
   - **REFACTORED**: `_validate_symlink_path()` function to reduce cyclomatic complexity from C to acceptable levels
     - **EXTRACTED**: `_validate_symlink_path_exists()` for empty path validation
@@ -317,7 +349,9 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **VERIFIED**: All 95 tests continue to pass after refactoring
 
 ### 📚 Documentation
+
 - **ENHANCED**: Documentation navigation with multiple ways to return home
+
   - **ADDED**: Clickable site title and logo that return to home page
   - **ADDED**: Home icon (`🏠`) to navigation breadcrumbs and home links
   - **ADDED**: Custom CSS styling to enhance home navigation visibility
@@ -330,45 +364,53 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **FILES**: `docs/stylesheets/extra.css`, `docs/javascripts/extra.js`, updated `mkdocs.yml`
 
 - **IMPROVED**: Documentation build tasks
+
   - **ENHANCED**: `docs:build` task with clear progress messages and success feedback
   - **ADDED**: `docs:serve` task for local development server with startup messages
   - **MAINTAINED**: `docs` task as alias for `docs:serve` for backward compatibility
   - **UPDATED**: Clean task now removes `site/` directory for documentation builds
 
 - **FIXED**: Missing MkDocs plugin installation issue
+
   - **INSTALLED**: `mkdocs-git-revision-date-localized-plugin==1.4.7` with dependency `pytz==2025.2`
   - **RESOLVED**: "The 'git-revision-date-localized' plugin is not installed" error
   - **RESULT**: Documentation now builds successfully with `task docs:build`
 
 ### 🐛 Bug Fixes
+
 - **FIXED**: Edit command exception traceback display issue
+
   - **PROBLEM**: Setting `--rotation` without symlink showed full exception traceback, creating messy error output
   - **SOLUTION**: Added specific `ValueError` exception handling to display clean error messages without tracebacks
   - **RESULT**: User-friendly error messages like "Error editing application: File rotation requires a symlink path. Use --symlink-path to specify one."
   - **IMPACT**: Cleaner, more professional error output that doesn't overwhelm users with technical details
 
 - **FIXED**: Symlink path validation in edit command
+
   - **PROBLEM**: `--symlink-path` accepted invalid paths without validation (empty strings, wrong extensions, malformed paths)
   - **SOLUTION**: Added comprehensive symlink path validation with new `_validate_symlink_path()` function
   - **VALIDATES**: Empty/whitespace paths, path structure, invalid characters, parent directory existence
   - **ENFORCES**: `.AppImage` extension requirement for symlink paths
   - **NORMALIZES**: Path expansion (`~` → home directory) and resolution (`..` segments)
-  - **EXAMPLES**: 
+  - **EXAMPLES**:
     - Rejects empty paths: `"Symlink path cannot be empty. Provide a valid file path."`
     - Rejects invalid extensions: `"Symlink path should end with '.AppImage': /tmp/invalid"`
     - Properly expands: `~/bin/test.AppImage` → `/home/user/bin/test.AppImage`
   - **IMPACT**: Prevents configuration errors and ensures valid symlink paths for file rotation
 
 ### 🧪 Testing & Quality Assurance
+
 - **NEW**: `test:regression` task in Taskfile.yml for automated regression validation
+
   - **ADDED**: `task test:regression` command for running regression tests specifically
-  - **FOCUSED**: Targets `tests/test_add_regression.py` with verbose output and colored results  
+  - **FOCUSED**: Targets `tests/test_add_regression.py` with verbose output and colored results
   - **INTEGRATED**: Part of comprehensive test suite alongside e2e, smoke, and pattern-matching tests
   - **FEEDBACK**: Provides clear success message when regression tests pass
   - **USAGE**: `task test:regression` - Run regression tests to validate fixed issues remain resolved
   - **AVAILABLE**: Shows up in `task --list` with other test tasks for easy discovery
 
 - **NEW**: Comprehensive Regression Testing for `add` Command
+
   - **ADDED**: `tests/test_add_regression.py` - Dynamic regression validation using real user configurations
   - **DISCOVERS**: Existing configurations in `~/.config/appimage-updater/apps/` automatically
   - **RECREATES**: Each configuration using enhanced `add` command with extracted parameters
@@ -383,6 +425,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **AUTOMATED**: Runs as part of test suite to prevent future regressions
 
 - **ENHANCED**: Comprehensive test coverage for edit command validation fixes
+
   - Added 7 new tests in `tests/test_edit_validation_fixes.py` covering all validation scenarios
   - Tests no traceback display for validation errors
   - Tests empty, whitespace-only, and invalid extension symlink path validation
@@ -392,22 +435,25 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **RESULT**: Total test coverage increased, all existing tests continue to pass
 
 ### 🏧 Architecture & Design
+
 - **ENHANCED**: Perfect Command Symmetry - `add` and `edit` Feature Parity
+
   - **ACHIEVED**: Complete parameter alignment between `add` and `edit` commands
   - **UPDATED**: `_generate_default_config()` function to accept all new configuration parameters
   - **IMPROVED**: Parameter validation and error handling consistency across commands
   - **STANDARDIZED**: Configuration field handling (always include `rotation_enabled` for consistency)
   - **UNIFIED**: Help text and documentation patterns between commands
-  - **BENEFITS**: 
+  - **BENEFITS**:
     - Users learn one parameter set that works for both commands
     - Reduces cognitive load and documentation complexity
     - Enables complex workflows with single commands
     - Future parameter additions automatically benefit both commands
 
 - **ENHANCED**: Configuration Generation Logic
+
   - **IMPROVED**: `_generate_default_config()` with comprehensive parameter support:
     - `prerelease`: Boolean control for prerelease versions
-    - `unit`: Frequency time unit (hours/days/weeks) 
+    - `unit`: Frequency time unit (hours/days/weeks)
     - `checksum`: Full checksum configuration (enabled, algorithm, pattern, required)
     - `rotation`: Complete file rotation setup (enabled, retain count, symlink path)
   - **CONSISTENT**: Field naming and structure matches existing configurations exactly
@@ -415,7 +461,9 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **DEFAULTS**: Intelligent defaults that match user expectations and current behavior
 
 ### 🔧 Code Quality & Refactoring
+
 - **REFACTORED**: Reduced code complexity in main.py functions
+
   - Broke down `_get_files_info()` function (complexity 11→8) into smaller helper functions:
     - `_find_matching_appimage_files()` for file discovery and error handling
     - `_format_file_groups()` for file group formatting
@@ -432,6 +480,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **BENEFIT**: Improved code maintainability, readability, and testability
 
 - **FIXED**: Code formatting and type annotation issues
+
   - Removed whitespace from blank lines (fixed 10+ W293 violations)
   - Fixed unused variable warning (B007) in `_group_files_by_rotation()`
   - Added proper type annotation for `rotation_groups` variable
@@ -440,41 +489,50 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **RESULT**: All radon complexity checks now pass
 
 ### 🐛 Bug Fixes
+
 - **FIXED**: Symlink detection for AppImage files with suffixes
+
   - Fixed `_get_valid_symlink_target()` function to properly detect symlinks pointing to files with suffixes like `.current` and `.old`
   - Changed condition from `target.name.endswith(".AppImage")` to `".AppImage" in target.name` to handle suffixed files
   - Resolves issue where symlinks pointing to rotation files (e.g., `app.AppImage.current`) were not detected
   - Now correctly displays symlinks in the `show` command for applications using file rotation systems
 
 - **ENHANCED**: Symlink search paths aligned with go-appimage's appimaged
+
   - Updated symlink detection to use the same search paths as go-appimage's `appimaged` daemon
   - **Search locations now include**: `/usr/local/bin`, `/opt`, `~/Applications`, `~/.local/bin`, `~/Downloads`, plus all `$PATH` directories
   - **Improved compatibility**: Better integration with existing AppImage ecosystem tools
   - **Expanded coverage**: Finds symlinks in all standard AppImage locations used by the community
 
 ### 🆕 New Features
+
 - **MAJOR**: Comprehensive `add` Command Enhancement - Feature Parity with `edit`
+
   - **COMPLETE**: `add` command now supports ALL configuration options available in `edit` command
   - **ELIMINATES**: Need for post-creation edits - create complete configurations in a single command
   - **NEW OPTIONS**: Added all missing parameters for complete control:
 
   **Basic Configuration:**
+
   - `--prerelease/--no-prerelease`: Enable/disable prerelease versions (default: disabled)
   - `--unit UNIT`: Frequency units - hours, days, weeks (default: days)
   - `--frequency N --unit UNIT`: Complete frequency specification
 
   **File Rotation Options:**
+
   - `--rotation/--no-rotation`: Enable/disable file rotation (default: disabled)
   - `--retain N`: Number of old files to retain (1-10, default: 3)
   - `--symlink PATH`: Managed symlink path (auto-enables rotation)
 
   **Checksum Verification Options:**
+
   - `--checksum/--no-checksum`: Enable/disable verification (default: enabled)
   - `--checksum-algorithm ALG`: Algorithm - sha256, sha1, md5 (default: sha256)
   - `--checksum-pattern PATTERN`: Checksum file pattern (default: {filename}-SHA256.txt)
   - `--checksum-required/--checksum-optional`: Make verification required/optional (default: optional)
 
   **EXAMPLES**: Complete single-command configurations now possible:
+
   ```bash
   # Prerelease with weekly updates and rotation
   appimage-updater add --prerelease --frequency 1 --unit weeks --rotation \
@@ -488,6 +546,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   ```
 
 - **NEW**: `add` command for easy application configuration
+
   - **ADDED**: `appimage-updater add <name> <github_url> <download_dir>` for simple app addition
   - **INTELLIGENT**: Automatically generates regex patterns based on GitHub repository names
   - **SMART DEFAULTS**: Creates sensible configurations with checksum verification, daily updates, and proper file patterns
@@ -497,13 +556,16 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **EXAMPLE**: `appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD`
 
 - **FIXED**: Type checking and linting errors in main.py
+
   - Resolved function name conflict between `list` command and Python's built-in `list` type
   - Renamed internal function from `list` to `list_apps` while keeping CLI command as `"list"`
   - Fixed deprecated `typing.List` imports, replaced with modern lowercase `list` annotations
   - Removed whitespace on blank lines and fixed line length violations
   - All mypy type checking errors resolved (26 errors → 0 errors)
   - All ruff linting errors fixed (7 errors → 0 errors)
+
 - **FIXED**: Pattern matching for existing AppImage files with suffixes
+
   - Updated application patterns to match files ending with `.AppImage.save`, `.AppImage.current`, `.AppImage.old`
   - Fixed FreeCAD pattern to handle case-insensitive extensions (both `.AppImage` and `.appimage`)
   - Fixed OrcaSlicer pattern to be more flexible with versioned assets
@@ -511,12 +573,15 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - Now correctly detects existing versions: `FreeCAD 1.0.2`, `FreeCAD_weekly 2025.09.03`, `OrcaSlicer 2.3.0`
 
 - **FIXED**: Version comparison logic for releases with extra text
+
   - Enhanced version extraction to handle GitHub release names with non-version text
   - Fixed false positive updates for releases like "Development Build weekly-2025.09.03"
   - Version comparison now correctly extracts and compares just the version portion
 
 ### 🆕 New Features
+
 - **NEW**: `show` command for detailed application information
+
   - **ADDED**: `appimage-updater show --app <name>` command to display comprehensive app details
   - **DISPLAYS**: Configuration settings (source, URL, download directory, patterns, frequency, checksum settings)
   - **SHOWS**: File information (size, modification time, executable status) for matching AppImage files
@@ -527,6 +592,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **EXAMPLE**: `appimage-updater show --app FreeCAD --config-dir ~/.config/appimage-updater/`
 
 - **ENHANCED**: `symlink_path` configuration support
+
   - **ADDED**: Optional `symlink_path` field in application configuration for explicit symlink management
   - **DISPLAYS**: Configured symlink path in `show` command configuration section
   - **DETECTS**: Configured symlinks in addition to automatically discovered ones
@@ -535,7 +601,9 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **EXAMPLE**: `"symlink_path": "~/Applications/FreeCAD.AppImage"` in configuration
 
 ### 🧪 Testing & Quality Assurance
+
 - **ENHANCED**: Comprehensive test coverage for `show` command and symlink_path
+
   - Added 8 new end-to-end tests covering all `show` command functionality and symlink_path
   - Tests valid/invalid applications, case-insensitive matching, error handling
   - Tests missing directories, disabled applications, symlink detection
@@ -546,6 +614,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - Main module test coverage improved from 78% to 79%
 
 - **ENHANCED**: Comprehensive test coverage for `list` command
+
   - Added 8 new end-to-end tests covering all `list` command functionality
   - Tests single and multiple application configurations
   - Tests enabled/disabled status display and counting
@@ -558,12 +627,15 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - Main module test coverage improved from 57% to 72%
 
 - **IMPROVED**: Development workflow quality checks
+
   - Added `format` task to beginning of `check` task in Taskfile.yml
   - Code formatting now runs automatically before type checking and linting
   - Prevents formatting-related linting errors in CI/CD pipeline
 
 ### 🔧 Configuration Updates
+
 - **IMPROVED**: Pattern matching precision for AppImage files with suffixes
+
   - **CHANGED**: Updated suffix patterns from `(\..*)?` to `(\.(|current|old))?` for better control
   - **PREVENTS**: Backup files (`.save`, `.backup`, `.bak`) from interfering with version detection
   - **MAINTAINS**: Support for rotation system files (`.current`, `.old`) and base AppImage files
@@ -571,24 +643,29 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **RESOLVES**: False version detection from backup files causing incorrect "update available" status
 
 - **CHANGED**: Application pattern configurations to support file suffixes
+
   - FreeCAD: `.*Linux-x86_64.*\.[Aa]pp[Ii]mage(\..*)?$`
   - FreeCAD_weekly: `FreeCAD_weekly.*Linux-x86_64.*\.AppImage(\..*)?$`
   - OrcaSlicer_nightly: `OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.AppImage(\.(|current|old))?$`
 
 - **FIXED**: pytest-cov coverage conflicts in task check
+
   - Added `--no-cov` flag to `test:e2e` task to prevent coverage database conflicts
   - Configured `parallel = false` to avoid SQLite database conflicts during test runs
   - Added `--cov-config=pyproject.toml` for consistent coverage configuration
   - Fixes "FileNotFoundError: No such file or directory" errors during coverage combining
 
 ### 🛠️ Development & Testing
+
 - **FIXED**: Test failures with missing trio dependency
+
   - Added `trio` as development dependency to support anyio pytest plugin backends
   - Resolves "ModuleNotFoundError: No module named 'trio'" in rotation tests
   - All parametrized tests now run successfully with both asyncio and trio backends
   - Added trio dependencies: trio==0.30.0, attrs==25.3.0, outcome==1.3.0.post0, sortedcontainers==2.4.0
 
 - **ENHANCED**: Taskfile with additional test tasks
+
   - `task test:e2e` - Run end-to-end tests (without coverage to avoid conflicts)
   - `task test:e2e-coverage` - Run E2E tests with coverage reporting
   - `task test:smoke` - Quick smoke test for basic functionality validation
@@ -596,48 +673,58 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - `task test:all` - Run all tests including end-to-end validation
 
 - **IMPROVED**: Documentation for testing and coverage
+
   - Updated WARP.md with comprehensive testing and coverage configuration section
   - Added troubleshooting steps for coverage database conflicts
   - Updated README.md with end-to-end testing commands
 
----
+______________________________________________________________________
 
 ## [Previous] - 2025-01-04
 
 ### 🏗️ Code Quality
+
 - **IMPROVED**: Significantly reduced code complexity across the codebase
+
   - Refactored `_check_updates` function from D complexity (critical) to B complexity
   - Broke down complex functions into smaller, focused methods
   - All functions now meet project complexity standards (≤10 cyclomatic complexity)
   - Enhanced maintainability and readability through better separation of concerns
 
 - **FIXED**: MyPy type checking issues
+
   - Resolved import redefinition errors in `_version.py`
   - Fixed untyped function call issues in `config.py`
   - All 11 source files now pass strict type checking
 
 ### 🧹 Code Structure
+
 - **REFACTORED**: Main update checking workflow
+
   - Extracted `_load_and_filter_config`, `_filter_apps_by_name`, `_perform_update_checks`
   - Separated update candidate processing and download handling
   - Clear separation between configuration, checking, and downloading phases
 
 - **REFACTORED**: Download system architecture
+
   - Split `_download_single` into `_setup_download`, `_perform_download`, `_post_process_download`
   - Improved error handling and retry logic organization
   - Better separation of file download and checksum verification
 
 - **REFACTORED**: Checksum verification system
+
   - Extracted `_parse_expected_checksum` and `_calculate_file_hash` methods
   - Simplified checksum parsing logic with dedicated functions
   - Enhanced GitHub checksum file association with pattern-based matching
 
 - **REFACTORED**: User interface components
+
   - Separated successful and failed download result displays
   - Extracted checksum status indicator logic
   - Improved code organization for better maintainability
 
 ### 🔒 Security
+
 - **NEW**: Automatic checksum verification for downloaded files
   - Supports SHA256, SHA1, and MD5 algorithms
   - Configurable checksum file patterns (e.g., `{filename}-SHA256.txt`)
@@ -646,18 +733,23 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - Optional or required verification modes per application
 
 ### 🚀 Improvements
+
 - **FIXED**: HTTP redirect handling for GitHub release downloads
+
   - Downloads now properly follow 302 redirects from GitHub CDN
   - Resolves previous "Redirect response '302 Found'" errors
-  
+
 - **ENHANCED**: Download robustness and reliability
+
   - Automatic retry logic with exponential backoff (up to 3 attempts)
   - Improved timeout configuration (separate connect/read/write timeouts)
   - Better error handling for network interruptions
   - Progress tracking with transfer speed and ETA
 
 ### 📝 Configuration
+
 - **NEW**: `list` command for viewing configured applications
+
   - **ADDED**: `appimage-updater list` command to display all configured applications
   - **DISPLAYS**: Application name, enabled/disabled status, source repository, download directory, and update frequency
   - **SUPPORTS**: Same configuration options as other commands (`--config`, `--config-dir`)
@@ -665,6 +757,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **EXAMPLE**: `appimage-updater list --config-dir ~/.config/appimage-updater/apps`
 
 - **NEW**: Checksum configuration block for applications
+
   ```json
   "checksum": {
     "enabled": true,
@@ -673,16 +766,20 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
     "required": false
   }
   ```
+
 - **NEW**: Application filtering with `--app` option
+
 - **IMPROVED**: Debug logging with `--debug` flag for troubleshooting
 
-### 🛠️ Developer Experience  
+### 🛠️ Developer Experience
+
 - Enhanced logging with checksum verification status
 - Comprehensive debug information for download failures
 - Better error messages and user feedback
 - Updated documentation with security recommendations
 
 ### 📋 Technical Details
+
 - Checksum files automatically downloaded and verified
 - Support for multiple checksum file formats:
   - Hash + filename: `abc123... filename.AppImage`
@@ -690,16 +787,17 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - Multiple files: One hash per line
 - Configurable patterns support various naming conventions:
   - `{filename}-SHA256.txt` (FreeCAD style)
-  - `{filename}_SHA256.txt` (underscore variant)  
+  - `{filename}_SHA256.txt` (underscore variant)
   - `{filename}.sha256` (extension-based)
 
 ### 🧪 Tested With
+
 - ✅ FreeCAD weekly builds (SHA256 verification)
 - ✅ Large file downloads (>800MB) with retry logic
 - ✅ GitHub release redirect handling
 - ✅ Checksum pattern detection and parsing
 
----
+______________________________________________________________________
 
 ## Contributing
 

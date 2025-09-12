@@ -1,362 +1,209 @@
-*[🏠 Home](index.md) > Commands Reference*
+# Developer Commands
 
-# Commands Reference
+*[Home](index.md) > Developer Commands*
 
-AppImage Updater provides several commands for managing your AppImage applications.
+This document covers development and maintenance commands using Task (Taskfile.yml) and other developer tools.
 
-## Global Options
+For user-facing CLI commands (`appimage-updater add`, `check`, etc.), see the [Usage Guide](usage.md).
 
-These options can be used with any command:
+## Task Commands
 
-| Option | Description |
-|--------|-------------|
-| `--config FILE` | Use specific config file |
-| `--config-dir DIR` | Use specific config directory |
-| `--debug` | Enable debug logging |
-| `--help` | Show help and exit |
-|| `--version`, `-V` | Show version and exit |
+The project uses [Task](https://taskfile.dev/) for development automation. All commands are defined in `Taskfile.yml`.
 
-## Commands
-
-### `init`
-
-Initialize configuration directory with examples.
+### Testing Commands
 
 ```bash
-appimage-updater init [OPTIONS]
+# Run all tests
+task test
+
+# Run tests in parallel (faster)
+task test:parallel
+
+# Run fast parallel tests (skip slow tests)
+task test:parallel-fast
+
+# Run all test suites
+task test:all
+
+# Run end-to-end tests
+task test:e2e
+
+# Run end-to-end tests with coverage
+task test:e2e-coverage
+
+# Run regression tests
+task test:regression
+
+# Run pattern matching tests
+task test:pattern-matching
+
+# Run smoke tests
+task test:smoke
 ```
 
-**Options:**
-- `--config-dir PATH` - Configuration directory (default: `~/.config/appimage-updater`)
-
-**Examples:**
-```bash
-# Initialize default config directory
-appimage-updater init
-
-# Initialize custom directory
-appimage-updater init --config-dir /custom/path
-```
-
-### `add`
-
-Add a new application configuration with intelligent defaults and **automatic prerelease detection**.
-
-```bash
-appimage-updater add [OPTIONS] NAME URL DOWNLOAD_DIR
-```
-
-**Arguments:**
-- `NAME` - Application name (must be unique)
-- `URL` - GitHub repository URL
-- `DOWNLOAD_DIR` - Directory to download AppImages
-
-**🔍 Automatic Prerelease Detection:**
-The `add` command intelligently analyzes the repository to detect continuous build patterns:
-- **Auto-enables prerelease** for repositories with only prerelease versions (like `appimaged`)
-- **Keeps prerelease disabled** for repositories with stable releases
-- **User flags override** auto-detection when specified
-
-**Options:**
-- `--frequency INTEGER` - Update check frequency (default: 1)
-- `--unit [hours|days|weeks]` - Frequency unit (default: days)
-- `--prerelease` - Force enable prerelease versions (overrides auto-detection)
-- `--no-prerelease` - Force disable prerelease versions (overrides auto-detection)
-- `--rotation` - Enable file rotation
-- `--no-rotation` - Disable file rotation (default)
-- `--symlink PATH` - Symlink path (required with --rotation)
-- `--retain INTEGER` - Files to retain with rotation (default: 3)
-
-**📦 ZIP File Support:**
-AppImage Updater automatically detects and extracts AppImage files from ZIP archives. This works seamlessly for applications like BambuStudio that distribute AppImages inside ZIP files.
-
-- **Automatic Detection**: ZIP files are detected by extension and automatically extracted
-- **Intelligent Extraction**: Scans ZIP contents for `.AppImage` files
-- **Subdirectory Support**: Handles AppImages nested in ZIP subdirectories
-- **Full Integration**: Works with rotation, checksums, and metadata systems
-- **Pattern Support**: Use patterns like `"(?i)App.*\\.(zip|AppImage)$"` for dual format support
-
-**🐧 Distribution-Aware Selection:**
-When multiple distribution-specific releases are available, AppImage Updater intelligently selects the best match:
-
-- **Automatic Selection**: Chooses compatible distributions (Ubuntu 25.04 → ubuntu-24.04)
-- **Smart Scoring**: Considers distribution family, version proximity, architecture
-- **Interactive Fallback**: Shows selection menu for uncommon distributions (Gentoo, NixOS)
-- **Pattern Recognition**: Detects ubuntu-22.04, fedora-38, debian-11, etc. in filenames
-
-**Examples:**
-```bash
-# Basic usage (auto-detects prerelease if needed)
-appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
-
-# ZIP file application (BambuStudio releases AppImages in ZIP files)
-appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio
-
-# Continuous build (auto-enables prerelease)
-appimage-updater add appimaged https://github.com/probonopd/go-appimage ~/Apps/appimaged
-# Output: 🔍 Auto-detected continuous builds - enabled prerelease support
-
-# ZIP with custom pattern (both ZIP and AppImage formats)
-appimage-updater add --pattern "(?i)Bambu_?Studio_.*\\.(zip|AppImage)(\\.(|current|old))?$" \
-  BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio
-
-# ZIP with file rotation
-appimage-updater add --rotation --symlink ~/bin/bambustudio.AppImage \
-  --pattern "(?i)Bambu_?Studio_.*\\.(zip|AppImage)(\\.(|current|old))?$" \
-  BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio
-
-# With custom frequency
-appimage-updater add --frequency 7 --unit days MyApp https://github.com/user/repo ~/Apps/MyApp
-
-# Force prerelease (overrides auto-detection)
-appimage-updater add --prerelease NightlyApp https://github.com/user/repo ~/Apps/NightlyApp
-
-# With file rotation
-appimage-updater add --rotation --symlink ~/bin/myapp.AppImage --retain 5 MyApp https://github.com/user/repo ~/Apps/MyApp
-```
-
-### `list`
-
-List all configured applications and their status.
+### Code Quality Commands
 
 ```bash
-appimage-updater list [OPTIONS]
+# Run all quality checks
+task check
+
+# Run quality checks in parallel
+task check:parallel
+
+# Run CI pipeline locally
+task ci
+
+# Format code
+task format
+
+# Lint code
+task lint
+
+# Type checking
+task typecheck
 ```
 
-**Options:**
-- `--config FILE` - Use specific config file
-- `--config-dir PATH` - Use specific config directory
-
-**Example:**
-```bash
-appimage-updater list
-```
-
-**Output:**
-```
-┌─────────────┬─────────┬─────────────────┬────────────────────────┐
-│ Application │ Status  │ Update Freq     │ Download Directory     │
-├─────────────┼─────────┼─────────────────┼────────────────────────┤
-│ FreeCAD     │ Enabled │ 1 days          │ ~/Applications/FreeCAD │
-│ OrcaSlicer  │ Enabled │ 2 days          │ ~/Apps/OrcaSlicer      │
-└─────────────┴─────────┴─────────────────┴────────────────────────┘
-```
-
-### `show`
-
-Show detailed information about a specific application.
+### Build and Release Commands
 
 ```bash
-appimage-updater show [OPTIONS] APP_NAME
+# Build the project
+task build
+
+# Clean build artifacts
+task clean
+
+# Bump version
+task version:bump
+
+# Tag version
+task version:tag
+
+# Show current version
+task version
 ```
 
-**Arguments:**
-- `APP_NAME` - Name of application to show
-
-**Options:**
-- `--config FILE` - Use specific config file
-- `--config-dir PATH` - Use specific config directory
-
-**Example:**
-```bash
-appimage-updater show FreeCAD
-```
-
-**Output:**
-```
-Application: FreeCAD
-Status: Enabled
-URL: https://github.com/FreeCAD/FreeCAD
-Download Directory: /home/user/Applications/FreeCAD
-File Pattern: FreeCAD.*Linux.*\.AppImage(\.(|current|old))?$
-Update Frequency: 1 days
-Prerelease: No
-Checksum Verification: Enabled
-  Algorithm: SHA256
-  Pattern: {filename}-SHA256.txt
-  Required: No
-File Rotation: Disabled
-
-Current Files:
-  FreeCAD_0.21.2-Linux-x86_64.AppImage (87.2 MB)
-
-Symlinks Found:
-  ~/bin/freecad.AppImage → /home/user/Applications/FreeCAD/FreeCAD_0.21.2-Linux-x86_64.AppImage
-```
-
-### `edit`
-
-Edit application configuration settings.
+### Development Environment
 
 ```bash
-appimage-updater edit [OPTIONS] APP_NAME
+# Install development dependencies
+task install
+
+# Install in development mode
+task install:dev
+
+# Update dependencies
+task update
+
+# Show project info
+task info
 ```
 
-**Arguments:**
-- `APP_NAME` - Name of application to edit
-
-**Options:**
-- `--url URL` - Change repository URL
-- `--download-dir PATH` - Change download directory
-- `--pattern REGEX` - Change file matching pattern
-- `--frequency INTEGER` - Change update frequency
-- `--unit [hours|days|weeks]` - Change frequency unit
-- `--enable` - Enable application
-- `--disable` - Disable application
-- `--prerelease` - Enable prerelease versions
-- `--no-prerelease` - Disable prerelease versions
-- `--checksum` - Enable checksum verification
-- `--no-checksum` - Disable checksum verification
-- `--checksum-algorithm [sha256|sha1|md5]` - Set checksum algorithm
-- `--checksum-pattern TEXT` - Set checksum file pattern
-- `--checksum-required` - Make checksum verification required
-- `--checksum-optional` - Make checksum verification optional
-- `--rotation` - Enable file rotation
-- `--no-rotation` - Disable file rotation
-- `--symlink-path PATH` - Set symlink path
-- `--retain-count INTEGER` - Set file retention count
-- `--create-dir` - Create download directory if missing
-
-**Examples:**
-```bash
-# Change update frequency
-appimage-updater edit FreeCAD --frequency 7 --unit days
-
-# Enable prereleases
-appimage-updater edit MyApp --prerelease
-
-# Add file rotation
-appimage-updater edit MyApp --rotation --symlink-path ~/bin/myapp.AppImage
-
-# Change download location
-appimage-updater edit FreeCAD --download-dir ~/NewLocation --create-dir
-
-# Update checksum settings
-appimage-updater edit MyApp --checksum-algorithm sha1 --checksum-required
-```
-
-### `check`
-
-Check for updates and optionally download them.
+### Documentation Commands
 
 ```bash
-appimage-updater check [OPTIONS] [APP_NAME]
+# Build documentation
+task docs:build
+
+# Serve documentation locally
+task docs:serve
+
+# Deploy documentation
+task docs:deploy
 ```
 
-**Arguments:**
-- `APP_NAME` - Check specific application (optional)
-
-**Options:**
-- `--dry-run` - Check for updates without downloading
-- `--no-interactive` - Disable interactive distribution selection (use best match automatically)
-- `--yes`, `-y` - Automatically confirm downloads
-- `--config FILE` - Use specific config file
-- `--config-dir PATH` - Use specific config directory
-
-**Examples:**
-```bash
-# Check all applications
-appimage-updater check
-
-# Dry run (check only, no downloads)
-appimage-updater check --dry-run
-
-# Check specific application
-appimage-updater check FreeCAD
-
-# Non-interactive mode (for automation)
-appimage-updater check --no-interactive
-
-# Auto-confirm downloads
-appimage-updater check --yes
-
-# Check with debug output
-appimage-updater --debug check --dry-run
-```
-
-**Output:**
-```
-Checking for updates...
-
-┌─────────────┬─────────────────┬─────────────────┬──────────────┐
-│ Application │ Current Version │ Latest Version  │ Status       │
-├─────────────┼─────────────────┼─────────────────┼──────────────┤
-│ FreeCAD     │ 0.21.2          │ 0.22.0          │ Update Ready │
-│ OrcaSlicer  │ 2.1.1           │ 2.1.1           │ Up to Date   │
-└─────────────┴─────────────────┴─────────────────┴──────────────┘
-
-Found 1 update available.
-```
-
-## Version Tracking
-
-### Automatic Version Metadata
-
-AppImage Updater automatically creates `.info` metadata files alongside downloaded files to ensure accurate version tracking:
+### Utility Commands
 
 ```bash
-# Example files after download:
-~/Apps/BambuStudio/
-├── Bambu_Studio_ubuntu-24.04_PR-8017.zip           # Downloaded file
-└── Bambu_Studio_ubuntu-24.04_PR-8017.zip.info      # Version metadata
+# Show all available tasks
+task --list
+
+# Show task details
+task --summary <task-name>
+
+# Run with verbose output
+task --verbose <task-name>
+
+# Run specific task file
+task --taskfile custom.yml <task-name>
 ```
 
-**Metadata file content:**
-```text
-Version: v02.02.01.60
-```
+## Development Workflow
 
-### Benefits
-
-- **Accurate Detection**: Uses GitHub release tags instead of filename parsing
-- **Multi-Format Support**: Works with `.zip`, `.AppImage`, and other formats
-- **Complex Filename Handling**: Avoids parsing OS versions ("ubuntu-24.04") as app versions
-- **Rotation Compatible**: Metadata files rotate with their associated downloads
-
-### Manual Metadata Creation
-
-For existing installations without metadata files, create them manually:
+### Daily Development
 
 ```bash
-# Create metadata for existing file
-echo "Version: v1.2.3" > ~/Apps/MyApp/myapp.AppImage.info
+# 1. Install dependencies
+task install:dev
+
+# 2. Run tests during development
+task test:parallel-fast
+
+# 3. Check code quality
+task check
+
+# 4. Format code before commit
+task format
 ```
 
-This ensures accurate version comparison for future update checks.
+### Before Committing
 
-## Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | General error (validation, configuration, etc.) |
-| 2 | Network error |
-| 3 | File system error |
-
-## Common Workflows
-
-### Daily Automation
 ```bash
-# Check all apps daily (add to cron)
-0 9 * * * appimage-updater check
+# Run full CI pipeline locally
+task ci
+
+# Or run individual checks
+task test:all
+task check:parallel
+task typecheck
 ```
 
-### Development Cycle
+### Release Process
+
 ```bash
-# Add development app with frequent checks
-appimage-updater add --prerelease --frequency 4 --unit hours DevApp https://github.com/me/app ~/Dev/App
+# 1. Bump version
+task version:bump
 
-# Quick check during development
-appimage-updater check DevApp --dry-run
+# 2. Run full test suite
+task test:all
+
+# 3. Tag release
+task version:tag
+
+# 4. Build and deploy
+task build
+task docs:deploy
 ```
 
-### Bulk Management
+## Other Developer Tools
+
+### Python Environment
+
 ```bash
-# List all apps
-appimage-updater list
+# Using uv (recommended)
+uv sync
+uv run pytest
 
-# Edit multiple apps
-for app in FreeCAD OrcaSlicer VSCode; do
-  appimage-updater edit $app --frequency 7 --unit days
-done
+# Using pip
+pip install -e .
+pip install -r requirements-dev.txt
 ```
+
+### Direct Tool Usage
+
+```bash
+# Run tests directly
+pytest tests/
+pytest --cov=src/appimage_updater
+
+# Code quality tools
+ruff check src/
+mypy src/
+radon cc src/
+```
+
+For complete information on development setup, testing procedures, and contribution guidelines, see:
+
+- [Development Guide](development.md) - Development environment setup
+- [Testing Guide](testing.md) - Detailed testing procedures and coverage
+- [Contributing Guide](contributing.md) - Contribution guidelines and standards
+- [Architecture Guide](architecture.md) - System design and component overview

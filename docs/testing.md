@@ -16,67 +16,153 @@ tests/
 
 ## Running Tests
 
-### Basic Test Execution
+### Task Commands (Recommended)
 
 ```bash
-# Run all tests
+# Run all tests (sequential)
 task test
 
+# Run tests with parallel execution (faster)
+task test:parallel
+
+# Run tests with 8 cores (good balance of speed and reliability)
+task test:parallel-fast
+
+# Run all tests including end-to-end validation
+task test:all
+
+# Run end-to-end tests without coverage (prevents conflicts)
+task test:e2e
+
+# Run end-to-end tests with coverage reporting
+task test:e2e-coverage
+
+# Run regression tests to validate fixed issues
+task test:regression
+
+# Run pattern matching functionality tests
+task test:pattern-matching
+
+# Run quick smoke test for basic functionality
+task test:smoke
+```
+
+### Direct pytest Commands
+
+```bash
 # Run specific test file
 uv run pytest tests/test_edit_command.py
 
 # Run specific test
 uv run pytest tests/test_edit_command.py::test_edit_frequency_single_file
-```
 
-### Test Options
-
-```bash
 # Run with verbose output
 uv run pytest -v
 
 # Run without coverage (faster)
 uv run pytest --no-cov
 
-# Run end-to-end tests without coverage (prevents conflicts)
-task test:e2e
-
-# Run end-to-end tests with coverage
-task test:e2e-coverage
-
 # Show coverage report
 uv run pytest --cov-report=html
 ```
 
+### Multi-Core Testing
+
+The project supports parallel test execution for faster development cycles:
+
+```bash
+# Parallel execution using all available cores
+task test:parallel
+
+# Parallel execution using 8 cores (recommended)
+task test:parallel-fast
+
+# Manual control with pytest-xdist
+uv run pytest -n auto  # Use all cores
+uv run pytest -n 4     # Use 4 cores
+```
+
+**Benefits of parallel testing:**
+
+- Significantly faster test execution (3-5x speedup)
+- Better utilization of multi-core systems
+- Maintains test isolation and reliability
+
 ### Quality Checks
 
 ```bash
-# Run all quality checks (includes tests)
+# Run all quality checks (includes sequential tests)
 task check
+
+# Run all quality checks with parallel tests (faster)
+task check:parallel
 ```
 
-This runs:
+**task check** runs:
+
 - Code formatting (ruff)
-- Type checking (mypy) 
+- Type checking (mypy)
 - Linting (ruff)
 - Complexity analysis (radon)
-- All tests with coverage
+- All tests with coverage (sequential)
+- End-to-end validation
+
+**task check:parallel** runs the same checks but with parallel test execution for faster feedback.
+
+### CI Pipeline
+
+```bash
+# Complete CI pipeline - run all checks, build, docs, and show version
+task ci
+```
+
+**task ci** performs:
+
+- All quality checks (formatting, linting, type checking, complexity)
+- Complete test suite with coverage
+- Documentation build
+- Package build (wheel and sdist)
+- Version display
+- Prepares for GitHub deployment
+
+### Version Management
+
+```bash
+# Display current project version
+task version
+
+# Bump patch version, build, commit, and deploy locally
+task version:bump
+
+# Create and push git tag for current version
+task version:tag
+```
+
+**task version:bump** workflow:
+
+1. Increments patch version (e.g., 0.2.0 → 0.2.1)
+2. Runs complete CI pipeline
+3. Builds distribution packages
+4. Commits version changes
+5. Performs local deployment verification
 
 ## Test Coverage
 
 The project maintains high test coverage across all functionality:
 
-### Current Coverage: **95+ tests, 71% coverage**
+### Current Coverage: **95+ tests, 85%+ coverage**
 
 #### Command Testing
+
 - **List Command**: 7+ tests covering application listing, status display, and error handling
-- **Check Command**: Multiple tests for update detection, dry-run mode, and error scenarios  
+- **Check Command**: Multiple tests for update detection, dry-run mode, and error scenarios
 - **Init Command**: Tests for configuration directory initialization
 - **Show Command**: 8+ tests covering application details, file discovery, and symlink detection
 - **Edit Command**: 17+ comprehensive tests for all configuration editing scenarios
 - **Add Command**: Tests for application addition with intelligent defaults
 
 #### Validation Testing (13 tests)
+
 - Empty path validation
 - Invalid character detection (null bytes, newlines, carriage returns)
 - Extension requirement validation (.AppImage)
@@ -85,6 +171,7 @@ The project maintains high test coverage across all functionality:
 - Clean error messages without tracebacks
 
 #### End-to-End Testing
+
 - Complete workflow testing from configuration to download
 - Integration between components
 - Real-world scenario simulation
@@ -121,22 +208,22 @@ def config_directory(tmp_path):
 CLI commands are tested using Typer's `CliRunner`:
 
 ```python
-def test_edit_frequency_single_file(runner, single_config_file):
-    """Test editing frequency in a single config file."""
+def test_edit_prerelease_single_file(runner, single_config_file):
+    """Test editing prerelease setting in a single config file."""
     result = runner.invoke(
         app, 
-        ["edit", "TestApp", "--frequency", "14", "--unit", "days", 
+        ["edit", "TestApp", "--prerelease", 
          "--config", str(single_config_file)]
     )
     
     assert result.exit_code == 0
-    assert "Update Frequency: 1 days → 14 days" in result.stdout
+    assert "Prerelease: Disabled → Enabled" in result.stdout
     
     # Verify persistence
     with single_config_file.open() as f:
         config_data = json.load(f)
     app_config = config_data["applications"][0]
-    assert app_config["frequency"]["value"] == 14
+    assert app_config["prerelease"] is True
 ```
 
 ### Validation Testing
@@ -192,14 +279,16 @@ def normalize_text(text: str) -> str:
 ### Unit Tests
 
 Test individual components in isolation:
+
 - Configuration validation
 - Version parsing logic
 - Path handling utilities
 - Error message formatting
 
-### Integration Tests  
+### Integration Tests
 
 Test component interactions:
+
 - Configuration loading with validation
 - CLI command execution with persistence
 - File operations with error handling
@@ -207,6 +296,7 @@ Test component interactions:
 ### End-to-End Tests
 
 Test complete workflows:
+
 - Full application lifecycle (add → check → edit)
 - Real configuration file operations
 - Directory creation and management
@@ -215,6 +305,7 @@ Test complete workflows:
 ### Validation Tests
 
 Specialized tests for input validation:
+
 - Parameter validation for all commands
 - Path validation and normalization
 - URL validation and correction
@@ -272,14 +363,14 @@ def mock_github_client():
 
 ## Coverage Configuration
 
-Coverage is configured to avoid common conflicts:
+Coverage is configured to work with both sequential and parallel testing:
 
 ```toml
 [tool.coverage.run]
 source = ["src"]
 omit = ["tests/*"]
-parallel = false  # Prevents SQLite conflicts
-concurrency = ["thread"]
+parallel = true   # Supports parallel test execution
+concurrency = ["thread", "multiprocessing"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -294,21 +385,38 @@ exclude_lines = [
 ### Coverage Commands
 
 ```bash
-# Tests with coverage (default)
+# Tests with coverage (sequential)
 task test
 
-# End-to-end without coverage (prevents conflicts in CI)
+# Tests with coverage (parallel)
+task test:parallel
+
+# End-to-end without coverage (prevents conflicts)
 task test:e2e
 
 # End-to-end with coverage (standalone)
 task test:e2e-coverage
+
+# Generate HTML coverage report
+uv run pytest --cov-report=html
+open htmlcov/index.html
 ```
+
+### Performance Comparison
+
+| Test Method | Execution Time | Use Case |
+|-------------|----------------|----------|
+| `task test` | ~15-20 seconds | Development, debugging |
+| `task test:parallel` | ~5-8 seconds | Fast development cycles |
+| `task test:parallel-fast` | ~4-6 seconds | Quick validation |
+| `task test:smoke` | ~2-3 seconds | Basic functionality check |
 
 ## Continuous Integration
 
 ### GitHub Actions
 
 Tests run automatically on:
+
 - Pull requests
 - Pushes to main branch
 - Tag creation
@@ -316,6 +424,7 @@ Tests run automatically on:
 ### Test Matrix
 
 Tests run across:
+
 - Python 3.11, 3.12, 3.13
 - Multiple operating systems (Linux, macOS, Windows)
 - Different dependency versions
@@ -325,10 +434,10 @@ Tests run across:
 ### Writing New Tests
 
 1. **Test behavior, not implementation**
-2. **Use descriptive test names** that explain what's being tested
-3. **Follow AAA pattern**: Arrange, Act, Assert
-4. **Test both success and failure cases**
-5. **Ensure tests are independent** and can run in any order
+1. **Use descriptive test names** that explain what's being tested
+1. **Follow AAA pattern**: Arrange, Act, Assert
+1. **Test both success and failure cases**
+1. **Ensure tests are independent** and can run in any order
 
 ### Test Organization
 
@@ -386,10 +495,43 @@ open htmlcov/index.html
 
 ## Test Quality Metrics
 
-- **Coverage**: >90% line coverage target
+- **Coverage**: 85%+ line coverage (target: >90%)
 - **Test Count**: 95+ comprehensive tests
-- **Test Speed**: Complete test suite runs in <10 seconds
+- **Test Speed**:
+  - Sequential: ~15-20 seconds
+  - Parallel: ~5-8 seconds
+  - Smoke tests: ~2-3 seconds
 - **Reliability**: Tests pass consistently across environments
 - **Maintainability**: Clear test organization and documentation
+- **Parallel Support**: Full multi-core testing capability
 
-The comprehensive test suite ensures AppImage Updater remains reliable and maintainable as new features are added.
+## Development Workflow Integration
+
+### Recommended Testing Workflow
+
+```bash
+# During active development (fast feedback)
+task test:smoke          # Quick validation (~2-3 seconds)
+task test:parallel-fast  # Full test suite (~4-6 seconds)
+
+# Before committing
+task check:parallel      # All quality checks (~10-15 seconds)
+
+# Before pushing/releasing
+task ci                  # Complete CI pipeline (~30-45 seconds)
+```
+
+### Debugging Workflow
+
+```bash
+# Run specific failing test with detailed output
+uv run pytest -vv --tb=long tests/test_file.py::test_name
+
+# Run tests without parallel execution for debugging
+task test
+
+# Stop on first failure
+uv run pytest -x
+```
+
+The comprehensive test suite with parallel execution ensures AppImage Updater remains reliable and maintainable while providing fast feedback during development.

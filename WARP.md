@@ -17,10 +17,12 @@ AppImage Updater is a service for automating the finding and downloading of AppI
 The application now provides **comprehensive support** for downloading and automatically extracting AppImage files from multiple formats:
 
 #### **Direct AppImage Downloads**
+
 - **Traditional `.AppImage` files**: Downloaded directly and made executable
 - **Optimal experience**: No extraction needed, immediate execution
 
-#### **ZIP Archive Extraction** 
+#### **ZIP Archive Extraction**
+
 - **Automatic Detection**: Scans ZIP files for contained AppImage files
 - **Smart Extraction**: Extracts AppImage files to download directory root
 - **Clean Handling**: Removes ZIP file after successful extraction
@@ -29,11 +31,13 @@ The application now provides **comprehensive support** for downloading and autom
 - **Rotation Compatible**: Works seamlessly with file rotation and symlink management
 
 #### **Intelligent Error Handling**
+
 - **Informative Messages**: When ZIP doesn't contain AppImage files, shows actual contents
 - **Project Guidance**: Suggests project may have stopped providing AppImage format
 - **User-Friendly**: Provides actionable next steps and alternative options
 
 **Example error when ZIP contains non-AppImage files:**
+
 ```
 No AppImage files found in zip: EdgeTX-Companion.zip. 
 Contains: companion.exe, companion.dll, readme.txt...
@@ -42,6 +46,7 @@ Check the project's releases page for alternative download options.
 ```
 
 **Example applications that benefit from ZIP support:**
+
 - **BambuStudio**: Releases AppImages inside ZIP files
 - **EdgeTX Companion**: Provides both ZIP and AppImage releases
 - Any application that packages AppImages in compressed archives
@@ -61,8 +66,9 @@ Check the project's releases page for alternative download options.
 ```
 
 **Benefits of Universal Patterns:**
+
 - **Future-Proof**: Works if projects switch between formats
-- **Backwards Compatible**: Still works with traditional AppImage releases  
+- **Backwards Compatible**: Still works with traditional AppImage releases
 - **Zero Configuration**: No manual pattern editing required
 - **Format Flexibility**: Handles projects that provide multiple formats
 
@@ -84,12 +90,14 @@ appimage-updater add BelenaEtcher https://github.com/balena-io/etcher ~/Apps/Bel
 ```
 
 **🔍 System Detection Features:**
+
 - **Architecture Detection**: x86_64, amd64, arm64, armv7l, i686 with intelligent aliasing
-- **Platform Detection**: Linux, macOS (darwin), Windows (win32) 
+- **Platform Detection**: Linux, macOS (darwin), Windows (win32)
 - **Format Compatibility**: .AppImage, .deb, .rpm, .dmg, .exe, .msi based on platform/distribution
 - **Distribution Family Mapping**: Debian, Red Hat, SUSE, Arch families for package format support
 
 **🎯 Smart Filtering Capabilities:**
+
 - **Architecture Filtering**: Eliminates incompatible CPU architectures (ARM vs x86)
 - **Platform Filtering**: Removes cross-platform packages (macOS .dmg on Linux)
 - **Format Filtering**: Excludes unsupported formats (.rpm on Ubuntu, .deb on Fedora)
@@ -112,7 +120,8 @@ Color coding: Green=Compatible, Red=Incompatible, Yellow=Partial match
 ```
 
 **🚫 Eliminated Download Errors:**
-- No more "cannot execute binary file: Exec format error" 
+
+- No more "cannot execute binary file: Exec format error"
 - No more downloading macOS .dmg files on Linux
 - No more ARM binaries on x86_64 systems
 - No more unsupported package formats
@@ -134,6 +143,7 @@ appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/
 ```
 
 **Smart Selection Features:**
+
 - **Automatic Selection**: Chooses compatible distributions based on system detection
 - **Compatibility Scoring**: Considers distribution family, version proximity, architecture
 - **Interactive Fallback**: Shows user-friendly selection menu for uncommon distributions
@@ -141,8 +151,9 @@ appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/
 - **Pattern Recognition**: Detects ubuntu-22.04, fedora-38, debian-11, etc. in filenames
 
 **Supported Distribution Families:**
+
 - Ubuntu/Debian family (automatic compatibility detection)
-- Fedora/CentOS/RHEL family (automatic compatibility detection)  
+- Fedora/CentOS/RHEL family (automatic compatibility detection)
 - openSUSE/SUSE family (automatic compatibility detection)
 - Arch/Manjaro family (automatic compatibility detection)
 - Other distributions (interactive selection with compatibility scores)
@@ -204,12 +215,14 @@ task dev
 ```
 
 ### Running Specific Tests
+
 ```bash
 uv run pytest tests/test_specific.py
 uv run pytest tests/test_specific.py::test_function_name
 ```
 
 ### Application Usage
+
 ```bash
 # Initialize configuration directory with examples
 uv run python -m appimage_updater init
@@ -294,14 +307,17 @@ appimage-updater add --prerelease --rotation --retain 5 --symlink ~/bin/myapp.Ap
 The `add` command now supports ALL configuration options available in the `edit` command:
 
 **Basic Configuration:**
+
 - `--prerelease/--no-prerelease`: Enable/disable prerelease versions (default: auto-detect)
 
 **File Rotation:**
+
 - `--rotation/--no-rotation`: Enable/disable file rotation (default: disabled)
 - `--retain N`: Number of old files to retain (1-10, default: 3)
 - `--symlink PATH`: Managed symlink path (auto-enables rotation)
 
 **Checksum Verification:**
+
 - `--checksum/--no-checksum`: Enable/disable checksum verification (default: enabled)
 - `--checksum-algorithm ALG`: Algorithm - sha256, sha1, md5 (default: sha256)
 - `--checksum-pattern PATTERN`: Checksum file pattern (default: {filename}-SHA256.txt)
@@ -330,6 +346,7 @@ appimage-updater add appimaged https://github.com/probonopd/go-appimage ~/Applic
 ```
 
 **How it works:**
+
 - Analyzes recent releases from the GitHub repository
 - If only prerelease versions exist (no stable releases), automatically enables `prerelease: true`
 - If stable releases exist, keeps `prerelease: false` (default behavior)
@@ -337,6 +354,7 @@ appimage-updater add appimaged https://github.com/probonopd/go-appimage ~/Applic
 - Fails silently on API errors (defaults to `prerelease: false`)
 
 **Benefits:**
+
 - **Zero configuration** for continuous build apps like appimaged, nightly builds, etc.
 - **Works automatically** - no need to remember which repos need prerelease enabled
 - **User control preserved** - explicit flags always take precedence
@@ -345,17 +363,21 @@ appimage-updater add appimaged https://github.com/probonopd/go-appimage ~/Applic
 ### Configuration Examples
 
 **Simple Example:**
+
 ```bash
 appimage-updater add OrcaSlicer https://github.com/SoftFever/OrcaSlicer ~/Applications/OrcaSlicer
 ```
+
 Generates basic configuration with intelligent defaults.
 
 **Complex Example:**
+
 ```bash
 appimage-updater add --prerelease --rotation --symlink ~/bin/freecad-weekly.AppImage --checksum-required FreeCAD_weekly https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
 ```
 
 Generates complete configuration:
+
 ```json
 {
   "name": "FreeCAD_weekly",
@@ -419,6 +441,7 @@ The `add` and `edit` commands now have **perfect feature parity**. Every option 
 | **URLs** | `--url URL` | `edit` only (can't change in add) |
 
 **Benefits of Perfect Symmetry:**
+
 - **Learn Once, Use Everywhere**: Same parameter names work in both commands
 - **No Cognitive Load**: No need to remember different option names
 - **Single Command Setup**: Create complete configurations without post-creation editing
@@ -444,15 +467,15 @@ The `edit` command options map directly to the fields displayed by `show`:
 ### Intuitive Workflow
 
 1. **Examine current config**: `appimage-updater show MyApp`
-2. **Make targeted changes**: `appimage-updater edit MyApp --prerelease`
-3. **Verify changes**: `appimage-updater show MyApp`
+1. **Make targeted changes**: `appimage-updater edit MyApp --prerelease`
+1. **Verify changes**: `appimage-updater show MyApp`
 
 ### Smart Features
 
 - **Field-by-field Updates**: Only specified fields are changed, others remain unchanged
 - **URL Normalization**: Automatically corrects GitHub download URLs to repository URLs
 - **Path Expansion**: Automatically expands `~` in directory and symlink paths
-- **Comprehensive Validation**: 
+- **Comprehensive Validation**:
   - Validates regex patterns, URLs, and configuration consistency
   - **Symlink Path Validation**: Ensures symlink paths end with `.AppImage`, are not empty, and can be resolved
   - **Path Normalization**: Resolves `..` segments and expands `~` to home directory
@@ -489,37 +512,43 @@ Error editing application: File rotation requires a symlink path. Use --symlink-
 The application follows a modular async architecture with clear separation of concerns:
 
 1. **Configuration Layer** (`config.py`, `config_loader.py`):
+
    - Pydantic models for type-safe configuration validation
    - Support for both single files and directory-based configs
    - Global and per-application settings
 
-2. **Data Models** (`models.py`):
+1. **Data Models** (`models.py`):
+
    - `Release`: GitHub release information with assets and compatibility filtering
    - `UpdateCandidate`: Represents available updates with version comparison and checksum requirements
-   - `CheckResult`: Results from update checks 
+   - `CheckResult`: Results from update checks
    - `DownloadResult`: Download operation results with checksum verification status
    - `ChecksumResult`: Checksum verification results and status
    - `Asset`: Download assets with automatic architecture, platform, and format detection
 
-3. **System Compatibility Layer** (`system_info.py`):
+1. **System Compatibility Layer** (`system_info.py`):
+
    - `SystemInfo`: Comprehensive system information including architecture, platform, and supported formats
    - `SystemDetector`: Detects current system capabilities and compatibility requirements
    - **Compatibility Functions**: `is_compatible_architecture()`, `is_compatible_platform()`, `is_supported_format()`
    - **Architecture Aliasing**: Intelligent mapping of x86_64↔amd64, arm64↔aarch64, etc.
    - **Distribution Detection**: Linux distribution family detection for package format support
 
-4. **Asset Selection Layer** (`distribution_selector.py`):
+1. **Asset Selection Layer** (`distribution_selector.py`):
+
    - `DistributionSelector`: Enhanced with architecture and platform awareness
    - **Compatibility Scoring**: 300+ point system considering arch, platform, format, and distribution
    - **Automatic Filtering**: Removes incompatible assets before user selection
    - **Rich Interactive Tables**: Color-coded compatibility display with detailed asset information
 
-5. **Service Layer**:
+1. **Service Layer**:
+
    - `GitHubClient`: Async GitHub API client with rate limiting awareness and checksum file detection
    - `VersionChecker`: Orchestrates version comparison using `packaging` library with compatibility filtering
    - `Downloader`: Concurrent download manager with progress tracking, retry logic, and checksum verification
 
-4. **CLI Interface** (`main.py`):
+1. **CLI Interface** (`main.py`):
+
    - Typer-based CLI with rich console output
    - Async command handling with proper error management
    - Modular design with extracted functionality:
@@ -545,6 +574,7 @@ The configuration system supports flexible deployment patterns:
 - **Hierarchical defaults**: Global config → per-app config → CLI overrides
 
 Configuration files use JSON format with the following structure:
+
 - `global_config`: Timeout, concurrency, retry settings
 - `applications`: Array of app configurations with source URL, download directory, file patterns, checksum verification settings, and optional symlink paths
 
@@ -553,6 +583,7 @@ Configuration files use JSON format with the following structure:
 The application uses regex patterns to identify and match both AppImage and ZIP files in download directories:
 
 #### Modern Universal Pattern Format
+
 **NEW**: All patterns now support both ZIP and AppImage formats automatically:
 
 ```regex
@@ -561,15 +592,17 @@ base_pattern\.(zip|AppImage)(suffix_pattern)?$
 ```
 
 **Enhanced suffix pattern**: `(\.(|current|old))?`
+
 - Matches files with no suffix: `app.AppImage`, `app.zip`
 - Matches files with `.current` suffix: `app.AppImage.current`, `app.zip.current`
-- Matches files with `.old` suffix: `app.AppImage.old`, `app.zip.old` 
+- Matches files with `.old` suffix: `app.AppImage.old`, `app.zip.old`
 - Matches files with empty suffix: `app.AppImage.`, `app.zip.`
 - **Does NOT match** backup files: `app.AppImage.save`, `app.zip.backup`, etc.
 
 #### Pattern Examples
 
 **Modern Universal Patterns (automatically generated):**
+
 ```regex
 # Supports both ZIP and AppImage formats
 (?i)OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.(zip|AppImage)(\.(|current|old))?$
@@ -578,6 +611,7 @@ base_pattern\.(zip|AppImage)(suffix_pattern)?$
 ```
 
 **Legacy AppImage-only patterns (no longer generated):**
+
 ```regex
 # Old format - AppImage only
 OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.AppImage(\.(|current|old))?$
@@ -589,31 +623,31 @@ OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.AppImage(\..*)?$
 #### Intelligent Pattern Generation Features
 
 1. **Dual Format Support**: Automatically includes both ZIP and AppImage extensions
-2. **Smart GitHub Analysis**: Scans actual releases to create accurate patterns
-3. **Flexible Naming**: Handles character variations (underscore ↔ hyphen)
-4. **Case Insensitive**: Uses `(?i)` flag for robust matching
-5. **Extension Stripping**: Removes extensions before prefix analysis for cleaner patterns
+1. **Smart GitHub Analysis**: Scans actual releases to create accurate patterns
+1. **Flexible Naming**: Handles character variations (underscore ↔ hyphen)
+1. **Case Insensitive**: Uses `(?i)` flag for robust matching
+1. **Extension Stripping**: Removes extensions before prefix analysis for cleaner patterns
 
 #### Benefits of Universal Patterns
 
 1. **Future-Proof**: Works if projects switch between ZIP and AppImage formats
-2. **Zero Configuration**: No manual pattern editing when formats change
-3. **Backwards Compatible**: Still works with traditional AppImage-only releases
-4. **Format Flexibility**: Handles projects providing multiple download options
-5. **Prevents backup conflicts**: Precise suffix matching avoids backup files
-6. **Rotation Support**: Works seamlessly with file rotation systems
-7. **Character Flexibility**: Adapts to naming variations automatically
+1. **Zero Configuration**: No manual pattern editing when formats change
+1. **Backwards Compatible**: Still works with traditional AppImage-only releases
+1. **Format Flexibility**: Handles projects providing multiple download options
+1. **Prevents backup conflicts**: Precise suffix matching avoids backup files
+1. **Rotation Support**: Works seamlessly with file rotation systems
+1. **Character Flexibility**: Adapts to naming variations automatically
 
 ### Version Detection Logic
 
 The version checker implements sophisticated version detection with intelligent fallback strategies:
 
 1. **Current version detection**: Scans download directory for existing files matching the regex pattern
-2. **Version extraction**: Uses a multi-layered approach:
+1. **Version extraction**: Uses a multi-layered approach:
    - **Primary**: Reads version from `.info` metadata files (most accurate)
    - **Fallback**: Extracts version from filenames using regex patterns
-3. **Version comparison**: Uses `packaging.version` for semantic version comparison, falls back to string comparison
-4. **Update determination**: Compares extracted current version with GitHub release version
+1. **Version comparison**: Uses `packaging.version` for semantic version comparison, falls back to string comparison
+1. **Update determination**: Compares extracted current version with GitHub release version
 
 ### Version Metadata System
 
@@ -630,6 +664,7 @@ Bambu_Studio_ubuntu-24.04_PR-8017.zip.info               # Version metadata
 ```
 
 **Metadata File Format**:
+
 ```text
 Version: v02.02.01.60
 ```
@@ -637,10 +672,10 @@ Version: v02.02.01.60
 #### Benefits
 
 1. **Accurate Version Tracking**: No more incorrect version parsing from Ubuntu version numbers (e.g., "24.04") in filenames
-2. **Multi-Format Support**: Works with both `.zip` and `.AppImage` releases seamlessly
-3. **Release Tag Accuracy**: Uses actual GitHub release tags instead of filename guessing
-4. **Rotation Compatible**: Metadata files are automatically rotated alongside main files during file rotation
-5. **Manual Creation**: For existing installations, you can manually create `.info` files:
+1. **Multi-Format Support**: Works with both `.zip` and `.AppImage` releases seamlessly
+1. **Release Tag Accuracy**: Uses actual GitHub release tags instead of filename guessing
+1. **Rotation Compatible**: Metadata files are automatically rotated alongside main files during file rotation
+1. **Manual Creation**: For existing installations, you can manually create `.info` files:
 
 ```bash
 # Create version metadata for existing file
@@ -650,11 +685,13 @@ echo "Version: v02.02.00.85" > ~/Applications/BambuStudio/myapp.AppImage.info
 #### Use Cases
 
 **Complex Filename Applications**: Perfect for applications like BambuStudio where:
+
 - Filenames contain OS version numbers ("ubuntu-24.04") that get misinterpreted as app versions
 - Latest releases are in different formats (zip vs AppImage)
 - Version information is in the GitHub release tag, not the filename
 
 **Pattern Configuration**: Enhanced pattern matching supports multiple file types:
+
 ```regex
 # Supports both zip and AppImage formats
 (?i)Bambu_?Studio_.*\.(zip|AppImage)(\.(|current|old))?$
@@ -665,49 +702,56 @@ echo "Version: v02.02.00.85" > ~/Applications/BambuStudio/myapp.AppImage.info
 The download system provides robust, secure file downloading:
 
 1. **Redirect Handling**: Automatically follows HTTP redirects (302, 301) from GitHub releases
-2. **Retry Logic**: Exponential backoff retry mechanism (3 attempts by default)
-3. **Timeout Configuration**: Separate timeouts for connect, read, write, and pool operations
-4. **Progress Tracking**: Real-time progress bars with transfer speed and ETA
-5. **Concurrent Downloads**: Semaphore-limited concurrent downloading
+1. **Retry Logic**: Exponential backoff retry mechanism (3 attempts by default)
+1. **Timeout Configuration**: Separate timeouts for connect, read, write, and pool operations
+1. **Progress Tracking**: Real-time progress bars with transfer speed and ETA
+1. **Concurrent Downloads**: Semaphore-limited concurrent downloading
 
 ### Security Features
 
 Comprehensive security through checksum verification:
 
 1. **Automatic Detection**: Intelligently finds checksum files using configurable patterns
-2. **Multiple Algorithms**: Support for SHA256, SHA1, and MD5 verification
-3. **Flexible Patterns**: Configurable checksum file naming patterns
-4. **Format Support**: Handles various checksum file formats (hash+filename, standalone hash)
-5. **Verification Modes**: Optional or required verification per application
-6. **Visual Feedback**: Clear indicators showing verification status in results
+1. **Multiple Algorithms**: Support for SHA256, SHA1, and MD5 verification
+1. **Flexible Patterns**: Configurable checksum file naming patterns
+1. **Format Support**: Handles various checksum file formats (hash+filename, standalone hash)
+1. **Verification Modes**: Optional or required verification per application
+1. **Visual Feedback**: Clear indicators showing verification status in results
 
 ### System Compatibility Architecture
 
 **NEW FEATURE**: Advanced system compatibility detection and filtering prevents incompatible downloads:
 
 #### System Detection (`system_info.py`)
-1. **Architecture Detection**: 
+
+1. **Architecture Detection**:
+
    - Auto-detects: x86_64, amd64, arm64, aarch64, armv7l, i686, etc.
    - **Intelligent aliasing**: x86_64 ↔ amd64 ↔ x64, arm64 ↔ aarch64
    - **Compatibility scoring**: 100=exact match, 80=compatible alias, 0=incompatible
 
-2. **Platform Detection**:
+1. **Platform Detection**:
+
    - Auto-detects: Linux, macOS (darwin), Windows (win32)
    - **Strict compatibility**: Cross-platform packages are filtered out
 
-3. **Format Compatibility**:
+1. **Format Compatibility**:
+
    - **Linux**: .AppImage (preferred), .deb/.rpm (distribution-specific), .tar.gz, .zip
    - **macOS**: .dmg (preferred), .pkg, .zip, .tar.gz
    - **Windows**: .exe (preferred), .msi, .zip
    - **Distribution awareness**: .deb on Debian family, .rpm on Red Hat family
 
 #### Asset Intelligence (`models.py`)
-1. **Automatic Parsing**: 
+
+1. **Automatic Parsing**:
+
    - Extracts architecture from filenames: "app-linux-x86_64.AppImage" → x86_64
    - Detects platform: "software-darwin.dmg" → darwin
    - Identifies formats: Complex extensions like ".pkg.tar.xz"
 
-2. **Computed Properties**:
+1. **Computed Properties**:
+
    ```python
    asset.architecture  # "x86_64", "arm64", etc.
    asset.platform      # "linux", "darwin", "win32"
@@ -715,19 +759,23 @@ Comprehensive security through checksum verification:
    ```
 
 #### Enhanced Filtering (`distribution_selector.py`)
+
 1. **Compatibility Scoring System** (300+ points total):
+
    - **Architecture**: 100 points (exact) or 80 points (compatible) or 0 (incompatible)
-   - **Platform**: 100 points (exact) or 0 (incompatible) 
+   - **Platform**: 100 points (exact) or 0 (incompatible)
    - **Format**: Up to 100 points based on platform preferences
    - **Distribution**: Up to 50 points for distribution family compatibility
    - **Version**: Up to 30 points for version proximity
 
-2. **Automatic Selection**: 
+1. **Automatic Selection**:
+
    - Score ≥ 150: Auto-select without user interaction
    - Score < 150: Show interactive menu with compatibility indicators
    - Score = 0: Filter out completely (incompatible)
 
-3. **Rich Interactive Display**:
+1. **Rich Interactive Display**:
+
    ```
    ┌─────┬──────────┬────────┬──────────┬──────────┬────────┐
    │  #  │    Arch  │ Platform │  Format   │ Filename │ Score  │
@@ -736,18 +784,21 @@ Comprehensive security through checksum verification:
    │  2  │ arm64  │  Linux   │ APPIMAGE │ app-arm.AppImage │  0.0   │
    └─────┴──────────┴────────┴──────────┴────────┴────────┘
    ```
+
    - **Color coding**: Green=compatible, Red=incompatible, Yellow=partial
    - **Detailed info**: Shows all relevant compatibility factors
 
 #### Integration Points
+
 1. **Release Filtering**: `release.get_matching_assets(pattern, filter_compatible=True)`
-2. **Version Checking**: Automatic pre-filtering of incompatible assets
-3. **Distribution Selection**: Enhanced with full compatibility awareness
-4. **CLI Interface**: Users only see compatible options
+1. **Version Checking**: Automatic pre-filtering of incompatible assets
+1. **Distribution Selection**: Enhanced with full compatibility awareness
+1. **CLI Interface**: Users only see compatible options
 
 #### Benefits
+
 - **🚫 Eliminates Download Errors**: No more "cannot execute binary file" errors
-- **⚡ Faster Selection**: Reduced noise = quicker decisions  
+- **⚡ Faster Selection**: Reduced noise = quicker decisions
 - **🎯 Better UX**: Clear visual compatibility indicators
 - **🔒 Future-Proof**: Handles new architectures automatically
 - **📊 Intelligent Scoring**: Prioritizes best compatibility matches
@@ -757,6 +808,7 @@ Comprehensive security through checksum verification:
 The GitHub client provides comprehensive integration with GitHub releases:
 
 #### **Core Functionality**
+
 - **Repository URL parsing**: Supports various GitHub URL formats and normalizes them
 - **Release fetching**: Proper error handling and rate limiting awareness
 - **Enhanced asset filtering**: Uses regex patterns to match both AppImage and ZIP files
@@ -766,13 +818,15 @@ The GitHub client provides comprehensive integration with GitHub releases:
 #### **Intelligent Pattern Generation**
 
 **Enhanced Algorithm**:
+
 1. **Dual Format Analysis**: Scans releases for both AppImage and ZIP files
-2. **Smart Prioritization**: Prefers AppImage files but includes ZIP files if no AppImages found
-3. **Common Prefix Extraction**: Analyzes actual filenames to find consistent naming patterns
-4. **Extension Stripping**: Removes file extensions before prefix analysis for cleaner patterns
-5. **Universal Pattern Creation**: Generates patterns supporting both `.(zip|AppImage)` formats
+1. **Smart Prioritization**: Prefers AppImage files but includes ZIP files if no AppImages found
+1. **Common Prefix Extraction**: Analyzes actual filenames to find consistent naming patterns
+1. **Extension Stripping**: Removes file extensions before prefix analysis for cleaner patterns
+1. **Universal Pattern Creation**: Generates patterns supporting both `.(zip|AppImage)` formats
 
 **Pattern Generation Flow**:
+
 ```python
 # Step 1: Fetch recent releases
 releases = await client.get_releases(url, limit=5)
@@ -794,11 +848,13 @@ pattern = create_pattern_from_filenames(target_files, include_both_formats=True)
 When GitHub API is unavailable, the system uses enhanced heuristic patterns:
 
 **Features**:
+
 - **Flexible character matching**: Handles underscore ↔ hyphen variations
 - **Universal format support**: Always includes both ZIP and AppImage extensions
 - **Case insensitive**: Uses `(?i)` flag for robust matching
 
 **Example transformations**:
+
 ```python
 # Input: EdgeTX_Companion
 # Output: (?i)EdgeTX[_-]Companion.*\.(?:zip|AppImage)(\.(|current|old))?$
@@ -821,6 +877,7 @@ When GitHub API is unavailable, the system uses enhanced heuristic patterns:
 ## Logging
 
 The application uses `loguru` for comprehensive logging:
+
 - **Console logging**: INFO level by default, DEBUG with `--debug` flag
 - **File logging**: All logs (DEBUG level) are written to `~/.local/share/appimage-updater/appimage-updater.log`
 - **Log rotation**: Automatic rotation at 10MB with 7-day retention
@@ -833,12 +890,14 @@ Use `--debug` flag to see detailed command flow and troubleshooting information.
 The project uses pytest with coverage reporting configured to avoid common conflicts:
 
 ### Coverage Setup
+
 - **Default coverage**: Enabled by default for `task test` with HTML and terminal reports
 - **Conflict prevention**: `task test:e2e` runs without coverage (`--no-cov`) when part of `task check` to prevent database conflicts
 - **Parallel mode**: Disabled (`parallel = false`) to avoid SQLite database conflicts when multiple test runs occur
 - **Coverage configuration**: Centralized in `pyproject.toml` with `--cov-config=pyproject.toml`
 
 ### Test Commands
+
 ```bash
 # Run tests with coverage (default)
 task test
@@ -854,9 +913,11 @@ task check
 ```
 
 ### Comprehensive Test Coverage
+
 The project maintains high test coverage across all CLI commands:
 
 #### List Command Testing
+
 - **Single application configurations**: Tests basic functionality and table display
 - **Multiple applications**: Tests enabled/disabled status and counting
 - **Empty configurations**: Tests graceful handling of no applications
@@ -866,6 +927,7 @@ The project maintains high test coverage across all CLI commands:
 - **Command availability**: Validates `list` command appears in help and works correctly
 
 #### Check Command Testing
+
 - **Dry run modes**: Tests update detection without downloads
 - **Application filtering**: Tests `--app` parameter functionality
 - **Update scenarios**: Tests both "up to date" and "updates available" cases
@@ -873,11 +935,13 @@ The project maintains high test coverage across all CLI commands:
 - **Error handling**: Tests network failures and invalid configurations
 
 #### Init Command Testing
+
 - **Directory creation**: Tests config directory initialization
 - **Example generation**: Tests creation of sample configuration files
 - **Existing directory handling**: Tests graceful handling of pre-existing configs
 
 #### Show Command Testing
+
 - **Valid applications**: Tests detailed information display with configuration, files, and symlinks
 - **Invalid applications**: Tests error handling for non-existent applications
 - **Case-insensitive matching**: Tests application name matching flexibility
@@ -887,6 +951,7 @@ The project maintains high test coverage across all CLI commands:
 - **Symlink detection**: Tests symlink discovery and validation across multiple locations
 
 #### Edit Command Testing
+
 - **Field editing**: Tests editing frequency, patterns, URLs, status, prerelease settings, and checksum configuration
 - **Rotation management**: Tests enabling/disabling file rotation with symlink path requirements
 - **Path validation**: Tests symlink path validation including empty paths, invalid extensions, and path normalization
@@ -899,6 +964,7 @@ The project maintains high test coverage across all CLI commands:
 - **Validation feedback**: Tests user-friendly error messages for invalid inputs
 
 #### System Compatibility Testing
+
 - **Architecture Detection**: Tests x86_64, arm64, i686 detection and aliasing
 - **Platform Detection**: Tests Linux, macOS, Windows platform identification
 - **Format Compatibility**: Tests supported formats per platform/distribution
@@ -932,9 +998,10 @@ Applications can specify a `symlink_path` for explicit symlink management:
 ### Symlink Detection
 
 The `show` command automatically detects symlinks using the same search paths as go-appimage's `appimaged` daemon:
+
 - Application download directory (always included)
 - `/usr/local/bin`
-- `/opt` 
+- `/opt`
 - `~/Applications`
 - `~/.local/bin`
 - `~/Downloads`
@@ -947,19 +1014,24 @@ The `show` command automatically detects symlinks using the same search paths as
 ### Future Integration
 
 The `symlink_path` configuration prepares for future download rotation improvements:
+
 - Automatic symlink creation/updates during downloads
 - File rotation with `.current`, `.old`, `.old2` suffixes
 - Seamless application launching through stable symlink paths
 
 ### Async Backend Testing
+
 The project uses `pytest-anyio` which supports testing with multiple async backends:
+
 - **asyncio**: The default Python async library (primary backend)
 - **trio**: Alternative async library for testing robustness
 
 Some tests are parametrized to run with both backends to ensure compatibility. The `trio` dependency is required for these parametrized tests to pass.
 
 ### Troubleshooting Coverage Issues
+
 If you encounter coverage database errors:
+
 ```bash
 # Clean up stale coverage files
 rm -f .coverage*
@@ -972,6 +1044,7 @@ task test
 ## Dependencies
 
 Key runtime dependencies:
+
 - `httpx`: Async HTTP client for GitHub API and downloads
 - `loguru`: Structured logging with rich formatting
 - `pydantic`: Data validation and settings management
@@ -980,6 +1053,7 @@ Key runtime dependencies:
 - `packaging`: Version parsing and comparison
 
 Development dependencies include:
+
 - `mypy`: Static type checking
 - `pytest`: Testing framework with async support
 - `pytest-anyio`: Async testing support for both asyncio and trio backends

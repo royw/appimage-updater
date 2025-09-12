@@ -11,14 +11,19 @@ graph TB
     B --> D[GitHub Client]
     B --> E[Version Checker]
     B --> F[Downloader]
+    B --> G[Distribution Selector]
+    B --> H[System Info]
     
-    C --> G[JSON Config Files]
-    D --> H[GitHub API]
-    E --> I[Version Comparison]
-    F --> J[Concurrent Downloads]
-    F --> K[ZIP Extraction]
-    F --> L[Checksum Verification]
-    F --> M[File Rotation]
+    C --> I[JSON Config Files]
+    D --> J[GitHub API]
+    D --> K[GitHub Auth]
+    E --> L[Version Comparison]
+    F --> M[Concurrent Downloads]
+    F --> N[ZIP Extraction]
+    F --> O[Checksum Verification]
+    F --> P[File Rotation]
+    G --> Q[Platform Detection]
+    H --> R[Architecture Detection]
     
     style A fill:#e1f5fe
     style B fill:#f3e5f5
@@ -26,6 +31,8 @@ graph TB
     style D fill:#e8f5e8
     style E fill:#e8f5e8
     style F fill:#e8f5e8
+    style G fill:#fff3e0
+    style H fill:#fff3e0
 ```
 
 ## Core Components
@@ -35,12 +42,14 @@ graph TB
 The entry point for all user interactions, built with [Typer](https://typer.tiangolo.com/).
 
 **Responsibilities:**
+
 - Parse command-line arguments and options
 - Coordinate between different components
 - Handle global error handling and logging
 - Orchestrate CLI command execution
 
 **Key Features:**
+
 - Rich console output with colors and progress bars
 - Async command execution
 - Structured error handling with clean user messages
@@ -48,42 +57,81 @@ The entry point for all user interactions, built with [Typer](https://typer.tian
   - `display.py` - Console output formatting and display functions
   - `pattern_generator.py` - GitHub URL parsing and intelligent pattern generation
   - `config_operations.py` - Configuration management and persistence operations
+  - `distribution_selector.py` - Intelligent asset selection for multi-platform releases
+  - `system_info.py` - System detection for compatibility filtering
+  - `github_auth.py` - GitHub authentication management
 
 #### Supporting Modules
 
 **Display Module (`display.py`)**
+
 - Console output formatting and styling
 - Table generation and data presentation
 - Progress indicators and status messages
 - Rich console integration for enhanced UX
+- Application listing and details display
+- Check and download results formatting
 
 **Pattern Generation (`pattern_generator.py`)**
+
 - GitHub repository URL parsing and validation
 - Intelligent AppImage pattern generation from actual releases
 - Async GitHub API integration for pattern discovery
 - Fallback pattern generation strategies
+- Source type detection and URL normalization
 
 **Configuration Operations (`config_operations.py`)**
+
 - Application configuration loading and saving
 - Configuration file and directory management
-- Application addition and removal operations
+- Application addition, removal, and editing operations
 - Configuration validation and error handling
+- Default configuration generation
+- Directory creation and validation
+
+**Distribution Selector (`distribution_selector.py`)**
+
+- Distribution-aware asset selection for multi-platform releases
+- Automatic compatibility detection based on system information
+- Interactive selection when automatic detection isn't possible
+- Support for Ubuntu, Fedora, Arch, openSUSE, and other distributions
+- Version compatibility scoring and selection
+
+**System Information (`system_info.py`)**
+
+- Comprehensive system detection (architecture, platform, distribution)
+- Architecture compatibility checking (x86_64, arm64, i686, etc.)
+- Platform detection (Linux, macOS, Windows)
+- Supported format detection (.AppImage, .deb, .rpm, etc.)
+- Distribution family identification for compatibility
+
+**GitHub Authentication (`github_auth.py`)**
+
+- GitHub token discovery from multiple sources
+- Environment variable and config file token support
+- GitHub CLI integration for token discovery
+- Security-first priority ordering for token sources
+- Authentication validation and error handling
 
 ### Configuration System
 
 #### Configuration Models (`config.py`)
+
 Pydantic-based models providing type-safe configuration validation.
 
 **Models:**
+
 - `GlobalConfig` - Global settings (timeouts, concurrency, logging)
 - `ChecksumConfig` - Checksum verification settings
 - `FrequencyConfig` - Update frequency configuration
 - `ApplicationConfig` - Per-application settings
 
 #### Configuration Loader (`config_loader.py`)
+
 Handles loading and validation of configuration files.
 
 **Features:**
+
 - Single file and directory-based configuration
 - Hierarchical configuration merging
 - Path expansion and validation
@@ -94,6 +142,7 @@ Handles loading and validation of configuration files.
 Core data structures used throughout the application.
 
 **Key Models:**
+
 - `Release` - GitHub release information
 - `Asset` - Download asset with checksum association
 - `UpdateCandidate` - Available update with metadata
@@ -103,24 +152,31 @@ Core data structures used throughout the application.
 
 ### GitHub Integration (`github_client.py`)
 
-Async HTTP client for GitHub API interactions.
+Async HTTP client for GitHub API interactions with comprehensive release and asset management.
 
 **Features:**
-- Rate limiting awareness
-- Automatic checksum file detection
-- Asset filtering and matching
-- Error handling and retries
+
+- Rate limiting awareness and respect
+- Automatic checksum file detection and association
+- Asset filtering and pattern matching
+- Error handling with exponential backoff retries
+- Authentication integration with `github_auth.py`
+- Release caching and efficient API usage
 
 **Key Methods:**
-- `get_releases()` - Fetch repository releases
-- `find_checksum_assets()` - Locate checksum files
-- `associate_assets_with_checksums()` - Link files to checksums
+
+- `get_releases()` - Fetch repository releases (latest or all)
+- `find_checksum_assets()` - Locate and parse checksum files
+- `associate_assets_with_checksums()` - Link download assets to checksums
+- `filter_assets_by_pattern()` - Pattern-based asset filtering
+- `get_release_by_tag()` - Fetch specific release by tag
 
 ### Version Management (`version_checker.py`)
 
 Handles version detection and comparison logic with intelligent fallback strategies.
 
 **Components:**
+
 - **Version Metadata System**: Reads version from `.info` metadata files for accurate tracking
 - **Fallback Version Extraction**: Regex-based filename parsing when metadata unavailable
 - **Semantic Version Parsing**: Uses `packaging.version` for proper version comparison
@@ -128,6 +184,7 @@ Handles version detection and comparison logic with intelligent fallback strateg
 - **Current Version Detection**: Scans local files with pattern matching
 
 **Version Metadata Features:**
+
 ```bash
 # Automatically created during downloads
 Bambu_Studio_ubuntu-24.04_PR-8017.zip      # Downloaded file
@@ -135,6 +192,7 @@ Bambu_Studio_ubuntu-24.04_PR-8017.zip.info # Metadata: "Version: v02.02.01.60"
 ```
 
 **Benefits:**
+
 - Avoids incorrect parsing of OS versions ("ubuntu-24.04") as app versions
 - Uses actual GitHub release tags for accurate version tracking
 - Supports complex filename patterns and multi-format releases
@@ -145,6 +203,7 @@ Bambu_Studio_ubuntu-24.04_PR-8017.zip.info # Metadata: "Version: v02.02.01.60"
 Concurrent download manager with comprehensive features.
 
 **Capabilities:**
+
 - Concurrent downloads with semaphore limiting
 - Progress tracking with rich progress bars
 - Automatic retry with exponential backoff
@@ -155,6 +214,7 @@ Concurrent download manager with comprehensive features.
 - Symlink management
 
 **ZIP Extraction Features:**
+
 - Automatic detection of ZIP files by extension
 - Scans ZIP contents for `.AppImage` files
 - Extracts AppImages from subdirectories within ZIP files
@@ -168,6 +228,7 @@ Concurrent download manager with comprehensive features.
 Centralized logging configuration using [Loguru](https://loguru.readthedocs.io/).
 
 **Features:**
+
 - Console and file logging with different levels
 - Structured log formatting
 - Automatic log rotation (10MB files, 7-day retention)
@@ -358,14 +419,15 @@ tests/
 ### Adding New Source Types
 
 1. Define new source type in `models.py`
-2. Implement client class (e.g., `GitLabClient`)
-3. Add configuration validation
-4. Implement release fetching logic
-5. Add comprehensive tests
+1. Implement client class (e.g., `GitLabClient`)
+1. Add configuration validation
+1. Implement release fetching logic
+1. Add comprehensive tests
 
 ### Plugin Architecture (Planned)
 
 Future plugin system for:
+
 - Custom source types
 - Custom download handlers
 - Custom notification systems

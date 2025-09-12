@@ -2,7 +2,7 @@
 
 ## Frequency Field Removal
 
-**Version**: Next Release  
+**Version**: Next Release\
 **Change**: The `frequency` field has been removed from application configurations.
 
 ### Background
@@ -12,8 +12,8 @@ The frequency field was originally designed to control when applications should 
 ### What Changed
 
 1. **Configuration Files**: The `frequency` field is no longer recognized in JSON configuration files
-2. **CLI Commands**: The `--frequency` and `--unit` options have been removed from `add` and `edit` commands  
-3. **Display**: Frequency information is no longer shown in `list` and `show` command outputs
+1. **CLI Commands**: The `--frequency` and `--unit` options have been removed from `add` and `edit` commands
+1. **Display**: Frequency information is no longer shown in `list` and `show` command outputs
 
 ### Migration Steps
 
@@ -61,11 +61,13 @@ appimage-updater add MyApp https://github.com/user/repo ~/Apps
 Since built-in frequency scheduling has been removed, you can now use external schedulers:
 
 **Cron example** (check all applications daily):
+
 ```cron
 0 9 * * * /path/to/appimage-updater check
 ```
 
 **Systemd timer example** (check specific app weekly):
+
 ```ini
 # /etc/systemd/system/appimage-updater-myapp.service
 [Unit]
@@ -89,13 +91,14 @@ WantedBy=timers.target
 ### Benefits of This Change
 
 1. **Cleaner Architecture**: Removes unused/inactive code paths
-2. **External Flexibility**: Use any scheduling system (cron, systemd, etc.)
-3. **Simplified Configuration**: Fewer options to configure and maintain
-4. **Better Testing**: Eliminates dormant features that were hard to test
+1. **External Flexibility**: Use any scheduling system (cron, systemd, etc.)
+1. **Simplified Configuration**: Fewer options to configure and maintain
+1. **Better Testing**: Eliminates dormant features that were hard to test
 
 ### Questions?
 
 If you have questions about this migration, please:
-1. Check the updated documentation 
-2. Open an issue on GitHub
-3. Review the changelog for additional context
+
+1. Check the updated documentation
+1. Open an issue on GitHub
+1. Review the changelog for additional context

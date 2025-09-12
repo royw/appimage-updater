@@ -1,3 +1,5 @@
+*[Home](index.md) > Configuration Guide*
+
 # Configuration Guide
 
 AppImage Updater uses JSON configuration files to define which applications to monitor and how to update them.
@@ -10,16 +12,14 @@ AppImage Updater uses JSON configuration files to define which applications to m
 {
   "global_config": {
     "concurrent_downloads": 3,
-    "timeout_seconds": 60,
-    "retry_attempts": 3,
+    "timeout_seconds": 30,
     "user_agent": "AppImage-Updater/0.1.0"
   }
 }
 ```
 
 - `concurrent_downloads`: Number of simultaneous downloads (1-10)
-- `timeout_seconds`: HTTP request timeout (5-300 seconds)
-- `retry_attempts`: Number of retry attempts for failed requests (1-10)
+- `timeout_seconds`: HTTP request timeout (5-300 seconds, default: 30)
 - `user_agent`: Custom User-Agent string for HTTP requests
 
 ### Application Configuration
@@ -33,11 +33,11 @@ AppImage Updater uses JSON configuration files to define which applications to m
       "url": "https://github.com/FreeCAD/FreeCAD",
       "download_dir": "~/Applications/FreeCAD",
       "pattern": ".*Linux-x86_64\\.AppImage$",
-      "frequency": {
-        "value": 1,
-        "unit": "weeks"
-      },
       "enabled": true,
+      "prerelease": false,
+      "rotation_enabled": false,
+      "symlink_path": null,
+      "retain_count": 3,
       "checksum": {
         "enabled": true,
         "pattern": "{filename}-SHA256.txt",
@@ -52,14 +52,15 @@ AppImage Updater uses JSON configuration files to define which applications to m
 #### Fields
 
 - `name`: Human-readable application name
-- `source_type`: Currently only "github" is supported
+- `source_type`: "github" or "direct" (currently only GitHub is fully implemented)
 - `url`: GitHub repository URL
 - `download_dir`: Directory to save AppImage files (supports ~ expansion)
 - `pattern`: Regular expression to match desired AppImage files
-- `frequency`: Update check frequency
-  - `value`: Numeric frequency value
-  - `unit`: Time unit ("hours", "days", "weeks")
 - `enabled`: Whether to check this application for updates
+- `prerelease`: Include prerelease versions (default: false)
+- `rotation_enabled`: Enable file rotation with .current/.old suffixes (default: false)
+- `symlink_path`: Path for stable symlink (required if rotation_enabled is true)
+- `retain_count`: Number of old versions to keep (1-10, default: 3)
 - `checksum`: Checksum verification settings (optional)
   - `enabled`: Whether to verify checksums (default: true)
   - `pattern`: Pattern to find checksum files, use `{filename}` placeholder (default: "{filename}-SHA256.txt")
@@ -71,9 +72,9 @@ AppImage Updater uses JSON configuration files to define which applications to m
 AppImage Updater looks for configuration in the following order:
 
 1. File specified with `--config` option
-2. Directory specified with `--config-dir` option
-3. `~/.config/appimage-updater/apps/` (directory of JSON files)
-4. `~/.config/appimage-updater/config.json` (single file)
+1. Directory specified with `--config-dir` option
+1. `~/.config/appimage-updater/apps/` (directory of JSON files)
+1. `~/.config/appimage-updater/config.json` (single file)
 
 ## GitHub Authentication
 
@@ -91,12 +92,12 @@ AppImage Updater supports GitHub Personal Access Token (PAT) authentication to i
 AppImage Updater automatically discovers tokens from multiple sources:
 
 1. **`GITHUB_TOKEN`** environment variable (GitHub CLI compatible)
-2. **`APPIMAGE_UPDATER_GITHUB_TOKEN`** environment variable (app-specific)
-3. **Token files** in user config directory:
+1. **`APPIMAGE_UPDATER_GITHUB_TOKEN`** environment variable (app-specific)
+1. **Token files** in user config directory:
    - `~/.config/appimage-updater/github-token.json`
    - `~/.config/appimage-updater/github_token.json`
    - `~/.appimage-updater-github-token`
-4. **Global config files**:
+1. **Global config files**:
    - `~/.config/appimage-updater/config.json`
    - `~/.config/appimage-updater/global.json`
 
@@ -111,13 +112,13 @@ AppImage Updater automatically discovers tokens from multiple sources:
 #### Token Creation Steps
 
 1. **Visit GitHub**: [Personal Access Tokens (Classic)](https://github.com/settings/tokens)
-2. **Generate Token**: Click "Generate new token (classic)"
-3. **Configure**:
+1. **Generate Token**: Click "Generate new token (classic)"
+1. **Configure**:
    - Name: `AppImage-Updater`
    - Expiration: Your preference (90 days, 1 year, or no expiration)
    - **Select ONLY**: ☑️ `public_repo` (under "repo" section)
-4. **Generate**: Click "Generate token"
-5. **Copy**: Save the token immediately (you won't see it again)
+1. **Generate**: Click "Generate token"
+1. **Copy**: Save the token immediately (you won't see it again)
 
 ### Token Storage Options
 
@@ -177,10 +178,10 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
 ### Security Best Practices
 
 1. **Minimal Permissions**: Only grant `public_repo` access
-2. **Secure Storage**: Use file permissions (600) for token files
-3. **Environment Priority**: Environment variables take precedence over files
-4. **No Token Exposure**: Tokens never appear in logs or debug output
-5. **Regular Rotation**: Consider rotating tokens periodically
+1. **Secure Storage**: Use file permissions (600) for token files
+1. **Environment Priority**: Environment variables take precedence over files
+1. **No Token Exposure**: Tokens never appear in logs or debug output
+1. **Regular Rotation**: Consider rotating tokens periodically
 
 ### Troubleshooting
 
@@ -209,12 +210,12 @@ AppImage Updater includes an advanced file rotation system that manages multiple
 When file rotation is enabled:
 
 1. **First Download**: `MyApp.AppImage` → `MyApp.AppImage.current`
-2. **Symlink Creation**: `~/bin/myapp.AppImage` → `MyApp.AppImage.current`
-3. **Next Update**: 
+1. **Symlink Creation**: `~/bin/myapp.AppImage` → `MyApp.AppImage.current`
+1. **Next Update**:
    - `MyApp.AppImage.current` → `MyApp.AppImage.old`
    - New download → `MyApp.AppImage.current`
    - Symlink automatically points to new `.current` file
-4. **Subsequent Updates**: Files rotate through the chain:
+1. **Subsequent Updates**: Files rotate through the chain:
    - `MyApp.AppImage.old` → `MyApp.AppImage.old2`
    - `MyApp.AppImage.current` → `MyApp.AppImage.old`
    - New download → `MyApp.AppImage.current`
@@ -253,11 +254,11 @@ Download Directory/
 
 ### Benefits of File Rotation
 
-✅ **Stable Access**: Applications always use the same symlink path  
-✅ **Easy Rollback**: Previous versions preserved if new version has issues  
-✅ **Automatic Cleanup**: Old versions automatically removed based on `retain_count`  
-✅ **Zero Downtime**: Symlink atomically switches to new version  
-✅ **Desktop Integration**: `.desktop` files can reference stable symlink path  
+**Stable Access**: Applications always use the same symlink path\
+**Easy Rollback**: Previous versions preserved if new version has issues\
+**Automatic Cleanup**: Old versions automatically removed based on `retain_count`\
+**Zero Downtime**: Symlink atomically switches to new version\
+**Desktop Integration**: `.desktop` files can reference stable symlink path
 
 ### Pattern Matching with Rotation
 
@@ -270,6 +271,7 @@ When using file rotation, your patterns should account for the suffixes:
 ```
 
 This pattern matches:
+
 - `MyApp.AppImage` (base file)
 - `MyApp.AppImage.current` (active rotation file)
 - `MyApp.AppImage.old` (previous rotation file)
@@ -377,9 +379,9 @@ Supported checksum file formats:
 ### Security Recommendations
 
 1. **Always enable**: Set `"enabled": true` for security
-2. **Use SHA256**: Preferred algorithm for security
-3. **Optional by default**: Set `"required": false` to handle projects without checksums gracefully
-4. **Monitor verification**: Check logs for verification status
+1. **Use SHA256**: Preferred algorithm for security
+1. **Optional by default**: Set `"required": false` to handle projects without checksums gracefully
+1. **Monitor verification**: Check logs for verification status
 
 ## ZIP File Support
 
@@ -388,10 +390,10 @@ AppImage Updater automatically extracts AppImage files from ZIP archives. This i
 ### How ZIP Extraction Works
 
 1. **Download Detection**: When a `.zip` file is downloaded, it's automatically identified
-2. **Automatic Extraction**: The ZIP file is opened and scanned for `.AppImage` files
-3. **AppImage Extraction**: Any found AppImage files are extracted to the download directory
-4. **Cleanup**: The original ZIP file is removed after successful extraction
-5. **Normal Processing**: The extracted AppImage continues through normal processing (permissions, checksum, rotation)
+1. **Automatic Extraction**: The ZIP file is opened and scanned for `.AppImage` files
+1. **AppImage Extraction**: Any found AppImage files are extracted to the download directory
+1. **Cleanup**: The original ZIP file is removed after successful extraction
+1. **Normal Processing**: The extracted AppImage continues through normal processing (permissions, checksum, rotation)
 
 ### ZIP-Compatible Pattern Examples
 
@@ -430,12 +432,14 @@ Pattern configurations that work with both ZIP and AppImage formats:
 ### ZIP Extraction Behavior
 
 **Single AppImage in ZIP:**
+
 ```
 download.zip → MyApp-1.2.3.AppImage
                 (ZIP file deleted, AppImage processed normally)
 ```
 
 **Multiple AppImages in ZIP:**
+
 ```
 download.zip → MyApp-x86_64.AppImage  ← First one extracted and used
                MyApp-arm64.AppImage   ← Ignored (warning logged)
@@ -443,6 +447,7 @@ download.zip → MyApp-x86_64.AppImage  ← First one extracted and used
 ```
 
 **AppImage in Subdirectory:**
+
 ```
 download.zip/release/linux/MyApp.AppImage → MyApp.AppImage
                                             (Extracted to download root)
@@ -459,12 +464,14 @@ download.zip/release/linux/MyApp.AppImage → MyApp.AppImage
 Common regex patterns for matching files:
 
 ### AppImage Files Only
+
 - Linux x86_64: `.*Linux-x86_64\\.AppImage$`
 - Any Linux: `.*[Ll]inux.*\\.AppImage$`
 - Any AppImage: `.*\\.AppImage$`
 - Specific architecture: `.*amd64\\.AppImage$`
 
 ### ZIP and AppImage Support
+
 - Both formats: `.*\\.(zip|AppImage)$`
 - With rotation: `(?i)MyApp.*\\.(zip|AppImage)(\\.(|current|old))?$`
 - Case insensitive: `(?i).*[Ll]inux.*\\.(zip|AppImage)$`

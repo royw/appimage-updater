@@ -1,10 +1,15 @@
 version: '3'
 
 tasks:
-  install:
-    desc: Install project dependencies
+  sync:
+    desc: Sync project dependencies with uv
     cmds:
       - uv sync --extra dev
+
+  install:
+    desc: Install project dependencies (first-time setup)
+    deps:
+      - sync
 
   typecheck:
     desc: Run type checking with mypy
@@ -22,9 +27,18 @@ tasks:
       - uv run ruff check --fix {{.CLI_ARGS | default "src/"}}
 
   format:
-    desc: Format code with ruff
+    desc: Format code with ruff and markdown files with mdformat
     cmds:
       - uv run ruff format {{.CLI_ARGS | default "src/"}}
+      - cmd: |
+          if ! command -v mdformat &> /dev/null; then
+            echo "❌ mdformat not found. Please install it with:"
+            echo "   uv tool install mdformat"
+            echo "   or: pipx install mdformat"
+            exit 1
+          fi
+        silent: true
+      - mdformat {{.CLI_ARGS | default "*.md docs/ *.md"}}
 
   test:
     desc: Run tests with pytest (sequential)
