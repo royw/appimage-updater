@@ -141,6 +141,7 @@ async def generate_default_config(
     checksum_algorithm: str = "sha256",
     checksum_pattern: str = "{filename}-SHA256.txt",
     checksum_required: bool | None = None,
+    pattern: str | None = None,
 ) -> tuple[dict[str, Any], bool]:
     """Generate a default application configuration.
 
@@ -166,7 +167,7 @@ async def generate_default_config(
         "source_type": detect_source_type(url),
         "url": url,
         "download_dir": download_dir,
-        "pattern": await generate_appimage_pattern_async(name, url),
+        "pattern": pattern if pattern is not None else await generate_appimage_pattern_async(name, url),
         "enabled": True,
         "prerelease": prerelease_final,
         "checksum": {
@@ -384,12 +385,14 @@ def collect_basic_edit_updates(
     pattern: str | None,
     enable: bool | None,
     prerelease: bool | None,
+    force: bool = False,
 ) -> dict[str, Any]:
     """Collect basic configuration updates."""
     updates: dict[str, Any] = {}
 
     if url is not None:
         updates["url"] = url
+        updates["force"] = force  # Store force flag for URL validation
     if download_dir is not None:
         updates["download_dir"] = download_dir
     if pattern is not None:
@@ -454,12 +457,13 @@ def collect_edit_updates(
     checksum_algorithm: str | None,
     checksum_pattern: str | None,
     checksum_required: bool | None,
+    force: bool = False,
 ) -> dict[str, Any]:
     """Collect all edit updates from all categories."""
     updates = {}
 
     # Collect basic updates
-    updates.update(collect_basic_edit_updates(url, download_dir, pattern, enable, prerelease))
+    updates.update(collect_basic_edit_updates(url, download_dir, pattern, enable, prerelease, force))
 
     # Collect rotation updates
     updates.update(collect_rotation_edit_updates(rotation, symlink_path, retain_count))
@@ -476,6 +480,16 @@ def validate_url_update(updates: dict[str, Any]) -> None:
         return
 
     url = updates["url"]
+    force = updates.get("force", False)
+
+    if force:
+        # Skip validation and normalization when --force is used
+        console.print("[yellow]⚠️  Using --force: Skipping URL validation and normalization")
+        logger.debug(f"Skipping URL validation for '{url}' due to --force flag")
+        # Remove the force flag from updates as it's not needed for config storage
+        updates.pop("force", None)
+        return
+
     try:
         repo_client = get_repository_client(url)
         normalized_url, was_corrected = repo_client.normalize_repo_url(url)

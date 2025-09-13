@@ -215,6 +215,7 @@ appimage-updater edit [OPTIONS] APP_NAME
 - `--checksum-required/--checksum-optional`: Make verification required/optional
 - `--create-dir`: Automatically create download directory
 - `--yes, -y`: Auto-confirm prompts
+- `--force`: Skip URL validation and normalization
 
 **Examples:**
 
@@ -230,6 +231,9 @@ appimage-updater edit FreeCAD --download-dir ~/NewLocation/FreeCAD --create-dir
 
 # Update pattern and enable required checksums
 appimage-updater edit OrcaSlicer --pattern "OrcaSlicer.*Linux.*\.AppImage$" --checksum-required
+
+# Update URL without validation (for direct downloads or nightly builds)
+appimage-updater edit MyApp --url https://direct-download-url.com/file.AppImage --force
 ```
 
 ### `remove`

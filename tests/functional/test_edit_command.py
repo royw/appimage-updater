@@ -419,3 +419,178 @@ def test_edit_preserve_unmodified_fields(runner, single_config_file):
     assert updated_app["pattern"] == original_app["pattern"]  # Preserved
     assert updated_app["enabled"] == original_app["enabled"]  # Preserved
     assert updated_app["checksum"] == original_app["checksum"]  # Preserved
+
+
+def test_edit_url_with_force_bypasses_validation(runner, single_config_file):
+    """Test that --force bypasses URL validation and normalization."""
+    direct_download_url = "https://direct-download-example.com/app.AppImage"
+
+    result = runner.invoke(
+        app,
+        ["edit", "TestApp", "--url", direct_download_url, "--force", "--config", str(single_config_file)]
+    )
+
+    assert result.exit_code == 0
+    assert "Using --force: Skipping URL validation and normalization" in result.stdout
+    assert "Detected download URL" not in result.stdout  # Should not show normalization message
+    # Handle potential line wrapping in output - normalize whitespace
+    clean_output = ' '.join(result.stdout.split())
+    expected_url_change = f"URL: https://github.com/test/testapp → {direct_download_url}"
+    assert expected_url_change in clean_output
+
+    # Verify the exact URL was saved without normalization
+    with single_config_file.open() as f:
+        config_data = json.load(f)
+
+    app_config = config_data["applications"][0]
+    assert app_config["url"] == direct_download_url
+
+
+def test_edit_url_with_force_preserves_invalid_urls(runner, single_config_file):
+    """Test that --force preserves even invalid URLs without validation."""
+    invalid_url = "https://example.com/some/path/file.AppImage"
+
+    result = runner.invoke(
+        app,
+        ["edit", "TestApp", "--url", invalid_url, "--force", "--config", str(single_config_file)]
+    )
+
+    assert result.exit_code == 0
+    assert "Using --force: Skipping URL validation and normalization" in result.stdout
+    # Handle potential line wrapping in output - normalize whitespace
+    clean_output = ' '.join(result.stdout.split())
+    expected_url_change = f"URL: https://github.com/test/testapp → {invalid_url}"
+    assert expected_url_change in clean_output
+
+    # Verify the exact URL was saved
+    with single_config_file.open() as f:
+        config_data = json.load(f)
+
+    app_config = config_data["applications"][0]
+    assert app_config["url"] == invalid_url
+
+
+def test_edit_url_with_force_and_github_download_url(runner, single_config_file):
+    """Test --force with GitHub download URL that would normally be normalized."""
+    github_download_url = "https://github.com/owner/repo/releases/download/v1.0/app.AppImage"
+
+    result = runner.invoke(
+        app,
+        ["edit", "TestApp", "--url", github_download_url, "--force", "--config", str(single_config_file)]
+    )
+
+    assert result.exit_code == 0
+    assert "Using --force: Skipping URL validation and normalization" in result.stdout
+    assert "Detected download URL" not in result.stdout  # Should not show normalization
+    # Handle potential line wrapping in output - normalize whitespace
+    clean_output = ' '.join(result.stdout.split())
+    expected_url_change = f"URL: https://github.com/test/testapp → {github_download_url}"
+    assert expected_url_change in clean_output
+
+    # Verify the download URL was preserved exactly
+    with single_config_file.open() as f:
+        config_data = json.load(f)
+
+    app_config = config_data["applications"][0]
+    assert app_config["url"] == github_download_url
+
+
+def test_edit_url_without_force_still_normalizes(runner, single_config_file):
+    """Test that URL normalization still works when --force is not used."""
+    github_download_url = "https://github.com/owner/repo/releases/download/v1.0/app.AppImage"
+    expected_normalized_url = "https://github.com/owner/repo"
+
+    result = runner.invoke(
+        app,
+        ["edit", "TestApp", "--url", github_download_url, "--config", str(single_config_file)]
+    )
+
+    assert result.exit_code == 0
+    assert "Detected download URL, using repository URL instead" in result.stdout
+    assert github_download_url in result.stdout
+    assert expected_normalized_url in result.stdout
+
+    # Verify the normalized URL was saved
+    with single_config_file.open() as f:
+        config_data = json.load(f)
+
+    app_config = config_data["applications"][0]
+    assert app_config["url"] == expected_normalized_url
+
+
+def test_edit_force_with_other_options(runner, single_config_file):
+    """Test that --force works correctly when combined with other edit options."""
+    direct_url = "https://nightly-builds.example.com/app-nightly.AppImage"
+
+    result = runner.invoke(
+        app,
+        [
+            "edit", "TestApp",
+            "--url", direct_url,
+            "--force",
+            "--prerelease",
+            "--checksum-required",
+            "--config", str(single_config_file)
+        ]
+    )
+
+    assert result.exit_code == 0
+    assert "Using --force: Skipping URL validation and normalization" in result.stdout
+    assert "Prerelease: No → Yes" in result.stdout
+    assert "Checksum Required: No → Yes" in result.stdout
+    # Handle potential line wrapping in output - normalize whitespace
+    clean_output = ' '.join(result.stdout.split())
+    expected_url_change = f"URL: https://github.com/test/testapp → {direct_url}"
+    assert expected_url_change in clean_output
+
+    # Verify all changes were saved
+    with single_config_file.open() as f:
+        config_data = json.load(f)
+
+    app_config = config_data["applications"][0]
+    assert app_config["url"] == direct_url
+    assert app_config["prerelease"] is True
+    assert app_config["checksum"]["required"] is True
+
+
+def test_edit_force_flag_only_affects_url_validation(runner, single_config_file):
+    """Test that --force only affects URL validation, not other validations."""
+    invalid_pattern = "TestApp.*[unclosed"  # Invalid regex
+    direct_url = "https://example.com/app.AppImage"
+
+    result = runner.invoke(
+        app,
+        [
+            "edit", "TestApp",
+            "--url", direct_url,
+            "--pattern", invalid_pattern,
+            "--force",
+            "--config", str(single_config_file)
+        ]
+    )
+
+    # Should still fail due to invalid pattern, even with --force
+    assert result.exit_code == 1
+    assert "Invalid regex pattern" in result.stdout
+    # URL validation should have been skipped though
+    assert "Using --force: Skipping URL validation and normalization" in result.stdout
+
+
+def test_edit_force_without_url_change_has_no_effect(runner, single_config_file):
+    """Test that --force has no effect when URL is not being changed."""
+    result = runner.invoke(
+        app,
+        ["edit", "TestApp", "--prerelease", "--force", "--config", str(single_config_file)]
+    )
+
+    assert result.exit_code == 0
+    assert "Using --force: Skipping URL validation and normalization" not in result.stdout
+    assert "Prerelease: No → Yes" in result.stdout
+
+    # Verify prerelease was changed but URL remained the same
+    with single_config_file.open() as f:
+        config_data = json.load(f)
+
+    app_config = config_data["applications"][0]
+    assert app_config["prerelease"] is True
+    assert app_config["url"] == "https://github.com/test/testapp"  # Original URL preserved

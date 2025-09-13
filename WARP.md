@@ -264,6 +264,7 @@ uv run python -m appimage_updater check OrcaSlicer_nightly
 uv run python -m appimage_updater edit GitHubDesktop --prerelease --checksum-required
 uv run python -m appimage_updater edit MyApp --rotation --symlink-path ~/bin/myapp.AppImage
 uv run python -m appimage_updater edit OldApp --url https://github.com/newowner/newrepo
+uv run python -m appimage_updater edit MyApp --url https://direct-download-url.com/file.AppImage --force
 
 # Show version information
 uv run python -m appimage_updater --version
@@ -426,6 +427,7 @@ appimage-updater edit <app-name> [OPTIONS]
 appimage-updater edit GitHubDesktop --prerelease --checksum-required
 appimage-updater edit MyApp --rotation --symlink-path ~/bin/myapp.AppImage
 appimage-updater edit OldApp --url https://github.com/newowner/newrepo
+appimage-updater edit MyApp --url https://direct-download-url.com/file.AppImage --force
 ```
 
 ### Perfect Command Symmetry: `add` ⟷ `edit`

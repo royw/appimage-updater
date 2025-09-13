@@ -188,6 +188,9 @@ appimage-updater edit MyApp --rotation --symlink ~/bin/myapp.AppImage
 
 # Change download location
 appimage-updater edit FreeCAD --download-dir ~/NewLocation/FreeCAD
+
+# Update URL without validation (for direct downloads)
+appimage-updater edit MyApp --url https://direct-download-url.com/file.AppImage --force
 ```
 
 ## Rotation for Stable Application Access

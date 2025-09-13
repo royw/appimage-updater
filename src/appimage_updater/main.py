@@ -160,6 +160,11 @@ _ADD_CHECKSUM_REQUIRED_OPTION = typer.Option(
     "--checksum-required/--checksum-optional",
     help="Make checksum verification required or optional (default: optional)",
 )
+_ADD_PATTERN_OPTION = typer.Option(
+    None,
+    "--pattern",
+    help="Custom file pattern (regex) to match AppImage files (overrides auto-generated pattern)",
+)
 
 # Edit command arguments and options
 _EDIT_APP_NAME_ARGUMENT = typer.Argument(
@@ -181,6 +186,7 @@ _EDIT_CHECKSUM_PATTERN_OPTION = typer.Option(None, "--checksum-pattern", help="U
 _EDIT_CHECKSUM_REQUIRED_OPTION = typer.Option(
     None, "--checksum-required/--checksum-optional", help="Make checksum verification required or optional"
 )
+_EDIT_FORCE_OPTION = typer.Option(False, "--force", help="Skip URL validation and normalization")
 
 
 def version_callback(value: bool) -> None:
@@ -323,6 +329,7 @@ def add(
     checksum_algorithm: str = _ADD_CHECKSUM_ALGORITHM_OPTION,
     checksum_pattern: str = _ADD_CHECKSUM_PATTERN_OPTION,
     checksum_required: bool | None = _ADD_CHECKSUM_REQUIRED_OPTION,
+    pattern: str | None = _ADD_PATTERN_OPTION,
 ) -> None:
     """Add a new application to the configuration.
 
@@ -390,6 +397,7 @@ def add(
             checksum_algorithm,
             checksum_pattern,
             checksum_required,
+            pattern,
         )
     )
 
@@ -410,6 +418,7 @@ async def _add(
     checksum_algorithm: str,
     checksum_pattern: str,
     checksum_required: bool | None,
+    pattern: str | None,
 ) -> None:
     """Async implementation of the add command."""
     try:
@@ -457,6 +466,7 @@ async def _add(
             checksum_algorithm,
             checksum_pattern,
             checksum_required,
+            pattern,
         )
 
         # Add the application to configuration
@@ -520,6 +530,7 @@ def edit(
     # Directory creation option
     create_dir: bool = _CREATE_DIR_OPTION,
     yes: bool = _YES_OPTION,
+    force: bool = _EDIT_FORCE_OPTION,
 ) -> None:
     """Edit configuration for an existing application.
 
@@ -559,6 +570,9 @@ def edit(
 
         # Update URL after repository move
         appimage-updater edit OldApp --url https://github.com/newowner/newrepo
+
+        # Force URL update without validation/normalization
+        appimage-updater edit MyApp --url https://direct-download-url.com/file.AppImage --force
     """
     try:
         logger.debug(f"Editing configuration for application: {app_name}")
@@ -589,6 +603,7 @@ def edit(
             checksum_algorithm,
             checksum_pattern,
             checksum_required,
+            force,
         )
 
         if not updates:
