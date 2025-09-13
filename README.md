@@ -365,13 +365,38 @@ Each monitored application has its own configuration file specifying:
 - File pattern matching for AppImage files
 - **Checksum verification settings** (optional, recommended for security)
 
+## Supported Repository Types
+
+AppImage Updater now supports multiple repository types:
+
+- **GitHub Repositories** - Full support for GitHub releases API
+- **Direct Download URLs** - Static download links and "latest" symlinks (e.g., OpenRGB, YubiKey Manager)
+- **Dynamic Download Pages** - Generic download pages with parseable AppImage links
+
+## Unsupported Applications
+
+Some applications cannot be automatically monitored due to technical limitations:
+
+### LM Studio
+
+- **Issue**: Uses complex JavaScript-generated download URLs with dynamic dropdown selectors
+- **Workaround**: Download manually from [lmstudio.ai/download](https://lmstudio.ai/download) and place in your configured directory
+- **Alternative**: Monitor their [beta releases page](https://lmstudio.ai/beta-releases) for direct download links
+
+### Applications with OAuth/Login Requirements
+
+Applications requiring authentication or login cannot be automatically monitored.
+
+### Applications with CAPTCHA Protection
+
+Download pages with CAPTCHA verification are not supported for automated access.
+
 ## Roadmap
 
-- Add support for non-github repositories, for example:
-  - OpenRGB: https://openrgb.org/releases/release_candidate_1.0rc1/OpenRGB_1.0rc1_x86_64_1fbacde.AppImage
-  - YubiKey_Manager: https://www.yubico.com/support/download/yubikey-manager/
-  - LM-Studio: https://lmstudio.ai/download
-  - gitlab
+- Add support for additional repository types:
+  - GitLab repositories
+  - SourceForge projects
+  - Custom API endpoints
 
 ## Documentation
 

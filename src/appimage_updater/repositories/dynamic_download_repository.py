@@ -32,7 +32,6 @@ class DynamicDownloadRepository(RepositoryClient):
         """Detect if URL requires dynamic parsing."""
         # Patterns that indicate dynamic download pages
         dynamic_patterns = [
-            r".*lmstudio\.ai/download.*",
             r".*/download/?$",  # Generic download pages that might be dynamic
         ]
 
@@ -48,76 +47,11 @@ class DynamicDownloadRepository(RepositoryClient):
     async def get_releases(self, url: str, limit: int = 10) -> list[Release]:
         """Get releases for dynamic download URL."""
         try:
-            if "lmstudio.ai" in url:
-                return await self._handle_lmstudio(url)
-            else:
-                return await self._handle_generic_dynamic(url)
+            return await self._handle_generic_dynamic(url)
 
         except Exception as e:
             logger.error(f"Failed to get releases for {url}: {e}")
             raise RepositoryError(f"Failed to fetch release information: {e}") from e
-
-    async def _handle_lmstudio(self, url: str) -> list[Release]:
-        """Handle LM Studio specific download parsing."""
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            # Get the download page
-            response = await client.get(url)
-            response.raise_for_status()
-
-            # Look for API endpoints or download links in the page
-            content = response.text
-
-            # Try to find version information in the page
-            version_match = re.search(r"v([\d.]+)", content)
-            version = version_match.group(1) if version_match else "latest"
-
-            # Look for Linux AppImage download links
-            appimage_pattern = r'href="([^"]*\.AppImage[^"]*)"'
-            appimage_matches = re.findall(appimage_pattern, content, re.IGNORECASE)
-
-            if not appimage_matches:
-                # Try to find installer URLs that might redirect to AppImage
-                installer_pattern = r'installers\.lmstudio\.ai[^"]*'
-                installer_matches = re.findall(installer_pattern, content)
-
-                if installer_matches:
-                    # Use the first installer URL as a base
-                    installer_url = installer_matches[0]
-                    if not installer_url.startswith("http"):
-                        installer_url = f"https://{installer_url}"
-
-                    # Create asset with the installer URL
-                    asset = Asset(
-                        name="LM-Studio-latest-linux.AppImage",
-                        url=installer_url,
-                        size=0,  # Size unknown for dynamic downloads
-                        created_at=datetime.now(),
-                    )
-                else:
-                    raise RepositoryError("No AppImage download found for LM Studio")
-            else:
-                # Use the first AppImage link found
-                download_url = appimage_matches[0]
-                if not download_url.startswith("http"):
-                    download_url = f"https://lmstudio.ai{download_url}"
-
-                asset = Asset(
-                    name="LM-Studio-latest-linux.AppImage",
-                    url=download_url,
-                    size=0,
-                    created_at=datetime.now(),
-                )
-
-            release = Release(
-                version=version,
-                tag_name=version,
-                published_at=datetime.now(),
-                assets=[asset],
-                is_prerelease=False,
-                is_draft=False,
-            )
-
-            return [release]
 
     async def _handle_generic_dynamic(self, url: str) -> list[Release]:
         """Handle generic dynamic download pages."""
