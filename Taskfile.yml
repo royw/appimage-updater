@@ -6,7 +6,6 @@ vars:
 tasks:
   output:
     desc: Internal task to output messages silently
-    internal: true
     cmds:
       - cmd: echo "{{.MESSAGE}}"
         silent: true
