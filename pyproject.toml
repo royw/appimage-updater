@@ -114,7 +114,7 @@ per-file-ignores = { "tests/*" = ["S101"] }
 max-complexity = 10
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests/unit", "tests/functional", "tests/e2e"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -130,6 +130,9 @@ source = ["src"]
 omit = ["tests/*"]
 parallel = false
 concurrency = ["thread"]
+
+[tool.coverage.paths]
+source = ["src/", "*/site-packages/"]
 
 [tool.coverage.report]
 exclude_lines = [

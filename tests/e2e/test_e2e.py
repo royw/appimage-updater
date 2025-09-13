@@ -862,7 +862,7 @@ def test_version_option(runner):
     from pathlib import Path
     
     # Read version from pyproject.toml
-    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+    pyproject_path = Path(__file__).parent.parent.parent / "pyproject.toml"
     with open(pyproject_path, "rb") as f:
         pyproject = tomllib.load(f)
     expected_version = pyproject["project"]["version"]

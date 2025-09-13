@@ -1,68 +1,85 @@
-# End-to-End Testing
+# Testing
 
-This directory contains comprehensive end-to-end tests for the AppImage Updater to ensure core functionality works correctly after making changes.
+This directory contains comprehensive tests for the AppImage Updater organized by test type to ensure core functionality works correctly after making changes.
+
+## Directory Structure
+
+- **`e2e/`** - End-to-end tests that validate complete workflows
+- **`unit/`** - Unit tests for individual components and functions
+- **`functional/`** - Functional tests for specific features and commands
+- **`regression/`** - Regression tests for bug fixes (excluded from coverage)
 
 ## Quick Start
 
 Use these Task commands to run tests:
 
 ```bash
-# Quick smoke test (fastest - basic functionality check)
-task test:smoke
+# Run all tests (excludes regression tests)
+task test
 
-# Full end-to-end test suite
-task test:e2e
+# Run tests with parallel execution (faster)
+task test:parallel
 
-# Run E2E tests with coverage report
-task test:e2e-coverage
+# Run specific test categories
+task test:unit          # Unit tests only
+task test:functional    # Functional tests only
+task test:e2e          # End-to-end tests only
+task test:regression   # Regression tests only
 
-# Test pattern matching functionality specifically
-task test:pattern-matching
+# Coverage reporting
+task test:coverage     # All tests with coverage (excludes regression)
+task test:e2e-coverage # E2E tests with coverage
 
-# Run all tests (unit + E2E)
-task test:all
+# Specialized test suites
+task test:pattern-matching  # Pattern matching functionality
+task test:all              # All tests including E2E (excludes regression)
 
-# Run complete code quality check including tests
+# Complete code quality check
 task check
 ```
 
 ## Test Categories
 
-### 🚀 Smoke Test (`task test:smoke`)
-- **Purpose**: Quick validation that basic CLI functionality works
-- **Runtime**: ~1 second  
-- **Use Case**: After small changes to verify nothing is broken
+### 🧪 Unit Tests (`tests/unit/`)
+- **Purpose**: Test individual components and functions in isolation
+- **Examples**: GitHub authentication, distribution selection, pattern generation
+- **Use Case**: After changes to specific modules or functions
+- **Coverage**: Individual classes, functions, and logic units
 
-### 🧪 End-to-End Tests (`task test:e2e`)
-- **Purpose**: Comprehensive testing of core functionality
-- **Runtime**: ~1 second
+### ⚙️ Functional Tests (`tests/functional/`)
+- **Purpose**: Test specific features and command functionality
+- **Examples**: Edit commands, file rotation, validation fixes
+- **Use Case**: After changes to user-facing features
+- **Coverage**: Feature workflows and command interactions
+
+### 🚀 End-to-End Tests (`tests/e2e/`)
+- **Purpose**: Test complete workflows from start to finish
+- **Examples**: Full CLI command execution, configuration workflows
 - **Use Case**: After significant changes or before releases
-- **Coverage**: CLI commands, configuration loading, version checking, pattern matching
+- **Coverage**: Complete user workflows and integration scenarios
 
-### 🎯 Pattern Matching Tests (`task test:pattern-matching`)
-- **Purpose**: Specifically tests file pattern matching and version extraction
-- **Runtime**: ~1 second
-- **Use Case**: After changes to patterns, version extraction, or file handling
-- **Coverage**: Our recent pattern matching fixes for `.current`, `.save`, `.old` suffixes
+### 🔄 Regression Tests (`tests/regression/`)
+- **Purpose**: Validate that previously fixed bugs remain fixed
+- **Examples**: Add command regression fixes
+- **Use Case**: Ensure bug fixes don't regress over time
+- **Coverage**: Excluded from coverage reports (focuses on bug validation)
 
-## Test Structure
+## Test Organization Benefits
 
-### `TestE2EFunctionality`
-Tests the main CLI functionality:
-- Configuration initialization (`init` command)
-- Update checking (`check` command) with various scenarios
-- Error handling for invalid configurations
-- App filtering and debug modes
+### 🎯 **Focused Testing**
+- Run only the tests relevant to your changes
+- Faster feedback during development
+- Clear separation of concerns
 
-### `TestPatternMatching` 
-Tests pattern matching specifically:
-- Files with suffixes (`.AppImage.current`, `.AppImage.save`, etc.)
-- Version detection from existing files
-- Validation that our pattern matching fixes work correctly
+### 📊 **Better Coverage Reporting**
+- Regression tests excluded from coverage metrics
+- Focus coverage on production code paths
+- More meaningful coverage statistics
 
-### Unit Tests
-- `test_version_extraction_patterns()`: Version extraction from filenames
-- `test_integration_smoke_test()`: Basic CLI smoke test
+### 🚀 **Improved CI/CD**
+- Parallel test execution by category
+- Selective test running based on changed files
+- Better test result organization
 
 ## What These Tests Validate
 
@@ -88,20 +105,29 @@ Tests pattern matching specifically:
 
 ## Coverage Reporting
 
-The E2E tests achieve **~48% code coverage** and specifically test the user-facing functionality that's most likely to break. The HTML coverage report shows exactly which lines are tested.
+Coverage reports exclude regression tests to focus on production code quality:
 
-View detailed coverage:
 ```bash
-task test:e2e-coverage
-# Open htmlcov/index.html in browser
+# Generate comprehensive coverage report
+task test:coverage
+
+# View detailed coverage in browser
+open htmlcov/index.html
 ```
+
+The organized test structure provides better coverage insights:
+- **Unit tests**: High coverage of individual components
+- **Functional tests**: Coverage of feature workflows
+- **E2E tests**: Coverage of complete user scenarios
 
 ## When to Run Tests
 
-- **After any code changes**: `task test:smoke` 
-- **Before committing**: `task test:e2e`
-- **Before releases**: `task test:all`
-- **After pattern/config changes**: `task test:pattern-matching`
+- **During development**: `task test:unit` (fast feedback)
+- **After feature changes**: `task test:functional`
+- **Before committing**: `task test` (all non-regression tests)
+- **Before releases**: `task test:all` + `task test:regression`
+- **For coverage analysis**: `task test:coverage`
+- **After pattern changes**: `task test:pattern-matching`
 
 ## Mocking Strategy
 
