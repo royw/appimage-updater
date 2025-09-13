@@ -1,6 +1,6 @@
 """Dynamic download repository implementation for applications with JavaScript-generated download links.
 
-This handles applications like LM Studio that generate download links dynamically
+This handles applications that generate download links dynamically
 through JavaScript or API calls.
 """
 
@@ -105,12 +105,9 @@ class DynamicDownloadRepository(RepositoryClient):
             domain = parsed.netloc.replace("www.", "")
 
             # Extract app name from domain or path
-            if "lmstudio" in domain:
-                return "lmstudio.ai", "lm-studio"
-            else:
-                path_parts = [p for p in parsed.path.split("/") if p]
-                repo_name = path_parts[0] if path_parts else "app"
-                return domain, repo_name
+            path_parts = [p for p in parsed.path.split("/") if p]
+            repo_name = path_parts[0] if path_parts else "app"
+            return domain, repo_name
         except Exception as e:
             raise RepositoryError(f"Invalid URL format: {url}") from e
 

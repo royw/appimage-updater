@@ -539,9 +539,9 @@ Handles applications with static download URLs or "latest" symlinks:
 
 Handles applications with JavaScript-generated or dynamic download pages:
 
-- **Use Cases**: LM Studio, applications with dynamic download generation
+- **Use Cases**: Applications with dynamic download generation
 - **Detection Patterns**:
-  - `lmstudio.ai/download` URLs
+  - Dynamic download page URLs
   - Generic download pages requiring content parsing
 - **Content Parsing**: Scrapes HTML for AppImage download links
 - **Version Extraction**: Attempts to find version information in page content or URLs

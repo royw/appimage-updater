@@ -490,7 +490,7 @@ Common regex patterns for matching files:
 ### Limitations
 
 - **OpenRGB**: Uses GitLab instead of GitHub (not currently supported)
-- **LM Studio**: May not publish AppImage releases regularly
+- **Dynamic Applications**: Some applications with JavaScript-generated downloads may not be reliably parseable
 
 ## Example Configurations
 
