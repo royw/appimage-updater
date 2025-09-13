@@ -245,6 +245,7 @@ Handles version detection and comparison logic with intelligent fallback strateg
 
 **Components:**
 
+- **Multi-Release Pattern Matching**: Searches through up to 20 releases to find assets matching specified patterns
 - **Version Metadata System**: Reads version from `.info` metadata files for accurate tracking
 - **Fallback Version Extraction**: Regex-based filename parsing when metadata unavailable
 - **Semantic Version Parsing**: Uses `packaging.version` for proper version comparison

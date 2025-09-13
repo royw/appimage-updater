@@ -45,11 +45,31 @@ class VersionChecker:
                 app_config.url, source_type=app_config.source_type
             )
 
-            # Choose appropriate method based on prerelease setting
-            if app_config.prerelease:
-                release = await repo_client.get_latest_release_including_prerelease(app_config.url)
-            else:
-                release = await repo_client.get_latest_release(app_config.url)
+            # Search through multiple releases to find one with matching assets
+            releases = await repo_client.get_releases(app_config.url, limit=20)
+            if not releases:
+                return CheckResult(
+                    app_name=app_config.name,
+                    success=False,
+                    error_message="No releases found",
+                )
+
+            # Find the best release with matching assets
+            release = None
+            matching_assets = []
+
+            for candidate_release in releases:
+                # Skip drafts, and skip prereleases only if not explicitly requested
+                if candidate_release.is_draft or (candidate_release.is_prerelease and not app_config.prerelease):
+                    continue
+
+                # Check if this release has matching assets
+                candidate_assets = candidate_release.get_matching_assets(app_config.pattern)
+                if candidate_assets:
+                    release = candidate_release
+                    matching_assets = candidate_assets
+                    break
+
         except RepositoryError as e:
             return CheckResult(
                 app_name=app_config.name,
@@ -57,17 +77,8 @@ class VersionChecker:
                 error_message=str(e),
             )
 
-        # Skip drafts, and skip prereleases only if not explicitly requested
-        if release.is_draft or (release.is_prerelease and not app_config.prerelease):
-            return CheckResult(
-                app_name=app_config.name,
-                success=True,
-                error_message="Latest release is draft or prerelease",
-            )
-
-        # Find matching assets
-        matching_assets = release.get_matching_assets(app_config.pattern)
-        if not matching_assets:
+        # Check if we found a suitable release
+        if not release or not matching_assets:
             return CheckResult(
                 app_name=app_config.name,
                 success=False,

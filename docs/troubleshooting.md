@@ -249,22 +249,37 @@ Look for these key indicators in debug output:
 
 ## Pattern Matching Issues
 
-### No Assets Found
+### No Assets Match Pattern
 
-**Error**: `No matching assets found` or `Pattern matched 0 assets`
+**Error**: `No assets match pattern: your-pattern`
+
+**Common Causes**:
+
+- Pattern doesn't match any assets in the latest release
+- Assets exist in older releases but not the most recent one
+- Nightly builds or continuous releases aren't the latest by date
 
 **Solutions**:
 
-1. **Check available assets**:
+1. **Check multiple releases** (AppImage Updater now searches up to 20 releases automatically):
 
    ```bash
-   curl -s https://api.github.com/repos/USER/REPO/releases/latest | jq '.assets[].name'
+   # View recent releases and their assets
+   curl -s https://api.github.com/repos/USER/REPO/releases?per_page=5 | \
+     jq '.[] | {tag_name, assets: [.assets[].name]}'
    ```
 
-1. **Test pattern manually**:
+1. **Test pattern with debug output**:
 
    ```bash
-   appimage-updater --debug add --dry-run MyApp https://github.com/user/app ~/Apps/MyApp
+   appimage-updater --debug check MyApp --dry-run
+   ```
+
+1. **For nightly builds**, ensure you're using `--prerelease`:
+
+   ```bash
+   appimage-updater add --prerelease --pattern ".*nightly.*\.AppImage$" \
+     MyApp https://github.com/user/app ~/Apps/MyApp
    ```
 
 1. **Use custom pattern**:

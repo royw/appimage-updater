@@ -435,7 +435,8 @@ done
 
 1. **Test patterns**: Use `--dry-run` to verify regex patterns match expected files
 1. **Organize configs**: Use directory-based configuration to organize by category
-1. **Version checking**: Tool uses intelligent semantic versioning when possible
+1. **Version checking**: Tool searches multiple releases automatically for pattern matches
+1. **Nightly builds**: Use `--prerelease` for continuous builds and nightly releases
 1. **Download locations**: Use absolute paths or `~` for home directory
 1. **Checksum verification**: Enable for security; use `--debug` for verification details
 1. **Application filtering**: Use specific app names to test individual applications

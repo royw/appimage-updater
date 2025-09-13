@@ -62,7 +62,18 @@ All notable changes to AppImage Updater will be documented in this file.
 
 ### Bug Fixes
 
+- **FIXED**: Version checker now searches multiple releases for pattern matches
+
+  - **PROBLEM**: Applications with non-standard release patterns (like nightly builds) failed when the latest release didn't contain matching assets
+  - **SOLUTION**: Enhanced `_check_repository_updates()` to search through up to 20 releases instead of just the latest one
+  - **RESULT**: Finds the first release with assets matching the specified pattern, regardless of publication date
+  - **USE CASE**: Fixes issues with continuous nightly builds where the "nightly-builds" release isn't the most recent by date
+  - **EXAMPLE**: OrcaSlicer nightly builds now work correctly with pattern `.*nightly.*\.(zip|AppImage)$`
+  - **PERFORMANCE**: Efficient early-exit when matching release is found
+  - **BACKWARD COMPATIBLE**: Standard versioned releases continue working as before
+
 - **FIXED**: AppImage rotation naming issue for extracted ZIP files
+
   - **PROBLEM**: Rotation suffix (`.current`, `.old`) was incorrectly added before `.AppImage` extension
   - **SOLUTION**: Modified rotation logic to treat `.AppImage` as part of the base filename
   - **RESULT**: Rotation suffixes now correctly added after `.AppImage` (e.g., `filename.AppImage.current`)
