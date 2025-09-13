@@ -50,7 +50,7 @@ def display_applications_list(applications: list[Any]) -> None:
     console.print(table)
 
 
-def display_check_results(results: list[CheckResult]) -> None:
+def display_check_results(results: list[CheckResult], show_urls: bool = False) -> None:
     """Display check results in a table."""
     table = Table(title="Update Check Results")
     table.add_column("Application", style="cyan")
@@ -59,38 +59,82 @@ def display_check_results(results: list[CheckResult]) -> None:
     table.add_column("Latest", style="magenta")
     table.add_column("Update", style="bold")
 
+    if show_urls:
+        table.add_column("Download URL", style="blue", max_width=60)
+
     for result in results:
         if not result.success:
-            table.add_row(
+            row = [
                 result.app_name,
                 "[red]Error",
                 "-",
                 "-",
                 result.error_message or "Unknown error",
-            )
+            ]
+            if show_urls:
+                row.append("-")
+            table.add_row(*row)
         elif not result.candidate:
-            table.add_row(
+            row = [
                 result.app_name,
                 "[yellow]No candidate",
                 "-",
                 "-",
                 result.error_message or "No matching assets",
-            )
+            ]
+            if show_urls:
+                row.append("-")
+            table.add_row(*row)
         else:
             candidate = result.candidate
             status = "[green]Up to date" if not candidate.needs_update else "[yellow]Update available"
             current = candidate.current_version or "[dim]None"
             update_indicator = "✓" if candidate.needs_update else "-"
 
-            table.add_row(
+            row = [
                 result.app_name,
                 status,
                 current,
                 candidate.latest_version,
                 update_indicator,
-            )
+            ]
+
+            if show_urls:
+                url = candidate.asset.url if candidate else "-"
+                # Truncate long URLs for display
+                if len(url) > 60:
+                    url = url[:57] + "..."
+                row.append(url)
+
+            table.add_row(*row)
 
     console.print(table)
+
+    # Display separate URL table if requested
+    if show_urls:
+        _display_url_table(results)
+
+
+def _display_url_table(results: list[CheckResult]) -> None:
+    """Display a separate table with full download URLs."""
+    # Filter results that have candidates with URLs
+    url_results = []
+    for result in results:
+        if result.success and result.candidate and result.candidate.asset:
+            url_results.append((result.app_name, result.candidate.asset.url))
+
+    if not url_results:
+        return
+
+    url_table = Table(title="Download URLs")
+    url_table.add_column("Application", style="cyan")
+    url_table.add_column("Download URL", style="blue", no_wrap=True)
+
+    for app_name, url in url_results:
+        url_table.add_row(app_name, url)
+
+    console.print()  # Add spacing
+    console.print(url_table)
 
 
 def display_download_results(results: list[Any]) -> None:
@@ -569,9 +613,21 @@ def format_single_symlink(symlink_path: Path, target_path: Path) -> list[str]:
 
 
 def find_application_by_name(applications: list[Any], app_name: str) -> Any:
-    """Find an application by name (case-insensitive)."""
+    """Find an application by name or glob pattern (case-insensitive)."""
+    import fnmatch
+
     app_name_lower = app_name.lower()
+
+    # Check for exact match first
     for app in applications:
         if app.name.lower() == app_name_lower:
             return app
-    return None
+
+    # Try glob pattern matching
+    matches = []
+    for app in applications:
+        if fnmatch.fnmatch(app.name.lower(), app_name_lower):
+            matches.append(app)
+
+    # Return first match if found, or None if no matches
+    return matches[0] if matches else None

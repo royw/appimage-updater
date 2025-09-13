@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import fnmatch
 import json
 import os
 from pathlib import Path
@@ -83,11 +84,15 @@ _NO_INTERACTIVE_OPTION = typer.Option(
     help="Disable interactive distribution selection (use best match automatically)",
 )
 _CHECK_APP_NAME_ARGUMENT = typer.Argument(
-    default=None, help="Name of the application to check (case-insensitive). If not provided, checks all applications."
+    default=None,
+    help="Name of the application to check (case-insensitive, supports glob patterns like 'Orca*'). "
+    "If not provided, checks all applications.",
 )
-_SHOW_APP_NAME_ARGUMENT = typer.Argument(help="Name of the application to display information for (case-insensitive)")
+_SHOW_APP_NAME_ARGUMENT = typer.Argument(
+    help="Name of the application to display information for (case-insensitive, supports glob patterns like 'Orca*')"
+)
 _REMOVE_APP_NAME_ARGUMENT = typer.Argument(
-    help="Name of the application to remove from configuration (case-insensitive)"
+    help="Name of the application to remove from configuration (case-insensitive, supports glob patterns like 'Orca*')"
 )
 _FORCE_OPTION = typer.Option(
     False,
@@ -157,7 +162,9 @@ _ADD_CHECKSUM_REQUIRED_OPTION = typer.Option(
 )
 
 # Edit command arguments and options
-_EDIT_APP_NAME_ARGUMENT = typer.Argument(help="Name of the application to edit (case-insensitive)")
+_EDIT_APP_NAME_ARGUMENT = typer.Argument(
+    help="Name of the application to edit (case-insensitive, supports glob patterns like 'Orca*')"
+)
 _EDIT_URL_OPTION = typer.Option(None, "--url", help="Update the repository URL")
 _EDIT_DOWNLOAD_DIR_OPTION = typer.Option(None, "--download-dir", help="Update the download directory")
 _EDIT_PATTERN_OPTION = typer.Option(None, "--pattern", help="Update the file pattern (regex)")
@@ -767,7 +774,7 @@ async def _check_updates(
         check_results = await _perform_update_checks(config, enabled_apps, no_interactive)
 
         # Process results and get update candidates
-        candidates = _get_update_candidates(check_results)
+        candidates = _get_update_candidates(check_results, dry_run)
 
         if not candidates:
             # Even if no updates are available, check for existing files that need rotation setup
@@ -910,20 +917,28 @@ async def _load_and_filter_config(
 
 
 def _filter_apps_by_name(enabled_apps: list[Any], app_name: str) -> list[Any]:
-    """Filter applications by name."""
-    logger.debug(f"Filtering applications for: {app_name} (case-insensitive)")
+    """Filter applications by name or glob pattern."""
+    logger.debug(f"Filtering applications for: {app_name} (case-insensitive, supports glob patterns)")
     app_name_lower = app_name.lower()
-    filtered_apps = [app for app in enabled_apps if app.name.lower() == app_name_lower]
 
-    if not filtered_apps:
-        available_apps = [app.name for app in enabled_apps]
-        console.print(f"[red]Application '{app_name}' not found in enabled applications")
-        console.print(f"[yellow]Available applications: {', '.join(available_apps)}")
-        logger.error(f"Application '{app_name}' not found. Available: {available_apps}")
-        return []
+    # Check for exact match first
+    exact_matches = [app for app in enabled_apps if app.name.lower() == app_name_lower]
+    if exact_matches:
+        logger.debug(f"Found exact match: {exact_matches[0].name}")
+        return exact_matches
 
-    logger.debug(f"Filtered to single application: {filtered_apps[0].name}")
-    return filtered_apps
+    # Try glob pattern matching
+    glob_matches = [app for app in enabled_apps if fnmatch.fnmatch(app.name.lower(), app_name_lower)]
+    if glob_matches:
+        logger.debug(f"Found {len(glob_matches)} glob matches: {[app.name for app in glob_matches]}")
+        return glob_matches
+
+    # No matches found
+    available_apps = [app.name for app in enabled_apps]
+    console.print(f"[red]Application '{app_name}' not found in enabled applications")
+    console.print(f"[yellow]Available applications: {', '.join(available_apps)}")
+    logger.error(f"Application '{app_name}' not found. Available: {available_apps}")
+    return []
 
 
 async def _perform_update_checks(config: Any, enabled_apps: list[Any], no_interactive: bool = False) -> list[Any]:
@@ -948,11 +963,11 @@ async def _perform_update_checks(config: Any, enabled_apps: list[Any], no_intera
     return check_results
 
 
-def _get_update_candidates(check_results: list[Any]) -> list[Any]:
+def _get_update_candidates(check_results: list[Any], dry_run: bool = False) -> list[Any]:
     """Process check results and extract update candidates."""
     # Display results
     logger.debug("Displaying check results")
-    display_check_results(check_results)
+    display_check_results(check_results, show_urls=dry_run)
 
     # Filter successful results with updates
     logger.debug("Filtering results for update candidates")
