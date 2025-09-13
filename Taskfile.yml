@@ -1,185 +1,38 @@
 version: '3'
 
+vars:
+  SRC: src/
+
 tasks:
-  sync:
-    desc: Sync project dependencies with uv
+  output:
+    desc: Internal task to output messages silently
+    internal: true
     cmds:
-      - uv sync --extra dev
+      - cmd: echo "{{.MESSAGE}}"
+        silent: true
+  # === Setup and Environment ===
+  
+  # Environment validation
+  env:check:
+    desc: Verify development environment setup
+    cmds:
+      - task: output
+        vars:
+          MESSAGE: "Checking Prerequisite versions..."
+      - uv --version
+      - uv run python --version
+      - git --version
+      - pipx --version
 
   install:
     desc: Install project dependencies (first-time setup)
     deps:
       - sync
 
-  typecheck:
-    desc: Run type checking with mypy
+  sync:
+    desc: Sync project dependencies with uv
     cmds:
-      - uv run mypy {{.CLI_ARGS | default "src/"}}
-
-  lint:
-    desc: Run linting with ruff
-    cmds:
-      - uv run ruff check {{.CLI_ARGS | default "src/"}}
-
-  fix:
-    desc: Automatically fix linting issues with ruff
-    cmds:
-      - uv run ruff check --fix {{.CLI_ARGS | default "src/"}}
-
-  format:
-    desc: Format code with ruff and markdown files with mdformat
-    cmds:
-      - uv run ruff format {{.CLI_ARGS | default "src/"}}
-      - cmd: |
-          if ! command -v mdformat &> /dev/null; then
-            echo "❌ mdformat not found. Please install it with:"
-            echo "   uv tool install mdformat"
-            echo "   or: pipx install mdformat"
-            exit 1
-          fi
-        silent: true
-      - mdformat {{.CLI_ARGS | default "*.md docs/ *.md"}}
-
-  test:
-    desc: Run tests with pytest (sequential) - excludes regression tests
-    cmds:
-      - uv run pytest tests/unit tests/functional tests/e2e {{.CLI_ARGS}}
-
-  test:parallel:
-    desc: Run tests with pytest using multiple CPU cores (faster) - excludes regression tests
-    cmds:
-      - uv run pytest tests/unit tests/functional tests/e2e -n auto {{.CLI_ARGS}}
-
-
-  test:e2e:
-    desc: Run end-to-end tests to validate core functionality
-    cmds:
-      - uv run pytest tests/e2e/ -v --tb=short --color=yes --no-cov -n auto
-
-  test:e2e-coverage:
-    desc: Run end-to-end tests with coverage reporting
-    cmds:
-      - uv run pytest tests/e2e/ -v --tb=short --color=yes --cov=src/appimage_updater --cov-report=term-missing --cov-report=html:htmlcov -n auto
-      - cmd: echo "📊 Coverage report saved to htmlcov/index.html"
-        silent: true
-
-
-  test:pattern-matching:
-    desc: Test pattern matching functionality specifically
-    cmds:
-      - uv run pytest tests/e2e/test_e2e.py::TestPatternMatching -v
-      - uv run pytest tests/e2e/test_e2e.py::test_version_extraction_patterns -v
-      - uv run pytest tests/unit/test_intelligent_pattern_generation.py -v
-
-  test:regression:
-    desc: Run regression tests to validate fixed issues
-    cmds:
-      - uv run pytest tests/regression/ -v --tb=short --color=yes
-      - cmd: echo "✅ Regression tests passed - fixed issues remain resolved!"
-        silent: true
-
-  complexity:
-    desc: Analyze code complexity with radon
-    cmds:
-      - uv run radon cc {{.CLI_ARGS | default "src/ --min C"}}
-
-  deadcode:
-    desc: Find dead (unreachable/unused) code with deadcode
-    cmds:
-      - >
-        uv run deadcode {{.CLI_ARGS | default "src/"}}
-        --ignore-if-decorated-with "@app.command" "@app.callback" "@field_validator" 
-        --ignore-names "main" "check" "init" "list_apps" "show" "edit" "DownloadError" "model_post_init"
-        "validate_pattern" "validate_download_dir" "validate_symlink_path" "generate_appimage_pattern"
-        "created_at" "tag_name" "checked_at" "expected" "actual" "duration_seconds"
-
-  test:unit:
-    desc: Run unit tests only
-    cmds:
-      - uv run pytest tests/unit/ {{.CLI_ARGS}}
-
-  test:functional:
-    desc: Run functional tests only
-    cmds:
-      - uv run pytest tests/functional/ {{.CLI_ARGS}}
-
-  test:all:
-    desc: Run all tests against all Python versions (excludes regression)
-    cmds:
-      - |
-        echo "🐍 Running tests against all Python versions..."
-        for version in $(cat .python-versions | grep -v '^$'); do
-          echo "\n📋 Testing with Python $version"
-          uv run --python $version pytest tests/unit tests/functional tests/e2e --tb=short --color=yes
-        done
-        echo "\n✅ All Python versions tested successfully!"
-
-  test:coverage:
-    desc: Run all tests with coverage reporting (excludes regression tests)
-    cmds:
-      - uv run pytest tests/unit tests/functional tests/e2e --cov=src/appimage_updater --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
-      - cmd: echo "📊 Coverage report saved to htmlcov/index.html"
-        silent: true
-
-  check:
-    desc: Run all code quality checks including end-to-end tests
-    cmds:
-      - task: fix
-      - task: format
-      - task: typecheck
-      - task: lint
-      - task: complexity
-      - task: test:parallel
-
-  run:
-    desc: Run the application
-    cmds:
-      - uv run python -m appimage_updater {{.CLI_ARGS}}
-
-  docs:build:
-    desc: Build documentation with MkDocs
-    cmds:
-      - cmd: echo "📚 Building documentation..."
-        silent: true
-      - uv run mkdocs build {{.CLI_ARGS}} 2>&1 | grep -v "MERMAID2.*Found superfences config" | grep -v "MERMAID2.*Initialization arguments" | grep -v "MERMAID2.*Using javascript library" || true
-      - cmd: echo "✅ Documentation built successfully in site/"
-        silent: true
-
-  docs:serve:
-    desc: Serve documentation locally for development
-    cmds:
-      - cmd: echo "🌍 Starting documentation server..."
-        silent: true
-      - uv run mkdocs serve {{.CLI_ARGS}}
-
-  docs:
-    desc: Build and serve documentation locally (alias for docs:serve)
-    deps:
-      - docs:serve
-
-  build:
-    desc: Build distribution packages
-    deps:
-      - clean
-    cmds:
-      - cmd: echo "🏗️  Building AppImage Updater distribution packages..."
-        silent: true
-      - uv build {{.CLI_ARGS}}
-      - cmd: echo "✅ Build complete! Packages created in dist/"
-        silent: true
-      - ls -la dist/
-
-  ci:
-    desc: Complete CI pipeline - run all checks, build, docs, and show version before pushing to GitHub
-    cmds:
-      - cmd: echo "🚀 Starting CI pipeline..."
-        silent: true
-      - task: check:parallel
-      - task: build
-      - task: docs:build
-      - task: version
-      - cmd: echo "✅ CI pipeline completed successfully! Ready to push to GitHub 🎉"
-        silent: true
+      - uv sync --extra dev
 
   clean:
     desc: Clean up generated files
@@ -192,71 +45,265 @@ tasks:
       - rm -rf build/
       - rm -rf site/
 
-  dev:
-    desc: Set up development environment
-    deps:
-      - install
+  # === Development and Running ===
+  run:
+    desc: Run the application
     cmds:
-      - cmd: echo "Development environment ready!"
-        silent: true
+      - uv run python -m appimage_updater {{.CLI_ARGS}}
 
-  install:dev:
-    desc: Install development environment
-    deps:
-      - install
+  # === Code Quality and Linting ===
+  format:
+    desc: Format code with ruff and markdown files with mdformat
     cmds:
-      - cmd: echo "Development environment ready!"
+      - uv run ruff format {{.CLI_ARGS | default .SRC}}
+      - cmd: |
+          if ! command -v mdformat &> /dev/null; then
+            uv tool install mdformat
+          fi
         silent: true
+      - mdformat {{.CLI_ARGS | default "*.md docs/ *.md"}}
+
+  lint:
+    desc: Run linting with ruff
+    cmds:
+      - uv run ruff check {{.CLI_ARGS | default .SRC}}
+
+  lint:fix:
+    desc: Automatically fix linting issues with ruff
+    cmds:
+      - uv run ruff check --fix {{.CLI_ARGS | default .SRC}}
+
+  typecheck:
+    desc: Run type checking with mypy
+    cmds:
+      - uv run mypy {{.CLI_ARGS | default .SRC}}
+
+  complexity:
+    desc: Analyze code complexity with radon
+    cmds:
+      - uv run radon cc {{.CLI_ARGS | default .SRC}} --min C
+
+  deadcode:
+    desc: Find dead (unreachable/unused) code with deadcode
+    cmds:
+      - >
+        uv run deadcode {{.CLI_ARGS | default .SRC}}
+        --ignore-if-decorated-with "@app.command" "@app.callback" "@field_validator" 
+        --ignore-names "main" "check" "init" "list_apps" "show" "edit" "DownloadError" "model_post_init"
+        "validate_pattern" "validate_download_dir" "validate_symlink_path" "generate_appimage_pattern"
+        "created_at" "tag_name" "checked_at" "expected" "actual" "duration_seconds"
+
+  # === Testing ===
+  test:
+    desc: Run tests with pytest (sequential) - excludes regression tests
+    cmds:
+      - uv run pytest tests/unit tests/functional tests/e2e {{.CLI_ARGS}}
+
+  test:parallel:
+    desc: Run tests with pytest using multiple CPU cores (faster) - excludes regression tests
+    cmds:
+      - uv run pytest tests/unit tests/functional tests/e2e -n auto {{.CLI_ARGS}}
+
+  test:unit:
+    desc: Run unit tests only
+    cmds:
+      - uv run pytest tests/unit/ {{.CLI_ARGS}}
+
+  test:functional:
+    desc: Run functional tests only
+    cmds:
+      - uv run pytest tests/functional/ {{.CLI_ARGS}}
+
+  test:e2e:
+    desc: Run end-to-end tests to validate core functionality
+    cmds:
+      - uv run pytest tests/e2e/ -v --tb=short --color=yes --no-cov -n auto
+
+  test:pattern-matching:
+    desc: Test pattern matching functionality specifically
+    cmds:
+      - uv run pytest tests/e2e/test_e2e.py::TestPatternMatching -v
+      - uv run pytest tests/e2e/test_e2e.py::test_version_extraction_patterns -v
+      - uv run pytest tests/unit/test_intelligent_pattern_generation.py -v
+
+  test:regression:
+    desc: Run regression tests to validate fixed issues
+    cmds:
+      - uv run pytest tests/regression/ -v --tb=short --color=yes
+      - task: output
+        vars:
+          MESSAGE: "✅ Regression tests passed - fixed issues remain resolved!"
+
+  test:all:
+    desc: Run all tests against all Python versions (excludes regression)
+    cmds:
+      - |
+        task: output
+        vars:
+          MESSAGE: "🐍 Running tests against all Python versions..."
+        for version in $(cat .python-versions | grep -v '^$'); do
+          task: output
+          vars:
+            MESSAGE: "📋 Testing with Python $version"
+          uv run --python $version pytest tests/unit tests/functional tests/e2e --tb=short --color=yes
+        done
+        task: output
+        vars:
+          MESSAGE: "\n✅ All Python versions tested successfully!"
+
+  test:coverage:
+    desc: Run all tests with coverage reporting (excludes regression tests)
+    cmds:
+      - uv run pytest tests/unit tests/functional tests/e2e --cov={{.SRC}}appimage_updater --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
+      - task: output
+        vars:
+          MESSAGE: "📊 Coverage report saved to htmlcov/index.html"
+
+  # === Quality Checks ===
+  check:
+    desc: Run all code quality checks including end-to-end tests
+    cmds:
+      - task: lint:fix
+      - task: format
+      - task: typecheck
+      - task: lint
+      - task: complexity
+      - task: test:parallel
+
+  # === Documentation ===
+  docs:build:
+    desc: Build documentation with MkDocs
+    cmds:
+      - task: output
+        vars:
+          MESSAGE: "📚 Building documentation..."
+      - uv run mkdocs build {{.CLI_ARGS}} 2>&1 | grep -v "MERMAID2.*Found superfences config" | grep -v "MERMAID2.*Initialization arguments" | grep -v "MERMAID2.*Using javascript library" || true
+      - task: output
+        vars:
+          MESSAGE: "✅ Documentation built successfully in site/"
+
+  docs:serve:
+    desc: Serve documentation locally for development
+    cmds:
+      - task: output
+        vars:
+          MESSAGE: "🌍 Starting documentation server..."
+      - uv run mkdocs serve {{.CLI_ARGS}}
+
+  docs:
+    desc: Build and serve documentation locally (alias for docs:serve)
+    deps:
+      - docs:build
+      - docs:serve
+
+  # === Build and Release ===
+  build:
+    desc: Build distribution packages
+    deps:
+      - clean
+    cmds:
+      - task: output
+        vars:
+          MESSAGE: "🏗️  Building AppImage Updater distribution packages..."
+      - uv build {{.CLI_ARGS}}
+      - task: output
+        vars:
+          MESSAGE: "✅ Build complete! Packages created in dist/"
+      - ls -la dist/
+
+  version:pyproject:
+    desc: Extract version from pyproject.toml (internal task)
+    cmds:
+      - python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data['project']['version'])"
+    silent: true
 
   version:
     desc: Display the current project version
     cmds:
-      - python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(f'v{data[\"project\"][\"version\"]}')"
+      - task: output
+        vars:
+          MESSAGE: "v$(task version:pyproject)"
 
   version:bump:
-    desc: Bump the patch version, build, commit, and deploy locally
+    desc: Bump the patch version, build, and commit changes
     cmds:
-      - cmd: echo "🔍 Checking for uncommitted changes..."
-        silent: true
+      - task: output
+        vars:
+          MESSAGE: "🔍 Checking for uncommitted changes..."
       - |
         if [ -n "$(git status --porcelain)" ]; then
-          echo "❌ Error: There are uncommitted changes. Please commit or stash them first."
+          task output MESSAGE="❌ Error: There are uncommitted changes. Please commit or stash them first."
           git status --short
           exit 1
         else
-          echo "✅ Working directory is clean"
+          task output MESSAGE="✅ Working directory is clean"
         fi
-      - cmd: echo "📈 Bumping version..."
-        silent: true
+      - task: output
+        vars:
+          MESSAGE: "📈 Bumping version..."
       - uv run version_bumper bump patch
-      - cmd: echo "✅ Version bumped! New version:"
-        silent: true
+      - task: output
+        vars:
+          MESSAGE: "✅ Version bumped! New version:"
       - task: version
-      - cmd: echo "🏗️  Building package..."
-        silent: true
+      - task: output
+        vars:
+          MESSAGE: "🏗️  Building package..."
       - task: build
-      - cmd: echo "📝 Committing version bump..."
-        silent: true
+      - task: output
+        vars:
+          MESSAGE: "📝 Committing version bump..."
       - |
-        NEW_VERSION=$(python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data['project']['version'])")
+        NEW_VERSION=$(task version:pyproject)
         git add pyproject.toml
         git commit -m "chore: bump version to v$NEW_VERSION"
-        echo "✅ Committed version bump to v$NEW_VERSION"
-      - cmd: echo "🚀 Installing locally with pipx..."
-        silent: true
+        task output MESSAGE="✅ Committed version bump to v$NEW_VERSION"
+
+  deploy:
+    desc: Deploy the built package locally with pipx
+    deps:
+      - build
+    cmds:
+      - task: output
+        vars:
+          MESSAGE: "🚀 Installing locally with pipx..."
       - pipx install --force dist/*.whl
-      - cmd: echo "✅ Successfully deployed appimage-updater v$(task version) locally!"
-        silent: true
-      - cmd: echo "🎉 Workflow complete! You can now use the updated version."
-        silent: true
+      - task: output
+        vars:
+          MESSAGE: "✅ Successfully deployed appimage-updater v$(task version) locally!"
 
   version:tag:
     desc: Create and push a git tag for the current version
     deps:
       - version
     cmds:
-      - python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); version = data['project']['version']; print(f'Creating tag v{version}...'); import subprocess; subprocess.run(['git', 'tag', f'v{version}'], check=True); subprocess.run(['git', 'push', 'origin', f'v{version}'], check=True); print(f'✅ Tag v{version} created and pushed to origin!')"
+      - cmd:  VERSION=$(task version:pyproject)
+        silent: true
+      - task: output
+        vars:
+          MESSAGE: "Creating tag v$VERSION..."
+      - cmd:  git tag "v$VERSION"
+      - cmd:  git push origin "v$VERSION"
+      - task: output
+        vars:
+          MESSAGE: "✅ Tag v$VERSION created and pushed to origin!"
 
+  # === CI/CD Pipeline ===
+  ci:
+    desc: Complete CI pipeline - run all checks, build, docs, and show version before pushing to GitHub
+    cmds:
+      - task: output
+        vars:
+          MESSAGE: "🚀 Starting CI pipeline..."
+      - task: check
+      - task: build
+      - task: docs:build
+      - task: version
+      - task: output
+        vars:
+          MESSAGE: "✅ CI pipeline completed successfully! Ready to push to GitHub 🎉"
+
+  # === Default ===
   default:
     desc: Show available tasks
     cmds:
