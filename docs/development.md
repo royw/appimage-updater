@@ -1,6 +1,6 @@
-*[Home](index.md) > Development*
-
 # Development
+
+*[Home](index.md) > Development*
 
 This project follows modern Python practices:
 
@@ -32,15 +32,35 @@ uv tool install mdformat
 
 ### Development Commands
 
-Use [Task](https://taskfile.dev) for development commands:
+Use [Task](https://taskfile.dev) for development commands. Tasks are organized into logical categories:
+
+#### Setup and Environment
 
 ```bash
+# Check development environment prerequisites
+task env:check
+
 # Install dependencies (first time)
 task install
 
 # Sync dependencies (updates)
 task sync
+```
 
+#### Development Tasks
+
+```bash
+# Run the application
+task run
+task run -- --help                               # Show application help
+task run -- check --dry-run                      # Check for updates (dry run)
+task run -- --debug check --dry-run              # Check with debug logging
+task run -- init --config-dir /custom/path       # Initialize with custom config
+```
+
+#### Code Quality
+
+```bash
 # Type checking
 task typecheck
 task typecheck -- src/appimage_updater/main.py  # Check specific file
@@ -50,22 +70,12 @@ task typecheck -- --strict src/                  # Pass mypy options
 task lint
 task lint -- src/appimage_updater/               # Lint specific directory
 
-task fix                                          # Auto-fix linting issues
-task fix -- tests/                               # Fix specific directory
+task lint:fix                                     # Auto-fix linting issues
+task lint:fix -- tests/                          # Fix specific directory
 
-task format                                       # Format Python code and markdown files
+task format
 task format -- src/appimage_updater/main.py      # Format specific file
 task format -- --check src/                      # Check formatting only
-
-# Testing
-task test
-task test -- tests/test_specific.py              # Run specific test file
-task test -- tests/test_specific.py::test_name    # Run specific test
-task test -- -v --cov-report=html                # Pass pytest options
-
-# End-to-end testing
-task test:e2e                                    # E2E tests (no coverage)
-task test:e2e-coverage                           # E2E tests with coverage
 
 # Complexity analysis
 task complexity
@@ -78,16 +88,59 @@ task deadcode -- --count src/                    # Count unused code items
 task deadcode -- --only src/appimage_updater/    # Check specific directory
 
 # Note: deadcode task filters out framework-used code (CLI commands, validators, etc.)
+```
 
-# Run all checks (includes auto-fix, formatting, type checking, linting, complexity, testing)
+#### Testing
+
+```bash
+# Unit and functional tests
+task test
+task test -- tests/unit/test_specific.py         # Run specific test file
+task test -- tests/unit/test_specific.py::test_name # Run specific test
+task test -- -v --cov-report=html                # Pass pytest options
+
+# Test all Python versions (from .python-versions file)
+task test:all
+
+# End-to-end testing
+task test:e2e                                    # E2E tests (no coverage)
+task test:e2e:coverage                           # E2E tests with coverage
+
+# Regression testing
+task test:regression                             # Regression tests only
+```
+
+#### Documentation
+
+```bash
+# Build and serve documentation
+task docs
+task docs:build                                  # Build docs only
+task docs:serve                                  # Serve docs locally
+```
+
+#### Build and Release
+
+```bash
+# Build the package
+task build
+
+# Deploy locally using pipx (includes build)
+task deploy
+
+# Version management
+task version:show                                # Show current version
+task version:bump                                # Bump version and deploy
+```
+
+#### CI/CD
+
+```bash
+# Run complete CI pipeline
+task ci
+
+# Run all quality checks (includes auto-fix, formatting, type checking, linting, complexity, testing)
 task check
-
-# Run the application
-task run
-task run -- --help                               # Show application help
-task run -- check --dry-run                      # Check for updates (dry run)
-task run -- --debug check --dry-run              # Check with debug logging
-task run -- init --config-dir /custom/path       # Initialize with custom config
 ```
 
 ## Development Guidelines
@@ -125,59 +178,104 @@ def my_command(
 
 ### Development Workflow
 
-Suggested commit workflow for development that provides a complete quality gate: CI testing → version bump → local installation verification → push to remote.
+Suggested commit workflow for development that provides a complete quality gate: environment check → CI testing → version bump → local installation verification → push to remote.
 
 ```bash
-# 1. Make your changes
+# 1. Check development environment
+task env:check
+
+# 2. Make your changes
 # ... edit code, add features, fix bugs ...
 
-# 2. Update documentation
+# 3. Update documentation
 # ... update relevant docs for your changes ...
 
-# 3. Run complete CI pipeline
+# 4. Run complete CI pipeline
 task ci
 
-# 4. Commit your changes
+# 5. Commit your changes
 git add .
 git commit -m "feat: your descriptive commit message"
 
-# 5. Verify no pending changes
+# 6. Verify no pending changes
 git status
 
-# 6. Bump version and deploy locally using pipx
+# 7. Bump version and deploy locally using pipx
 task version:bump
 
-# 7. Verify the application
+# 8. Verify the application
 appimage-updater --help
 
-# 8. Push to remote
+# 9. Push to remote
 git push
 ```
 
 For detailed development guidelines including error handling, adding features, performance optimization, and debugging, see the [Architecture Guide](architecture.md).
+
+## Task Organization
+
+Tasks are organized into logical categories for better maintainability:
+
+- **Setup**: `env:check`, `install`, `sync`
+- **Development**: `run`
+- **Code Quality**: `typecheck`, `lint`, `lint:fix`, `format`, `complexity`, `deadcode`
+- **Testing**: `test`, `test:all`, `test:e2e`, `test:e2e:coverage`, `test:regression`
+- **Documentation**: `docs`, `docs:build`, `docs:serve`
+- **Build/Release**: `build`, `deploy`, `version:show`, `version:bump`
+- **CI/CD**: `ci`, `check`
+
+### Internal Tasks
+
+The following internal tasks provide centralized functionality:
+
+- `version:pyproject`: Extracts version from pyproject.toml
+- `output`: Provides consistent output messaging across tasks
 
 ## Quick Reference
 
 ### Essential Commands
 
 ```bash
+task env:check      # Check development environment
 task check          # Run all quality checks
-task test           # Run tests
-task typecheck      # Type checking
-task lint           # Code linting
-task format         # Code formatting
+task test           # Run unit and functional tests
+task test:all       # Test all Python versions
+task ci             # Complete CI pipeline
+task version:bump   # Bump version and deploy
 ```
 
-### Debugging
+### Quick Code Quality Commands
+
+```bash
+task typecheck      # Type checking
+task lint           # Code linting
+task lint:fix       # Auto-fix linting issues
+task format         # Code formatting
+task complexity     # Complexity analysis
+task deadcode       # Dead code detection
+```
+
+### Quick Testing Commands
+
+```bash
+task test                    # Unit and functional tests
+task test:all               # Multi-version testing
+task test:e2e               # End-to-end tests
+task test:regression        # Regression tests
+```
+
+### Quick Debugging Commands
 
 ```bash
 appimage-updater --debug command    # Enable debug logging
 task test -- -v                    # Verbose test output
+task version:show                  # Show current version
 ```
 
-### Documentation
+### Quick Documentation Commands
 
 ```bash
 task docs           # Build and serve docs locally
 task docs:build     # Build docs only
+task docs:serve     # Serve docs locally
 ```
