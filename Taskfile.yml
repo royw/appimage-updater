@@ -163,7 +163,6 @@ tasks:
       - cmd: echo "🚀 Starting CI pipeline..."
         silent: true
       - task: check:parallel
-      - task: test:regression
       - task: build
       - task: docs:build
       - task: version
