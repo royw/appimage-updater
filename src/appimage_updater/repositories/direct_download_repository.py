@@ -52,9 +52,13 @@ class DirectDownloadRepository(RepositoryClient):
     async def get_releases(self, url: str, limit: int = 10) -> list[Release]:
         """Get releases for direct download URL."""
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            # Configure client to handle redirects properly
+            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True, max_redirects=10) as client:
                 # Check if this is a releases page that needs parsing
-                if any(pattern in url.lower() for pattern in ["releases.html", "releases/", "openrgb.org/releases"]):
+                # Exclude direct AppImage URLs from releases page handling
+                if any(
+                    pattern in url.lower() for pattern in ["releases.html", "releases/", "openrgb.org/releases"]
+                ) and not url.endswith(".AppImage"):
                     return await self._handle_releases_page(client, url)
                 else:
                     # Handle direct download URLs
@@ -66,16 +70,22 @@ class DirectDownloadRepository(RepositoryClient):
 
     async def _handle_direct_download(self, client: httpx.AsyncClient, url: str) -> list[Release]:
         """Handle direct download URLs."""
-        # Follow redirects to get actual download URL
-        response = await client.head(url, follow_redirects=True)
-        response.raise_for_status()
+        # For URLs ending with -latest or similar, use GET to handle redirects properly
+        if "-latest" in url or "latest" in url:
+            # Use GET request to follow redirects and get final URL
+            response = await client.get(url)
+            response.raise_for_status()
+            final_url = str(response.url)
+            file_size = len(response.content)
+        else:
+            # Use HEAD request for direct URLs
+            response = await client.head(url)
+            response.raise_for_status()
+            final_url = str(response.url)
+            file_size = int(response.headers.get("content-length", 0))
 
         # Extract version from final URL or headers
-        final_url = str(response.url)
         version = self._extract_version_from_url(final_url)
-
-        # Get file size from headers
-        file_size = int(response.headers.get("content-length", 0))
 
         # Create asset from the download URL
         asset = Asset(
