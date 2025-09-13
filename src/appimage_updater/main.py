@@ -13,10 +13,8 @@ from loguru import logger
 from rich.console import Console
 
 from ._version import __version__
-from .config_loader import (
-    ConfigLoadError,
-    get_default_config_dir,
-)
+from .config import ApplicationConfig, Config
+from .config_loader import ConfigLoadError, get_default_config_dir
 from .config_operations import (
     add_application_to_config,
     apply_configuration_updates,
@@ -772,6 +770,8 @@ async def _check_updates(
         candidates = _get_update_candidates(check_results)
 
         if not candidates:
+            # Even if no updates are available, check for existing files that need rotation setup
+            await _setup_existing_files_rotation(config, enabled_apps)
             console.print("[green]All applications are up to date!")
             logger.debug("No updates available, exiting")
             return
@@ -792,6 +792,102 @@ async def _check_updates(
         logger.error(f"Unexpected error: {e}")
         logger.exception("Full exception details")
         raise typer.Exit(1) from e
+
+
+def _is_symlink_valid(symlink_path: Path, download_dir: Path) -> bool:
+    """Check if symlink exists and points to a valid target in download directory."""
+    if not (symlink_path.exists() and symlink_path.is_symlink()):
+        return False
+
+    try:
+        target = symlink_path.resolve()
+        return target.exists() and target.parent == download_dir
+    except Exception as e:
+        logger.debug(f"Symlink validation failed for {symlink_path}: {e}")
+        return False
+
+
+def _find_unrotated_appimages(download_dir: Path) -> list[Path]:
+    """Find AppImage files that are not in rotation format."""
+    appimage_files = []
+    rotation_suffixes = [".current", ".old", ".old2", ".old3"]
+
+    for file_path in download_dir.iterdir():
+        if (
+            file_path.is_file()
+            and file_path.suffix.lower() == ".appimage"
+            and not any(file_path.name.endswith(suffix) for suffix in rotation_suffixes)
+        ):
+            appimage_files.append(file_path)
+
+    return appimage_files
+
+
+async def _setup_rotation_for_file(app_config: ApplicationConfig, latest_file: Path, config: Config) -> None:
+    """Set up rotation for a single file."""
+    from datetime import datetime
+
+    from .downloader import Downloader
+    from .models import Asset, UpdateCandidate
+
+    downloader = Downloader(
+        timeout=config.global_config.timeout_seconds * 10,
+        user_agent=config.global_config.user_agent,
+        max_concurrent=config.global_config.concurrent_downloads,
+    )
+
+    # Create a mock asset for the existing file
+    mock_asset = Asset(
+        name=latest_file.name,
+        url="file://" + str(latest_file),
+        size=latest_file.stat().st_size,
+        created_at=datetime.fromtimestamp(latest_file.stat().st_mtime),
+    )
+
+    # Create a temporary candidate that represents the existing file
+    candidate = UpdateCandidate(
+        app_name=app_config.name,
+        current_version="existing",
+        latest_version="existing",
+        asset=mock_asset,
+        download_path=latest_file,
+        is_newer=False,
+        app_config=app_config,
+    )
+
+    # Use the existing rotation logic
+    await downloader._handle_rotation(candidate)
+    logger.info(f"Set up rotation and symlink for existing file: {app_config.name}")
+
+
+async def _setup_existing_files_rotation(config: Config, enabled_apps: list[ApplicationConfig]) -> None:
+    """Set up rotation and symlinks for existing files that need it."""
+    for app_config in enabled_apps:
+        # Skip if rotation is not enabled or no symlink path configured
+        if not app_config.rotation_enabled or not app_config.symlink_path:
+            continue
+
+        download_dir = Path(app_config.download_dir)
+        if not download_dir.exists():
+            continue
+
+        # Check if symlink already exists and is valid
+        if _is_symlink_valid(app_config.symlink_path, download_dir):
+            continue  # Symlink is already properly set up
+
+        # Find unrotated AppImage files
+        appimage_files = _find_unrotated_appimages(download_dir)
+        if not appimage_files:
+            continue
+
+        # Get the most recent AppImage file
+        latest_file = max(appimage_files, key=lambda f: f.stat().st_mtime)
+
+        # Set up rotation for this file
+        try:
+            await _setup_rotation_for_file(app_config, latest_file, config)
+        except Exception as e:
+            logger.warning(f"Failed to set up rotation for {app_config.name}: {e}")
 
 
 async def _load_and_filter_config(
