@@ -50,10 +50,6 @@ tasks:
     cmds:
       - uv run pytest -n auto {{.CLI_ARGS}}
 
-  test:parallel-fast:
-    desc: Run tests using 8 cores (good balance of speed and reliability)
-    cmds:
-      - uv run pytest -n 8 {{.CLI_ARGS}}
 
   test:e2e:
     desc: Run end-to-end tests to validate core functionality
@@ -67,12 +63,6 @@ tasks:
       - cmd: echo "📊 Coverage report saved to htmlcov/index.html"
         silent: true
 
-  test:smoke:
-    desc: Run quick smoke test to validate basic functionality
-    cmds:
-      - uv run pytest tests/test_e2e.py::test_integration_smoke_test -v
-      - cmd: echo "✅ Basic functionality verified!"
-        silent: true
 
   test:pattern-matching:
     desc: Test pattern matching functionality specifically
@@ -173,6 +163,7 @@ tasks:
       - cmd: echo "🚀 Starting CI pipeline..."
         silent: true
       - task: check:parallel
+      - task: test:regression
       - task: build
       - task: docs:build
       - task: version

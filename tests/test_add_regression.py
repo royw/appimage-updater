@@ -115,6 +115,56 @@ class TestAddRegression:
         assert success_rate >= 0.7, f"Regression test failed: only {success_rate:.1%} success rate"
         assert total_applications > 0, "No applications found to test"
 
+    def test_comprehensive_command_regression(self):
+        """Test all commands (add, list, show, check, remove) on existing configurations."""
+        runner = CliRunner()
+        config_files = self.discover_existing_configs()
+
+        print(f"\n🔧 Comprehensive command testing on {len(config_files)} config files")
+
+        total_applications = 0
+        successful_tests = 0
+        failed_tests = []
+
+        for config_file in config_files:
+            print(f"\n🔍 Testing commands for config file: {config_file.name}")
+            applications = self.load_applications_from_config(config_file)
+
+            for app_config in applications:
+                total_applications += 1
+                app_name = app_config.get("name", "Unknown")
+
+                try:
+                    success = self._test_comprehensive_commands(runner, app_config, app_name)
+                    if success:
+                        successful_tests += 1
+                        print(f"  ✅ {app_name}: All commands successful")
+                    else:
+                        failed_tests.append(f"{config_file.name}:{app_name}")
+                        print(f"  ❌ {app_name}: Command tests failed")
+
+                except Exception as e:
+                    failed_tests.append(f"{config_file.name}:{app_name}")
+                    print(f"  💥 {app_name}: Exception during command tests: {e}")
+
+        # Print summary
+        print("\n📊 Comprehensive Command Test Summary:")
+        print(f"  • Total applications tested: {total_applications}")
+        print(f"  • Successful command tests: {successful_tests}")
+        print(f"  • Failed command tests: {len(failed_tests)}")
+
+        if failed_tests:
+            print("  • Failed applications:")
+            for failure in failed_tests:
+                print(f"    - {failure}")
+
+        success_rate = successful_tests / total_applications if total_applications > 0 else 0
+        print(f"  • Success rate: {success_rate:.1%}")
+
+        # Require at least 60% success rate for comprehensive tests (lower than add-only due to network dependencies)
+        assert success_rate >= 0.6, f"Comprehensive command test failed: only {success_rate:.1%} success rate"
+        assert total_applications > 0, "No applications found to test"
+
     def _test_single_application_recreation(self, runner: CliRunner, original_config: dict[str, Any], app_name: str) -> bool:
         """Test recreating a single application configuration."""
         # Extract required fields from original config
@@ -351,3 +401,149 @@ class TestAddRegression:
 
         assert success, f"Detailed recreation test failed for {app_name}"
         print(f"✅ Detailed test passed for {app_name}")
+
+    def _test_comprehensive_commands(self, runner: CliRunner, original_config: dict[str, Any], app_name: str) -> bool:
+        """Test all commands (add, list, show, check, remove) on a single application."""
+        source_url = original_config.get("url")
+        download_dir = original_config.get("download_dir")
+
+        if not source_url or not download_dir:
+            print("    ⚠️  Missing required fields (url or download_dir)")
+            return False
+
+        # Create temporary directory for testing
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_config_dir = Path(temp_dir) / "config"
+            temp_config_dir.mkdir()
+
+            # Step 1: Add the application
+            print(f"    🔧 Testing add command for {app_name}")
+            if not self._test_add_command(runner, original_config, app_name, temp_config_dir):
+                return False
+
+            # Step 2: Test list command
+            print(f"    📋 Testing list command")
+            if not self._test_list_command(runner, app_name, temp_config_dir):
+                return False
+
+            # Step 3: Test show command
+            print(f"    👁️  Testing show command")
+            if not self._test_show_command(runner, app_name, temp_config_dir):
+                return False
+
+            # Step 4: Test check --dry-run command
+            print(f"    🔍 Testing check --dry-run command")
+            if not self._test_check_command(runner, app_name, temp_config_dir):
+                return False
+
+            # Step 5: Test remove command
+            print(f"    🗑️  Testing remove command")
+            if not self._test_remove_command(runner, app_name, temp_config_dir):
+                return False
+
+            return True
+
+    def _test_add_command(self, runner: CliRunner, original_config: dict[str, Any], app_name: str, temp_config_dir: Path) -> bool:
+        """Test the add command."""
+        source_url = original_config.get("url")
+        download_dir = original_config.get("download_dir")
+
+        # Build add command arguments
+        cmd_args = ["add", app_name, source_url, download_dir, "--config-dir", str(temp_config_dir)]
+
+        # Add optional parameters (simplified version)
+        if original_config.get("prerelease", False):
+            cmd_args.append("--prerelease")
+        if original_config.get("rotation_enabled", False):
+            cmd_args.append("--rotation")
+        if "symlink_path" in original_config:
+            cmd_args.extend(["--symlink", original_config["symlink_path"]])
+
+        # Execute add command
+        result = runner.invoke(app, cmd_args)
+        if result.exit_code != 0:
+            print(f"      ❌ Add command failed: {result.stdout}")
+            return False
+
+        # Verify config file was created
+        config_files = list(temp_config_dir.glob("*.json"))
+        if not config_files:
+            print("      ❌ No config file created")
+            return False
+
+        return True
+
+    def _test_list_command(self, runner: CliRunner, app_name: str, temp_config_dir: Path) -> bool:
+        """Test the list command."""
+        result = runner.invoke(app, ["list", "--config-dir", str(temp_config_dir)])
+        
+        if result.exit_code != 0:
+            print(f"      ❌ List command failed: {result.stdout}")
+            return False
+
+        # Check that the application appears in the list
+        if app_name not in result.stdout:
+            print(f"      ❌ Application {app_name} not found in list output")
+            return False
+
+        return True
+
+    def _test_show_command(self, runner: CliRunner, app_name: str, temp_config_dir: Path) -> bool:
+        """Test the show command."""
+        result = runner.invoke(app, ["show", app_name, "--config-dir", str(temp_config_dir)])
+        
+        if result.exit_code != 0:
+            print(f"      ❌ Show command failed: {result.stdout}")
+            return False
+
+        # Check that the output contains application details
+        if app_name not in result.stdout:
+            print(f"      ❌ Application {app_name} not found in show output")
+            return False
+
+        # Check for key configuration elements
+        expected_elements = ["Configuration", "Source", "Download Directory"]
+        for element in expected_elements:
+            if element not in result.stdout:
+                print(f"      ❌ Missing '{element}' in show output")
+                return False
+
+        return True
+
+    def _test_check_command(self, runner: CliRunner, app_name: str, temp_config_dir: Path) -> bool:
+        """Test the check --dry-run command."""
+        result = runner.invoke(app, ["check", app_name, "--dry-run", "--config-dir", str(temp_config_dir)])
+        
+        if result.exit_code != 0:
+            print(f"      ❌ Check command failed: {result.stdout}")
+            return False
+
+        # Check that the output contains update check results
+        if "Update Check Results" not in result.stdout:
+            print("      ❌ Missing 'Update Check Results' in check output")
+            return False
+
+        # Check that the application appears in results
+        if app_name not in result.stdout:
+            print(f"      ❌ Application {app_name} not found in check output")
+            return False
+
+        return True
+
+    def _test_remove_command(self, runner: CliRunner, app_name: str, temp_config_dir: Path) -> bool:
+        """Test the remove command."""
+        # Use non-interactive removal
+        result = runner.invoke(app, ["remove", app_name, "--config-dir", str(temp_config_dir)], input="y\n")
+        
+        if result.exit_code != 0:
+            print(f"      ❌ Remove command failed: {result.stdout}")
+            return False
+
+        # Verify the application was removed by trying to list it
+        list_result = runner.invoke(app, ["list", "--config-dir", str(temp_config_dir)])
+        
+        if list_result.exit_code == 0 and app_name in list_result.stdout:
+            print(f"      ❌ Application {app_name} still appears after removal")
+            return False
+
+        return True
