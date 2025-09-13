@@ -7,6 +7,7 @@ All notable changes to AppImage Updater will be documented in this file.
 ### New Features
 
 - **MAJOR**: Automatic ZIP File Extraction Support
+
   - **PROBLEM SOLVED**: Applications like BambuStudio that distribute AppImages inside ZIP files now work seamlessly
   - **ZERO-CONFIG**: ZIP files are automatically detected and extracted with no configuration needed
   - **INTELLIGENT**: Scans ZIP contents for `.AppImage` files and extracts them to download directory
@@ -34,6 +35,30 @@ All notable changes to AppImage Updater will be documented in this file.
     - Non-ZIP files (skipped)
     - Subdirectories in ZIP
     - Directory entries ignored
+
+- **MAJOR**: Direct Download URL Support with `--direct` Option
+
+  - **PROBLEM SOLVED**: Ambiguity in URL-based repository detection for direct download URLs (nightly builds, CI artifacts)
+  - **EXPLICIT CONTROL**: New `--direct` flag allows users to explicitly mark URLs as direct downloads
+  - **BYPASSES DETECTION**: When `--direct` is used, skips URL pattern-based repository type detection
+  - **REPOSITORY FACTORY**: Enhanced `get_repository_client()` to accept explicit `source_type` parameter
+  - **VERSION CHECKER**: Updated to use `source_type` from configuration instead of URL detection
+  - **CLI INTEGRATION**: Available in both `add` and `edit` commands with consistent behavior
+  - **CONFIGURATION**: Sets `source_type: "direct"` in application configuration when flag is used
+  - **BACKWARD COMPATIBLE**: Existing configurations continue working with URL detection fallback
+  - **EXAMPLES**:
+    - `appimage-updater add --direct NightlyBuild https://nightly.example.com/app.AppImage ~/Apps/NightlyBuild`
+    - `appimage-updater edit MyApp --direct --url https://ci.example.com/artifacts/latest.AppImage`
+  - **USE CASES**:
+    - Nightly builds from CI systems
+    - Direct download URLs that don't follow GitHub repository patterns
+    - Custom download endpoints
+    - Any URL where repository detection might be ambiguous
+  - **TECHNICAL DETAILS**:
+    - Maps `"direct"` source type to `DirectDownloadRepository` client
+    - Supports `"github"`, `"direct_download"`, `"dynamic_download"`, and `"direct"` source types
+    - Maintains existing URL detection as fallback when no explicit source type provided
+  - **DOCUMENTATION**: Comprehensive updates to usage.md, getting-started.md, and WARP.md with examples and explanations
 
 ### Bug Fixes
 

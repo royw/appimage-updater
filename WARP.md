@@ -266,6 +266,10 @@ uv run python -m appimage_updater edit MyApp --rotation --symlink-path ~/bin/mya
 uv run python -m appimage_updater edit OldApp --url https://github.com/newowner/newrepo
 uv run python -m appimage_updater edit MyApp --url https://direct-download-url.com/file.AppImage --force
 
+# Direct download URLs (bypass repository detection)
+uv run python -m appimage_updater add --direct NightlyBuild https://nightly.example.com/app.AppImage ~/Apps/NightlyBuild
+uv run python -m appimage_updater edit MyApp --direct --url https://ci.example.com/artifacts/latest.AppImage
+
 # Show version information
 uv run python -m appimage_updater --version
 uv run python -m appimage_updater -V
@@ -292,6 +296,10 @@ appimage-updater add <app-name> <github-url> <download-directory>
 # Simple applications
 appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
 appimage-updater add VSCode https://github.com/microsoft/vscode ~/Apps/VSCode
+
+# Direct download URLs (bypass repository detection)
+appimage-updater add --direct NightlyBuild https://nightly.example.com/app.AppImage ~/Apps/NightlyBuild
+appimage-updater add --direct --prerelease CIBuild https://ci.example.com/artifacts/latest.AppImage ~/Apps/CIBuild
 
 # Prerelease with file rotation
 appimage-updater add --prerelease --rotation --symlink ~/bin/freecad-weekly.AppImage FreeCAD_weekly https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
@@ -323,6 +331,12 @@ The `add` command now supports ALL configuration options available in the `edit`
 - `--checksum-algorithm ALG`: Algorithm - sha256, sha1, md5 (default: sha256)
 - `--checksum-pattern PATTERN`: Checksum file pattern (default: {filename}-SHA256.txt)
 - `--checksum-required/--checksum-optional`: Make verification required/optional (default: optional)
+
+**Direct Download URLs:**
+
+- `--direct/--no-direct`: Explicitly mark URL as direct download (bypasses repository detection)
+- Use for nightly builds, CI artifacts, or any non-GitHub repository URLs
+- Prevents ambiguity in URL interpretation and ensures correct repository client selection
 
 ### Intelligent Defaults & Auto-Detection
 
@@ -439,6 +453,7 @@ The `add` and `edit` commands now have **perfect feature parity**. Every option 
 | **Basic Config** | `--prerelease/--no-prerelease` | Same in both commands |
 | **File Rotation** | `--rotation/--no-rotation`<br>`--retain N`<br>`--symlink PATH` | Same in both commands |
 | **Checksum** | `--checksum/--no-checksum`<br>`--checksum-algorithm ALG`<br>`--checksum-pattern PATTERN`<br>`--checksum-required/--checksum-optional` | Same in both commands |
+| **Direct Downloads** | `--direct/--no-direct` | Same in both commands |
 | **Directories** | `--download-dir PATH` | `edit` only (can't change in add) |
 | **URLs** | `--url URL` | `edit` only (can't change in add) |
 

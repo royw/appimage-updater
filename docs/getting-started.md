@@ -43,6 +43,9 @@ appimage-updater add OrcaSlicer https://github.com/SoftFever/OrcaSlicer ~/Applic
 
 # Add BambuStudio (automatically handles ZIP files)
 appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Applications/BambuStudio
+
+# Add direct download URL (nightly builds, CI artifacts)
+appimage-updater add --direct OrcaSlicer-Nightly https://github.com/SoftFever/OrcaSlicer/releases/download/nightly-builds/OrcaSlicer_Linux_V2.2.0_dev.AppImage ~/Applications/OrcaSlicer
 ```
 
 ### What the `add` Command Does
@@ -191,6 +194,9 @@ appimage-updater edit FreeCAD --download-dir ~/NewLocation/FreeCAD
 
 # Update URL without validation (for direct downloads)
 appimage-updater edit MyApp --url https://direct-download-url.com/file.AppImage --force
+
+# Convert existing app to use direct download
+appimage-updater edit OrcaSlicer --direct --url https://github.com/SoftFever/OrcaSlicer/releases/download/nightly-builds/OrcaSlicer_Linux_V2.2.0_dev.AppImage
 ```
 
 ## Rotation for Stable Application Access
@@ -246,6 +252,7 @@ For complete command documentation including all options and examples, see the [
 | `--dry-run` | Check without downloading |
 | `--yes` | Auto-confirm prompts |
 | `--debug` | Enable debug logging |
+| `--direct` | Treat URL as direct download link |
 
 ### File Locations
 

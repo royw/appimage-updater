@@ -142,6 +142,7 @@ async def generate_default_config(
     checksum_pattern: str = "{filename}-SHA256.txt",
     checksum_required: bool | None = None,
     pattern: str | None = None,
+    direct: bool | None = None,
 ) -> tuple[dict[str, Any], bool]:
     """Generate a default application configuration.
 
@@ -164,7 +165,7 @@ async def generate_default_config(
 
     config = {
         "name": name,
-        "source_type": detect_source_type(url),
+        "source_type": "direct" if direct is True else detect_source_type(url),
         "url": url,
         "download_dir": download_dir,
         "pattern": pattern if pattern is not None else await generate_appimage_pattern_async(name, url),
@@ -386,6 +387,8 @@ def collect_basic_edit_updates(
     enable: bool | None,
     prerelease: bool | None,
     force: bool = False,
+    direct: bool | None = None,
+    app: Any = None,
 ) -> dict[str, Any]:
     """Collect basic configuration updates."""
     updates: dict[str, Any] = {}
@@ -401,6 +404,11 @@ def collect_basic_edit_updates(
         updates["enabled"] = enable
     if prerelease is not None:
         updates["prerelease"] = prerelease
+    if direct is not None:
+        # Update source_type based on direct flag, but only if it's actually changing
+        new_source_type = "direct" if direct else "github"
+        if app is None or getattr(app, "source_type", None) != new_source_type:
+            updates["source_type"] = new_source_type
 
     return updates
 
@@ -458,12 +466,14 @@ def collect_edit_updates(
     checksum_pattern: str | None,
     checksum_required: bool | None,
     force: bool = False,
+    direct: bool | None = None,
+    app: Any = None,
 ) -> dict[str, Any]:
     """Collect all edit updates from all categories."""
     updates = {}
 
     # Collect basic updates
-    updates.update(collect_basic_edit_updates(url, download_dir, pattern, enable, prerelease, force))
+    updates.update(collect_basic_edit_updates(url, download_dir, pattern, enable, prerelease, force, direct, app))
 
     # Collect rotation updates
     updates.update(collect_rotation_edit_updates(rotation, symlink_path, retain_count))
@@ -684,6 +694,13 @@ def apply_basic_config_updates(app: Any, updates: dict[str, Any]) -> list[str]:
         app.prerelease = updates["prerelease"]
         new_value = "Yes" if updates["prerelease"] else "No"
         changes.append(f"Prerelease: {old_value} → {new_value}")
+
+    if "source_type" in updates:
+        old_value = app.source_type
+        new_value = updates["source_type"]
+        if old_value != new_value:
+            app.source_type = new_value
+            changes.append(f"Source Type: {old_value} → {new_value}")
 
     return changes
 

@@ -594,3 +594,120 @@ def test_edit_force_without_url_change_has_no_effect(runner, single_config_file)
     app_config = config_data["applications"][0]
     assert app_config["prerelease"] is True
     assert app_config["url"] == "https://github.com/test/testapp"  # Original URL preserved
+
+
+def test_edit_direct_flag_sets_source_type(runner, single_config_file):
+    """Test that --direct flag sets source_type to 'direct'."""
+    result = runner.invoke(
+        app,
+        ["edit", "TestApp", "--direct", "--config", str(single_config_file)]
+    )
+
+    assert result.exit_code == 0
+    assert "Source Type: github → direct" in result.stdout
+
+    # Verify source_type was changed to 'direct'
+    with single_config_file.open() as f:
+        config_data = json.load(f)
+
+    app_config = config_data["applications"][0]
+    assert app_config["source_type"] == "direct"
+
+
+def test_edit_no_direct_flag_sets_source_type_github(runner, single_config_file):
+    """Test that --no-direct flag sets source_type to 'github'."""
+    # First set it to direct
+    with single_config_file.open() as f:
+        config_data = json.load(f)
+    config_data["applications"][0]["source_type"] = "direct"
+    with single_config_file.open("w") as f:
+        json.dump(config_data, f, indent=2)
+
+    result = runner.invoke(
+        app,
+        ["edit", "TestApp", "--no-direct", "--config", str(single_config_file)]
+    )
+
+    assert result.exit_code == 0
+    assert "Source Type: direct → github" in result.stdout
+
+    # Verify source_type was changed back to 'github'
+    with single_config_file.open() as f:
+        config_data = json.load(f)
+
+    app_config = config_data["applications"][0]
+    assert app_config["source_type"] == "github"
+
+
+def test_edit_direct_flag_with_url_change(runner, single_config_file):
+    """Test --direct flag with URL change to direct download URL."""
+    direct_url = "https://nightly.example.com/app.AppImage"
+    
+    result = runner.invoke(
+        app,
+        [
+            "edit", "TestApp", 
+            "--direct", 
+            "--url", direct_url,
+            "--config", str(single_config_file)
+        ]
+    )
+
+    assert result.exit_code == 0
+    assert "Source Type: github → direct" in result.stdout
+    # URL might be split across lines in output, so check for both parts
+    assert "https://github.com/test/testapp" in result.stdout
+    assert direct_url in result.stdout
+
+    # Verify both source_type and URL were changed
+    with single_config_file.open() as f:
+        config_data = json.load(f)
+
+    app_config = config_data["applications"][0]
+    assert app_config["source_type"] == "direct"
+    assert app_config["url"] == direct_url
+
+
+def test_edit_direct_flag_with_directory_config(runner, config_directory):
+    """Test --direct flag works with directory-based configuration."""
+    result = runner.invoke(
+        app,
+        ["edit", "DirectoryApp", "--direct", "--config-dir", str(config_directory)]
+    )
+
+    assert result.exit_code == 0
+    assert "Source Type: github → direct" in result.stdout
+
+    # Verify source_type was changed in directory config
+    config_file = config_directory / "directoryapp.json"
+    with config_file.open() as f:
+        config_data = json.load(f)
+
+    app_config = config_data["applications"][0]
+    assert app_config["source_type"] == "direct"
+
+
+def test_edit_direct_flag_no_change_when_already_direct(runner, single_config_file):
+    """Test --direct flag shows no change when source_type is already 'direct'."""
+    # First set it to direct
+    with single_config_file.open() as f:
+        config_data = json.load(f)
+    config_data["applications"][0]["source_type"] = "direct"
+    with single_config_file.open("w") as f:
+        json.dump(config_data, f, indent=2)
+
+    result = runner.invoke(
+        app,
+        ["edit", "TestApp", "--direct", "--config", str(single_config_file)]
+    )
+
+    assert result.exit_code == 0
+    # Should show no changes specified since source_type is already 'direct'
+    assert "No changes specified" in result.stdout
+
+    # Verify source_type remains 'direct'
+    with single_config_file.open() as f:
+        config_data = json.load(f)
+
+    app_config = config_data["applications"][0]
+    assert app_config["source_type"] == "direct"

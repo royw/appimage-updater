@@ -70,6 +70,9 @@ class DirectDownloadRepository(RepositoryClient):
 
     async def _handle_direct_download(self, client: httpx.AsyncClient, url: str) -> list[Release]:
         """Handle direct download URLs."""
+        # Extract original filename before making requests
+        original_filename = self._extract_filename_from_url(url)
+
         # For URLs ending with -latest or similar, use GET to handle redirects properly
         if "-latest" in url or "latest" in url:
             # Use GET request to follow redirects and get final URL
@@ -84,12 +87,12 @@ class DirectDownloadRepository(RepositoryClient):
             final_url = str(response.url)
             file_size = int(response.headers.get("content-length", 0))
 
-        # Extract version from final URL or headers
-        version = self._extract_version_from_url(final_url)
+        # Extract version from original URL (not redirected URL)
+        version = self._extract_version_from_url(url)
 
-        # Create asset from the download URL
+        # Create asset from the download URL, but use original filename
         asset = Asset(
-            name=self._extract_filename_from_url(final_url),
+            name=original_filename,
             url=final_url,
             size=file_size,
             created_at=datetime.now(),  # Use current time for direct downloads
@@ -189,16 +192,22 @@ class DirectDownloadRepository(RepositoryClient):
             r"v?(\d+\.\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?)",  # Semantic versions
             r"(\d+\.\d+(?:\.\d+)?(?:rc\d+)?)",  # Release candidates
             r"latest",  # Latest symlinks
+            r"nightly-builds?",  # Nightly build directories
+            r"nightly",  # Nightly versions
         ]
 
         for pattern in version_patterns:
             match = re.search(pattern, url, re.IGNORECASE)
             if match:
-                return match.group(1) if match.group(1) != "latest" else "latest"
+                matched_text = match.group(1) if match.groups() else match.group(0)
+                if matched_text.lower() in ["latest", "nightly-builds", "nightly-build", "nightly"]:
+                    return "nightly"
+                return matched_text
 
-        # Fallback to filename without extension
-        filename = self._extract_filename_from_url(url)
-        return filename if filename else "download.AppImage"
+        # For direct download URLs, use a timestamp-based version for nightly builds
+        from datetime import datetime
+
+        return datetime.now().strftime("%Y%m%d")
 
     def _extract_filename_from_url(self, url: str) -> str:
         """Extract filename from URL."""

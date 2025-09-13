@@ -1192,6 +1192,120 @@ class TestAddCommand:
         app_config = config_data["applications"][0]
         assert app_config["url"] == "https://github.com/microsoft/vscode"
 
+    def test_add_command_with_direct_flag(self, runner, temp_config_dir):
+        """Test add command with --direct flag sets source_type to 'direct'."""
+        direct_url = "https://nightly.example.com/app.AppImage"
+        
+        result = runner.invoke(app, [
+            "add", "DirectApp",
+            direct_url,
+            str(temp_config_dir / "downloads" / "DirectApp"),
+            "--direct",
+            "--config-dir", str(temp_config_dir),
+            "--create-dir"
+        ])
+
+        assert result.exit_code == 0
+        assert "Successfully added application 'DirectApp'" in result.stdout
+
+        # Verify config was saved with source_type: 'direct'
+        config_file = temp_config_dir / "directapp.json"
+        assert config_file.exists()
+
+        with config_file.open() as f:
+            config_data = json.load(f)
+
+        app_config = config_data["applications"][0]
+        assert app_config["name"] == "DirectApp"
+        assert app_config["source_type"] == "direct"
+        assert app_config["url"] == direct_url
+
+    def test_add_command_with_no_direct_flag(self, runner, temp_config_dir):
+        """Test add command with --no-direct flag explicitly sets source_type to 'github'."""
+        result = runner.invoke(app, [
+            "add", "NoDirectApp",
+            "https://github.com/user/nodirectapp",
+            str(temp_config_dir / "downloads" / "NoDirectApp"),
+            "--no-direct",
+            "--config-dir", str(temp_config_dir),
+            "--create-dir"
+        ])
+
+        assert result.exit_code == 0
+        assert "Successfully added application 'NoDirectApp'" in result.stdout
+
+        # Verify config was saved with source_type: 'github'
+        config_file = temp_config_dir / "nodirectapp.json"
+        assert config_file.exists()
+
+        with config_file.open() as f:
+            config_data = json.load(f)
+
+        app_config = config_data["applications"][0]
+        assert app_config["name"] == "NoDirectApp"
+        assert app_config["source_type"] == "github"
+        assert app_config["url"] == "https://github.com/user/nodirectapp"
+
+    def test_add_command_direct_with_prerelease_and_rotation(self, runner, temp_config_dir):
+        """Test add command with --direct combined with other options."""
+        direct_url = "https://ci.example.com/artifacts/latest.AppImage"
+        symlink_path = str(temp_config_dir / "bin" / "ciapp.AppImage")
+        
+        result = runner.invoke(app, [
+            "add", "CIApp",
+            direct_url,
+            str(temp_config_dir / "downloads" / "CIApp"),
+            "--direct",
+            "--prerelease",
+            "--rotation",
+            "--symlink", symlink_path,
+            "--config-dir", str(temp_config_dir),
+            "--create-dir"
+        ])
+
+        assert result.exit_code == 0
+        assert "Successfully added application 'CIApp'" in result.stdout
+
+        # Verify config has all options set correctly
+        config_file = temp_config_dir / "ciapp.json"
+        assert config_file.exists()
+
+        with config_file.open() as f:
+            config_data = json.load(f)
+
+        app_config = config_data["applications"][0]
+        assert app_config["name"] == "CIApp"
+        assert app_config["source_type"] == "direct"
+        assert app_config["url"] == direct_url
+        assert app_config["prerelease"] is True
+        assert app_config["rotation_enabled"] is True
+        assert app_config["symlink_path"] == symlink_path
+
+    def test_add_command_direct_flag_default_behavior(self, runner, temp_config_dir):
+        """Test add command without --direct flag defaults to GitHub detection."""
+        result = runner.invoke(app, [
+            "add", "DefaultApp",
+            "https://github.com/user/defaultapp",
+            str(temp_config_dir / "downloads" / "DefaultApp"),
+            "--config-dir", str(temp_config_dir),
+            "--create-dir"
+        ])
+
+        assert result.exit_code == 0
+        assert "Successfully added application 'DefaultApp'" in result.stdout
+
+        # Verify config defaults to GitHub source type
+        config_file = temp_config_dir / "defaultapp.json"
+        assert config_file.exists()
+
+        with config_file.open() as f:
+            config_data = json.load(f)
+
+        app_config = config_data["applications"][0]
+        assert app_config["name"] == "DefaultApp"
+        assert app_config["source_type"] == "github"
+        assert app_config["url"] == "https://github.com/user/defaultapp"
+
 class TestRemoveCommand:
     """Test the remove command functionality."""
 

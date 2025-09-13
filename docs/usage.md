@@ -118,6 +118,7 @@ appimage-updater add [OPTIONS] NAME URL DOWNLOAD_DIR
 - `--checksum-algorithm TEXT`: Checksum algorithm (sha256, sha1, md5)
 - `--checksum-pattern TEXT`: Checksum file pattern
 - `--checksum-required/--checksum-optional`: Make verification required/optional
+- `--direct`: Treat URL as direct download link (bypasses repository detection)
 
 **Examples:**
 
@@ -133,6 +134,9 @@ appimage-updater add --rotation --symlink ~/bin/freecad.AppImage FreeCAD https:/
 
 # Non-interactive with directory creation
 appimage-updater add --yes --create-dir MyApp https://github.com/user/myapp ~/Apps/MyApp
+
+# Direct download URL (nightly builds, continuous integration)
+appimage-updater add --direct OrcaSlicer-Nightly https://github.com/SoftFever/OrcaSlicer/releases/download/nightly-builds/OrcaSlicer_Linux_V2.2.0_dev.AppImage ~/Applications/OrcaSlicer
 ```
 
 ### `list`
@@ -216,6 +220,7 @@ appimage-updater edit [OPTIONS] APP_NAME
 - `--create-dir`: Automatically create download directory
 - `--yes, -y`: Auto-confirm prompts
 - `--force`: Skip URL validation and normalization
+- `--direct/--no-direct`: Treat URL as direct download link (bypasses repository detection)
 
 **Examples:**
 
@@ -234,6 +239,12 @@ appimage-updater edit OrcaSlicer --pattern "OrcaSlicer.*Linux.*\.AppImage$" --ch
 
 # Update URL without validation (for direct downloads or nightly builds)
 appimage-updater edit MyApp --url https://direct-download-url.com/file.AppImage --force
+
+# Convert existing app to use direct download
+appimage-updater edit OrcaSlicer --direct --url https://github.com/SoftFever/OrcaSlicer/releases/download/nightly-builds/OrcaSlicer_Linux_V2.2.0_dev.AppImage
+
+# Convert direct download back to repository detection
+appimage-updater edit MyApp --no-direct --url https://github.com/user/repo
 ```
 
 ### `remove`
@@ -359,6 +370,35 @@ appimage-updater edit MyApp --pattern ".*[Ll]inux.*\.AppImage(\\..*)?$"
 # ZIP and AppImage support
 appimage-updater edit MyApp --pattern "(?i)MyApp.*\.(zip|AppImage)(\\..*)?$"
 ```
+
+### Direct Download URLs
+
+For applications that provide direct download links (like nightly builds, continuous integration artifacts, or non-GitHub releases), use the `--direct` flag:
+
+```bash
+# Add application with direct download URL
+appimage-updater add --direct OrcaSlicer-Nightly https://github.com/SoftFever/OrcaSlicer/releases/download/nightly-builds/OrcaSlicer_Linux_V2.2.0_dev.AppImage ~/Applications/OrcaSlicer
+
+# Convert existing repository-based app to direct download
+appimage-updater edit MyApp --direct --url https://example.com/releases/latest/myapp.AppImage
+
+# Convert back to repository detection
+appimage-updater edit MyApp --no-direct --url https://github.com/user/repo
+```
+
+**When to use `--direct`:**
+
+- Nightly builds with fixed URLs
+- Continuous integration artifacts
+- Non-GitHub release systems
+- Direct file downloads that don't follow repository patterns
+
+**Benefits:**
+
+- Bypasses repository detection ambiguity
+- Works with any direct download URL
+- Explicit control over source type
+- Prevents URL normalization issues
 
 ### Checksum Verification
 

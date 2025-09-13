@@ -41,7 +41,9 @@ class VersionChecker:
         """Check for updates from repository releases."""
         try:
             # Get or create repository client for this app
-            repo_client = self.repository_client or get_repository_client(app_config.url)
+            repo_client = self.repository_client or get_repository_client(
+                app_config.url, source_type=app_config.source_type
+            )
 
             # Choose appropriate method based on prerelease setting
             if app_config.prerelease:

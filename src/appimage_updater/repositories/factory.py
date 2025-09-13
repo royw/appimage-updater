@@ -18,14 +18,16 @@ def get_repository_client(
     url: str,
     timeout: int = 30,
     user_agent: str | None = None,
+    source_type: str | None = None,
     **kwargs: Any,
 ) -> RepositoryClient:
-    """Create appropriate repository client based on URL.
+    """Create appropriate repository client based on URL and optional source type.
 
     Args:
         url: Repository URL
         timeout: Request timeout in seconds
         user_agent: Custom user agent string
+        source_type: Explicit source type (github, direct_download, dynamic_download, direct)
         **kwargs: Repository-specific configuration options
 
     Returns:
@@ -34,6 +36,24 @@ def get_repository_client(
     Raises:
         RepositoryError: If no suitable repository client is found
     """
+    # If explicit source type is provided, use it directly
+    if source_type:
+        # Map source types to repository classes
+        type_mapping = {
+            "github": GitHubRepository,
+            "direct_download": DirectDownloadRepository,
+            "dynamic_download": DynamicDownloadRepository,
+            "direct": DirectDownloadRepository,  # "direct" maps to DirectDownloadRepository
+        }
+
+        if source_type in type_mapping:
+            repo_class = type_mapping[source_type]
+            client: RepositoryClient = repo_class(timeout=timeout, user_agent=user_agent, **kwargs)
+            return client
+        else:
+            raise RepositoryError(f"Unsupported source type: {source_type}")
+
+    # Fall back to URL-based detection if no explicit source type
     # Try each repository type in order of preference
     # Order matters: more specific types should come first
     repository_types = [

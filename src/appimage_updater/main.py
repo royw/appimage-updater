@@ -165,6 +165,11 @@ _ADD_PATTERN_OPTION = typer.Option(
     "--pattern",
     help="Custom file pattern (regex) to match AppImage files (overrides auto-generated pattern)",
 )
+_ADD_DIRECT_OPTION = typer.Option(
+    None,
+    "--direct/--no-direct",
+    help="Treat URL as direct download link (bypasses repository detection)",
+)
 
 # Edit command arguments and options
 _EDIT_APP_NAME_ARGUMENT = typer.Argument(
@@ -187,6 +192,9 @@ _EDIT_CHECKSUM_REQUIRED_OPTION = typer.Option(
     None, "--checksum-required/--checksum-optional", help="Make checksum verification required or optional"
 )
 _EDIT_FORCE_OPTION = typer.Option(False, "--force", help="Skip URL validation and normalization")
+_EDIT_DIRECT_OPTION = typer.Option(
+    None, "--direct/--no-direct", help="Treat URL as direct download link (bypasses repository detection)"
+)
 
 
 def version_callback(value: bool) -> None:
@@ -330,6 +338,7 @@ def add(
     checksum_pattern: str = _ADD_CHECKSUM_PATTERN_OPTION,
     checksum_required: bool | None = _ADD_CHECKSUM_REQUIRED_OPTION,
     pattern: str | None = _ADD_PATTERN_OPTION,
+    direct: bool | None = _ADD_DIRECT_OPTION,
 ) -> None:
     """Add a new application to the configuration.
 
@@ -398,6 +407,7 @@ def add(
             checksum_pattern,
             checksum_required,
             pattern,
+            direct,
         )
     )
 
@@ -419,6 +429,7 @@ async def _add(
     checksum_pattern: str,
     checksum_required: bool | None,
     pattern: str | None,
+    direct: bool | None,
 ) -> None:
     """Async implementation of the add command."""
     try:
@@ -467,6 +478,7 @@ async def _add(
             checksum_pattern,
             checksum_required,
             pattern,
+            direct,
         )
 
         # Add the application to configuration
@@ -531,6 +543,7 @@ def edit(
     create_dir: bool = _CREATE_DIR_OPTION,
     yes: bool = _YES_OPTION,
     force: bool = _EDIT_FORCE_OPTION,
+    direct: bool | None = _EDIT_DIRECT_OPTION,
 ) -> None:
     """Edit configuration for an existing application.
 
@@ -604,6 +617,8 @@ def edit(
             checksum_pattern,
             checksum_required,
             force,
+            direct,
+            app,
         )
 
         if not updates:
