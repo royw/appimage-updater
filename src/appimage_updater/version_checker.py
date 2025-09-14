@@ -183,7 +183,8 @@ class VersionChecker:
         # Common version patterns
         patterns = [
             r"v?(\d+\.\d+\.\d+(?:\.\d+)?)",  # v1.2.3 or 1.2.3.4
-            r"(\d{4}-\d{2}-\d{2})",  # 2023-12-01
+            r"(\d{4}-\d{2}-\d{2})",  # 2023-12-01 (date-based versions)
+            r"(\d{8})",  # 20231201 (compact date format)
             r"(\d+\.\d+)",  # 1.2
         ]
 
@@ -204,6 +205,10 @@ class VersionChecker:
         current_extracted = self._extract_version_from_filename(current)
         latest_extracted = self._extract_version_from_filename(latest)
 
+        # Handle date-based versions (YYYY-MM-DD format)
+        if self._is_date_version(current_extracted) and self._is_date_version(latest_extracted):
+            return self._compare_date_versions(current_extracted, latest_extracted)
+
         try:
             current_ver = version.parse(current_extracted)
             latest_ver = version.parse(latest_extracted)
@@ -211,3 +216,28 @@ class VersionChecker:
         except version.InvalidVersion:
             # Fallback to string comparison of extracted versions
             return current_extracted != latest_extracted
+
+    def _is_date_version(self, version_str: str) -> bool:
+        """Check if version string is in date format (YYYY-MM-DD or YYYYMMDD)."""
+        return bool(re.match(r"^\d{4}-\d{2}-\d{2}$|^\d{8}$", version_str))
+
+    def _compare_date_versions(self, current: str, latest: str) -> bool:
+        """Compare date-based versions."""
+        from datetime import datetime
+
+        try:
+            # Handle both YYYY-MM-DD and YYYYMMDD formats
+            if "-" in current:
+                current_date = datetime.strptime(current, "%Y-%m-%d")
+            else:
+                current_date = datetime.strptime(current, "%Y%m%d")
+
+            if "-" in latest:
+                latest_date = datetime.strptime(latest, "%Y-%m-%d")
+            else:
+                latest_date = datetime.strptime(latest, "%Y%m%d")
+
+            return latest_date > current_date
+        except ValueError:
+            # Fallback to string comparison
+            return current != latest

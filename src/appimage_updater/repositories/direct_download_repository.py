@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import Any
+from email.utils import parsedate_to_datetime
+from typing import Any, cast
 
 import httpx
 from loguru import logger
@@ -87,22 +88,25 @@ class DirectDownloadRepository(RepositoryClient):
             final_url = str(response.url)
             file_size = int(response.headers.get("content-length", 0))
 
-        # Extract version from original URL (not redirected URL)
-        version = self._extract_version_from_url(url)
+        # Get file modification date from Last-Modified header
+        file_date = self._extract_file_date(response)
+
+        # For nightly builds and direct URLs, use date-based versioning
+        version = self._extract_version_from_url_with_date(url, file_date)
 
         # Create asset from the download URL, but use original filename
         asset = Asset(
             name=original_filename,
             url=final_url,
             size=file_size,
-            created_at=datetime.now(),  # Use current time for direct downloads
+            created_at=file_date,
         )
 
         # Create release object
         release = Release(
             version=version,
             tag_name=version,
-            published_at=datetime.now(),  # Use current time for direct downloads
+            published_at=file_date,
             assets=[asset],
             is_prerelease=False,
             is_draft=False,
@@ -148,17 +152,25 @@ class DirectDownloadRepository(RepositoryClient):
         except Exception:
             file_size = 0  # Size unknown
 
+        # Try to get file date from Last-Modified header
+        file_date = datetime.now()  # fallback
+        try:
+            head_response = await client.head(download_url, follow_redirects=True)
+            file_date = self._extract_file_date(head_response)
+        except Exception as e:
+            logger.debug(f"Failed to get file date for {download_url}: {e}")  # Use fallback date
+
         asset = Asset(
             name=self._extract_filename_from_url(download_url),
             url=download_url,
             size=file_size,
-            created_at=datetime.now(),
+            created_at=file_date,
         )
 
         release = Release(
             version=version,
             tag_name=version,
-            published_at=datetime.now(),
+            published_at=file_date,
             assets=[asset],
             is_prerelease=False,
             is_draft=False,
@@ -205,9 +217,47 @@ class DirectDownloadRepository(RepositoryClient):
                 return matched_text
 
         # For direct download URLs, use a timestamp-based version for nightly builds
-        from datetime import datetime
-
         return datetime.now().strftime("%Y%m%d")
+
+    def _extract_version_from_url_with_date(self, url: str, file_date: datetime) -> str:
+        """Extract version from URL, using date for nightly builds."""
+        # First try standard version extraction
+        version = self._extract_version_from_url(url)
+
+        # If it's a nightly build or date-based version, use the file date
+        if version in ["nightly", "latest"] or "nightly" in url.lower():
+            return file_date.strftime("%Y-%m-%d")
+
+        # If no semantic version found, use date
+        if not re.match(r"\d+\.\d+", version):
+            return file_date.strftime("%Y-%m-%d")
+
+        return version
+
+    def _extract_file_date(self, response: httpx.Response) -> datetime:
+        """Extract file modification date from HTTP response headers."""
+        # Try Last-Modified header first
+        last_modified = response.headers.get("last-modified")
+        if last_modified:
+            try:
+                parsed_date = parsedate_to_datetime(last_modified)
+                if parsed_date is not None:
+                    return cast(datetime, parsed_date)
+            except (ValueError, TypeError):
+                pass
+
+        # Try Date header as fallback
+        date_header = response.headers.get("date")
+        if date_header:
+            try:
+                parsed_date = parsedate_to_datetime(date_header)
+                if parsed_date is not None:
+                    return cast(datetime, parsed_date)
+            except (ValueError, TypeError):
+                pass
+
+        # Fallback to current time
+        return datetime.now()
 
     def _extract_filename_from_url(self, url: str) -> str:
         """Extract filename from URL."""
