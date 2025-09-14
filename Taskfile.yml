@@ -2,6 +2,10 @@ version: '3'
 
 vars:
   SRC: src/
+  PYTHON_VERSIONS:
+    sh: cat .python-versions | grep -v '^$' | tr '\n' ' ' | sed 's/[[:space:]]*$//'
+  PYTHON_VERSION:
+    sh: cat .python-version | head -n1
 
 tasks:
   output:
@@ -136,19 +140,16 @@ tasks:
   test:all:
     desc: Run all tests against all Python versions (excludes regression)
     cmds:
-      - |
-        task: output
-        vars:
-          MESSAGE: "🐍 Running tests against all Python versions..."
-        for version in $(cat .python-versions | grep -v '^$'); do
-          task: output
-          vars:
-            MESSAGE: "📋 Testing with Python $version"
-          uv run --python $version pytest tests/unit tests/functional tests/e2e --tb=short --color=yes
-        done
-        task: output
-        vars:
-          MESSAGE: "\n✅ All Python versions tested successfully!"
+      - cmd: echo "🐍 Running tests against all Python versions..."
+        silent: true
+      - for:
+          var: PYTHON_VERSIONS
+          split: ' '
+        cmd: |
+          echo "📋 Testing with Python {{.ITEM}}"
+          uv run --python {{.ITEM}} pytest tests/unit tests/functional tests/e2e --tb=short --color=yes
+      - cmd: echo "✅ All Python versions tested successfully!"
+        silent: true
 
   test:coverage:
     desc: Run all tests with coverage reporting (excludes regression tests)

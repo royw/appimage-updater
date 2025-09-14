@@ -946,8 +946,19 @@ class TestAddCommand:
         config_files = list(temp_config_dir.glob("*.json"))
         assert len(config_files) == 0
 
-    def test_add_command_with_different_repo_name(self, runner, temp_config_dir):
+    @patch('appimage_updater.config_operations.generate_appimage_pattern_async')
+    @patch('appimage_updater.repositories.get_repository_client')
+    def test_add_command_with_different_repo_name(self, mock_repo_client, mock_pattern_gen, runner, temp_config_dir):
         """Test add command now uses intelligent pattern generation from actual releases."""
+        # Mock the repository client to avoid real API calls
+        mock_repo = Mock()
+        mock_repo_client.return_value = mock_repo
+        
+        # Mock async pattern generation to return OrcaSlicer-based pattern
+        async def mock_async_pattern_gen(*args, **kwargs):
+            return "(?i)OrcaSlicer_Linux_AppImage.*\\.AppImage(\\.(|current|old))?$"
+        mock_pattern_gen.side_effect = mock_async_pattern_gen
+        
         result = runner.invoke(app, [
             "add", "MyApp",
             "https://github.com/SoftFever/OrcaSlicer",
@@ -959,26 +970,10 @@ class TestAddCommand:
         assert result.exit_code == 0
         assert "Successfully added application" in result.stdout
         assert "MyApp" in result.stdout
-        # NEW BEHAVIOR: Uses intelligent pattern generation based on actual GitHub releases
-        # OrcaSlicer has files like "OrcaSlicer_Linux_AppImage_Ubuntu2404_..."
-        # However, if GitHub API is unavailable, falls back to heuristic pattern
-
-        # Check if intelligent pattern generation worked
-        # Look for the pattern in the output to determine which method was used
-        pattern_output = result.stdout
-
-        if "(?i)OrcaSlicer" in pattern_output or "OrcaSlicer_Linux_AppImage" in pattern_output:
-            # Intelligent pattern generation succeeded - got OrcaSlicer-based pattern
-            print("✅ Intelligent pattern generation worked")
-        elif "MyApp.*" in pattern_output:
-            # Fallback to heuristic pattern generation (uses MyApp name)
-            print("ℹ️  Used fallback heuristic pattern generation")
-            assert "AppImage" in result.stdout  # Should still generate a valid pattern
-        else:
-            # Unexpected pattern - show what we got for debugging
-            print(f"❓ Unexpected pattern: {result.stdout}")
-            assert False, f"Unexpected pattern in output: {result.stdout}"
-
+        
+        # With mocked pattern generation, should always use the mocked OrcaSlicer pattern
+        assert "OrcaSlicer_Linux_AppImage" in result.stdout
+        
         # Verify config content
         config_file = temp_config_dir / "myapp.json"
         assert config_file.exists()
@@ -988,14 +983,14 @@ class TestAddCommand:
 
         app_config = config_data["applications"][0]
         assert app_config["name"] == "MyApp"
-
-        # Check pattern based on which generation method was used
-        if "(?i)OrcaSlicer" in pattern_output or "OrcaSlicer_Linux_AppImage" in pattern_output:
-            # Intelligent pattern generation - should contain OrcaSlicer and be case-insensitive
-            assert "(?i)" in app_config["pattern"] or "OrcaSlicer" in app_config["pattern"]
-        else:
-            # Fallback heuristic pattern - should use MyApp and be valid
-            assert "MyApp" in app_config["pattern"] and "AppImage" in app_config["pattern"]
+        assert app_config["source_type"] == "github"
+        assert app_config["url"] == "https://github.com/SoftFever/OrcaSlicer"
+        
+        # Should use the mocked intelligent pattern
+        assert app_config["pattern"] == "(?i)OrcaSlicer_Linux_AppImage.*\\.AppImage(\\.(|current|old))?$"
+        
+        # Verify pattern generation was called
+        mock_pattern_gen.assert_called_once()
 
     def test_add_command_with_existing_config_file(self, runner, temp_config_dir):
         """Test add command appends to existing config file."""
@@ -1192,9 +1187,26 @@ class TestAddCommand:
         app_config = config_data["applications"][0]
         assert app_config["url"] == "https://github.com/microsoft/vscode"
 
-    def test_add_command_with_direct_flag(self, runner, temp_config_dir):
+    @patch('appimage_updater.config_operations.should_enable_prerelease')
+    @patch('appimage_updater.config_operations.generate_appimage_pattern_async')
+    @patch('appimage_updater.repositories.get_repository_client')
+    def test_add_command_with_direct_flag(self, mock_repo_client, mock_pattern_gen, mock_prerelease, runner, temp_config_dir):
         """Test add command with --direct flag sets source_type to 'direct'."""
         direct_url = "https://nightly.example.com/app.AppImage"
+        
+        # Mock the repository client to avoid real network calls
+        mock_repo = Mock()
+        mock_repo_client.return_value = mock_repo
+        
+        # Mock pattern generation for direct downloads
+        async def mock_async_pattern_gen(*args, **kwargs):
+            return "(?i)DirectApp.*\\.AppImage(\\.(|current|old))?$"
+        mock_pattern_gen.side_effect = mock_async_pattern_gen
+        
+        # Mock prerelease check to avoid network calls
+        async def mock_async_prerelease_check(*args, **kwargs):
+            return False  # Don't enable prerelease for direct downloads
+        mock_prerelease.side_effect = mock_async_prerelease_check
         
         result = runner.invoke(app, [
             "add", "DirectApp",
@@ -1206,7 +1218,7 @@ class TestAddCommand:
         ])
 
         assert result.exit_code == 0
-        assert "Successfully added application 'DirectApp'" in result.stdout
+        assert "✓ Successfully added application 'DirectApp'" in result.stdout
 
         # Verify config was saved with source_type: 'direct'
         config_file = temp_config_dir / "directapp.json"
@@ -1246,10 +1258,21 @@ class TestAddCommand:
         assert app_config["source_type"] == "github"
         assert app_config["url"] == "https://github.com/user/nodirectapp"
 
-    def test_add_command_direct_with_prerelease_and_rotation(self, runner, temp_config_dir):
+    @patch('appimage_updater.config_operations.generate_appimage_pattern_async')
+    @patch('appimage_updater.repositories.get_repository_client')
+    def test_add_command_direct_with_prerelease_and_rotation(self, mock_repo_client, mock_pattern_gen, runner, temp_config_dir):
         """Test add command with --direct combined with other options."""
         direct_url = "https://ci.example.com/artifacts/latest.AppImage"
         symlink_path = str(temp_config_dir / "bin" / "ciapp.AppImage")
+        
+        # Mock the repository client to avoid real network calls
+        mock_repo = Mock()
+        mock_repo_client.return_value = mock_repo
+        
+        # Mock pattern generation for direct downloads
+        async def mock_async_pattern_gen(*args, **kwargs):
+            return "(?i)CIApp.*\\.AppImage(\\.(|current|old))?$"
+        mock_pattern_gen.side_effect = mock_async_pattern_gen
         
         result = runner.invoke(app, [
             "add", "CIApp",
