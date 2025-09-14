@@ -850,82 +850,94 @@ async def _examine_repositories(
 
 async def _display_repository_info(app: ApplicationConfig, limit: int, show_assets: bool) -> None:
     """Display detailed repository information for a single application."""
-    from rich.panel import Panel
-    from rich.table import Table
 
     try:
-        # Create repository client
-        repo_client = get_repository_client(app.url, source_type=app.source_type)
-
-        # Get releases
-        releases = await repo_client.get_releases(app.url, limit=limit)
-
+        releases = await _fetch_repository_releases(app, limit)
         if not releases:
             console.print(f"[yellow]No releases found for {app.name}")
             return
 
-        # Create header panel
-        header_info = [
-            f"[bold]Application:[/bold] {app.name}",
-            f"[bold]Repository URL:[/bold] {app.url}",
-            f"[bold]Source Type:[/bold] {app.source_type}",
-            f"[bold]Pattern:[/bold] {app.pattern}",
-            f"[bold]Prerelease Enabled:[/bold] {'Yes' if app.prerelease else 'No'}",
-            f"[bold]Total Releases Found:[/bold] {len(releases)}",
-        ]
-
-        console.print(Panel("\n".join(header_info), title=f"Repository Info: {app.name}", border_style="blue"))
-
-        # Create releases table
-        table = Table(show_header=True, header_style="bold magenta")
-        table.add_column("Tag", style="cyan", no_wrap=True)
-        table.add_column("Published", style="green")
-        table.add_column("Prerelease", justify="center")
-        table.add_column("Draft", justify="center")
-        if show_assets:
-            table.add_column("Matching Assets", style="yellow")
-        else:
-            table.add_column("Total Assets", justify="right")
-
-        for release in releases:
-            # Format published date
-            published = release.published_at.strftime("%Y-%m-%d %H:%M")
-
-            # Get matching assets for this app's pattern
-            matching_assets = release.get_matching_assets(app.pattern)
-
-            if show_assets:
-                # Show detailed asset info
-                if matching_assets:
-                    asset_names = [asset.name for asset in matching_assets]
-                    assets_display = "\n".join(asset_names)
-                else:
-                    assets_display = "[dim]No matching assets[/dim]"
-            else:
-                # Show just the count
-                if matching_assets:
-                    assets_display = f"{len(matching_assets)} matching"
-                else:
-                    assets_display = f"{len(release.assets)} total"
-
-            # Add row to table
-            table.add_row(
-                release.tag_name,
-                published,
-                "✓" if release.is_prerelease else "✗",
-                "✓" if release.is_draft else "✗",
-                assets_display,
-            )
-
+        _display_repository_header(app, releases)
+        table = _create_repository_table(show_assets)
+        _populate_repository_table(table, releases, app.pattern, show_assets)
         console.print(table)
-
-        # Show pattern matching summary
-        total_matching = sum(len(release.get_matching_assets(app.pattern)) for release in releases)
-        console.print(f"[blue]Pattern '{app.pattern}' matches {total_matching} assets across {len(releases)} releases")
+        _display_pattern_summary(app.pattern, releases)
 
     except Exception as e:
         console.print(f"[red]Error examining repository for {app.name}: {e}")
         logger.error(f"Error examining repository for {app.name}: {e}")
+
+
+async def _fetch_repository_releases(app: ApplicationConfig, limit: int) -> list[Any]:
+    """Fetch releases from the repository."""
+    repo_client = get_repository_client(app.url, source_type=app.source_type)
+    return await repo_client.get_releases(app.url, limit=limit)
+
+
+def _display_repository_header(app: ApplicationConfig, releases: list[Any]) -> None:
+    """Display repository information header panel."""
+    from rich.panel import Panel
+
+    header_info = [
+        f"[bold]Application:[/bold] {app.name}",
+        f"[bold]Repository URL:[/bold] {app.url}",
+        f"[bold]Source Type:[/bold] {app.source_type}",
+        f"[bold]Pattern:[/bold] {app.pattern}",
+        f"[bold]Prerelease Enabled:[/bold] {'Yes' if app.prerelease else 'No'}",
+        f"[bold]Total Releases Found:[/bold] {len(releases)}",
+    ]
+    console.print(Panel("\n".join(header_info), title=f"Repository Info: {app.name}", border_style="blue"))
+
+
+def _create_repository_table(show_assets: bool) -> Any:
+    """Create the repository releases table with appropriate columns."""
+    from rich.table import Table
+
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Tag", style="cyan", no_wrap=True)
+    table.add_column("Published", style="green")
+    table.add_column("Prerelease", justify="center")
+    table.add_column("Draft", justify="center")
+    if show_assets:
+        table.add_column("Matching Assets", style="yellow")
+    else:
+        table.add_column("Total Assets", justify="right")
+    return table
+
+
+def _populate_repository_table(table: Any, releases: list[Any], pattern: str, show_assets: bool) -> None:
+    """Populate the repository table with release information."""
+    for release in releases:
+        published = release.published_at.strftime("%Y-%m-%d %H:%M")
+        matching_assets = release.get_matching_assets(pattern)
+        assets_display = _format_assets_display(matching_assets, release.assets, show_assets)
+
+        table.add_row(
+            release.tag_name,
+            published,
+            "✓" if release.is_prerelease else "✗",
+            "✓" if release.is_draft else "✗",
+            assets_display,
+        )
+
+
+def _format_assets_display(matching_assets: list[Any], all_assets: list[Any], show_assets: bool) -> str:
+    """Format the assets display column based on show_assets flag."""
+    if show_assets:
+        if matching_assets:
+            asset_names = [asset.name for asset in matching_assets]
+            return "\n".join(asset_names)
+        return "[dim]No matching assets[/dim]"
+
+    if matching_assets:
+        return f"{len(matching_assets)} matching"
+    return f"{len(all_assets)} total"
+
+
+def _display_pattern_summary(pattern: str, releases: list[Any]) -> None:
+    """Display pattern matching summary."""
+    total_matching = sum(len(release.get_matching_assets(pattern)) for release in releases)
+    console.print(f"[blue]Pattern '{pattern}' matches {total_matching} assets across {len(releases)} releases")
 
 
 async def _check_updates(

@@ -124,46 +124,54 @@ class VersionChecker:
         if not app_config.download_dir.exists():
             return None
 
-        # Look for existing files matching the pattern
+        matched_files = self._find_matching_files(app_config)
+        if not matched_files:
+            return None
+
+        current_file = self._select_current_file(matched_files)
+        return self._extract_version_from_file(current_file)
+
+    def _find_matching_files(self, app_config: ApplicationConfig) -> list[Path]:
+        """Find files in download directory that match the application pattern."""
         pattern = re.compile(app_config.pattern)
         matched_files = []
 
         for file_path in app_config.download_dir.iterdir():
             if file_path.is_file():
-                # For rotation-enabled apps, check if the base filename matches the pattern
-                # by removing rotation suffixes (.current, .old, .old2, etc.)
-                filename = file_path.name
-                base_filename = filename
-
-                # Remove rotation suffixes to check against pattern
-                rotation_suffixes = [".current", ".old", ".old2", ".old3", ".old4"]
-                for suffix in rotation_suffixes:
-                    if filename.endswith(suffix):
-                        base_filename = filename[: -len(suffix)]
-                        break
-
+                base_filename = self._remove_rotation_suffix(file_path.name)
                 if pattern.search(base_filename):
                     matched_files.append(file_path)
 
-        if not matched_files:
-            return None
+        return matched_files
 
+    def _remove_rotation_suffix(self, filename: str) -> str:
+        """Remove rotation suffixes from filename for pattern matching."""
+        rotation_suffixes = [".current", ".old", ".old2", ".old3", ".old4"]
+        for suffix in rotation_suffixes:
+            if filename.endswith(suffix):
+                return filename[: -len(suffix)]
+        return filename
+
+    def _select_current_file(self, matched_files: list[Path]) -> Path:
+        """Select the current file from matched files, prioritizing .current files."""
         # Prioritize .current files, then sort by modification time
         current_files = [f for f in matched_files if f.name.endswith(".current")]
         if current_files:
-            current_file = current_files[0]  # Should only be one .current file
-        else:
-            # Fallback to most recent file
-            matched_files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-            current_file = matched_files[0]
+            return current_files[0]  # Should only be one .current file
 
+        # Fallback to most recent file
+        matched_files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+        return matched_files[0]
+
+    def _extract_version_from_file(self, file_path: Path) -> str | None:
+        """Extract version from file using metadata or filename parsing."""
         # First try to get version from metadata file
-        version_from_metadata = self._get_version_from_metadata(current_file)
+        version_from_metadata = self._get_version_from_metadata(file_path)
         if version_from_metadata:
             return version_from_metadata
 
         # Fallback to filename parsing
-        return self._extract_version_from_filename(current_file.name)
+        return self._extract_version_from_filename(file_path.name)
 
     def _get_version_from_metadata(self, file_path: Path) -> str | None:
         """Get version information from associated .info metadata file.
