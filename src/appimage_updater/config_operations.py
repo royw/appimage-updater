@@ -8,6 +8,7 @@ directory-based configuration structures.
 import json
 import os
 import re
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -668,41 +669,69 @@ def apply_basic_config_updates(app: Any, updates: dict[str, Any]) -> list[str]:
     """Apply basic configuration updates (URL, directory, pattern, status)."""
     changes = []
 
-    if "url" in updates:
-        old_value = app.url
-        app.url = updates["url"]
-        changes.append(f"URL: {old_value} → {updates['url']}")
+    # Simple string/value updates
+    simple_updates = [
+        ("url", "URL", lambda v: v),
+        ("pattern", "File Pattern", lambda v: v),
+    ]
 
+    for key, label, transform in simple_updates:
+        if key in updates:
+            changes.extend(_apply_simple_update(app, key, label, updates[key], transform))
+
+    # Directory update (needs Path conversion)
     if "download_dir" in updates:
-        old_value = str(app.download_dir)
-        app.download_dir = Path(updates["download_dir"])
-        changes.append(f"Download Directory: {old_value} → {updates['download_dir']}")
+        changes.extend(_apply_directory_update(app, updates["download_dir"]))
 
-    if "pattern" in updates:
-        old_value = app.pattern
-        app.pattern = updates["pattern"]
-        changes.append(f"File Pattern: {old_value} → {updates['pattern']}")
+    # Boolean updates with custom formatting
+    boolean_updates = [
+        ("enabled", "Status", "Enabled", "Disabled"),
+        ("prerelease", "Prerelease", "Yes", "No"),
+    ]
 
-    if "enabled" in updates:
-        old_value = "Enabled" if app.enabled else "Disabled"
-        app.enabled = updates["enabled"]
-        new_value = "Enabled" if updates["enabled"] else "Disabled"
-        changes.append(f"Status: {old_value} → {new_value}")
+    for key, label, true_text, false_text in boolean_updates:
+        if key in updates:
+            changes.extend(_apply_boolean_update(app, key, label, updates[key], true_text, false_text))
 
-    if "prerelease" in updates:
-        old_value = "Yes" if app.prerelease else "No"
-        app.prerelease = updates["prerelease"]
-        new_value = "Yes" if updates["prerelease"] else "No"
-        changes.append(f"Prerelease: {old_value} → {new_value}")
-
+    # Source type update (only if changed)
     if "source_type" in updates:
-        old_value = app.source_type
-        new_value = updates["source_type"]
-        if old_value != new_value:
-            app.source_type = new_value
-            changes.append(f"Source Type: {old_value} → {new_value}")
+        changes.extend(_apply_conditional_update(app, "source_type", "Source Type", updates["source_type"]))
 
     return changes
+
+
+def _apply_simple_update(app: Any, attr: str, label: str, new_value: Any, transform: Callable[[Any], Any]) -> list[str]:
+    """Apply a simple attribute update."""
+    old_value = getattr(app, attr)
+    setattr(app, attr, transform(new_value))
+    return [f"{label}: {old_value} → {new_value}"]
+
+
+def _apply_directory_update(app: Any, new_dir: str) -> list[str]:
+    """Apply directory update with Path conversion."""
+    old_value = str(app.download_dir)
+    app.download_dir = Path(new_dir)
+    return [f"Download Directory: {old_value} → {new_dir}"]
+
+
+def _apply_boolean_update(
+    app: Any, attr: str, label: str, new_value: bool, true_text: str, false_text: str
+) -> list[str]:
+    """Apply boolean update with custom text formatting."""
+    old_bool = getattr(app, attr)
+    old_text = true_text if old_bool else false_text
+    new_text = true_text if new_value else false_text
+    setattr(app, attr, new_value)
+    return [f"{label}: {old_text} → {new_text}"]
+
+
+def _apply_conditional_update(app: Any, attr: str, label: str, new_value: Any) -> list[str]:
+    """Apply update only if value actually changes."""
+    old_value = getattr(app, attr)
+    if old_value != new_value:
+        setattr(app, attr, new_value)
+        return [f"{label}: {old_value} → {new_value}"]
+    return []
 
 
 def apply_rotation_updates(app: Any, updates: dict[str, Any]) -> list[str]:

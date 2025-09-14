@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Any
 
 from packaging import version
 
@@ -40,68 +41,60 @@ class VersionChecker:
     async def _check_repository_updates(self, app_config: ApplicationConfig) -> CheckResult:
         """Check for updates from repository releases."""
         try:
-            # Get or create repository client for this app
             repo_client = self.repository_client or get_repository_client(
                 app_config.url, source_type=app_config.source_type
             )
-
-            # Search through multiple releases to find one with matching assets
             releases = await repo_client.get_releases(app_config.url, limit=20)
+
             if not releases:
-                return CheckResult(
-                    app_name=app_config.name,
-                    success=False,
-                    error_message="No releases found",
-                )
+                return self._create_error_result(app_config.name, "No releases found")
 
-            # Find the best release with matching assets
-            release = None
-            matching_assets = []
+            release, matching_assets = self._find_matching_release(releases, app_config)
+            if not release or not matching_assets:
+                return self._create_error_result(app_config.name, f"No assets match pattern: {app_config.pattern}")
 
-            for candidate_release in releases:
-                # Skip drafts, and skip prereleases only if not explicitly requested
-                if candidate_release.is_draft or (candidate_release.is_prerelease and not app_config.prerelease):
-                    continue
+            asset = self._select_best_asset(matching_assets, app_config.name)
+            if not asset:
+                return self._create_error_result(app_config.name, "Asset selection failed")
 
-                # Check if this release has matching assets
-                candidate_assets = candidate_release.get_matching_assets(app_config.pattern)
-                if candidate_assets:
-                    release = candidate_release
-                    matching_assets = candidate_assets
-                    break
+            return self._create_success_result(app_config, release, asset)
 
         except RepositoryError as e:
-            return CheckResult(
-                app_name=app_config.name,
-                success=False,
-                error_message=str(e),
-            )
+            return self._create_error_result(app_config.name, str(e))
 
-        # Check if we found a suitable release
-        if not release or not matching_assets:
-            return CheckResult(
-                app_name=app_config.name,
-                success=False,
-                error_message=f"No assets match pattern: {app_config.pattern}",
-            )
+    def _create_error_result(self, app_name: str, error_message: str) -> CheckResult:
+        """Create a CheckResult for error cases."""
+        return CheckResult(
+            app_name=app_name,
+            success=False,
+            error_message=error_message,
+        )
 
-        # Use distribution-aware asset selection
+    def _find_matching_release(
+        self, releases: list[Any], app_config: ApplicationConfig
+    ) -> tuple[Any | None, list[Any]]:
+        """Find the first release with matching assets."""
+        for candidate_release in releases:
+            if candidate_release.is_draft or (candidate_release.is_prerelease and not app_config.prerelease):
+                continue
+
+            candidate_assets = candidate_release.get_matching_assets(app_config.pattern)
+            if candidate_assets:
+                return candidate_release, candidate_assets
+
+        return None, []
+
+    def _select_best_asset(self, matching_assets: list[Any], app_name: str) -> Any | None:
+        """Select the best asset from matching assets."""
         try:
-            asset = select_best_distribution_asset(matching_assets, interactive=self.interactive)
-        except ValueError as e:
-            return CheckResult(
-                app_name=app_config.name,
-                success=False,
-                error_message=f"Asset selection failed: {e}",
-            )
+            return select_best_distribution_asset(matching_assets, interactive=self.interactive)
+        except ValueError:
+            return None
 
-        # Get current version
+    def _create_success_result(self, app_config: ApplicationConfig, release: Any, asset: Any) -> CheckResult:
+        """Create a CheckResult for successful cases."""
         current_version = self._get_current_version(app_config)
-
-        # Check if version is newer
         is_newer = self._is_version_newer(current_version, release.version)
-
-        # Create download path
         download_path = app_config.download_dir / asset.name
 
         candidate = UpdateCandidate(
@@ -174,11 +167,11 @@ class VersionChecker:
             for line in content.split("\n"):
                 line = line.strip()
                 if line.lower().startswith("version:"):
-                    version = line.split(":", 1)[1].strip()
+                    version_str = line.split(":", 1)[1].strip()
                     # Remove 'v' prefix if present
-                    if version.startswith("v"):
-                        version = version[1:]
-                    return version
+                    if version_str.startswith("v"):
+                        version_str = version_str[1:]
+                    return version_str
         except (OSError, UnicodeDecodeError):
             # Failed to read metadata file
             pass

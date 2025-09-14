@@ -52,6 +52,20 @@ def display_applications_list(applications: list[Any]) -> None:
 
 def display_check_results(results: list[CheckResult], show_urls: bool = False) -> None:
     """Display check results in a table."""
+    table = _create_results_table(show_urls)
+
+    for result in results:
+        row = _create_result_row(result, show_urls)
+        table.add_row(*row)
+
+    console.print(table)
+
+    if show_urls:
+        _display_url_table(results)
+
+
+def _create_results_table(show_urls: bool) -> Table:
+    """Create the results table with appropriate columns."""
     table = Table(title="Update Check Results")
     table.add_column("Application", style="cyan")
     table.add_column("Status", style="green")
@@ -62,57 +76,73 @@ def display_check_results(results: list[CheckResult], show_urls: bool = False) -
     if show_urls:
         table.add_column("Download URL", style="blue", max_width=60)
 
-    for result in results:
-        if not result.success:
-            row = [
-                result.app_name,
-                "[red]Error",
-                "-",
-                "-",
-                result.error_message or "Unknown error",
-            ]
-            if show_urls:
-                row.append("-")
-            table.add_row(*row)
-        elif not result.candidate:
-            row = [
-                result.app_name,
-                "[yellow]No candidate",
-                "-",
-                "-",
-                result.error_message or "No matching assets",
-            ]
-            if show_urls:
-                row.append("-")
-            table.add_row(*row)
-        else:
-            candidate = result.candidate
-            status = "[green]Up to date" if not candidate.needs_update else "[yellow]Update available"
-            current = candidate.current_version or "[dim]None"
-            update_indicator = "✓" if candidate.needs_update else "-"
+    return table
 
-            row = [
-                result.app_name,
-                status,
-                current,
-                candidate.latest_version,
-                update_indicator,
-            ]
 
-            if show_urls:
-                url = candidate.asset.url if candidate else "-"
-                # Truncate long URLs for display
-                if len(url) > 60:
-                    url = url[:57] + "..."
-                row.append(url)
+def _create_result_row(result: CheckResult, show_urls: bool) -> list[str]:
+    """Create a table row for a single check result."""
+    if not result.success:
+        return _create_error_row(result, show_urls)
+    elif not result.candidate:
+        return _create_no_candidate_row(result, show_urls)
+    else:
+        return _create_success_row(result, show_urls)
 
-            table.add_row(*row)
 
-    console.print(table)
-
-    # Display separate URL table if requested
+def _create_error_row(result: CheckResult, show_urls: bool) -> list[str]:
+    """Create row for error results."""
+    row = [
+        result.app_name,
+        "[red]Error",
+        "-",
+        "-",
+        result.error_message or "Unknown error",
+    ]
     if show_urls:
-        _display_url_table(results)
+        row.append("-")
+    return row
+
+
+def _create_no_candidate_row(result: CheckResult, show_urls: bool) -> list[str]:
+    """Create row for results with no candidate."""
+    row = [
+        result.app_name,
+        "[yellow]No candidate",
+        "-",
+        "-",
+        result.error_message or "No matching assets",
+    ]
+    if show_urls:
+        row.append("-")
+    return row
+
+
+def _create_success_row(result: CheckResult, show_urls: bool) -> list[str]:
+    """Create row for successful results."""
+    candidate = result.candidate
+    if candidate is None:
+        # This shouldn't happen for success rows, but handle it gracefully
+        return _create_error_row(result, show_urls)
+
+    status = "[green]Up to date" if not candidate.needs_update else "[yellow]Update available"
+    current = candidate.current_version or "[dim]None"
+    update_indicator = "✓" if candidate.needs_update else "-"
+
+    row = [
+        result.app_name,
+        status,
+        current,
+        candidate.latest_version,
+        update_indicator,
+    ]
+
+    if show_urls:
+        url = candidate.asset.url if candidate else "-"
+        if len(url) > 60:
+            url = url[:57] + "..."
+        row.append(url)
+
+    return row
 
 
 def _display_url_table(results: list[CheckResult]) -> None:
