@@ -40,7 +40,7 @@ appimage-updater check [OPTIONS] [APP_NAMES...]
 
 **Arguments:**
 
-- `APP_NAMES`: Names of applications to check (case-insensitive, supports glob patterns like 'Orca*'). Multiple names can be specified. If not provided, checks all applications.
+- `APP_NAMES`: Names of applications to check (case-insensitive, supports glob patterns like 'Orca\*'). Multiple names can be specified. If not provided, checks all applications.
 
 **Options:**
 
@@ -178,7 +178,7 @@ appimage-updater show [OPTIONS] APP_NAMES...
 
 **Arguments:**
 
-- `APP_NAMES`: Names of applications to display information for (case-insensitive, supports glob patterns like 'Orca*'). Multiple names can be specified.
+- `APP_NAMES`: Names of applications to display information for (case-insensitive, supports glob patterns like 'Orca\*'). Multiple names can be specified.
 
 **Options:**
 
@@ -211,7 +211,7 @@ appimage-updater edit [OPTIONS] APP_NAMES...
 
 **Arguments:**
 
-- `APP_NAMES`: Names of applications to edit (case-insensitive, supports glob patterns like 'Orca*'). Multiple names can be specified.
+- `APP_NAMES`: Names of applications to edit (case-insensitive, supports glob patterns like 'Orca\*'). Multiple names can be specified.
 
 **Options:**
 
@@ -278,7 +278,7 @@ appimage-updater remove [OPTIONS] APP_NAMES...
 
 **Arguments:**
 
-- `APP_NAMES`: Names of applications to remove from configuration (case-insensitive, supports glob patterns like 'Orca*'). Multiple names can be specified.
+- `APP_NAMES`: Names of applications to remove from configuration (case-insensitive, supports glob patterns like 'Orca\*'). Multiple names can be specified.
 
 **Options:**
 
