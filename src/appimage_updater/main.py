@@ -195,6 +195,25 @@ _EDIT_CHECKSUM_REQUIRED_OPTION = typer.Option(
     None, "--checksum-required/--checksum-optional", help="Make checksum verification required or optional"
 )
 _EDIT_FORCE_OPTION = typer.Option(False, "--force", help="Skip URL validation and normalization")
+_REPOSITORY_APP_NAME_ARGUMENT = typer.Argument(
+    help="Names of applications to examine repository information for (case-insensitive, supports glob patterns "
+    "like 'Orca*'). Multiple names can be specified."
+)
+_REPOSITORY_LIMIT_OPTION = typer.Option(
+    10,
+    "--limit",
+    "-l",
+    help="Maximum number of releases to display (default: 10)",
+    min=1,
+    max=50,
+)
+_REPOSITORY_ASSETS_OPTION = typer.Option(
+    False,
+    "--assets",
+    "-a",
+    help="Show detailed asset information for each release",
+)
+
 _EDIT_DIRECT_OPTION = typer.Option(
     None, "--direct/--no-direct", help="Treat URL as direct download link (bypasses repository detection)"
 )
@@ -772,6 +791,141 @@ def remove(
         logger.error(f"Error removing applications '{app_names}': {e}")
         logger.exception("Full exception details")
         raise typer.Exit(1) from e
+
+
+@app.command()
+def repository(
+    app_names: list[str] = _REPOSITORY_APP_NAME_ARGUMENT,
+    config_file: Path | None = _CONFIG_FILE_OPTION,
+    config_dir: Path | None = _CONFIG_DIR_OPTION,
+    limit: int = _REPOSITORY_LIMIT_OPTION,
+    assets: bool = _REPOSITORY_ASSETS_OPTION,
+) -> None:
+    """Examine repository information for configured applications.
+
+    Shows detailed information about releases, assets, and repository metadata
+    for the specified applications. Useful for troubleshooting and understanding
+    what versions and files are available.
+
+    Examples:
+        appimage-updater repository OrcaSlicer
+        appimage-updater repository OrcaSlicer --limit 5 --assets
+        appimage-updater repository "Orca*" --assets
+    """
+    asyncio.run(_examine_repositories(config_file, config_dir, app_names, limit, assets))
+
+
+async def _examine_repositories(
+    config_file: Path | None,
+    config_dir: Path | None,
+    app_names: list[str],
+    limit: int,
+    show_assets: bool,
+) -> None:
+    """Examine repository information for applications."""
+    try:
+        # Load configuration
+        config = load_config(config_file, config_dir)
+
+        # Filter applications by names
+        apps_to_examine = _filter_apps_by_names(config.applications, app_names)
+
+        console.print(f"[blue]Examining repository information for {len(apps_to_examine)} application(s)...")
+        console.print()
+
+        for app in apps_to_examine:
+            await _display_repository_info(app, limit, show_assets)
+            console.print()  # Add spacing between apps
+
+    except ConfigLoadError as e:
+        console.print(f"[red]Configuration error: {e}")
+        logger.error(f"Configuration error: {e}")
+        raise typer.Exit(1) from e
+    except Exception as e:
+        console.print(f"[red]Error examining repositories: {e}")
+        logger.error(f"Error examining repositories for '{app_names}': {e}")
+        logger.exception("Full exception details")
+        raise typer.Exit(1) from e
+
+
+async def _display_repository_info(app: ApplicationConfig, limit: int, show_assets: bool) -> None:
+    """Display detailed repository information for a single application."""
+    from rich.panel import Panel
+    from rich.table import Table
+
+    try:
+        # Create repository client
+        repo_client = get_repository_client(app.url, source_type=app.source_type)
+
+        # Get releases
+        releases = await repo_client.get_releases(app.url, limit=limit)
+
+        if not releases:
+            console.print(f"[yellow]No releases found for {app.name}")
+            return
+
+        # Create header panel
+        header_info = [
+            f"[bold]Application:[/bold] {app.name}",
+            f"[bold]Repository URL:[/bold] {app.url}",
+            f"[bold]Source Type:[/bold] {app.source_type}",
+            f"[bold]Pattern:[/bold] {app.pattern}",
+            f"[bold]Prerelease Enabled:[/bold] {'Yes' if app.prerelease else 'No'}",
+            f"[bold]Total Releases Found:[/bold] {len(releases)}",
+        ]
+
+        console.print(Panel("\n".join(header_info), title=f"Repository Info: {app.name}", border_style="blue"))
+
+        # Create releases table
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Tag", style="cyan", no_wrap=True)
+        table.add_column("Published", style="green")
+        table.add_column("Prerelease", justify="center")
+        table.add_column("Draft", justify="center")
+        if show_assets:
+            table.add_column("Matching Assets", style="yellow")
+        else:
+            table.add_column("Total Assets", justify="right")
+
+        for release in releases:
+            # Format published date
+            published = release.published_at.strftime("%Y-%m-%d %H:%M")
+
+            # Get matching assets for this app's pattern
+            matching_assets = release.get_matching_assets(app.pattern)
+
+            if show_assets:
+                # Show detailed asset info
+                if matching_assets:
+                    asset_names = [asset.name for asset in matching_assets]
+                    assets_display = "\n".join(asset_names)
+                else:
+                    assets_display = "[dim]No matching assets[/dim]"
+            else:
+                # Show just the count
+                if matching_assets:
+                    assets_display = f"{len(matching_assets)} matching"
+                else:
+                    assets_display = f"{len(release.assets)} total"
+
+            # Add row to table
+            table.add_row(
+                release.tag_name,
+                published,
+                "✓" if release.is_prerelease else "✗",
+                "✓" if release.is_draft else "✗",
+                assets_display,
+            )
+
+        console.print(table)
+
+        # Show pattern matching summary
+        total_matching = sum(len(release.get_matching_assets(app.pattern)) for release in releases)
+        console.print(f"[blue]Pattern '{app.pattern}' matches {total_matching} assets across {len(releases)} releases")
+
+    except Exception as e:
+        console.print(f"[red]Error examining repository for {app.name}: {e}")
+        logger.error(f"Error examining repository for {app.name}: {e}")
 
 
 async def _check_updates(

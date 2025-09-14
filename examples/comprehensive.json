@@ -50,7 +50,8 @@
       "source_type": "github",
       "url": "https://github.com/SoftFever/OrcaSlicer",
       "download_dir": "~/Applications/OrcaSlicer",
-      "pattern": ".*Linux.*\\.AppImage$",
+      "pattern": ".*Linux.*(?<!beta)(?<!alpha)(?<!rc)\\.AppImage$",
+      "prerelease": false,
       "enabled": true
     },
     {

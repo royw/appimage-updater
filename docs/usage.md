@@ -305,6 +305,62 @@ appimage-updater remove --force DeprecatedApp
 appimage-updater remove --force App1 App2 App3
 ```
 
+### `repository`
+
+Examine repository information for configured applications.
+
+```bash
+appimage-updater repository [OPTIONS] APP_NAMES...
+```
+
+**Arguments:**
+
+- `APP_NAMES`: Names of applications to examine repository information for (case-insensitive, supports glob patterns like 'Orca\*'). Multiple names can be specified.
+
+**Options:**
+
+- `--config, -c PATH`: Configuration file path
+- `--config-dir, -d PATH`: Configuration directory path
+- `--limit, -l INTEGER`: Maximum number of releases to display (1-50, default: 10)
+- `--assets, -a`: Show detailed asset information for each release
+
+**Examples:**
+
+```bash
+# Examine repository for single application
+appimage-updater repository OrcaSlicer
+
+# Examine with limited releases and detailed assets
+appimage-updater repository OrcaSlicer --limit 5 --assets
+
+# Examine multiple applications
+appimage-updater repository FreeCAD VSCode OrcaSlicer
+
+# Examine applications using glob patterns
+appimage-updater repository "Orca*" "Free*"
+
+# Examine with custom config and show assets
+appimage-updater repository MyApp --config /path/to/config.json --assets
+
+# Show detailed repository information for troubleshooting
+appimage-updater repository ProblematicApp --limit 20 --assets
+```
+
+**What it shows:**
+
+- Application configuration details (URL, pattern, prerelease settings)
+- Release information (tag, published date, prerelease/draft status)
+- Asset matching against your configured pattern
+- Pattern matching summary across all releases
+- Detailed asset names when using `--assets` flag
+
+This command is particularly useful for:
+
+- Troubleshooting why an application isn't finding updates
+- Understanding what releases and assets are available
+- Verifying that your pattern correctly matches the desired files
+- Debugging prerelease filtering issues
+
 ## Configuration Examples
 
 ### Single Application
