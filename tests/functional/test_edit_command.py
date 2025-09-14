@@ -299,7 +299,7 @@ def test_edit_nonexistent_app(runner, single_config_file):
     )
 
     assert result.exit_code == 1
-    assert "Application 'NonExistentApp' not found in configuration" in result.stdout
+    assert "Applications not found: NonExistentApp" in result.stdout
     assert "Available applications: TestApp" in result.stdout
 
 

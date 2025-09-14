@@ -35,7 +35,6 @@ from .display import (
     display_check_results,
     display_download_results,
     display_edit_summary,
-    find_application_by_name,
 )
 from .downloader import Downloader
 from .logging_config import configure_logging
@@ -85,14 +84,16 @@ _NO_INTERACTIVE_OPTION = typer.Option(
 )
 _CHECK_APP_NAME_ARGUMENT = typer.Argument(
     default=None,
-    help="Name of the application to check (case-insensitive, supports glob patterns like 'Orca*'). "
-    "If not provided, checks all applications.",
+    help="Names of applications to check (case-insensitive, supports glob patterns like 'Orca*'). "
+    "If not provided, checks all applications. Multiple names can be specified.",
 )
 _SHOW_APP_NAME_ARGUMENT = typer.Argument(
-    help="Name of the application to display information for (case-insensitive, supports glob patterns like 'Orca*')"
+    help="Names of applications to display information for (case-insensitive, supports glob patterns like 'Orca*'). "
+    "Multiple names can be specified."
 )
 _REMOVE_APP_NAME_ARGUMENT = typer.Argument(
-    help="Name of the application to remove from configuration (case-insensitive, supports glob patterns like 'Orca*')"
+    help="Names of applications to remove from configuration (case-insensitive, supports glob patterns like 'Orca*'). "
+    "Multiple names can be specified."
 )
 _FORCE_OPTION = typer.Option(
     False,
@@ -173,7 +174,9 @@ _ADD_DIRECT_OPTION = typer.Option(
 
 # Edit command arguments and options
 _EDIT_APP_NAME_ARGUMENT = typer.Argument(
-    help="Name of the application to edit (case-insensitive, supports glob patterns like 'Orca*')"
+    ...,
+    help="Names of applications to edit (case-insensitive, supports glob patterns like 'Orca*'). "
+    "Multiple names can be specified.",
 )
 _EDIT_URL_OPTION = typer.Option(None, "--url", help="Update the repository URL")
 _EDIT_DOWNLOAD_DIR_OPTION = typer.Option(None, "--download-dir", help="Update the download directory")
@@ -222,7 +225,7 @@ def main(
 
 @app.command()
 def check(
-    app_name: str | None = _CHECK_APP_NAME_ARGUMENT,
+    app_names: list[str] = _CHECK_APP_NAME_ARGUMENT,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     dry_run: bool = _DRY_RUN_OPTION,
@@ -234,12 +237,14 @@ def check(
     Examples:
         appimage-updater check                    # Check all applications
         appimage-updater check GitHubDesktop     # Check specific application
+        appimage-updater check GitHubDesktop OrcaSlicer  # Check multiple applications
         appimage-updater check --dry-run         # Check all (dry run)
         appimage-updater check --yes             # Auto-confirm downloads
         appimage-updater check GitHubDesktop --dry-run  # Check specific (dry run)
         appimage-updater check GitHubDesktop --yes      # Check specific and auto-confirm
     """
-    asyncio.run(_check_updates(config_file, config_dir, dry_run, app_name, yes, no_interactive))
+    # Handle multiple app names by passing them as a list to the internal function
+    asyncio.run(_check_updates(config_file, config_dir, dry_run, app_names, yes, no_interactive))
 
 
 @app.command()
@@ -521,7 +526,7 @@ async def _add(
 
 @app.command()
 def edit(
-    app_name: str = _EDIT_APP_NAME_ARGUMENT,
+    app_names: list[str] = _EDIT_APP_NAME_ARGUMENT,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     # Basic configuration options
@@ -545,10 +550,11 @@ def edit(
     force: bool = _EDIT_FORCE_OPTION,
     direct: bool | None = _EDIT_DIRECT_OPTION,
 ) -> None:
-    """Edit configuration for an existing application.
+    """Edit configuration for existing applications.
 
     Update any configuration field by specifying the corresponding option.
     Only the specified fields will be changed - all other settings remain unchanged.
+    When multiple applications are specified, the same changes are applied to all.
 
     Basic Configuration:
         --url URL                    Update repository URL
@@ -569,40 +575,33 @@ def edit(
         --checksum-required/--checksum-optional  Make verification required/optional
 
     Examples:
-        # Enable rotation with symlink
+        # Enable rotation with symlink for single app
         appimage-updater edit FreeCAD --rotation --symlink-path ~/bin/freecad.AppImage
+
+        # Enable prerelease for multiple apps
+        appimage-updater edit OrcaSlicer OrcaSlicerRC --prerelease
 
         # Update download directory
         appimage-updater edit MyApp --download-dir ~/NewLocation/MyApp --create-dir
 
-        # Update download directory in non-interactive mode
-        appimage-updater edit MyApp --download-dir ~/NewLocation/MyApp --yes
-
-        # Disable prerelease and enable required checksums
-        appimage-updater edit OrcaSlicer --no-prerelease --checksum-required
+        # Disable prerelease and enable required checksums for multiple apps
+        appimage-updater edit OrcaSlicer BambuStudio --no-prerelease --checksum-required
 
         # Update URL after repository move
         appimage-updater edit OldApp --url https://github.com/newowner/newrepo
-
-        # Force URL update without validation/normalization
-        appimage-updater edit MyApp --url https://direct-download-url.com/file.AppImage --force
     """
     try:
-        logger.debug(f"Editing configuration for application: {app_name}")
+        logger.debug(f"Editing configuration for applications: {app_names}")
 
         # Load current configuration
         config = load_config(config_file, config_dir)
 
-        # Find the application (case-insensitive)
-        app = find_application_by_name(config.applications, app_name)
-        if not app:
-            available_apps = [a.name for a in config.applications]
-            console.print(f"[red]Application '{app_name}' not found in configuration")
-            console.print(f"[yellow]Available applications: {', '.join(available_apps)}")
-            logger.error(f"Application '{app_name}' not found. Available: {available_apps}")
-            raise typer.Exit(1)
+        # Use filtering logic that supports glob patterns
+        apps_to_edit = _filter_apps_by_names(config.applications, app_names)
 
-        # Collect all the updates to apply
+        # _filter_apps_by_names will exit if no apps found, so we can continue here
+
+        # Collect all the updates to apply (same for all apps)
         updates = collect_edit_updates(
             url,
             download_dir,
@@ -618,7 +617,7 @@ def edit(
             checksum_required,
             force,
             direct,
-            app,
+            apps_to_edit[0],  # Use first app for validation
         )
 
         if not updates:
@@ -626,19 +625,21 @@ def edit(
             logger.debug("No updates specified for edit command")
             return
 
-        # Validate the updates before applying them
-        validate_edit_updates(app, updates, create_dir, yes)
+        # Apply updates to all selected applications
+        for app in apps_to_edit:
+            # Validate the updates before applying them
+            validate_edit_updates(app, updates, create_dir, yes)
 
-        # Apply the updates
-        changes_made = apply_configuration_updates(app, updates)
+            # Apply the updates
+            changes_made = apply_configuration_updates(app, updates)
 
-        # Save the updated configuration
-        save_updated_configuration(app, config, config_file, config_dir)
+            # Save the updated configuration
+            save_updated_configuration(app, config, config_file, config_dir)
 
-        # Display what was changed
-        display_edit_summary(app_name, changes_made)
+            # Display what was changed
+            display_edit_summary(app.name, changes_made)
 
-        logger.debug(f"Successfully updated configuration for application '{app.name}'")
+            logger.debug(f"Successfully updated configuration for application '{app.name}'")
 
     except ConfigLoadError as e:
         console.print(f"[red]Configuration error: {e}")
@@ -647,21 +648,21 @@ def edit(
     except ValueError as e:
         # Handle validation errors without traceback
         console.print(f"[red]Error editing application: {e}")
-        logger.error(f"Validation error for application '{app_name}': {e}")
+        logger.error(f"Validation error for applications '{app_names}': {e}")
         raise typer.Exit(1) from e
     except typer.Exit:
         # Re-raise typer.Exit without logging - these are intentional exits
         raise
     except Exception as e:
-        console.print(f"[red]Unexpected error editing application: {e}")
-        logger.error(f"Unexpected error editing application '{app_name}': {e}")
+        console.print(f"[red]Unexpected error editing applications: {e}")
+        logger.error(f"Unexpected error editing applications '{app_names}': {e}")
         logger.exception("Full exception details")
         raise typer.Exit(1) from e
 
 
 @app.command()
 def show(
-    app_name: str = _SHOW_APP_NAME_ARGUMENT,
+    app_names: list[str] = _SHOW_APP_NAME_ARGUMENT,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
 ) -> None:
@@ -669,24 +670,24 @@ def show(
 
     Examples:
         appimage-updater show FreeCAD
-        appimage-updater show GitHubDesktop
+        appimage-updater show FreeCAD OrcaSlicer
         appimage-updater show --config-dir ~/.config/appimage-updater OrcaSlicer
     """
     try:
-        logger.debug(f"Loading configuration to show application: {app_name}")
+        logger.debug(f"Loading configuration to show applications: {app_names}")
         config = load_config(config_file, config_dir)
 
-        # Find the application (case-insensitive)
-        app = find_application_by_name(config.applications, app_name)
-        if not app:
-            available_apps = [a.name for a in config.applications]
-            console.print(f"[red]Application '{app_name}' not found in configuration")
-            console.print(f"[yellow]Available applications: {', '.join(available_apps)}")
-            logger.error(f"Application '{app_name}' not found. Available: {available_apps}")
-            raise typer.Exit(1)
+        # Use filtering logic that supports glob patterns
+        found_apps = _filter_apps_by_names(config.applications, app_names)
 
-        logger.debug(f"Displaying information for application: {app.name}")
-        display_application_details(app)
+        # _filter_apps_by_names will exit if no apps found, so we can continue here
+
+        # Display information for found applications
+        for i, app in enumerate(found_apps):
+            if i > 0:
+                console.print()  # Add spacing between multiple apps
+            logger.debug(f"Displaying information for application: {app.name}")
+            display_application_details(app)
 
     except ConfigLoadError as e:
         console.print(f"[red]Configuration error: {e}")
@@ -704,52 +705,46 @@ def show(
 
 @app.command()
 def remove(
-    app_name: str = _REMOVE_APP_NAME_ARGUMENT,
+    app_names: list[str] = _REMOVE_APP_NAME_ARGUMENT,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     force: bool = _FORCE_OPTION,
 ) -> None:
-    """Remove an application from the configuration.
+    """Remove applications from the configuration.
 
-    This command will delete the application's configuration. It does NOT delete
-    downloaded AppImage files or symlinks - only the configuration entry.
+    This command will delete the applications' configuration. It does NOT delete
+    downloaded AppImage files or symlinks - only the configuration entries.
 
     Examples:
         appimage-updater remove FreeCAD
+        appimage-updater remove FreeCAD OrcaSlicer
         appimage-updater remove --config-dir ~/.config/appimage-updater MyApp
         appimage-updater remove --force MyApp     # Skip confirmation prompt
     """
     try:
-        logger.debug(f"Removing application: {app_name}")
+        logger.debug(f"Removing applications: {app_names}")
 
-        # Load current configuration to find the app
+        # Load current configuration to find the apps
         config = load_config(config_file, config_dir)
 
-        # Find the application (case-insensitive)
-        app = find_application_by_name(config.applications, app_name)
-        if not app:
-            available_apps = [a.name for a in config.applications]
-            console.print(f"[red]Application '{app_name}' not found in configuration")
-            if available_apps:
-                console.print(f"[yellow]Available applications: {', '.join(available_apps)}")
-            else:
-                console.print("[yellow]No applications are currently configured")
-            logger.error(f"Application '{app_name}' not found. Available: {available_apps}")
-            raise typer.Exit(1)
+        # Use filtering logic that supports glob patterns
+        apps_to_remove = _filter_apps_by_names(config.applications, app_names)
+
+        # _filter_apps_by_names will exit if no apps found, so we can continue here
 
         # Confirm removal with user unless --force flag is used
         if not force:
-            console.print(f"[yellow]Found application: {app.name}")
-            console.print(f"[yellow]Source: {app.url}")
-            console.print(f"[yellow]Download Directory: {app.download_dir}")
-            console.print("[red]This will remove the application from your configuration.")
+            console.print(f"[yellow]Found {len(apps_to_remove)} application(s) to remove:")
+            for app in apps_to_remove:
+                console.print(f"  • {app.name} ({app.url})")
+            console.print("[red]This will remove the applications from your configuration.")
             console.print("[red]Downloaded files and symlinks will NOT be deleted.")
 
             try:
-                confirmed = typer.confirm("Are you sure you want to remove this application?")
+                confirmed = typer.confirm(f"Are you sure you want to remove {len(apps_to_remove)} application(s)?")
                 if not confirmed:
                     console.print("[yellow]Removal cancelled.")
-                    logger.debug("User declined to remove application")
+                    logger.debug("User declined to remove applications")
                     return
             except (EOFError, KeyboardInterrupt, typer.Abort):
                 console.print("[yellow]Running in non-interactive mode. Use --force to remove without confirmation.")
@@ -758,12 +753,12 @@ def remove(
         else:
             logger.debug("Skipping confirmation due to --force flag")
 
-        # Remove the application from configuration
-        remove_application_from_config(app.name, config, config_file, config_dir)
-
-        console.print(f"[green]✓ Successfully removed application '{app.name}' from configuration")
-        console.print(f"[blue]Note: Files in {app.download_dir} were not deleted")
-        logger.debug(f"Successfully removed application '{app.name}' from configuration")
+        # Remove the applications from configuration
+        for app in apps_to_remove:
+            remove_application_from_config(app.name, config, config_file, config_dir)
+            console.print(f"[green]✓ Successfully removed application '{app.name}' from configuration")
+            console.print(f"[blue]Note: Files in {app.download_dir} were not deleted")
+            logger.debug(f"Successfully removed application '{app.name}' from configuration")
 
     except ConfigLoadError as e:
         console.print(f"[red]Configuration error: {e}")
@@ -773,8 +768,8 @@ def remove(
         # Re-raise typer.Exit without logging - these are intentional exits
         raise
     except Exception as e:
-        console.print(f"[red]Error removing application: {e}")
-        logger.error(f"Error removing application '{app_name}': {e}")
+        console.print(f"[red]Error removing applications: {e}")
+        logger.error(f"Error removing applications '{app_names}': {e}")
         logger.exception("Full exception details")
         raise typer.Exit(1) from e
 
@@ -783,17 +778,27 @@ async def _check_updates(
     config_file: Path | None,
     config_dir: Path | None,
     dry_run: bool,
-    app_name: str | None = None,
+    app_names: list[str] | str | None = None,
     yes: bool = False,
     no_interactive: bool = False,
 ) -> None:
-    """Internal async function to check for updates."""
+    """Internal async function to check for updates.
+
+    Args:
+        app_names: List of app names, single app name, or None for all apps
+    """
     logger.debug("Starting update check process")
-    logger.debug(f"Config file: {config_file}, Config dir: {config_dir}, Dry run: {dry_run}, App filter: {app_name}")
+    # Handle backward compatibility - convert single string to list
+    if isinstance(app_names, str):
+        app_names = [app_names]
+    elif app_names is None:
+        app_names = []
+
+    logger.debug(f"Config file: {config_file}, Config dir: {config_dir}, Dry run: {dry_run}, App filters: {app_names}")
 
     try:
         # Load and filter configuration
-        config, enabled_apps = await _load_and_filter_config(config_file, config_dir, app_name)
+        config, enabled_apps = await _load_and_filter_config(config_file, config_dir, app_names)
 
         if not enabled_apps:
             console.print("[yellow]No enabled applications found in configuration")
@@ -930,25 +935,62 @@ async def _setup_existing_files_rotation(config: Config, enabled_apps: list[Appl
 async def _load_and_filter_config(
     config_file: Path | None,
     config_dir: Path | None,
-    app_name: str | None,
+    app_names: list[str] | None,
 ) -> tuple[Any, list[Any]]:
-    """Load configuration and filter applications."""
+    """Load configuration and filter applications.
+
+    Args:
+        app_names: List of app names to filter by, or None for all apps
+    """
     logger.debug("Loading configuration")
     config = load_config(config_file, config_dir)
     enabled_apps = config.get_enabled_apps()
 
-    # Filter by app name if specified
-    if app_name:
-        enabled_apps = _filter_apps_by_name(enabled_apps, app_name)
+    # Filter by app names if specified
+    if app_names:
+        enabled_apps = _filter_apps_by_names(enabled_apps, app_names)
 
-    filter_msg = " (filtered)" if app_name else ""
+    filter_msg = " (filtered)" if app_names else ""
     logger.debug(f"Found {len(config.applications)} total applications, {len(enabled_apps)} enabled{filter_msg}")
     return config, enabled_apps
 
 
-def _filter_apps_by_name(enabled_apps: list[Any], app_name: str) -> list[Any]:
-    """Filter applications by name or glob pattern."""
-    logger.debug(f"Filtering applications for: {app_name} (case-insensitive, supports glob patterns)")
+def _filter_apps_by_names(enabled_apps: list[Any], app_names: list[str]) -> list[Any]:
+    """Filter applications by multiple names or glob patterns."""
+    logger.debug(f"Filtering applications for: {app_names} (case-insensitive, supports glob patterns)")
+
+    all_matches = []
+    not_found = []
+
+    for app_name in app_names:
+        matches = _filter_apps_by_single_name(enabled_apps, app_name)
+        if matches:
+            all_matches.extend(matches)
+        else:
+            not_found.append(app_name)
+
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_matches = []
+    for app in all_matches:
+        if app.name not in seen:
+            seen.add(app.name)
+            unique_matches.append(app)
+
+    if not_found:
+        available_apps = [app.name for app in enabled_apps]
+        console.print(f"[red]Applications not found: {', '.join(not_found)}")
+        console.print(f"[yellow]Available applications: {', '.join(available_apps)}")
+        logger.error(f"Applications not found: {not_found}. Available: {available_apps}")
+
+        # Always exit with error if any apps were not found
+        raise typer.Exit(1)
+
+    return unique_matches
+
+
+def _filter_apps_by_single_name(enabled_apps: list[Any], app_name: str) -> list[Any]:
+    """Filter applications by a single name or glob pattern."""
     app_name_lower = app_name.lower()
 
     # Check for exact match first
@@ -960,14 +1002,10 @@ def _filter_apps_by_name(enabled_apps: list[Any], app_name: str) -> list[Any]:
     # Try glob pattern matching
     glob_matches = [app for app in enabled_apps if fnmatch.fnmatch(app.name.lower(), app_name_lower)]
     if glob_matches:
-        logger.debug(f"Found {len(glob_matches)} glob matches: {[app.name for app in glob_matches]}")
+        logger.debug(f"Found {len(glob_matches)} glob matches for '{app_name}': {[app.name for app in glob_matches]}")
         return glob_matches
 
     # No matches found
-    available_apps = [app.name for app in enabled_apps]
-    console.print(f"[red]Application '{app_name}' not found in enabled applications")
-    console.print(f"[yellow]Available applications: {', '.join(available_apps)}")
-    logger.error(f"Application '{app_name}' not found. Available: {available_apps}")
     return []
 
 

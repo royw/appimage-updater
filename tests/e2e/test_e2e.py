@@ -561,7 +561,7 @@ class TestE2EFunctionality:
         result = runner.invoke(app, ["show", "NonExistentApp", "--config", str(config_file)])
 
         assert result.exit_code == 1
-        assert "Application 'NonExistentApp' not found in configuration" in result.stdout
+        assert "Applications not found: NonExistentApp" in result.stdout
         assert "Available applications: TestApp" in result.stdout
 
     def test_show_command_case_insensitive(self, runner, temp_config_dir, sample_config):
@@ -1332,7 +1332,8 @@ class TestRemoveCommand:
         ], input="y\n")
 
         assert result.exit_code == 0
-        assert "Found application: TestRemoveApp" in result.stdout
+        assert "Found 1 application(s) to remove:" in result.stdout
+        assert "TestRemoveApp" in result.stdout
         assert "Successfully removed application 'TestRemoveApp' from configuration" in result.stdout
         assert "Files in /tmp/test-remove were not deleted" in result.stdout
 
@@ -1383,7 +1384,7 @@ class TestRemoveCommand:
         ])
 
         assert result.exit_code == 1
-        assert "Application 'NonExistentApp' not found in configuration" in result.stdout
+        assert "Applications not found: NonExistentApp" in result.stdout
         assert "Available applications: ExistingApp" in result.stdout
 
     def test_remove_command_case_insensitive(self, runner, temp_config_dir):
@@ -1405,7 +1406,8 @@ class TestRemoveCommand:
         ], input="y\n")
 
         assert result.exit_code == 0
-        assert "Found application: CaseTestApp" in result.stdout  # Should find the original case
+        assert "Found 1 application(s) to remove:" in result.stdout
+        assert "CaseTestApp" in result.stdout  # Should find the original case
         assert "Successfully removed application 'CaseTestApp' from configuration" in result.stdout
 
     def test_remove_command_from_config_file(self, runner, temp_config_dir):
