@@ -8,10 +8,17 @@ The test suite is organized into focused test files:
 
 ```
 tests/
-├── test_e2e.py                    # End-to-end integration tests
-├── test_edit_command.py           # CLI edit command tests
-├── test_edit_validation_fixes.py  # Validation and error handling tests
-└── test_rotation.py               # File rotation functionality tests
+├── e2e/
+│   ├── conftest.py                # Shared E2E test fixtures
+│   ├── test_cli_commands.py       # Core CLI functionality tests
+│   ├── test_add_remove_commands.py # Add/remove command tests
+│   ├── test_pattern_matching.py   # Pattern matching tests
+│   └── test_integration_smoke.py  # Basic integration tests
+├── functional/
+│   ├── test_edit_command.py       # CLI edit command tests
+│   ├── test_edit_validation_fixes.py # Validation and error handling tests
+│   └── test_rotation.py           # File rotation functionality tests
+└── unit/                          # Unit tests for individual components
 ```
 
 ## Running Tests
@@ -28,7 +35,7 @@ task test:parallel
 # Run tests with 8 cores (good balance of speed and reliability)
 task test:parallel-fast
 
-# Run all tests including end-to-end validation
+# Run all tests across supported Python versions found in the .python_versions file  (3.11, 3.12, 3.13)
 task test:all
 
 # Run end-to-end tests without coverage (prevents conflicts)
@@ -425,7 +432,7 @@ Tests run automatically on:
 
 Tests run across:
 
-- Python 3.11, 3.12, 3.13
+- Python 3.11, 3.12, 3.13 (as defined in `.python-versions`)
 - Multiple operating systems (Linux, macOS, Windows)
 - Different dependency versions
 
