@@ -125,14 +125,15 @@ def _create_success_row(result: CheckResult, show_urls: bool) -> list[str]:
         return _create_error_row(result, show_urls)
 
     status = "[green]Up to date" if not candidate.needs_update else "[yellow]Update available"
-    current = candidate.current_version or "[dim]None"
+    current = _format_version_display(candidate.current_version) or "[dim]None"
+    latest = _format_version_display(candidate.latest_version)
     update_indicator = "✓" if candidate.needs_update else "-"
 
     row = [
         result.app_name,
         status,
         current,
-        candidate.latest_version,
+        latest,
         update_indicator,
     ]
 
@@ -143,6 +144,23 @@ def _create_success_row(result: CheckResult, show_urls: bool) -> list[str]:
         row.append(url)
 
     return row
+
+
+def _format_version_display(version: str | None) -> str:
+    """Format version for display, showing dates in a user-friendly format."""
+    if not version:
+        return ""
+
+    # Check if version is in date format (YYYY-MM-DD or YYYYMMDD)
+    if re.match(r"^\d{4}-\d{2}-\d{2}$", version):
+        # Already in YYYY-MM-DD format, return as-is
+        return version
+    elif re.match(r"^\d{8}$", version):
+        # Convert YYYYMMDD to YYYY-MM-DD format
+        return f"{version[:4]}-{version[4:6]}-{version[6:8]}"
+    else:
+        # Regular semantic version or other format
+        return version
 
 
 def _display_url_table(results: list[CheckResult]) -> None:

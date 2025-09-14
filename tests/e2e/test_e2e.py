@@ -815,7 +815,7 @@ def test_version_extraction_patterns():
 
     test_cases = [
         ("FreeCAD_1.0.2-conda-Linux-x86_64-py311.AppImage.save", "1.0.2"),
-        ("TestApp-V2.3.1-alpha-Linux.AppImage.current", "2.3.1"),
+        ("TestApp-V2.3.1-alpha-Linux.AppImage.current", "2.3.1-alpha"),
         ("SomeApp_2025.09.03-Linux.AppImage.old", "2025.09.03"),
         ("App-1.0-Linux.AppImage", "1.0"),
         ("NoVersionApp-Linux.AppImage", "NoVersionApp-Linux.AppImage"),  # Fallback

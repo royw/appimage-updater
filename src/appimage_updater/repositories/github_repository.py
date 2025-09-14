@@ -6,6 +6,7 @@ wrapping the existing GitHub client functionality.
 
 from __future__ import annotations
 
+import re
 import urllib.parse
 from typing import Any
 
@@ -53,21 +54,25 @@ class GitHubRepository(RepositoryClient):
     async def get_latest_release(self, repo_url: str) -> Release:
         """Get the latest stable release for a GitHub repository."""
         try:
-            return await self._github_client.get_latest_release(repo_url)
+            release = await self._github_client.get_latest_release(repo_url)
+            return self._convert_nightly_version(release)
         except GitHubClientError as e:
             raise RepositoryError(str(e)) from e
 
     async def get_latest_release_including_prerelease(self, repo_url: str) -> Release:
         """Get the latest release including prereleases for a GitHub repository."""
         try:
-            return await self._github_client.get_latest_release_including_prerelease(repo_url)
+            release = await self._github_client.get_latest_release_including_prerelease(repo_url)
+            return self._convert_nightly_version(release)
         except GitHubClientError as e:
             raise RepositoryError(str(e)) from e
 
     async def get_releases(self, repo_url: str, limit: int = 10) -> list[Release]:
         """Get recent releases for a GitHub repository."""
         try:
-            return await self._github_client.get_releases(repo_url, limit=limit)
+            releases = await self._github_client.get_releases(repo_url, limit=limit)
+            # Convert nightly build versions to date-based versions
+            return [self._convert_nightly_version(release) for release in releases]
         except GitHubClientError as e:
             raise RepositoryError(str(e)) from e
 
@@ -106,6 +111,45 @@ class GitHubRepository(RepositoryClient):
         from ..pattern_generator import fetch_appimage_pattern_from_github
 
         return await fetch_appimage_pattern_from_github(url)
+
+    def _convert_nightly_version(self, release: Release) -> Release:
+        """Convert nightly build release versions to date-based versions."""
+        # Check if this is a nightly build release
+        if self._is_nightly_release(release):
+            # For nightly builds, use the most recent asset creation date instead of release publication date
+            # This ensures we get the actual build date, not the original release date
+            if release.assets:
+                # Find the most recent asset creation date
+                most_recent_asset_date = max(asset.created_at for asset in release.assets)
+                date_version = most_recent_asset_date.strftime("%Y-%m-%d")
+            else:
+                # Fallback to published date if no assets
+                date_version = release.published_at.strftime("%Y-%m-%d")
+
+            # Create a new release with date-based version
+            return Release(
+                version=date_version,
+                tag_name=release.tag_name,
+                published_at=release.published_at,
+                assets=release.assets,
+                is_prerelease=release.is_prerelease,
+                is_draft=release.is_draft,
+            )
+        return release
+
+    def _is_nightly_release(self, release: Release) -> bool:
+        """Check if a release is a nightly build."""
+        nightly_patterns = [
+            r"nightly",
+            r"continuous",
+            r"dev",
+            r"development",
+            r"snapshot",
+        ]
+
+        # Check version/tag name
+        version_text = f"{release.version} {release.tag_name}".lower()
+        return any(re.search(pattern, version_text, re.IGNORECASE) for pattern in nightly_patterns)
 
     @property
     def github_client(self) -> GitHubClient:

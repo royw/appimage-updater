@@ -129,15 +129,33 @@ class VersionChecker:
         matched_files = []
 
         for file_path in app_config.download_dir.iterdir():
-            if file_path.is_file() and pattern.search(file_path.name):
-                matched_files.append(file_path)
+            if file_path.is_file():
+                # For rotation-enabled apps, check if the base filename matches the pattern
+                # by removing rotation suffixes (.current, .old, .old2, etc.)
+                filename = file_path.name
+                base_filename = filename
+
+                # Remove rotation suffixes to check against pattern
+                rotation_suffixes = [".current", ".old", ".old2", ".old3", ".old4"]
+                for suffix in rotation_suffixes:
+                    if filename.endswith(suffix):
+                        base_filename = filename[: -len(suffix)]
+                        break
+
+                if pattern.search(base_filename):
+                    matched_files.append(file_path)
 
         if not matched_files:
             return None
 
-        # Sort by modification time (most recent first) to get the current version
-        matched_files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-        current_file = matched_files[0]
+        # Prioritize .current files, then sort by modification time
+        current_files = [f for f in matched_files if f.name.endswith(".current")]
+        if current_files:
+            current_file = current_files[0]  # Should only be one .current file
+        else:
+            # Fallback to most recent file
+            matched_files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+            current_file = matched_files[0]
 
         # First try to get version from metadata file
         version_from_metadata = self._get_version_from_metadata(current_file)
@@ -171,18 +189,60 @@ class VersionChecker:
                     # Remove 'v' prefix if present
                     if version_str.startswith("v"):
                         version_str = version_str[1:]
-                    return version_str
+
+                    # Convert nightly build versions to date-based format
+                    converted_version = self._convert_nightly_version_string(version_str)
+                    if converted_version is not None:
+                        return converted_version
+                    # If conversion returned None, fall back to filename extraction
+                    break
         except (OSError, UnicodeDecodeError):
             # Failed to read metadata file
             pass
 
         return None
 
+    def _convert_nightly_version_string(self, version_str: str) -> str | None:
+        """Convert nightly build version strings to date format."""
+        import re
+
+        # If it's already in date format (YYYY-MM-DD), return as-is
+        if re.match(r"^\d{4}-\d{2}-\d{2}$", version_str):
+            return version_str
+
+        # Try to extract date from version string first
+        date_match = re.search(r"(\d{4}[-.]?\d{2}[-.]?\d{2})", version_str)
+        if date_match:
+            date_str = date_match.group(1)
+            # Normalize date format to YYYY-MM-DD
+            date_str = re.sub(r"[-.]", "-", date_str)
+            if re.match(r"^\d{4}-\d{2}-\d{2}$", date_str):
+                return date_str
+
+        # Check if this is a nightly build version
+        nightly_patterns = [
+            r"nightly",
+            r"continuous",
+            r"dev",
+            r"development",
+            r"snapshot",
+        ]
+
+        version_lower = version_str.lower()
+        if any(pattern in version_lower for pattern in nightly_patterns):
+            # Return None to indicate no meaningful version found in generic nightly strings
+            # This allows fallback to filename-based version extraction
+            return None
+
+        return version_str
+
     def _extract_version_from_filename(self, filename: str) -> str:
         """Extract version from filename using common patterns."""
         # Common version patterns
         patterns = [
-            r"v?(\d+\.\d+\.\d+(?:\.\d+)?)",  # v1.2.3 or 1.2.3.4
+            # v1.2.3 with pre-release suffixes only
+            r"v?(\d+\.\d+\.\d+(?:\.\d+)?(?:-(?:alpha|beta|rc|dev|pre|a|b)\d*)?)",
+            r"v?(\d+\.\d+\.\d+(?:\.\d+)?)",  # v1.2.3 or 1.2.3.4 without suffixes
             r"(\d{4}-\d{2}-\d{2})",  # 2023-12-01 (date-based versions)
             r"(\d{8})",  # 20231201 (compact date format)
             r"(\d+\.\d+)",  # 1.2

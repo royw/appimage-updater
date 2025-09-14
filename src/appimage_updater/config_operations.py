@@ -602,9 +602,26 @@ def validate_symlink_path_characters(expanded_path: Path, original_path: str) ->
 
 def normalize_and_validate_symlink_path(expanded_path: Path, original_path: str) -> Path:
     """Normalize path and validate parent directory and extension."""
-    # Normalize path to remove redundant separators and resolve ..
+    # Normalize path to remove redundant separators and resolve .. but don't follow symlinks
+    # We need to handle the case where the symlink itself might exist but we want to validate
+    # the intended path, not the target it points to
     try:
-        normalized_path = expanded_path.resolve()
+        # Use resolve() but catch cases where it follows existing symlinks
+        if expanded_path.is_symlink():
+            # If it's already a symlink, just normalize the path without following it
+            normalized_path = Path(str(expanded_path)).absolute()
+            # Manually resolve .. segments without following symlinks
+            parts: list[str] = []
+            for part in normalized_path.parts:
+                if part == "..":
+                    if parts:
+                        parts.pop()
+                elif part != ".":
+                    parts.append(part)
+            normalized_path = Path(*parts) if parts else Path("/")
+        else:
+            # If it's not a symlink, we can safely resolve it
+            normalized_path = expanded_path.resolve()
     except (OSError, ValueError) as e:
         raise ValueError(f"Cannot resolve symlink path '{original_path}': {e}") from e
 

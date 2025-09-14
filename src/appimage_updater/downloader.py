@@ -296,8 +296,22 @@ class Downloader:
         try:
             info_file_path = candidate.download_path.with_suffix(candidate.download_path.suffix + ".info")
 
+            # For date-based versioning, use asset creation date instead of release name
+            # Check if latest_version looks like a release name rather than a version
+            if (
+                candidate.latest_version
+                and any(word in candidate.latest_version.lower() for word in ["nightly", "build", "snapshot", "dev"])
+                and candidate.asset
+                and candidate.asset.created_at
+            ):
+                # Use asset creation date for nightly/development builds
+                version_info = candidate.asset.created_at.strftime("%Y-%m-%d")
+            else:
+                # Use the standard version for regular releases
+                version_info = candidate.latest_version
+
             # Create metadata content
-            metadata_content = f"Version: v{candidate.latest_version}\n"
+            metadata_content = f"Version: v{version_info}\n"
 
             # Write metadata file
             info_file_path.write_text(metadata_content)
