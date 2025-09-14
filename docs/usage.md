@@ -35,37 +35,43 @@ For installation instructions, see the [Installation Guide](installation.md).
 Check for and optionally download updates.
 
 ```bash
-appimage-updater check [OPTIONS]
+appimage-updater check [OPTIONS] [APP_NAMES...]
 ```
+
+**Arguments:**
+
+- `APP_NAMES`: Names of applications to check (case-insensitive, supports glob patterns like 'Orca*'). Multiple names can be specified. If not provided, checks all applications.
 
 **Options:**
 
 - `--config, -c PATH`: Use specific configuration file
 - `--config-dir, -d PATH`: Use specific configuration directory
 - `--dry-run`: Check for updates without downloading
-- `--app, -a NAME`: Check only specific application (case-insensitive)
 - `--debug`: Enable debug logging for troubleshooting
 
 **Examples:**
 
 ```bash
-# Check with default configuration
+# Check all applications with default configuration
 appimage-updater check
 
 # Dry run to see what would be updated
 appimage-updater check --dry-run
 
-# Use custom config file
+# Check specific application
+appimage-updater check FreeCAD
+
+# Check multiple applications
+appimage-updater check FreeCAD VSCode OrcaSlicer
+
+# Check applications using glob patterns
+appimage-updater check "Orca*" "Free*"
+
+# Check with custom config file
 appimage-updater check --config /path/to/config.json
 
-# Use custom config directory
-appimage-updater check --config-dir /path/to/configs/
-
-# Check specific application with debug logging
-appimage-updater --debug check --app freecad
-
-# Check specific application (dry run) with debug logging  
-appimage-updater --debug check --app freecad --dry-run
+# Check with debug logging
+appimage-updater --debug check FreeCAD --dry-run
 ```
 
 ### `init`
@@ -164,15 +170,15 @@ appimage-updater list --config /path/to/config.json
 
 ### `show`
 
-Show detailed information about a specific application.
+Show detailed information about applications.
 
 ```bash
-appimage-updater show [OPTIONS] APP_NAME
+appimage-updater show [OPTIONS] APP_NAMES...
 ```
 
 **Arguments:**
 
-- `APP_NAME`: Name of the application (case-insensitive)
+- `APP_NAMES`: Names of applications to display information for (case-insensitive, supports glob patterns like 'Orca*'). Multiple names can be specified.
 
 **Options:**
 
@@ -182,8 +188,14 @@ appimage-updater show [OPTIONS] APP_NAME
 **Examples:**
 
 ```bash
-# Show application details
+# Show single application details
 appimage-updater show FreeCAD
+
+# Show multiple applications
+appimage-updater show FreeCAD VSCode OrcaSlicer
+
+# Show applications using glob patterns
+appimage-updater show "Orca*" "Free*"
 
 # Show with custom config
 appimage-updater show MyApp --config /path/to/config.json
@@ -191,15 +203,15 @@ appimage-updater show MyApp --config /path/to/config.json
 
 ### `edit`
 
-Edit configuration for an existing application.
+Edit configuration for existing applications.
 
 ```bash
-appimage-updater edit [OPTIONS] APP_NAME
+appimage-updater edit [OPTIONS] APP_NAMES...
 ```
 
 **Arguments:**
 
-- `APP_NAME`: Name of the application to edit (case-insensitive)
+- `APP_NAMES`: Names of applications to edit (case-insensitive, supports glob patterns like 'Orca*'). Multiple names can be specified.
 
 **Options:**
 
@@ -225,8 +237,17 @@ appimage-updater edit [OPTIONS] APP_NAME
 **Examples:**
 
 ```bash
-# Enable prerelease versions
+# Enable prerelease versions for single application
 appimage-updater edit GitHubDesktop --prerelease
+
+# Edit multiple applications at once
+appimage-updater edit FreeCAD VSCode OrcaSlicer --enable
+
+# Edit applications using glob patterns
+appimage-updater edit "Orca*" --prerelease
+
+# Disable multiple applications
+appimage-updater edit App1 App2 App3 --disable
 
 # Add rotation with symlink
 appimage-updater edit MyApp --rotation --symlink ~/bin/myapp.AppImage
@@ -249,30 +270,39 @@ appimage-updater edit MyApp --no-direct --url https://github.com/user/repo
 
 ### `remove`
 
-Remove an application from the configuration.
+Remove applications from the configuration.
 
 ```bash
-appimage-updater remove [OPTIONS] APP_NAME
+appimage-updater remove [OPTIONS] APP_NAMES...
 ```
 
 **Arguments:**
 
-- `APP_NAME`: Name of the application to remove (case-insensitive)
+- `APP_NAMES`: Names of applications to remove from configuration (case-insensitive, supports glob patterns like 'Orca*'). Multiple names can be specified.
 
 **Options:**
 
 - `--config, -c PATH`: Configuration file path
 - `--config-dir, -d PATH`: Configuration directory path
-- `--yes, -y`: Auto-confirm removal
+- `--force, -f`: Force operation without confirmation prompts (use with caution)
 
 **Examples:**
 
 ```bash
-# Remove application (with confirmation)
+# Remove single application (with confirmation)
 appimage-updater remove OldApp
 
+# Remove multiple applications
+appimage-updater remove App1 App2 App3
+
+# Remove applications using glob patterns
+appimage-updater remove "Old*" "Deprecated*"
+
 # Remove without confirmation
-appimage-updater remove --yes DeprecatedApp
+appimage-updater remove --force DeprecatedApp
+
+# Remove multiple apps without confirmation
+appimage-updater remove --force App1 App2 App3
 ```
 
 ## Configuration Examples

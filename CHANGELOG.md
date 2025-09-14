@@ -6,6 +6,33 @@ All notable changes to AppImage Updater will be documented in this file.
 
 ### New Features
 
+- **MAJOR**: Multi-App CLI Operations Support
+
+  - **PROBLEM SOLVED**: Users can now operate on multiple applications simultaneously instead of one at a time
+  - **MULTIPLE APP NAMES**: All commands (`check`, `show`, `edit`, `remove`) now accept multiple application names
+  - **GLOB PATTERN SUPPORT**: Use patterns like `"Orca*"` or `"*Studio"` to match multiple applications by name
+  - **CASE-INSENSITIVE**: All application name matching is case-insensitive for better usability
+  - **BATCH OPERATIONS**: Perform bulk operations efficiently:
+    - `appimage-updater check FreeCAD VSCode OrcaSlicer` - check multiple apps
+    - `appimage-updater edit "Test*" --disable` - disable all test applications
+    - `appimage-updater remove "Old*" --force` - remove all old applications
+    - `appimage-updater show App1 App2 App3` - show details for multiple apps
+  - **INTELLIGENT ERROR HANDLING**: Clear reporting of found vs. not-found applications
+  - **BACKWARD COMPATIBLE**: Single app usage continues to work exactly as before
+  - **CLI ENHANCEMENTS**:
+    - Updated command signatures to accept multiple `APP_NAMES...` arguments
+    - Enhanced help text with glob pattern examples
+    - Consistent behavior across all multi-app commands
+  - **ARCHITECTURE**:
+    - New `_filter_apps_by_names()` function for multi-app filtering
+    - Enhanced `_filter_apps_by_single_name()` with glob pattern support using `fnmatch`
+    - Unified error handling and user feedback for missing applications
+  - **TESTING**: 17 comprehensive tests covering all multi-app scenarios:
+    - Multiple app names with mixed existing/non-existing apps
+    - Glob pattern matching and case-insensitive operations
+    - Error handling and exit codes for various scenarios
+    - Integration with all CLI commands (check, show, edit, remove)
+
 - **MAJOR**: Automatic ZIP File Extraction Support
 
   - **PROBLEM SOLVED**: Applications like BambuStudio that distribute AppImages inside ZIP files now work seamlessly

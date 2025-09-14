@@ -227,6 +227,55 @@ appimage-updater edit MyApp --no-rotation
 
 For detailed setup, desktop integration, and troubleshooting, see the [Rotation Guide](rotation.md).
 
+## Multi-App Operations
+
+AppImage Updater supports operating on multiple applications simultaneously using app names, lists, or glob patterns.
+
+### Multiple App Names
+
+```bash
+# Check specific applications
+appimage-updater check FreeCAD VSCode OrcaSlicer
+
+# Show details for multiple apps
+appimage-updater show App1 App2 App3
+
+# Edit multiple applications at once
+appimage-updater edit FreeCAD VSCode --enable
+
+# Remove multiple applications
+appimage-updater remove OldApp1 OldApp2 --force
+```
+
+### Glob Patterns
+
+Use glob patterns to match multiple applications by name:
+
+```bash
+# Check all applications starting with "Orca"
+appimage-updater check "Orca*"
+
+# Show all applications ending with "Studio"
+appimage-updater show "*Studio"
+
+# Disable all test applications
+appimage-updater edit "Test*" --disable
+
+# Remove all deprecated applications
+appimage-updater remove "Deprecated*" --force
+```
+
+### Case-Insensitive Matching
+
+All app name matching is case-insensitive:
+
+```bash
+# These are equivalent
+appimage-updater show freecad
+appimage-updater show FreeCAD
+appimage-updater show FREECAD
+```
+
 ## Quick Reference
 
 ### Essential Commands
@@ -238,10 +287,10 @@ For complete command documentation including all options and examples, see the [
 | `appimage-updater init` | Initialize configuration |
 | `appimage-updater add` | Add new application |
 | `appimage-updater list` | List all applications |
-| `appimage-updater check` | Check for updates |
-| `appimage-updater show <app>` | Show app details |
-| `appimage-updater edit <app>` | Edit app settings |
-| `appimage-updater remove <app>` | Remove application |
+| `appimage-updater check [apps...]` | Check for updates (all or specific apps) |
+| `appimage-updater show <apps...>` | Show app details (supports multiple apps) |
+| `appimage-updater edit <apps...>` | Edit app settings (supports multiple apps) |
+| `appimage-updater remove <apps...>` | Remove applications (supports multiple apps) |
 
 ### Common Options
 
