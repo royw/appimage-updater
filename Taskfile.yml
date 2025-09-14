@@ -125,8 +125,7 @@ tasks:
   test:pattern-matching:
     desc: Test pattern matching functionality specifically
     cmds:
-      - uv run pytest tests/e2e/test_e2e.py::TestPatternMatching -v
-      - uv run pytest tests/e2e/test_e2e.py::test_version_extraction_patterns -v
+      - uv run pytest tests/e2e/test_pattern_matching.py -v
       - uv run pytest tests/unit/test_intelligent_pattern_generation.py -v
 
   test:regression:
