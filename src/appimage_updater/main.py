@@ -112,7 +112,11 @@ _ADD_URL_ARGUMENT = typer.Argument(
     help="URL to the application repository or release page (e.g., GitHub repository URL)"
 )
 _ADD_DOWNLOAD_DIR_ARGUMENT = typer.Argument(
-    help="Directory where AppImage files will be downloaded (e.g., ~/Applications/AppName)"
+    default=None,
+    help=(
+        "Directory where AppImage files will be downloaded (e.g., ~/Applications/AppName). "
+        "If not provided, uses global default with auto-subdir if enabled."
+    ),
 )
 _CREATE_DIR_OPTION = typer.Option(
     False,
@@ -140,7 +144,10 @@ _RETAIN_OPTION = typer.Option(
 _SYMLINK_OPTION = typer.Option(
     None,
     "--symlink",
-    help="Path for managed symlink (enables rotation if not explicitly disabled)",
+    help=(
+        "Path for managed symlink (enables rotation if not explicitly disabled). "
+        "If no path provided, auto-generates based on app name."
+    ),
 )
 _ADD_PRERELEASE_OPTION = typer.Option(
     None,
@@ -176,6 +183,11 @@ _ADD_DIRECT_OPTION = typer.Option(
     None,
     "--direct/--no-direct",
     help="Treat URL as direct download link (bypasses repository detection)",
+)
+_ADD_AUTO_SUBDIR_OPTION = typer.Option(
+    None,
+    "--auto-subdir/--no-auto-subdir",
+    help="Enable or disable automatic subdirectory creation (overrides global default)",
 )
 
 # Edit command arguments and options
@@ -354,7 +366,7 @@ def list_apps(
 def add(
     name: str = _ADD_NAME_ARGUMENT,
     url: str = _ADD_URL_ARGUMENT,
-    download_dir: str = _ADD_DOWNLOAD_DIR_ARGUMENT,
+    download_dir: str | None = _ADD_DOWNLOAD_DIR_ARGUMENT,
     create_dir: bool = _CREATE_DIR_OPTION,
     yes: bool = _YES_OPTION,
     config_file: Path | None = _CONFIG_FILE_OPTION,
@@ -369,6 +381,7 @@ def add(
     checksum_required: bool | None = _ADD_CHECKSUM_REQUIRED_OPTION,
     pattern: str | None = _ADD_PATTERN_OPTION,
     direct: bool | None = _ADD_DIRECT_OPTION,
+    auto_subdir: bool | None = _ADD_AUTO_SUBDIR_OPTION,
 ) -> None:
     """Add a new application to the configuration.
 
@@ -438,14 +451,57 @@ def add(
             checksum_required,
             pattern,
             direct,
+            auto_subdir,
         )
     )
+
+
+def _log_repository_auth_status(url: str) -> None:
+    """Log repository authentication status for debugging."""
+    try:
+        repo_client = get_repository_client(url)
+        if hasattr(repo_client, "github_client"):
+            # This is a GitHub repository, show GitHub-specific auth info
+            from .github_auth import get_github_auth
+
+            auth = get_github_auth()
+            rate_info = auth.get_rate_limit_info()
+            if auth.is_authenticated:
+                logger.debug(f"GitHub API: Authenticated ({rate_info['limit']} req/hour via {auth.token_source})")
+            else:
+                logger.debug(
+                    f"GitHub API: Anonymous ({rate_info['limit']} req/hour) - Set GITHUB_TOKEN for higher limits"
+                )
+        else:
+            logger.debug(f"Repository type: {repo_client.repository_type}")
+    except Exception as e:
+        logger.debug(f"Could not determine repository authentication status: {e}")
+
+
+def _resolve_download_directory(
+    download_dir: str | None,
+    auto_subdir: bool | None,
+    global_config: Any,
+    name: str,
+) -> str:
+    """Resolve download directory using global defaults and auto-subdir overrides."""
+    if download_dir is None:
+        # Use explicit auto_subdir override if provided, otherwise use global default
+        if auto_subdir is not None:
+            # Override the global auto_subdir setting temporarily
+            base_dir = global_config.defaults.download_dir
+            return str(Path(base_dir) / name) if auto_subdir else base_dir
+        else:
+            # Use global defaults (respects global auto_subdir setting)
+            return str(global_config.defaults.get_default_download_dir(name))
+    else:
+        return download_dir
 
 
 async def _add(
     name: str,
     url: str,
-    download_dir: str,
+    download_dir: str | None,
     create_dir: bool,
     yes: bool,
     config_file: Path | None,
@@ -460,30 +516,14 @@ async def _add(
     checksum_required: bool | None,
     pattern: str | None,
     direct: bool | None,
+    auto_subdir: bool | None,
 ) -> None:
     """Async implementation of the add command."""
     try:
         logger.debug(f"Adding new application: {name}")
 
         # Show repository authentication status if debug logging is enabled
-        try:
-            repo_client = get_repository_client(url)
-            if hasattr(repo_client, "github_client"):
-                # This is a GitHub repository, show GitHub-specific auth info
-                from .github_auth import get_github_auth
-
-                auth = get_github_auth()
-                rate_info = auth.get_rate_limit_info()
-                if auth.is_authenticated:
-                    logger.debug(f"GitHub API: Authenticated ({rate_info['limit']} req/hour via {auth.token_source})")
-                else:
-                    logger.debug(
-                        f"GitHub API: Anonymous ({rate_info['limit']} req/hour) - Set GITHUB_TOKEN for higher limits"
-                    )
-            else:
-                logger.debug(f"Repository type: {repo_client.repository_type}")
-        except Exception as e:
-            logger.debug(f"Could not determine repository authentication status: {e}")
+        _log_repository_auth_status(url)
 
         # Validate and normalize URL
         validated_url = validate_and_normalize_add_url(url)
@@ -501,8 +541,11 @@ async def _add(
 
             global_config = GlobalConfig()
 
+        # Resolve download directory using global defaults if not provided
+        resolved_download_dir = _resolve_download_directory(download_dir, auto_subdir, global_config, name)
+
         # Handle directory path expansion and creation
-        expanded_download_dir = handle_add_directory_creation(download_dir, create_dir, yes)
+        expanded_download_dir = handle_add_directory_creation(resolved_download_dir, create_dir, yes)
 
         # Generate application configuration
         app_config, prerelease_auto_enabled = await generate_default_config(
