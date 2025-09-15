@@ -133,36 +133,32 @@ def handle_add_directory_creation(download_dir: str, create_dir: bool, yes: bool
 async def generate_default_config(
     name: str,
     url: str,
-    download_dir: str,
+    download_dir: str | None = None,
     rotation: bool | None = None,
-    retain: int = 3,
+    retain: int | None = None,
     symlink: str | None = None,
     prerelease: bool | None = None,
     checksum: bool | None = None,
-    checksum_algorithm: str = "sha256",
-    checksum_pattern: str = "{filename}-SHA256.txt",
+    checksum_algorithm: str | None = None,
+    checksum_pattern: str | None = None,
     checksum_required: bool | None = None,
     pattern: str | None = None,
     direct: bool | None = None,
+    global_config: Any = None,
 ) -> tuple[dict[str, Any], bool]:
     """Generate a default application configuration.
 
     Returns:
         tuple: (config_dict, prerelease_auto_enabled)
     """
-    # Determine checksum settings
-    checksum_enabled = True if checksum is None else checksum
-    checksum_required_final = False if checksum_required is None else checksum_required
+    defaults = global_config.defaults if global_config else None
 
-    # Handle prerelease detection - if not explicitly set, check if repo only has prereleases
-    prerelease_auto_enabled = False
-    if prerelease is None:
-        # Auto-detect if we should enable prereleases for repositories with only continuous builds
-        should_enable = await should_enable_prerelease(url)
-        prerelease_final = should_enable
-        prerelease_auto_enabled = should_enable
-    else:
-        prerelease_final = prerelease
+    # Apply global defaults for basic settings
+    download_dir = _get_effective_download_dir(download_dir, defaults, name)
+    checksum_config = _get_effective_checksum_config(
+        checksum, checksum_algorithm, checksum_pattern, checksum_required, defaults
+    )
+    prerelease_final, prerelease_auto_enabled = await _get_effective_prerelease_config(prerelease, defaults, url)
 
     config = {
         "name": name,
@@ -172,31 +168,107 @@ async def generate_default_config(
         "pattern": pattern if pattern is not None else await generate_appimage_pattern_async(name, url),
         "enabled": True,
         "prerelease": prerelease_final,
-        "checksum": {
-            "enabled": checksum_enabled,
-            "pattern": checksum_pattern,
-            "algorithm": checksum_algorithm,
-            "required": checksum_required_final,
-        },
+        "checksum": checksum_config,
     }
 
-    # Determine rotation settings
-    # If symlink is provided, enable rotation by default (unless explicitly disabled)
-    rotation_enabled = symlink is not None if rotation is None else rotation
-
-    # Always include rotation_enabled field for consistency
-    config["rotation_enabled"] = rotation_enabled
-
-    # Add additional rotation settings if enabled
-    if rotation_enabled:
-        config["retain_count"] = retain
-
-        # Add symlink_path if provided
-        if symlink:
-            # Expand user path
-            config["symlink_path"] = str(Path(symlink).expanduser())
+    # Apply rotation settings
+    _apply_rotation_config(config, rotation, retain, symlink, defaults, name)
 
     return config, prerelease_auto_enabled
+
+
+def _get_effective_download_dir(download_dir: str | None, defaults: Any, name: str) -> str:
+    """Get effective download directory with global defaults."""
+    if download_dir is not None:
+        return download_dir
+    if defaults:
+        return str(defaults.get_default_download_dir(name))
+    return str(Path.cwd() / name)
+
+
+def _get_effective_checksum_config(
+    checksum: bool | None,
+    checksum_algorithm: str | None,
+    checksum_pattern: str | None,
+    checksum_required: bool | None,
+    defaults: Any,
+) -> dict[str, Any]:
+    """Get effective checksum configuration with global defaults."""
+    if defaults:
+        enabled = defaults.checksum_enabled if checksum is None else checksum
+        algorithm = defaults.checksum_algorithm if checksum_algorithm is None else checksum_algorithm
+        pattern = defaults.checksum_pattern if checksum_pattern is None else checksum_pattern
+        required = defaults.checksum_required if checksum_required is None else checksum_required
+    else:
+        enabled = True if checksum is None else checksum
+        algorithm = "sha256" if checksum_algorithm is None else checksum_algorithm
+        pattern = "{filename}-SHA256.txt" if checksum_pattern is None else checksum_pattern
+        required = False if checksum_required is None else checksum_required
+
+    return {
+        "enabled": enabled,
+        "algorithm": algorithm,
+        "pattern": pattern,
+        "required": required,
+    }
+
+
+async def _get_effective_prerelease_config(prerelease: bool | None, defaults: Any, url: str) -> tuple[bool, bool]:
+    """Get effective prerelease configuration with global defaults."""
+    if prerelease is not None:
+        return prerelease, False
+
+    # Auto-detect if we should enable prereleases for repositories with only continuous builds
+    should_enable = await should_enable_prerelease(url)
+    if defaults:
+        # If global default is False but auto-detection says we should enable, use auto-detection
+        if not defaults.prerelease and should_enable:
+            return should_enable, True
+        return defaults.prerelease, False
+
+    return should_enable, should_enable
+
+
+def _determine_rotation_enabled(rotation: bool | None, symlink: str | None, defaults: Any) -> bool:
+    """Determine if rotation should be enabled based on parameters and defaults."""
+    if rotation is None and defaults:
+        return bool(defaults.rotation_enabled)
+    return symlink is not None if rotation is None else rotation
+
+
+def _apply_retain_count(config: dict[str, Any], retain: int | None, defaults: Any) -> None:
+    """Apply retain count configuration."""
+    if retain is None and defaults:
+        config["retain_count"] = defaults.retain_count
+    else:
+        config["retain_count"] = 3 if retain is None else retain
+
+
+def _apply_symlink_path(config: dict[str, Any], symlink: str | None, defaults: Any, name: str) -> None:
+    """Apply symlink path configuration."""
+    if symlink:
+        config["symlink_path"] = str(Path(symlink).expanduser())
+    elif defaults:
+        default_symlink = defaults.get_default_symlink_path(name)
+        if default_symlink is not None:
+            config["symlink_path"] = str(default_symlink)
+
+
+def _apply_rotation_config(
+    config: dict[str, Any],
+    rotation: bool | None,
+    retain: int | None,
+    symlink: str | None,
+    defaults: Any,
+    name: str,
+) -> None:
+    """Apply rotation configuration with global defaults."""
+    rotation_enabled = _determine_rotation_enabled(rotation, symlink, defaults)
+    config["rotation_enabled"] = rotation_enabled
+
+    if rotation_enabled:
+        _apply_retain_count(config, retain, defaults)
+        _apply_symlink_path(config, symlink, defaults, name)
 
 
 def add_application_to_config(app_config: dict[str, Any], config_file: Path | None, config_dir: Path | None) -> None:

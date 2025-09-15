@@ -67,6 +67,79 @@ AppImage Updater uses JSON configuration files to define which applications to m
   - `algorithm`: Hash algorithm - "sha256", "sha1", or "md5" (default: "sha256")
   - `required`: Whether verification is mandatory - fails download if checksum missing (default: false)
 
+## Global Configuration Management
+
+AppImage Updater provides a `config` command to manage global settings that apply to all applications. These settings provide defaults for new applications and control system-wide behavior.
+
+### Managing Global Settings
+
+```bash
+# View current global configuration
+appimage-updater config show
+
+# Set default download directory for new applications
+appimage-updater config set download-dir ~/Applications
+
+# Enable file rotation by default
+appimage-updater config set rotation-enabled true
+
+# Configure system performance
+appimage-updater config set concurrent-downloads 5
+appimage-updater config set timeout-seconds 60
+
+# Reset all settings to defaults
+appimage-updater config reset
+```
+
+### Configuration Display
+
+The `config show` command displays both user-friendly names and the actual setting names needed for the `config set` command:
+
+```text
+Global Configuration
+
+Basic Settings:
+Concurrent Downloads        (concurrent-downloads)    3
+Timeout (seconds)           (timeout-seconds)         30
+User Agent                                            AppImage-Updater/0.2.23
+
+Default Settings for New Applications:
+Download Directory          (download-dir)            /home/user/Applications
+Rotation Enabled            (rotation-enabled)        Yes
+Retain Count                (retain-count)            5
+Symlink Enabled             (symlink-enabled)         Yes
+Symlink Directory           (symlink-dir)             /home/user/bin
+Symlink Pattern             (symlink-pattern)         {appname}.AppImage
+Checksum Enabled            (checksum-enabled)        Yes
+Checksum Algorithm          (checksum-algorithm)      SHA256
+Checksum Pattern            (checksum-pattern)        {filename}-SHA256.txt
+Checksum Required           (checksum-required)       No
+Prerelease                  (prerelease)              No
+```
+
+The setting names in parentheses (e.g., `(download-dir)`) are what you use with the `config set` command.
+
+### Available Settings
+
+**System Settings:**
+
+- `concurrent-downloads`: Number of simultaneous downloads (1-10)
+- `timeout-seconds`: HTTP request timeout in seconds (5-300)
+
+**Default Settings for New Applications:**
+
+- `download-dir`: Default download directory
+- `symlink-dir`: Default symlink directory
+- `symlink-pattern`: Default symlink filename pattern
+- `rotation-enabled`: Enable file rotation by default (true/false)
+- `symlink-enabled`: Enable symlinks by default (true/false)
+- `retain-count`: Default number of old files to retain (1-10)
+- `checksum-enabled`: Enable checksum verification by default (true/false)
+- `checksum-algorithm`: Default checksum algorithm (sha256/sha1/md5)
+- `checksum-pattern`: Default checksum file pattern
+- `checksum-required`: Make checksum verification required by default (true/false)
+- `prerelease`: Include prerelease versions by default (true/false)
+
 ## Configuration Locations
 
 AppImage Updater looks for configuration in the following order:

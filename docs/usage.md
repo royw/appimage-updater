@@ -305,6 +305,102 @@ appimage-updater remove --force DeprecatedApp
 appimage-updater remove --force App1 App2 App3
 ```
 
+### `config`
+
+Manage global configuration settings that apply to all applications.
+
+```bash
+appimage-updater config [OPTIONS] ACTION [SETTING] [VALUE]
+```
+
+**Actions:**
+
+- `show`: Display current global configuration
+- `set`: Update a configuration setting
+- `reset`: Reset all settings to defaults
+- `show-effective`: Show effective configuration for a specific application
+
+**Options:**
+
+- `--config, -c PATH`: Configuration file path
+- `--config-dir, -d PATH`: Configuration directory path
+- `--app TEXT`: Application name (required for show-effective action)
+
+**Available Settings:**
+
+- `download-dir`: Default download directory for new applications
+- `symlink-dir`: Default symlink directory for new applications
+- `symlink-pattern`: Default symlink filename pattern
+- `rotation-enabled`: Enable file rotation by default (true/false)
+- `symlink-enabled`: Enable symlinks by default (true/false)
+- `retain-count`: Default number of old files to retain (1-10)
+- `checksum-enabled`: Enable checksum verification by default (true/false)
+- `checksum-algorithm`: Default checksum algorithm (sha256/sha1/md5)
+- `checksum-pattern`: Default checksum file pattern
+- `checksum-required`: Make checksum verification required by default (true/false)
+- `prerelease`: Include prerelease versions by default (true/false)
+- `concurrent-downloads`: Number of simultaneous downloads (1-10)
+- `timeout-seconds`: HTTP request timeout in seconds (5-300)
+
+**Examples:**
+
+```bash
+# Show current global configuration
+appimage-updater config show
+
+# Set default download directory
+appimage-updater config set download-dir ~/Applications
+
+# Enable rotation by default for new applications
+appimage-updater config set rotation-enabled true
+
+# Set default symlink directory
+appimage-updater config set symlink-dir ~/bin
+
+# Configure concurrent downloads
+appimage-updater config set concurrent-downloads 5
+
+# Set timeout for HTTP requests
+appimage-updater config set timeout-seconds 60
+
+# Enable prerelease versions by default
+appimage-updater config set prerelease true
+
+# Reset all settings to defaults
+appimage-updater config reset
+
+# Show effective configuration for a specific application
+appimage-updater config show-effective --app FreeCAD
+```
+
+**Configuration Display Format:**
+
+The `config show` command displays both user-friendly names and the setting names needed for the `config set` command:
+
+```text
+Global Configuration
+
+Basic Settings:
+Concurrent Downloads        (concurrent-downloads)    3
+Timeout (seconds)           (timeout-seconds)         30
+User Agent                                            AppImage-Updater/0.2.23
+
+Default Settings for New Applications:
+Download Directory          (download-dir)            /home/user/Applications
+Rotation Enabled            (rotation-enabled)        Yes
+Retain Count                (retain-count)            5
+Symlink Enabled             (symlink-enabled)         Yes
+Symlink Directory           (symlink-dir)             /home/user/bin
+Symlink Pattern             (symlink-pattern)         {appname}.AppImage
+Checksum Enabled            (checksum-enabled)        Yes
+Checksum Algorithm          (checksum-algorithm)      SHA256
+Checksum Pattern            (checksum-pattern)        {filename}-SHA256.txt
+Checksum Required           (checksum-required)       No
+Prerelease                  (prerelease)              No
+```
+
+The setting names in parentheses (e.g., `(download-dir)`) are what you use with the `config set` command.
+
 ### `repository`
 
 Examine repository information for configured applications.

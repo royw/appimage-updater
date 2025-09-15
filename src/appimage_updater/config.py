@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -95,6 +95,81 @@ class ApplicationConfig(BaseModel):
             raise ValueError(msg)
 
 
+class DefaultsConfig(BaseModel):
+    """Default settings for new applications."""
+
+    download_dir: Path | None = Field(
+        default=None,
+        description="Default download directory (None means no global default)",
+    )
+    rotation_enabled: bool = Field(
+        default=False,
+        description="Enable file rotation by default",
+    )
+    retain_count: int = Field(
+        default=3,
+        ge=1,
+        le=10,
+        description="Default number of old files to retain",
+    )
+    symlink_enabled: bool = Field(
+        default=False,
+        description="Enable automatic symlink creation by default",
+    )
+    symlink_dir: Path | None = Field(
+        default=None,
+        description="Default directory for symlinks (None means no global default)",
+    )
+    symlink_pattern: str = Field(
+        default="{appname}.AppImage",
+        description="Default pattern for symlink names",
+    )
+    checksum_enabled: bool = Field(
+        default=True,
+        description="Enable checksum verification by default",
+    )
+    checksum_algorithm: Literal["sha256", "sha1", "md5"] = Field(
+        default="sha256",
+        description="Default checksum algorithm",
+    )
+    checksum_pattern: str = Field(
+        default="{filename}-SHA256.txt",
+        description="Default checksum file pattern",
+    )
+    checksum_required: bool = Field(
+        default=False,
+        description="Require checksum verification by default",
+    )
+    prerelease: bool = Field(
+        default=False,
+        description="Include prerelease versions by default",
+    )
+
+    @field_validator("download_dir", "symlink_dir")
+    @classmethod
+    def validate_paths(cls, v: Path | None) -> Path | None:
+        """Validate and expand user paths."""
+        if v is not None:
+            return v.expanduser()
+        return v
+
+    def get_default_download_dir(self, app_name: str) -> Path:
+        """Get effective download directory for an app."""
+        if self.download_dir is not None:
+            # Use global default with app subdirectory
+            return self.download_dir / app_name
+        else:
+            # Fall back to current directory with app name
+            return Path.cwd() / app_name
+
+    def get_default_symlink_path(self, app_name: str) -> Path | None:
+        """Get effective symlink path for an app."""
+        if self.symlink_enabled and self.symlink_dir is not None:
+            symlink_name = self.symlink_pattern.format(appname=app_name)
+            return self.symlink_dir / symlink_name
+        return None
+
+
 class GlobalConfig(BaseModel):
     """Global configuration settings."""
 
@@ -103,6 +178,10 @@ class GlobalConfig(BaseModel):
     user_agent: str = Field(
         default_factory=lambda: _get_default_user_agent(),
         description="User agent for HTTP requests",
+    )
+    defaults: DefaultsConfig = Field(
+        default_factory=DefaultsConfig,
+        description="Default settings for new applications",
     )
 
 
@@ -115,3 +194,90 @@ class Config(BaseModel):
     def get_enabled_apps(self) -> list[ApplicationConfig]:
         """Get list of enabled applications."""
         return [app for app in self.applications if app.enabled]
+
+    def apply_global_defaults_to_config(self, app_config: dict[str, Any], app_name: str) -> dict[str, Any]:
+        """Apply global defaults to an application configuration dictionary."""
+        defaults = self.global_config.defaults
+
+        # Apply download directory default if not specified
+        if "download_dir" not in app_config or app_config["download_dir"] is None:
+            app_config["download_dir"] = str(defaults.get_default_download_dir(app_name))
+
+        # Apply rotation and symlink defaults
+        self._apply_rotation_defaults(app_config, defaults, app_name)
+
+        # Apply checksum defaults
+        self._apply_checksum_defaults(app_config, defaults)
+
+        # Apply prerelease default if not specified
+        if "prerelease" not in app_config:
+            app_config["prerelease"] = defaults.prerelease
+
+        return app_config
+
+    def _apply_rotation_defaults(self, app_config: dict[str, Any], defaults: DefaultsConfig, app_name: str) -> None:
+        """Apply rotation-related defaults."""
+        if "rotation_enabled" not in app_config:
+            app_config["rotation_enabled"] = defaults.rotation_enabled
+
+        if "retain_count" not in app_config and app_config.get("rotation_enabled", False):
+            app_config["retain_count"] = defaults.retain_count
+
+        # Apply symlink defaults if not specified and rotation is enabled
+        if app_config.get("rotation_enabled", False) and "symlink_path" not in app_config:
+            default_symlink = defaults.get_default_symlink_path(app_name)
+            if default_symlink is not None:
+                app_config["symlink_path"] = str(default_symlink)
+
+    def _apply_checksum_defaults(self, app_config: dict[str, Any], defaults: DefaultsConfig) -> None:
+        """Apply checksum-related defaults."""
+        if "checksum" not in app_config:
+            app_config["checksum"] = {}
+
+        checksum_config = app_config["checksum"]
+        if "enabled" not in checksum_config:
+            checksum_config["enabled"] = defaults.checksum_enabled
+        if "algorithm" not in checksum_config:
+            checksum_config["algorithm"] = defaults.checksum_algorithm
+        if "pattern" not in checksum_config:
+            checksum_config["pattern"] = defaults.checksum_pattern
+        if "required" not in checksum_config:
+            checksum_config["required"] = defaults.checksum_required
+
+    def get_effective_config_for_app(self, app_name: str) -> dict[str, Any] | None:
+        """Get the effective configuration for an app (global defaults + app-specific settings)."""
+        # Find the app in the configuration
+        app = None
+        for application in self.applications:
+            if application.name.lower() == app_name.lower():
+                app = application
+                break
+
+        if app is None:
+            return None
+
+        # Convert app to dict
+        app_dict = {
+            "name": app.name,
+            "source_type": app.source_type,
+            "url": app.url,
+            "download_dir": str(app.download_dir),
+            "pattern": app.pattern,
+            "enabled": app.enabled,
+            "prerelease": app.prerelease,
+            "rotation_enabled": app.rotation_enabled,
+            "checksum": {
+                "enabled": app.checksum.enabled,
+                "algorithm": app.checksum.algorithm,
+                "pattern": app.checksum.pattern,
+                "required": app.checksum.required,
+            },
+        }
+
+        # Add optional fields
+        if hasattr(app, "retain_count"):
+            app_dict["retain_count"] = app.retain_count
+        if hasattr(app, "symlink_path") and app.symlink_path is not None:
+            app_dict["symlink_path"] = str(app.symlink_path)
+
+        return app_dict

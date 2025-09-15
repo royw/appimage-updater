@@ -15,6 +15,12 @@ from rich.console import Console
 
 from ._version import __version__
 from .config import ApplicationConfig, Config
+from .config_command import (
+    reset_global_config,
+    set_global_config_value,
+    show_effective_config,
+    show_global_config,
+)
 from .config_loader import ConfigLoadError, get_default_config_dir
 from .config_operations import (
     add_application_to_config,
@@ -485,6 +491,16 @@ async def _add(
         # Validate rotation/symlink consistency
         validate_add_rotation_config(rotation, symlink)
 
+        # Load global configuration for defaults
+        try:
+            config = load_config(config_file, config_dir)
+            global_config = config.global_config
+        except ConfigLoadError:
+            # If no config exists yet, use default global config
+            from .config import GlobalConfig
+
+            global_config = GlobalConfig()
+
         # Handle directory path expansion and creation
         expanded_download_dir = handle_add_directory_creation(download_dir, create_dir, yes)
 
@@ -503,6 +519,7 @@ async def _add(
             checksum_required,
             pattern,
             direct,
+            global_config,
         )
 
         # Add the application to configuration
@@ -1264,6 +1281,40 @@ async def _handle_downloads(config: Any, candidates: list[Any], yes: bool = Fals
     successful_downloads = sum(1 for r in download_results if r.success)
     failed_downloads = len(download_results) - successful_downloads
     logger.debug(f"Download summary: {successful_downloads} successful, {failed_downloads} failed")
+
+
+@app.command()
+def config(
+    action: str = typer.Argument(help="Action: show, set, reset, show-effective"),
+    setting: str = typer.Argument(default="", help="Setting name (for 'set' action)"),
+    value: str = typer.Argument(default="", help="Setting value (for 'set' action)"),
+    app_name: str = typer.Option("", "--app", help="Application name (for 'show-effective' action)"),
+    config_file: Path = _CONFIG_FILE_OPTION,
+    config_dir: Path = _CONFIG_DIR_OPTION,
+    debug: bool = _DEBUG_OPTION,
+) -> None:
+    """Manage global configuration settings."""
+    configure_logging(debug)
+    if action == "show":
+        show_global_config(config_file, config_dir)
+    elif action == "set":
+        if not setting or not value:
+            console.print("[red]Error: 'set' action requires both setting and value")
+            console.print("[yellow]Usage: appimage-updater config set <setting> <value>")
+            raise typer.Exit(1)
+        set_global_config_value(setting, value, config_file, config_dir)
+    elif action == "reset":
+        reset_global_config(config_file, config_dir)
+    elif action == "show-effective":
+        if not app_name:
+            console.print("[red]Error: 'show-effective' action requires --app parameter")
+            console.print("[yellow]Usage: appimage-updater config show-effective --app <app-name>")
+            raise typer.Exit(1)
+        show_effective_config(app_name, config_file, config_dir)
+    else:
+        console.print(f"[red]Error: Unknown action '{action}'")
+        console.print("[yellow]Available actions: show, set, reset, show-effective")
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":

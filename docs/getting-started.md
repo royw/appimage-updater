@@ -291,6 +291,7 @@ For complete command documentation including all options and examples, see the [
 | `appimage-updater show <apps...>` | Show app details (supports multiple apps) |
 | `appimage-updater edit <apps...>` | Edit app settings (supports multiple apps) |
 | `appimage-updater remove <apps...>` | Remove applications (supports multiple apps) |
+| `appimage-updater config` | Manage global configuration settings |
 
 ### Common Options
 
