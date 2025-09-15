@@ -16,6 +16,7 @@ from rich.console import Console
 from ._version import __version__
 from .config import ApplicationConfig, Config, GlobalConfig
 from .config_command import (
+    list_available_settings,
     reset_global_config,
     set_global_config_value,
     show_effective_config,
@@ -362,12 +363,17 @@ def check(
 ) -> None:
     """Check for and optionally download AppImage updates.
 
-    Examples:
+    BASIC USAGE:
         appimage-updater check                    # Check all applications
         appimage-updater check GitHubDesktop     # Check specific application
         appimage-updater check GitHubDesktop OrcaSlicer  # Check multiple applications
-        appimage-updater check --dry-run         # Check all (dry run)
+
+    AUTOMATION OPTIONS:
+        appimage-updater check --dry-run         # Check all (dry run only)
         appimage-updater check --yes             # Auto-confirm downloads
+        appimage-updater check --no-interactive  # Use best match automatically
+
+    COMBINED USAGE:
         appimage-updater check GitHubDesktop --dry-run  # Check specific (dry run)
         appimage-updater check GitHubDesktop --yes      # Check specific and auto-confirm
     """
@@ -930,26 +936,26 @@ def edit(
     Only the specified fields will be changed - all other settings remain unchanged.
     When multiple applications are specified, the same changes are applied to all.
 
-    Basic Configuration:
+    BASIC CONFIGURATION:
         --url URL                    Update repository URL
         --download-dir PATH          Update download directory
         --pattern REGEX              Update file pattern
         --enable/--disable           Enable or disable the application
         --prerelease/--no-prerelease Enable or disable prerelease versions
 
-    File Rotation:
+    FILE ROTATION:
         --rotation/--no-rotation     Enable or disable file rotation
         --symlink-path PATH          Set symlink path for rotation
         --retain-count N             Number of old files to retain (1-10)
 
-    Checksum Verification:
+    CHECKSUM VERIFICATION:
         --checksum/--no-checksum     Enable or disable checksum verification
         --checksum-algorithm ALG     Set algorithm (sha256, sha1, md5)
         --checksum-pattern PATTERN   Set checksum file pattern
         --checksum-required/--checksum-optional  Make verification required/optional
 
-    Examples:
-        # Enable rotation with symlink for single app
+    COMMON EXAMPLES:
+        # Enable rotation with symlink
         appimage-updater edit FreeCAD --rotation --symlink-path ~/bin/freecad.AppImage
 
         # Enable prerelease for multiple apps
@@ -958,7 +964,7 @@ def edit(
         # Update download directory
         appimage-updater edit MyApp --download-dir ~/NewLocation/MyApp --create-dir
 
-        # Disable prerelease and enable required checksums for multiple apps
+        # Configure security settings
         appimage-updater edit OrcaSlicer BambuStudio --no-prerelease --checksum-required
 
         # Update URL after repository move
@@ -1047,9 +1053,11 @@ def show(
 ) -> None:
     """Show detailed information about a specific application.
 
-    Examples:
-        appimage-updater show FreeCAD
-        appimage-updater show FreeCAD OrcaSlicer
+    BASIC USAGE:
+        appimage-updater show FreeCAD                 # Show single application
+        appimage-updater show FreeCAD OrcaSlicer      # Show multiple applications
+
+    CUSTOM CONFIG:
         appimage-updater show --config-dir ~/.config/appimage-updater OrcaSlicer
     """
     try:
@@ -1094,11 +1102,13 @@ def remove(
     This command will delete the applications' configuration. It does NOT delete
     downloaded AppImage files or symlinks - only the configuration entries.
 
-    Examples:
-        appimage-updater remove FreeCAD
-        appimage-updater remove FreeCAD OrcaSlicer
-        appimage-updater remove --config-dir ~/.config/appimage-updater MyApp
+    BASIC USAGE:
+        appimage-updater remove FreeCAD           # Remove single application
+        appimage-updater remove FreeCAD OrcaSlicer  # Remove multiple applications
+
+    ADVANCED OPTIONS:
         appimage-updater remove --force MyApp     # Skip confirmation prompt
+        appimage-updater remove --config-dir ~/.config/appimage-updater MyApp
     """
     try:
         logger.debug(f"Removing applications: {app_names}")
@@ -1167,10 +1177,14 @@ def repository(
     for the specified applications. Useful for troubleshooting and understanding
     what versions and files are available.
 
-    Examples:
-        appimage-updater repository OrcaSlicer
-        appimage-updater repository OrcaSlicer --limit 5 --assets
-        appimage-updater repository "Orca*" --assets
+    BASIC USAGE:
+        appimage-updater repository OrcaSlicer        # Show release information
+        appimage-updater repository "Orca*"          # Use glob patterns
+
+    DETAILED INSPECTION:
+        appimage-updater repository OrcaSlicer --assets    # Include asset details
+        appimage-updater repository OrcaSlicer --limit 5   # Limit number of releases
+        appimage-updater repository OrcaSlicer --limit 3 --assets  # Combined options
     """
     asyncio.run(_examine_repositories(config_file, config_dir, app_names, limit, assets))
 
@@ -1635,7 +1649,7 @@ async def _handle_downloads(config: Any, candidates: list[Any], yes: bool = Fals
 
 @app.command()
 def config(
-    action: str = typer.Argument(help="Action: show, set, reset, show-effective"),
+    action: str = typer.Argument(help="Action: show, set, reset, show-effective, list"),
     setting: str = typer.Argument(default="", help="Setting name (for 'set' action)"),
     value: str = typer.Argument(default="", help="Setting value (for 'set' action)"),
     app_name: str = typer.Option("", "--app", help="Application name (for 'show-effective' action)"),
@@ -1661,9 +1675,11 @@ def config(
             console.print("[yellow]Usage: appimage-updater config show-effective --app <app-name>")
             raise typer.Exit(1)
         show_effective_config(app_name, config_file, config_dir)
+    elif action == "list":
+        list_available_settings()
     else:
         console.print(f"[red]Error: Unknown action '{action}'")
-        console.print("[yellow]Available actions: show, set, reset, show-effective")
+        console.print("[yellow]Available actions: show, set, reset, show-effective, list")
         raise typer.Exit(1)
 
 

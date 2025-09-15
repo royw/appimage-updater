@@ -279,6 +279,108 @@ def _show_available_settings(setting: str) -> None:
     raise typer.Exit(1) from None
 
 
+def list_available_settings() -> None:
+    """List all available configuration settings with descriptions and examples."""
+    console.print("[bold blue]Available Configuration Settings[/bold blue]")
+    console.print()
+
+    # Global settings
+    console.print("[bold]Global Settings:[/bold]")
+    global_table = Table(show_header=True, box=None, pad_edge=False)
+    global_table.add_column("Setting", style="cyan", width=22)
+    global_table.add_column("Description", style="white", width=40)
+    global_table.add_column("Valid Values", style="dim", width=25)
+    global_table.add_column("Example", style="green", width=20)
+
+    global_table.add_row(
+        "concurrent-downloads", "Number of simultaneous downloads", "1-10", "config set concurrent-downloads 3"
+    )
+    global_table.add_row("timeout-seconds", "HTTP request timeout", "5-300", "config set timeout-seconds 30")
+
+    console.print(global_table)
+    console.print()
+
+    # Default settings for new applications
+    console.print("[bold]Default Settings for New Applications:[/bold]")
+    defaults_table = Table(show_header=True, box=None, pad_edge=False)
+    defaults_table.add_column("Setting", style="cyan", width=22)
+    defaults_table.add_column("Description", style="white", width=40)
+    defaults_table.add_column("Valid Values", style="dim", width=25)
+    defaults_table.add_column("Example", style="green", width=20)
+
+    # Directory settings
+    defaults_table.add_row(
+        "download-dir", "Default download directory", "path or 'none'", "config set download-dir ~/Apps"
+    )
+    defaults_table.add_row("symlink-dir", "Default symlink directory", "path or 'none'", "config set symlink-dir ~/bin")
+    defaults_table.add_row(
+        "symlink-pattern",
+        "Default symlink filename pattern",
+        "string with {name}",
+        "config set symlink-pattern '{name}'",
+    )
+    defaults_table.add_row(
+        "auto-subdir",
+        "Create app subdirectories automatically",
+        "true/false, yes/no, 1/0",
+        "config set auto-subdir true",
+    )
+
+    # Rotation settings
+    defaults_table.add_row(
+        "rotation-enabled",
+        "Enable file rotation by default",
+        "true/false, yes/no, 1/0",
+        "config set rotation-enabled true",
+    )
+    defaults_table.add_row("retain-count", "Number of old files to keep", "1-10", "config set retain-count 3")
+    defaults_table.add_row(
+        "symlink-enabled", "Create symlinks by default", "true/false, yes/no, 1/0", "config set symlink-enabled true"
+    )
+
+    # Checksum settings
+    defaults_table.add_row(
+        "checksum-enabled",
+        "Enable checksum verification",
+        "true/false, yes/no, 1/0",
+        "config set checksum-enabled true",
+    )
+    defaults_table.add_row(
+        "checksum-algorithm", "Default checksum algorithm", "sha256, sha1, md5", "config set checksum-algorithm sha256"
+    )
+    defaults_table.add_row(
+        "checksum-pattern",
+        "Checksum file pattern",
+        "string with {filename}",
+        "config set checksum-pattern '{filename}.sha256'",
+    )
+    defaults_table.add_row(
+        "checksum-required",
+        "Require checksum verification",
+        "true/false, yes/no, 1/0",
+        "config set checksum-required false",
+    )
+
+    # Other settings
+    defaults_table.add_row(
+        "prerelease", "Include prerelease versions", "true/false, yes/no, 1/0", "config set prerelease false"
+    )
+
+    console.print(defaults_table)
+    console.print()
+
+    # Usage examples
+    console.print("[bold]Common Usage Examples:[/bold]")
+    console.print("  [cyan]appimage-updater config list[/cyan]                    # Show this help")
+    console.print("  [cyan]appimage-updater config show[/cyan]                    # Show current settings")
+    console.print("  [cyan]appimage-updater config set download-dir ~/Apps[/cyan] # Set download directory")
+    console.print("  [cyan]appimage-updater config set rotation-enabled true[/cyan] # Enable rotation")
+    console.print("  [cyan]appimage-updater config reset[/cyan]                   # Reset to defaults")
+    console.print()
+
+    console.print("[dim]💡 Tip: Use 'appimage-updater config show' to see current values[/dim]")
+
+
 def reset_global_config(config_file: Path | None = None, config_dir: Path | None = None) -> None:
     """Reset global configuration to defaults."""
     try:

@@ -183,38 +183,6 @@ def _display_add_summary(settings: dict[str, Any]) -> None:
     console.print(f"   Auto-subdir: {'✅' if settings['auto_subdir'] else '❌'}")
 
 
-def interactive_edit_command(app_names: list[str]) -> dict[str, Any]:
-    """Interactive mode for the edit command."""
-    console.print(
-        Panel.fit(
-            f"✏️  [bold cyan]Interactive Edit Mode[/bold cyan]\nLet's edit configuration for: {', '.join(app_names)}",
-            border_style="cyan",
-        )
-    )
-
-    # Collect all updates from different sections
-    updates = {}
-    updates.update(_collect_basic_edit_settings())
-    updates.update(_collect_rotation_settings())
-    updates.update(_collect_checksum_settings())
-    updates.update(_collect_advanced_settings())
-
-    if not updates:
-        console.print("ℹ️  [yellow]No changes specified[/yellow]")
-        raise typer.Exit(0)
-
-    # Summary
-    console.print("\n✨ [bold green]Changes Summary[/bold green]")
-    for key, value in updates.items():
-        console.print(f"   {key}: {value}")
-
-    if not Confirm.ask("\n🎯 Apply these changes?", default=True):
-        console.print("❌ [yellow]Operation cancelled[/yellow]")
-        raise typer.Exit(0)
-
-    return updates
-
-
 def _collect_basic_edit_settings() -> dict[str, Any]:
     """Collect basic settings updates."""
     updates = {}
@@ -291,6 +259,38 @@ def _collect_advanced_settings() -> dict[str, Any]:
 
     if Confirm.ask("   Update direct download setting?", default=False):
         updates["direct"] = Confirm.ask("   Treat as direct download?")
+
+    return updates
+
+
+def interactive_edit_command(app_names: list[str]) -> dict[str, Any]:
+    """Interactive mode for the edit command."""
+    console.print(
+        Panel.fit(
+            f"✏️  [bold cyan]Interactive Edit Mode[/bold cyan]\nLet's edit configuration for: {', '.join(app_names)}",
+            border_style="cyan",
+        )
+    )
+
+    # Collect all updates from different sections
+    updates = {}
+    updates.update(_collect_basic_edit_settings())
+    updates.update(_collect_rotation_settings())
+    updates.update(_collect_checksum_settings())
+    updates.update(_collect_advanced_settings())
+
+    if not updates:
+        console.print("ℹ️  [yellow]No changes specified[/yellow]")
+        raise typer.Exit(0)
+
+    # Summary
+    console.print("\n✨ [bold green]Changes Summary[/bold green]")
+    for key, value in updates.items():
+        console.print(f"   {key}: {value}")
+
+    if not Confirm.ask("\n🎯 Apply these changes?", default=True):
+        console.print("❌ [yellow]Operation cancelled[/yellow]")
+        raise typer.Exit(0)
 
     return updates
 

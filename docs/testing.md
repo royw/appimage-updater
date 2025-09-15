@@ -6,7 +6,7 @@ AppImage Updater has comprehensive test coverage to ensure reliability and corre
 
 The test suite is organized into focused test files:
 
-```
+```text
 tests/
 ├── e2e/
 │   ├── conftest.py                # Shared E2E test fixtures
@@ -157,7 +157,7 @@ task version:tag
 
 The project maintains high test coverage across all functionality:
 
-### Current Coverage: **95+ tests, 85%+ coverage**
+### Current Coverage: **258 tests, 70%+ coverage**
 
 #### Command Testing
 
@@ -446,7 +446,7 @@ Tests run across:
 1. **Test both success and failure cases**
 1. **Ensure tests are independent** and can run in any order
 
-### Test Organization
+### Test File Organization
 
 ```python
 class TestEditCommand:
@@ -502,8 +502,8 @@ open htmlcov/index.html
 
 ## Test Quality Metrics
 
-- **Coverage**: 85%+ line coverage (target: >90%)
-- **Test Count**: 95+ comprehensive tests
+- **Coverage**: 70%+ line coverage (target: >85%)
+- **Test Count**: 258 comprehensive tests
 - **Test Speed**:
   - Sequential: ~15-20 seconds
   - Parallel: ~5-8 seconds
