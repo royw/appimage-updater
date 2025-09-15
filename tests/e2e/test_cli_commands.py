@@ -115,7 +115,8 @@ class TestE2EFunctionality:
                 ),
                 download_path=temp_download_dir / "TestApp-1.0.1-Linux-x86_64.AppImage",
                 is_newer=True,
-                checksum_required=False
+                checksum_required=False,
+                app_config=None
             )
         )
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
@@ -124,7 +125,7 @@ class TestE2EFunctionality:
         result = runner.invoke(app, ["check", "--config", str(config_file), "--dry-run"])
 
         assert result.exit_code == 0
-        assert "Update available" in result.stdout or "updates available" in result.stdout
+        assert "update available" in result.stdout
         assert "Dry run mode" in result.stdout
 
     @patch('appimage_updater.repositories.get_repository_client')

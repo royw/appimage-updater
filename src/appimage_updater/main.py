@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import fnmatch
 import json
 import os
 from pathlib import Path
@@ -14,6 +13,14 @@ from loguru import logger
 from rich.console import Console
 
 from ._version import __version__
+from .cli_options import (
+    CHECK_APP_NAME_ARGUMENT,
+    CONFIG_DIR_OPTION,
+    CONFIG_FILE_OPTION,
+    DRY_RUN_OPTION,
+    NO_INTERACTIVE_OPTION,
+    YES_OPTION,
+)
 from .config import ApplicationConfig, Config, GlobalConfig
 from .config_command import (
     list_available_settings,
@@ -48,6 +55,7 @@ from .interactive import interactive_add_command
 from .logging_config import configure_logging
 from .models import rebuild_models
 from .repositories import get_repository_client
+from .services import ApplicationService
 from .version_checker import VersionChecker
 
 # Rebuild models to resolve forward references
@@ -354,12 +362,12 @@ def main(
 
 @app.command()
 def check(
-    app_names: list[str] = _CHECK_APP_NAME_ARGUMENT,
-    config_file: Path | None = _CONFIG_FILE_OPTION,
-    config_dir: Path | None = _CONFIG_DIR_OPTION,
-    dry_run: bool = _DRY_RUN_OPTION,
-    yes: bool = _YES_OPTION,
-    no_interactive: bool = _NO_INTERACTIVE_OPTION,
+    app_names: list[str] = CHECK_APP_NAME_ARGUMENT,
+    config_file: Path | None = CONFIG_FILE_OPTION,
+    config_dir: Path | None = CONFIG_DIR_OPTION,
+    dry_run: bool = DRY_RUN_OPTION,
+    yes: bool = YES_OPTION,
+    no_interactive: bool = NO_INTERACTIVE_OPTION,
 ) -> None:
     """Check for and optionally download AppImage updates.
 
@@ -977,7 +985,7 @@ def edit(
         config = load_config(config_file, config_dir)
 
         # Use filtering logic that supports glob patterns
-        apps_to_edit = _filter_apps_by_names(config.applications, app_names)
+        apps_to_edit = ApplicationService.filter_apps_by_names(config.applications, app_names)
 
         # _filter_apps_by_names will exit if no apps found, so we can continue here
 
@@ -1065,7 +1073,7 @@ def show(
         config = load_config(config_file, config_dir)
 
         # Use filtering logic that supports glob patterns
-        found_apps = _filter_apps_by_names(config.applications, app_names)
+        found_apps = ApplicationService.filter_apps_by_names(config.applications, app_names)
 
         # _filter_apps_by_names will exit if no apps found, so we can continue here
 
@@ -1117,7 +1125,7 @@ def remove(
         config = load_config(config_file, config_dir)
 
         # Use filtering logic that supports glob patterns
-        apps_to_remove = _filter_apps_by_names(config.applications, app_names)
+        apps_to_remove = ApplicationService.filter_apps_by_names(config.applications, app_names)
 
         # _filter_apps_by_names will exit if no apps found, so we can continue here
 
@@ -1202,7 +1210,7 @@ async def _examine_repositories(
         config = load_config(config_file, config_dir)
 
         # Filter applications by names
-        apps_to_examine = _filter_apps_by_names(config.applications, app_names)
+        apps_to_examine = ApplicationService.filter_apps_by_names(config.applications, app_names)
 
         console.print(f"[blue]Examining repository information for {len(apps_to_examine)} application(s)...")
         console.print()
@@ -1488,72 +1496,11 @@ async def _load_and_filter_config(
 
     # Filter by app names if specified
     if app_names:
-        enabled_apps = _filter_apps_by_names(enabled_apps, app_names)
+        enabled_apps = ApplicationService.filter_apps_by_names(enabled_apps, app_names)
 
     filter_msg = " (filtered)" if app_names else ""
     logger.debug(f"Found {len(config.applications)} total applications, {len(enabled_apps)} enabled{filter_msg}")
     return config, enabled_apps
-
-
-def _filter_apps_by_names(enabled_apps: list[Any], app_names: list[str]) -> list[Any]:
-    """Filter applications by multiple names or glob patterns."""
-    logger.debug(f"Filtering applications for: {app_names} (case-insensitive, supports glob patterns)")
-
-    all_matches = []
-    not_found = []
-
-    for app_name in app_names:
-        matches = _filter_apps_by_single_name(enabled_apps, app_name)
-        if matches:
-            all_matches.extend(matches)
-        else:
-            not_found.append(app_name)
-
-    # Remove duplicates while preserving order
-    seen = set()
-    unique_matches = []
-    for app in all_matches:
-        if app.name not in seen:
-            seen.add(app.name)
-            unique_matches.append(app)
-
-    if not_found:
-        available_apps = [app.name for app in enabled_apps]
-        console.print(f"[red]Applications not found: {', '.join(not_found)}")
-        console.print("[yellow]💡 Troubleshooting:")
-        available_text = ", ".join(available_apps) if available_apps else "None configured"
-        console.print(f"[yellow]   • Available applications: {available_text}")
-        console.print("[yellow]   • Application names are case-insensitive")
-        console.print("[yellow]   • Use glob patterns like 'Orca*' to match multiple apps")
-        console.print("[yellow]   • Run 'appimage-updater list' to see all configured applications")
-        if not available_apps:
-            console.print("[yellow]   • Run 'appimage-updater add' to configure your first application")
-        logger.error(f"Applications not found: {not_found}. Available: {available_apps}")
-
-        # Always exit with error if any apps were not found
-        raise typer.Exit(1)
-
-    return unique_matches
-
-
-def _filter_apps_by_single_name(enabled_apps: list[Any], app_name: str) -> list[Any]:
-    """Filter applications by a single name or glob pattern."""
-    app_name_lower = app_name.lower()
-
-    # Check for exact match first
-    exact_matches = [app for app in enabled_apps if app.name.lower() == app_name_lower]
-    if exact_matches:
-        logger.debug(f"Found exact match: {exact_matches[0].name}")
-        return exact_matches
-
-    # Try glob pattern matching
-    glob_matches = [app for app in enabled_apps if fnmatch.fnmatch(app.name.lower(), app_name_lower)]
-    if glob_matches:
-        logger.debug(f"Found {len(glob_matches)} glob matches for '{app_name}': {[app.name for app in glob_matches]}")
-        return glob_matches
-
-    # No matches found
-    return []
 
 
 async def _perform_update_checks(config: Any, enabled_apps: list[Any], no_interactive: bool = False) -> list[Any]:
@@ -1562,7 +1509,6 @@ async def _perform_update_checks(config: Any, enabled_apps: list[Any], no_intera
     logger.debug(f"Starting update checks for {len(enabled_apps)} applications")
 
     # Initialize version checker (repository clients will be created per-app as needed)
-    logger.debug(f"Initializing version checker with timeout: {config.global_config.timeout_seconds}s")
     version_checker = VersionChecker(interactive=not no_interactive)
     logger.debug("Version checker initialized")
 
@@ -1598,8 +1544,12 @@ def _get_update_candidates(check_results: list[Any], dry_run: bool = False) -> l
         f"Check results: {successful_checks} successful, {failed_checks} failed, {len(candidates)} updates available"
     )
 
+    # Display summary message about updates
     if candidates:
-        console.print(f"\n[yellow]{len(candidates)} updates available")
+        if len(candidates) == 1:
+            console.print("\n[yellow]1 update available")
+        else:
+            console.print(f"\n[yellow]{len(candidates)} updates available")
         logger.debug(f"Found {len(candidates)} updates available")
 
     return candidates
