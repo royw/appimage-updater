@@ -43,6 +43,7 @@ from .display import (
     display_edit_summary,
 )
 from .downloader import Downloader
+from .interactive import interactive_add_command
 from .logging_config import configure_logging
 from .models import rebuild_models
 from .repositories import get_repository_client
@@ -113,9 +114,11 @@ _FORCE_OPTION = typer.Option(
     "-f",
     help="Force operation without confirmation prompts (use with caution)",
 )
-_ADD_NAME_ARGUMENT = typer.Argument(help="Name for the application (used for identification and pattern matching)")
+_ADD_NAME_ARGUMENT = typer.Argument(
+    default=None, help="Name for the application (used for identification and pattern matching)"
+)
 _ADD_URL_ARGUMENT = typer.Argument(
-    help="URL to the application repository or release page (e.g., GitHub repository URL)"
+    default=None, help="URL to the application repository or release page (e.g., GitHub repository URL)"
 )
 _ADD_DOWNLOAD_DIR_ARGUMENT = typer.Argument(
     default=None,
@@ -150,10 +153,7 @@ _RETAIN_OPTION = typer.Option(
 _SYMLINK_OPTION = typer.Option(
     None,
     "--symlink",
-    help=(
-        "Path for managed symlink (enables rotation if not explicitly disabled). "
-        "If no path provided, auto-generates based on app name."
-    ),
+    help="Path for managed symlink to latest version (enables rotation automatically)",
 )
 _ADD_PRERELEASE_OPTION = typer.Option(
     None,
@@ -173,7 +173,7 @@ _ADD_CHECKSUM_ALGORITHM_OPTION = typer.Option(
 _ADD_CHECKSUM_PATTERN_OPTION = typer.Option(
     "{filename}-SHA256.txt",
     "--checksum-pattern",
-    help="Checksum file pattern (default: {filename}-SHA256.txt)",
+    help="Checksum file pattern with {filename} placeholder (default: {filename}-SHA256.txt)",
 )
 _ADD_CHECKSUM_REQUIRED_OPTION = typer.Option(
     None,
@@ -183,7 +183,7 @@ _ADD_CHECKSUM_REQUIRED_OPTION = typer.Option(
 _ADD_PATTERN_OPTION = typer.Option(
     None,
     "--pattern",
-    help="Custom file pattern (regex) to match AppImage files (overrides auto-generated pattern)",
+    help="Custom regex pattern to match AppImage files (overrides auto-detection)",
 )
 _ADD_DIRECT_OPTION = typer.Option(
     None,
@@ -194,6 +194,12 @@ _ADD_AUTO_SUBDIR_OPTION = typer.Option(
     None,
     "--auto-subdir/--no-auto-subdir",
     help="Enable or disable automatic subdirectory creation (overrides global default)",
+)
+_INTERACTIVE_OPTION = typer.Option(
+    False,
+    "--interactive",
+    "-i",
+    help="Use interactive mode with step-by-step prompts",
 )
 
 # Edit command arguments and options
@@ -248,6 +254,85 @@ def version_callback(value: bool) -> None:
     if value:
         console.print(f"AppImage Updater {__version__}")
         raise typer.Exit()
+
+
+def _check_configuration_warnings(app_config: dict[str, Any], download_dir: str) -> None:
+    """Check for potential configuration issues and display warnings."""
+    warnings = []
+
+    # Check if rotation is enabled but no symlink is configured
+    if app_config.get("rotation", False) and not app_config.get("symlink"):
+        warnings.append(
+            "⚠️  Rotation is enabled but no symlink path is configured. "
+            "Consider adding --symlink for easier access to the latest version."
+        )
+
+    # Check if download directory doesn't exist
+    from pathlib import Path
+
+    if not Path(download_dir).exists():
+        warnings.append(
+            "⚠️  Download directory doesn't exist and will be created on first update. "
+            "Use --create-dir to create it immediately."
+        )
+
+    # Check if checksum is disabled
+    if not app_config.get("checksum", True):
+        warnings.append(
+            "⚠️  Checksum verification is disabled. This reduces security. "
+            "Consider enabling with --checksum for better integrity checks."
+        )
+
+    # Check for potentially problematic patterns
+    pattern = app_config.get("pattern", "")
+    if ".*" in pattern and not pattern.endswith("$"):
+        warnings.append(
+            "⚠️  File pattern may be too broad and could match unintended files. "
+            "Consider making the pattern more specific."
+        )
+
+    # Display warnings if any
+    if warnings:
+        console.print("\n[yellow]⚠️  Configuration Warnings:")
+        for warning in warnings:
+            console.print(f"[yellow]   {warning}")
+
+
+def _show_add_examples() -> None:
+    """Display detailed examples for the add command."""
+    console.print("\n[bold cyan]📚 ADD COMMAND EXAMPLES[/bold cyan]\n")
+
+    console.print("[bold yellow]🔹 BASIC USAGE[/bold yellow]")
+    console.print("  # Add application with minimal options (uses intelligent defaults)")
+    console.print("  [green]appimage-updater add GitHubDesktop https://github.com/shiftkey/desktop[/green]\n")
+
+    console.print("[bold yellow]🔹 FILE MANAGEMENT[/bold yellow]")
+    console.print("  # Specify custom download directory")
+    console.print("  [green]appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD[/green]\n")
+
+    console.print("  # Enable file rotation with symlink")
+    console.print("  [green]appimage-updater add OrcaSlicer https://github.com/SoftFever/OrcaSlicer \\[/green]")
+    console.print("  [green]    --rotation --symlink ~/bin/orcaslicer --retain 5[/green]\n")
+
+    console.print("[bold yellow]🔹 CHECKSUM VERIFICATION[/bold yellow]")
+    console.print("  # Configure checksum validation")
+    console.print("  [green]appimage-updater add MyApp https://github.com/user/myapp \\[/green]")
+    console.print("  [green]    --checksum --checksum-required --checksum-algorithm sha512[/green]\n")
+
+    console.print("[bold yellow]🔹 ADVANCED OPTIONS[/bold yellow]")
+    console.print("  # Direct download with custom pattern")
+    console.print("  [green]appimage-updater add CustomApp https://releases.example.com/app.AppImage \\[/green]")
+    console.print("  [green]    --direct --pattern '.*x86_64.*\\.AppImage$'[/green]\n")
+
+    console.print("  # Interactive mode for guided setup")
+    console.print("  [green]appimage-updater add --interactive[/green]\n")
+
+    console.print("[bold yellow]🔹 COMMON WORKFLOWS[/bold yellow]")
+    console.print("  # Preview configuration before saving")
+    console.print("  [green]appimage-updater add MyApp https://github.com/user/myapp --dry-run --verbose[/green]\n")
+
+    console.print("  # Auto-create directory and confirm all prompts")
+    console.print("  [green]appimage-updater add MyApp https://github.com/user/myapp --create-dir --yes[/green]\n")
 
 
 @app.callback()
@@ -370,8 +455,8 @@ def list_apps(
 
 @app.command()
 def add(
-    name: str = _ADD_NAME_ARGUMENT,
-    url: str = _ADD_URL_ARGUMENT,
+    name: str | None = _ADD_NAME_ARGUMENT,
+    url: str | None = _ADD_URL_ARGUMENT,
     download_dir: str | None = _ADD_DOWNLOAD_DIR_ARGUMENT,
     create_dir: bool = _CREATE_DIR_OPTION,
     yes: bool = _YES_OPTION,
@@ -390,56 +475,67 @@ def add(
     auto_subdir: bool | None = _ADD_AUTO_SUBDIR_OPTION,
     verbose: bool = _VERBOSE_OPTION,
     dry_run: bool = _DRY_RUN_OPTION,
+    interactive: bool = _INTERACTIVE_OPTION,
+    examples: bool = typer.Option(False, "--examples", help="Show usage examples and exit"),
 ) -> None:
     """Add a new application to the configuration.
 
-    Automatically generates intelligent defaults for pattern matching, update frequency,
-    and other settings based on the provided URL and name. If the download directory
-    does not exist, you will be prompted to create it (unless --create-dir is used).
+    BASIC USAGE:
+        Add an application with minimal options - intelligent defaults will be generated.
 
-    Additionally, this command automatically detects if a repository only contains
-    prerelease versions (like continuous builds) and enables prerelease support
-    automatically when needed.
+    FILE MANAGEMENT:
+        Control download directories, file rotation, and symlink management.
 
-    Basic Options:
-        --prerelease/--no-prerelease: Enable/disable prerelease versions (default: auto-detect)
+    CHECKSUM VERIFICATION:
+        Configure checksum validation for security and integrity checks.
 
-    File Rotation:
-        --rotation/--no-rotation: Enable/disable file rotation (default: disabled)
-        --retain N: Number of old files to retain (1-10, default: 3)
-        --symlink PATH: Managed symlink path (auto-enables rotation)
+    ADVANCED OPTIONS:
+        Fine-tune pattern matching, repository detection, and specialized settings.
 
-    Checksum Verification:
-        --checksum/--no-checksum: Enable/disable checksum verification (default: enabled)
-        --checksum-algorithm ALG: Algorithm - sha256, sha1, md5 (default: sha256)
-        --checksum-pattern PATTERN: Checksum file pattern (default: {filename}-SHA256.txt)
-        --checksum-required/--checksum-optional: Make verification required/optional (default: optional)
-
-    Note: File rotation requires a symlink path to work properly. If you specify --rotation,
-    you must also provide --symlink PATH.
-
-    Examples:
-        # Basic usage with auto-detection
-        appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
-
-        # Force prerelease enabled
-        appimage-updater add --prerelease \\
-            FreeCAD_weekly https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
-
-        # With file rotation and symlink
-        appimage-updater add --rotation --symlink ~/bin/freecad.AppImage \\
-            FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
-
-        # Required checksums and directory creation
-        appimage-updater add --checksum-required --create-dir \\
-            MyApp https://github.com/user/myapp ~/Apps/MyApp
-
-        # Non-interactive mode with auto-confirm directory creation
-        appimage-updater add --yes MyTool https://github.com/user/tool ~/Tools/MyTool
-
-        # Disable checksum verification
-        appimage-updater add --no-checksum MyTool https://github.com/user/tool ~/Tools
+    Use --interactive for a guided setup experience with step-by-step prompts.
+    Use --examples to see detailed usage examples.
     """
+    # Handle examples flag
+    if examples:
+        _show_add_examples()
+        raise typer.Exit()
+
+    # Validate required arguments when not using examples or interactive mode
+    if not interactive and (name is None or url is None):
+        console.print("[red]Error: NAME and URL are required arguments[/red]")
+        console.print("[yellow]💡 Try one of these options:")
+        console.print("[yellow]   • Provide both NAME and URL: appimage-updater add MyApp https://github.com/user/repo")
+        console.print("[yellow]   • Use interactive mode: appimage-updater add --interactive")
+        console.print("[yellow]   • See examples: appimage-updater add --examples")
+        raise typer.Exit(1)
+
+    # Handle interactive mode
+    if interactive:
+        # Override all parameters with interactive input
+        interactive_params = interactive_add_command()
+        name = interactive_params["name"]
+        url = interactive_params["url"]
+        download_dir = interactive_params["download_dir"]
+        create_dir = interactive_params["create_dir"]
+        yes = interactive_params["yes"]
+        rotation = interactive_params["rotation"]
+        retain = interactive_params["retain"]
+        symlink = interactive_params["symlink"]
+        prerelease = interactive_params["prerelease"]
+        checksum = interactive_params["checksum"]
+        checksum_algorithm = interactive_params["checksum_algorithm"]
+        checksum_pattern = interactive_params["checksum_pattern"]
+        checksum_required = interactive_params["checksum_required"]
+        pattern = interactive_params["pattern"]
+        direct = interactive_params["direct"]
+        auto_subdir = interactive_params["auto_subdir"]
+        verbose = interactive_params["verbose"]
+        dry_run = interactive_params["dry_run"]
+
+    # Ensure name and url are not None at this point
+    assert name is not None
+    assert url is not None
+
     asyncio.run(
         _add(
             name,
@@ -547,6 +643,9 @@ def _display_dry_run_config(
     if prerelease_auto_enabled:
         console.print("[cyan]🔍 Auto-detected continuous builds - would enable prerelease support")
 
+    # Check for potential configuration issues and warn user
+    _check_configuration_warnings(app_config, expanded_download_dir)
+
     console.print("\n[yellow]💡 Run without --dry-run to actually add this configuration")
 
 
@@ -558,14 +657,17 @@ def _display_add_success(
     prerelease_auto_enabled: bool,
 ) -> None:
     """Display success message after adding configuration."""
-    console.print(f"[green]✓ Successfully added application '{name}'")
-    console.print(f"[blue]Source: {validated_url}")
-    console.print(f"[blue]Download Directory: {expanded_download_dir}")
-    console.print(f"[blue]Pattern: {app_config['pattern']}")
+    console.print(f"[green]✅ Successfully added application '{name}'")
+    console.print(f"[blue]📍 Source: {validated_url}")
+    console.print(f"[blue]📁 Download Directory: {expanded_download_dir}")
+    console.print(f"[blue]🔍 Pattern: {app_config['pattern']}")
 
     # Show prerelease auto-detection feedback
     if prerelease_auto_enabled:
         console.print("[cyan]🔍 Auto-detected continuous builds - enabled prerelease support")
+
+    # Check for potential configuration issues and warn user
+    _check_configuration_warnings(app_config, expanded_download_dir)
 
     console.print(f"\n[yellow]💡 Tip: Use 'appimage-updater show {name}' to view full configuration")
 
@@ -751,44 +853,7 @@ async def _add(
         global_config = _load_global_config(config_file, config_dir)
 
         # Resolve all parameters with defaults
-        (
-            resolved_download_dir,
-            resolved_rotation,
-            resolved_prerelease,
-            resolved_checksum,
-            resolved_checksum_required,
-            resolved_direct,
-        ) = _resolve_add_parameters(
-            download_dir, auto_subdir, rotation, prerelease, checksum, checksum_required, direct, global_config, name
-        )
-        resolved_auto_subdir = auto_subdir if auto_subdir is not None else global_config.defaults.auto_subdir
-
-        # Show resolved parameters if verbose mode is enabled
-        _handle_verbose_logging(
-            verbose,
-            name,
-            url,
-            validated_url,
-            download_dir,
-            resolved_download_dir,
-            rotation,
-            resolved_rotation,
-            retain,
-            symlink,
-            prerelease,
-            resolved_prerelease,
-            checksum,
-            resolved_checksum,
-            checksum_algorithm,
-            checksum_pattern,
-            checksum_required,
-            resolved_checksum_required,
-            pattern,
-            direct,
-            resolved_direct,
-            auto_subdir,
-            resolved_auto_subdir,
-        )
+        resolved_download_dir = _resolve_download_directory(download_dir, auto_subdir, global_config, name)
 
         # Handle directory path expansion and creation (skip in dry-run mode)
         if dry_run:
@@ -957,6 +1022,11 @@ def edit(
     except ValueError as e:
         # Handle validation errors without traceback
         console.print(f"[red]Error editing application: {e}")
+        console.print("[yellow]💡 Common solutions:")
+        console.print("[yellow]   • Check that application names exist: appimage-updater list")
+        console.print("[yellow]   • Verify URL format for --url updates")
+        console.print("[yellow]   • Use --force to bypass URL validation if needed")
+        console.print("[yellow]   • Check directory paths exist for --download-dir")
         logger.error(f"Validation error for applications '{app_names}': {e}")
         raise typer.Exit(1) from e
     except typer.Exit:
@@ -1436,7 +1506,14 @@ def _filter_apps_by_names(enabled_apps: list[Any], app_names: list[str]) -> list
     if not_found:
         available_apps = [app.name for app in enabled_apps]
         console.print(f"[red]Applications not found: {', '.join(not_found)}")
-        console.print(f"[yellow]Available applications: {', '.join(available_apps)}")
+        console.print("[yellow]💡 Troubleshooting:")
+        available_text = ", ".join(available_apps) if available_apps else "None configured"
+        console.print(f"[yellow]   • Available applications: {available_text}")
+        console.print("[yellow]   • Application names are case-insensitive")
+        console.print("[yellow]   • Use glob patterns like 'Orca*' to match multiple apps")
+        console.print("[yellow]   • Run 'appimage-updater list' to see all configured applications")
+        if not available_apps:
+            console.print("[yellow]   • Run 'appimage-updater add' to configure your first application")
         logger.error(f"Applications not found: {not_found}. Available: {available_apps}")
 
         # Always exit with error if any apps were not found

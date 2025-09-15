@@ -337,7 +337,7 @@ class TestAddCommand:
         ])
 
         assert result.exit_code == 0
-        assert "✓ Successfully added application 'DirectApp'" in result.stdout
+        assert "✅ Successfully added application 'DirectApp'" in result.stdout
 
         # Verify config was saved with source_type: 'direct'
         config_file = temp_config_dir / "directapp.json"

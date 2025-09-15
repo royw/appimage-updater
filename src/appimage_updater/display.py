@@ -24,22 +24,76 @@ from .models import CheckResult
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 
 
+def _wrap_path(path: str, max_width: int = 40) -> str:
+    """Wrap a path by breaking on path separators."""
+    if len(path) <= max_width:
+        return path
+
+    # Try to break on path separators
+    parts = path.replace("\\", "/").split("/")
+    if len(parts) > 1:
+        # Start from the end and work backwards to preserve meaningful parts
+        result_parts: list[str] = []
+        current_length = 0
+
+        for part in reversed(parts):
+            part_length = len(part) + (1 if result_parts else 0)  # +1 for separator
+            if current_length + part_length <= max_width or not result_parts:
+                result_parts.insert(0, part)
+                current_length += part_length
+            else:
+                # Add ellipsis at the beginning if we had to truncate
+                if len(result_parts) < len(parts):
+                    result_parts.insert(0, "...")
+                break
+
+        return "/".join(result_parts)
+
+    # Fallback to simple truncation if no separators
+    return "..." + path[-(max_width - 3) :]
+
+
+def _wrap_url(url: str, max_width: int = 50) -> str:
+    """Wrap a URL by breaking on meaningful separators."""
+    if len(url) <= max_width:
+        return url
+
+    # For GitHub URLs, preserve the important parts
+    if "github.com" in url:
+        parts = url.split("/")
+        if len(parts) >= 5:  # https://github.com/user/repo
+            return f"{parts[2]}/{parts[3]}/{parts[4]}"
+
+    # For other URLs, try to preserve domain and path
+    if "://" in url:
+        protocol, rest = url.split("://", 1)
+        if "/" in rest:
+            domain, path = rest.split("/", 1)
+            if len(domain) + len(path) + 4 > max_width:  # +4 for ://
+                return f"{domain}/...{path[-(max_width - len(domain) - 7) :]}"
+
+    # Fallback truncation
+    return url[: max_width - 3] + "..."
+
+
 def display_applications_list(applications: list[Any]) -> None:
     """Display applications list in a table."""
     table = Table(title="Configured Applications")
-    table.add_column("Application", style="cyan")
+    table.add_column("Application", style="cyan", no_wrap=False)
     table.add_column("Status", style="green")
-    table.add_column("Source", style="yellow")
-    table.add_column("Download Directory", style="magenta")
+    table.add_column("Source", style="yellow", no_wrap=False)
+    table.add_column("Download Directory", style="magenta", no_wrap=False)
 
     for app in applications:
-        status = "[green]Enabled" if app.enabled else "[red]Disabled"
-        source_display = f"{app.source_type.title()}: {app.url}"
+        status = "✅ Enabled" if app.enabled else "⏸️ Disabled"
 
-        # Truncate long paths for better display
-        download_dir = str(app.download_dir)
-        if len(download_dir) > 40:
-            download_dir = "..." + download_dir[-37:]
+        # Format source with better wrapping
+        source_url = _wrap_url(app.url, 45)
+        source_display = f"{app.source_type.title()}: {source_url}"
+
+        # Wrap download directory path
+        download_dir = _wrap_path(str(app.download_dir), 35)
+
         table.add_row(
             app.name,
             status,
@@ -93,7 +147,7 @@ def _create_error_row(result: CheckResult, show_urls: bool) -> list[str]:
     """Create row for error results."""
     row = [
         result.app_name,
-        "[red]Error",
+        "❌ Error",
         "-",
         "-",
         result.error_message or "Unknown error",
@@ -107,7 +161,7 @@ def _create_no_candidate_row(result: CheckResult, show_urls: bool) -> list[str]:
     """Create row for results with no candidate."""
     row = [
         result.app_name,
-        "[yellow]No candidate",
+        "⚠️ No candidate",
         "-",
         "-",
         result.error_message or "No matching assets",
@@ -124,10 +178,10 @@ def _create_success_row(result: CheckResult, show_urls: bool) -> list[str]:
         # This shouldn't happen for success rows, but handle it gracefully
         return _create_error_row(result, show_urls)
 
-    status = "[green]Up to date" if not candidate.needs_update else "[yellow]Update available"
+    status = "✅ Up to date" if not candidate.needs_update else "⬆️ Update available"
     current = _format_version_display(candidate.current_version) or "[dim]None"
     latest = _format_version_display(candidate.latest_version)
-    update_indicator = "✓" if candidate.needs_update else "-"
+    update_indicator = "⬆️" if candidate.needs_update else "✅"
 
     row = [
         result.app_name,
@@ -139,8 +193,7 @@ def _create_success_row(result: CheckResult, show_urls: bool) -> list[str]:
 
     if show_urls:
         url = candidate.asset.url if candidate else "-"
-        if len(url) > 60:
-            url = url[:57] + "..."
+        url = _wrap_url(url, 60)
         row.append(url)
 
     return row

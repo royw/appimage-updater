@@ -55,6 +55,9 @@ class TestDefaultsRegression:
             checksum_required=None,  # Should use default
             pattern=None,  # Should be auto-generated
             direct=None,  # Should use default
+            auto_subdir=None,  # Should use default
+            verbose=False,
+            dry_run=False,
         )
 
         # Verify the created configuration
@@ -127,6 +130,9 @@ class TestDefaultsRegression:
             checksum_required=None,  # Should use default
             pattern=None,  # Should be auto-generated
             direct=None,  # Should use default
+            auto_subdir=None,  # Should use default
+            verbose=False,
+            dry_run=False,
         )
 
         # Verify the created configuration
@@ -196,6 +202,9 @@ class TestDefaultsRegression:
             checksum_required=None,
             pattern=None,
             direct=None,
+            auto_subdir=None,
+            verbose=False,
+            dry_run=False,
         )
 
         # Verify configuration was created with defaults
@@ -239,6 +248,9 @@ class TestDefaultsRegression:
             checksum_required=None,
             pattern=None,
             direct=None,
+            auto_subdir=None,
+            verbose=False,
+            dry_run=False,
         )
 
         # Verify explicit parameters took precedence
