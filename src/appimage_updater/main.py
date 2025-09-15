@@ -14,7 +14,7 @@ from loguru import logger
 from rich.console import Console
 
 from ._version import __version__
-from .config import ApplicationConfig, Config
+from .config import ApplicationConfig, Config, GlobalConfig
 from .config_command import (
     reset_global_config,
     set_global_config_value,
@@ -515,6 +515,61 @@ def _log_resolved_parameters(
     console.print()
 
 
+def _display_dry_run_config(
+    name: str,
+    validated_url: str,
+    expanded_download_dir: str,
+    app_config: dict[str, Any],
+    prerelease_auto_enabled: bool,
+) -> None:
+    """Display configuration that would be created in dry-run mode."""
+    console.print(
+        f"\n[bold yellow]DRY RUN: Would add application '{name}' with the following configuration:[/bold yellow]"
+    )
+    console.print("=" * 70)
+    console.print(f"[blue]Name: {name}")
+    console.print(f"[blue]Source: {validated_url}")
+    console.print(f"[blue]Download Directory: {expanded_download_dir}")
+    console.print(f"[blue]Pattern: {app_config['pattern']}")
+    console.print(f"[blue]Rotation: {'Enabled' if app_config.get('rotation', False) else 'Disabled'}")
+    if app_config.get("rotation", False):
+        console.print(f"[blue]  Retain Count: {app_config.get('retain', 3)}")
+        if app_config.get("symlink"):
+            console.print(f"[blue]  Symlink: {app_config['symlink']}")
+    console.print(f"[blue]Prerelease: {'Enabled' if app_config.get('prerelease', False) else 'Disabled'}")
+    console.print(f"[blue]Checksum: {'Enabled' if app_config.get('checksum', True) else 'Disabled'}")
+    if app_config.get("checksum", True):
+        console.print(f"[blue]  Algorithm: {app_config.get('checksum_algorithm', 'sha256')}")
+        console.print(f"[blue]  Pattern: {app_config.get('checksum_pattern', '{filename}-SHA256.txt')}")
+        console.print(f"[blue]  Required: {'Yes' if app_config.get('checksum_required', False) else 'No'}")
+
+    # Show prerelease auto-detection feedback
+    if prerelease_auto_enabled:
+        console.print("[cyan]🔍 Auto-detected continuous builds - would enable prerelease support")
+
+    console.print("\n[yellow]💡 Run without --dry-run to actually add this configuration")
+
+
+def _display_add_success(
+    name: str,
+    validated_url: str,
+    expanded_download_dir: str,
+    app_config: dict[str, Any],
+    prerelease_auto_enabled: bool,
+) -> None:
+    """Display success message after adding configuration."""
+    console.print(f"[green]✓ Successfully added application '{name}'")
+    console.print(f"[blue]Source: {validated_url}")
+    console.print(f"[blue]Download Directory: {expanded_download_dir}")
+    console.print(f"[blue]Pattern: {app_config['pattern']}")
+
+    # Show prerelease auto-detection feedback
+    if prerelease_auto_enabled:
+        console.print("[cyan]🔍 Auto-detected continuous builds - enabled prerelease support")
+
+    console.print(f"\n[yellow]💡 Tip: Use 'appimage-updater show {name}' to view full configuration")
+
+
 def _resolve_download_directory(
     download_dir: str | None,
     auto_subdir: bool | None,
@@ -533,6 +588,128 @@ def _resolve_download_directory(
             return str(global_config.defaults.get_default_download_dir(name))
     else:
         return download_dir
+
+
+def _load_global_config(config_file: Path | None, config_dir: Path | None) -> GlobalConfig:
+    """Load global configuration or return default if none exists."""
+    try:
+        config = load_config(config_file, config_dir)
+        return config.global_config  # type: ignore[no-any-return]
+    except ConfigLoadError:
+        # If no config exists yet, use default global config
+        return GlobalConfig()
+
+
+def _resolve_add_parameters(
+    download_dir: str | None,
+    auto_subdir: bool | None,
+    rotation: bool | None,
+    prerelease: bool | None,
+    checksum: bool | None,
+    checksum_required: bool | None,
+    direct: bool | None,
+    global_config: GlobalConfig,
+    name: str,
+) -> tuple[str, bool, bool, bool, bool, bool]:
+    """Resolve all add command parameters using global defaults."""
+    resolved_download_dir = _resolve_download_directory(download_dir, auto_subdir, global_config, name)
+    resolved_rotation = rotation if rotation is not None else global_config.defaults.rotation_enabled
+    resolved_prerelease = prerelease if prerelease is not None else False  # No global default for prerelease
+    resolved_checksum = checksum if checksum is not None else global_config.defaults.checksum_enabled
+    resolved_checksum_required = (
+        checksum_required if checksum_required is not None else global_config.defaults.checksum_required
+    )
+    resolved_direct = direct if direct is not None else False
+
+    return (
+        resolved_download_dir,
+        resolved_rotation,
+        resolved_prerelease,
+        resolved_checksum,
+        resolved_checksum_required,
+        resolved_direct,
+    )
+
+
+def _handle_verbose_logging(
+    verbose: bool,
+    name: str,
+    url: str,
+    validated_url: str,
+    download_dir: str | None,
+    resolved_download_dir: str,
+    rotation: bool | None,
+    resolved_rotation: bool,
+    retain: int,
+    symlink: str | None,
+    prerelease: bool | None,
+    resolved_prerelease: bool,
+    checksum: bool | None,
+    resolved_checksum: bool,
+    checksum_algorithm: str,
+    checksum_pattern: str,
+    checksum_required: bool | None,
+    resolved_checksum_required: bool,
+    pattern: str | None,
+    direct: bool | None,
+    resolved_direct: bool,
+    auto_subdir: bool | None,
+    resolved_auto_subdir: bool,
+) -> None:
+    """Handle verbose parameter logging if enabled."""
+    if not verbose:
+        return
+    original_params = {
+        "name": name,
+        "url": url,
+        "download_dir": download_dir,
+        "rotation": rotation,
+        "retain": retain,
+        "symlink": symlink,
+        "prerelease": prerelease,
+        "checksum": checksum,
+        "checksum_algorithm": checksum_algorithm,
+        "checksum_pattern": checksum_pattern,
+        "checksum_required": checksum_required,
+        "pattern": pattern,
+        "direct": direct,
+        "auto_subdir": auto_subdir,
+    }
+    resolved_params = {
+        "name": name,
+        "url": validated_url,
+        "download_dir": resolved_download_dir,
+        "rotation": resolved_rotation,
+        "retain": retain,
+        "symlink": symlink,
+        "prerelease": resolved_prerelease,
+        "checksum": resolved_checksum,
+        "checksum_algorithm": checksum_algorithm,
+        "checksum_pattern": checksum_pattern,
+        "checksum_required": resolved_checksum_required,
+        "pattern": pattern,
+        "direct": resolved_direct,
+        "auto_subdir": resolved_auto_subdir,
+    }
+    _log_resolved_parameters("add", resolved_params, original_params)
+
+
+def _handle_add_error(e: Exception, name: str) -> None:
+    """Handle and display add command errors with appropriate messaging."""
+    error_msg = str(e)
+    if "rate limit" in error_msg.lower():
+        if "github" in error_msg.lower():
+            console.print(f"[red]GitHub API rate limit exceeded: {e}")
+            console.print("[yellow]💡 To avoid rate limits, set a GitHub token:")
+            console.print("[yellow]   export GITHUB_TOKEN=your_token_here")
+            console.print("[yellow]   Get a token at: https://github.com/settings/tokens")
+            console.print("[yellow]   Only 'public_repo' permission is needed for public repositories")
+        else:
+            console.print(f"[red]Repository API rate limit exceeded: {e}")
+    else:
+        console.print(f"[red]Error adding application: {e}")
+    logger.error(f"Error adding application '{name}': {e}")
+    logger.exception("Full exception details")
 
 
 async def _add(
@@ -571,63 +748,47 @@ async def _add(
         validate_add_rotation_config(rotation, symlink)
 
         # Load global configuration for defaults
-        try:
-            config = load_config(config_file, config_dir)
-            global_config = config.global_config
-        except ConfigLoadError:
-            # If no config exists yet, use default global config
-            from .config import GlobalConfig
+        global_config = _load_global_config(config_file, config_dir)
 
-            global_config = GlobalConfig()
-
-        # Resolve download directory using global defaults if not provided
-        resolved_download_dir = _resolve_download_directory(download_dir, auto_subdir, global_config, name)
-
-        # Resolve other parameters with defaults
-        resolved_rotation = rotation if rotation is not None else global_config.defaults.rotation_enabled
-        resolved_prerelease = prerelease if prerelease is not None else False  # No global default for prerelease
-        resolved_checksum = checksum if checksum is not None else global_config.defaults.checksum_enabled
-        resolved_checksum_required = (
-            checksum_required if checksum_required is not None else global_config.defaults.checksum_required
+        # Resolve all parameters with defaults
+        (
+            resolved_download_dir,
+            resolved_rotation,
+            resolved_prerelease,
+            resolved_checksum,
+            resolved_checksum_required,
+            resolved_direct,
+        ) = _resolve_add_parameters(
+            download_dir, auto_subdir, rotation, prerelease, checksum, checksum_required, direct, global_config, name
         )
-        resolved_direct = direct if direct is not None else False
         resolved_auto_subdir = auto_subdir if auto_subdir is not None else global_config.defaults.auto_subdir
 
         # Show resolved parameters if verbose mode is enabled
-        if verbose:
-            original_params = {
-                "name": name,
-                "url": url,
-                "download_dir": download_dir,
-                "rotation": rotation,
-                "retain": retain,
-                "symlink": symlink,
-                "prerelease": prerelease,
-                "checksum": checksum,
-                "checksum_algorithm": checksum_algorithm,
-                "checksum_pattern": checksum_pattern,
-                "checksum_required": checksum_required,
-                "pattern": pattern,
-                "direct": direct,
-                "auto_subdir": auto_subdir,
-            }
-            resolved_params = {
-                "name": name,
-                "url": validated_url,
-                "download_dir": resolved_download_dir,
-                "rotation": resolved_rotation,
-                "retain": retain,
-                "symlink": symlink,
-                "prerelease": resolved_prerelease,
-                "checksum": resolved_checksum,
-                "checksum_algorithm": checksum_algorithm,
-                "checksum_pattern": checksum_pattern,
-                "checksum_required": resolved_checksum_required,
-                "pattern": pattern,
-                "direct": resolved_direct,
-                "auto_subdir": resolved_auto_subdir,
-            }
-            _log_resolved_parameters("add", resolved_params, original_params)
+        _handle_verbose_logging(
+            verbose,
+            name,
+            url,
+            validated_url,
+            download_dir,
+            resolved_download_dir,
+            rotation,
+            resolved_rotation,
+            retain,
+            symlink,
+            prerelease,
+            resolved_prerelease,
+            checksum,
+            resolved_checksum,
+            checksum_algorithm,
+            checksum_pattern,
+            checksum_required,
+            resolved_checksum_required,
+            pattern,
+            direct,
+            resolved_direct,
+            auto_subdir,
+            resolved_auto_subdir,
+        )
 
         # Handle directory path expansion and creation (skip in dry-run mode)
         if dry_run:
@@ -656,68 +817,19 @@ async def _add(
 
         if dry_run:
             # Dry run mode - show what would be configured without saving
-            console.print(
-                f"\n[bold yellow]DRY RUN: Would add application '{name}' "
-                "with the following configuration:[/bold yellow]"
-            )
-            console.print("=" * 70)
-            console.print(f"[blue]Name: {name}")
-            console.print(f"[blue]Source: {validated_url}")
-            console.print(f"[blue]Download Directory: {expanded_download_dir}")
-            console.print(f"[blue]Pattern: {app_config['pattern']}")
-            console.print(f"[blue]Rotation: {'Enabled' if app_config.get('rotation', False) else 'Disabled'}")
-            if app_config.get('rotation', False):
-                console.print(f"[blue]  Retain Count: {app_config.get('retain', 3)}")
-                if app_config.get('symlink'):
-                    console.print(f"[blue]  Symlink: {app_config['symlink']}")
-            console.print(f"[blue]Prerelease: {'Enabled' if app_config.get('prerelease', False) else 'Disabled'}")
-            console.print(f"[blue]Checksum: {'Enabled' if app_config.get('checksum', True) else 'Disabled'}")
-            if app_config.get('checksum', True):
-                console.print(f"[blue]  Algorithm: {app_config.get('checksum_algorithm', 'sha256')}")
-                console.print(f"[blue]  Pattern: {app_config.get('checksum_pattern', '{filename}-SHA256.txt')}")
-                console.print(f"[blue]  Required: {'Yes' if app_config.get('checksum_required', False) else 'No'}")
-
-            # Show prerelease auto-detection feedback
-            if prerelease_auto_enabled:
-                console.print("[cyan]🔍 Auto-detected continuous builds - would enable prerelease support")
-
-            console.print("\n[yellow]💡 Run without --dry-run to actually add this configuration")
+            _display_dry_run_config(name, validated_url, expanded_download_dir, app_config, prerelease_auto_enabled)
             logger.debug(f"Dry run completed for application '{name}'")
         else:
             # Normal mode - actually add the configuration
             add_application_to_config(app_config, config_file, config_dir)
-
-            console.print(f"[green]✓ Successfully added application '{name}'")
-            console.print(f"[blue]Source: {validated_url}")
-            console.print(f"[blue]Download Directory: {expanded_download_dir}")
-            console.print(f"[blue]Pattern: {app_config['pattern']}")
-
-            # Show prerelease auto-detection feedback
-            if prerelease_auto_enabled:
-                console.print("[cyan]🔍 Auto-detected continuous builds - enabled prerelease support")
-
-            console.print(f"\n[yellow]💡 Tip: Use 'appimage-updater show {name}' to view full configuration")
+            _display_add_success(name, validated_url, expanded_download_dir, app_config, prerelease_auto_enabled)
             logger.debug(f"Successfully added application '{name}' to configuration")
 
     except typer.Exit:
         # Re-raise typer.Exit without logging - these are intentional exits
         raise
     except Exception as e:
-        # Check for repository rate limit errors and provide helpful feedback
-        error_msg = str(e)
-        if "rate limit" in error_msg.lower():
-            if "github" in error_msg.lower():
-                console.print(f"[red]GitHub API rate limit exceeded: {e}")
-                console.print("[yellow]💡 To avoid rate limits, set a GitHub token:")
-                console.print("[yellow]   export GITHUB_TOKEN=your_token_here")
-                console.print("[yellow]   Get a token at: https://github.com/settings/tokens")
-                console.print("[yellow]   Only 'public_repo' permission is needed for public repositories")
-            else:
-                console.print(f"[red]Repository API rate limit exceeded: {e}")
-        else:
-            console.print(f"[red]Error adding application: {e}")
-        logger.error(f"Error adding application '{name}': {e}")
-        logger.exception("Full exception details")
+        _handle_add_error(e, name)
         raise typer.Exit(1) from e
 
 
