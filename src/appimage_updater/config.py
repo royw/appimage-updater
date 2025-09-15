@@ -124,6 +124,10 @@ class DefaultsConfig(BaseModel):
         default="{appname}.AppImage",
         description="Default pattern for symlink names",
     )
+    auto_subdir: bool = Field(
+        default=False,
+        description="Automatically create {appname} subdirectory in download_dir",
+    )
     checksum_enabled: bool = Field(
         default=True,
         description="Enable checksum verification by default",
@@ -155,12 +159,10 @@ class DefaultsConfig(BaseModel):
 
     def get_default_download_dir(self, app_name: str) -> Path:
         """Get effective download directory for an app."""
-        if self.download_dir is not None:
-            # Use global default with app subdirectory
-            return self.download_dir / app_name
-        else:
-            # Fall back to current directory with app name
-            return Path.cwd() / app_name
+        base_dir = self.download_dir if self.download_dir is not None else Path.cwd()
+
+        # Add app subdirectory if auto_subdir is enabled
+        return base_dir / app_name if self.auto_subdir else base_dir
 
     def get_default_symlink_path(self, app_name: str) -> Path | None:
         """Get effective symlink path for an app."""

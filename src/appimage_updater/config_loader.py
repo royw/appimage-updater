@@ -43,6 +43,11 @@ def load_configs_from_directory(config_dir: Path) -> Config:
 
     config_files = list(config_dir.glob("*.json"))
 
+    # Also check for global config in parent directory
+    parent_config = config_dir.parent / "config.json"
+    if parent_config.exists():
+        config_files.append(parent_config)
+
     if not config_files:
         msg = f"No JSON configuration files found in {config_dir}"
         raise ConfigLoadError(msg)

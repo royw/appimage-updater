@@ -131,6 +131,7 @@ The setting names in parentheses (e.g., `(download-dir)`) are what you use with 
 - `download-dir`: Default download directory
 - `symlink-dir`: Default symlink directory
 - `symlink-pattern`: Default symlink filename pattern
+- `auto-subdir`: Automatically create `{appname}` subdirectories in download directory (true/false)
 - `rotation-enabled`: Enable file rotation by default (true/false)
 - `symlink-enabled`: Enable symlinks by default (true/false)
 - `retain-count`: Default number of old files to retain (1-10)

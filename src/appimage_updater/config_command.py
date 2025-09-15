@@ -71,6 +71,7 @@ def show_global_config(config_file: Path | None = None, config_dir: Path | None 
             str(defaults.symlink_dir) if defaults.symlink_dir else "None",
         )
         defaults_table.add_row("Symlink Pattern", "[dim](symlink-pattern)[/dim]", defaults.symlink_pattern)
+        defaults_table.add_row("Auto Subdirectory", "[dim](auto-subdir)[/dim]", "Yes" if defaults.auto_subdir else "No")
         defaults_table.add_row(
             "Checksum Enabled", "[dim](checksum-enabled)[/dim]", "Yes" if defaults.checksum_enabled else "No"
         )
@@ -176,7 +177,14 @@ def _apply_setting_change(config: Config, setting: str, value: str) -> None:
     elif setting == "symlink-pattern":
         config.global_config.defaults.symlink_pattern = value
         console.print(f"[green]Set default symlink pattern to: {value}")
-    elif setting in ("rotation-enabled", "symlink-enabled", "checksum-enabled", "checksum-required", "prerelease"):
+    elif setting in (
+        "rotation-enabled",
+        "symlink-enabled",
+        "checksum-enabled",
+        "checksum-required",
+        "prerelease",
+        "auto-subdir",
+    ):
         _apply_boolean_setting(config, setting, value)
     elif setting in ("retain-count", "concurrent-downloads", "timeout-seconds"):
         _apply_numeric_setting(config, setting, value)
@@ -208,6 +216,9 @@ def _apply_boolean_setting(config: Config, setting: str, value: str) -> None:
     elif setting == "prerelease":
         config.global_config.defaults.prerelease = bool_value
         console.print(f"[green]Set default prerelease to: {bool_value}")
+    elif setting == "auto-subdir":
+        config.global_config.defaults.auto_subdir = bool_value
+        console.print(f"[green]Set automatic subdirectory creation to: {bool_value}")
 
 
 def _apply_numeric_setting(config: Config, setting: str, value: str) -> None:
@@ -261,7 +272,7 @@ def _show_available_settings(setting: str) -> None:
     """Show available settings and exit."""
     console.print(f"[red]Unknown setting: {setting}")
     console.print("[yellow]Available settings:")
-    console.print("  download-dir, symlink-dir, symlink-pattern")
+    console.print("  download-dir, symlink-dir, symlink-pattern, auto-subdir")
     console.print("  rotation-enabled, symlink-enabled, retain-count")
     console.print("  checksum-enabled, checksum-algorithm, checksum-pattern, checksum-required")
     console.print("  prerelease, concurrent-downloads, timeout-seconds")
@@ -301,8 +312,10 @@ def _save_config(config: Config, config_file: Path | None, config_dir: Path | No
         default_file = get_default_config_path()
 
         if default_dir.exists():
-            default_dir.mkdir(parents=True, exist_ok=True)
-            target_file = default_dir / "global.json"
+            # Save global config to parent directory, not in apps/
+            config_parent = default_dir.parent
+            config_parent.mkdir(parents=True, exist_ok=True)
+            target_file = config_parent / "config.json"
         else:
             # Use single file approach
             target_file = default_file
@@ -329,6 +342,7 @@ def _save_config(config: Config, config_file: Path | None, config_dir: Path | No
                     else None
                 ),
                 "symlink_pattern": config.global_config.defaults.symlink_pattern,
+                "auto_subdir": config.global_config.defaults.auto_subdir,
                 "checksum_enabled": config.global_config.defaults.checksum_enabled,
                 "checksum_algorithm": config.global_config.defaults.checksum_algorithm,
                 "checksum_pattern": config.global_config.defaults.checksum_pattern,

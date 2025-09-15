@@ -331,6 +331,7 @@ appimage-updater config [OPTIONS] ACTION [SETTING] [VALUE]
 - `download-dir`: Default download directory for new applications
 - `symlink-dir`: Default symlink directory for new applications
 - `symlink-pattern`: Default symlink filename pattern
+- `auto-subdir`: Automatically create `{appname}` subdirectories in download directory (true/false)
 - `rotation-enabled`: Enable file rotation by default (true/false)
 - `symlink-enabled`: Enable symlinks by default (true/false)
 - `retain-count`: Default number of old files to retain (1-10)
@@ -366,6 +367,9 @@ appimage-updater config set timeout-seconds 60
 # Enable prerelease versions by default
 appimage-updater config set prerelease true
 
+# Enable automatic subdirectory creation for organized downloads
+appimage-updater config set auto-subdir true
+
 # Reset all settings to defaults
 appimage-updater config reset
 
@@ -392,6 +396,7 @@ Retain Count                (retain-count)            5
 Symlink Enabled             (symlink-enabled)         Yes
 Symlink Directory           (symlink-dir)             /home/user/bin
 Symlink Pattern             (symlink-pattern)         {appname}.AppImage
+Auto Subdirectory           (auto-subdir)             No
 Checksum Enabled            (checksum-enabled)        Yes
 Checksum Algorithm          (checksum-algorithm)      SHA256
 Checksum Pattern            (checksum-pattern)        {filename}-SHA256.txt
