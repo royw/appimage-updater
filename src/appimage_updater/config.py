@@ -217,49 +217,73 @@ class Config(BaseModel):
 
         return app_config
 
-    def _apply_rotation_defaults(self, app_config: dict[str, Any], defaults: DefaultsConfig, app_name: str) -> None:
-        """Apply rotation-related defaults."""
+    def _apply_rotation_enabled_default(self, app_config: dict[str, Any], defaults: DefaultsConfig) -> None:
+        """Apply rotation_enabled default if not specified."""
         if "rotation_enabled" not in app_config:
             app_config["rotation_enabled"] = defaults.rotation_enabled
 
+    def _apply_retain_count_default(self, app_config: dict[str, Any], defaults: DefaultsConfig) -> None:
+        """Apply retain_count default if rotation is enabled and not specified."""
         if "retain_count" not in app_config and app_config.get("rotation_enabled", False):
             app_config["retain_count"] = defaults.retain_count
 
-        # Apply symlink defaults if not specified and rotation is enabled
+    def _apply_symlink_path_default(self, app_config: dict[str, Any], defaults: DefaultsConfig, app_name: str) -> None:
+        """Apply symlink_path default if rotation is enabled and not specified."""
         if app_config.get("rotation_enabled", False) and "symlink_path" not in app_config:
             default_symlink = defaults.get_default_symlink_path(app_name)
             if default_symlink is not None:
                 app_config["symlink_path"] = str(default_symlink)
 
-    def _apply_checksum_defaults(self, app_config: dict[str, Any], defaults: DefaultsConfig) -> None:
-        """Apply checksum-related defaults."""
+    def _apply_rotation_defaults(self, app_config: dict[str, Any], defaults: DefaultsConfig, app_name: str) -> None:
+        """Apply rotation-related defaults."""
+        self._apply_rotation_enabled_default(app_config, defaults)
+        self._apply_retain_count_default(app_config, defaults)
+        self._apply_symlink_path_default(app_config, defaults, app_name)
+
+    def _ensure_checksum_config_exists(self, app_config: dict[str, Any]) -> dict[str, Any]:
+        """Ensure checksum config section exists and return it."""
         if "checksum" not in app_config:
             app_config["checksum"] = {}
+        return app_config["checksum"]
 
-        checksum_config = app_config["checksum"]
+    def _apply_checksum_enabled_default(self, checksum_config: dict[str, Any], defaults: DefaultsConfig) -> None:
+        """Apply checksum enabled default if not specified."""
         if "enabled" not in checksum_config:
             checksum_config["enabled"] = defaults.checksum_enabled
+
+    def _apply_checksum_algorithm_default(self, checksum_config: dict[str, Any], defaults: DefaultsConfig) -> None:
+        """Apply checksum algorithm default if not specified."""
         if "algorithm" not in checksum_config:
             checksum_config["algorithm"] = defaults.checksum_algorithm
+
+    def _apply_checksum_pattern_default(self, checksum_config: dict[str, Any], defaults: DefaultsConfig) -> None:
+        """Apply checksum pattern default if not specified."""
         if "pattern" not in checksum_config:
             checksum_config["pattern"] = defaults.checksum_pattern
+
+    def _apply_checksum_required_default(self, checksum_config: dict[str, Any], defaults: DefaultsConfig) -> None:
+        """Apply checksum required default if not specified."""
         if "required" not in checksum_config:
             checksum_config["required"] = defaults.checksum_required
 
-    def get_effective_config_for_app(self, app_name: str) -> dict[str, Any] | None:
-        """Get the effective configuration for an app (global defaults + app-specific settings)."""
-        # Find the app in the configuration
-        app = None
+    def _apply_checksum_defaults(self, app_config: dict[str, Any], defaults: DefaultsConfig) -> None:
+        """Apply checksum-related defaults."""
+        checksum_config = self._ensure_checksum_config_exists(app_config)
+        self._apply_checksum_enabled_default(checksum_config, defaults)
+        self._apply_checksum_algorithm_default(checksum_config, defaults)
+        self._apply_checksum_pattern_default(checksum_config, defaults)
+        self._apply_checksum_required_default(checksum_config, defaults)
+
+    def _find_application_by_name(self, app_name: str) -> Any | None:
+        """Find application by name (case-insensitive)."""
         for application in self.applications:
             if application.name.lower() == app_name.lower():
-                app = application
-                break
+                return application
+        return None
 
-        if app is None:
-            return None
-
-        # Convert app to dict
-        app_dict = {
+    def _create_base_app_dict(self, app: Any) -> dict[str, Any]:
+        """Create base application dictionary with required fields."""
+        return {
             "name": app.name,
             "source_type": app.source_type,
             "url": app.url,
@@ -276,10 +300,21 @@ class Config(BaseModel):
             },
         }
 
-        # Add optional fields
+    def _add_optional_app_fields(self, app_dict: dict[str, Any], app: Any) -> None:
+        """Add optional fields to application dictionary."""
         if hasattr(app, "retain_count"):
             app_dict["retain_count"] = app.retain_count
         if hasattr(app, "symlink_path") and app.symlink_path is not None:
             app_dict["symlink_path"] = str(app.symlink_path)
 
+    def get_effective_config_for_app(self, app_name: str) -> dict[str, Any] | None:
+        """Get the effective configuration for an app (global defaults + app-specific settings)."""
+        # Find the app in the configuration
+        app = self._find_application_by_name(app_name)
+        if app is None:
+            return None
+
+        # Convert app to dict
+        app_dict = self._create_base_app_dict(app)
+        self._add_optional_app_fields(app_dict, app)
         return app_dict

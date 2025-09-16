@@ -90,6 +90,65 @@ class Downloader:
         async with semaphore:
             return await self._download_single(candidate, progress)
 
+    async def _execute_download_attempt(
+        self, candidate: UpdateCandidate, progress: Progress | None, start_time: float
+    ) -> DownloadResult:
+        """Execute a single download attempt with all processing steps."""
+        # Setup for download
+        task_id = self._setup_download(candidate, progress)
+
+        # Perform the download
+        await self._perform_download(candidate, progress, task_id)
+
+        # Post-process the downloaded file
+        checksum_result = await self._post_process_download(candidate)
+
+        # Create version metadata file
+        await self._create_version_metadata(candidate)
+
+        # Handle image rotation if enabled
+        final_path = await self._handle_rotation(candidate)
+
+        # Return successful result
+        duration = time.time() - start_time
+        file_size = final_path.stat().st_size if final_path.exists() else 0
+        return DownloadResult(
+            app_name=candidate.app_name,
+            success=True,
+            file_path=final_path,
+            download_size=file_size,
+            duration_seconds=duration,
+            checksum_result=checksum_result,
+        )
+
+    async def _handle_download_failure(
+        self, candidate: UpdateCandidate, attempt: int, max_retries: int, error: Exception
+    ) -> None:
+        """Handle download failure cleanup and retry logic."""
+        logger.debug(f"Download attempt {attempt + 1} failed for {candidate.app_name}: {error}")
+
+        # Clean up partial download on failed attempt
+        if candidate.download_path.exists():
+            candidate.download_path.unlink()
+
+        # If not the last attempt, wait before retrying
+        if attempt < max_retries - 1:
+            wait_time = 2**attempt  # Exponential backoff: 1s, 2s, 4s
+            logger.debug(f"Waiting {wait_time}s before retry...")
+            await asyncio.sleep(wait_time)
+
+    def _create_failure_result(
+        self, candidate: UpdateCandidate, last_error: Exception | None, start_time: float
+    ) -> DownloadResult:
+        """Create a failure result when all retries are exhausted."""
+        duration = time.time() - start_time
+        return DownloadResult(
+            app_name=candidate.app_name,
+            success=False,
+            error_message=str(last_error),
+            duration_seconds=duration,
+        )
+
     async def _download_single(
         self,
         candidate: UpdateCandidate,
@@ -98,63 +157,21 @@ class Downloader:
     ) -> DownloadResult:
         """Download a single update with retry logic."""
         start_time = time.time()
-
         last_error = None
+
         for attempt in range(max_retries):
             if attempt > 0:
                 logger.debug(f"Retry attempt {attempt + 1}/{max_retries} for {candidate.app_name}")
 
             try:
-                # Setup for download
-                task_id = self._setup_download(candidate, progress)
-
-                # Perform the download
-                await self._perform_download(candidate, progress, task_id)
-
-                # Post-process the downloaded file
-                checksum_result = await self._post_process_download(candidate)
-
-                # Create version metadata file
-                await self._create_version_metadata(candidate)
-
-                # Handle image rotation if enabled
-                final_path = await self._handle_rotation(candidate)
-
-                # Return successful result
-                duration = time.time() - start_time
-                file_size = final_path.stat().st_size if final_path.exists() else 0
-                return DownloadResult(
-                    app_name=candidate.app_name,
-                    success=True,
-                    file_path=final_path,
-                    download_size=file_size,
-                    duration_seconds=duration,
-                    checksum_result=checksum_result,
-                )
+                return await self._execute_download_attempt(candidate, progress, start_time)
 
             except Exception as e:
                 last_error = e
-                logger.debug(f"Download attempt {attempt + 1} failed for {candidate.app_name}: {e}")
-
-                # Clean up partial download on failed attempt
-                if candidate.download_path.exists():
-                    candidate.download_path.unlink()
-
-                # If not the last attempt, wait before retrying
-                if attempt < max_retries - 1:
-                    wait_time = 2**attempt  # Exponential backoff: 1s, 2s, 4s
-                    logger.debug(f"Waiting {wait_time}s before retry...")
-                    await asyncio.sleep(wait_time)
-                    continue
+                await self._handle_download_failure(candidate, attempt, max_retries, e)
 
         # All retries failed
-        duration = time.time() - start_time
-        return DownloadResult(
-            app_name=candidate.app_name,
-            success=False,
-            error_message=str(last_error),
-            duration_seconds=duration,
-        )
+        return self._create_failure_result(candidate, last_error, start_time)
 
     def _setup_download(
         self,
@@ -287,6 +304,30 @@ class Downloader:
         logger.debug(f"Extracted AppImage: {appimage_basename}")
         return extract_path
 
+    def _should_use_asset_date(self, candidate: UpdateCandidate) -> bool:
+        """Check if we should use asset creation date instead of version."""
+        return (
+            candidate.latest_version
+            and any(word in candidate.latest_version.lower() for word in ["nightly", "build", "snapshot", "dev"])
+            and candidate.asset
+            and candidate.asset.created_at
+        )
+
+    def _get_version_info(self, candidate: UpdateCandidate) -> str:
+        """Get appropriate version information for metadata."""
+        if self._should_use_asset_date(candidate):
+            # Use asset creation date for nightly/development builds
+            return candidate.asset.created_at.strftime("%Y-%m-%d")
+        else:
+            # Use the standard version for regular releases
+            return candidate.latest_version
+
+    def _write_metadata_file(self, info_file_path: Path, version_info: str) -> None:
+        """Write the metadata content to file."""
+        metadata_content = f"Version: v{version_info}\n"
+        info_file_path.write_text(metadata_content)
+        logger.debug(f"Created version metadata file: {info_file_path.name}")
+
     async def _create_version_metadata(self, candidate: UpdateCandidate) -> None:
         """Create a .info metadata file with version information.
 
@@ -295,27 +336,8 @@ class Downloader:
         """
         try:
             info_file_path = candidate.download_path.with_suffix(candidate.download_path.suffix + ".info")
-
-            # For date-based versioning, use asset creation date instead of release name
-            # Check if latest_version looks like a release name rather than a version
-            if (
-                candidate.latest_version
-                and any(word in candidate.latest_version.lower() for word in ["nightly", "build", "snapshot", "dev"])
-                and candidate.asset
-                and candidate.asset.created_at
-            ):
-                # Use asset creation date for nightly/development builds
-                version_info = candidate.asset.created_at.strftime("%Y-%m-%d")
-            else:
-                # Use the standard version for regular releases
-                version_info = candidate.latest_version
-
-            # Create metadata content
-            metadata_content = f"Version: v{version_info}\n"
-
-            # Write metadata file
-            info_file_path.write_text(metadata_content)
-            logger.debug(f"Created version metadata file: {info_file_path.name}")
+            version_info = self._get_version_info(candidate)
+            self._write_metadata_file(info_file_path, version_info)
 
         except Exception as e:
             # Don't fail the download if metadata creation fails

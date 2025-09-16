@@ -1653,33 +1653,52 @@ def _get_update_candidates(check_results: list[Any], dry_run: bool = False) -> l
     return candidates
 
 
+def _prompt_for_download_confirmation() -> bool:
+    """Prompt user for download confirmation."""
+    logger.debug("Prompting user for download confirmation")
+    try:
+        if not typer.confirm("Download all updates?"):
+            console.print("[yellow]Download cancelled")
+            logger.debug("User cancelled download")
+            return False
+    except (EOFError, KeyboardInterrupt, typer.Abort):
+        console.print("[yellow]Running in non-interactive mode. Use --yes to automatically confirm downloads.")
+        logger.debug("Non-interactive mode detected, download cancelled")
+        return False
+    return True
+
+
+def _create_downloader(config: Any) -> Downloader:
+    """Create and configure downloader instance."""
+    logger.debug("Initializing downloader")
+    timeout_value = config.global_config.timeout_seconds * 10
+    concurrent_value = config.global_config.concurrent_downloads
+    logger.debug(f"Download settings: timeout={timeout_value}s, max_concurrent={concurrent_value}")
+    return Downloader(
+        timeout=config.global_config.timeout_seconds * 10,  # Longer for downloads
+        user_agent=config.global_config.user_agent,
+        max_concurrent=config.global_config.concurrent_downloads,
+    )
+
+
+def _log_download_summary(download_results: list[Any]) -> None:
+    """Log download summary statistics."""
+    successful_downloads = sum(1 for r in download_results if r.success)
+    failed_downloads = len(download_results) - successful_downloads
+    logger.debug(f"Download summary: {successful_downloads} successful, {failed_downloads} failed")
+
+
 async def _handle_downloads(config: Any, candidates: list[Any], yes: bool = False) -> None:
     """Handle the download process."""
     # Prompt for download unless --yes flag is used
     if not yes:
-        logger.debug("Prompting user for download confirmation")
-        try:
-            if not typer.confirm("Download all updates?"):
-                console.print("[yellow]Download cancelled")
-                logger.debug("User cancelled download")
-                return
-        except (EOFError, KeyboardInterrupt, typer.Abort):
-            console.print("[yellow]Running in non-interactive mode. Use --yes to automatically confirm downloads.")
-            logger.debug("Non-interactive mode detected, download cancelled")
+        if not _prompt_for_download_confirmation():
             return
     else:
         logger.debug("Auto-confirming downloads due to --yes flag")
 
     # Download updates
-    logger.debug("Initializing downloader")
-    timeout_value = config.global_config.timeout_seconds * 10
-    concurrent_value = config.global_config.concurrent_downloads
-    logger.debug(f"Download settings: timeout={timeout_value}s, max_concurrent={concurrent_value}")
-    downloader = Downloader(
-        timeout=config.global_config.timeout_seconds * 10,  # Longer for downloads
-        user_agent=config.global_config.user_agent,
-        max_concurrent=config.global_config.concurrent_downloads,
-    )
+    downloader = _create_downloader(config)
 
     console.print(f"\n[blue]Downloading {len(candidates)} updates...")
     logger.debug(f"Starting concurrent downloads of {len(candidates)} updates")
@@ -1690,9 +1709,7 @@ async def _handle_downloads(config: Any, candidates: list[Any], yes: bool = Fals
     logger.debug("Displaying download results")
     display_download_results(download_results)
 
-    successful_downloads = sum(1 for r in download_results if r.success)
-    failed_downloads = len(download_results) - successful_downloads
-    logger.debug(f"Download summary: {successful_downloads} successful, {failed_downloads} failed")
+    _log_download_summary(download_results)
 
 
 @app.command()

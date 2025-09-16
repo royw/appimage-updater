@@ -6,7 +6,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import typer
 from rich.console import Console
@@ -331,22 +331,25 @@ def _apply_auto_subdir_setting(config: Config, bool_value: bool) -> None:
     console.print(f"[green]Set automatic subdirectory creation to: {bool_value}")
 
 
+def _get_boolean_setting_handler(setting: str) -> Callable[[Config, bool], None] | None:
+    """Get the appropriate handler function for a boolean setting."""
+    handlers = {
+        "rotation-enabled": _apply_rotation_enabled_setting,
+        "symlink-enabled": _apply_symlink_enabled_setting,
+        "checksum-enabled": _apply_checksum_enabled_setting,
+        "checksum-required": _apply_checksum_required_setting,
+        "prerelease": _apply_prerelease_setting,
+        "auto-subdir": _apply_auto_subdir_setting,
+    }
+    return handlers.get(setting)
+
+
 def _apply_boolean_setting(config: Config, setting: str, value: str) -> None:
     """Apply boolean setting changes."""
     bool_value = _parse_boolean_value(value)
-
-    if setting == "rotation-enabled":
-        _apply_rotation_enabled_setting(config, bool_value)
-    elif setting == "symlink-enabled":
-        _apply_symlink_enabled_setting(config, bool_value)
-    elif setting == "checksum-enabled":
-        _apply_checksum_enabled_setting(config, bool_value)
-    elif setting == "checksum-required":
-        _apply_checksum_required_setting(config, bool_value)
-    elif setting == "prerelease":
-        _apply_prerelease_setting(config, bool_value)
-    elif setting == "auto-subdir":
-        _apply_auto_subdir_setting(config, bool_value)
+    handler = _get_boolean_setting_handler(setting)
+    if handler:
+        handler(config, bool_value)
 
 
 def _apply_numeric_setting(config: Config, setting: str, value: str) -> None:

@@ -252,16 +252,8 @@ def _build_pattern(prefix: str, include_both_formats: bool, empty_ok: bool = Fal
     return f"(?i){escaped}.*{ext}(\\.(|current|old))?$"
 
 
-def _generalize_pattern_prefix(prefix: str) -> str:
-    """Generalize a pattern prefix by removing version numbers and overly specific details.
-
-    This helps create patterns that work across multiple releases rather than being
-    tied to specific version numbers or build configurations.
-    """
-    if not prefix:
-        return prefix
-
-    # Remove version numbers and date patterns
+def _remove_version_and_date_patterns(prefix: str) -> str:
+    """Remove version numbers and date patterns from prefix."""
     # Handle standard versions: "_1.0.2" or "_v1.0.2" or "-1.0.2"
     prefix = re.sub(r"[_-]v?\d+(\.\d+)*", "", prefix)
 
@@ -271,9 +263,12 @@ def _generalize_pattern_prefix(prefix: str) -> str:
     # Remove any trailing periods left behind from date/version removal
     prefix = re.sub(r"\.$", "", prefix)
 
-    # More aggressive cleanup - remove platform/build specific parts
-    # These patterns often appear in the middle or at the end
-    platform_patterns = [
+    return prefix
+
+
+def _get_platform_patterns() -> list[str]:
+    """Get list of platform patterns to remove from middle of prefix."""
+    return [
         r"[_-]conda[_-]Linux[_-]",  # -conda-Linux- or _conda_Linux_
         r"[_-]conda[_-]",  # -conda- or _conda_
         r"[_-]Linux[_-]",  # -Linux- or _Linux_
@@ -282,12 +277,10 @@ def _generalize_pattern_prefix(prefix: str) -> str:
         r"[_-]darwin[_-]",  # -darwin- or _darwin_
     ]
 
-    # Remove platform patterns that appear in the middle
-    for pattern in platform_patterns:
-        prefix = re.sub(pattern, "-", prefix, flags=re.IGNORECASE)
 
-    # Clean up trailing separators and platform terms
-    suffix_patterns = [
+def _get_suffix_patterns() -> list[str]:
+    """Get list of suffix patterns to remove from end of prefix."""
+    return [
         r"[_-]conda$",
         r"[_-]Linux$",
         r"[_-]Windows$",
@@ -300,10 +293,22 @@ def _generalize_pattern_prefix(prefix: str) -> str:
         r"[_-]+$",  # Remove trailing separators
     ]
 
-    for pattern in suffix_patterns:
+
+def _remove_platform_patterns(prefix: str) -> str:
+    """Remove platform patterns from prefix."""
+    # Remove platform patterns that appear in the middle
+    for pattern in _get_platform_patterns():
+        prefix = re.sub(pattern, "-", prefix, flags=re.IGNORECASE)
+
+    # Clean up trailing separators and platform terms
+    for pattern in _get_suffix_patterns():
         prefix = re.sub(pattern, "", prefix, flags=re.IGNORECASE)
 
-    # Ensure we have at least something meaningful left
+    return prefix
+
+
+def _ensure_meaningful_prefix(prefix: str) -> str:
+    """Ensure prefix has meaningful content, extract app name if over-generalized."""
     if len(prefix) < 2:
         # If we've over-generalized, try to extract just the app name
         # Look for the first sequence of letters before any special characters
@@ -312,6 +317,41 @@ def _generalize_pattern_prefix(prefix: str) -> str:
             prefix = match.group(1)
 
     return prefix
+
+
+def _generalize_pattern_prefix(prefix: str) -> str:
+    """Generalize a pattern prefix by removing version numbers and overly specific details.
+
+    This helps create patterns that work across multiple releases rather than being
+    tied to specific version numbers or build configurations.
+    """
+    if not prefix:
+        return prefix
+
+    # Remove version numbers and date patterns
+    prefix = _remove_version_and_date_patterns(prefix)
+
+    # Remove platform/build specific parts
+    prefix = _remove_platform_patterns(prefix)
+
+    # Ensure we have at least something meaningful left
+    prefix = _ensure_meaningful_prefix(prefix)
+
+    return prefix
+
+
+def _find_common_length(str1: str, str2: str) -> int:
+    """Find the length of common prefix between two strings."""
+    common_len = 0
+    min_len = min(len(str1), len(str2))
+
+    for i in range(min_len):
+        if str1[i].lower() == str2[i].lower():  # Case-insensitive comparison
+            common_len += 1
+        else:
+            break
+
+    return common_len
 
 
 def find_common_prefix(strings: list[str]) -> str:
@@ -324,15 +364,7 @@ def find_common_prefix(strings: list[str]) -> str:
 
     for string in strings[1:]:
         # Find common prefix with current string
-        common_len = 0
-        min_len = min(len(prefix), len(string))
-
-        for i in range(min_len):
-            if prefix[i].lower() == string[i].lower():  # Case-insensitive comparison
-                common_len += 1
-            else:
-                break
-
+        common_len = _find_common_length(prefix, string)
         prefix = prefix[:common_len]
 
         # If prefix becomes too short, stop

@@ -332,18 +332,21 @@ def _validate_app_name(name: str) -> bool:
     return not any(char in name for char in invalid_chars)
 
 
-def _validate_url(url: str) -> bool:
-    """Validate repository or download URL."""
+def _check_url_basic_format(url: str) -> bool:
+    """Check basic URL format requirements."""
     if not url or not url.strip():
         return False
 
-    # Basic URL format check
     if not (url.startswith("http://") or url.startswith("https://")):
         console.print("[yellow]💡 URL should start with http:// or https://[/yellow]")
         return False
 
+    return True
+
+
+def _validate_with_repository_client(url: str) -> bool:
+    """Validate URL using repository client."""
     try:
-        # Try to validate with repository client
         repo_client = get_repository_client(url)
         normalized_url, was_corrected = repo_client.normalize_repo_url(url)
 
@@ -358,6 +361,14 @@ def _validate_url(url: str) -> bool:
     except Exception as e:
         console.print(f"[yellow]💡 {str(e)}[/yellow]")
         return False
+
+
+def _validate_url(url: str) -> bool:
+    """Validate repository or download URL."""
+    if not _check_url_basic_format(url):
+        return False
+
+    return _validate_with_repository_client(url)
 
 
 def _validate_directory_path(path: str) -> bool:

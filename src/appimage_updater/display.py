@@ -655,18 +655,23 @@ def get_symlinks_info(app: Any) -> str:
     return format_symlink_info(found_symlinks)
 
 
+def _is_valid_symlink(symlink_path: Path) -> bool:
+    """Check if path exists and is a symlink."""
+    return symlink_path.exists() and symlink_path.is_symlink()
+
+def _is_valid_appimage_target(target: Path, download_dir: Path) -> bool:
+    """Check if target is an AppImage in the download directory."""
+    return target.parent == download_dir and target.name.endswith(".AppImage")
+
 def check_configured_symlink(symlink_path: Path, download_dir: Path) -> tuple[Path, Path] | None:
     """Check if the configured symlink exists and points to an AppImage in the download directory."""
-    if not symlink_path.exists():
-        return None
-
-    if not symlink_path.is_symlink():
+    if not _is_valid_symlink(symlink_path):
         return None
 
     try:
         target = symlink_path.resolve()
         # Check if target is in download directory and is an AppImage
-        if target.parent == download_dir and target.name.endswith(".AppImage"):
+        if _is_valid_appimage_target(target, download_dir):
             return (symlink_path, target)
         # If we get here, symlink doesn't point to expected location
         logger.debug(f"Symlink {symlink_path} points to {target}, not an AppImage in download directory")
@@ -751,15 +756,21 @@ def scan_directory_for_symlinks(location: Path, download_dir: Path) -> list[tupl
     return symlinks
 
 
+def _is_valid_target_location(target: Path, download_dir: Path) -> bool:
+    """Check if target is in download directory and contains AppImage."""
+    return target.parent == download_dir and ".AppImage" in target.name
+
+def _is_valid_symlink_location(symlink: Path, download_dir: Path) -> bool:
+    """Check if symlink is in download directory and ends with AppImage."""
+    return symlink.parent == download_dir and symlink.name.endswith(".AppImage")
+
 def get_valid_symlink_target(symlink: Path, download_dir: Path) -> Path | None:
     """Check if symlink points to a valid AppImage file and return the target."""
     try:
         target = symlink.resolve()
         # Check if symlink points to a file in our download directory
         # Accept files that contain ".AppImage" (handles .current, .old suffixes)
-        if (target.parent == download_dir and ".AppImage" in target.name) or (
-            symlink.parent == download_dir and symlink.name.endswith(".AppImage")
-        ):
+        if _is_valid_target_location(target, download_dir) or _is_valid_symlink_location(symlink, download_dir):
             return target
         # If we get here, symlink doesn't point to expected location
         logger.debug(f"Symlink {symlink} points to {target}, not a valid AppImage in download directory")

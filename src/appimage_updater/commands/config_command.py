@@ -17,20 +17,31 @@ class ConfigCommand(Command):
         self.params = params
         self.console = Console()
 
+    def _validate_action(self) -> list[str]:
+        """Validate the action parameter."""
+        valid_actions = {"show", "set", "reset", "show-effective", "list"}
+        if self.params.action not in valid_actions:
+            return [f"Invalid action '{self.params.action}'. Valid actions: {', '.join(valid_actions)}"]
+        return []
+
+    def _validate_set_action_parameters(self) -> list[str]:
+        """Validate parameters for set action."""
+        if self.params.action == "set" and (not self.params.setting or not self.params.value):
+            return ["'set' action requires both setting and value"]
+        return []
+
+    def _validate_show_effective_parameters(self) -> list[str]:
+        """Validate parameters for show-effective action."""
+        if self.params.action == "show-effective" and not self.params.app_name:
+            return ["'show-effective' action requires --app parameter"]
+        return []
+
     def validate(self) -> list[str]:
         """Validate command parameters."""
         errors = []
-
-        valid_actions = {"show", "set", "reset", "show-effective", "list"}
-        if self.params.action not in valid_actions:
-            errors.append(f"Invalid action '{self.params.action}'. Valid actions: {', '.join(valid_actions)}")
-
-        if self.params.action == "set" and (not self.params.setting or not self.params.value):
-            errors.append("'set' action requires both setting and value")
-
-        if self.params.action == "show-effective" and not self.params.app_name:
-            errors.append("'show-effective' action requires --app parameter")
-
+        errors.extend(self._validate_action())
+        errors.extend(self._validate_set_action_parameters())
+        errors.extend(self._validate_show_effective_parameters())
         return errors
 
     async def execute(self) -> CommandResult:

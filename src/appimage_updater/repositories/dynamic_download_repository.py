@@ -8,13 +8,16 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
+from pathlib import Path
 from typing import Any
+from urllib.parse import urljoin, urlparse
 
 import httpx
-from loguru import logger
+from bs4 import BeautifulSoup
 
-from ..models import Asset, Release
-from .base import RepositoryClient, RepositoryError
+from appimage_updater.logging_config import logger
+from appimage_updater.models import Asset, Release
+from appimage_updater.repositories.base import RepositoryClient, RepositoryError
 
 
 class DynamicDownloadRepository(RepositoryClient):
@@ -163,6 +166,24 @@ class DynamicDownloadRepository(RepositoryClient):
         """Check if prerelease should be enabled (always False for dynamic downloads)."""
         return False
 
+    def _extract_appimage_asset_names(self, releases: list[Any]) -> list[str]:
+        """Extract AppImage asset names from releases."""
+        asset_names = []
+        for release in releases:
+            for asset in release.assets:
+                if asset.name.endswith(".AppImage"):
+                    asset_names.append(asset.name)
+        return asset_names
+
+    def _generate_regex_pattern(self, asset_name: str) -> str:
+        """Generate regex pattern from asset name."""
+        import re
+
+        # Replace version-like patterns with regex
+        pattern = re.sub(r"\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?", r"[\\d\\.\\-\\w]+", asset_name)
+        pattern = pattern.replace(".", "\\.")
+        return f"^{pattern}$"
+
     async def generate_pattern_from_releases(self, url: str) -> str | None:
         """Generate file pattern from releases."""
         try:
@@ -170,26 +191,13 @@ class DynamicDownloadRepository(RepositoryClient):
             if not releases:
                 return None
 
-            # Extract common patterns from asset names
-            asset_names = []
-            for release in releases:
-                for asset in release.assets:
-                    if asset.name.endswith(".AppImage"):
-                        asset_names.append(asset.name)
-
+            # Extract AppImage asset names
+            asset_names = self._extract_appimage_asset_names(releases)
             if not asset_names:
                 return None
 
-            # Generate pattern based on common structure
-            first_name = asset_names[0]
-
-            # Replace version-like patterns with regex
-            import re
-
-            pattern = re.sub(r"\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?", r"[\\d\\.\\-\\w]+", first_name)
-            pattern = pattern.replace(".", "\\.")
-
-            return f"^{pattern}$"
+            # Generate pattern based on first asset name
+            return self._generate_regex_pattern(asset_names[0])
 
         except Exception as e:
             logger.error(f"Failed to generate pattern for {url}: {e}")

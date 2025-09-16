@@ -857,11 +857,9 @@ def validate_edit_updates(app: Any, updates: dict[str, Any], create_dir: bool, y
     handle_path_expansions(updates)
 
 
-def apply_basic_config_updates(app: Any, updates: dict[str, Any]) -> list[str]:
-    """Apply basic configuration updates (URL, directory, pattern, status)."""
+def _apply_simple_string_updates(app: Any, updates: dict[str, Any]) -> list[str]:
+    """Apply simple string/value updates."""
     changes = []
-
-    # Simple string/value updates
     simple_updates = [
         ("url", "URL", lambda v: v),
         ("pattern", "File Pattern", lambda v: v),
@@ -870,12 +868,19 @@ def apply_basic_config_updates(app: Any, updates: dict[str, Any]) -> list[str]:
     for key, label, transform in simple_updates:
         if key in updates:
             changes.extend(_apply_simple_update(app, key, label, updates[key], transform))
+    return changes
 
-    # Directory update (needs Path conversion)
+
+def _apply_directory_updates(app: Any, updates: dict[str, Any]) -> list[str]:
+    """Apply directory update if present."""
     if "download_dir" in updates:
-        changes.extend(_apply_directory_update(app, updates["download_dir"]))
+        return _apply_directory_update(app, updates["download_dir"])
+    return []
 
-    # Boolean updates with custom formatting
+
+def _apply_boolean_field_updates(app: Any, updates: dict[str, Any]) -> list[str]:
+    """Apply boolean field updates with custom formatting."""
+    changes = []
     boolean_updates = [
         ("enabled", "Status", "Enabled", "Disabled"),
         ("prerelease", "Prerelease", "Yes", "No"),
@@ -884,11 +889,23 @@ def apply_basic_config_updates(app: Any, updates: dict[str, Any]) -> list[str]:
     for key, label, true_text, false_text in boolean_updates:
         if key in updates:
             changes.extend(_apply_boolean_update(app, key, label, updates[key], true_text, false_text))
+    return changes
 
-    # Source type update (only if changed)
+
+def _apply_source_type_updates(app: Any, updates: dict[str, Any]) -> list[str]:
+    """Apply source type update if present."""
     if "source_type" in updates:
-        changes.extend(_apply_conditional_update(app, "source_type", "Source Type", updates["source_type"]))
+        return _apply_conditional_update(app, "source_type", "Source Type", updates["source_type"])
+    return []
 
+
+def apply_basic_config_updates(app: Any, updates: dict[str, Any]) -> list[str]:
+    """Apply basic configuration updates (URL, directory, pattern, status)."""
+    changes = []
+    changes.extend(_apply_simple_string_updates(app, updates))
+    changes.extend(_apply_directory_updates(app, updates))
+    changes.extend(_apply_boolean_field_updates(app, updates))
+    changes.extend(_apply_source_type_updates(app, updates))
     return changes
 
 

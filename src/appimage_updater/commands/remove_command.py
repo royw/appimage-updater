@@ -151,31 +151,47 @@ class RemoveCommand(Command):
             self.console.print(f"Files in {app.download_dir} were not deleted")
         return config
 
-    def _save_config(self, config: Config, removed_apps: list[ApplicationConfig]) -> None:
-        """Save the updated configuration."""
+    def _save_single_file_config(self, config: Config) -> None:
+        """Save configuration to a single file."""
         import json
         from pathlib import Path
 
         if self.params.config_file:
-            # Save to single file
             config_data = {
                 "global_config": config.global_config.model_dump(),
                 "applications": [app.model_dump() for app in config.applications],
             }
             with self.params.config_file.open("w") as f:
                 json.dump(config_data, f, indent=2, default=str)
-        elif self.params.config_dir:
-            # For directory-based config, delete the removed app files
+
+    def _delete_removed_app_files(self, config_dir: Path, removed_apps: list[ApplicationConfig]) -> None:
+        """Delete individual app config files for removed apps."""
+        for app in removed_apps:
+            app_file = config_dir / f"{app.name.lower()}.json"
+            if app_file.exists():
+                app_file.unlink()
+
+    def _update_global_config_file(self, config_dir: Path, config: Config) -> None:
+        """Update global config file if it exists."""
+        import json
+
+        global_config_file = config_dir / "config.json"
+        if global_config_file.exists():
+            with global_config_file.open("w") as f:
+                json.dump(config.global_config.model_dump(), f, indent=2, default=str)
+
+    def _save_directory_based_config(self, config: Config, removed_apps: list[ApplicationConfig]) -> None:
+        """Save directory-based configuration."""
+        from pathlib import Path
+
+        if self.params.config_dir:
             config_dir = Path(self.params.config_dir)
+            self._delete_removed_app_files(config_dir, removed_apps)
+            self._update_global_config_file(config_dir, config)
 
-            # Delete individual app config files for removed apps
-            for app in removed_apps:
-                app_file = config_dir / f"{app.name.lower()}.json"
-                if app_file.exists():
-                    app_file.unlink()
-
-            # Update global config if it exists
-            global_config_file = config_dir / "config.json"
-            if global_config_file.exists():
-                with global_config_file.open("w") as f:
-                    json.dump(config.global_config.model_dump(), f, indent=2, default=str)
+    def _save_config(self, config: Config, removed_apps: list[ApplicationConfig]) -> None:
+        """Save the updated configuration."""
+        if self.params.config_file:
+            self._save_single_file_config(config)
+        elif self.params.config_dir:
+            self._save_directory_based_config(config, removed_apps)

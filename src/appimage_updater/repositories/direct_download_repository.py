@@ -234,9 +234,8 @@ class DirectDownloadRepository(RepositoryClient):
 
         return version
 
-    def _extract_file_date(self, response: httpx.Response) -> datetime:
-        """Extract file modification date from HTTP response headers."""
-        # Try Last-Modified header first
+    def _try_parse_last_modified_header(self, response: httpx.Response) -> datetime | None:
+        """Try to parse Last-Modified header."""
         last_modified = response.headers.get("last-modified")
         if last_modified:
             try:
@@ -245,8 +244,10 @@ class DirectDownloadRepository(RepositoryClient):
                     return cast(datetime, parsed_date)
             except (ValueError, TypeError):
                 pass
+        return None
 
-        # Try Date header as fallback
+    def _try_parse_date_header(self, response: httpx.Response) -> datetime | None:
+        """Try to parse Date header as fallback."""
         date_header = response.headers.get("date")
         if date_header:
             try:
@@ -255,6 +256,19 @@ class DirectDownloadRepository(RepositoryClient):
                     return cast(datetime, parsed_date)
             except (ValueError, TypeError):
                 pass
+        return None
+
+    def _extract_file_date(self, response: httpx.Response) -> datetime:
+        """Extract file modification date from HTTP response headers."""
+        # Try Last-Modified header first
+        date = self._try_parse_last_modified_header(response)
+        if date:
+            return date
+
+        # Try Date header as fallback
+        date = self._try_parse_date_header(response)
+        if date:
+            return date
 
         # Fallback to current time
         return datetime.now()
@@ -274,6 +288,32 @@ class DirectDownloadRepository(RepositoryClient):
         """Check if prerelease should be enabled (always False for direct downloads)."""
         return False
 
+    def _extract_appimage_names_from_releases(self, releases: list[Any]) -> list[str]:
+        """Extract AppImage asset names from releases."""
+        asset_names = []
+        for release in releases:
+            for asset in release.assets:
+                if asset.name.endswith(".AppImage"):
+                    asset_names.append(asset.name)
+        return asset_names
+
+    def _clean_base_name(self, filename: str) -> str:
+        """Clean filename to extract base application name."""
+        import re
+
+        # Remove version patterns, architecture, and hash info
+        base_name = re.sub(r"_\d+\.\d+(?:\.\d+)?(?:rc\d+)?", "", filename)  # Remove version
+        base_name = re.sub(r"_x86_64|_i386|_arm64|_armhf", "", base_name)  # Remove architecture
+        base_name = re.sub(r"_[a-f0-9]{7,}", "", base_name)  # Remove hash
+        base_name = re.sub(r"\.AppImage$", "", base_name)  # Remove extension
+        return base_name
+
+    def _create_flexible_pattern(self, base_name: str) -> str:
+        """Create a flexible pattern that matches the base name with variations."""
+        import re
+        pattern = f"{re.escape(base_name)}.*\\.AppImage"
+        return f"(?i){pattern}$"
+
     async def generate_pattern_from_releases(self, url: str) -> str | None:
         """Generate file pattern from releases."""
         try:
@@ -281,33 +321,14 @@ class DirectDownloadRepository(RepositoryClient):
             if not releases:
                 return None
 
-            # Extract common patterns from asset names
-            asset_names = []
-            for release in releases:
-                for asset in release.assets:
-                    if asset.name.endswith(".AppImage"):
-                        asset_names.append(asset.name)
-
+            # Extract AppImage asset names
+            asset_names = self._extract_appimage_names_from_releases(releases)
             if not asset_names:
                 return None
 
-            # Generate pattern based on common structure
-            # For direct downloads, create a flexible pattern
-            first_name = asset_names[0]
-
-            # Extract the base application name (everything before version/architecture info)
-            import re
-
-            # Remove version patterns, architecture, and hash info
-            base_name = re.sub(r"_\d+\.\d+(?:\.\d+)?(?:rc\d+)?", "", first_name)  # Remove version
-            base_name = re.sub(r"_x86_64|_i386|_arm64|_armhf", "", base_name)  # Remove architecture
-            base_name = re.sub(r"_[a-f0-9]{7,}", "", base_name)  # Remove hash
-            base_name = re.sub(r"\.AppImage$", "", base_name)  # Remove extension
-
-            # Create a flexible pattern that matches the base name with any version/arch/hash
-            pattern = f"{re.escape(base_name)}.*\\.AppImage"
-
-            return f"(?i){pattern}$"
+            # Generate pattern based on first asset name
+            base_name = self._clean_base_name(asset_names[0])
+            return self._create_flexible_pattern(base_name)
 
         except Exception as e:
             logger.error(f"Failed to generate pattern for {url}: {e}")

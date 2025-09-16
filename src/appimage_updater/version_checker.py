@@ -10,7 +10,7 @@ from packaging import version
 
 from .config import ApplicationConfig
 from .distribution_selector import select_best_distribution_asset
-from .models import CheckResult, UpdateCandidate
+from .models import Asset, CheckResult, Release, UpdateCandidate
 from .repositories import RepositoryClient, RepositoryError, get_repository_client
 
 
@@ -38,24 +38,54 @@ class VersionChecker:
                 error_message=str(e),
             )
 
+    async def _get_repository_releases(self, app_config: ApplicationConfig) -> list[Release]:
+        """Get releases from repository client."""
+        repo_client = self.repository_client or get_repository_client(
+            app_config.url, source_type=app_config.source_type
+        )
+        return await repo_client.get_releases(app_config.url, limit=20)
+
+    def _validate_releases_found(self, releases: list[Release], app_name: str) -> CheckResult | None:
+        """Validate that releases were found, return error result if not."""
+        if not releases:
+            return self._create_error_result(app_name, "No releases found")
+        return None
+
+    def _validate_matching_assets(
+        self, release: Release | None, matching_assets: list[Asset], app_config: ApplicationConfig
+    ) -> CheckResult | None:
+        """Validate that matching assets were found, return error result if not."""
+        if not release or not matching_assets:
+            return self._create_error_result(app_config.name, f"No assets match pattern: {app_config.pattern}")
+        return None
+
+    def _validate_asset_selection(self, asset: Asset | None, app_name: str) -> CheckResult | None:
+        """Validate that asset selection succeeded, return error result if not."""
+        if not asset:
+            return self._create_error_result(app_name, "Asset selection failed")
+        return None
+
     async def _check_repository_updates(self, app_config: ApplicationConfig) -> CheckResult:
         """Check for updates from repository releases."""
         try:
-            repo_client = self.repository_client or get_repository_client(
-                app_config.url, source_type=app_config.source_type
-            )
-            releases = await repo_client.get_releases(app_config.url, limit=20)
+            releases = await self._get_repository_releases(app_config)
 
-            if not releases:
-                return self._create_error_result(app_config.name, "No releases found")
+            # Validate releases found
+            error_result = self._validate_releases_found(releases, app_config.name)
+            if error_result:
+                return error_result
 
+            # Find matching release and assets
             release, matching_assets = self._find_matching_release(releases, app_config)
-            if not release or not matching_assets:
-                return self._create_error_result(app_config.name, f"No assets match pattern: {app_config.pattern}")
+            error_result = self._validate_matching_assets(release, matching_assets, app_config)
+            if error_result:
+                return error_result
 
+            # Select best asset
             asset = self._select_best_asset(matching_assets, app_config.name)
-            if not asset:
-                return self._create_error_result(app_config.name, "Asset selection failed")
+            error_result = self._validate_asset_selection(asset, app_config.name)
+            if error_result:
+                return error_result
 
             return self._create_success_result(app_config, release, asset)
 
@@ -173,6 +203,36 @@ class VersionChecker:
         # Fallback to filename parsing
         return self._extract_version_from_filename(file_path.name)
 
+    def _get_info_file_path(self, file_path: Path) -> Path | None:
+        """Get the path to the .info metadata file if it exists."""
+        info_file = file_path.with_suffix(file_path.suffix + ".info")
+        return info_file if info_file.exists() else None
+
+    def _read_metadata_content(self, info_file: Path) -> str | None:
+        """Read and return the content of the metadata file."""
+        try:
+            return info_file.read_text().strip()
+        except (OSError, UnicodeDecodeError):
+            return None
+
+    def _extract_version_from_metadata_content(self, content: str) -> str | None:
+        """Extract version string from metadata file content."""
+        for line in content.split("\n"):
+            line = line.strip()
+            if line.lower().startswith("version:"):
+                version_str = line.split(":", 1)[1].strip()
+                # Remove 'v' prefix if present
+                if version_str.startswith("v"):
+                    version_str = version_str[1:]
+
+                # Convert nightly build versions to date-based format
+                converted_version = self._convert_nightly_version_string(version_str)
+                if converted_version is not None:
+                    return converted_version
+                # If conversion returned None, fall back to filename extraction
+                break
+        return None
+
     def _get_version_from_metadata(self, file_path: Path) -> str | None:
         """Get version information from associated .info metadata file.
 
@@ -183,42 +243,26 @@ class VersionChecker:
             Version string if found in metadata file, None otherwise
         """
         # Check for .info file alongside the downloaded file
-        info_file = file_path.with_suffix(file_path.suffix + ".info")
-        if not info_file.exists():
+        info_file = self._get_info_file_path(file_path)
+        if not info_file:
             return None
 
-        try:
-            content = info_file.read_text().strip()
-            # Look for "Version: v02.02.01.60" or similar patterns
-            for line in content.split("\n"):
-                line = line.strip()
-                if line.lower().startswith("version:"):
-                    version_str = line.split(":", 1)[1].strip()
-                    # Remove 'v' prefix if present
-                    if version_str.startswith("v"):
-                        version_str = version_str[1:]
+        # Read metadata content
+        content = self._read_metadata_content(info_file)
+        if not content:
+            return None
 
-                    # Convert nightly build versions to date-based format
-                    converted_version = self._convert_nightly_version_string(version_str)
-                    if converted_version is not None:
-                        return converted_version
-                    # If conversion returned None, fall back to filename extraction
-                    break
-        except (OSError, UnicodeDecodeError):
-            # Failed to read metadata file
-            pass
+        # Extract version from content
+        return self._extract_version_from_metadata_content(content)
 
-        return None
-
-    def _convert_nightly_version_string(self, version_str: str) -> str | None:
-        """Convert nightly build version strings to date format."""
+    def _is_date_format(self, version_str: str) -> bool:
+        """Check if version string is already in date format."""
         import re
+        return bool(re.match(r"^\d{4}-\d{2}-\d{2}$", version_str))
 
-        # If it's already in date format (YYYY-MM-DD), return as-is
-        if re.match(r"^\d{4}-\d{2}-\d{2}$", version_str):
-            return version_str
-
-        # Try to extract date from version string first
+    def _extract_and_normalize_date(self, version_str: str) -> str | None:
+        """Extract and normalize date from version string."""
+        import re
         date_match = re.search(r"(\d{4}[-.]?\d{2}[-.]?\d{2})", version_str)
         if date_match:
             date_str = date_match.group(1)
@@ -226,8 +270,10 @@ class VersionChecker:
             date_str = re.sub(r"[-.]", "-", date_str)
             if re.match(r"^\d{4}-\d{2}-\d{2}$", date_str):
                 return date_str
+        return None
 
-        # Check if this is a nightly build version
+    def _is_nightly_build(self, version_str: str) -> bool:
+        """Check if version string indicates a nightly build."""
         nightly_patterns = [
             r"nightly",
             r"continuous",
@@ -235,9 +281,22 @@ class VersionChecker:
             r"development",
             r"snapshot",
         ]
-
         version_lower = version_str.lower()
-        if any(pattern in version_lower for pattern in nightly_patterns):
+        return any(pattern in version_lower for pattern in nightly_patterns)
+
+    def _convert_nightly_version_string(self, version_str: str) -> str | None:
+        """Convert nightly build version strings to date format."""
+        # If it's already in date format (YYYY-MM-DD), return as-is
+        if self._is_date_format(version_str):
+            return version_str
+
+        # Try to extract date from version string first
+        normalized_date = self._extract_and_normalize_date(version_str)
+        if normalized_date:
+            return normalized_date
+
+        # Check if this is a nightly build version
+        if self._is_nightly_build(version_str):
             # Return None to indicate no meaningful version found in generic nightly strings
             # This allows fallback to filename-based version extraction
             return None
