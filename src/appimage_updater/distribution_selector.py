@@ -157,6 +157,29 @@ class DistributionSelector:
         logger.warning("Could not detect distribution, assuming generic Linux")
         return DistributionInfo(id="linux", version="unknown", version_numeric=0.0)
 
+    def _parse_os_release_content(self, content: str) -> dict[str, str]:
+        """Parse os-release file content into key-value pairs."""
+        info = {}
+        for line in content.strip().split("\n"):
+            if "=" in line:
+                key, value = line.split("=", 1)
+                info[key] = value.strip("\"'")
+        return info
+
+    def _extract_distribution_info_from_os_release(self, info: dict[str, str]) -> DistributionInfo | None:
+        """Extract DistributionInfo from parsed os-release data."""
+        dist_id = info.get("ID", "").lower()
+        version_id = info.get("VERSION_ID", "")
+        version_codename = info.get("VERSION_CODENAME", "")
+
+        if not (dist_id and version_id):
+            return None
+
+        version_numeric = self._parse_version_number(version_id)
+        return DistributionInfo(
+            id=dist_id, version=version_id, version_numeric=version_numeric, codename=version_codename or None
+        )
+
     def _parse_os_release(self) -> DistributionInfo | None:
         """Parse /etc/os-release file."""
         os_release_path = Path("/etc/os-release")
@@ -165,21 +188,8 @@ class DistributionSelector:
 
         try:
             content = os_release_path.read_text()
-            info = {}
-            for line in content.strip().split("\n"):
-                if "=" in line:
-                    key, value = line.split("=", 1)
-                    info[key] = value.strip("\"'")
-
-            dist_id = info.get("ID", "").lower()
-            version_id = info.get("VERSION_ID", "")
-            version_codename = info.get("VERSION_CODENAME", "")
-
-            if dist_id and version_id:
-                version_numeric = self._parse_version_number(version_id)
-                return DistributionInfo(
-                    id=dist_id, version=version_id, version_numeric=version_numeric, codename=version_codename or None
-                )
+            info = self._parse_os_release_content(content)
+            return self._extract_distribution_info_from_os_release(info)
 
         except (OSError, ValueError) as e:
             logger.debug(f"Failed to parse /etc/os-release: {e}")

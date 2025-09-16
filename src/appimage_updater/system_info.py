@@ -115,40 +115,53 @@ class SystemDetector:
         logger.warning(f"Unknown architecture '{machine}', using as-is")
         return machine, {machine}, machine
 
+    def _add_linux_formats(self, formats: set[str]) -> None:
+        """Add Linux-specific package formats."""
+        formats.add(".AppImage")
+        formats.add(".tar.gz")
+        formats.add(".tar.xz")
+        formats.add(".zip")
+
+    def _add_linux_distribution_formats(self, formats: set[str]) -> None:
+        """Add distribution-specific package formats for Linux."""
+        dist_info = self._get_distribution_info()
+        if not dist_info:
+            return
+
+        dist_id = dist_info.get("id", "").lower()
+
+        if dist_id in {"ubuntu", "debian", "mint", "elementary"}:
+            formats.add(".deb")
+        elif dist_id in {"fedora", "centos", "rhel", "rocky", "almalinux", "opensuse", "suse"}:
+            formats.add(".rpm")
+        elif dist_id in {"arch", "manjaro", "endeavouros"}:
+            formats.add(".pkg.tar.xz")
+            formats.add(".pkg.tar.zst")
+
+    def _add_darwin_formats(self, formats: set[str]) -> None:
+        """Add macOS-specific package formats."""
+        formats.add(".dmg")
+        formats.add(".pkg")
+        formats.add(".zip")
+        formats.add(".tar.gz")
+
+    def _add_windows_formats(self, formats: set[str]) -> None:
+        """Add Windows-specific package formats."""
+        formats.add(".exe")
+        formats.add(".msi")
+        formats.add(".zip")
+
     def _detect_supported_formats(self, platform_name: str) -> set[str]:
         """Detect supported package formats based on platform and distribution."""
-        formats = set()
+        formats: set[str] = set()
 
-        # Platform-specific formats
         if platform_name == "linux":
-            formats.add(".AppImage")
-            formats.add(".tar.gz")
-            formats.add(".tar.xz")
-            formats.add(".zip")
-
-            # Distribution-specific package formats
-            dist_info = self._get_distribution_info()
-            if dist_info:
-                dist_id = dist_info.get("id", "").lower()
-
-                if dist_id in {"ubuntu", "debian", "mint", "elementary"}:
-                    formats.add(".deb")
-                elif dist_id in {"fedora", "centos", "rhel", "rocky", "almalinux", "opensuse", "suse"}:
-                    formats.add(".rpm")
-                elif dist_id in {"arch", "manjaro", "endeavouros"}:
-                    formats.add(".pkg.tar.xz")
-                    formats.add(".pkg.tar.zst")
-
+            self._add_linux_formats(formats)
+            self._add_linux_distribution_formats(formats)
         elif platform_name == "darwin":
-            formats.add(".dmg")
-            formats.add(".pkg")
-            formats.add(".zip")
-            formats.add(".tar.gz")
-
+            self._add_darwin_formats(formats)
         elif platform_name == "win32":
-            formats.add(".exe")
-            formats.add(".msi")
-            formats.add(".zip")
+            self._add_windows_formats(formats)
 
         return formats
 
