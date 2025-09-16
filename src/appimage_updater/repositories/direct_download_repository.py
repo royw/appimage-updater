@@ -311,6 +311,7 @@ class DirectDownloadRepository(RepositoryClient):
     def _create_flexible_pattern(self, base_name: str) -> str:
         """Create a flexible pattern that matches the base name with variations."""
         import re
+
         pattern = f"{re.escape(base_name)}.*\\.AppImage"
         return f"(?i){pattern}$"
 

@@ -258,11 +258,13 @@ class VersionChecker:
     def _is_date_format(self, version_str: str) -> bool:
         """Check if version string is already in date format."""
         import re
+
         return bool(re.match(r"^\d{4}-\d{2}-\d{2}$", version_str))
 
     def _extract_and_normalize_date(self, version_str: str) -> str | None:
         """Extract and normalize date from version string."""
         import re
+
         date_match = re.search(r"(\d{4}[-.]?\d{2}[-.]?\d{2})", version_str)
         if date_match:
             date_str = date_match.group(1)

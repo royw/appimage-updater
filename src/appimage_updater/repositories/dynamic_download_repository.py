@@ -6,18 +6,18 @@ through JavaScript or API calls.
 
 from __future__ import annotations
 
+import logging
 import re
 from datetime import datetime
-from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 import httpx
-from bs4 import BeautifulSoup
 
-from appimage_updater.logging_config import logger
 from appimage_updater.models import Asset, Release
 from appimage_updater.repositories.base import RepositoryClient, RepositoryError
+
+logger = logging.getLogger(__name__)
 
 
 class DynamicDownloadRepository(RepositoryClient):
@@ -152,7 +152,6 @@ class DynamicDownloadRepository(RepositoryClient):
 
     def _extract_filename_from_url(self, url: str) -> str:
         """Extract filename from URL."""
-        from urllib.parse import urlparse
 
         parsed = urlparse(url)
         filename = parsed.path.split("/")[-1]

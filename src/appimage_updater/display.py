@@ -659,9 +659,11 @@ def _is_valid_symlink(symlink_path: Path) -> bool:
     """Check if path exists and is a symlink."""
     return symlink_path.exists() and symlink_path.is_symlink()
 
+
 def _is_valid_appimage_target(target: Path, download_dir: Path) -> bool:
     """Check if target is an AppImage in the download directory."""
     return target.parent == download_dir and target.name.endswith(".AppImage")
+
 
 def check_configured_symlink(symlink_path: Path, download_dir: Path) -> tuple[Path, Path] | None:
     """Check if the configured symlink exists and points to an AppImage in the download directory."""
@@ -760,9 +762,11 @@ def _is_valid_target_location(target: Path, download_dir: Path) -> bool:
     """Check if target is in download directory and contains AppImage."""
     return target.parent == download_dir and ".AppImage" in target.name
 
+
 def _is_valid_symlink_location(symlink: Path, download_dir: Path) -> bool:
     """Check if symlink is in download directory and ends with AppImage."""
     return symlink.parent == download_dir and symlink.name.endswith(".AppImage")
+
 
 def get_valid_symlink_target(symlink: Path, download_dir: Path) -> Path | None:
     """Check if symlink points to a valid AppImage file and return the target."""

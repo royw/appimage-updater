@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from appimage_updater.config import Config
 from appimage_updater.config_loader import ConfigLoadError
@@ -154,7 +155,6 @@ class RemoveCommand(Command):
     def _save_single_file_config(self, config: Config) -> None:
         """Save configuration to a single file."""
         import json
-        from pathlib import Path
 
         if self.params.config_file:
             config_data = {

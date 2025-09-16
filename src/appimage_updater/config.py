@@ -244,7 +244,8 @@ class Config(BaseModel):
         """Ensure checksum config section exists and return it."""
         if "checksum" not in app_config:
             app_config["checksum"] = {}
-        return app_config["checksum"]
+        checksum_config: dict[str, Any] = app_config["checksum"]
+        return checksum_config
 
     def _apply_checksum_enabled_default(self, checksum_config: dict[str, Any], defaults: DefaultsConfig) -> None:
         """Apply checksum enabled default if not specified."""

@@ -322,7 +322,7 @@ class Downloader:
 
     def _should_use_asset_date(self, candidate: UpdateCandidate) -> bool:
         """Check if we should use asset creation date instead of version."""
-        return (
+        return bool(
             candidate.latest_version
             and any(word in candidate.latest_version.lower() for word in ["nightly", "build", "snapshot", "dev"])
             and candidate.asset
