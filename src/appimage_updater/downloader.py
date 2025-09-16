@@ -226,25 +226,52 @@ class Downloader:
                     if progress and task_id is not None:
                         progress.update(task_id, advance=len(chunk))
 
+    def _make_appimage_executable(self, candidate: UpdateCandidate) -> None:
+        """Make AppImage file executable if it's an AppImage."""
+        if candidate.download_path.suffix.lower() == ".appimage":
+            candidate.download_path.chmod(0o755)
+
+    async def _handle_checksum_verification(self, candidate: UpdateCandidate) -> ChecksumResult | None:
+        """Handle checksum verification and validation."""
+        if not candidate.asset.checksum_asset:
+            return None
+
+        checksum_result = await self._verify_download_checksum(candidate)
+
+        # If checksum is required and verification failed, treat as error
+        if candidate.checksum_required and checksum_result and not checksum_result.verified:
+            raise Exception(f"Checksum verification failed: {checksum_result.error_message}")
+
+        return checksum_result
+
     async def _post_process_download(self, candidate: UpdateCandidate) -> ChecksumResult | None:
         """Post-process downloaded file (extract if zip, make executable, verify checksum)."""
         # Handle zip extraction first
         await self._extract_if_zip(candidate)
 
         # Make AppImage executable
-        if candidate.download_path.suffix.lower() == ".appimage":
-            candidate.download_path.chmod(0o755)
+        self._make_appimage_executable(candidate)
 
         # Verify checksum if available
-        checksum_result = None
-        if candidate.asset.checksum_asset:
-            checksum_result = await self._verify_download_checksum(candidate)
+        return await self._handle_checksum_verification(candidate)
 
-            # If checksum is required and verification failed, treat as error
-            if candidate.checksum_required and checksum_result and not checksum_result.verified:
-                raise Exception(f"Checksum verification failed: {checksum_result.error_message}")
+    def _validate_appimage_files_in_zip(self, zip_ref: zipfile.ZipFile, candidate: UpdateCandidate) -> str:
+        """Validate and return the AppImage file to extract from zip."""
+        appimage_files = self._list_appimages_in_zip(zip_ref)
+        if not appimage_files:
+            self._raise_no_appimage_error(zip_ref, candidate)
 
-        return checksum_result
+        if len(appimage_files) > 1:
+            logger.warning(f"Multiple AppImage files found in zip, using first: {appimage_files[0]}")
+
+        return appimage_files[0]
+
+    def _cleanup_zip_and_update_path(self, candidate: UpdateCandidate, extract_path: Path) -> None:
+        """Remove zip file and update candidate download path."""
+        candidate.download_path.unlink()
+        logger.debug(f"Removed zip file: {candidate.download_path.name}")
+        candidate.download_path = extract_path
+        logger.debug(f"Updated download path to: {extract_path.name}")
 
     async def _extract_if_zip(self, candidate: UpdateCandidate) -> None:
         """Extract an AppImage from a downloaded ZIP, updating download_path.
@@ -259,20 +286,9 @@ class Downloader:
 
         try:
             with zipfile.ZipFile(candidate.download_path, "r") as zip_ref:
-                appimage_files = self._list_appimages_in_zip(zip_ref)
-                if not appimage_files:
-                    self._raise_no_appimage_error(zip_ref, candidate)
-
-                if len(appimage_files) > 1:
-                    logger.warning(f"Multiple AppImage files found in zip, using first: {appimage_files[0]}")
-
-                extract_path = self._extract_appimage(zip_ref, appimage_files[0], candidate)
-
-                # Remove the zip file and update path
-                candidate.download_path.unlink()
-                logger.debug(f"Removed zip file: {candidate.download_path.name}")
-                candidate.download_path = extract_path
-                logger.debug(f"Updated download path to: {extract_path.name}")
+                appimage_file = self._validate_appimage_files_in_zip(zip_ref, candidate)
+                extract_path = self._extract_appimage(zip_ref, appimage_file, candidate)
+                self._cleanup_zip_and_update_path(candidate, extract_path)
 
         except zipfile.BadZipFile:
             raise Exception(f"Invalid zip file: {candidate.download_path.name}") from None

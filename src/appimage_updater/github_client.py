@@ -94,6 +94,25 @@ class GitHubClient:
         valid_releases.sort(key=lambda r: r.published_at, reverse=True)
         return valid_releases[0]
 
+    def _handle_releases_request_error(self, e: httpx.HTTPError, owner: str, repo: str) -> None:
+        """Handle HTTP errors when fetching releases."""
+        msg = f"Failed to fetch releases for {owner}/{repo}: {e}"
+        if "rate limit" in str(e).lower():
+            rate_info = self.auth.get_rate_limit_info()
+            msg += f" (Rate limit: {rate_info['limit']} requests/hour for {rate_info['type']} access)"
+            if not self.auth.is_authenticated:
+                msg += ". Consider setting GITHUB_TOKEN environment variable for higher limits."
+        raise GitHubClientError(msg) from e
+
+    def _validate_and_parse_releases_response(self, response: httpx.Response) -> list[Release]:
+        """Validate and parse the releases response data."""
+        releases_data = response.json()
+        if not isinstance(releases_data, list):
+            msg = f"Expected list of releases, got {type(releases_data).__name__}"
+            raise GitHubClientError(msg)
+
+        return [self._parse_release(release_data) for release_data in releases_data]
+
     async def get_releases(self, repo_url: str, limit: int = 10) -> list[Release]:
         """Get recent releases for a repository."""
         owner, repo = self._parse_repo_url(repo_url)
@@ -108,20 +127,9 @@ class GitHubClient:
                 )
                 response.raise_for_status()
             except httpx.HTTPError as e:
-                msg = f"Failed to fetch releases for {owner}/{repo}: {e}"
-                if "rate limit" in str(e).lower():
-                    rate_info = self.auth.get_rate_limit_info()
-                    msg += f" (Rate limit: {rate_info['limit']} requests/hour for {rate_info['type']} access)"
-                    if not self.auth.is_authenticated:
-                        msg += ". Consider setting GITHUB_TOKEN environment variable for higher limits."
-                raise GitHubClientError(msg) from e
+                self._handle_releases_request_error(e, owner, repo)
 
-        releases_data = response.json()
-        if not isinstance(releases_data, list):
-            msg = f"Expected list of releases, got {type(releases_data).__name__}"
-            raise GitHubClientError(msg)
-
-        return [self._parse_release(release_data) for release_data in releases_data]
+        return self._validate_and_parse_releases_response(response)
 
     def _parse_repo_url(self, url: str) -> tuple[str, str]:
         """Parse repository URL to extract owner and repo name."""
