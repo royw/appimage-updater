@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -151,6 +151,47 @@ class Release(BaseModel):
 
         return matching_assets
 
+    def _check_architecture_compatibility(self, asset: Asset, system_info: Any) -> bool:
+        """Check if asset architecture is compatible with system."""
+        from .system_info import is_compatible_architecture
+
+        arch_value = asset.architecture
+        if not arch_value:
+            return True
+
+        arch_compatible, _ = is_compatible_architecture(arch_value, system_info.architecture)
+        return arch_compatible
+
+    def _check_platform_compatibility(self, asset: Asset, system_info: Any) -> bool:
+        """Check if asset platform is compatible with system."""
+        from .system_info import is_compatible_platform
+
+        platform_value = asset.platform
+        if not platform_value:
+            return True
+
+        platform_compatible, _ = is_compatible_platform(platform_value, system_info.platform)
+        return platform_compatible
+
+    def _check_format_compatibility(self, asset: Asset, system_info: Any) -> bool:
+        """Check if asset format is supported on system."""
+        from .system_info import is_supported_format
+
+        format_value = asset.file_extension
+        if not format_value:
+            return True
+
+        format_compatible, _ = is_supported_format(format_value, system_info.platform)
+        return format_compatible
+
+    def _is_asset_compatible(self, asset: Asset, system_info: Any) -> bool:
+        """Check if asset is compatible with system."""
+        return (
+            self._check_architecture_compatibility(asset, system_info)
+            and self._check_platform_compatibility(asset, system_info)
+            and self._check_format_compatibility(asset, system_info)
+        )
+
     def _filter_compatible_assets(self, assets: list[Asset]) -> list[Asset]:
         """Filter assets for system compatibility.
 
@@ -161,47 +202,13 @@ class Release(BaseModel):
             List of compatible assets (empty list if no compatibility module available)
         """
         try:
-            from .system_info import (
-                get_system_info,
-                is_compatible_architecture,
-                is_compatible_platform,
-                is_supported_format,
-            )
+            from .system_info import get_system_info
         except ImportError:
             # System info module not available, return all assets
             return assets
 
         system_info = get_system_info()
-        compatible_assets = []
-
-        for asset in assets:
-            is_compatible = True
-
-            # Check architecture compatibility
-            arch_value = asset.architecture
-            if arch_value:
-                arch_compatible, _ = is_compatible_architecture(arch_value, system_info.architecture)
-                if not arch_compatible:
-                    is_compatible = False
-
-            # Check platform compatibility
-            platform_value = asset.platform
-            if platform_value:
-                platform_compatible, _ = is_compatible_platform(platform_value, system_info.platform)
-                if not platform_compatible:
-                    is_compatible = False
-
-            # Check format compatibility
-            format_value = asset.file_extension
-            if format_value:
-                format_compatible, _ = is_supported_format(format_value, system_info.platform)
-                if not format_compatible:
-                    is_compatible = False
-
-            if is_compatible:
-                compatible_assets.append(asset)
-
-        return compatible_assets
+        return [asset for asset in assets if self._is_asset_compatible(asset, system_info)]
 
 
 class UpdateCandidate(BaseModel):
