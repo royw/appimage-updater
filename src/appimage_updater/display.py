@@ -583,7 +583,14 @@ def find_appimage_symlinks(download_dir: Path, configured_symlink_path: Path | N
             found_symlinks.append(configured_symlink)
 
     # Search locations matching go-appimage's appimaged search paths
-    search_locations = get_appimage_search_locations(download_dir)
+    search_locations = [
+        download_dir,  # Always include the download directory
+        Path("/usr/local/bin"),
+        Path("/opt"),
+        Path.home() / "Applications",
+        Path.home() / ".local" / "bin",
+        Path.home() / "Downloads",
+    ]
 
     for location in search_locations:
         if location.exists():
@@ -598,58 +605,6 @@ def find_appimage_symlinks(download_dir: Path, configured_symlink_path: Path | N
             unique_symlinks.append((symlink_path, target_path))
 
     return unique_symlinks
-
-
-def get_appimage_search_locations(download_dir: Path) -> list[Path]:
-    """Get AppImage search locations matching go-appimage's appimaged search paths.
-
-    Returns the same directories that go-appimage's appimaged watches:
-    - /usr/local/bin
-    - /opt
-    - ~/Applications
-    - ~/.local/bin
-    - ~/Downloads
-    - $PATH directories (common ones like /bin, /sbin, /usr/bin, /usr/sbin, etc.)
-    """
-    search_locations = [
-        download_dir,  # Always include the download directory
-        Path("/usr/local/bin"),
-        Path("/opt"),
-        Path.home() / "Applications",
-        Path.home() / ".local" / "bin",
-        Path.home() / "Downloads",
-    ]
-
-    # Add common $PATH directories that frequently include AppImages
-    path_dirs = get_path_directories()
-    search_locations.extend(path_dirs)
-
-    # Remove duplicates while preserving order
-    seen = set()
-    unique_locations = []
-    for location in search_locations:
-        if location not in seen:
-            seen.add(location)
-            unique_locations.append(location)
-
-    return unique_locations
-
-
-def get_path_directories() -> list[Path]:
-    """Get directories from $PATH environment variable."""
-    path_env = os.environ.get("PATH", "")
-    if not path_env:
-        return []
-
-    path_dirs = []
-    for path_str in path_env.split(os.pathsep):
-        if path_str.strip():
-            try:
-                path_dirs.append(Path(path_str.strip()))
-            except Exception as e:
-                logger.debug(f"Skipping invalid PATH entry '{path_str.strip()}': {e}")
-
-    return path_dirs
 
 
 def scan_directory_for_symlinks(location: Path, download_dir: Path) -> list[tuple[Path, Path]]:
@@ -711,24 +666,3 @@ def format_single_symlink(symlink_path: Path, target_path: Path) -> list[str]:
         lines.append("  [yellow][dim]Target not executable[/dim][/yellow]")
 
     return lines
-
-
-def find_application_by_name(applications: list[Any], app_name: str) -> Any:
-    """Find an application by name or glob pattern (case-insensitive)."""
-    import fnmatch
-
-    app_name_lower = app_name.lower()
-
-    # Check for exact match first
-    for app in applications:
-        if app.name.lower() == app_name_lower:
-            return app
-
-    # Try glob pattern matching
-    matches = []
-    for app in applications:
-        if fnmatch.fnmatch(app.name.lower(), app_name_lower):
-            matches.append(app)
-
-    # Return first match if found, or None if no matches
-    return matches[0] if matches else None

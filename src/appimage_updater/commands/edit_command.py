@@ -175,16 +175,6 @@ class EditCommand(Command):
                 with app_file.open("w") as f:
                     json.dump(app_data, f, indent=2, default=str)
 
-    def _update_application_fields(self, app: ApplicationConfig, updates: dict[str, Any]) -> None:
-        """Update application fields with the provided updates."""
-        from pathlib import Path
-
-        for field, value in updates.items():
-            if field == "download_dir" and value is not None:
-                app.download_dir = Path(value)
-            elif hasattr(app, field):
-                setattr(app, field, value)
-
     def _show_validation_hints(self, error_message: str) -> None:
         """Show helpful hints based on validation error."""
         if "File rotation requires a symlink path" in error_message:

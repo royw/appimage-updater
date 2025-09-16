@@ -7,11 +7,6 @@ to keep them organized and reusable across commands.
 import typer
 
 # Common options used across multiple commands
-DEBUG_OPTION = typer.Option(
-    False,
-    "--debug",
-    help="Enable debug logging",
-)
 
 VERBOSE_OPTION = typer.Option(
     False,
@@ -65,20 +60,6 @@ NO_INTERACTIVE_OPTION = typer.Option(
     help="Disable interactive distribution selection (use best match automatically)",
 )
 
-FORCE_OPTION = typer.Option(
-    False,
-    "--force",
-    "-f",
-    help="Force operation without confirmation prompts (use with caution)",
-)
-
-INTERACTIVE_OPTION = typer.Option(
-    False,
-    "--interactive",
-    "-i",
-    help="Use interactive mode with step-by-step prompts",
-)
-
 # Arguments for application names
 CHECK_APP_NAME_ARGUMENT = typer.Argument(
     default=None,
@@ -86,32 +67,8 @@ CHECK_APP_NAME_ARGUMENT = typer.Argument(
     "If not provided, checks all applications. Multiple names can be specified.",
 )
 
-SHOW_APP_NAME_ARGUMENT = typer.Argument(
-    help="Names of applications to display information for (case-insensitive, supports glob patterns like 'Orca*'). "
-    "Multiple names can be specified."
-)
-
-REMOVE_APP_NAME_ARGUMENT = typer.Argument(
-    help="Names of applications to remove from configuration (case-insensitive, supports glob patterns like 'Orca*'). "
-    "Multiple names can be specified."
-)
-
 # Add command specific options
-ADD_NAME_ARGUMENT = typer.Argument(
-    default=None, help="Name for the application (used for identification and pattern matching)"
-)
 
-ADD_URL_ARGUMENT = typer.Argument(
-    default=None, help="URL to the application repository or release page (e.g., GitHub repository URL)"
-)
-
-ADD_DOWNLOAD_DIR_ARGUMENT = typer.Argument(
-    default=None,
-    help=(
-        "Directory where AppImage files will be downloaded (e.g., ~/Applications/AppName). "
-        "If not provided, uses global default with auto-subdir if enabled."
-    ),
-)
 
 CREATE_DIR_OPTION = typer.Option(
     False,
@@ -120,82 +77,12 @@ CREATE_DIR_OPTION = typer.Option(
 )
 
 # Init command options
-INIT_CONFIG_DIR_OPTION = typer.Option(
-    None,
-    "--config-dir",
-    "-d",
-    help="Configuration directory to create",
-)
 
 # Rotation options
-ROTATION_OPTION = typer.Option(
-    None,
-    "--rotation/--no-rotation",
-    help="Enable or disable file rotation (default: disabled)",
-)
 
-RETAIN_OPTION = typer.Option(
-    3,
-    "--retain",
-    help="Number of old files to retain when rotation is enabled (default: 3)",
-    min=1,
-    max=10,
-)
-
-SYMLINK_OPTION = typer.Option(
-    None,
-    "--symlink",
-    help="Path for managed symlink to latest version (enables rotation automatically)",
-)
 
 # Add command feature options
-ADD_PRERELEASE_OPTION = typer.Option(
-    None,
-    "--prerelease/--no-prerelease",
-    help="Enable or disable prerelease versions (default: disabled)",
-)
 
-ADD_CHECKSUM_OPTION = typer.Option(
-    None,
-    "--checksum/--no-checksum",
-    help="Enable or disable checksum verification (default: enabled)",
-)
-
-ADD_CHECKSUM_ALGORITHM_OPTION = typer.Option(
-    "sha256",
-    "--checksum-algorithm",
-    help="Checksum algorithm: sha256, sha1, md5 (default: sha256)",
-)
-
-ADD_CHECKSUM_PATTERN_OPTION = typer.Option(
-    "{filename}-SHA256.txt",
-    "--checksum-pattern",
-    help="Checksum file pattern with {filename} placeholder (default: {filename}-SHA256.txt)",
-)
-
-ADD_CHECKSUM_REQUIRED_OPTION = typer.Option(
-    None,
-    "--checksum-required/--checksum-optional",
-    help="Make checksum verification required or optional (default: optional)",
-)
-
-ADD_PATTERN_OPTION = typer.Option(
-    None,
-    "--pattern",
-    help="Custom regex pattern to match AppImage files (overrides auto-detection)",
-)
-
-ADD_DIRECT_OPTION = typer.Option(
-    None,
-    "--direct/--no-direct",
-    help="Treat URL as direct download link (bypasses repository detection)",
-)
-
-ADD_AUTO_SUBDIR_OPTION = typer.Option(
-    None,
-    "--auto-subdir/--no-auto-subdir",
-    help="Enable or disable automatic subdirectory creation (overrides global default)",
-)
 
 # Edit command options
 EDIT_APP_NAME_ARGUMENT = typer.Argument(

@@ -20,7 +20,7 @@ class HelpGroup:
 
 
 def create_help_panel(title: str, options_help: list[str], description: str | None = None) -> Panel:
-    """Create a rich panel for a group of options."""
+    """Help group utilities for organizing CLI options."""
     content = "\n".join(options_help)
     if description:
         content = f"{description}\n\n{content}"
@@ -56,3 +56,5 @@ FILE_MANAGEMENT_HELP = "File rotation, symlinks, and directory management"
 CHECKSUM_HELP = "Checksum verification and security options"
 ADVANCED_HELP = "Advanced configuration for specialized use cases"
 OUTPUT_HELP = "Control output verbosity and command behavior"
+
+# This module is currently unused but kept for potential future CLI help organization and command behavior

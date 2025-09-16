@@ -95,6 +95,14 @@ tasks:
         --ignore-names "main" "check" "init" "list_apps" "show" "edit" "DownloadError" "model_post_init"
         "validate_pattern" "validate_download_dir" "validate_symlink_path" "generate_appimage_pattern"
         "created_at" "tag_name" "checked_at" "expected" "actual" "duration_seconds"
+        "message" "validate_paths" "apply_global_defaults_to_config" "remove_application_from_config"
+        "protocol" "codename" "HelpGroup" "add_option" "format_grouped_help" "BASIC_OPTIONS_GROUP"
+        "CONFIGURATION_GROUP" "FILE_MANAGEMENT_GROUP" "CHECKSUM_GROUP" "ADVANCED_GROUP" "OUTPUT_GROUP"
+        "BASIC_OPTIONS_HELP" "CONFIGURATION_HELP" "FILE_MANAGEMENT_HELP" "CHECKSUM_HELP" "ADVANCED_HELP"
+        "OUTPUT_HELP" "interactive_edit_command" "_validate_directory_path" "_resolve_add_parameters"
+        "_handle_verbose_logging" "_handle_edit_preview_modes" "_apply_edit_updates_to_apps" "repository"
+        "generate_pattern_from_releases" "get_supported_repository_types" "_print_troubleshooting_tips"
+        "perform_update_checks" "get_update_candidates" "reload_config" "distribution_family"
 
   # === Testing ===
   test:
@@ -295,6 +303,7 @@ tasks:
         vars:
           MESSAGE: "🚀 Starting CI pipeline..."
       - task: check
+      - task: deadcode
       - task: build
       - task: docs:build
       - task: version

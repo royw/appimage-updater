@@ -4,17 +4,20 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any
 
 
 @dataclass
 class CommandResult:
-    """Result of command execution."""
+    """Result of a command execution."""
 
     success: bool
-    message: str | None = None
-    data: Any = None
+    message: str = ""
     exit_code: int = 0
+
+    def __post_init__(self) -> None:
+        """Set exit_code to 0 for successful commands."""
+        if self.success:
+            self.exit_code = 0
 
 
 class Command(ABC):
