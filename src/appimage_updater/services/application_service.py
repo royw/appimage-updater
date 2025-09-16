@@ -16,47 +16,16 @@ class ApplicationService:
     @staticmethod
     def filter_apps_by_names(enabled_apps: list[Any], app_names: list[str]) -> list[Any]:
         """Filter applications by multiple names or glob patterns."""
-        console = Console()
         logger.debug(f"Filtering applications for: {app_names} (case-insensitive, supports glob patterns)")
 
         if not app_names:
             return enabled_apps
 
-        # Collect all matches across all patterns
-        all_matches = []
-        not_found = []
+        all_matches, not_found = ApplicationService._collect_app_matches(enabled_apps, app_names)
+        unique_matches = ApplicationService._remove_duplicate_apps(all_matches)
 
-        for app_name in app_names:
-            matches = ApplicationService._filter_apps_by_single_name(enabled_apps, app_name)
-            if matches:
-                all_matches.extend(matches)
-            else:
-                not_found.append(app_name)
-
-        # Remove duplicates while preserving order
-        unique_matches = []
-        seen_names = set()
-        for app in all_matches:
-            if app.name not in seen_names:
-                unique_matches.append(app)
-                seen_names.add(app.name)
-
-        # Handle error cases like the original function
         if not_found:
-            available_apps = [app.name for app in enabled_apps]
-            console.print(f"[red]Applications not found: {', '.join(not_found)}")
-            console.print("[yellow]💡 Troubleshooting:")
-            available_text = ", ".join(available_apps) if available_apps else "None configured"
-            console.print(f"[yellow]   • Available applications: {available_text}")
-            console.print("[yellow]   • Application names are case-insensitive")
-            console.print("[yellow]   • Use glob patterns like 'Orca*' to match multiple apps")
-            console.print("[yellow]   • Run 'appimage-updater list' to see all configured applications")
-            if not available_apps:
-                console.print("[yellow]   • Run 'appimage-updater add' to configure your first application")
-            logger.error(f"Applications not found: {not_found}. Available: {available_apps}")
-
-            # Always exit with error if any apps were not found
-            raise typer.Exit(1)
+            ApplicationService._handle_apps_not_found(not_found, enabled_apps)
 
         logger.debug(f"Found {len(unique_matches)} unique application(s) matching the criteria")
         return unique_matches
@@ -84,3 +53,54 @@ class ApplicationService:
             logger.debug(f"No matches found for '{app_name}'")
 
         return glob_matches
+
+    @staticmethod
+    def _collect_app_matches(enabled_apps: list[Any], app_names: list[str]) -> tuple[list[Any], list[str]]:
+        """Collect all matches and track not found apps."""
+        all_matches = []
+        not_found = []
+
+        for app_name in app_names:
+            matches = ApplicationService._filter_apps_by_single_name(enabled_apps, app_name)
+            if matches:
+                all_matches.extend(matches)
+            else:
+                not_found.append(app_name)
+
+        return all_matches, not_found
+
+    @staticmethod
+    def _remove_duplicate_apps(all_matches: list[Any]) -> list[Any]:
+        """Remove duplicate apps while preserving order."""
+        unique_matches = []
+        seen_names = set()
+        for app in all_matches:
+            if app.name not in seen_names:
+                unique_matches.append(app)
+                seen_names.add(app.name)
+        return unique_matches
+
+    @staticmethod
+    def _handle_apps_not_found(not_found: list[str], enabled_apps: list[Any]) -> None:
+        """Handle error cases when apps are not found."""
+        console = Console()
+        available_apps = [app.name for app in enabled_apps]
+
+        console.print(f"[red]Applications not found: {', '.join(not_found)}")
+        console.print("[yellow]💡 Troubleshooting:")
+
+        ApplicationService._print_troubleshooting_tips(console, available_apps)
+
+        logger.error(f"Applications not found: {not_found}. Available: {available_apps}")
+        raise typer.Exit(1)
+
+    @staticmethod
+    def _print_troubleshooting_tips(console: Console, available_apps: list[str]) -> None:
+        """Print troubleshooting tips for not found apps."""
+        available_text = ", ".join(available_apps) if available_apps else "None configured"
+        console.print(f"[yellow]   • Available applications: {available_text}")
+        console.print("[yellow]   • Application names are case-insensitive")
+        console.print("[yellow]   • Use glob patterns like 'Orca*' to match multiple apps")
+        console.print("[yellow]   • Run 'appimage-updater list' to see all configured applications")
+        if not available_apps:
+            console.print("[yellow]   • Run 'appimage-updater add' to configure your first application")

@@ -1,0 +1,231 @@
+                                                                                                                                                                   
+ Usage: appimage-updater [OPTIONS] COMMAND [ARGS]...                                                                                                               
+                                                                                                                                                                   
+ AppImage update manager                                                                                                                                           
+                                                                                                                                                                   
+╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --debug                         Enable debug logging                                                                                                            │
+│ --version             -V        Show version and exit                                                                                                           │
+│ --install-completion            Install completion for the current shell.                                                                                       │
+│ --show-completion               Show completion for the current shell, to copy it or customize the installation.                                                │
+│ --help                          Show this message and exit.                                                                                                     │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ check        Check for and optionally download AppImage updates.                                                                                                │
+│ init         Initialize configuration directory with examples.                                                                                                  │
+│ list         List all configured applications.                                                                                                                  │
+│ add          Add a new application to the configuration.                                                                                                        │
+│ edit         Edit configuration for existing applications.                                                                                                      │
+│ show         Show detailed information about a specific application.                                                                                            │
+│ remove       Remove applications from the configuration.                                                                                                        │
+│ repository   Examine repository information for configured applications.                                                                                        │
+│ config       Manage global configuration settings.                                                                                                              │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+                                                                                                                                                                   
+ Usage: appimage-updater add [OPTIONS] [NAME] [URL] [DOWNLOAD_DIR]                                                                                                 
+                                                                                                                                                                   
+ Add a new application to the configuration.                                                                                                                       
+                                                                                                                                                                   
+ BASIC USAGE:     Add an application with minimal options - intelligent defaults will be generated.                                                                
+ FILE MANAGEMENT:     Control download directories, file rotation, and symlink management.                                                                         
+ CHECKSUM VERIFICATION:     Configure checksum validation for security and integrity checks.                                                                       
+ ADVANCED OPTIONS:     Fine-tune pattern matching, repository detection, and specialized settings.                                                                 
+ Use --interactive for a guided setup experience with step-by-step prompts. Use --examples to see detailed usage examples.                                         
+                                                                                                                                                                   
+╭─ Arguments ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│   name              [NAME]          Name for the application (used for identification and pattern matching)                                                     │
+│   url               [URL]           URL to the application repository or release page (e.g., GitHub repository URL)                                             │
+│   download_dir      [DOWNLOAD_DIR]  Directory where AppImage files will be downloaded (e.g., ~/Applications/AppName). If not provided, uses global default with │
+│                                     auto-subdir if enabled.                                                                                                     │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --create-dir                                                               Automatically create download directory if it doesn't exist (no prompt)              │
+│ --yes                 -y                                                   Automatically answer yes to prompts (non-interactive mode)                           │
+│ --config              -c                         PATH                      Configuration file path                                                              │
+│ --config-dir          -d                         PATH                      Configuration directory path                                                         │
+│ --rotation                --no-rotation                                    Enable or disable file rotation (default: disabled)                                  │
+│ --retain                                         INTEGER RANGE [1<=x<=10]  Number of old files to retain when rotation is enabled (default: 3) [default: 3]     │
+│ --symlink                                        TEXT                      Path for managed symlink to latest version (enables rotation automatically)          │
+│ --prerelease              --no-prerelease                                  Enable or disable prerelease versions (default: disabled)                            │
+│ --checksum                --no-checksum                                    Enable or disable checksum verification (default: enabled)                           │
+│ --checksum-algorithm                             TEXT                      Checksum algorithm: sha256, sha1, md5 (default: sha256) [default: sha256]            │
+│ --checksum-pattern                               TEXT                      Checksum file pattern with {filename} placeholder (default: {filename}-SHA256.txt)   │
+│                                                                            [default: {filename}-SHA256.txt]                                                     │
+│ --checksum-required       --checksum-optional                              Make checksum verification required or optional (default: optional)                  │
+│ --pattern                                        TEXT                      Custom regex pattern to match AppImage files (overrides auto-detection)              │
+│ --direct                  --no-direct                                      Treat URL as direct download link (bypasses repository detection)                    │
+│ --auto-subdir             --no-auto-subdir                                 Enable or disable automatic subdirectory creation (overrides global default)         │
+│ --verbose             -v                                                   Show resolved parameter values including defaults                                    │
+│ --dry-run                                                                  Check for updates without downloading                                                │
+│ --interactive         -i                                                   Use interactive mode with step-by-step prompts                                       │
+│ --examples                                                                 Show usage examples and exit                                                         │
+│ --help                                                                     Show this message and exit.                                                          │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+                                                                                                                                                                   
+ Usage: appimage-updater check [OPTIONS] [APP_NAMES]...                                                                                                            
+                                                                                                                                                                   
+ Check for and optionally download AppImage updates.                                                                                                               
+                                                                                                                                                                   
+ BASIC USAGE:     appimage-updater check                    # Check all applications     appimage-updater check GitHubDesktop     # Check specific application     
+ appimage-updater check GitHubDesktop OrcaSlicer  # Check multiple applications                                                                                    
+ AUTOMATION OPTIONS:     appimage-updater check --dry-run         # Check all (dry run only)     appimage-updater check --yes             # Auto-confirm downloads 
+ appimage-updater check --no-interactive  # Use best match automatically                                                                                           
+ COMBINED USAGE:     appimage-updater check GitHubDesktop --dry-run  # Check specific (dry run)     appimage-updater check GitHubDesktop --yes      # Check        
+ specific and auto-confirm                                                                                                                                         
+                                                                                                                                                                   
+╭─ Arguments ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│   app_names      [APP_NAMES]...  Names of applications to check (case-insensitive, supports glob patterns like 'Orca*'). If not provided, checks all            │
+│                                  applications. Multiple names can be specified.                                                                                 │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --config          -c      PATH  Configuration file path                                                                                                         │
+│ --config-dir      -d      PATH  Configuration directory path                                                                                                    │
+│ --dry-run                       Check for updates without downloading                                                                                           │
+│ --yes             -y            Automatically answer yes to prompts (non-interactive mode)                                                                      │
+│ --no-interactive                Disable interactive distribution selection (use best match automatically)                                                       │
+│ --help                          Show this message and exit.                                                                                                     │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+                                                                                                                                                                   
+ Usage: appimage-updater edit [OPTIONS] APP_NAMES...                                                                                                               
+                                                                                                                                                                   
+ Edit configuration for existing applications.                                                                                                                     
+                                                                                                                                                                   
+ Update any configuration field by specifying the corresponding option. Only the specified fields will be changed - all other settings remain unchanged. When      
+ multiple applications are specified, the same changes are applied to all.                                                                                         
+ BASIC CONFIGURATION:     --url URL                    Update repository URL     --download-dir PATH          Update download directory     --pattern REGEX        
+ Update file pattern     --enable/--disable           Enable or disable the application     --prerelease/--no-prerelease Enable or disable prerelease versions     
+ FILE ROTATION:     --rotation/--no-rotation     Enable or disable file rotation     --symlink-path PATH          Set symlink path for rotation     --retain-count 
+ N             Number of old files to retain (1-10)                                                                                                                
+ CHECKSUM VERIFICATION:     --checksum/--no-checksum     Enable or disable checksum verification     --checksum-algorithm ALG     Set algorithm (sha256, sha1,     
+ md5)     --checksum-pattern PATTERN   Set checksum file pattern     --checksum-required/--checksum-optional  Make verification required/optional                  
+ COMMON EXAMPLES:     # Enable rotation with symlink     appimage-updater edit FreeCAD --rotation --symlink-path ~/bin/freecad.AppImage                            
+ # Enable prerelease for multiple apps     appimage-updater edit OrcaSlicer OrcaSlicerRC --prerelease                                                              
+ # Update download directory     appimage-updater edit MyApp --download-dir ~/NewLocation/MyApp --create-dir                                                       
+ # Configure security settings     appimage-updater edit OrcaSlicer BambuStudio --no-prerelease --checksum-required                                                
+ # Update URL after repository move     appimage-updater edit OldApp --url https://github.com/newowner/newrepo                                                     
+                                                                                                                                                                   
+╭─ Arguments ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *    app_names      APP_NAMES...  Names of applications to edit (case-insensitive, supports glob patterns like 'Orca*'). Multiple names can be specified.       │
+│                                   [required]                                                                                                                    │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --config              -c                         PATH                      Configuration file path                                                              │
+│ --config-dir          -d                         PATH                      Configuration directory path                                                         │
+│ --url                                            TEXT                      Update the repository URL                                                            │
+│ --download-dir                                   TEXT                      Update the download directory                                                        │
+│ --pattern                                        TEXT                      Update the file pattern (regex)                                                      │
+│ --enable                  --disable                                        Enable or disable the application                                                    │
+│ --prerelease              --no-prerelease                                  Enable or disable prereleases                                                        │
+│ --rotation                --no-rotation                                    Enable or disable file rotation                                                      │
+│ --symlink-path                                   TEXT                      Update the symlink path for rotation                                                 │
+│ --retain-count                                   INTEGER RANGE [1<=x<=10]  Update the number of old files to retain                                             │
+│ --checksum                --no-checksum                                    Enable or disable checksum verification                                              │
+│ --checksum-algorithm                             TEXT                      Update the checksum algorithm                                                        │
+│ --checksum-pattern                               TEXT                      Update the checksum file pattern                                                     │
+│ --checksum-required       --checksum-optional                              Make checksum verification required or optional                                      │
+│ --create-dir                                                               Automatically create download directory if it doesn't exist (no prompt)              │
+│ --yes                 -y                                                   Automatically answer yes to prompts (non-interactive mode)                           │
+│ --force                                                                    Skip URL validation and normalization                                                │
+│ --direct                  --no-direct                                      Treat URL as direct download link (bypasses repository detection)                    │
+│ --help                                                                     Show this message and exit.                                                          │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+                                                                                                                                                                   
+ Usage: appimage-updater list [OPTIONS]                                                                                                                            
+                                                                                                                                                                   
+ List all configured applications.                                                                                                                                 
+                                                                                                                                                                   
+╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --config      -c      PATH  Configuration file path                                                                                                             │
+│ --config-dir  -d      PATH  Configuration directory path                                                                                                        │
+│ --help                      Show this message and exit.                                                                                                         │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+                                                                                                                                                                   
+ Usage: appimage-updater remove [OPTIONS] APP_NAMES...                                                                                                             
+                                                                                                                                                                   
+ Remove applications from the configuration.                                                                                                                       
+                                                                                                                                                                   
+ This command will delete the applications' configuration. It does NOT delete downloaded AppImage files or symlinks - only the configuration entries.              
+ BASIC USAGE:     appimage-updater remove FreeCAD           # Remove single application     appimage-updater remove FreeCAD OrcaSlicer  # Remove multiple          
+ applications                                                                                                                                                      
+ ADVANCED OPTIONS:     appimage-updater remove --force MyApp     # Skip confirmation prompt     appimage-updater remove --config-dir ~/.config/appimage-updater    
+ MyApp                                                                                                                                                             
+                                                                                                                                                                   
+╭─ Arguments ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *    app_names      APP_NAMES...  Names of applications to remove from configuration (case-insensitive, supports glob patterns like 'Orca*'). Multiple names    │
+│                                   can be specified.                                                                                                             │
+│                                   [required]                                                                                                                    │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --config      -c      PATH  Configuration file path                                                                                                             │
+│ --config-dir  -d      PATH  Configuration directory path                                                                                                        │
+│ --force       -f            Force operation without confirmation prompts (use with caution)                                                                     │
+│ --help                      Show this message and exit.                                                                                                         │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+                                                                                                                                                                   
+ Usage: appimage-updater repository [OPTIONS] APP_NAMES...                                                                                                         
+                                                                                                                                                                   
+ Examine repository information for configured applications.                                                                                                       
+                                                                                                                                                                   
+ Shows detailed information about releases, assets, and repository metadata for the specified applications. Useful for troubleshooting and understanding what      
+ versions and files are available.                                                                                                                                 
+ BASIC USAGE:     appimage-updater repository OrcaSlicer        # Show release information     appimage-updater repository "Orca*"          # Use glob patterns    
+ DETAILED INSPECTION:     appimage-updater repository OrcaSlicer --assets    # Include asset details     appimage-updater repository OrcaSlicer --limit 5   #      
+ Limit number of releases     appimage-updater repository OrcaSlicer --limit 3 --assets  # Combined options                                                        
+                                                                                                                                                                   
+╭─ Arguments ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *    app_names      APP_NAMES...  Names of applications to examine repository information for (case-insensitive, supports glob patterns like 'Orca*'). Multiple │
+│                                   names can be specified.                                                                                                       │
+│                                   [required]                                                                                                                    │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --config      -c      PATH                      Configuration file path                                                                                         │
+│ --config-dir  -d      PATH                      Configuration directory path                                                                                    │
+│ --limit       -l      INTEGER RANGE [1<=x<=50]  Maximum number of releases to display (default: 10) [default: 10]                                               │
+│ --assets      -a                                Show detailed asset information for each release                                                                │
+│ --help                                          Show this message and exit.                                                                                     │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+                                                                                                                                                                   
+ Usage: appimage-updater show [OPTIONS] APP_NAMES...                                                                                                               
+                                                                                                                                                                   
+ Show detailed information about a specific application.                                                                                                           
+                                                                                                                                                                   
+ BASIC USAGE:     appimage-updater show FreeCAD                 # Show single application     appimage-updater show FreeCAD OrcaSlicer      # Show multiple        
+ applications                                                                                                                                                      
+ CUSTOM CONFIG:     appimage-updater show --config-dir ~/.config/appimage-updater OrcaSlicer                                                                       
+                                                                                                                                                                   
+╭─ Arguments ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *    app_names      APP_NAMES...  Names of applications to display information for (case-insensitive, supports glob patterns like 'Orca*'). Multiple names can  │
+│                                   be specified.                                                                                                                 │
+│                                   [required]                                                                                                                    │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --config      -c      PATH  Configuration file path                                                                                                             │
+│ --config-dir  -d      PATH  Configuration directory path                                                                                                        │
+│ --help                      Show this message and exit.                                                                                                         │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+                                                                                                                                                                   
+ Usage: appimage-updater config [OPTIONS] ACTION [SETTING] [VALUE]                                                                                                 
+                                                                                                                                                                   
+ Manage global configuration settings.                                                                                                                             
+                                                                                                                                                                   
+╭─ Arguments ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *    action       TEXT       Action: show, set, reset, show-effective, list [required]                                                                          │
+│      setting      [SETTING]  Setting name (for 'set' action)                                                                                                    │
+│      value        [VALUE]    Setting value (for 'set' action)                                                                                                   │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --app                 TEXT  Application name (for 'show-effective' action)                                                                                      │
+│ --config      -c      PATH  Configuration file path                                                                                                             │
+│ --config-dir  -d      PATH  Configuration directory path                                                                                                        │
+│ --debug                     Enable debug logging                                                                                                                │
+│ --help                      Show this message and exit.                                                                                                         │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+

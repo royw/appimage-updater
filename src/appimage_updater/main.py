@@ -17,8 +17,31 @@ from .cli_options import (
     CHECK_APP_NAME_ARGUMENT,
     CONFIG_DIR_OPTION,
     CONFIG_FILE_OPTION,
+    CREATE_DIR_OPTION,
     DRY_RUN_OPTION,
+    EDIT_APP_NAME_ARGUMENT,
+    EDIT_CHECKSUM_ALGORITHM_OPTION,
+    EDIT_CHECKSUM_OPTION,
+    EDIT_CHECKSUM_PATTERN_OPTION,
+    EDIT_CHECKSUM_REQUIRED_OPTION,
+    EDIT_DIRECT_OPTION,
+    EDIT_DOWNLOAD_DIR_OPTION,
+    EDIT_DRY_RUN_OPTION,
+    EDIT_ENABLE_OPTION,
+    EDIT_FORCE_OPTION,
+    EDIT_PATTERN_OPTION,
+    EDIT_PRERELEASE_OPTION,
+    EDIT_RETAIN_COUNT_OPTION,
+    EDIT_ROTATION_OPTION,
+    EDIT_SYMLINK_PATH_OPTION,
+    EDIT_URL_OPTION,
+    LIST_VERBOSE_OPTION,
     NO_INTERACTIVE_OPTION,
+    REPOSITORY_APP_NAME_ARGUMENT,
+    REPOSITORY_ASSETS_OPTION,
+    REPOSITORY_DRY_RUN_OPTION,
+    REPOSITORY_LIMIT_OPTION,
+    VERBOSE_OPTION,
     YES_OPTION,
 )
 from .config import ApplicationConfig, Config, GlobalConfig
@@ -368,6 +391,7 @@ def check(
     dry_run: bool = DRY_RUN_OPTION,
     yes: bool = YES_OPTION,
     no_interactive: bool = NO_INTERACTIVE_OPTION,
+    verbose: bool = VERBOSE_OPTION,
 ) -> None:
     """Check for and optionally download AppImage updates.
 
@@ -386,7 +410,7 @@ def check(
         appimage-updater check GitHubDesktop --yes      # Check specific and auto-confirm
     """
     # Handle multiple app names by passing them as a list to the internal function
-    asyncio.run(_check_updates(config_file, config_dir, dry_run, app_names, yes, no_interactive))
+    asyncio.run(_check_updates(config_file, config_dir, dry_run, app_names, yes, no_interactive, verbose))
 
 
 @app.command()
@@ -429,8 +453,9 @@ def init(
 
 @app.command(name="list")
 def list_apps(
-    config_file: Path | None = _CONFIG_FILE_OPTION,
-    config_dir: Path | None = _CONFIG_DIR_OPTION,
+    config_file: Path | None = CONFIG_FILE_OPTION,
+    config_dir: Path | None = CONFIG_DIR_OPTION,
+    verbose: bool = LIST_VERBOSE_OPTION,
 ) -> None:
     """List all configured applications."""
     try:
@@ -441,6 +466,16 @@ def list_apps(
             console.print("[yellow]No applications configured")
             logger.debug("No applications found in configuration")
             return
+
+        # Show verbose information if requested
+        if verbose:
+            if config_file:
+                console.print(f"[dim]Configuration file: {config_file}")
+            else:
+                config_dir_path = config_dir or get_default_config_dir()
+                console.print(f"[dim]Configuration directory: {config_dir_path}")
+                console.print(f"[dim]Individual app configs in: {config_dir_path}/apps/")
+            console.print()
 
         display_applications_list(config.applications)
 
@@ -912,71 +947,134 @@ async def _add(
         raise typer.Exit(1) from e
 
 
+def _handle_edit_preview_modes(
+    verbose: bool, dry_run: bool, updates: dict[str, Any], apps_to_edit: list[ApplicationConfig]
+) -> bool:
+    """Handle verbose and dry-run preview modes for edit command.
+
+    Returns True if the command should exit early (dry-run mode), False otherwise.
+    """
+    # Show verbose parameter information if requested
+    if verbose:
+        console.print("[blue]Resolved edit parameters:")
+        for key, value in updates.items():
+            if value is not None:
+                status = "[green](provided)" if value != "" else "[yellow](resolved)"
+                console.print(f"  {key}: {value} {status}")
+        console.print()
+
+    # Handle dry-run mode
+    if dry_run:
+        console.print("[yellow]DRY RUN: Configuration changes preview (not saved)")
+        console.print(f"[blue]Would edit {len(apps_to_edit)} application(s):")
+        for app in apps_to_edit:
+            console.print(f"  - {app.name}")
+        console.print("\n[blue]Changes to apply:")
+        for key, value in updates.items():
+            if value is not None:
+                console.print(f"  {key}: {value}")
+        console.print("\n[dim]Run without --dry-run to apply these changes")
+        return True
+
+    return False
+
+
+def _apply_edit_updates_to_apps(
+    apps_to_edit: list[ApplicationConfig],
+    updates: dict[str, Any],
+    config: Config,
+    config_file: Path | None,
+    config_dir: Path | None,
+    create_dir: bool,
+    yes: bool,
+) -> None:
+    """Apply updates to all selected applications."""
+    # Imports are already available at module level
+
+    for app in apps_to_edit:
+        # Validate the updates before applying them
+        validate_edit_updates(app, updates, create_dir, yes)
+
+        # Apply the updates
+        changes_made = apply_configuration_updates(app, updates)
+
+        # Save the updated configuration
+        save_updated_configuration(app, config, config_file, config_dir)
+
+        # Display what was changed
+        display_edit_summary(app.name, changes_made)
+
+        logger.debug(f"Successfully updated configuration for application '{app.name}'")
+
+
 @app.command()
 def edit(
-    app_names: list[str] = _EDIT_APP_NAME_ARGUMENT,
-    config_file: Path | None = _CONFIG_FILE_OPTION,
-    config_dir: Path | None = _CONFIG_DIR_OPTION,
+    app_names: list[str] = EDIT_APP_NAME_ARGUMENT,
+    config_file: Path | None = CONFIG_FILE_OPTION,
+    config_dir: Path | None = CONFIG_DIR_OPTION,
     # Basic configuration options
-    url: str | None = _EDIT_URL_OPTION,
-    download_dir: str | None = _EDIT_DOWNLOAD_DIR_OPTION,
-    pattern: str | None = _EDIT_PATTERN_OPTION,
-    enable: bool | None = _EDIT_ENABLE_OPTION,
-    prerelease: bool | None = _EDIT_PRERELEASE_OPTION,
+    url: str | None = EDIT_URL_OPTION,
+    download_dir: str | None = EDIT_DOWNLOAD_DIR_OPTION,
+    pattern: str | None = EDIT_PATTERN_OPTION,
+    enable: bool | None = EDIT_ENABLE_OPTION,
+    prerelease: bool | None = EDIT_PRERELEASE_OPTION,
     # Rotation options
-    rotation: bool | None = _EDIT_ROTATION_OPTION,
-    symlink_path: str | None = _EDIT_SYMLINK_PATH_OPTION,
-    retain_count: int | None = _EDIT_RETAIN_COUNT_OPTION,
+    rotation: bool | None = EDIT_ROTATION_OPTION,
+    symlink_path: str | None = EDIT_SYMLINK_PATH_OPTION,
+    retain_count: int | None = EDIT_RETAIN_COUNT_OPTION,
     # Checksum options
-    checksum: bool | None = _EDIT_CHECKSUM_OPTION,
-    checksum_algorithm: str | None = _EDIT_CHECKSUM_ALGORITHM_OPTION,
-    checksum_pattern: str | None = _EDIT_CHECKSUM_PATTERN_OPTION,
-    checksum_required: bool | None = _EDIT_CHECKSUM_REQUIRED_OPTION,
+    checksum: bool | None = EDIT_CHECKSUM_OPTION,
+    checksum_algorithm: str | None = EDIT_CHECKSUM_ALGORITHM_OPTION,
+    checksum_pattern: str | None = EDIT_CHECKSUM_PATTERN_OPTION,
+    checksum_required: bool | None = EDIT_CHECKSUM_REQUIRED_OPTION,
     # Directory creation option
-    create_dir: bool = _CREATE_DIR_OPTION,
-    yes: bool = _YES_OPTION,
-    force: bool = _EDIT_FORCE_OPTION,
-    direct: bool | None = _EDIT_DIRECT_OPTION,
+    create_dir: bool = CREATE_DIR_OPTION,
+    yes: bool = YES_OPTION,
+    force: bool = EDIT_FORCE_OPTION,
+    direct: bool | None = EDIT_DIRECT_OPTION,
+    verbose: bool = VERBOSE_OPTION,
+    dry_run: bool = EDIT_DRY_RUN_OPTION,
 ) -> None:
     """Edit configuration for existing applications.
 
-    Update any configuration field by specifying the corresponding option.
-    Only the specified fields will be changed - all other settings remain unchanged.
-    When multiple applications are specified, the same changes are applied to all.
+        Update any configuration field by specifying the corresponding option.
+        Only the specified fields will be changed - all other settings remain unchanged.
+        When multiple applications are specified, the same changes are applied to all.
 
-    BASIC CONFIGURATION:
-        --url URL                    Update repository URL
-        --download-dir PATH          Update download directory
-        --pattern REGEX              Update file pattern
-        --enable/--disable           Enable or disable the application
-        --prerelease/--no-prerelease Enable or disable prerelease versions
+        BASIC CONFIGURATION:
+            --url URL                    Update repository URL
+            --download-dir PATH          Update download directory
+            --pattern REGEX              Update file pattern
+            --enable/--disable           Enable or disable the application
+            --prerelease/--no-prerelease Enable or disable prerelease versions
 
-    FILE ROTATION:
-        --rotation/--no-rotation     Enable or disable file rotation
-        --symlink-path PATH          Set symlink path for rotation
-        --retain-count N             Number of old files to retain (1-10)
+        FILE ROTATION:
+            --rotation/--no-rotation     Enable or disable file rotation
+    {{ ... }}
+            --symlink-path PATH          Set symlink path for rotation
+            --retain-count N             Number of old files to retain (1-10)
 
-    CHECKSUM VERIFICATION:
-        --checksum/--no-checksum     Enable or disable checksum verification
-        --checksum-algorithm ALG     Set algorithm (sha256, sha1, md5)
-        --checksum-pattern PATTERN   Set checksum file pattern
-        --checksum-required/--checksum-optional  Make verification required/optional
+        CHECKSUM VERIFICATION:
+            --checksum/--no-checksum     Enable or disable checksum verification
+            --checksum-algorithm ALG     Set algorithm (sha256, sha1, md5)
+            --checksum-pattern PATTERN   Set checksum file pattern
+            --checksum-required/--checksum-optional  Make verification required/optional
 
-    COMMON EXAMPLES:
-        # Enable rotation with symlink
-        appimage-updater edit FreeCAD --rotation --symlink-path ~/bin/freecad.AppImage
+        COMMON EXAMPLES:
+            # Enable rotation with symlink
+            appimage-updater edit FreeCAD --rotation --symlink-path ~/bin/freecad.AppImage
 
-        # Enable prerelease for multiple apps
-        appimage-updater edit OrcaSlicer OrcaSlicerRC --prerelease
+            # Enable prerelease for multiple apps
+            appimage-updater edit OrcaSlicer OrcaSlicerRC --prerelease
 
-        # Update download directory
-        appimage-updater edit MyApp --download-dir ~/NewLocation/MyApp --create-dir
+            # Update download directory
+            appimage-updater edit MyApp --download-dir ~/NewLocation/MyApp --create-dir
 
-        # Configure security settings
-        appimage-updater edit OrcaSlicer BambuStudio --no-prerelease --checksum-required
+            # Configure security settings
+            appimage-updater edit OrcaSlicer BambuStudio --no-prerelease --checksum-required
 
-        # Update URL after repository move
-        appimage-updater edit OldApp --url https://github.com/newowner/newrepo
+            # Update URL after repository move
+            appimage-updater edit OldApp --url https://github.com/newowner/newrepo
     """
     try:
         logger.debug(f"Editing configuration for applications: {app_names}")
@@ -1013,21 +1111,12 @@ def edit(
             logger.debug("No updates specified for edit command")
             return
 
+        # Handle verbose and dry-run modes
+        if _handle_edit_preview_modes(verbose, dry_run, updates, apps_to_edit):
+            return
+
         # Apply updates to all selected applications
-        for app in apps_to_edit:
-            # Validate the updates before applying them
-            validate_edit_updates(app, updates, create_dir, yes)
-
-            # Apply the updates
-            changes_made = apply_configuration_updates(app, updates)
-
-            # Save the updated configuration
-            save_updated_configuration(app, config, config_file, config_dir)
-
-            # Display what was changed
-            display_edit_summary(app.name, changes_made)
-
-            logger.debug(f"Successfully updated configuration for application '{app.name}'")
+        _apply_edit_updates_to_apps(apps_to_edit, updates, config, config_file, config_dir, create_dir, yes)
 
     except ConfigLoadError as e:
         console.print(f"[red]Configuration error: {e}")
@@ -1173,11 +1262,12 @@ def remove(
 
 @app.command()
 def repository(
-    app_names: list[str] = _REPOSITORY_APP_NAME_ARGUMENT,
-    config_file: Path | None = _CONFIG_FILE_OPTION,
-    config_dir: Path | None = _CONFIG_DIR_OPTION,
-    limit: int = _REPOSITORY_LIMIT_OPTION,
-    assets: bool = _REPOSITORY_ASSETS_OPTION,
+    app_names: list[str] = REPOSITORY_APP_NAME_ARGUMENT,
+    config_file: Path | None = CONFIG_FILE_OPTION,
+    config_dir: Path | None = CONFIG_DIR_OPTION,
+    limit: int = REPOSITORY_LIMIT_OPTION,
+    assets: bool = REPOSITORY_ASSETS_OPTION,
+    dry_run: bool = REPOSITORY_DRY_RUN_OPTION,
 ) -> None:
     """Examine repository information for configured applications.
 
@@ -1194,7 +1284,7 @@ def repository(
         appimage-updater repository OrcaSlicer --limit 5   # Limit number of releases
         appimage-updater repository OrcaSlicer --limit 3 --assets  # Combined options
     """
-    asyncio.run(_examine_repositories(config_file, config_dir, app_names, limit, assets))
+    asyncio.run(_examine_repositories(config_file, config_dir, app_names, limit, assets, dry_run))
 
 
 async def _examine_repositories(
@@ -1203,6 +1293,7 @@ async def _examine_repositories(
     app_names: list[str],
     limit: int,
     show_assets: bool,
+    dry_run: bool = False,
 ) -> None:
     """Examine repository information for applications."""
     try:
@@ -1211,6 +1302,15 @@ async def _examine_repositories(
 
         # Filter applications by names
         apps_to_examine = ApplicationService.filter_apps_by_names(config.applications, app_names)
+
+        # Handle dry-run mode
+        if dry_run:
+            console.print("[yellow]DRY RUN: Repository URLs that would be examined (no data fetched)")
+            console.print(f"[blue]Would examine {len(apps_to_examine)} application(s):")
+            for app in apps_to_examine:
+                console.print(f"  - {app.name}: {app.url}")
+            console.print("\n[dim]Run without --dry-run to fetch and display repository data")
+            return
 
         console.print(f"[blue]Examining repository information for {len(apps_to_examine)} application(s)...")
         console.print()
@@ -1329,6 +1429,7 @@ async def _check_updates(
     app_names: list[str] | str | None = None,
     yes: bool = False,
     no_interactive: bool = False,
+    verbose: bool = False,
 ) -> None:
     """Internal async function to check for updates.
 
@@ -1352,6 +1453,16 @@ async def _check_updates(
             console.print("[yellow]No enabled applications found in configuration")
             logger.warning("No enabled applications found, exiting")
             return
+
+        # Show verbose parameter information if requested
+        if verbose:
+            console.print("[blue]Resolved check parameters:")
+            console.print(f"  dry_run: {dry_run}")
+            console.print(f"  app_names: {app_names if app_names else 'all enabled apps'}")
+            console.print(f"  yes: {yes}")
+            console.print(f"  no_interactive: {no_interactive}")
+            console.print(f"  enabled_apps_count: {len(enabled_apps)}")
+            console.print()
 
         # Perform update checks
         check_results = await _perform_update_checks(config, enabled_apps, no_interactive)

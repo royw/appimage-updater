@@ -40,6 +40,18 @@ DRY_RUN_OPTION = typer.Option(
     help="Check for updates without downloading",
 )
 
+EDIT_DRY_RUN_OPTION = typer.Option(
+    False,
+    "--dry-run",
+    help="Preview configuration changes without saving",
+)
+
+REPOSITORY_DRY_RUN_OPTION = typer.Option(
+    False,
+    "--dry-run",
+    help="Show repository URLs that would be examined without fetching data",
+)
+
 YES_OPTION = typer.Option(
     False,
     "--yes",
@@ -233,4 +245,12 @@ REPOSITORY_ASSETS_OPTION = typer.Option(
     "--assets",
     "-a",
     help="Show detailed asset information for each release",
+)
+
+# Verbose options for different commands
+LIST_VERBOSE_OPTION = typer.Option(
+    False,
+    "--verbose",
+    "-v",
+    help="Show configuration file paths and additional details",
 )

@@ -178,6 +178,34 @@ This displays comprehensive information including:
 - Detected symlinks
 - Update frequency and status
 
+### Examine Repository Information
+
+The `repository` command provides detailed information about releases and assets available in the configured repositories:
+
+```bash
+# Show release information for an application
+appimage-updater repository OrcaSlicer
+
+# Show detailed asset information
+appimage-updater repository OrcaSlicer --assets
+
+# Limit number of releases shown (default: 10)
+appimage-updater repository OrcaSlicer --limit 5
+
+# Use glob patterns to examine multiple apps
+appimage-updater repository "Orca*" --assets
+
+# Combined options for detailed inspection
+appimage-updater repository FreeCAD --limit 3 --assets
+```
+
+This command is useful for:
+
+- **Troubleshooting** - Understanding what releases and assets are available
+- **Pattern Development** - Seeing actual filenames to create better patterns
+- **Version Analysis** - Checking release dates and version numbering
+- **Asset Discovery** - Finding checksums, signatures, and alternative downloads
+
 ### Edit Application Settings
 
 The `edit` command allows you to modify any configuration setting:
@@ -291,6 +319,7 @@ For complete command documentation including all options and examples, see the [
 | `appimage-updater show <apps...>` | Show app details (supports multiple apps) |
 | `appimage-updater edit <apps...>` | Edit app settings (supports multiple apps) |
 | `appimage-updater remove <apps...>` | Remove applications (supports multiple apps) |
+| `appimage-updater repository <apps...>` | Examine repository information and releases |
 | `appimage-updater config` | Manage global configuration settings |
 
 ### Common Options
@@ -299,7 +328,8 @@ For complete command documentation including all options and examples, see the [
 |--------|---------|
 | `--prerelease` | Include prerelease versions |
 | `--rotation --symlink <path>` | Enable rotation with symlink |
-| `--dry-run` | Check without downloading |
+| `--dry-run` | Preview changes without applying them |
+| `--verbose` | Show detailed parameter information |
 | `--yes` | Auto-confirm prompts |
 | `--debug` | Enable debug logging |
 | `--direct` | Treat URL as direct download link |
@@ -309,7 +339,8 @@ For complete command documentation including all options and examples, see the [
 | Path | Purpose |
 |------|---------|
 | `~/.config/appimage-updater/` | Default configuration directory |
-| `~/.config/appimage-updater/config.json` | Single-file configuration |
+| `~/.config/appimage-updater/config.json` | Global configuration settings |
+| `~/.config/appimage-updater/apps/` | Directory-based app configurations |
 | `~/.local/share/appimage-updater/appimage-updater.log` | Application logs |
 
 ## Troubleshooting
@@ -441,9 +472,12 @@ You can also use separate files for each application in the config directory:
 
 ```text
 ~/.config/appimage-updater/
-├── freecad.json
-├── orcaslicer.json
-└── global.json
+├── config.json (global configuration)
+└── apps/
+    ├── freecad.json
+    ├── orcaslicer.json
+    ├── bambustudio.json
+    └── ... (other app configs)
 ```
 
 ## Example Workflows

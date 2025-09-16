@@ -47,6 +47,7 @@ appimage-updater check [OPTIONS] [APP_NAMES...]
 - `--config, -c PATH`: Use specific configuration file
 - `--config-dir, -d PATH`: Use specific configuration directory
 - `--dry-run`: Check for updates without downloading
+- `--verbose`: Show detailed parameter information
 - `--debug`: Enable debug logging for troubleshooting
 
 **Examples:**
@@ -72,6 +73,12 @@ appimage-updater check --config /path/to/config.json
 
 # Check with debug logging
 appimage-updater --debug check FreeCAD --dry-run
+
+# Check with verbose output to see resolved parameters
+appimage-updater check --verbose
+
+# Check specific apps with verbose output
+appimage-updater check FreeCAD --verbose
 ```
 
 ### `init`
@@ -157,6 +164,7 @@ appimage-updater list [OPTIONS]
 
 - `--config, -c PATH`: Configuration file path
 - `--config-dir, -d PATH`: Configuration directory path
+- `--verbose`: Show configuration file paths and additional details
 
 **Examples:**
 
@@ -166,6 +174,9 @@ appimage-updater list
 
 # List with custom config
 appimage-updater list --config /path/to/config.json
+
+# List with verbose output showing config paths
+appimage-updater list --verbose
 ```
 
 ### `show`
@@ -233,6 +244,8 @@ appimage-updater edit [OPTIONS] APP_NAMES...
 - `--yes, -y`: Auto-confirm prompts
 - `--force`: Skip URL validation and normalization
 - `--direct/--no-direct`: Treat URL as direct download link (bypasses repository detection)
+- `--verbose`: Show detailed parameter information
+- `--dry-run`: Preview configuration changes without saving
 
 **Examples:**
 
@@ -266,6 +279,15 @@ appimage-updater edit OrcaSlicer --direct --url https://github.com/SoftFever/Orc
 
 # Convert direct download back to repository detection
 appimage-updater edit MyApp --no-direct --url https://github.com/user/repo
+
+# Preview changes without applying them
+appimage-updater edit FreeCAD --prerelease --dry-run
+
+# Show detailed parameter information
+appimage-updater edit OrcaSlicer --rotation --verbose
+
+# Combine verbose and dry-run for detailed preview
+appimage-updater edit "Orca*" --prerelease --verbose --dry-run
 ```
 
 ### `remove`
@@ -424,6 +446,7 @@ appimage-updater repository [OPTIONS] APP_NAMES...
 - `--config-dir, -d PATH`: Configuration directory path
 - `--limit, -l INTEGER`: Maximum number of releases to display (1-50, default: 10)
 - `--assets, -a`: Show detailed asset information for each release
+- `--dry-run`: Show URLs that would be examined without fetching data
 
 **Examples:**
 
@@ -436,6 +459,12 @@ appimage-updater repository OrcaSlicer --limit 5 --assets
 
 # Examine multiple applications
 appimage-updater repository FreeCAD VSCode OrcaSlicer
+
+# Preview what URLs would be examined without fetching data
+appimage-updater repository OrcaSlicer --dry-run
+
+# Combine options for detailed preview
+appimage-updater repository "Orca*" --limit 3 --assets --dry-run
 
 # Examine applications using glob patterns
 appimage-updater repository "Orca*" "Free*"
