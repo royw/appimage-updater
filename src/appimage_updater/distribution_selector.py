@@ -319,26 +319,37 @@ class DistributionSelector:
 
     def _calculate_compatibility_score(self, info: AssetInfo) -> float:
         """Calculate compatibility score for an asset."""
-        # Get asset properties for enhanced compatibility checking
+        asset_properties = self._extract_asset_properties(info)
+
+        if not self._check_critical_compatibility(asset_properties):
+            return 0.0
+
+        return self._calculate_total_score(info, asset_properties)
+
+    def _extract_asset_properties(self, info: AssetInfo) -> dict[str, str | None]:
+        """Extract asset properties for compatibility checking."""
         asset = info.asset
-        asset_arch = asset.architecture or info.arch
-        asset_platform = asset.platform
-        asset_format = asset.file_extension or (f".{info.format}" if info.format else None)
+        return {
+            "arch": asset.architecture or info.arch,
+            "platform": asset.platform,
+            "format": asset.file_extension or (f".{info.format}" if info.format else None)
+        }
 
-        # Check critical compatibility first
-        if not self._is_architecture_compatible(asset_arch):
-            return 0.0
-        if not self._is_platform_compatible(asset_platform, asset_format):
-            return 0.0
+    def _check_critical_compatibility(self, asset_properties: dict[str, str | None]) -> bool:
+        """Check critical compatibility requirements."""
+        return (
+            self._is_architecture_compatible(asset_properties["arch"]) and
+            self._is_platform_compatible(asset_properties["platform"], asset_properties["format"])
+        )
 
-        # Calculate score components
+    def _calculate_total_score(self, info: AssetInfo, asset_properties: dict[str, str | None]) -> float:
+        """Calculate total compatibility score from all components."""
         score = 0.0
-        score += self._score_architecture(asset_arch)
-        score += self._score_platform(asset_platform, asset_format)
-        score += self._score_format(asset_format)
+        score += self._score_architecture(asset_properties["arch"])
+        score += self._score_platform(asset_properties["platform"], asset_properties["format"])
+        score += self._score_format(asset_properties["format"])
         score += self._score_distribution(info)
         score += self._score_version(info)
-
         return max(0.0, score)
 
     def _is_architecture_compatible(self, asset_arch: str | None) -> bool:
@@ -395,22 +406,32 @@ class DistributionSelector:
 
     def _score_version(self, info: AssetInfo) -> float:
         """Score version compatibility."""
-        if not (info.version_numeric and self.current_dist.version_numeric > 0):
+        if not self._has_valid_version_info(info):
             return 0.0
 
         version_diff = abs(info.version_numeric - self.current_dist.version_numeric)
 
         if info.version_numeric <= self.current_dist.version_numeric:
-            # Prefer older or same version (backward compatibility)
-            if version_diff == 0:
-                return 30.0  # Exact version match
-            elif version_diff <= 2.0:
-                return 25.0 - (version_diff * 2.5)  # Close version
-            else:
-                return 15.0  # Older version
+            return self._score_backward_compatible_version(version_diff)
         else:
-            # Newer version - less preferred but might work
-            return max(5.0, 20.0 - (version_diff * 5))
+            return self._score_newer_version(version_diff)
+
+    def _has_valid_version_info(self, info: AssetInfo) -> bool:
+        """Check if version information is valid for scoring."""
+        return bool(info.version_numeric and self.current_dist.version_numeric > 0)
+
+    def _score_backward_compatible_version(self, version_diff: float) -> float:
+        """Score backward compatible (older or same) versions."""
+        if version_diff == 0:
+            return 30.0  # Exact version match
+        elif version_diff <= 2.0:
+            return 25.0 - (version_diff * 2.5)  # Close version
+        else:
+            return 15.0  # Older version
+
+    def _score_newer_version(self, version_diff: float) -> float:
+        """Score newer versions (less preferred but might work)."""
+        return max(5.0, 20.0 - (version_diff * 5))
 
     def _is_compatible_distribution(self, dist: str) -> bool:
         """Check if a distribution is compatible with the current one."""

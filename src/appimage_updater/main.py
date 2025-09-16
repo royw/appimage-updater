@@ -1461,18 +1461,20 @@ def _is_symlink_valid(symlink_path: Path, download_dir: Path) -> bool:
 
 def _find_unrotated_appimages(download_dir: Path) -> list[Path]:
     """Find AppImage files that are not in rotation format."""
-    appimage_files = []
+    return [
+        file_path for file_path in download_dir.iterdir()
+        if _is_unrotated_appimage(file_path)
+    ]
+
+
+def _is_unrotated_appimage(file_path: Path) -> bool:
+    """Check if file is an unrotated AppImage."""
     rotation_suffixes = [".current", ".old", ".old2", ".old3"]
-
-    for file_path in download_dir.iterdir():
-        if (
-            file_path.is_file()
-            and file_path.suffix.lower() == ".appimage"
-            and not any(file_path.name.endswith(suffix) for suffix in rotation_suffixes)
-        ):
-            appimage_files.append(file_path)
-
-    return appimage_files
+    return (
+        file_path.is_file()
+        and file_path.suffix.lower() == ".appimage"
+        and not any(file_path.name.endswith(suffix) for suffix in rotation_suffixes)
+    )
 
 
 async def _setup_rotation_for_file(app_config: ApplicationConfig, latest_file: Path, config: Config) -> None:

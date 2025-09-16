@@ -401,13 +401,29 @@ def add_optional_config_lines(app: Any, config_lines: list[str]) -> None:
 
 def add_checksum_config_lines(app: Any, config_lines: list[str]) -> None:
     """Add checksum configuration lines if applicable."""
-    if hasattr(app, "checksum") and app.checksum:
-        checksum_status = "Enabled" if app.checksum.enabled else "Disabled"
-        config_lines.append(f"[bold]Checksum Verification:[/bold] {checksum_status}")
-        if app.checksum.enabled:
-            config_lines.append(f"  [dim]Algorithm:[/dim] {app.checksum.algorithm.upper()}")
-            config_lines.append(f"  [dim]Pattern:[/dim] {app.checksum.pattern}")
-            config_lines.append(f"  [dim]Required:[/dim] {'Yes' if app.checksum.required else 'No'}")
+    if not _has_checksum_config(app):
+        return
+    _add_checksum_status_line(app, config_lines)
+    if app.checksum.enabled:
+        _add_checksum_details(app, config_lines)
+
+
+def _has_checksum_config(app: Any) -> bool:
+    """Check if app has checksum configuration."""
+    return hasattr(app, "checksum") and app.checksum
+
+
+def _add_checksum_status_line(app: Any, config_lines: list[str]) -> None:
+    """Add checksum status line."""
+    checksum_status = "Enabled" if app.checksum.enabled else "Disabled"
+    config_lines.append(f"[bold]Checksum Verification:[/bold] {checksum_status}")
+
+
+def _add_checksum_details(app: Any, config_lines: list[str]) -> None:
+    """Add detailed checksum configuration."""
+    config_lines.append(f"  [dim]Algorithm:[/dim] {app.checksum.algorithm.upper()}")
+    config_lines.append(f"  [dim]Pattern:[/dim] {app.checksum.pattern}")
+    config_lines.append(f"  [dim]Required:[/dim] {'Yes' if app.checksum.required else 'No'}")
 
 
 def _add_rotation_status_line(app: Any, config_lines: list[str]) -> None:
