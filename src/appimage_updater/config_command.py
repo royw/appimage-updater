@@ -290,28 +290,63 @@ def _apply_string_setting(config: Config, setting: str, value: str) -> None:
         console.print(f"[green]Set default checksum pattern to: {value}")
 
 
+def _parse_boolean_value(value: str) -> bool:
+    """Parse string value to boolean."""
+    return value.lower() in ("true", "yes", "1")
+
+
+def _apply_rotation_enabled_setting(config: Config, bool_value: bool) -> None:
+    """Apply rotation enabled setting."""
+    config.global_config.defaults.rotation_enabled = bool_value
+    console.print(f"[green]Set default rotation enabled to: {bool_value}")
+
+
+def _apply_symlink_enabled_setting(config: Config, bool_value: bool) -> None:
+    """Apply symlink enabled setting."""
+    config.global_config.defaults.symlink_enabled = bool_value
+    console.print(f"[green]Set default symlink enabled to: {bool_value}")
+
+
+def _apply_checksum_enabled_setting(config: Config, bool_value: bool) -> None:
+    """Apply checksum enabled setting."""
+    config.global_config.defaults.checksum_enabled = bool_value
+    console.print(f"[green]Set default checksum enabled to: {bool_value}")
+
+
+def _apply_checksum_required_setting(config: Config, bool_value: bool) -> None:
+    """Apply checksum required setting."""
+    config.global_config.defaults.checksum_required = bool_value
+    console.print(f"[green]Set default checksum required to: {bool_value}")
+
+
+def _apply_prerelease_setting(config: Config, bool_value: bool) -> None:
+    """Apply prerelease setting."""
+    config.global_config.defaults.prerelease = bool_value
+    console.print(f"[green]Set default prerelease to: {bool_value}")
+
+
+def _apply_auto_subdir_setting(config: Config, bool_value: bool) -> None:
+    """Apply auto-subdir setting."""
+    config.global_config.defaults.auto_subdir = bool_value
+    console.print(f"[green]Set automatic subdirectory creation to: {bool_value}")
+
+
 def _apply_boolean_setting(config: Config, setting: str, value: str) -> None:
     """Apply boolean setting changes."""
-    bool_value = value.lower() in ("true", "yes", "1")
+    bool_value = _parse_boolean_value(value)
 
     if setting == "rotation-enabled":
-        config.global_config.defaults.rotation_enabled = bool_value
-        console.print(f"[green]Set default rotation enabled to: {bool_value}")
+        _apply_rotation_enabled_setting(config, bool_value)
     elif setting == "symlink-enabled":
-        config.global_config.defaults.symlink_enabled = bool_value
-        console.print(f"[green]Set default symlink enabled to: {bool_value}")
+        _apply_symlink_enabled_setting(config, bool_value)
     elif setting == "checksum-enabled":
-        config.global_config.defaults.checksum_enabled = bool_value
-        console.print(f"[green]Set default checksum enabled to: {bool_value}")
+        _apply_checksum_enabled_setting(config, bool_value)
     elif setting == "checksum-required":
-        config.global_config.defaults.checksum_required = bool_value
-        console.print(f"[green]Set default checksum required to: {bool_value}")
+        _apply_checksum_required_setting(config, bool_value)
     elif setting == "prerelease":
-        config.global_config.defaults.prerelease = bool_value
-        console.print(f"[green]Set default prerelease to: {bool_value}")
+        _apply_prerelease_setting(config, bool_value)
     elif setting == "auto-subdir":
-        config.global_config.defaults.auto_subdir = bool_value
-        console.print(f"[green]Set automatic subdirectory creation to: {bool_value}")
+        _apply_auto_subdir_setting(config, bool_value)
 
 
 def _apply_numeric_setting(config: Config, setting: str, value: str) -> None:

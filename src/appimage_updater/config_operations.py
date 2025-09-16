@@ -926,25 +926,38 @@ def _apply_conditional_update(app: Any, attr: str, label: str, new_value: Any) -
     return []
 
 
-def apply_rotation_updates(app: Any, updates: dict[str, Any]) -> list[str]:
-    """Apply rotation-related updates."""
-    changes = []
-
+def _apply_rotation_enabled_update(app: Any, updates: dict[str, Any], changes: list[str]) -> None:
+    """Apply rotation enabled update and record change."""
     if "rotation_enabled" in updates:
         old_value = "Enabled" if getattr(app, "rotation_enabled", False) else "Disabled"
         app.rotation_enabled = updates["rotation_enabled"]
         new_value = "Enabled" if updates["rotation_enabled"] else "Disabled"
         changes.append(f"File Rotation: {old_value} → {new_value}")
 
+
+def _apply_symlink_path_update(app: Any, updates: dict[str, Any], changes: list[str]) -> None:
+    """Apply symlink path update and record change."""
     if "symlink_path" in updates:
         old_value = str(getattr(app, "symlink_path", None)) if getattr(app, "symlink_path", None) else "None"
         app.symlink_path = Path(updates["symlink_path"])
         changes.append(f"Symlink Path: {old_value} → {updates['symlink_path']}")
 
+
+def _apply_retain_count_update(app: Any, updates: dict[str, Any], changes: list[str]) -> None:
+    """Apply retain count update and record change."""
     if "retain_count" in updates:
-        old_value = getattr(app, "retain_count", 3)  # type: ignore[arg-type]
+        old_value = getattr(app, "retain_count", 3)
         app.retain_count = updates["retain_count"]
         changes.append(f"Retain Count: {old_value} → {updates['retain_count']}")
+
+
+def apply_rotation_updates(app: Any, updates: dict[str, Any]) -> list[str]:
+    """Apply rotation-related updates."""
+    changes: list[str] = []
+
+    _apply_rotation_enabled_update(app, updates, changes)
+    _apply_symlink_path_update(app, updates, changes)
+    _apply_retain_count_update(app, updates, changes)
 
     return changes
 

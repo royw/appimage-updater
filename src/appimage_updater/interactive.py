@@ -332,24 +332,25 @@ def _validate_app_name(name: str) -> bool:
     return not any(char in name for char in invalid_chars)
 
 
-def _validate_url(url: str) -> bool:
-    """Validate repository or download URL."""
+def _check_basic_url_format(url: str) -> bool:
+    """Check if URL has basic format requirements."""
     if not url or not url.strip():
         return False
 
-    # Basic URL format check
     if not (url.startswith("http://") or url.startswith("https://")):
         console.print("[yellow]💡 URL should start with http:// or https://[/yellow]")
         return False
 
+    return True
+
+
+def _normalize_and_validate_repository_url(url: str) -> bool:
+    """Normalize URL and validate with repository client."""
     try:
-        # Try to validate with repository client
         repo_client = get_repository_client(url)
         normalized_url, was_corrected = repo_client.normalize_repo_url(url)
 
-        # Show correction if URL was normalized
-        if was_corrected:
-            console.print(f"[yellow]📝 Detected download URL, will use repository URL: {normalized_url}[/yellow]")
+        _show_url_correction_if_needed(normalized_url, was_corrected)
 
         # Try to parse the normalized URL
         repo_client.parse_repo_url(normalized_url)
@@ -358,6 +359,20 @@ def _validate_url(url: str) -> bool:
     except Exception as e:
         console.print(f"[yellow]💡 {str(e)}[/yellow]")
         return False
+
+
+def _show_url_correction_if_needed(normalized_url: str, was_corrected: bool) -> None:
+    """Show URL correction message if URL was normalized."""
+    if was_corrected:
+        console.print(f"[yellow]📝 Detected download URL, will use repository URL: {normalized_url}[/yellow]")
+
+
+def _validate_url(url: str) -> bool:
+    """Validate repository or download URL."""
+    if not _check_basic_url_format(url):
+        return False
+
+    return _normalize_and_validate_repository_url(url)
 
 
 def _validate_directory_path(path: str) -> bool:

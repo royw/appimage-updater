@@ -64,22 +64,29 @@ class DistributionSelector:
             f"arch: {self.system_info.architecture}, platform: {self.system_info.platform}"
         )
 
-    def select_best_asset(self, assets: list[Asset]) -> Asset:
-        """Select the best asset for the current system or prompt the user."""
+    def _validate_assets_input(self, assets: list[Asset]) -> Asset | None:
+        """Validate assets input and return single asset if only one available."""
         if not assets:
             raise ValueError("No assets provided")
         if len(assets) == 1:
             return assets[0]
+        return None
 
+    def _process_and_score_assets(self, assets: list[Asset]) -> list[AssetInfo]:
+        """Process assets and return scored, sorted, and filtered list."""
         asset_infos = self._parse_assets(assets)
         asset_infos = self._score_and_sort(asset_infos)
-        asset_infos = self._filter_compatible(asset_infos) or asset_infos
+        return self._filter_compatible(asset_infos) or asset_infos
 
-        best_info = asset_infos[0]
+    def _handle_high_score_selection(self, best_info: AssetInfo) -> Asset | None:
+        """Handle selection when best asset has high confidence score."""
         if best_info.score >= 150.0:
             logger.debug(f"Auto-selected asset: {best_info.asset.name} (score: {best_info.score:.1f})")
             return best_info.asset
+        return None
 
+    def _handle_user_input_selection(self, asset_infos: list[AssetInfo], best_info: AssetInfo) -> Asset:
+        """Handle selection when user input is needed."""
         if self._needs_user_input(asset_infos, best_info):
             if self.interactive:
                 return self._prompt_user_selection(asset_infos).asset
@@ -88,6 +95,25 @@ class DistributionSelector:
 
         logger.debug(f"Selected asset: {best_info.asset.name} (score: {best_info.score:.1f})")
         return best_info.asset
+
+    def select_best_asset(self, assets: list[Asset]) -> Asset:
+        """Select the best asset for the current system or prompt the user."""
+        # Check for simple cases first
+        single_asset = self._validate_assets_input(assets)
+        if single_asset is not None:
+            return single_asset
+
+        # Process and score all assets
+        asset_infos = self._process_and_score_assets(assets)
+        best_info = asset_infos[0]
+
+        # Try high-confidence auto-selection
+        high_score_asset = self._handle_high_score_selection(best_info)
+        if high_score_asset is not None:
+            return high_score_asset
+
+        # Handle cases requiring user input or fallback
+        return self._handle_user_input_selection(asset_infos, best_info)
 
     def _parse_assets(self, assets: list[Asset]) -> list[AssetInfo]:
         return [self._parse_asset_info(a) for a in assets]
@@ -446,27 +472,36 @@ class DistributionSelector:
 
         return table
 
+    def _format_basic_info(self, info: AssetInfo) -> tuple[str, str]:
+        """Format basic distribution and version information."""
+        dist_display = info.distribution.title() if info.distribution else "Generic"
+        version_display = info.version or "N/A"
+        return dist_display, version_display
+
+    def _format_architecture_info(self, asset: Asset, info: AssetInfo) -> str:
+        """Format architecture information for display."""
+        arch = asset.architecture or info.arch
+        return self._format_architecture_display(arch)
+
+    def _format_platform_info(self, asset: Asset) -> str:
+        """Format platform information for display."""
+        platform = asset.platform
+        return self._format_platform_display(platform)
+
+    def _format_file_format_info(self, asset: Asset, info: AssetInfo) -> str:
+        """Format file format information for display."""
+        asset_format = asset.file_extension or (f".{info.format}" if info.format else None)
+        return asset_format.upper() if asset_format else "Unknown"
+
     def _format_asset_row(self, index: int, info: AssetInfo) -> tuple[str, ...]:
         """Format a single asset row for the table."""
         asset = info.asset
 
-        # Basic information
-        dist_display = info.distribution.title() if info.distribution else "Generic"
-        version_display = info.version or "N/A"
-
-        # Architecture information
-        arch = asset.architecture or info.arch
-        arch_display = self._format_architecture_display(arch)
-
-        # Platform information
-        platform = asset.platform
-        platform_display = self._format_platform_display(platform)
-
-        # Format information
-        asset_format = asset.file_extension or (f".{info.format}" if info.format else None)
-        format_display = asset_format.upper() if asset_format else "Unknown"
-
-        # Score information
+        # Get formatted information
+        dist_display, version_display = self._format_basic_info(info)
+        arch_display = self._format_architecture_info(asset, info)
+        platform_display = self._format_platform_info(asset)
+        format_display = self._format_file_format_info(asset, info)
         score_display = self._format_score_display(info.score)
 
         return (

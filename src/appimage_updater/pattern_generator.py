@@ -140,39 +140,70 @@ async def fetch_appimage_pattern_from_github(url: str) -> str | None:
         return None
 
 
+def _categorize_asset_by_type_and_stability(asset_name: str, is_prerelease: bool, groups: dict[str, list[str]]) -> None:
+    """Categorize a single asset by type and stability."""
+    name_lower = asset_name.lower()
+    if name_lower.endswith(".appimage"):
+        target_list = "pre_app" if is_prerelease else "stable_app"
+        groups[target_list].append(asset_name)
+    elif name_lower.endswith(".zip"):
+        target_list = "pre_zip" if is_prerelease else "stable_zip"
+        groups[target_list].append(asset_name)
+
+
+def _process_release_assets(release: Release, groups: dict[str, list[str]]) -> None:
+    """Process all assets in a release and categorize them."""
+    for asset in release.assets:
+        _categorize_asset_by_type_and_stability(asset.name, release.is_prerelease, groups)
+
+
 def _collect_release_files(releases: list[Release]) -> ReleaseGroups:
     """Collect filenames grouped by stability and extension."""
-    stable_app: list[str] = []
-    stable_zip: list[str] = []
-    pre_app: list[str] = []
-    pre_zip: list[str] = []
+    groups: dict[str, list[str]] = {
+        "stable_app": [],
+        "stable_zip": [],
+        "pre_app": [],
+        "pre_zip": [],
+    }
+
     for release in releases:
-        for asset in release.assets:
-            name_lower = asset.name.lower()
-            is_pre = release.is_prerelease
-            if name_lower.endswith(".appimage"):
-                (pre_app if is_pre else stable_app).append(asset.name)
-            elif name_lower.endswith(".zip"):
-                (pre_zip if is_pre else stable_zip).append(asset.name)
+        _process_release_assets(release, groups)
+
     return ReleaseGroups(
-        stable_app=stable_app,
-        stable_zip=stable_zip,
-        pre_app=pre_app,
-        pre_zip=pre_zip,
+        stable_app=groups["stable_app"],
+        stable_zip=groups["stable_zip"],
+        pre_app=groups["pre_app"],
+        pre_zip=groups["pre_zip"],
     )
 
 
-def _select_target_files(groups: ReleaseGroups) -> list[str] | None:
-    """Choose best filenames: prefer stable, prefer AppImage over ZIP."""
+def _select_stable_files(groups: ReleaseGroups) -> list[str] | None:
+    """Select stable files, preferring AppImage over ZIP."""
     if groups["stable_app"] or groups["stable_zip"]:
         target: list[str] = groups["stable_app"] if groups["stable_app"] else groups["stable_zip"]
         logger.debug(f"Using stable releases for pattern generation: {len(target)} files")
         return target
+    return None
+
+
+def _select_prerelease_files(groups: ReleaseGroups) -> list[str] | None:
+    """Select prerelease files, preferring AppImage over ZIP."""
     if groups["pre_app"] or groups["pre_zip"]:
-        target = groups["pre_app"] if groups["pre_app"] else groups["pre_zip"]
+        target: list[str] = groups["pre_app"] if groups["pre_app"] else groups["pre_zip"]
         logger.debug(f"No stable releases found, using prerelease files for pattern: {len(target)} files")
         return target
     return None
+
+
+def _select_target_files(groups: ReleaseGroups) -> list[str] | None:
+    """Choose best filenames: prefer stable, prefer AppImage over ZIP."""
+    # Try stable files first
+    stable_files = _select_stable_files(groups)
+    if stable_files is not None:
+        return stable_files
+
+    # Fall back to prerelease files
+    return _select_prerelease_files(groups)
 
 
 def create_pattern_from_filenames(filenames: list[str], include_both_formats: bool = False) -> str:
