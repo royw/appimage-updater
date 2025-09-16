@@ -1,0 +1,87 @@
+"""Config command implementation."""
+
+from __future__ import annotations
+
+from loguru import logger
+from rich.console import Console
+
+from ..logging_config import configure_logging
+from .base import Command, CommandResult
+from .parameters import ConfigParams
+
+
+class ConfigCommand(Command):
+    """Command to manage global configuration settings."""
+
+    def __init__(self, params: ConfigParams):
+        self.params = params
+        self.console = Console()
+
+    def validate(self) -> list[str]:
+        """Validate command parameters."""
+        errors = []
+
+        valid_actions = {"show", "set", "reset", "show-effective", "list"}
+        if self.params.action not in valid_actions:
+            errors.append(f"Invalid action '{self.params.action}'. Valid actions: {', '.join(valid_actions)}")
+
+        if self.params.action == "set" and (not self.params.setting or not self.params.value):
+            errors.append("'set' action requires both setting and value")
+
+        if self.params.action == "show-effective" and not self.params.app_name:
+            errors.append("'show-effective' action requires --app parameter")
+
+        return errors
+
+    async def execute(self) -> CommandResult:
+        """Execute the config command."""
+        configure_logging(debug=self.params.debug)
+
+        try:
+            # Validate required parameters
+            validation_errors = self.validate()
+            if validation_errors:
+                error_msg = f"Validation errors: {', '.join(validation_errors)}"
+                self.console.print(f"[red]Error: {error_msg}[/red]")
+
+                if self.params.action == "set":
+                    self.console.print("[yellow]Usage: appimage-updater config set <setting> <value>")
+                elif self.params.action == "show-effective":
+                    self.console.print("[yellow]Usage: appimage-updater config show-effective --app <app-name>")
+                else:
+                    self.console.print("[yellow]Available actions: show, set, reset, show-effective, list")
+
+                return CommandResult(success=False, message=error_msg, exit_code=1)
+
+            # Execute the config operation
+            await self._execute_config_operation()
+
+            return CommandResult(success=True, message="Config operation completed successfully")
+
+        except Exception as e:
+            logger.error(f"Unexpected error in config command: {e}")
+            logger.exception("Full exception details")
+            return CommandResult(success=False, message=str(e), exit_code=1)
+
+    async def _execute_config_operation(self) -> None:
+        """Execute the core config operation logic."""
+        from ..config_command import (
+            list_available_settings,
+            reset_global_config,
+            set_global_config_value,
+            show_effective_config,
+            show_global_config,
+        )
+
+        if self.params.action == "show":
+            show_global_config(self.params.config_file, self.params.config_dir)
+        elif self.params.action == "set":
+            set_global_config_value(
+                self.params.setting, self.params.value, self.params.config_file, self.params.config_dir
+            )
+        elif self.params.action == "reset":
+            reset_global_config(self.params.config_file, self.params.config_dir)
+        elif self.params.action == "show-effective":
+            show_effective_config(self.params.app_name, self.params.config_file, self.params.config_dir)
+        elif self.params.action == "list":
+            list_available_settings()

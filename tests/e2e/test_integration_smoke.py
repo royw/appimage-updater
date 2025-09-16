@@ -17,7 +17,7 @@ def test_integration_smoke_test(runner):
     # Test that commands are available
     result = runner.invoke(app, ["check", "--help"])
     assert result.exit_code == 0
-    assert "Check for and optionally download AppImage updates" in result.stdout
+    assert "Check for updates to configured applications" in result.stdout
 
     result = runner.invoke(app, ["init", "--help"])
     assert result.exit_code == 0

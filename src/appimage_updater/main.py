@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 from pathlib import Path
 from typing import Any
@@ -44,37 +43,26 @@ from .cli_options import (
     VERBOSE_OPTION,
     YES_OPTION,
 )
+from .commands import CommandFactory
 from .config import ApplicationConfig, Config, GlobalConfig
-from .config_command import (
-    list_available_settings,
-    reset_global_config,
-    set_global_config_value,
-    show_effective_config,
-    show_global_config,
-)
-from .config_loader import ConfigLoadError, get_default_config_dir
+from .config_loader import ConfigLoadError
 from .config_operations import (
     add_application_to_config,
     apply_configuration_updates,
-    collect_edit_updates,
     generate_default_config,
     handle_add_directory_creation,
     load_config,
-    remove_application_from_config,
     save_updated_configuration,
     validate_add_rotation_config,
     validate_and_normalize_add_url,
     validate_edit_updates,
 )
 from .display import (
-    display_application_details,
-    display_applications_list,
     display_check_results,
     display_download_results,
     display_edit_summary,
 )
 from .downloader import Downloader
-from .interactive import interactive_add_command
 from .logging_config import configure_logging
 from .models import rebuild_models
 from .repositories import get_repository_client
@@ -392,63 +380,47 @@ def check(
     yes: bool = YES_OPTION,
     no_interactive: bool = NO_INTERACTIVE_OPTION,
     verbose: bool = VERBOSE_OPTION,
+    debug: bool = _DEBUG_OPTION,
 ) -> None:
-    """Check for and optionally download AppImage updates.
+    """Check for updates to configured applications.
 
-    BASIC USAGE:
-        appimage-updater check                    # Check all applications
-        appimage-updater check GitHubDesktop     # Check specific application
-        appimage-updater check GitHubDesktop OrcaSlicer  # Check multiple applications
+    Examines each configured application to determine if newer versions are available.
+    By default, this command only checks for updates without downloading them.
 
-    AUTOMATION OPTIONS:
-        appimage-updater check --dry-run         # Check all (dry run only)
-        appimage-updater check --yes             # Auto-confirm downloads
-        appimage-updater check --no-interactive  # Use best match automatically
-
-    COMBINED USAGE:
-        appimage-updater check GitHubDesktop --dry-run  # Check specific (dry run)
-        appimage-updater check GitHubDesktop --yes      # Check specific and auto-confirm
+    Use --yes to automatically download available updates.
+    Use --dry-run to preview what would be checked without making network requests.
+    Use --verbose to see detailed parameter resolution and processing information.
     """
-    # Handle multiple app names by passing them as a list to the internal function
-    asyncio.run(_check_updates(config_file, config_dir, dry_run, app_names, yes, no_interactive, verbose))
+    command = CommandFactory.create_check_command(
+        app_names=app_names,
+        config_file=config_file,
+        config_dir=config_dir,
+        dry_run=dry_run,
+        yes=yes,
+        no_interactive=no_interactive,
+        verbose=verbose,
+        debug=debug,
+    )
+
+    result = asyncio.run(command.execute())
+    if not result.success:
+        raise typer.Exit(result.exit_code)
 
 
 @app.command()
 def init(
     config_dir: Path | None = _INIT_CONFIG_DIR_OPTION,
+    debug: bool = _DEBUG_OPTION,
 ) -> None:
     """Initialize configuration directory with examples."""
-    target_dir = config_dir or get_default_config_dir()
+    command = CommandFactory.create_init_command(
+        config_dir=config_dir,
+        debug=debug,
+    )
 
-    if target_dir.exists():
-        console.print(f"[yellow]Configuration directory already exists: {target_dir}")
-        return
-
-    target_dir.mkdir(parents=True, exist_ok=True)
-    console.print(f"[green]Created configuration directory: {target_dir}")
-
-    # Create example configuration
-    example_config = {
-        "applications": [
-            {
-                "name": "FreeCAD",
-                "source_type": "github",
-                "url": "https://github.com/FreeCAD/FreeCAD",
-                "download_dir": str(Path.home() / "Applications" / "FreeCAD"),
-                "pattern": r".*Linux-x86_64\.AppImage$",
-                "enabled": True,
-                "symlink_path": str(Path.home() / "Applications" / "FreeCAD.AppImage"),
-            }
-        ]
-    }
-
-    example_file = target_dir / "freecad.json"
-
-    with example_file.open("w", encoding="utf-8") as f:
-        json.dump(example_config, f, indent=2)
-
-    console.print(f"[green]Created example configuration: {example_file}")
-    console.print("[blue]Edit the configuration files and run: appimage-updater check")
+    result = asyncio.run(command.execute())
+    if not result.success:
+        raise typer.Exit(result.exit_code)
 
 
 @app.command(name="list")
@@ -456,50 +428,23 @@ def list_apps(
     config_file: Path | None = CONFIG_FILE_OPTION,
     config_dir: Path | None = CONFIG_DIR_OPTION,
     verbose: bool = LIST_VERBOSE_OPTION,
+    debug: bool = _DEBUG_OPTION,
 ) -> None:
-    """List all configured applications."""
-    try:
-        logger.debug("Loading configuration for show command")
-        config = load_config(config_file, config_dir)
+    """List all configured applications.
 
-        if not config.applications:
-            console.print("[yellow]No applications configured")
-            logger.debug("No applications found in configuration")
-            return
+    Shows a summary of all applications in the configuration with their current status.
+    Use --verbose to see additional details like configuration file paths.
+    """
+    command = CommandFactory.create_list_command(
+        config_file=config_file,
+        config_dir=config_dir,
+        verbose=verbose,
+        debug=debug,
+    )
 
-        # Show verbose information if requested
-        if verbose:
-            if config_file:
-                console.print(f"[dim]Configuration file: {config_file}")
-            else:
-                config_dir_path = config_dir or get_default_config_dir()
-                console.print(f"[dim]Configuration directory: {config_dir_path}")
-                console.print(f"[dim]Individual app configs in: {config_dir_path}/apps/")
-            console.print()
-
-        display_applications_list(config.applications)
-
-        # Summary
-        total_apps = len(config.applications)
-        enabled_apps = len(config.get_enabled_apps())
-        console.print(
-            f"\n[blue]Total: {total_apps} applications ({enabled_apps} enabled, {total_apps - enabled_apps} disabled)"
-        )
-
-        logger.debug(f"Listed {total_apps} applications ({enabled_apps} enabled)")
-
-    except ConfigLoadError as e:
-        console.print(f"[red]Configuration error: {e}")
-        logger.error(f"Configuration error: {e}")
-        raise typer.Exit(1) from e
-    except typer.Exit:
-        # Re-raise typer.Exit without logging - these are intentional exits
-        raise
-    except Exception as e:
-        console.print(f"[red]Unexpected error: {e}")
-        logger.error(f"Unexpected error: {e}")
-        logger.exception("Full exception details")
-        raise typer.Exit(1) from e
+    result = asyncio.run(command.execute())
+    if not result.success:
+        raise typer.Exit(result.exit_code)
 
 
 @app.command()
@@ -526,6 +471,7 @@ def add(
     dry_run: bool = _DRY_RUN_OPTION,
     interactive: bool = _INTERACTIVE_OPTION,
     examples: bool = typer.Option(False, "--examples", help="Show usage examples and exit"),
+    debug: bool = _DEBUG_OPTION,
 ) -> None:
     """Add a new application to the configuration.
 
@@ -544,71 +490,35 @@ def add(
     Use --interactive for a guided setup experience with step-by-step prompts.
     Use --examples to see detailed usage examples.
     """
-    # Handle examples flag
-    if examples:
-        _show_add_examples()
-        raise typer.Exit()
-
-    # Validate required arguments when not using examples or interactive mode
-    if not interactive and (name is None or url is None):
-        console.print("[red]Error: NAME and URL are required arguments[/red]")
-        console.print("[yellow]💡 Try one of these options:")
-        console.print("[yellow]   • Provide both NAME and URL: appimage-updater add MyApp https://github.com/user/repo")
-        console.print("[yellow]   • Use interactive mode: appimage-updater add --interactive")
-        console.print("[yellow]   • See examples: appimage-updater add --examples")
-        raise typer.Exit(1)
-
-    # Handle interactive mode
-    if interactive:
-        # Override all parameters with interactive input
-        interactive_params = interactive_add_command()
-        name = interactive_params["name"]
-        url = interactive_params["url"]
-        download_dir = interactive_params["download_dir"]
-        create_dir = interactive_params["create_dir"]
-        yes = interactive_params["yes"]
-        rotation = interactive_params["rotation"]
-        retain = interactive_params["retain"]
-        symlink = interactive_params["symlink"]
-        prerelease = interactive_params["prerelease"]
-        checksum = interactive_params["checksum"]
-        checksum_algorithm = interactive_params["checksum_algorithm"]
-        checksum_pattern = interactive_params["checksum_pattern"]
-        checksum_required = interactive_params["checksum_required"]
-        pattern = interactive_params["pattern"]
-        direct = interactive_params["direct"]
-        auto_subdir = interactive_params["auto_subdir"]
-        verbose = interactive_params["verbose"]
-        dry_run = interactive_params["dry_run"]
-
-    # Ensure name and url are not None at this point
-    assert name is not None
-    assert url is not None
-
-    asyncio.run(
-        _add(
-            name,
-            url,
-            download_dir,
-            create_dir,
-            yes,
-            config_file,
-            config_dir,
-            rotation,
-            retain,
-            symlink,
-            prerelease,
-            checksum,
-            checksum_algorithm,
-            checksum_pattern,
-            checksum_required,
-            pattern,
-            direct,
-            auto_subdir,
-            verbose,
-            dry_run,
-        )
+    command = CommandFactory.create_add_command(
+        name=name,
+        url=url,
+        download_dir=download_dir,
+        create_dir=create_dir,
+        yes=yes,
+        config_file=config_file,
+        config_dir=config_dir,
+        rotation=rotation,
+        retain=retain,
+        symlink=symlink,
+        prerelease=prerelease,
+        checksum=checksum,
+        checksum_algorithm=checksum_algorithm,
+        checksum_pattern=checksum_pattern,
+        checksum_required=checksum_required,
+        pattern=pattern,
+        direct=direct,
+        auto_subdir=auto_subdir,
+        verbose=verbose,
+        dry_run=dry_run,
+        interactive=interactive,
+        examples=examples,
+        debug=debug,
     )
+
+    result = asyncio.run(command.execute())
+    if not result.success:
+        raise typer.Exit(result.exit_code)
 
 
 def _log_repository_auth_status(url: str) -> None:
@@ -1034,112 +944,76 @@ def edit(
     direct: bool | None = EDIT_DIRECT_OPTION,
     verbose: bool = VERBOSE_OPTION,
     dry_run: bool = EDIT_DRY_RUN_OPTION,
+    debug: bool = _DEBUG_OPTION,
 ) -> None:
     """Edit configuration for existing applications.
 
-        Update any configuration field by specifying the corresponding option.
-        Only the specified fields will be changed - all other settings remain unchanged.
-        When multiple applications are specified, the same changes are applied to all.
+    Update any configuration field by specifying the corresponding option.
+    Only the specified fields will be changed - all other settings remain unchanged.
+    When multiple applications are specified, the same changes are applied to all.
 
-        BASIC CONFIGURATION:
-            --url URL                    Update repository URL
-            --download-dir PATH          Update download directory
-            --pattern REGEX              Update file pattern
-            --enable/--disable           Enable or disable the application
-            --prerelease/--no-prerelease Enable or disable prerelease versions
+    BASIC CONFIGURATION:
+        --url URL                    Update repository URL
+        --download-dir PATH          Update download directory
+        --pattern REGEX              Update file pattern
+        --enable/--disable           Enable or disable the application
+        --prerelease/--no-prerelease Enable or disable prerelease versions
 
-        FILE ROTATION:
-            --rotation/--no-rotation     Enable or disable file rotation
-    {{ ... }}
-            --symlink-path PATH          Set symlink path for rotation
-            --retain-count N             Number of old files to retain (1-10)
+    FILE ROTATION:
+        --rotation/--no-rotation     Enable or disable file rotation
+        --symlink-path PATH          Set symlink path for rotation
+        --retain-count N             Number of old files to retain (1-10)
 
-        CHECKSUM VERIFICATION:
-            --checksum/--no-checksum     Enable or disable checksum verification
-            --checksum-algorithm ALG     Set algorithm (sha256, sha1, md5)
-            --checksum-pattern PATTERN   Set checksum file pattern
-            --checksum-required/--checksum-optional  Make verification required/optional
+    CHECKSUM VERIFICATION:
+        --checksum/--no-checksum     Enable or disable checksum verification
+        --checksum-algorithm ALG     Set algorithm (sha256, sha1, md5)
+        --checksum-pattern PATTERN   Set checksum file pattern
+        --checksum-required/--checksum-optional  Make verification required/optional
 
-        COMMON EXAMPLES:
-            # Enable rotation with symlink
-            appimage-updater edit FreeCAD --rotation --symlink-path ~/bin/freecad.AppImage
+    COMMON EXAMPLES:
+        # Enable rotation with symlink
+        appimage-updater edit FreeCAD --rotation --symlink-path ~/bin/freecad.AppImage
 
-            # Enable prerelease for multiple apps
-            appimage-updater edit OrcaSlicer OrcaSlicerRC --prerelease
+        # Enable prerelease for multiple apps
+        appimage-updater edit OrcaSlicer OrcaSlicerRC --prerelease
 
-            # Update download directory
-            appimage-updater edit MyApp --download-dir ~/NewLocation/MyApp --create-dir
+        # Update download directory
+        appimage-updater edit MyApp --download-dir ~/NewLocation/MyApp --create-dir
 
-            # Configure security settings
-            appimage-updater edit OrcaSlicer BambuStudio --no-prerelease --checksum-required
+        # Configure security settings
+        appimage-updater edit OrcaSlicer BambuStudio --no-prerelease --checksum-required
 
-            # Update URL after repository move
-            appimage-updater edit OldApp --url https://github.com/newowner/newrepo
+        # Update URL after repository move
+        appimage-updater edit OldApp --url https://github.com/newowner/newrepo
     """
-    try:
-        logger.debug(f"Editing configuration for applications: {app_names}")
+    command = CommandFactory.create_edit_command(
+        app_names=app_names,
+        config_file=config_file,
+        config_dir=config_dir,
+        url=url,
+        download_dir=download_dir,
+        pattern=pattern,
+        enable=enable,
+        prerelease=prerelease,
+        rotation=rotation,
+        symlink_path=symlink_path,
+        retain_count=retain_count,
+        checksum=checksum,
+        checksum_algorithm=checksum_algorithm,
+        checksum_pattern=checksum_pattern,
+        checksum_required=checksum_required,
+        create_dir=create_dir,
+        yes=yes,
+        force=force,
+        direct=direct,
+        verbose=verbose,
+        dry_run=dry_run,
+        debug=debug,
+    )
 
-        # Load current configuration
-        config = load_config(config_file, config_dir)
-
-        # Use filtering logic that supports glob patterns
-        apps_to_edit = ApplicationService.filter_apps_by_names(config.applications, app_names)
-
-        # _filter_apps_by_names will exit if no apps found, so we can continue here
-
-        # Collect all the updates to apply (same for all apps)
-        updates = collect_edit_updates(
-            url,
-            download_dir,
-            pattern,
-            enable,
-            prerelease,
-            rotation,
-            symlink_path,
-            retain_count,
-            checksum,
-            checksum_algorithm,
-            checksum_pattern,
-            checksum_required,
-            force,
-            direct,
-            apps_to_edit[0],  # Use first app for validation
-        )
-
-        if not updates:
-            console.print("[yellow]No changes specified. Use --help to see available options.")
-            logger.debug("No updates specified for edit command")
-            return
-
-        # Handle verbose and dry-run modes
-        if _handle_edit_preview_modes(verbose, dry_run, updates, apps_to_edit):
-            return
-
-        # Apply updates to all selected applications
-        _apply_edit_updates_to_apps(apps_to_edit, updates, config, config_file, config_dir, create_dir, yes)
-
-    except ConfigLoadError as e:
-        console.print(f"[red]Configuration error: {e}")
-        logger.error(f"Configuration error: {e}")
-        raise typer.Exit(1) from e
-    except ValueError as e:
-        # Handle validation errors without traceback
-        console.print(f"[red]Error editing application: {e}")
-        console.print("[yellow]💡 Common solutions:")
-        console.print("[yellow]   • Check that application names exist: appimage-updater list")
-        console.print("[yellow]   • Verify URL format for --url updates")
-        console.print("[yellow]   • Use --force to bypass URL validation if needed")
-        console.print("[yellow]   • Check directory paths exist for --download-dir")
-        logger.error(f"Validation error for applications '{app_names}': {e}")
-        raise typer.Exit(1) from e
-    except typer.Exit:
-        # Re-raise typer.Exit without logging - these are intentional exits
-        raise
-    except Exception as e:
-        console.print(f"[red]Unexpected error editing applications: {e}")
-        logger.error(f"Unexpected error editing applications '{app_names}': {e}")
-        logger.exception("Full exception details")
-        raise typer.Exit(1) from e
+    result = asyncio.run(command.execute())
+    if not result.success:
+        raise typer.Exit(result.exit_code)
 
 
 @app.command()
@@ -1147,6 +1021,7 @@ def show(
     app_names: list[str] = _SHOW_APP_NAME_ARGUMENT,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
+    debug: bool = _DEBUG_OPTION,
 ) -> None:
     """Show detailed information about a specific application.
 
@@ -1157,34 +1032,16 @@ def show(
     CUSTOM CONFIG:
         appimage-updater show --config-dir ~/.config/appimage-updater OrcaSlicer
     """
-    try:
-        logger.debug(f"Loading configuration to show applications: {app_names}")
-        config = load_config(config_file, config_dir)
+    command = CommandFactory.create_show_command(
+        app_names=app_names,
+        config_file=config_file,
+        config_dir=config_dir,
+        debug=debug,
+    )
 
-        # Use filtering logic that supports glob patterns
-        found_apps = ApplicationService.filter_apps_by_names(config.applications, app_names)
-
-        # _filter_apps_by_names will exit if no apps found, so we can continue here
-
-        # Display information for found applications
-        for i, app in enumerate(found_apps):
-            if i > 0:
-                console.print()  # Add spacing between multiple apps
-            logger.debug(f"Displaying information for application: {app.name}")
-            display_application_details(app)
-
-    except ConfigLoadError as e:
-        console.print(f"[red]Configuration error: {e}")
-        logger.error(f"Configuration error: {e}")
-        raise typer.Exit(1) from e
-    except typer.Exit:
-        # Re-raise typer.Exit without logging - these are intentional exits
-        raise
-    except Exception as e:
-        console.print(f"[red]Unexpected error: {e}")
-        logger.error(f"Unexpected error: {e}")
-        logger.exception("Full exception details")
-        raise typer.Exit(1) from e
+    result = asyncio.run(command.execute())
+    if not result.success:
+        raise typer.Exit(result.exit_code)
 
 
 @app.command()
@@ -1193,6 +1050,7 @@ def remove(
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     force: bool = _FORCE_OPTION,
+    debug: bool = _DEBUG_OPTION,
 ) -> None:
     """Remove applications from the configuration.
 
@@ -1207,57 +1065,17 @@ def remove(
         appimage-updater remove --force MyApp     # Skip confirmation prompt
         appimage-updater remove --config-dir ~/.config/appimage-updater MyApp
     """
-    try:
-        logger.debug(f"Removing applications: {app_names}")
+    command = CommandFactory.create_remove_command(
+        app_names=app_names,
+        config_file=config_file,
+        config_dir=config_dir,
+        force=force,
+        debug=debug,
+    )
 
-        # Load current configuration to find the apps
-        config = load_config(config_file, config_dir)
-
-        # Use filtering logic that supports glob patterns
-        apps_to_remove = ApplicationService.filter_apps_by_names(config.applications, app_names)
-
-        # _filter_apps_by_names will exit if no apps found, so we can continue here
-
-        # Confirm removal with user unless --force flag is used
-        if not force:
-            console.print(f"[yellow]Found {len(apps_to_remove)} application(s) to remove:")
-            for app in apps_to_remove:
-                console.print(f"  • {app.name} ({app.url})")
-            console.print("[red]This will remove the applications from your configuration.")
-            console.print("[red]Downloaded files and symlinks will NOT be deleted.")
-
-            try:
-                confirmed = typer.confirm(f"Are you sure you want to remove {len(apps_to_remove)} application(s)?")
-                if not confirmed:
-                    console.print("[yellow]Removal cancelled.")
-                    logger.debug("User declined to remove applications")
-                    return
-            except (EOFError, KeyboardInterrupt, typer.Abort):
-                console.print("[yellow]Running in non-interactive mode. Use --force to remove without confirmation.")
-                logger.debug("Non-interactive mode detected, removal cancelled")
-                return
-        else:
-            logger.debug("Skipping confirmation due to --force flag")
-
-        # Remove the applications from configuration
-        for app in apps_to_remove:
-            remove_application_from_config(app.name, config, config_file, config_dir)
-            console.print(f"[green]✓ Successfully removed application '{app.name}' from configuration")
-            console.print(f"[blue]Note: Files in {app.download_dir} were not deleted")
-            logger.debug(f"Successfully removed application '{app.name}' from configuration")
-
-    except ConfigLoadError as e:
-        console.print(f"[red]Configuration error: {e}")
-        logger.error(f"Configuration error: {e}")
-        raise typer.Exit(1) from e
-    except typer.Exit:
-        # Re-raise typer.Exit without logging - these are intentional exits
-        raise
-    except Exception as e:
-        console.print(f"[red]Error removing applications: {e}")
-        logger.error(f"Error removing applications '{app_names}': {e}")
-        logger.exception("Full exception details")
-        raise typer.Exit(1) from e
+    result = asyncio.run(command.execute())
+    if not result.success:
+        raise typer.Exit(result.exit_code)
 
 
 @app.command()
@@ -1268,6 +1086,7 @@ def repository(
     limit: int = REPOSITORY_LIMIT_OPTION,
     assets: bool = REPOSITORY_ASSETS_OPTION,
     dry_run: bool = REPOSITORY_DRY_RUN_OPTION,
+    debug: bool = _DEBUG_OPTION,
 ) -> None:
     """Examine repository information for configured applications.
 
@@ -1284,7 +1103,19 @@ def repository(
         appimage-updater repository OrcaSlicer --limit 5   # Limit number of releases
         appimage-updater repository OrcaSlicer --limit 3 --assets  # Combined options
     """
-    asyncio.run(_examine_repositories(config_file, config_dir, app_names, limit, assets, dry_run))
+    command = CommandFactory.create_repository_command(
+        app_names=app_names,
+        config_file=config_file,
+        config_dir=config_dir,
+        limit=limit,
+        assets=assets,
+        dry_run=dry_run,
+        debug=debug,
+    )
+
+    result = asyncio.run(command.execute())
+    if not result.success:
+        raise typer.Exit(result.exit_code)
 
 
 async def _examine_repositories(
@@ -1719,29 +1550,19 @@ def config(
     debug: bool = _DEBUG_OPTION,
 ) -> None:
     """Manage global configuration settings."""
-    configure_logging(debug)
-    if action == "show":
-        show_global_config(config_file, config_dir)
-    elif action == "set":
-        if not setting or not value:
-            console.print("[red]Error: 'set' action requires both setting and value")
-            console.print("[yellow]Usage: appimage-updater config set <setting> <value>")
-            raise typer.Exit(1)
-        set_global_config_value(setting, value, config_file, config_dir)
-    elif action == "reset":
-        reset_global_config(config_file, config_dir)
-    elif action == "show-effective":
-        if not app_name:
-            console.print("[red]Error: 'show-effective' action requires --app parameter")
-            console.print("[yellow]Usage: appimage-updater config show-effective --app <app-name>")
-            raise typer.Exit(1)
-        show_effective_config(app_name, config_file, config_dir)
-    elif action == "list":
-        list_available_settings()
-    else:
-        console.print(f"[red]Error: Unknown action '{action}'")
-        console.print("[yellow]Available actions: show, set, reset, show-effective, list")
-        raise typer.Exit(1)
+    command = CommandFactory.create_config_command(
+        action=action,
+        setting=setting,
+        value=value,
+        app_name=app_name,
+        config_file=config_file,
+        config_dir=config_dir,
+        debug=debug,
+    )
+
+    result = asyncio.run(command.execute())
+    if not result.success:
+        raise typer.Exit(result.exit_code)
 
 
 if __name__ == "__main__":

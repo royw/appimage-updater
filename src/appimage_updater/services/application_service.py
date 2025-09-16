@@ -83,13 +83,15 @@ class ApplicationService:
     @staticmethod
     def _handle_apps_not_found(not_found: list[str], enabled_apps: list[Any]) -> None:
         """Handle error cases when apps are not found."""
-        console = Console()
+        import sys
+
         available_apps = [app.name for app in enabled_apps]
 
-        console.print(f"[red]Applications not found: {', '.join(not_found)}")
-        console.print("[yellow]💡 Troubleshooting:")
+        # Use print to ensure output is captured by test framework
+        print(f"Applications not found: {', '.join(not_found)}", file=sys.stdout)  # noqa: T201
+        print("💡 Troubleshooting:", file=sys.stdout)  # noqa: T201
 
-        ApplicationService._print_troubleshooting_tips(console, available_apps)
+        ApplicationService._print_troubleshooting_tips_plain(available_apps)
 
         logger.error(f"Applications not found: {not_found}. Available: {available_apps}")
         raise typer.Exit(1)
@@ -98,9 +100,22 @@ class ApplicationService:
     def _print_troubleshooting_tips(console: Console, available_apps: list[str]) -> None:
         """Print troubleshooting tips for not found apps."""
         available_text = ", ".join(available_apps) if available_apps else "None configured"
-        console.print(f"[yellow]   • Available applications: {available_text}")
-        console.print("[yellow]   • Application names are case-insensitive")
-        console.print("[yellow]   • Use glob patterns like 'Orca*' to match multiple apps")
-        console.print("[yellow]   • Run 'appimage-updater list' to see all configured applications")
+        console.print(f"   • Available applications: {available_text}")
+        console.print("   • Application names are case-insensitive")
+        console.print("   • Use glob patterns like 'Orca*' to match multiple apps")
+        console.print("   • Run 'appimage-updater list' to see all configured applications")
         if not available_apps:
-            console.print("[yellow]   • Run 'appimage-updater add' to configure your first application")
+            console.print("   • Run 'appimage-updater add' to configure your first application")
+
+    @staticmethod
+    def _print_troubleshooting_tips_plain(available_apps: list[str]) -> None:
+        """Print troubleshooting tips for not found apps using plain print."""
+        import sys
+
+        available_text = ", ".join(available_apps) if available_apps else "None configured"
+        print(f"   • Available applications: {available_text}", file=sys.stdout)  # noqa: T201
+        print("   • Application names are case-insensitive", file=sys.stdout)  # noqa: T201
+        print("   • Use glob patterns like 'Orca*' to match multiple apps", file=sys.stdout)  # noqa: T201
+        print("   • Run 'appimage-updater list' to see all configured applications", file=sys.stdout)  # noqa: T201
+        if not available_apps:
+            print("   • Run 'appimage-updater add' to configure your first application", file=sys.stdout)  # noqa: T201
