@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from rich.console import Console
 from rich.panel import Panel
 
@@ -17,9 +16,9 @@ from appimage_updater.help_groups import (
     CONFIGURATION_HELP,
     FILE_MANAGEMENT_GROUP,
     FILE_MANAGEMENT_HELP,
-    HelpGroup,
     OUTPUT_GROUP,
     OUTPUT_HELP,
+    HelpGroup,
     create_help_panel,
     format_grouped_help,
 )
@@ -47,7 +46,7 @@ class TestHelpGroup:
         group = HelpGroup("Test Group")
         group.add_option("--verbose")
         group.add_option("--quiet")
-        
+
         assert len(group.options) == 2
         assert "--verbose" in group.options
         assert "--quiet" in group.options
@@ -56,10 +55,10 @@ class TestHelpGroup:
         """Test adding multiple options."""
         group = HelpGroup("Test Group")
         options = ["--help", "--version", "--config"]
-        
+
         for option in options:
             group.add_option(option)
-        
+
         assert group.options == options
 
 
@@ -70,7 +69,7 @@ class TestCreateHelpPanel:
         """Test creating a panel without description."""
         options = ["--verbose: Enable verbose output", "--quiet: Suppress output"]
         panel = create_help_panel("Test Options", options)
-        
+
         assert isinstance(panel, Panel)
         # Check that the panel has the correct title and content
         assert panel.title == "[bold cyan]Test Options[/bold cyan]"
@@ -82,7 +81,7 @@ class TestCreateHelpPanel:
         options = ["--verbose: Enable verbose output"]
         description = "These are test options"
         panel = create_help_panel("Test Options", options, description)
-        
+
         assert isinstance(panel, Panel)
         assert panel.title == "[bold cyan]Test Options[/bold cyan]"
         # Check that description and options are in the content
@@ -99,7 +98,7 @@ class TestCreateHelpPanel:
         """Test panel styling properties."""
         options = ["--test: Test option"]
         panel = create_help_panel("Test", options)
-        
+
         # Check that the panel has the expected styling
         assert panel.border_style == "cyan"
         assert panel.padding == (0, 1)
@@ -112,7 +111,7 @@ class TestFormatGroupedHelp:
         """Test formatting a single help group."""
         console = Console(file=None, width=80)
         groups = [("Basic Options", ["--help: Show help", "--version: Show version"], "Basic command options")]
-        
+
         format_grouped_help(console, groups)
         # Test passes if no exception is raised
 
@@ -123,7 +122,7 @@ class TestFormatGroupedHelp:
             ("Basic Options", ["--help: Show help"], "Basic options"),
             ("Advanced Options", ["--config: Config file"], "Advanced options"),
         ]
-        
+
         format_grouped_help(console, groups)
         # Test passes if no exception is raised
 
@@ -137,7 +136,7 @@ class TestFormatGroupedHelp:
         """Test formatting group without description."""
         console = Console(file=None, width=80)
         groups = [("Basic Options", ["--help: Show help"], None)]
-        
+
         format_grouped_help(console, groups)
         # Test passes if no exception is raised
 
@@ -171,7 +170,7 @@ class TestConstants:
             BASIC_OPTIONS_HELP, CONFIGURATION_HELP, FILE_MANAGEMENT_HELP,
             CHECKSUM_HELP, ADVANCED_HELP, OUTPUT_HELP
         ]
-        
+
         for constant in constants:
             assert isinstance(constant, str)
             assert len(constant) > 0

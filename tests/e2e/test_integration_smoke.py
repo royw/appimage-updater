@@ -1,10 +1,6 @@
-import json
 from pathlib import Path
-from unittest.mock import Mock, patch, AsyncMock
 
-from click.testing import CliRunner
 from appimage_updater.main import app
-from appimage_updater.models import CheckResult
 
 
 def test_integration_smoke_test(runner):
@@ -39,19 +35,18 @@ def test_version_option(runner):
     """Test the --version option displays version and exits."""
     import re
     import tomllib
-    from pathlib import Path
-    
+
     # Read version from pyproject.toml
     pyproject_path = Path(__file__).parent.parent.parent / "pyproject.toml"
     with open(pyproject_path, "rb") as f:
         pyproject = tomllib.load(f)
     expected_version = pyproject["project"]["version"]
-    
+
     # Test --version flag
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
     assert "AppImage Updater" in result.stdout
-    
+
     # Strip ANSI color codes to check version
     clean_output = re.sub(r'\x1b\[[0-9;]*m', '', result.stdout)
     assert expected_version in clean_output
@@ -60,7 +55,7 @@ def test_version_option(runner):
     result_short = runner.invoke(app, ["-V"])
     assert result_short.exit_code == 0
     assert "AppImage Updater" in result_short.stdout
-    
+
     # Strip ANSI color codes to check version
     clean_output_short = re.sub(r'\x1b\[[0-9;]*m', '', result_short.stdout)
     assert expected_version in clean_output_short

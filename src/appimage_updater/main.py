@@ -57,6 +57,7 @@ from .config_operations import (
     validate_and_normalize_add_url,
     validate_edit_updates,
 )
+from .dependency_injection import get_container
 from .display import (
     display_check_results,
     display_download_results,
@@ -74,6 +75,9 @@ rebuild_models()
 
 app = typer.Typer(name="appimage-updater", help="AppImage update manager")
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
+
+# Initialize dependency injection container
+container = get_container()
 
 # Module-level typer.Option definitions
 _DEBUG_OPTION = typer.Option(

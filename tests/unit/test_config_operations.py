@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 from appimage_updater.config_operations import (
-    collect_edit_updates,
     collect_basic_edit_updates,
+    collect_edit_updates,
     validate_url_update,
 )
 
@@ -154,7 +155,7 @@ class TestValidateUrlUpdate:
         mock_console.print.assert_called_once_with(
             "[yellow]⚠️  Using --force: Skipping URL validation and normalization"
         )
-        
+
         # Should log debug message
         mock_logger.debug.assert_called_once_with(
             "Skipping URL validation for 'https://direct-download.com/app.AppImage' due to --force flag"

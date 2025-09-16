@@ -8,7 +8,7 @@ from pathlib import Path
 from appimage_updater.config import Config
 from appimage_updater.config_loader import ConfigLoadError
 from appimage_updater.config_operations import load_config
-from appimage_updater.models import ApplicationConfig  # type: ignore[attr-defined]
+from appimage_updater.models import ApplicationConfig
 from appimage_updater.services.application_service import ApplicationService
 
 from .base import Command, CommandResult

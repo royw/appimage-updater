@@ -1,10 +1,9 @@
 import json
 from pathlib import Path
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
 
-from click.testing import CliRunner
 from appimage_updater.main import app
-from appimage_updater.models import CheckResult, UpdateCandidate, Asset
+from appimage_updater.models import Asset, CheckResult, UpdateCandidate
 
 
 class TestE2EFunctionality:

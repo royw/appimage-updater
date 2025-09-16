@@ -17,11 +17,9 @@ The old pattern 'openshot-qt.*[Ll]inux.*\\.AppImage' would not match.
 The new pattern '(?i)OpenShot.*\\.AppImage' matches perfectly.
 """
 import re
-from datetime import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from appimage_updater.pattern_generator import generate_appimage_pattern
-from appimage_updater.models import Release, Asset
 
 
 @patch('appimage_updater.pattern_generator.fetch_appimage_pattern_from_github')
@@ -91,7 +89,7 @@ def test_openshot_pattern_now_works_correctly(mock_fetch_pattern):
             assert pattern_compiled.match(filename), \
                 f"Intelligent pattern {pattern} should match {filename}"
     else:
-        # FALLBACK: API unavailable, using heuristic method  
+        # FALLBACK: API unavailable, using heuristic method
         # Still an improvement over the original broken logic
         # New behavior: fallback also supports both ZIP and AppImage formats
         assert "\\.(?:zip|AppImage)(\\.(|current|old))?$" in pattern or \
@@ -134,8 +132,8 @@ def test_intelligent_pattern_generation_success(mock_fetch_pattern):
     else:
         # FALLBACK CASE: API unavailable, using heuristic method
         # This is still better than the completely broken original logic
-        # New behavior: fallback also supports both ZIP and AppImage formats  
-        assert ("\\.(?:zip|AppImage)(\\.(|current|old))?$" in pattern or 
+        # New behavior: fallback also supports both ZIP and AppImage formats
+        assert ("\\.(?:zip|AppImage)(\\.(|current|old))?$" in pattern or
                 "\\.(zip|AppImage)(\\.(|current|old))?$" in pattern), "Should be valid pattern for both formats"
 
         # Verify fallback produces valid regex
@@ -154,25 +152,25 @@ def test_freecad_stable_vs_prerelease_prioritization(mock_fetch_pattern):
     """
     app_name = "FreeCAD"
     url = "https://github.com/FreeCAD/FreeCAD"
-    
+
     # Mock the fetch function to return a pattern based on stable FreeCAD releases
     mock_fetch_pattern.return_value = "(?i)FreeCAD.*\\.(?:zip|AppImage)(\\.(|current|old))?$"
-    
+
     pattern = generate_appimage_pattern(app_name, url)
-    
+
     # The pattern should be general enough to match both stable and prerelease versions
     if "(?i)" in pattern:  # API-generated pattern
         # Should start with FreeCAD but not include version-specific details
         assert "(?i)FreeCAD" in pattern
-        
+
         # Should NOT be specific to weekly builds
         assert "weekly" not in pattern.lower()
         assert "2025" not in pattern  # No specific year
         assert "1.0.2" not in pattern  # No specific version
-        
+
         # Should support both formats
         assert "\\.(?:zip|AppImage)(\\.(|current|old))?$" in pattern or "\\.(zip|AppImage)" in pattern
-        
+
         # Test that it matches various FreeCAD file types
         import re
         pattern_compiled = re.compile(pattern)
@@ -182,7 +180,7 @@ def test_freecad_stable_vs_prerelease_prioritization(mock_fetch_pattern):
             "FreeCAD_2.0.0-Linux-x86_64.AppImage",  # Future stable
             "FreeCAD-Windows-x64.zip",  # ZIP format
         ]
-        
+
         for filename in test_files:
             assert pattern_compiled.match(filename), \
                 f"Pattern {pattern} should match {filename}"
@@ -201,34 +199,34 @@ def test_pattern_generation_mixed_releases():
     """
     # This would ideally be a mock test, but for now we document the expected behavior
     from appimage_updater.pattern_generator import create_pattern_from_filenames
-    
+
     # Simulate stable release files (should be used for pattern)
     stable_files = [
         "FreeCAD_1.0.2-conda-Linux-x86_64-py311.AppImage",
         "FreeCAD_1.0.2-conda-Linux-aarch64-py311.AppImage"
     ]
-    
+
     # Simulate prerelease files (should be ignored when stable files exist)
     prerelease_files = [
         "FreeCAD_weekly-2025.09.10-Linux-x86_64-py311.AppImage",
         "FreeCAD_weekly-2025.09.03-Linux-x86_64-py311.AppImage"
     ]
-    
+
     # Generate pattern from stable files
     stable_pattern = create_pattern_from_filenames(stable_files, include_both_formats=True)
-    
+
     # Generate pattern from prerelease files
     prerelease_pattern = create_pattern_from_filenames(prerelease_files, include_both_formats=True)
-    
+
     # The stable pattern should be more general (not include weekly)
     assert "weekly" not in stable_pattern.lower()
-    assert "(?i)FreeCAD.*\\.(zip|AppImage)(\\.(|current|old))?$" == stable_pattern
-    
+    assert stable_pattern == "(?i)FreeCAD.*\\.(zip|AppImage)(\\.(|current|old))?$"
+
     # The prerelease pattern would be specific to weekly builds
     # The actual pattern escapes special characters and might generalize dates
     assert "FreeCAD_weekly" in prerelease_pattern
     assert "\\.(zip|AppImage)(\\.(|current|old))?$" in prerelease_pattern
-    
+
     # Verify it's a valid pattern that would match weekly files
     import re
     prerelease_compiled = re.compile(prerelease_pattern)

@@ -17,11 +17,11 @@ class TestDirectWorkflowIntegration:
     def test_add_direct_creates_correct_configuration(self):
         """Test that add --direct creates configuration with direct source_type."""
         runner = CliRunner(env={"NO_COLOR": "1", "TERM": "dumb"})
-        
+
         with tempfile.TemporaryDirectory() as tmp_dir:
             temp_config_dir = Path(tmp_dir)
             direct_url = "https://nightly.example.com/app.AppImage"
-            
+
             result = runner.invoke(app, [
                 "add", "DirectApp",
                 direct_url,
@@ -33,14 +33,14 @@ class TestDirectWorkflowIntegration:
 
             assert result.exit_code == 0
             assert "Successfully added application 'DirectApp'" in result.stdout
-            
+
             # Verify configuration file was created with correct source_type
             config_file = temp_config_dir / "directapp.json"
             assert config_file.exists()
-            
+
             with config_file.open() as f:
                 config = json.load(f)
-            
+
             app_config = config["applications"][0]
             assert app_config["name"] == "DirectApp"
             assert app_config["source_type"] == "direct"
@@ -50,11 +50,11 @@ class TestDirectWorkflowIntegration:
     def test_add_no_direct_flag_defaults_to_github(self):
         """Test that add without --direct flag defaults to GitHub detection."""
         runner = CliRunner(env={"NO_COLOR": "1", "TERM": "dumb"})
-        
+
         with tempfile.TemporaryDirectory() as tmp_dir:
             temp_config_dir = Path(tmp_dir)
             github_url = "https://github.com/user/repo"
-            
+
             result = runner.invoke(app, [
                 "add", "GitHubApp",
                 github_url,
@@ -64,14 +64,14 @@ class TestDirectWorkflowIntegration:
             ])
 
             assert result.exit_code == 0
-            
+
             # Verify configuration file was created with GitHub source_type
             config_file = temp_config_dir / "githubapp.json"
             assert config_file.exists()
-            
+
             with config_file.open() as f:
                 config = json.load(f)
-            
+
             app_config = config["applications"][0]
             assert app_config["name"] == "GitHubApp"
             assert app_config["source_type"] == "github"
@@ -80,12 +80,12 @@ class TestDirectWorkflowIntegration:
     def test_direct_flag_with_complex_options(self):
         """Test --direct flag works with other configuration options."""
         runner = CliRunner(env={"NO_COLOR": "1", "TERM": "dumb"})
-        
+
         with tempfile.TemporaryDirectory() as tmp_dir:
             temp_config_dir = Path(tmp_dir)
             direct_url = "https://ci.example.com/artifacts/latest.AppImage"
             symlink_path = str(temp_config_dir / "bin" / "complex.AppImage")
-            
+
             result = runner.invoke(app, [
                 "add", "ComplexApp",
                 direct_url,

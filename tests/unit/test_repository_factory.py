@@ -17,51 +17,51 @@ class TestRepositoryFactory:
     def test_get_repository_client_non_github_url_detection_fallback(self):
         """Test fallback to DirectDownloadRepository for non-GitHub URLs."""
         url = "https://nightly.example.com/app-latest.AppImage"
-        
+
         client = get_repository_client(url)  # No explicit source_type
-        
+
         assert isinstance(client, DirectDownloadRepository)
         assert client.repository_type == "direct_download"
 
     def test_get_repository_client_with_explicit_github_source_type(self):
         """Test get_repository_client with explicit source_type='github'."""
         url = "https://github.com/user/repo"
-        
+
         client = get_repository_client(url, source_type="github")
-        
+
         assert isinstance(client, GitHubRepository)
 
     def test_get_repository_client_with_direct_download_source_type(self):
         """Test get_repository_client with explicit source_type='direct_download'."""
         url = "https://example.com/app.AppImage"
-        
+
         client = get_repository_client(url, source_type="direct_download")
-        
+
         assert isinstance(client, DirectDownloadRepository)
         assert client.repository_type == "direct_download"
 
     def test_get_repository_client_with_dynamic_download_source_type(self):
         """Test get_repository_client with explicit source_type='dynamic_download'."""
         url = "https://example.com/releases"
-        
+
         client = get_repository_client(url, source_type="dynamic_download")
-        
+
         assert isinstance(client, DynamicDownloadRepository)
         assert client.repository_type == "dynamic_download"
 
     def test_get_repository_client_github_url_detection_fallback(self):
         """Test get_repository_client falls back to URL detection for GitHub URLs."""
         url = "https://github.com/user/repo"
-        
+
         # No explicit source_type - should detect GitHub from URL
         client = get_repository_client(url)
-        
+
         assert isinstance(client, GitHubRepository)
 
     def test_get_repository_client_invalid_source_type(self):
         """Test error handling for invalid source_type."""
         url = "https://github.com/user/repo"
-        
+
         with pytest.raises(RepositoryError, match=r"Unsupported source type: invalid_type"):
             get_repository_client(url, source_type="invalid_type")
 
@@ -69,19 +69,19 @@ class TestRepositoryFactory:
         """Test that explicit source_type takes precedence over URL detection."""
         # GitHub URL but explicit direct source type
         url = "https://github.com/user/repo/releases/download/v1.0/app.AppImage"
-        
+
         client = get_repository_client(url, source_type="direct")
-        
+
         assert isinstance(client, DirectDownloadRepository)
         assert client.repository_type == "direct_download"
 
     def test_get_repository_client_direct_with_github_url(self):
         """Test --direct flag behavior with GitHub URL."""
         github_url = "https://github.com/user/repo/releases/download/v1.0/app.AppImage"
-        
+
         # When user explicitly uses --direct, treat as direct download
         client = get_repository_client(github_url, source_type="direct")
-        
+
         assert isinstance(client, DirectDownloadRepository)
         assert client.repository_type == "direct_download"
 
@@ -92,7 +92,7 @@ class TestRepositoryFactory:
             "https://ci.example.com/artifacts/build-123/app.AppImage",
             "https://custom.domain.com/downloads/app.AppImage?version=latest"
         ]
-        
+
         for url in urls:
             client = get_repository_client(url, source_type="direct")
             assert isinstance(client, DirectDownloadRepository)
@@ -112,9 +112,9 @@ class TestRepositoryFactoryIntegration:
             "pattern": "app.*\\.AppImage$",
             "enabled": True
         }
-        
+
         client = get_repository_client(config["url"], source_type=config["source_type"])
-        
+
         assert isinstance(client, DirectDownloadRepository)
         assert client.repository_type == "direct_download"
 
@@ -129,9 +129,9 @@ class TestRepositoryFactoryIntegration:
             "pattern": "app.*\\.AppImage$",
             "enabled": True
         }
-        
+
         client = get_repository_client(config["url"], source_type=config["source_type"])
-        
+
         assert isinstance(client, GitHubRepository)
 
     def test_legacy_configuration_without_source_type(self):
@@ -144,10 +144,10 @@ class TestRepositoryFactoryIntegration:
             "pattern": "legacy.*\\.AppImage$",
             "enabled": True
         }
-        
+
         # No source_type provided - should detect from URL
         client = get_repository_client(config["url"])
-        
+
         assert isinstance(client, GitHubRepository)
 
     def test_mixed_configuration_scenarios(self):
@@ -178,7 +178,7 @@ class TestRepositoryFactoryIntegration:
                 "expected_type": DirectDownloadRepository
             }
         ]
-        
+
         for scenario in scenarios:
             client = get_repository_client(
                 scenario["url"],

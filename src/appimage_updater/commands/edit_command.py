@@ -9,7 +9,7 @@ from loguru import logger
 from rich.console import Console
 
 from appimage_updater.config import Config
-from appimage_updater.models import ApplicationConfig  # type: ignore[attr-defined]
+from appimage_updater.models import ApplicationConfig
 
 from .base import Command, CommandResult
 from .parameters import EditParams

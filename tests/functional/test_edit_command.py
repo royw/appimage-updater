@@ -642,12 +642,12 @@ def test_edit_no_direct_flag_sets_source_type_github(runner, single_config_file)
 def test_edit_direct_flag_with_url_change(runner, single_config_file):
     """Test --direct flag with URL change to direct download URL."""
     direct_url = "https://nightly.example.com/app.AppImage"
-    
+
     result = runner.invoke(
         app,
         [
-            "edit", "TestApp", 
-            "--direct", 
+            "edit", "TestApp",
+            "--direct",
             "--url", direct_url,
             "--config", str(single_config_file)
         ]

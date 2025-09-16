@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -189,7 +188,7 @@ class TestRotationVaryingFilenames:
         # Create test files
         test_files = [
             "Bambu_Studio_ubuntu-20.04_PR-7500.AppImage.current",
-            "Bambu_Studio_ubuntu-24.04_PR-7829.AppImage.current",  
+            "Bambu_Studio_ubuntu-24.04_PR-7829.AppImage.current",
             "SomeOtherApp.AppImage.current",
             "NotCurrentFile.AppImage",
             "Bambu_Studio_ubuntu-22.04_PR-8017.AppImage",

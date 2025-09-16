@@ -33,6 +33,11 @@ class Asset(BaseModel):
     )
 
     @property
+    def download_url(self) -> str:
+        """Get download URL (alias for url)."""
+        return self.url
+
+    @property
     def architecture(self) -> str | None:
         """Extract architecture from filename."""
         return self._parse_architecture()
@@ -126,6 +131,7 @@ class Release(BaseModel):
 
     version: str = Field(description="Release version")
     tag_name: str = Field(description="Git tag name")
+    name: str | None = Field(default=None, description="Release name")
     published_at: datetime = Field(description="Release publication time")
     assets: list[Asset] = Field(description="Available assets")
     is_prerelease: bool = Field(default=False, description="Is prerelease")
@@ -229,6 +235,12 @@ class UpdateCandidate(BaseModel):
         default=None,
         description="Application configuration for rotation settings",
     )
+    release: Release | None = Field(default=None, description="Associated release")
+
+    @property
+    def version(self) -> str:
+        """Get version string (alias for latest_version)."""
+        return self.latest_version
 
     @property
     def needs_update(self) -> bool:
@@ -244,6 +256,14 @@ class CheckResult(BaseModel):
     error_message: str | None = Field(default=None, description="Error message if failed")
     candidate: UpdateCandidate | None = Field(default=None, description="Update candidate")
     checked_at: datetime = Field(default_factory=datetime.now, description="Check time")
+
+    # Additional fields used by version_checker
+    current_version: str | None = Field(default=None, description="Current version")
+    available_version: str | None = Field(default=None, description="Available version")
+    update_available: bool = Field(default=False, description="Whether update is available")
+    message: str | None = Field(default=None, description="Status message")
+    download_url: str | None = Field(default=None, description="Download URL")
+    asset: Asset | None = Field(default=None, description="Associated asset")
 
 
 class ChecksumResult(BaseModel):
@@ -276,3 +296,16 @@ def rebuild_models() -> None:
     if not TYPE_CHECKING and ApplicationConfig is not None:
         UpdateCandidate.model_rebuild()
         CheckResult.model_rebuild()
+
+
+# Export all models for proper type checking
+__all__ = [
+    "Asset",
+    "Release",
+    "UpdateCandidate",
+    "CheckResult",
+    "ChecksumResult",
+    "DownloadResult",
+    "ApplicationConfig",
+    "rebuild_models",
+]

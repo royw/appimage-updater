@@ -1,12 +1,8 @@
 """Tests for command pattern implementation."""
 
-import pytest
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from appimage_updater.commands import (
     AddParams,
-    CheckParams,
     CommandFactory,
     CommandResult,
 )
@@ -22,7 +18,7 @@ class TestCommandFactory:
             url="https://github.com/user/repo",
             debug=True,
         )
-        
+
         assert command.params.name == "TestApp"
         assert command.params.url == "https://github.com/user/repo"
         assert command.params.debug is True
@@ -33,7 +29,7 @@ class TestCommandFactory:
             app_names=["TestApp"],
             verbose=True,
         )
-        
+
         assert command.params.app_names == ["TestApp"]
         assert command.params.verbose is True
 
@@ -48,7 +44,7 @@ class TestAddCommand:
             name=params.name,
             url=params.url,
         )
-        
+
         errors = command.validate()
         assert errors == []
 
@@ -58,7 +54,7 @@ class TestAddCommand:
             name=None,
             url="https://github.com/user/repo",
         )
-        
+
         errors = command.validate()
         assert "NAME is required" in errors
 
@@ -68,21 +64,21 @@ class TestAddCommand:
             name="TestApp",
             url=None,
         )
-        
+
         errors = command.validate()
         assert "URL is required" in errors
 
     def test_add_command_examples_mode(self):
         """Test add command in examples mode."""
         command = CommandFactory.create_add_command(examples=True)
-        
+
         # Test that examples=True is set correctly
         assert command.params.examples is True
 
     def test_add_command_interactive_mode(self):
         """Test add command in interactive mode."""
         command = CommandFactory.create_add_command(interactive=True)
-        
+
         # Test that interactive=True is set correctly
         assert command.params.interactive is True
 
@@ -93,7 +89,7 @@ class TestCheckCommand:
     def test_check_command_validation(self):
         """Test check command validation (no required parameters)."""
         command = CommandFactory.create_check_command()
-        
+
         errors = command.validate()
         assert errors == []
 
@@ -103,7 +99,7 @@ class TestCheckCommand:
             app_names=["TestApp"],
             verbose=True,
         )
-        
+
         # Test that parameters are set correctly
         assert command.params.app_names == ["TestApp"]
         assert command.params.verbose is True
@@ -115,7 +111,7 @@ class TestCommandResult:
     def test_command_result_success(self):
         """Test successful command result."""
         result = CommandResult(success=True, message="Operation completed")
-        
+
         assert result.success is True
         assert result.message == "Operation completed"
         assert result.exit_code == 0
@@ -123,7 +119,7 @@ class TestCommandResult:
     def test_command_result_failure(self):
         """Test failed command result."""
         result = CommandResult(success=False, message="Operation failed", exit_code=1)
-        
+
         assert result.success is False
         assert result.message == "Operation failed"
         assert result.exit_code == 1

@@ -1,11 +1,9 @@
 import json
-import pytest
-from pathlib import Path
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import Mock, patch
 
-from click.testing import CliRunner
+import pytest
+
 from appimage_updater.main import app
-from appimage_updater.models import CheckResult
 
 
 class TestAddCommand:
@@ -72,12 +70,12 @@ class TestAddCommand:
         # Mock the repository client to avoid real API calls
         mock_repo = Mock()
         mock_repo_client.return_value = mock_repo
-        
+
         # Mock async pattern generation to return OrcaSlicer-based pattern
         async def mock_async_pattern_gen(*args, **kwargs):
             return "(?i)OrcaSlicer_Linux_AppImage.*\\.AppImage(\\.(|current|old))?$"
         mock_pattern_gen.side_effect = mock_async_pattern_gen
-        
+
         result = runner.invoke(app, [
             "add", "MyApp",
             "https://github.com/SoftFever/OrcaSlicer",
@@ -89,10 +87,10 @@ class TestAddCommand:
         assert result.exit_code == 0
         assert "Successfully added application" in result.stdout
         assert "MyApp" in result.stdout
-        
+
         # With mocked pattern generation, should always use the mocked OrcaSlicer pattern
         assert "OrcaSlicer_Linux_AppImage" in result.stdout
-        
+
         # Verify config content
         config_file = temp_config_dir / "myapp.json"
         assert config_file.exists()
@@ -104,10 +102,10 @@ class TestAddCommand:
         assert app_config["name"] == "MyApp"
         assert app_config["source_type"] == "github"
         assert app_config["url"] == "https://github.com/SoftFever/OrcaSlicer"
-        
+
         # Should use the mocked intelligent pattern
         assert app_config["pattern"] == "(?i)OrcaSlicer_Linux_AppImage.*\\.AppImage(\\.(|current|old))?$"
-        
+
         # Verify pattern generation was called
         mock_pattern_gen.assert_called_once()
 
@@ -122,7 +120,7 @@ class TestAddCommand:
                     "url": "https://github.com/existing/app",
                     "download_dir": "/tmp/existing",
                     "pattern": "Existing.*",
-                    
+
                     "enabled": True
                 }
             ]
@@ -312,21 +310,21 @@ class TestAddCommand:
     def test_add_command_with_direct_flag(self, mock_repo_client, mock_pattern_gen, mock_prerelease, runner, temp_config_dir):
         """Test add command with --direct flag sets source_type to 'direct'."""
         direct_url = "https://nightly.example.com/app.AppImage"
-        
+
         # Mock the repository client to avoid real network calls
         mock_repo = Mock()
         mock_repo_client.return_value = mock_repo
-        
+
         # Mock pattern generation for direct downloads
         async def mock_async_pattern_gen(*args, **kwargs):
             return "(?i)DirectApp.*\\.AppImage(\\.(|current|old))?$"
         mock_pattern_gen.side_effect = mock_async_pattern_gen
-        
+
         # Mock prerelease check to avoid network calls
         async def mock_async_prerelease_check(*args, **kwargs):
             return False  # Don't enable prerelease for direct downloads
         mock_prerelease.side_effect = mock_async_prerelease_check
-        
+
         result = runner.invoke(app, [
             "add", "DirectApp",
             direct_url,
@@ -383,16 +381,16 @@ class TestAddCommand:
         """Test add command with --direct combined with other options."""
         direct_url = "https://ci.example.com/artifacts/latest.AppImage"
         symlink_path = str(temp_config_dir / "bin" / "ciapp.AppImage")
-        
+
         # Mock the repository client to avoid real network calls
         mock_repo = Mock()
         mock_repo_client.return_value = mock_repo
-        
+
         # Mock pattern generation for direct downloads
         async def mock_async_pattern_gen(*args, **kwargs):
             return "(?i)CIApp.*\\.AppImage(\\.(|current|old))?$"
         mock_pattern_gen.side_effect = mock_async_pattern_gen
-        
+
         result = runner.invoke(app, [
             "add", "CIApp",
             direct_url,
@@ -564,7 +562,7 @@ class TestRemoveCommand:
                     "url": "https://github.com/user/app1",
                     "download_dir": "/tmp/app1",
                     "pattern": "App1.*",
-                    
+
                     "enabled": True
                 },
                 {
@@ -573,7 +571,7 @@ class TestRemoveCommand:
                     "url": "https://github.com/user/app2",
                     "download_dir": "/tmp/app2",
                     "pattern": "App2.*",
-                    
+
                     "enabled": True
                 }
             ]

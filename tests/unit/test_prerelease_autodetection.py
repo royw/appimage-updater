@@ -178,7 +178,7 @@ class TestPrereleaseAutoDetection:
         with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
              patch("appimage_updater.config_operations.get_repository_client") as mock_config_client, \
              patch("appimage_updater.config_operations.should_enable_prerelease") as mock_should_enable:
-            
+
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             # Synchronous methods need regular return values, not async
@@ -227,7 +227,7 @@ class TestPrereleaseAutoDetection:
         with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
              patch("appimage_updater.config_operations.get_repository_client") as mock_config_client, \
              patch("appimage_updater.config_operations.should_enable_prerelease") as mock_should_enable:
-            
+
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             # Synchronous methods need regular return values, not async
@@ -275,7 +275,7 @@ class TestPrereleaseAutoDetection:
 
         with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
              patch("appimage_updater.config_operations.get_repository_client") as mock_config_client:
-            
+
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             # Synchronous methods need regular return values, not async
@@ -322,7 +322,7 @@ class TestPrereleaseAutoDetection:
 
         with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
              patch("appimage_updater.config_operations.get_repository_client") as mock_config_client:
-            
+
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             # Synchronous methods need regular return values, not async

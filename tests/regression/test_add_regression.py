@@ -422,22 +422,22 @@ class TestAddRegression:
                 return False
 
             # Step 2: Test list command
-            print(f"    📋 Testing list command")
+            print("    📋 Testing list command")
             if not self._test_list_command(runner, app_name, temp_config_dir):
                 return False
 
             # Step 3: Test show command
-            print(f"    👁️  Testing show command")
+            print("    👁️  Testing show command")
             if not self._test_show_command(runner, app_name, temp_config_dir):
                 return False
 
             # Step 4: Test check --dry-run command
-            print(f"    🔍 Testing check --dry-run command")
+            print("    🔍 Testing check --dry-run command")
             if not self._test_check_command(runner, app_name, temp_config_dir):
                 return False
 
             # Step 5: Test remove command
-            print(f"    🗑️  Testing remove command")
+            print("    🗑️  Testing remove command")
             if not self._test_remove_command(runner, app_name, temp_config_dir):
                 return False
 
@@ -476,7 +476,7 @@ class TestAddRegression:
     def _test_list_command(self, runner: CliRunner, app_name: str, temp_config_dir: Path) -> bool:
         """Test the list command."""
         result = runner.invoke(app, ["list", "--config-dir", str(temp_config_dir)])
-        
+
         if result.exit_code != 0:
             print(f"      ❌ List command failed: {result.stdout}")
             return False
@@ -491,7 +491,7 @@ class TestAddRegression:
     def _test_show_command(self, runner: CliRunner, app_name: str, temp_config_dir: Path) -> bool:
         """Test the show command."""
         result = runner.invoke(app, ["show", app_name, "--config-dir", str(temp_config_dir)])
-        
+
         if result.exit_code != 0:
             print(f"      ❌ Show command failed: {result.stdout}")
             return False
@@ -513,7 +513,7 @@ class TestAddRegression:
     def _test_check_command(self, runner: CliRunner, app_name: str, temp_config_dir: Path) -> bool:
         """Test the check --dry-run command."""
         result = runner.invoke(app, ["check", app_name, "--dry-run", "--config-dir", str(temp_config_dir)])
-        
+
         if result.exit_code != 0:
             print(f"      ❌ Check command failed: {result.stdout}")
             return False
@@ -534,14 +534,14 @@ class TestAddRegression:
         """Test the remove command."""
         # Use non-interactive removal
         result = runner.invoke(app, ["remove", app_name, "--config-dir", str(temp_config_dir)], input="y\n")
-        
+
         if result.exit_code != 0:
             print(f"      ❌ Remove command failed: {result.stdout}")
             return False
 
         # Verify the application was removed by trying to list it
         list_result = runner.invoke(app, ["list", "--config-dir", str(temp_config_dir)])
-        
+
         if list_result.exit_code == 0 and app_name in list_result.stdout:
             print(f"      ❌ Application {app_name} still appears after removal")
             return False

@@ -20,6 +20,7 @@ from rich.progress import (
     TransferSpeedColumn,
 )
 
+from .events import DownloadProgressEvent, get_event_bus
 from .models import ChecksumResult, DownloadResult, UpdateCandidate
 
 
@@ -206,6 +207,11 @@ class Downloader:
             pool=self.timeout,  # Overall pool timeout
         )
 
+        event_bus = get_event_bus()
+        downloaded_bytes = 0
+        last_event_time = time.time()
+        event_interval = 0.5  # Publish events every 0.5 seconds
+
         async with (
             httpx.AsyncClient(
                 timeout=timeout_config,
@@ -219,12 +225,35 @@ class Downloader:
         ):
             response.raise_for_status()
 
+            # Get total file size from response headers
+            total_bytes = int(response.headers.get("content-length", 0))
+
             with candidate.download_path.open("wb") as f:
                 async for chunk in response.aiter_bytes(chunk_size=8192):
                     f.write(chunk)
+                    downloaded_bytes += len(chunk)
+
+                    current_time = time.time()
 
                     if progress and task_id is not None:
                         progress.update(task_id, advance=len(chunk))
+
+                    # Publish download progress events at intervals
+                    if current_time - last_event_time >= event_interval or downloaded_bytes == total_bytes:
+                        # Calculate download speed
+                        time_elapsed = current_time - last_event_time
+                        speed_bps = len(chunk) / time_elapsed if time_elapsed > 0 else 0
+
+                        event = DownloadProgressEvent(
+                            app_name=candidate.app_name,
+                            filename=candidate.download_path.name,
+                            downloaded_bytes=downloaded_bytes,
+                            total_bytes=total_bytes,
+                            speed_bps=speed_bps,
+                            source="downloader",
+                        )
+                        event_bus.publish(event)
+                        last_event_time = current_time
 
     def _make_appimage_executable(self, candidate: UpdateCandidate) -> None:
         """Make AppImage file executable if it's an AppImage."""

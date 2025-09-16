@@ -226,25 +226,25 @@ async def test_extract_updates_candidate_path_for_rotation(mock_candidate, downl
     """Test that ZIP extraction updates the candidate path correctly for file rotation."""
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
-        
+
         test_content = b"appimage content for rotation"
-        
+
         # Create zip with AppImage
         zip_path = temp_dir / "BambuStudio-1.2.3.zip"
         with zipfile.ZipFile(zip_path, 'w') as zip_file:
             zip_file.writestr("BambuStudio-1.2.3-Linux.AppImage", test_content)
-        
+
         mock_candidate.download_path = zip_path
-        
+
         # Extract the zip
         await downloader._extract_if_zip(mock_candidate)
-        
+
         # Verify the candidate's download path is updated to the AppImage
         expected_appimage_path = temp_dir / "BambuStudio-1.2.3-Linux.AppImage"
         assert mock_candidate.download_path == expected_appimage_path
         assert expected_appimage_path.exists()
         assert expected_appimage_path.suffix.lower() == ".appimage"
-        
+
         # Verify the filename structure is correct for rotation
         # Should be "BambuStudio-1.2.3-Linux.AppImage", not "BambuStudio-1.2.3-Linux" with ".AppImage" extension
         assert ".AppImage" in mock_candidate.download_path.name

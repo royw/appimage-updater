@@ -47,7 +47,7 @@ def multi_app_config():
                 }
             },
             {
-                "name": "App2", 
+                "name": "App2",
                 "source_type": "github",
                 "url": "https://github.com/user/app2",
                 "download_dir": "/tmp/app2",
@@ -66,7 +66,7 @@ def multi_app_config():
             },
             {
                 "name": "App3",
-                "source_type": "github", 
+                "source_type": "github",
                 "url": "https://github.com/user/app3",
                 "download_dir": "/tmp/app3",
                 "enabled": False,
@@ -96,7 +96,7 @@ class TestMultiAppShow:
             json.dump(multi_app_config, f)
 
         result = runner.invoke(app, ["show", "App1", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "App1" in result.stdout
         assert "https://github.com/user/app1" in result.stdout
@@ -108,7 +108,7 @@ class TestMultiAppShow:
             json.dump(multi_app_config, f)
 
         result = runner.invoke(app, ["show", "App1", "App2", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "App1" in result.stdout
         assert "App2" in result.stdout
@@ -122,7 +122,7 @@ class TestMultiAppShow:
             json.dump(multi_app_config, f)
 
         result = runner.invoke(app, ["show", "App1", "NonExistent", "--config", str(config_file)])
-        
+
         assert result.exit_code == 1
         assert "Applications not found: NonExistent" in result.stdout
         assert "Available applications: App1, App2, App3" in result.stdout
@@ -134,7 +134,7 @@ class TestMultiAppShow:
             json.dump(multi_app_config, f)
 
         result = runner.invoke(app, ["show", "app1", "APP2", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "App1" in result.stdout
         assert "App2" in result.stdout
@@ -150,7 +150,7 @@ class TestMultiAppRemove:
             json.dump(multi_app_config, f)
 
         result = runner.invoke(app, ["remove", "App1", "--config", str(config_file)], input="y\n")
-        
+
         assert result.exit_code == 0
         assert "Found 1 application(s) to remove:" in result.stdout
         assert "App1" in result.stdout
@@ -163,7 +163,7 @@ class TestMultiAppRemove:
             json.dump(multi_app_config, f)
 
         result = runner.invoke(app, ["remove", "App1", "App2", "--config", str(config_file)], input="y\n")
-        
+
         assert result.exit_code == 0
         assert "Found 2 application(s) to remove:" in result.stdout
         assert "App1" in result.stdout
@@ -178,7 +178,7 @@ class TestMultiAppRemove:
             json.dump(multi_app_config, f)
 
         result = runner.invoke(app, ["remove", "App1", "App2", "--config", str(config_file)], input="n\n")
-        
+
         assert result.exit_code == 0
         assert "Found 2 application(s) to remove:" in result.stdout
         assert "Removal cancelled." in result.stdout
@@ -190,7 +190,7 @@ class TestMultiAppRemove:
             json.dump(multi_app_config, f)
 
         result = runner.invoke(app, ["remove", "App1", "App2", "--force", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "Successfully removed application 'App1'" in result.stdout
         assert "Successfully removed application 'App2'" in result.stdout
@@ -202,7 +202,7 @@ class TestMultiAppRemove:
             json.dump(multi_app_config, f)
 
         result = runner.invoke(app, ["remove", "NonExistent1", "NonExistent2", "--config", str(config_file)])
-        
+
         assert result.exit_code == 1
         assert "Applications not found: NonExistent1, NonExistent2" in result.stdout
 
@@ -218,11 +218,11 @@ class TestMultiAppEdit:
 
         new_url = "https://github.com/newuser/newrepo"
         result = runner.invoke(app, [
-            "edit", "App1", "App2", 
+            "edit", "App1", "App2",
             "--url", new_url,
             "--config", str(config_file)
         ])
-        
+
         assert result.exit_code == 0
         assert "✓ Successfully updated configuration for 'App1'" in result.stdout
         assert "✓ Successfully updated configuration for 'App2'" in result.stdout
@@ -235,10 +235,10 @@ class TestMultiAppEdit:
 
         result = runner.invoke(app, [
             "edit", "App1", "App2",
-            "--disable", 
+            "--disable",
             "--config", str(config_file)
         ])
-        
+
         assert result.exit_code == 0
         assert "✓ Successfully updated configuration for 'App1'" in result.stdout
         assert "✓ Successfully updated configuration for 'App2'" in result.stdout
@@ -254,7 +254,7 @@ class TestMultiAppEdit:
             "--disable",
             "--config", str(config_file)
         ])
-        
+
         assert result.exit_code == 1
         assert "Applications not found: NonExistent1, NonExistent2" in result.stdout
 
@@ -269,7 +269,7 @@ class TestMultiAppEdit:
             "--disable",
             "--config", str(config_file)
         ])
-        
+
         assert result.exit_code == 1
         assert "Applications not found: NonExistent" in result.stdout
 
@@ -285,7 +285,7 @@ class TestMultiAppCheck:
 
         # This will likely fail due to network/GitHub API, but we test the argument parsing
         result = runner.invoke(app, ["check", "App1", "App2", "--config", str(config_file), "--dry-run"])
-        
+
         # The command should parse arguments correctly even if it fails later
         assert "App1" in result.stdout or "App2" in result.stdout or "Checking" in result.stdout
 
@@ -296,7 +296,7 @@ class TestMultiAppCheck:
             json.dump(multi_app_config, f)
 
         result = runner.invoke(app, ["check", "NonExistent1", "NonExistent2", "--config", str(config_file)])
-        
+
         assert "Applications not found: NonExistent1, NonExistent2" in result.stdout
 
 
@@ -310,7 +310,7 @@ class TestMultiAppGlobPatterns:
             json.dump(multi_app_config, f)
 
         result = runner.invoke(app, ["show", "App*", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "App1" in result.stdout
         assert "App2" in result.stdout
@@ -323,7 +323,7 @@ class TestMultiAppGlobPatterns:
             json.dump(multi_app_config, f)
 
         result = runner.invoke(app, ["remove", "App[12]", "--force", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         assert "Successfully removed application 'App1'" in result.stdout
         assert "Successfully removed application 'App2'" in result.stdout
