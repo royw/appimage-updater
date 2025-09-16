@@ -114,35 +114,40 @@ class CheckService:
         Returns:
             List of check results
         """
-        # Get enabled applications
+        apps_to_check = await self._get_apps_to_check(app_names)
+        if not apps_to_check:
+            return []
+
+        logger.info(f"Checking {len(apps_to_check)} application(s) for updates...")
+        check_results = await self._check_apps_for_updates(apps_to_check)
+
+        return await self._handle_check_results(check_results, dry_run)
+
+    async def _get_apps_to_check(self, app_names: list[str] | None) -> list[Any]:
+        """Get list of applications to check for updates."""
         enabled_apps = self.config_service.get_enabled_apps()
 
         if not enabled_apps:
             logger.info("No enabled applications found in configuration")
             return []
 
-        # Filter apps by names if provided
-        if app_names:
-            apps_to_check = self.application_service.filter_apps_by_names(enabled_apps, app_names)
-            if not apps_to_check:
-                logger.error(f"No applications found matching: {', '.join(app_names)}")
-                return []
-        else:
-            apps_to_check = enabled_apps
+        if not app_names:
+            return enabled_apps
 
-        logger.info(f"Checking {len(apps_to_check)} application(s) for updates...")
+        apps_to_check = self.application_service.filter_apps_by_names(enabled_apps, app_names)
+        if not apps_to_check:
+            logger.error(f"No applications found matching: {', '.join(app_names)}")
+            return []
 
-        # Check for updates
-        check_results = await self._check_apps_for_updates(apps_to_check)
+        return apps_to_check
 
-        # Get update candidates
+    async def _handle_check_results(self, check_results: list[Any], dry_run: bool) -> list[Any]:
+        """Handle check results and optionally download updates."""
         update_candidates = self._get_update_candidates(check_results, dry_run)
 
         if not dry_run and update_candidates:
-            # Download updates
             downloader = Downloader()
-            download_results = await downloader.download_updates(update_candidates)
-            return download_results
+            return await downloader.download_updates(update_candidates)
 
         return check_results
 

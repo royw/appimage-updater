@@ -176,19 +176,33 @@ def _print_main_config_table(effective_config: dict[str, Any]) -> None:
 
 def _add_main_config_rows(table: Table, effective_config: dict[str, Any]) -> None:
     """Add main configuration rows to the table."""
-    table.add_row("Name", effective_config["name"])
-    table.add_row("Source Type", effective_config["source_type"])
-    table.add_row("URL", effective_config["url"])
-    table.add_row("Download Directory", effective_config["download_dir"])
-    table.add_row("Pattern", effective_config["pattern"])
-    table.add_row("Enabled", "Yes" if effective_config["enabled"] else "No")
-    table.add_row("Prerelease", "Yes" if effective_config["prerelease"] else "No")
-    table.add_row("Rotation Enabled", "Yes" if effective_config["rotation_enabled"] else "No")
+    _add_basic_config_rows(table, effective_config)
+    _add_boolean_config_rows(table, effective_config)
+    _add_optional_config_rows(table, effective_config)
 
-    if effective_config.get("retain_count"):
-        table.add_row("Retain Count", str(effective_config["retain_count"]))
-    if effective_config.get("symlink_path"):
-        table.add_row("Symlink Path", effective_config["symlink_path"])
+
+def _add_basic_config_rows(table: Table, config: dict[str, Any]) -> None:
+    """Add basic configuration rows."""
+    table.add_row("Name", config["name"])
+    table.add_row("Source Type", config["source_type"])
+    table.add_row("URL", config["url"])
+    table.add_row("Download Directory", config["download_dir"])
+    table.add_row("Pattern", config["pattern"])
+
+
+def _add_boolean_config_rows(table: Table, config: dict[str, Any]) -> None:
+    """Add boolean configuration rows."""
+    table.add_row("Enabled", "Yes" if config["enabled"] else "No")
+    table.add_row("Prerelease", "Yes" if config["prerelease"] else "No")
+    table.add_row("Rotation Enabled", "Yes" if config["rotation_enabled"] else "No")
+
+
+def _add_optional_config_rows(table: Table, config: dict[str, Any]) -> None:
+    """Add optional configuration rows."""
+    if config.get("retain_count"):
+        table.add_row("Retain Count", str(config["retain_count"]))
+    if config.get("symlink_path"):
+        table.add_row("Symlink Path", config["symlink_path"])
 
 
 def _print_checksum_config_table(effective_config: dict[str, Any]) -> None:
@@ -229,18 +243,27 @@ def set_global_config_value(
 
 def _apply_setting_change(config: Config, setting: str, value: str) -> None:
     """Apply a single setting change to the configuration."""
-    if _is_path_setting(setting):
-        _apply_path_setting(config, setting, value)
-    elif _is_string_setting(setting):
-        _apply_string_setting(config, setting, value)
-    elif _is_boolean_setting(setting):
-        _apply_boolean_setting(config, setting, value)
-    elif _is_numeric_setting(setting):
-        _apply_numeric_setting(config, setting, value)
-    elif setting == "checksum-algorithm":
+    # Define setting type mappings
+    setting_handlers = {
+        "path": (_is_path_setting, _apply_path_setting),
+        "string": (_is_string_setting, _apply_string_setting),
+        "boolean": (_is_boolean_setting, _apply_boolean_setting),
+        "numeric": (_is_numeric_setting, _apply_numeric_setting),
+    }
+
+    # Try each handler type
+    for _, (checker, applier) in setting_handlers.items():
+        if checker(setting):
+            applier(config, setting, value)
+            return
+
+    # Handle special case
+    if setting == "checksum-algorithm":
         _apply_checksum_algorithm_setting(config, value)
-    else:
-        _show_available_settings(setting)
+        return
+
+    # Unknown setting
+    _show_available_settings(setting)
 
 
 def _is_path_setting(setting: str) -> bool:

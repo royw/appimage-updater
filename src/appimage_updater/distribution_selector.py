@@ -332,14 +332,13 @@ class DistributionSelector:
         return {
             "arch": asset.architecture or info.arch,
             "platform": asset.platform,
-            "format": asset.file_extension or (f".{info.format}" if info.format else None)
+            "format": asset.file_extension or (f".{info.format}" if info.format else None),
         }
 
     def _check_critical_compatibility(self, asset_properties: dict[str, str | None]) -> bool:
         """Check critical compatibility requirements."""
-        return (
-            self._is_architecture_compatible(asset_properties["arch"]) and
-            self._is_platform_compatible(asset_properties["platform"], asset_properties["format"])
+        return self._is_architecture_compatible(asset_properties["arch"]) and self._is_platform_compatible(
+            asset_properties["platform"], asset_properties["format"]
         )
 
     def _calculate_total_score(self, info: AssetInfo, asset_properties: dict[str, str | None]) -> float:
@@ -409,6 +408,9 @@ class DistributionSelector:
         if not self._has_valid_version_info(info):
             return 0.0
 
+        # Both version_numeric values are guaranteed to be non-None by _has_valid_version_info
+        assert info.version_numeric is not None
+        assert self.current_dist.version_numeric is not None
         version_diff = abs(info.version_numeric - self.current_dist.version_numeric)
 
         if info.version_numeric <= self.current_dist.version_numeric:
@@ -614,14 +616,10 @@ class DistributionSelector:
                 if "User cancelled" in str(e):
                     raise
                 self.console.print("[red]Please enter a valid number or 'q' to quit[/red]")
-    
+
     def _prompt_for_choice(self, num_options: int) -> str:
         """Prompt user for their choice."""
-        return Prompt.ask(
-            f"Select an option [1-{num_options}] (or 'q' to quit)",
-            default=str(1),
-            console=self.console
-        )
+        return Prompt.ask(f"Select an option [1-{num_options}] (or 'q' to quit)", default=str(1), console=self.console)
 
     def _is_quit_choice(self, choice: str) -> bool:
         """Check if user chose to quit."""

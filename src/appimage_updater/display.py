@@ -479,17 +479,25 @@ def find_matching_appimage_files(download_dir: Path, pattern: str) -> list[Path]
     Returns:
         List of matching files, or error message string if there was an error.
     """
-    pattern_compiled = re.compile(pattern)
-    matching_files = []
-
     try:
-        for file_path in download_dir.iterdir():
-            if file_path.is_file() and not file_path.is_symlink() and pattern_compiled.match(file_path.name):
-                matching_files.append(file_path)
+        pattern_compiled = re.compile(pattern)
+        return _collect_matching_files(download_dir, pattern_compiled)
     except PermissionError:
         return "[red]Permission denied accessing download directory[/red]"
 
+
+def _collect_matching_files(download_dir: Path, pattern_compiled: re.Pattern[str]) -> list[Path]:
+    """Collect files that match the compiled pattern."""
+    matching_files = []
+    for file_path in download_dir.iterdir():
+        if _is_matching_appimage_file(file_path, pattern_compiled):
+            matching_files.append(file_path)
     return matching_files
+
+
+def _is_matching_appimage_file(file_path: Path, pattern_compiled: re.Pattern[str]) -> bool:
+    """Check if file is a matching AppImage file."""
+    return file_path.is_file() and not file_path.is_symlink() and bool(pattern_compiled.match(file_path.name))
 
 
 def _sort_files_by_modification_time(files: list[Path]) -> None:
@@ -835,15 +843,36 @@ def format_symlink_info(found_symlinks: list[tuple[Path, Path]]) -> str:
 
 def format_single_symlink(symlink_path: Path, target_path: Path) -> list[str]:
     """Format information for a single symlink."""
-    target_exists = target_path.exists()
-    target_executable = target_exists and os.access(target_path, os.X_OK)
-    status_icon = "[green]✓[/green]" if target_exists and target_executable else "[red]✗[/red]"
+    target_status = _get_target_status(target_path)
+    status_icon = _get_status_icon(target_status)
 
     lines = [f"[bold]{symlink_path}[/bold] {status_icon}", f"  [dim]→[/dim] {target_path}"]
 
-    if not target_exists:
-        lines.append("  [red][dim]Target does not exist[/dim][/red]")
-    elif not target_executable:
-        lines.append("  [yellow][dim]Target not executable[/dim][/yellow]")
-
+    status_message = _get_status_message(target_status)
+    if status_message:
+        lines.append(status_message)
     return lines
+
+
+def _get_target_status(target_path: Path) -> str:
+    """Get the status of the symlink target."""
+    if not target_path.exists():
+        return "missing"
+    elif not os.access(target_path, os.X_OK):
+        return "not_executable"
+    else:
+        return "valid"
+
+
+def _get_status_icon(status: str) -> str:
+    """Get status icon based on target status."""
+    return "[green]✓[/green]" if status == "valid" else "[red]✗[/red]"
+
+
+def _get_status_message(status: str) -> str | None:
+    """Get status message based on target status."""
+    if status == "missing":
+        return "  [red][dim]Target does not exist[/dim][/red]"
+    elif status == "not_executable":
+        return "  [yellow][dim]Target not executable[/dim][/yellow]"
+    return None

@@ -1408,42 +1408,71 @@ async def _check_updates(
     Args:
         app_names: List of app names, single app name, or None for all apps
     """
-    logger.debug("Starting update check process")
-    app_names = _normalize_app_names(app_names)
-    logger.debug(f"Config file: {config_file}, Config dir: {config_dir}, Dry run: {dry_run}, App filters: {app_names}")
+    _log_check_start(config_file, config_dir, dry_run, app_names)
 
     try:
-        # Load and filter configuration
-        config, enabled_apps = await _load_and_filter_config(config_file, config_dir, app_names)
-
+        config, enabled_apps = await _prepare_check_environment(
+            config_file, config_dir, app_names, verbose, dry_run, yes, no_interactive
+        )
         if not enabled_apps:
-            console.print("[yellow]No enabled applications found in configuration")
-            logger.warning("No enabled applications found, exiting")
             return
 
-        # Show verbose parameter information if requested
-        if verbose:
-            _display_check_verbose_info(app_names, dry_run, yes, no_interactive, len(enabled_apps))
-
-        # Perform update checks
-        check_results = await _perform_update_checks(config, enabled_apps, no_interactive)
-
-        # Process results and get update candidates
-        candidates = _get_update_candidates(check_results, dry_run)
-
-        if not candidates:
-            await _handle_no_updates_scenario(config, enabled_apps)
-            return
-
-        # Handle downloads if not dry run
-        if not dry_run:
-            await _handle_downloads(config, candidates, yes)
-        else:
-            console.print("[blue]Dry run mode - no downloads performed")
-            logger.debug("Dry run mode enabled, skipping downloads")
-
+        await _execute_update_workflow(config, enabled_apps, dry_run, yes, no_interactive)
     except Exception as e:
         _handle_check_errors(e)
+
+
+def _log_check_start(
+    config_file: Path | None, config_dir: Path | None, dry_run: bool, app_names: list[str] | str | None
+) -> None:
+    """Log the start of update check process."""
+    logger.debug("Starting update check process")
+    normalized_names = _normalize_app_names(app_names)
+    logger.debug(
+        f"Config file: {config_file}, Config dir: {config_dir}, Dry run: {dry_run}, App filters: {normalized_names}"
+    )
+
+
+async def _prepare_check_environment(
+    config_file: Path | None,
+    config_dir: Path | None,
+    app_names: list[str] | str | None,
+    verbose: bool,
+    dry_run: bool,
+    yes: bool,
+    no_interactive: bool,
+) -> tuple[Any, list[Any]]:
+    """Prepare the environment for update checks."""
+    normalized_names = _normalize_app_names(app_names)
+    config, enabled_apps = await _load_and_filter_config(config_file, config_dir, normalized_names)
+
+    if not enabled_apps:
+        console.print("[yellow]No enabled applications found in configuration")
+        logger.warning("No enabled applications found, exiting")
+        return config, []
+
+    if verbose:
+        _display_check_verbose_info(normalized_names, dry_run, yes, no_interactive, len(enabled_apps))
+
+    return config, enabled_apps
+
+
+async def _execute_update_workflow(
+    config: Any, enabled_apps: list[Any], dry_run: bool, yes: bool, no_interactive: bool
+) -> None:
+    """Execute the main update workflow."""
+    check_results = await _perform_update_checks(config, enabled_apps, no_interactive)
+    candidates = _get_update_candidates(check_results, dry_run)
+
+    if not candidates:
+        await _handle_no_updates_scenario(config, enabled_apps)
+        return
+
+    if not dry_run:
+        await _handle_downloads(config, candidates, yes)
+    else:
+        console.print("[blue]Dry run mode - no downloads performed")
+        logger.debug("Dry run mode enabled, skipping downloads")
 
 
 def _is_symlink_valid(symlink_path: Path, download_dir: Path) -> bool:
@@ -1461,10 +1490,7 @@ def _is_symlink_valid(symlink_path: Path, download_dir: Path) -> bool:
 
 def _find_unrotated_appimages(download_dir: Path) -> list[Path]:
     """Find AppImage files that are not in rotation format."""
-    return [
-        file_path for file_path in download_dir.iterdir()
-        if _is_unrotated_appimage(file_path)
-    ]
+    return [file_path for file_path in download_dir.iterdir() if _is_unrotated_appimage(file_path)]
 
 
 def _is_unrotated_appimage(file_path: Path) -> bool:
@@ -1550,20 +1576,23 @@ async def _setup_rotation_safely(app_config: ApplicationConfig, latest_file: Pat
 async def _setup_existing_files_rotation(config: Config, enabled_apps: list[ApplicationConfig]) -> None:
     """Set up rotation and symlinks for existing files that need it."""
     for app_config in enabled_apps:
-        if _should_skip_rotation_setup(app_config):
-            continue
+        await _process_app_rotation_setup(app_config, config)
 
-        download_dir = Path(app_config.download_dir)
-        if _should_skip_download_dir(download_dir):
-            continue
 
-        if _should_skip_existing_symlink(app_config, download_dir):
-            continue  # Symlink is already properly set up
+async def _process_app_rotation_setup(app_config: ApplicationConfig, config: Config) -> None:
+    """Process rotation setup for a single application."""
+    if _should_skip_rotation_setup(app_config):
+        return
 
-        latest_file = _get_latest_appimage_file(download_dir)
-        if latest_file is None:
-            continue
+    download_dir = Path(app_config.download_dir)
+    if _should_skip_download_dir(download_dir):
+        return
 
+    if _should_skip_existing_symlink(app_config, download_dir):
+        return  # Symlink is already properly set up
+
+    latest_file = _get_latest_appimage_file(download_dir)
+    if latest_file is not None:
         await _setup_rotation_safely(app_config, latest_file, config)
 
 

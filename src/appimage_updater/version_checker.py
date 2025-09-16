@@ -105,7 +105,7 @@ class VersionChecker:
     ) -> tuple[Any | None, list[Any]]:
         """Find the first release with matching assets."""
         for candidate_release in releases:
-            if candidate_release.is_draft or (candidate_release.is_prerelease and not app_config.prerelease):
+            if self._should_skip_release(candidate_release, app_config):
                 continue
 
             candidate_assets = candidate_release.get_matching_assets(app_config.pattern)
@@ -113,6 +113,10 @@ class VersionChecker:
                 return candidate_release, candidate_assets
 
         return None, []
+
+    def _should_skip_release(self, release: Any, app_config: ApplicationConfig) -> bool:
+        """Check if release should be skipped."""
+        return release.is_draft or (release.is_prerelease and not app_config.prerelease)
 
     def _select_best_asset(self, matching_assets: list[Any], app_name: str) -> Any | None:
         """Select the best asset from matching assets."""

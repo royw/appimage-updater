@@ -66,24 +66,27 @@ class RemoveCommand(Command):
     async def _execute_remove_operation(self) -> CommandResult:
         """Execute the core remove operation logic."""
         try:
-            config = self._load_config()
-
-            if not self._validate_applications_exist(config):
-                return CommandResult(success=False, exit_code=1)
-
-            found_apps = self._validate_and_filter_apps(config, self.params.app_names or [])
-
-            if not self._should_proceed_with_removal(found_apps):
-                return CommandResult(success=True, exit_code=0)
-
-            self._perform_removal(config, found_apps)
-            return CommandResult(success=True, exit_code=0)
-
+            return await self._process_removal_workflow()
         except ConfigLoadError:
             return self._handle_config_load_error()
         except Exception as e:
             self._handle_unexpected_error(e)
             raise
+
+    async def _process_removal_workflow(self) -> CommandResult:
+        """Process the main removal workflow."""
+        config = self._load_config()
+
+        if not self._validate_applications_exist(config):
+            return CommandResult(success=False, exit_code=1)
+
+        found_apps = self._validate_and_filter_apps(config, self.params.app_names or [])
+
+        if not self._should_proceed_with_removal(found_apps):
+            return CommandResult(success=True, exit_code=0)
+
+        self._perform_removal(config, found_apps)
+        return CommandResult(success=True, exit_code=0)
 
     def _validate_applications_exist(self, config: Config) -> bool:
         """Check if there are any applications configured."""

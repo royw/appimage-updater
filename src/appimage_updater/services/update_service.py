@@ -79,12 +79,22 @@ class UpdateService:
             True if path is valid and writable
         """
         try:
-            # Check if directory exists and is writable
-            if path.exists():
-                return path.is_dir() and bool(path.stat().st_mode & 0o200)
-
-            # Check if parent directory is writable
-            parent = path.parent
-            return parent.exists() and parent.is_dir() and bool(parent.stat().st_mode & 0o200)
+            return self._check_path_writability(path)
         except (OSError, PermissionError):
             return False
+
+    def _check_path_writability(self, path: Path) -> bool:
+        """Check if path or its parent is writable."""
+        if path.exists():
+            return self._is_existing_path_writable(path)
+        else:
+            return self._is_parent_path_writable(path)
+
+    def _is_existing_path_writable(self, path: Path) -> bool:
+        """Check if existing path is a writable directory."""
+        return path.is_dir() and bool(path.stat().st_mode & 0o200)
+
+    def _is_parent_path_writable(self, path: Path) -> bool:
+        """Check if parent directory is writable for new path creation."""
+        parent = path.parent
+        return parent.exists() and parent.is_dir() and bool(parent.stat().st_mode & 0o200)

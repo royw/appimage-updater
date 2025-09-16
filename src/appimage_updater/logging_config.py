@@ -7,6 +7,9 @@ from pathlib import Path
 
 from loguru import logger
 
+# Explicitly export logger for type checking
+__all__ = ["configure_logging", "logger"]
+
 
 def configure_logging(debug: bool = False) -> None:
     """Configure logging with loguru.

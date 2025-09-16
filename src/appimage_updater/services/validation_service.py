@@ -85,23 +85,28 @@ class ValidationService:
         Raises:
             ValueError: If path is invalid
         """
+        self._validate_path_not_empty(symlink_path)
+        expanded_path = Path(symlink_path).expanduser()
+        self._validate_path_characters(expanded_path, symlink_path)
+        return self._normalize_path_safely(expanded_path, symlink_path)
+
+    def _validate_path_not_empty(self, symlink_path: str) -> None:
+        """Validate that path is not empty."""
         if not symlink_path or not symlink_path.strip():
             raise ValueError("Symlink path cannot be empty")
 
-        expanded_path = Path(symlink_path).expanduser()
-
-        # Check for invalid characters
+    def _validate_path_characters(self, expanded_path: Path, original_path: str) -> None:
+        """Validate that path doesn't contain invalid characters."""
         path_str = str(expanded_path)
         if any(char in path_str for char in ["\x00", "\n", "\r"]):
-            raise ValueError(f"Symlink path contains invalid characters: {symlink_path}")
+            raise ValueError(f"Symlink path contains invalid characters: {original_path}")
 
-        # Normalize path
+    def _normalize_path_safely(self, expanded_path: Path, original_path: str) -> Path:
+        """Normalize path with error handling."""
         try:
-            normalized_path = expanded_path.resolve()
+            return expanded_path.resolve()
         except (OSError, RuntimeError) as e:
-            raise ValueError(f"Cannot resolve symlink path '{symlink_path}': {e}") from e
-
-        return normalized_path
+            raise ValueError(f"Cannot resolve symlink path '{original_path}': {e}") from e
 
     def validate_download_directory(self, download_dir: str, create_dir: bool = False) -> Path:
         """Validate and normalize download directory.

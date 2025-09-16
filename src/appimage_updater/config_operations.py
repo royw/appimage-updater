@@ -779,11 +779,26 @@ def _manually_resolve_path_segments(normalized_path: Path) -> Path:
     """Manually resolve .. segments without following symlinks."""
     parts: list[str] = []
     for part in normalized_path.parts:
-        if part == "..":
-            if parts:
-                parts.pop()
-        elif part != ".":
-            parts.append(part)
+        _process_path_segment(part, parts)
+    return _build_resolved_path(parts)
+
+
+def _process_path_segment(part: str, parts: list[str]) -> None:
+    """Process a single path segment."""
+    if part == "..":
+        _handle_parent_directory(parts)
+    elif part != ".":
+        parts.append(part)
+
+
+def _handle_parent_directory(parts: list[str]) -> None:
+    """Handle parent directory (..) segment."""
+    if parts:
+        parts.pop()
+
+
+def _build_resolved_path(parts: list[str]) -> Path:
+    """Build the resolved path from parts."""
     return Path(*parts) if parts else Path("/")
 
 

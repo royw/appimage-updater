@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from loguru import logger
 from rich.console import Console
 
@@ -76,6 +78,13 @@ class ConfigCommand(Command):
 
     async def _execute_config_operation(self) -> None:
         """Execute the core config operation logic."""
+        action_handlers = self._get_action_handlers()
+        handler = action_handlers.get(self.params.action)
+        if handler:
+            handler()
+
+    def _get_action_handlers(self) -> dict[str, Callable[[], None]]:
+        """Get mapping of actions to their handler functions."""
         from ..config_command import (
             list_available_settings,
             reset_global_config,
@@ -84,15 +93,14 @@ class ConfigCommand(Command):
             show_global_config,
         )
 
-        if self.params.action == "show":
-            show_global_config(self.params.config_file, self.params.config_dir)
-        elif self.params.action == "set":
-            set_global_config_value(
+        return {
+            "show": lambda: show_global_config(self.params.config_file, self.params.config_dir),
+            "set": lambda: set_global_config_value(
                 self.params.setting, self.params.value, self.params.config_file, self.params.config_dir
-            )
-        elif self.params.action == "reset":
-            reset_global_config(self.params.config_file, self.params.config_dir)
-        elif self.params.action == "show-effective":
-            show_effective_config(self.params.app_name, self.params.config_file, self.params.config_dir)
-        elif self.params.action == "list":
-            list_available_settings()
+            ),
+            "reset": lambda: reset_global_config(self.params.config_file, self.params.config_dir),
+            "show-effective": lambda: show_effective_config(
+                self.params.app_name, self.params.config_file, self.params.config_dir
+            ),
+            "list": lambda: list_available_settings(),
+        }
