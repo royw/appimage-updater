@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -38,3 +39,132 @@ class ConfigService:
         """Force reload configuration from disk."""
         self._config = None
         return self.load_config()
+
+    def add_application(self, app_config: dict[str, Any]) -> None:
+        """Add an application configuration to the config file or directory.
+
+        Args:
+            app_config: Application configuration dictionary
+        """
+        # Determine target configuration location
+        if self.config_file:
+            self._add_to_config_file(app_config, self.config_file)
+        elif self.config_dir:
+            self._add_to_config_directory(app_config, self.config_dir)
+        else:
+            # Use default location
+            from ..config_loader import get_default_config_dir
+
+            default_dir = get_default_config_dir()
+            self._add_to_config_directory(app_config, default_dir)
+
+    def remove_application(self, app_name: str) -> None:
+        """Remove an application configuration.
+
+        Args:
+            app_name: Name of application to remove
+        """
+        if self.config_file:
+            self._remove_from_config_file(app_name, self.config_file)
+        elif self.config_dir:
+            self._remove_from_config_directory(app_name, self.config_dir)
+        else:
+            raise ValueError("No configuration found to remove application from")
+
+    def save_configuration_updates(self, app_name: str, updates: dict[str, Any]) -> None:
+        """Save configuration updates for an application.
+
+        Args:
+            app_name: Application name
+            updates: Configuration updates to apply
+        """
+        config = self.load_config()
+
+        # Find and update the application
+        for app in config.applications:
+            if app.name.lower() == app_name.lower():
+                for key, value in updates.items():
+                    setattr(app, key, value)
+                break
+
+        # Save the updated configuration
+        self._save_config(config)
+
+    def _add_to_config_file(self, app_config: dict[str, Any], config_file: Path) -> None:
+        """Add application to a single JSON config file."""
+        if config_file.exists():
+            # Load existing configuration
+            with config_file.open() as f:
+                config_data = json.load(f)
+        else:
+            # Create new configuration
+            config_data = {"applications": []}
+
+        # Add the new application
+        config_data["applications"].append(app_config)
+
+        # Save updated configuration
+        config_file.parent.mkdir(parents=True, exist_ok=True)
+        with config_file.open("w") as f:
+            json.dump(config_data, f, indent=2)
+
+    def _add_to_config_directory(self, app_config: dict[str, Any], config_dir: Path) -> None:
+        """Add application to a directory-based config structure."""
+        config_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create individual config file for the application
+        app_name = app_config["name"]
+        config_file = config_dir / f"{app_name}.json"
+
+        config_data = {"applications": [app_config]}
+
+        with config_file.open("w") as f:
+            json.dump(config_data, f, indent=2)
+
+    def _remove_from_config_file(self, app_name: str, config_file: Path) -> None:
+        """Remove application from a single JSON config file."""
+        if not config_file.exists():
+            raise ValueError(f"Configuration file '{config_file}' does not exist")
+
+        with config_file.open() as f:
+            config_data = json.load(f)
+
+        # Find and remove the application
+        app_name_lower = app_name.lower()
+        original_count = len(config_data.get("applications", []))
+
+        config_data["applications"] = [
+            app for app in config_data.get("applications", []) if app.get("name", "").lower() != app_name_lower
+        ]
+
+        if len(config_data["applications"]) == original_count:
+            raise ValueError(f"Application '{app_name}' not found in configuration")
+
+        # Save updated configuration
+        with config_file.open("w") as f:
+            json.dump(config_data, f, indent=2)
+
+    def _remove_from_config_directory(self, app_name: str, config_dir: Path) -> None:
+        """Remove application from a directory-based config structure."""
+        if not config_dir.exists():
+            raise ValueError(f"Configuration directory '{config_dir}' does not exist")
+
+        config_file = config_dir / f"{app_name}.json"
+        if config_file.exists():
+            config_file.unlink()
+        else:
+            raise ValueError(f"Application '{app_name}' not found in configuration directory")
+
+    def _save_config(self, config: Config) -> None:
+        """Save configuration to disk."""
+        if self.config_file:
+            config_data = {"applications": [app.model_dump() for app in config.applications]}
+            with self.config_file.open("w") as f:
+                json.dump(config_data, f, indent=2)
+        elif self.config_dir:
+            # Save each application to its own file
+            for app in config.applications:
+                config_file = self.config_dir / f"{app.name}.json"
+                config_data = {"applications": [app.model_dump()]}
+                with config_file.open("w") as f:
+                    json.dump(config_data, f, indent=2)
