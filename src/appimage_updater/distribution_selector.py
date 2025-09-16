@@ -603,25 +603,40 @@ class DistributionSelector:
         """Get user's selection from the available options."""
         while True:
             try:
-                choice = Prompt.ask(
-                    f"Select an option [1-{len(asset_infos)}] (or 'q' to quit)", default=str(1), console=self.console
-                )
+                choice = self._prompt_for_choice(len(asset_infos))
 
-                if choice.lower() == "q":
+                if self._is_quit_choice(choice):
                     raise ValueError("User cancelled asset selection")
 
-                choice_num = int(choice)
-                if 1 <= choice_num <= len(asset_infos):
-                    selected_info = asset_infos[choice_num - 1]
-                    self.console.print(f"[green]Selected: {selected_info.asset.name}[/green]")
-                    return selected_info
-                else:
-                    self.console.print(f"[red]Please enter a number between 1 and {len(asset_infos)}[/red]")
+                return self._process_numeric_choice(choice, asset_infos)
 
             except ValueError as e:
                 if "User cancelled" in str(e):
                     raise
                 self.console.print("[red]Please enter a valid number or 'q' to quit[/red]")
+    
+    def _prompt_for_choice(self, num_options: int) -> str:
+        """Prompt user for their choice."""
+        return Prompt.ask(
+            f"Select an option [1-{num_options}] (or 'q' to quit)",
+            default=str(1),
+            console=self.console
+        )
+
+    def _is_quit_choice(self, choice: str) -> bool:
+        """Check if user chose to quit."""
+        return choice.lower() == "q"
+
+    def _process_numeric_choice(self, choice: str, asset_infos: list[AssetInfo]) -> AssetInfo:
+        """Process numeric choice and return selected asset."""
+        choice_num = int(choice)
+        if 1 <= choice_num <= len(asset_infos):
+            selected_info = asset_infos[choice_num - 1]
+            self.console.print(f"[green]Selected: {selected_info.asset.name}[/green]")
+            return selected_info
+        else:
+            self.console.print(f"[red]Please enter a number between 1 and {len(asset_infos)}[/red]")
+            raise ValueError("Invalid choice range")
 
 
 def select_best_distribution_asset(

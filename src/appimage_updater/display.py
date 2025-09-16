@@ -643,16 +643,36 @@ def has_rotation_suffix(filename: str) -> bool:
 
 def get_rotation_indicator(filename: str) -> str:
     """Get a visual indicator for rotation status."""
-    if filename.endswith(".current"):
+    if _is_current_file(filename):
         return " [green](current)[/green]"
-    elif filename.endswith(".old"):
+    elif _is_previous_file(filename):
         return " [yellow](previous)[/yellow]"
-    elif ".old" in filename and filename.split(".old")[-1].isdigit():
-        old_num = filename.split(".old")[-1]
-        return f" [dim](old-{old_num})[/dim]"
+    elif _is_numbered_old_file(filename):
+        return _get_numbered_old_indicator(filename)
     elif has_rotation_suffix(filename):
         return " [blue](rotated)[/blue]"
     return ""
+
+
+def _is_current_file(filename: str) -> bool:
+    """Check if file is the current rotation file."""
+    return filename.endswith(".current")
+
+
+def _is_previous_file(filename: str) -> bool:
+    """Check if file is the previous rotation file."""
+    return filename.endswith(".old")
+
+
+def _is_numbered_old_file(filename: str) -> bool:
+    """Check if file is a numbered old rotation file."""
+    return ".old" in filename and filename.split(".old")[-1].isdigit()
+
+
+def _get_numbered_old_indicator(filename: str) -> str:
+    """Get indicator for numbered old rotation files."""
+    old_num = filename.split(".old")[-1]
+    return f" [dim](old-{old_num})[/dim]"
 
 
 def get_symlinks_info(app: Any) -> str:
