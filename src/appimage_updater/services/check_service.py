@@ -68,26 +68,33 @@ class CheckService:
         Returns:
             List of update candidates
         """
-        # Display results
+        self._display_check_results(check_results, dry_run)
+        candidates = self._extract_update_candidates(check_results)
+        self._log_check_summary(check_results, candidates)
+        return candidates
+
+    def _display_check_results(self, check_results: list[Any], dry_run: bool) -> None:
+        """Display check results to user."""
         logger.debug("Displaying check results")
         display_check_results(check_results, show_urls=dry_run)
 
-        # Filter successful results with updates
+    def _extract_update_candidates(self, check_results: list[Any]) -> list[Any]:
+        """Extract update candidates from check results."""
         logger.debug("Filtering results for update candidates")
-        candidates = [
+        return [
             result.candidate
             for result in check_results
             if result.success and result.candidate and result.candidate.needs_update
         ]
 
+    def _log_check_summary(self, check_results: list[Any], candidates: list[Any]) -> None:
+        """Log summary of check results."""
         successful_checks = sum(1 for r in check_results if r.success)
         failed_checks = len(check_results) - successful_checks
         logger.debug(
             f"Check results: {successful_checks} successful, {failed_checks} failed, "
             f"{len(candidates)} updates available"
         )
-
-        return candidates
 
     async def check_for_updates(
         self,

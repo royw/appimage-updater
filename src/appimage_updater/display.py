@@ -24,6 +24,29 @@ from .models import CheckResult
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 
 
+def _build_path_from_parts(parts: list[str], max_width: int) -> tuple[list[str], int]:
+    """Build path parts list from end to beginning within width limit."""
+    result_parts: list[str] = []
+    current_length = 0
+
+    for part in reversed(parts):
+        part_length = len(part) + (1 if result_parts else 0)  # +1 for separator
+        if current_length + part_length <= max_width or not result_parts:
+            result_parts.insert(0, part)
+            current_length += part_length
+        else:
+            break
+
+    return result_parts, current_length
+
+
+def _add_ellipsis_if_truncated(result_parts: list[str], original_parts: list[str]) -> list[str]:
+    """Add ellipsis at beginning if path was truncated."""
+    if len(result_parts) < len(original_parts):
+        result_parts.insert(0, "...")
+    return result_parts
+
+
 def _wrap_path(path: str, max_width: int = 40) -> str:
     """Wrap a path by breaking on path separators."""
     if len(path) <= max_width:
@@ -33,24 +56,30 @@ def _wrap_path(path: str, max_width: int = 40) -> str:
     parts = path.replace("\\", "/").split("/")
     if len(parts) > 1:
         # Start from the end and work backwards to preserve meaningful parts
-        result_parts: list[str] = []
-        current_length = 0
-
-        for part in reversed(parts):
-            part_length = len(part) + (1 if result_parts else 0)  # +1 for separator
-            if current_length + part_length <= max_width or not result_parts:
-                result_parts.insert(0, part)
-                current_length += part_length
-            else:
-                # Add ellipsis at the beginning if we had to truncate
-                if len(result_parts) < len(parts):
-                    result_parts.insert(0, "...")
-                break
-
+        result_parts, _ = _build_path_from_parts(parts, max_width)
+        result_parts = _add_ellipsis_if_truncated(result_parts, parts)
         return "/".join(result_parts)
 
     # Fallback to simple truncation if no separators
     return "..." + path[-(max_width - 3) :]
+
+
+def _wrap_github_url(url: str) -> str:
+    """Extract key parts from GitHub URL for display."""
+    parts = url.split("/")
+    if len(parts) >= 5:  # https://github.com/user/repo
+        return f"{parts[2]}/{parts[3]}/{parts[4]}"
+    return url
+
+
+def _wrap_generic_url(url: str, max_width: int) -> str:
+    """Wrap generic URL by preserving domain and truncating path."""
+    protocol, rest = url.split("://", 1)
+    if "/" in rest:
+        domain, path = rest.split("/", 1)
+        if len(domain) + len(path) + 4 > max_width:  # +4 for ://
+            return f"{domain}/...{path[-(max_width - len(domain) - 7) :]}"
+    return url
 
 
 def _wrap_url(url: str, max_width: int = 50) -> str:
@@ -60,17 +89,13 @@ def _wrap_url(url: str, max_width: int = 50) -> str:
 
     # For GitHub URLs, preserve the important parts
     if "github.com" in url:
-        parts = url.split("/")
-        if len(parts) >= 5:  # https://github.com/user/repo
-            return f"{parts[2]}/{parts[3]}/{parts[4]}"
+        return _wrap_github_url(url)
 
     # For other URLs, try to preserve domain and path
     if "://" in url:
-        protocol, rest = url.split("://", 1)
-        if "/" in rest:
-            domain, path = rest.split("/", 1)
-            if len(domain) + len(path) + 4 > max_width:  # +4 for ://
-                return f"{domain}/...{path[-(max_width - len(domain) - 7) :]}"
+        wrapped = _wrap_generic_url(url, max_width)
+        if wrapped != url:
+            return wrapped
 
     # Fallback truncation
     return url[: max_width - 3] + "..."
@@ -171,6 +196,30 @@ def _create_no_candidate_row(result: CheckResult, show_urls: bool) -> list[str]:
     return row
 
 
+def _get_success_status_and_indicator(candidate: Any) -> tuple[str, str]:
+    """Get status text and update indicator for successful results."""
+    if candidate.needs_update:
+        return "⬆️ Update available", "⬆️"
+    else:
+        return "✅ Up to date", "✅"
+
+
+def _format_success_versions(candidate: Any) -> tuple[str, str]:
+    """Format current and latest versions for display."""
+    current = _format_version_display(candidate.current_version) or "[dim]None"
+    latest = _format_version_display(candidate.latest_version)
+    return current, latest
+
+
+def _add_url_if_requested(row: list[str], show_urls: bool, candidate: Any) -> list[str]:
+    """Add URL column to row if requested."""
+    if show_urls:
+        url = candidate.asset.url if candidate else "-"
+        url = _wrap_url(url, 60)
+        row.append(url)
+    return row
+
+
 def _create_success_row(result: CheckResult, show_urls: bool) -> list[str]:
     """Create row for successful results."""
     candidate = result.candidate
@@ -178,10 +227,8 @@ def _create_success_row(result: CheckResult, show_urls: bool) -> list[str]:
         # This shouldn't happen for success rows, but handle it gracefully
         return _create_error_row(result, show_urls)
 
-    status = "✅ Up to date" if not candidate.needs_update else "⬆️ Update available"
-    current = _format_version_display(candidate.current_version) or "[dim]None"
-    latest = _format_version_display(candidate.latest_version)
-    update_indicator = "⬆️" if candidate.needs_update else "✅"
+    status, update_indicator = _get_success_status_and_indicator(candidate)
+    current, latest = _format_success_versions(candidate)
 
     row = [
         result.app_name,
@@ -191,12 +238,7 @@ def _create_success_row(result: CheckResult, show_urls: bool) -> list[str]:
         update_indicator,
     ]
 
-    if show_urls:
-        url = candidate.asset.url if candidate else "-"
-        url = _wrap_url(url, 60)
-        row.append(url)
-
-    return row
+    return _add_url_if_requested(row, show_urls, candidate)
 
 
 def _format_version_display(version: str | None) -> str:
@@ -216,23 +258,38 @@ def _format_version_display(version: str | None) -> str:
         return version
 
 
-def _display_url_table(results: list[CheckResult]) -> None:
-    """Display a separate table with full download URLs."""
-    # Filter results that have candidates with URLs
+def _extract_url_results(results: list[CheckResult]) -> list[tuple[str, str]]:
+    """Extract URL results from check results."""
     url_results = []
     for result in results:
         if result.success and result.candidate and result.candidate.asset:
             url_results.append((result.app_name, result.candidate.asset.url))
+    return url_results
+
+
+def _create_url_table() -> Table:
+    """Create and configure URL table."""
+    url_table = Table(title="Download URLs")
+    url_table.add_column("Application", style="cyan")
+    url_table.add_column("Download URL", style="blue", no_wrap=True)
+    return url_table
+
+
+def _populate_url_table(url_table: Table, url_results: list[tuple[str, str]]) -> None:
+    """Populate URL table with results."""
+    for app_name, url in url_results:
+        url_table.add_row(app_name, url)
+
+
+def _display_url_table(results: list[CheckResult]) -> None:
+    """Display a separate table with full download URLs."""
+    url_results = _extract_url_results(results)
 
     if not url_results:
         return
 
-    url_table = Table(title="Download URLs")
-    url_table.add_column("Application", style="cyan")
-    url_table.add_column("Download URL", style="blue", no_wrap=True)
-
-    for app_name, url in url_results:
-        url_table.add_row(app_name, url)
+    url_table = _create_url_table()
+    _populate_url_table(url_table, url_results)
 
     console.print()  # Add spacing
     console.print(url_table)
@@ -353,16 +410,31 @@ def add_checksum_config_lines(app: Any, config_lines: list[str]) -> None:
             config_lines.append(f"  [dim]Required:[/dim] {'Yes' if app.checksum.required else 'No'}")
 
 
+def _add_rotation_status_line(app: Any, config_lines: list[str]) -> None:
+    """Add rotation status line."""
+    rotation_status = "Enabled" if app.rotation_enabled else "Disabled"
+    config_lines.append(f"[bold]File Rotation:[/bold] {rotation_status}")
+
+
+def _add_retain_count_line(app: Any, config_lines: list[str]) -> None:
+    """Add retain count line if applicable."""
+    if hasattr(app, "retain_count"):
+        config_lines.append(f"  [dim]Retain Count:[/dim] {app.retain_count} files")
+
+
+def _add_managed_symlink_line(app: Any, config_lines: list[str]) -> None:
+    """Add managed symlink line if applicable."""
+    if hasattr(app, "symlink_path") and app.symlink_path:
+        config_lines.append(f"  [dim]Managed Symlink:[/dim] {app.symlink_path}")
+
+
 def add_rotation_config_lines(app: Any, config_lines: list[str]) -> None:
     """Add file rotation configuration lines if applicable."""
     if hasattr(app, "rotation_enabled"):
-        rotation_status = "Enabled" if app.rotation_enabled else "Disabled"
-        config_lines.append(f"[bold]File Rotation:[/bold] {rotation_status}")
+        _add_rotation_status_line(app, config_lines)
         if app.rotation_enabled:
-            if hasattr(app, "retain_count"):
-                config_lines.append(f"  [dim]Retain Count:[/dim] {app.retain_count} files")
-            if hasattr(app, "symlink_path") and app.symlink_path:
-                config_lines.append(f"  [dim]Managed Symlink:[/dim] {app.symlink_path}")
+            _add_retain_count_line(app, config_lines)
+            _add_managed_symlink_line(app, config_lines)
 
 
 def get_files_info(app: Any) -> str:
@@ -404,30 +476,48 @@ def find_matching_appimage_files(download_dir: Path, pattern: str) -> list[Path]
     return matching_files
 
 
-def format_file_groups(rotation_groups: dict[str, list[Path]]) -> str:
-    """Format file groups into display strings."""
-    file_lines = []
+def _sort_files_by_modification_time(files: list[Path]) -> None:
+    """Sort files by modification time (newest first)."""
+    files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
 
-    for group_name, files in rotation_groups.items():
-        # Sort files by modification time (newest first)
-        files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
 
-        if group_name != "standalone":
-            file_lines.append(f"[bold blue]{group_name.title()} Files:[/bold blue]")
+def _add_group_header(file_lines: list[str], group_name: str) -> None:
+    """Add group header if not standalone."""
+    if group_name != "standalone":
+        file_lines.append(f"[bold blue]{group_name.title()} Files:[/bold blue]")
 
-        for file_path in files:
-            file_info_lines = format_single_file_info(file_path)
-            file_lines.extend(file_info_lines)
-            file_lines.append("")  # Empty line between files
 
-        # Add separator between groups
-        if group_name != "standalone" and file_lines:
-            file_lines.append("")
+def _add_file_info_lines(file_lines: list[str], files: list[Path]) -> None:
+    """Add file information lines for all files in group."""
+    for file_path in files:
+        file_info_lines = format_single_file_info(file_path)
+        file_lines.extend(file_info_lines)
+        file_lines.append("")  # Empty line between files
 
-    # Remove last empty line
+
+def _add_group_separator(file_lines: list[str], group_name: str) -> None:
+    """Add separator between groups if needed."""
+    if group_name != "standalone" and file_lines:
+        file_lines.append("")
+
+
+def _remove_trailing_empty_lines(file_lines: list[str]) -> None:
+    """Remove trailing empty lines."""
     while file_lines and file_lines[-1] == "":
         file_lines.pop()
 
+
+def format_file_groups(rotation_groups: dict[str, list[Path]]) -> str:
+    """Format file groups into display strings."""
+    file_lines: list[str] = []
+
+    for group_name, files in rotation_groups.items():
+        _sort_files_by_modification_time(files)
+        _add_group_header(file_lines, group_name)
+        _add_file_info_lines(file_lines, files)
+        _add_group_separator(file_lines, group_name)
+
+    _remove_trailing_empty_lines(file_lines)
     return "\n".join(file_lines)
 
 
@@ -452,6 +542,35 @@ def format_single_file_info(file_path: Path) -> list[str]:
     ]
 
 
+def _create_base_name_groups(files: list[Path]) -> dict[str, list[Path]]:
+    """Create mapping of base names to files."""
+    base_name_groups: dict[str, list[Path]] = {}
+    for file_path in files:
+        base_name = get_base_appimage_name(file_path.name)
+        if base_name not in base_name_groups:
+            base_name_groups[base_name] = []
+        base_name_groups[base_name].append(file_path)
+    return base_name_groups
+
+
+def _is_rotation_group(file_list: list[Path]) -> bool:
+    """Check if a file list represents a rotation group."""
+    return len(file_list) > 1 or any(has_rotation_suffix(f.name) for f in file_list)
+
+
+def _classify_file_groups(base_name_groups: dict[str, list[Path]]) -> dict[str, list[Path]]:
+    """Classify file groups into rotated and standalone categories."""
+    rotation_groups: dict[str, list[Path]] = {"rotated": [], "standalone": []}
+
+    for _base_name, file_list in base_name_groups.items():
+        if _is_rotation_group(file_list):
+            rotation_groups["rotated"].extend(file_list)
+        else:
+            rotation_groups["standalone"].extend(file_list)
+
+    return rotation_groups
+
+
 def group_files_by_rotation(files: list[Path]) -> dict[str, list[Path]]:
     """Group files by their rotation status.
 
@@ -459,22 +578,8 @@ def group_files_by_rotation(files: list[Path]) -> dict[str, list[Path]]:
     - 'rotated': Files that are part of a rotation group (have .current, .old, etc.)
     - 'standalone': Files that don't appear to be part of rotation
     """
-    rotation_groups: dict[str, list[Path]] = {"rotated": [], "standalone": []}
-
-    # Create mapping of base names to files
-    base_name_groups: dict[str, list[Path]] = {}
-    for file_path in files:
-        base_name = get_base_appimage_name(file_path.name)
-        if base_name not in base_name_groups:
-            base_name_groups[base_name] = []
-        base_name_groups[base_name].append(file_path)
-
-    # Classify each group
-    for _base_name, file_list in base_name_groups.items():
-        if len(file_list) > 1 or any(has_rotation_suffix(f.name) for f in file_list):
-            rotation_groups["rotated"].extend(file_list)
-        else:
-            rotation_groups["standalone"].extend(file_list)
+    base_name_groups = _create_base_name_groups(files)
+    rotation_groups = _classify_file_groups(base_name_groups)
 
     # Remove empty groups
     return {k: v for k, v in rotation_groups.items() if v}
@@ -496,20 +601,28 @@ def get_base_appimage_name(filename: str) -> str:
     return filename
 
 
+def _has_numbered_old_suffix(filename: str) -> bool:
+    """Check if filename has a numbered old suffix (.old2, .old3, etc.)."""
+    if ".old" not in filename:
+        return False
+
+    parts = filename.split(".old")
+    if len(parts) <= 1:
+        return False
+
+    suffix = parts[-1]
+    return suffix == "" or (suffix.isdigit() and int(suffix) >= 2)
+
+
+def _has_basic_rotation_suffix(filename: str) -> bool:
+    """Check if filename has basic rotation suffixes (.current, .old)."""
+    rotation_suffixes = [".current", ".old"]
+    return any(filename.endswith(suffix) for suffix in rotation_suffixes)
+
+
 def has_rotation_suffix(filename: str) -> bool:
     """Check if filename has a rotation suffix like .current, .old, .old2, etc."""
-    rotation_suffixes = [".current", ".old"]
-
-    # Check for numbered old files (.old2, .old3, etc.)
-    if ".old" in filename:
-        parts = filename.split(".old")
-        if len(parts) > 1:
-            suffix = parts[-1]
-            # Check if it's just .old or .old followed by a number
-            if suffix == "" or (suffix.isdigit() and int(suffix) >= 2):
-                return True
-
-    return any(filename.endswith(suffix) for suffix in rotation_suffixes)
+    return _has_numbered_old_suffix(filename) or _has_basic_rotation_suffix(filename)
 
 
 def get_rotation_indicator(filename: str) -> str:
@@ -563,6 +676,50 @@ def check_configured_symlink(symlink_path: Path, download_dir: Path) -> tuple[Pa
     return None
 
 
+def _check_configured_symlink_if_provided(
+    configured_symlink_path: Path | None, download_dir: Path
+) -> list[tuple[Path, Path]]:
+    """Check configured symlink path if provided."""
+    found_symlinks = []
+    if configured_symlink_path:
+        configured_symlink = check_configured_symlink(configured_symlink_path, download_dir)
+        if configured_symlink:
+            found_symlinks.append(configured_symlink)
+    return found_symlinks
+
+
+def _get_search_locations(download_dir: Path) -> list[Path]:
+    """Get search locations matching go-appimage's appimaged search paths."""
+    return [
+        download_dir,  # Always include the download directory
+        Path("/usr/local/bin"),
+        Path("/opt"),
+        Path.home() / "Applications",
+        Path.home() / ".local" / "bin",
+        Path.home() / "Downloads",
+    ]
+
+
+def _scan_all_locations(search_locations: list[Path], download_dir: Path) -> list[tuple[Path, Path]]:
+    """Scan all search locations for symlinks."""
+    found_symlinks = []
+    for location in search_locations:
+        if location.exists():
+            found_symlinks.extend(scan_directory_for_symlinks(location, download_dir))
+    return found_symlinks
+
+
+def _remove_duplicate_symlinks(found_symlinks: list[tuple[Path, Path]]) -> list[tuple[Path, Path]]:
+    """Remove duplicate symlinks from the list."""
+    seen = set()
+    unique_symlinks = []
+    for symlink_path, target_path in found_symlinks:
+        if symlink_path not in seen:
+            seen.add(symlink_path)
+            unique_symlinks.append((symlink_path, target_path))
+    return unique_symlinks
+
+
 def find_appimage_symlinks(download_dir: Path, configured_symlink_path: Path | None = None) -> list[tuple[Path, Path]]:
     """Find symlinks pointing to AppImage files in the download directory.
 
@@ -574,37 +731,10 @@ def find_appimage_symlinks(download_dir: Path, configured_symlink_path: Path | N
     - ~/Downloads
     - $PATH directories
     """
-    found_symlinks = []
-
-    # First, check the configured symlink path if provided
-    if configured_symlink_path:
-        configured_symlink = check_configured_symlink(configured_symlink_path, download_dir)
-        if configured_symlink:
-            found_symlinks.append(configured_symlink)
-
-    # Search locations matching go-appimage's appimaged search paths
-    search_locations = [
-        download_dir,  # Always include the download directory
-        Path("/usr/local/bin"),
-        Path("/opt"),
-        Path.home() / "Applications",
-        Path.home() / ".local" / "bin",
-        Path.home() / "Downloads",
-    ]
-
-    for location in search_locations:
-        if location.exists():
-            found_symlinks.extend(scan_directory_for_symlinks(location, download_dir))
-
-    # Remove duplicates (configured symlink might also be found in scanning)
-    seen = set()
-    unique_symlinks = []
-    for symlink_path, target_path in found_symlinks:
-        if symlink_path not in seen:
-            seen.add(symlink_path)
-            unique_symlinks.append((symlink_path, target_path))
-
-    return unique_symlinks
+    found_symlinks = _check_configured_symlink_if_provided(configured_symlink_path, download_dir)
+    search_locations = _get_search_locations(download_dir)
+    found_symlinks.extend(_scan_all_locations(search_locations, download_dir))
+    return _remove_duplicate_symlinks(found_symlinks)
 
 
 def scan_directory_for_symlinks(location: Path, download_dir: Path) -> list[tuple[Path, Path]]:

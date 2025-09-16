@@ -401,23 +401,39 @@ class Downloader:
         """Parse expected checksum from checksum file."""
         checksum_content = checksum_path.read_text().strip()
 
-        # Try different checksum file formats
         for line in checksum_content.split("\n"):
             line = line.strip()
-            if not line or line.startswith("#"):
+            if self._should_skip_checksum_line(line):
                 continue
 
-            # Format: hash filename
-            if " " in line:
-                hash_part, file_part = line.split(" ", 1)
-                file_part = file_part.strip().lstrip("*")  # Remove binary indicator
-                if file_part == filename or file_part.endswith(filename):
-                    return hash_part.lower()
+            checksum = self._extract_checksum_from_line(line, filename)
+            if checksum:
+                return checksum
 
-            # Format: just the hash (single file)
-            elif len(line) in [32, 40, 64]:  # MD5, SHA1, SHA256 lengths
-                return line.lower()
+        return None
 
+    def _should_skip_checksum_line(self, line: str) -> bool:
+        """Check if a checksum file line should be skipped."""
+        return not line or line.startswith("#")
+
+    def _extract_checksum_from_line(self, line: str, filename: str) -> str | None:
+        """Extract checksum from a single line, matching against filename."""
+        # Format: hash filename
+        if " " in line:
+            return self._parse_hash_filename_format(line, filename)
+
+        # Format: just the hash (single file)
+        elif len(line) in [32, 40, 64]:  # MD5, SHA1, SHA256 lengths
+            return line.lower()
+
+        return None
+
+    def _parse_hash_filename_format(self, line: str, filename: str) -> str | None:
+        """Parse checksum from 'hash filename' format line."""
+        hash_part, file_part = line.split(" ", 1)
+        file_part = file_part.strip().lstrip("*")  # Remove binary indicator
+        if file_part == filename or file_part.endswith(filename):
+            return hash_part.lower()
         return None
 
     def _calculate_file_hash(self, file_path: Path, algorithm: str) -> str:
@@ -437,8 +453,7 @@ class Downloader:
             return None
 
         try:
-            # Download checksum file
-            checksum_path = candidate.download_path.parent / f"{candidate.download_path.name}.checksum"
+            checksum_path = self._get_checksum_file_path(candidate)
 
             success = await self._download_checksum_file(
                 candidate.asset.checksum_asset.url,
@@ -446,35 +461,13 @@ class Downloader:
             )
 
             if not success:
-                return ChecksumResult(
-                    verified=False,
-                    error_message="Failed to download checksum file",
-                )
+                return self._create_download_failure_result()
 
-            # Determine algorithm from checksum filename
-            algorithm = "sha256"  # Default
-            checksum_name = candidate.asset.checksum_asset.name.lower()
-            if "sha1" in checksum_name:
-                algorithm = "sha1"
-            elif "md5" in checksum_name:
-                algorithm = "md5"
+            algorithm = self._determine_checksum_algorithm(candidate.asset.checksum_asset.name)
+            result = self._perform_checksum_verification(candidate, checksum_path, algorithm)
 
-            # Verify checksum
-            result = self._verify_checksum(
-                candidate.download_path,
-                checksum_path,
-                algorithm,
-            )
-
-            # Clean up checksum file
-            if checksum_path.exists():
-                checksum_path.unlink()
-
-            logger.debug(
-                f"Checksum verification for {candidate.app_name}: "
-                f"{'✓ PASS' if result.verified else '✗ FAIL'} "
-                f"({algorithm.upper()})"
-            )
+            self._cleanup_checksum_file(checksum_path)
+            self._log_verification_result(candidate, result, algorithm)
 
             return result
 
@@ -484,6 +477,49 @@ class Downloader:
                 verified=False,
                 error_message=f"Checksum verification error: {e}",
             )
+
+    def _get_checksum_file_path(self, candidate: UpdateCandidate) -> Path:
+        """Get the path for the checksum file."""
+        return candidate.download_path.parent / f"{candidate.download_path.name}.checksum"
+
+    def _create_download_failure_result(self) -> ChecksumResult:
+        """Create a ChecksumResult for download failure."""
+        return ChecksumResult(
+            verified=False,
+            error_message="Failed to download checksum file",
+        )
+
+    def _determine_checksum_algorithm(self, checksum_name: str) -> str:
+        """Determine the checksum algorithm from the filename."""
+        checksum_name_lower = checksum_name.lower()
+        if "sha1" in checksum_name_lower:
+            return "sha1"
+        elif "md5" in checksum_name_lower:
+            return "md5"
+        return "sha256"  # Default
+
+    def _perform_checksum_verification(
+        self, candidate: UpdateCandidate, checksum_path: Path, algorithm: str
+    ) -> ChecksumResult:
+        """Perform the actual checksum verification."""
+        return self._verify_checksum(
+            candidate.download_path,
+            checksum_path,
+            algorithm,
+        )
+
+    def _cleanup_checksum_file(self, checksum_path: Path) -> None:
+        """Clean up the temporary checksum file."""
+        if checksum_path.exists():
+            checksum_path.unlink()
+
+    def _log_verification_result(self, candidate: UpdateCandidate, result: ChecksumResult, algorithm: str) -> None:
+        """Log the checksum verification result."""
+        logger.debug(
+            f"Checksum verification for {candidate.app_name}: "
+            f"{'✓ PASS' if result.verified else '✗ FAIL'} "
+            f"({algorithm.upper()})"
+        )
 
     async def _handle_rotation(self, candidate: UpdateCandidate) -> Path:
         """Handle image rotation if enabled in app config."""

@@ -28,68 +28,109 @@ def show_global_config(config_file: Path | None = None, config_dir: Path | None 
         global_config = config.global_config
         defaults = global_config.defaults
 
-        console.print("[bold blue]Global Configuration[/bold blue]")
-        console.print()
-
-        # Basic settings
-        console.print("[bold]Basic Settings:[/bold]")
-        table = Table(show_header=False, box=None, pad_edge=False)
-        table.add_column("Setting", style="cyan", width=25)
-        table.add_column("Setting Name", style="dim", width=20)
-        table.add_column("Value", style="white")
-
-        table.add_row(
-            "Concurrent Downloads", "[dim](concurrent-downloads)[/dim]", str(global_config.concurrent_downloads)
-        )
-        table.add_row("Timeout (seconds)", "[dim](timeout-seconds)[/dim]", str(global_config.timeout_seconds))
-        table.add_row("User Agent", "", global_config.user_agent)
-        console.print(table)
-        console.print()
-
-        # Default settings
-        console.print("[bold]Default Settings for New Applications:[/bold]")
-        defaults_table = Table(show_header=False, box=None, pad_edge=False)
-        defaults_table.add_column("Setting", style="cyan", width=25)
-        defaults_table.add_column("Setting Name", style="dim", width=20)
-        defaults_table.add_column("Value", style="white")
-
-        defaults_table.add_row(
-            "Download Directory",
-            "[dim](download-dir)[/dim]",
-            str(defaults.download_dir) if defaults.download_dir else "None (use current directory)",
-        )
-        defaults_table.add_row(
-            "Rotation Enabled", "[dim](rotation-enabled)[/dim]", "Yes" if defaults.rotation_enabled else "No"
-        )
-        defaults_table.add_row("Retain Count", "[dim](retain-count)[/dim]", str(defaults.retain_count))
-        defaults_table.add_row(
-            "Symlink Enabled", "[dim](symlink-enabled)[/dim]", "Yes" if defaults.symlink_enabled else "No"
-        )
-        defaults_table.add_row(
-            "Symlink Directory",
-            "[dim](symlink-dir)[/dim]",
-            str(defaults.symlink_dir) if defaults.symlink_dir else "None",
-        )
-        defaults_table.add_row("Symlink Pattern", "[dim](symlink-pattern)[/dim]", defaults.symlink_pattern)
-        defaults_table.add_row("Auto Subdirectory", "[dim](auto-subdir)[/dim]", "Yes" if defaults.auto_subdir else "No")
-        defaults_table.add_row(
-            "Checksum Enabled", "[dim](checksum-enabled)[/dim]", "Yes" if defaults.checksum_enabled else "No"
-        )
-        defaults_table.add_row(
-            "Checksum Algorithm", "[dim](checksum-algorithm)[/dim]", defaults.checksum_algorithm.upper()
-        )
-        defaults_table.add_row("Checksum Pattern", "[dim](checksum-pattern)[/dim]", defaults.checksum_pattern)
-        defaults_table.add_row(
-            "Checksum Required", "[dim](checksum-required)[/dim]", "Yes" if defaults.checksum_required else "No"
-        )
-        defaults_table.add_row("Prerelease", "[dim](prerelease)[/dim]", "Yes" if defaults.prerelease else "No")
-
-        console.print(defaults_table)
+        _print_config_header()
+        _print_basic_settings_table(global_config)
+        _print_defaults_settings_table(defaults)
 
     except ConfigLoadError as e:
-        console.print(f"[red]Error loading configuration: {e}")
-        console.print("[yellow]Run 'appimage-updater init' to create a configuration.")
-        raise typer.Exit(1) from e
+        _handle_config_load_error(e)
+
+
+def _print_config_header() -> None:
+    """Print the configuration header."""
+    console.print("[bold blue]Global Configuration[/bold blue]")
+    console.print()
+
+
+def _print_basic_settings_table(global_config: Any) -> None:
+    """Print the basic settings table."""
+    console.print("[bold]Basic Settings:[/bold]")
+    table = Table(show_header=False, box=None, pad_edge=False)
+    table.add_column("Setting", style="cyan", width=25)
+    table.add_column("Setting Name", style="dim", width=20)
+    table.add_column("Value", style="white")
+
+    table.add_row("Concurrent Downloads", "[dim](concurrent-downloads)[/dim]", str(global_config.concurrent_downloads))
+    table.add_row("Timeout (seconds)", "[dim](timeout-seconds)[/dim]", str(global_config.timeout_seconds))
+    table.add_row("User Agent", "", global_config.user_agent)
+    console.print(table)
+    console.print()
+
+
+def _print_defaults_settings_table(defaults: Any) -> None:
+    """Print the default settings table."""
+    console.print("[bold]Default Settings for New Applications:[/bold]")
+    defaults_table = Table(show_header=False, box=None, pad_edge=False)
+    defaults_table.add_column("Setting", style="cyan", width=25)
+    defaults_table.add_column("Setting Name", style="dim", width=20)
+    defaults_table.add_column("Value", style="white")
+
+    _add_defaults_table_rows(defaults_table, defaults)
+    console.print(defaults_table)
+
+
+def _add_defaults_table_rows(defaults_table: Table, defaults: Any) -> None:
+    """Add all rows to the defaults table."""
+    _add_directory_rows(defaults_table, defaults)
+    _add_rotation_rows(defaults_table, defaults)
+    _add_symlink_rows(defaults_table, defaults)
+    _add_checksum_rows(defaults_table, defaults)
+    _add_misc_rows(defaults_table, defaults)
+
+
+def _add_directory_rows(defaults_table: Table, defaults: Any) -> None:
+    """Add directory-related rows to the table."""
+    defaults_table.add_row(
+        "Download Directory",
+        "[dim](download-dir)[/dim]",
+        str(defaults.download_dir) if defaults.download_dir else "None (use current directory)",
+    )
+    defaults_table.add_row("Auto Subdirectory", "[dim](auto-subdir)[/dim]", "Yes" if defaults.auto_subdir else "No")
+
+
+def _add_rotation_rows(defaults_table: Table, defaults: Any) -> None:
+    """Add rotation-related rows to the table."""
+    defaults_table.add_row(
+        "Rotation Enabled", "[dim](rotation-enabled)[/dim]", "Yes" if defaults.rotation_enabled else "No"
+    )
+    defaults_table.add_row("Retain Count", "[dim](retain-count)[/dim]", str(defaults.retain_count))
+
+
+def _add_symlink_rows(defaults_table: Table, defaults: Any) -> None:
+    """Add symlink-related rows to the table."""
+    defaults_table.add_row(
+        "Symlink Enabled", "[dim](symlink-enabled)[/dim]", "Yes" if defaults.symlink_enabled else "No"
+    )
+    defaults_table.add_row(
+        "Symlink Directory",
+        "[dim](symlink-dir)[/dim]",
+        str(defaults.symlink_dir) if defaults.symlink_dir else "None",
+    )
+    defaults_table.add_row("Symlink Pattern", "[dim](symlink-pattern)[/dim]", defaults.symlink_pattern)
+
+
+def _add_checksum_rows(defaults_table: Table, defaults: Any) -> None:
+    """Add checksum-related rows to the table."""
+    defaults_table.add_row(
+        "Checksum Enabled", "[dim](checksum-enabled)[/dim]", "Yes" if defaults.checksum_enabled else "No"
+    )
+    defaults_table.add_row("Checksum Algorithm", "[dim](checksum-algorithm)[/dim]", defaults.checksum_algorithm.upper())
+    defaults_table.add_row("Checksum Pattern", "[dim](checksum-pattern)[/dim]", defaults.checksum_pattern)
+    defaults_table.add_row(
+        "Checksum Required", "[dim](checksum-required)[/dim]", "Yes" if defaults.checksum_required else "No"
+    )
+
+
+def _add_misc_rows(defaults_table: Table, defaults: Any) -> None:
+    """Add miscellaneous rows to the table."""
+    defaults_table.add_row("Prerelease", "[dim](prerelease)[/dim]", "Yes" if defaults.prerelease else "No")
+
+
+def _handle_config_load_error(e: ConfigLoadError) -> None:
+    """Handle configuration load errors."""
+    console.print(f"[red]Error loading configuration: {e}")
+    console.print("[yellow]Run 'appimage-updater init' to create a configuration.")
+    raise typer.Exit(1) from e
 
 
 def show_effective_config(app_name: str, config_file: Path | None = None, config_dir: Path | None = None) -> None:
@@ -99,51 +140,70 @@ def show_effective_config(app_name: str, config_file: Path | None = None, config
         effective_config = config.get_effective_config_for_app(app_name)
 
         if effective_config is None:
-            console.print(f"[red]Application '{app_name}' not found in configuration.")
-            raise typer.Exit(1)
+            _handle_app_not_found(app_name)
 
-        console.print(f"[bold blue]Effective Configuration for '{app_name}'[/bold blue]")
-        console.print()
-
-        # Display the effective configuration
-        table = Table(show_header=False, box=None, pad_edge=False)
-        table.add_column("Setting", style="cyan", width=20)
-        table.add_column("Value", style="white")
-
-        table.add_row("Name", effective_config["name"])
-        table.add_row("Source Type", effective_config["source_type"])
-        table.add_row("URL", effective_config["url"])
-        table.add_row("Download Directory", effective_config["download_dir"])
-        table.add_row("Pattern", effective_config["pattern"])
-        table.add_row("Enabled", "Yes" if effective_config["enabled"] else "No")
-        table.add_row("Prerelease", "Yes" if effective_config["prerelease"] else "No")
-        table.add_row("Rotation Enabled", "Yes" if effective_config["rotation_enabled"] else "No")
-
-        if effective_config.get("retain_count"):
-            table.add_row("Retain Count", str(effective_config["retain_count"]))
-        if effective_config.get("symlink_path"):
-            table.add_row("Symlink Path", effective_config["symlink_path"])
-
-        console.print(table)
-        console.print()
-
-        # Checksum settings
-        checksum = effective_config["checksum"]
-        console.print("[bold]Checksum Settings:[/bold]")
-        checksum_table = Table(show_header=False, box=None, pad_edge=False)
-        checksum_table.add_column("Setting", style="cyan", width=20)
-        checksum_table.add_column("Value", style="white")
-
-        checksum_table.add_row("Enabled", "Yes" if checksum["enabled"] else "No")
-        checksum_table.add_row("Algorithm", checksum["algorithm"].upper())
-        checksum_table.add_row("Pattern", checksum["pattern"])
-        checksum_table.add_row("Required", "Yes" if checksum["required"] else "No")
-
-        console.print(checksum_table)
+        _print_effective_config_header(app_name)
+        _print_main_config_table(effective_config)
+        _print_checksum_config_table(effective_config)
 
     except ConfigLoadError as e:
-        console.print(f"[red]Error loading configuration: {e}")
-        raise typer.Exit(1) from e
+        _handle_config_load_error(e)
+
+
+def _handle_app_not_found(app_name: str) -> None:
+    """Handle case where application is not found."""
+    console.print(f"[red]Application '{app_name}' not found in configuration.")
+    raise typer.Exit(1)
+
+
+def _print_effective_config_header(app_name: str) -> None:
+    """Print the effective configuration header."""
+    console.print(f"[bold blue]Effective Configuration for '{app_name}'[/bold blue]")
+    console.print()
+
+
+def _print_main_config_table(effective_config: dict[str, Any]) -> None:
+    """Print the main configuration table."""
+    table = Table(show_header=False, box=None, pad_edge=False)
+    table.add_column("Setting", style="cyan", width=20)
+    table.add_column("Value", style="white")
+
+    _add_main_config_rows(table, effective_config)
+    console.print(table)
+    console.print()
+
+
+def _add_main_config_rows(table: Table, effective_config: dict[str, Any]) -> None:
+    """Add main configuration rows to the table."""
+    table.add_row("Name", effective_config["name"])
+    table.add_row("Source Type", effective_config["source_type"])
+    table.add_row("URL", effective_config["url"])
+    table.add_row("Download Directory", effective_config["download_dir"])
+    table.add_row("Pattern", effective_config["pattern"])
+    table.add_row("Enabled", "Yes" if effective_config["enabled"] else "No")
+    table.add_row("Prerelease", "Yes" if effective_config["prerelease"] else "No")
+    table.add_row("Rotation Enabled", "Yes" if effective_config["rotation_enabled"] else "No")
+
+    if effective_config.get("retain_count"):
+        table.add_row("Retain Count", str(effective_config["retain_count"]))
+    if effective_config.get("symlink_path"):
+        table.add_row("Symlink Path", effective_config["symlink_path"])
+
+
+def _print_checksum_config_table(effective_config: dict[str, Any]) -> None:
+    """Print the checksum configuration table."""
+    checksum = effective_config["checksum"]
+    console.print("[bold]Checksum Settings:[/bold]")
+    checksum_table = Table(show_header=False, box=None, pad_edge=False)
+    checksum_table.add_column("Setting", style="cyan", width=20)
+    checksum_table.add_column("Value", style="white")
+
+    checksum_table.add_row("Enabled", "Yes" if checksum["enabled"] else "No")
+    checksum_table.add_row("Algorithm", checksum["algorithm"].upper())
+    checksum_table.add_row("Pattern", checksum["pattern"])
+    checksum_table.add_row("Required", "Yes" if checksum["required"] else "No")
+
+    console.print(checksum_table)
 
 
 def set_global_config_value(
@@ -168,33 +228,66 @@ def set_global_config_value(
 
 def _apply_setting_change(config: Config, setting: str, value: str) -> None:
     """Apply a single setting change to the configuration."""
-    if setting == "download-dir":
-        config.global_config.defaults.download_dir = Path(value).expanduser() if value != "none" else None
-        console.print(f"[green]Set default download directory to: {value}")
-    elif setting == "symlink-dir":
-        config.global_config.defaults.symlink_dir = Path(value).expanduser() if value != "none" else None
-        console.print(f"[green]Set default symlink directory to: {value}")
-    elif setting == "symlink-pattern":
-        config.global_config.defaults.symlink_pattern = value
-        console.print(f"[green]Set default symlink pattern to: {value}")
-    elif setting in (
+    if _is_path_setting(setting):
+        _apply_path_setting(config, setting, value)
+    elif _is_string_setting(setting):
+        _apply_string_setting(config, setting, value)
+    elif _is_boolean_setting(setting):
+        _apply_boolean_setting(config, setting, value)
+    elif _is_numeric_setting(setting):
+        _apply_numeric_setting(config, setting, value)
+    elif setting == "checksum-algorithm":
+        _apply_checksum_algorithm_setting(config, value)
+    else:
+        _show_available_settings(setting)
+
+
+def _is_path_setting(setting: str) -> bool:
+    """Check if setting is a path-based setting."""
+    return setting in ("download-dir", "symlink-dir")
+
+
+def _is_string_setting(setting: str) -> bool:
+    """Check if setting is a string-based setting."""
+    return setting in ("symlink-pattern", "checksum-pattern")
+
+
+def _is_boolean_setting(setting: str) -> bool:
+    """Check if setting is a boolean-based setting."""
+    return setting in (
         "rotation-enabled",
         "symlink-enabled",
         "checksum-enabled",
         "checksum-required",
         "prerelease",
         "auto-subdir",
-    ):
-        _apply_boolean_setting(config, setting, value)
-    elif setting in ("retain-count", "concurrent-downloads", "timeout-seconds"):
-        _apply_numeric_setting(config, setting, value)
-    elif setting == "checksum-algorithm":
-        _apply_checksum_algorithm_setting(config, value)
+    )
+
+
+def _is_numeric_setting(setting: str) -> bool:
+    """Check if setting is a numeric-based setting."""
+    return setting in ("retain-count", "concurrent-downloads", "timeout-seconds")
+
+
+def _apply_path_setting(config: Config, setting: str, value: str) -> None:
+    """Apply path-based setting changes."""
+    path_value = Path(value).expanduser() if value != "none" else None
+    if setting == "download-dir":
+        config.global_config.defaults.download_dir = path_value
+        console.print(f"[green]Set default download directory to: {value}")
+    elif setting == "symlink-dir":
+        config.global_config.defaults.symlink_dir = path_value
+        console.print(f"[green]Set default symlink directory to: {value}")
+
+
+def _apply_string_setting(config: Config, setting: str, value: str) -> None:
+    """Apply string-based setting changes."""
+    if setting == "symlink-pattern":
+        config.global_config.defaults.symlink_pattern = value
+        console.print(f"[green]Set default symlink pattern to: {value}")
     elif setting == "checksum-pattern":
         config.global_config.defaults.checksum_pattern = value
         console.print(f"[green]Set default checksum pattern to: {value}")
-    else:
-        _show_available_settings(setting)
 
 
 def _apply_boolean_setting(config: Config, setting: str, value: str) -> None:
@@ -225,30 +318,49 @@ def _apply_numeric_setting(config: Config, setting: str, value: str) -> None:
     """Apply numeric setting changes."""
     try:
         numeric_value = int(value)
-
-        if setting == "retain-count":
-            if 1 <= numeric_value <= 10:
-                config.global_config.defaults.retain_count = numeric_value
-                console.print(f"[green]Set default retain count to: {numeric_value}")
-            else:
-                console.print("[red]Retain count must be between 1 and 10")
-                raise typer.Exit(1) from None
-        elif setting == "concurrent-downloads":
-            if 1 <= numeric_value <= 10:
-                config.global_config.concurrent_downloads = numeric_value
-                console.print(f"[green]Set concurrent downloads to: {numeric_value}")
-            else:
-                console.print("[red]Concurrent downloads must be between 1 and 10")
-                raise typer.Exit(1) from None
-        elif setting == "timeout-seconds":
-            if 5 <= numeric_value <= 300:
-                config.global_config.timeout_seconds = numeric_value
-                console.print(f"[green]Set timeout to: {numeric_value} seconds")
-            else:
-                console.print("[red]Timeout must be between 5 and 300 seconds")
-                raise typer.Exit(1) from None
+        _validate_and_apply_numeric_value(config, setting, numeric_value)
     except ValueError:
         console.print(f"[red]{setting.replace('-', ' ').title()} must be a number")
+        raise typer.Exit(1) from None
+
+
+def _validate_and_apply_numeric_value(config: Config, setting: str, numeric_value: int) -> None:
+    """Validate and apply a numeric setting value."""
+    if setting == "retain-count":
+        _apply_retain_count_setting(config, numeric_value)
+    elif setting == "concurrent-downloads":
+        _apply_concurrent_downloads_setting(config, numeric_value)
+    elif setting == "timeout-seconds":
+        _apply_timeout_setting(config, numeric_value)
+
+
+def _apply_retain_count_setting(config: Config, value: int) -> None:
+    """Apply retain count setting with validation."""
+    if 1 <= value <= 10:
+        config.global_config.defaults.retain_count = value
+        console.print(f"[green]Set default retain count to: {value}")
+    else:
+        console.print("[red]Retain count must be between 1 and 10")
+        raise typer.Exit(1) from None
+
+
+def _apply_concurrent_downloads_setting(config: Config, value: int) -> None:
+    """Apply concurrent downloads setting with validation."""
+    if 1 <= value <= 10:
+        config.global_config.concurrent_downloads = value
+        console.print(f"[green]Set concurrent downloads to: {value}")
+    else:
+        console.print("[red]Concurrent downloads must be between 1 and 10")
+        raise typer.Exit(1) from None
+
+
+def _apply_timeout_setting(config: Config, value: int) -> None:
+    """Apply timeout setting with validation."""
+    if 5 <= value <= 300:
+        config.global_config.timeout_seconds = value
+        console.print(f"[green]Set timeout to: {value} seconds")
+    else:
+        console.print("[red]Timeout must be between 5 and 300 seconds")
         raise typer.Exit(1) from None
 
 
@@ -400,61 +512,72 @@ def reset_global_config(config_file: Path | None = None, config_dir: Path | None
 
 def _save_config(config: Config, config_file: Path | None, config_dir: Path | None) -> None:
     """Save configuration to file or directory."""
-    # Determine where to save
+    target_file = _determine_target_file(config_file, config_dir)
+    config_dict = _build_config_dict(config)
+    _preserve_existing_applications(target_file, config_dict)
+    _write_config_file(target_file, config_dict)
+
+
+def _determine_target_file(config_file: Path | None, config_dir: Path | None) -> Path:
+    """Determine the target file path for saving configuration."""
     if config_file:
-        target_file = config_file
+        return config_file
     elif config_dir:
-        # For directory-based configs, we need to save global config separately
-        # or update existing files. For now, create a global config file.
         config_dir.mkdir(parents=True, exist_ok=True)
-        target_file = config_dir / "global.json"
+        return config_dir / "global.json"
     else:
-        # Use default location - prefer directory if it exists
-        default_dir = get_default_config_dir()
-        default_file = get_default_config_path()
+        return _get_default_target_file()
 
-        if default_dir.exists():
-            # Save global config to parent directory, not in apps/
-            config_parent = default_dir.parent
-            config_parent.mkdir(parents=True, exist_ok=True)
-            target_file = config_parent / "config.json"
-        else:
-            # Use single file approach
-            target_file = default_file
-            target_file.parent.mkdir(parents=True, exist_ok=True)
 
-    # Convert config to dict for JSON serialization
-    config_dict: dict[str, Any] = {
+def _get_default_target_file() -> Path:
+    """Get the default target file path."""
+    default_dir = get_default_config_dir()
+    default_file = get_default_config_path()
+
+    if default_dir.exists():
+        # Save global config to parent directory, not in apps/
+        config_parent = default_dir.parent
+        config_parent.mkdir(parents=True, exist_ok=True)
+        return config_parent / "config.json"
+    else:
+        # Use single file approach
+        target_file = default_file
+        target_file.parent.mkdir(parents=True, exist_ok=True)
+        return target_file
+
+
+def _build_config_dict(config: Config) -> dict[str, Any]:
+    """Build configuration dictionary for JSON serialization."""
+    return {
         "global_config": {
             "concurrent_downloads": config.global_config.concurrent_downloads,
             "timeout_seconds": config.global_config.timeout_seconds,
             "user_agent": config.global_config.user_agent,
-            "defaults": {
-                "download_dir": (
-                    str(config.global_config.defaults.download_dir)
-                    if config.global_config.defaults.download_dir
-                    else None
-                ),
-                "rotation_enabled": config.global_config.defaults.rotation_enabled,
-                "retain_count": config.global_config.defaults.retain_count,
-                "symlink_enabled": config.global_config.defaults.symlink_enabled,
-                "symlink_dir": (
-                    str(config.global_config.defaults.symlink_dir)
-                    if config.global_config.defaults.symlink_dir
-                    else None
-                ),
-                "symlink_pattern": config.global_config.defaults.symlink_pattern,
-                "auto_subdir": config.global_config.defaults.auto_subdir,
-                "checksum_enabled": config.global_config.defaults.checksum_enabled,
-                "checksum_algorithm": config.global_config.defaults.checksum_algorithm,
-                "checksum_pattern": config.global_config.defaults.checksum_pattern,
-                "checksum_required": config.global_config.defaults.checksum_required,
-                "prerelease": config.global_config.defaults.prerelease,
-            },
+            "defaults": _build_defaults_dict(config.global_config.defaults),
         }
     }
 
-    # If saving to a file that might have applications, preserve them
+
+def _build_defaults_dict(defaults: Any) -> dict[str, Any]:
+    """Build defaults dictionary for JSON serialization."""
+    return {
+        "download_dir": str(defaults.download_dir) if defaults.download_dir else None,
+        "rotation_enabled": defaults.rotation_enabled,
+        "retain_count": defaults.retain_count,
+        "symlink_enabled": defaults.symlink_enabled,
+        "symlink_dir": str(defaults.symlink_dir) if defaults.symlink_dir else None,
+        "symlink_pattern": defaults.symlink_pattern,
+        "auto_subdir": defaults.auto_subdir,
+        "checksum_enabled": defaults.checksum_enabled,
+        "checksum_algorithm": defaults.checksum_algorithm,
+        "checksum_pattern": defaults.checksum_pattern,
+        "checksum_required": defaults.checksum_required,
+        "prerelease": defaults.prerelease,
+    }
+
+
+def _preserve_existing_applications(target_file: Path, config_dict: dict[str, Any]) -> None:
+    """Preserve existing applications when saving configuration."""
     if target_file.exists():
         try:
             with target_file.open() as f:
@@ -465,8 +588,9 @@ def _save_config(config: Config, config_file: Path | None, config_dir: Path | No
             # If we can't read the existing file, just overwrite it
             pass
 
-    # Write the configuration
+
+def _write_config_file(target_file: Path, config_dict: dict[str, Any]) -> None:
+    """Write configuration dictionary to file."""
     with target_file.open("w") as f:
         json.dump(config_dict, f, indent=2)
-
     logger.debug(f"Saved global configuration to: {target_file}")

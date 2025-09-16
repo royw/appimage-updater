@@ -91,6 +91,37 @@ def validate_add_rotation_config(rotation: bool | None, symlink: str | None) -> 
         raise typer.Exit(1)
 
 
+def _prompt_for_directory_creation() -> bool:
+    """Prompt user for directory creation in interactive mode."""
+    try:
+        return typer.confirm("Create this directory?")
+    except (EOFError, KeyboardInterrupt, typer.Abort):
+        # Non-interactive environment or user cancelled, don't create by default
+        console.print(
+            "[yellow]Running in non-interactive mode. Use --create-dir or --yes to automatically create directories."
+        )
+        return False
+
+
+def _create_directory(download_path: Path) -> None:
+    """Create the download directory with error handling."""
+    try:
+        download_path.mkdir(parents=True, exist_ok=True)
+        console.print(f"[green]Created directory: {download_path}")
+        logger.debug(f"Created download directory: {download_path}")
+    except OSError as e:
+        console.print(f"[red]Failed to create directory: {e}")
+        logger.error(f"Failed to create download directory {download_path}: {e}")
+        raise typer.Exit(1) from e
+
+
+def _handle_directory_creation_declined() -> None:
+    """Handle case when user declines directory creation."""
+    console.print("[yellow]Directory creation cancelled. Application configuration will still be saved.")
+    console.print("[yellow]You will need to create the directory manually before downloading updates.")
+    logger.debug("User declined to create download directory")
+
+
 def handle_add_directory_creation(download_dir: str, create_dir: bool, yes: bool = False) -> str:
     """Handle download directory path expansion and creation for add command."""
     expanded_download_dir = str(Path(download_dir).expanduser())
@@ -102,30 +133,12 @@ def handle_add_directory_creation(download_dir: str, create_dir: bool, yes: bool
         should_create = create_dir or yes
 
         if not should_create:
-            # Try to prompt if in interactive environment
-            try:
-                should_create = typer.confirm("Create this directory?")
-            except (EOFError, KeyboardInterrupt, typer.Abort):
-                # Non-interactive environment or user cancelled, don't create by default
-                should_create = False
-                console.print(
-                    "[yellow]Running in non-interactive mode. "
-                    "Use --create-dir or --yes to automatically create directories."
-                )
+            should_create = _prompt_for_directory_creation()
 
         if should_create:
-            try:
-                download_path.mkdir(parents=True, exist_ok=True)
-                console.print(f"[green]Created directory: {download_path}")
-                logger.debug(f"Created download directory: {download_path}")
-            except OSError as e:
-                console.print(f"[red]Failed to create directory: {e}")
-                logger.error(f"Failed to create download directory {download_path}: {e}")
-                raise typer.Exit(1) from e
+            _create_directory(download_path)
         else:
-            console.print("[yellow]Directory creation cancelled. Application configuration will still be saved.")
-            console.print("[yellow]You will need to create the directory manually before downloading updates.")
-            logger.debug("User declined to create download directory")
+            _handle_directory_creation_declined()
 
     return expanded_download_dir
 
@@ -186,6 +199,34 @@ def _get_effective_download_dir(download_dir: str | None, defaults: Any, name: s
     return str(Path.cwd() / name)
 
 
+def _get_checksum_enabled(checksum: bool | None, defaults: Any) -> bool:
+    """Get effective checksum enabled setting."""
+    if defaults:
+        return defaults.checksum_enabled if checksum is None else checksum
+    return True if checksum is None else checksum
+
+
+def _get_checksum_algorithm(checksum_algorithm: str | None, defaults: Any) -> str:
+    """Get effective checksum algorithm setting."""
+    if defaults:
+        return defaults.checksum_algorithm if checksum_algorithm is None else checksum_algorithm
+    return "sha256" if checksum_algorithm is None else checksum_algorithm
+
+
+def _get_checksum_pattern(checksum_pattern: str | None, defaults: Any) -> str:
+    """Get effective checksum pattern setting."""
+    if defaults:
+        return defaults.checksum_pattern if checksum_pattern is None else checksum_pattern
+    return "{filename}-SHA256.txt" if checksum_pattern is None else checksum_pattern
+
+
+def _get_checksum_required(checksum_required: bool | None, defaults: Any) -> bool:
+    """Get effective checksum required setting."""
+    if defaults:
+        return defaults.checksum_required if checksum_required is None else checksum_required
+    return False if checksum_required is None else checksum_required
+
+
 def _get_effective_checksum_config(
     checksum: bool | None,
     checksum_algorithm: str | None,
@@ -194,22 +235,11 @@ def _get_effective_checksum_config(
     defaults: Any,
 ) -> dict[str, Any]:
     """Get effective checksum configuration with global defaults."""
-    if defaults:
-        enabled = defaults.checksum_enabled if checksum is None else checksum
-        algorithm = defaults.checksum_algorithm if checksum_algorithm is None else checksum_algorithm
-        pattern = defaults.checksum_pattern if checksum_pattern is None else checksum_pattern
-        required = defaults.checksum_required if checksum_required is None else checksum_required
-    else:
-        enabled = True if checksum is None else checksum
-        algorithm = "sha256" if checksum_algorithm is None else checksum_algorithm
-        pattern = "{filename}-SHA256.txt" if checksum_pattern is None else checksum_pattern
-        required = False if checksum_required is None else checksum_required
-
     return {
-        "enabled": enabled,
-        "algorithm": algorithm,
-        "pattern": pattern,
-        "required": required,
+        "enabled": _get_checksum_enabled(checksum, defaults),
+        "algorithm": _get_checksum_algorithm(checksum_algorithm, defaults),
+        "pattern": _get_checksum_pattern(checksum_pattern, defaults),
+        "required": _get_checksum_required(checksum_required, defaults),
     }
 
 
@@ -358,37 +388,54 @@ def remove_application_from_config(
             raise ValueError("No configuration found to remove application from")
 
 
-def remove_from_config_file(app_name: str, config_file: Path) -> None:
-    """Remove application from a single JSON config file."""
+def _validate_config_file_exists(config_file: Path) -> None:
+    """Validate that config file exists."""
     if not config_file.exists():
         raise ValueError(f"Configuration file '{config_file}' does not exist")
 
-    # Load existing configuration
+
+def _load_config_data(config_file: Path) -> dict[str, Any]:
+    """Load configuration data from file."""
     try:
         with config_file.open() as f:
-            config_data = json.load(f)
+            data: dict[str, Any] = json.load(f)
+            return data
     except (json.JSONDecodeError, OSError) as e:
         raise ValueError(f"Failed to read configuration file '{config_file}': {e}") from e
 
-    applications = config_data.get("applications", [])
-    app_name_lower = app_name.lower()
 
-    # Find and remove the application (case-insensitive)
+def _remove_application_from_list(applications: list[dict[str, Any]], app_name_lower: str) -> list[dict[str, Any]]:
+    """Remove application from applications list."""
     original_count = len(applications)
-    applications[:] = [app for app in applications if app.get("name", "").lower() != app_name_lower]
+    filtered_applications = [app for app in applications if app.get("name", "").lower() != app_name_lower]
 
-    if len(applications) == original_count:
-        raise ValueError(f"Application '{app_name}' not found in configuration file")
+    if len(filtered_applications) == original_count:
+        raise ValueError("Application not found in configuration file")
 
-    # Update config data
-    config_data["applications"] = applications
+    return filtered_applications
 
-    # Write back to file
+
+def _write_config_data(config_file: Path, config_data: dict[str, Any]) -> None:
+    """Write configuration data back to file."""
     try:
         with config_file.open("w") as f:
             json.dump(config_data, f, indent=2)
     except OSError as e:
         raise ValueError(f"Failed to write configuration file '{config_file}': {e}") from e
+
+
+def remove_from_config_file(app_name: str, config_file: Path) -> None:
+    """Remove application from a single JSON config file."""
+    _validate_config_file_exists(config_file)
+    config_data = _load_config_data(config_file)
+
+    applications = config_data.get("applications", [])
+    app_name_lower = app_name.lower()
+
+    filtered_applications = _remove_application_from_list(applications, app_name_lower)
+    config_data["applications"] = filtered_applications
+
+    _write_config_data(config_file, config_data)
 
 
 def process_config_file_for_removal(config_file: Path, app_name_lower: str) -> bool:
@@ -453,6 +500,33 @@ def remove_from_config_directory(app_name: str, config_dir: Path) -> None:
         raise ValueError(f"Application '{app_name}' not found in configuration directory")
 
 
+def _add_url_update(updates: dict[str, Any], url: str, force: bool) -> None:
+    """Add URL update with force flag."""
+    updates["url"] = url
+    updates["force"] = force  # Store force flag for URL validation
+
+
+def _add_basic_field_updates(
+    updates: dict[str, Any], download_dir: str | None, pattern: str | None, enable: bool | None, prerelease: bool | None
+) -> None:
+    """Add basic field updates to the updates dictionary."""
+    if download_dir is not None:
+        updates["download_dir"] = download_dir
+    if pattern is not None:
+        updates["pattern"] = pattern
+    if enable is not None:
+        updates["enabled"] = enable
+    if prerelease is not None:
+        updates["prerelease"] = prerelease
+
+
+def _add_source_type_update(updates: dict[str, Any], direct: bool, app: Any) -> None:
+    """Add source_type update based on direct flag if it's changing."""
+    new_source_type = "direct" if direct else "github"
+    if app is None or getattr(app, "source_type", None) != new_source_type:
+        updates["source_type"] = new_source_type
+
+
 def collect_basic_edit_updates(
     url: str | None,
     download_dir: str | None,
@@ -467,21 +541,12 @@ def collect_basic_edit_updates(
     updates: dict[str, Any] = {}
 
     if url is not None:
-        updates["url"] = url
-        updates["force"] = force  # Store force flag for URL validation
-    if download_dir is not None:
-        updates["download_dir"] = download_dir
-    if pattern is not None:
-        updates["pattern"] = pattern
-    if enable is not None:
-        updates["enabled"] = enable
-    if prerelease is not None:
-        updates["prerelease"] = prerelease
+        _add_url_update(updates, url, force)
+
+    _add_basic_field_updates(updates, download_dir, pattern, enable, prerelease)
+
     if direct is not None:
-        # Update source_type based on direct flag, but only if it's actually changing
-        new_source_type = "direct" if direct else "github"
-        if app is None or getattr(app, "source_type", None) != new_source_type:
-            updates["source_type"] = new_source_type
+        _add_source_type_update(updates, direct, app)
 
     return updates
 
@@ -611,35 +676,51 @@ def validate_basic_field_updates(updates: dict[str, Any]) -> None:
             raise ValueError(f"Invalid checksum algorithm. Must be one of: {', '.join(valid_algorithms)}")
 
 
+def _get_expanded_download_path(download_dir: str) -> Path:
+    """Get expanded path for download directory."""
+    return Path(download_dir).expanduser()
+
+
+def _should_create_directory(create_dir: bool, yes: bool, expanded_path: Path) -> bool:
+    """Determine if directory should be created based on flags and user input."""
+    should_create = create_dir or yes
+
+    if not should_create:
+        try:
+            should_create = typer.confirm(f"Directory '{expanded_path}' does not exist. Create it?")
+        except (EOFError, KeyboardInterrupt, typer.Abort):
+            should_create = False
+            console.print(
+                "[yellow]Running in non-interactive mode. "
+                "Use --create-dir or --yes to automatically create directories."
+            )
+
+    return should_create
+
+
+def _create_directory_if_needed(expanded_path: Path, should_create: bool) -> None:
+    """Create directory if requested, otherwise show warning."""
+    if should_create:
+        try:
+            expanded_path.mkdir(parents=True, exist_ok=True)
+            console.print(f"[green]Created directory: {expanded_path}")
+        except OSError as e:
+            raise ValueError(f"Failed to create directory {expanded_path}: {e}") from e
+    else:
+        console.print("[yellow]Directory will be created manually when needed.")
+
+
 def handle_directory_creation(updates: dict[str, Any], create_dir: bool, yes: bool = False) -> None:
     """Handle download directory creation if needed."""
     if "download_dir" not in updates:
         return
 
     download_dir = updates["download_dir"]
-    expanded_path = Path(download_dir).expanduser()
+    expanded_path = _get_expanded_download_path(download_dir)
 
     if not expanded_path.exists():
-        should_create = create_dir or yes
-
-        if not should_create:
-            try:
-                should_create = typer.confirm(f"Directory '{expanded_path}' does not exist. Create it?")
-            except (EOFError, KeyboardInterrupt, typer.Abort):
-                should_create = False
-                console.print(
-                    "[yellow]Running in non-interactive mode. "
-                    "Use --create-dir or --yes to automatically create directories."
-                )
-
-        if should_create:
-            try:
-                expanded_path.mkdir(parents=True, exist_ok=True)
-                console.print(f"[green]Created directory: {expanded_path}")
-            except OSError as e:
-                raise ValueError(f"Failed to create directory {expanded_path}: {e}") from e
-        else:
-            console.print("[yellow]Directory will be created manually when needed.")
+        should_create = _should_create_directory(create_dir, yes, expanded_path)
+        _create_directory_if_needed(expanded_path, should_create)
 
     # Update with expanded path
     updates["download_dir"] = str(expanded_path)
@@ -672,39 +753,61 @@ def validate_symlink_path_characters(expanded_path: Path, original_path: str) ->
         raise ValueError(f"Symlink path contains invalid characters: {original_path}")
 
 
+def _normalize_symlink_path(expanded_path: Path, original_path: str) -> Path:
+    """Normalize symlink path handling existing symlinks and path resolution."""
+    try:
+        if expanded_path.is_symlink():
+            return _normalize_existing_symlink(expanded_path)
+        else:
+            return _normalize_regular_path(expanded_path)
+    except (OSError, ValueError) as e:
+        raise ValueError(f"Cannot resolve symlink path '{original_path}': {e}") from e
+
+
+def _normalize_existing_symlink(expanded_path: Path) -> Path:
+    """Normalize an existing symlink path without following it."""
+    normalized_path = Path(str(expanded_path)).absolute()
+    return _manually_resolve_path_segments(normalized_path)
+
+
+def _normalize_regular_path(expanded_path: Path) -> Path:
+    """Normalize a regular (non-symlink) path by resolving it."""
+    return expanded_path.resolve()
+
+
+def _manually_resolve_path_segments(normalized_path: Path) -> Path:
+    """Manually resolve .. segments without following symlinks."""
+    parts: list[str] = []
+    for part in normalized_path.parts:
+        if part == "..":
+            if parts:
+                parts.pop()
+        elif part != ".":
+            parts.append(part)
+    return Path(*parts) if parts else Path("/")
+
+
+def _validate_symlink_parent_directory(normalized_path: Path, original_path: str) -> None:
+    """Validate that symlink path has a valid parent directory."""
+    parent_dir = normalized_path.parent
+    if not parent_dir:
+        raise ValueError(f"Invalid symlink path - no parent directory: {original_path}")
+
+
+def _validate_symlink_extension(normalized_path: Path, original_path: str) -> None:
+    """Validate that symlink path ends with .AppImage extension."""
+    if not normalized_path.name.endswith(".AppImage"):
+        raise ValueError(f"Symlink path should end with '.AppImage': {original_path}")
+
+
 def normalize_and_validate_symlink_path(expanded_path: Path, original_path: str) -> Path:
     """Normalize path and validate parent directory and extension."""
     # Normalize path to remove redundant separators and resolve .. but don't follow symlinks
     # We need to handle the case where the symlink itself might exist but we want to validate
     # the intended path, not the target it points to
-    try:
-        # Use resolve() but catch cases where it follows existing symlinks
-        if expanded_path.is_symlink():
-            # If it's already a symlink, just normalize the path without following it
-            normalized_path = Path(str(expanded_path)).absolute()
-            # Manually resolve .. segments without following symlinks
-            parts: list[str] = []
-            for part in normalized_path.parts:
-                if part == "..":
-                    if parts:
-                        parts.pop()
-                elif part != ".":
-                    parts.append(part)
-            normalized_path = Path(*parts) if parts else Path("/")
-        else:
-            # If it's not a symlink, we can safely resolve it
-            normalized_path = expanded_path.resolve()
-    except (OSError, ValueError) as e:
-        raise ValueError(f"Cannot resolve symlink path '{original_path}': {e}") from e
-
-    # Check if parent directory can be created (basic validation)
-    parent_dir = normalized_path.parent
-    if not parent_dir:
-        raise ValueError(f"Invalid symlink path - no parent directory: {original_path}")
-
-    # Check if the symlink path ends with .AppImage extension
-    if not normalized_path.name.endswith(".AppImage"):
-        raise ValueError(f"Symlink path should end with '.AppImage': {original_path}")
+    normalized_path = _normalize_symlink_path(expanded_path, original_path)
+    _validate_symlink_parent_directory(normalized_path, original_path)
+    _validate_symlink_extension(normalized_path, original_path)
 
     return normalized_path
 
@@ -846,32 +949,49 @@ def apply_rotation_updates(app: Any, updates: dict[str, Any]) -> list[str]:
     return changes
 
 
-def apply_checksum_updates(app: Any, updates: dict[str, Any]) -> list[str]:
-    """Apply checksum-related updates."""
-    changes = []
-
+def _apply_checksum_enabled_update(app: Any, updates: dict[str, Any], changes: list[str]) -> None:
+    """Apply checksum enabled update and record change."""
     if "checksum_enabled" in updates:
         old_value = "Enabled" if app.checksum.enabled else "Disabled"
         app.checksum.enabled = updates["checksum_enabled"]
         new_value = "Enabled" if updates["checksum_enabled"] else "Disabled"
         changes.append(f"Checksum Verification: {old_value} → {new_value}")
 
+
+def _apply_checksum_algorithm_update(app: Any, updates: dict[str, Any], changes: list[str]) -> None:
+    """Apply checksum algorithm update and record change."""
     if "checksum_algorithm" in updates:
         old_value = app.checksum.algorithm.upper()
         app.checksum.algorithm = updates["checksum_algorithm"]
         new_value = updates["checksum_algorithm"].upper()
         changes.append(f"Checksum Algorithm: {old_value} → {new_value}")
 
+
+def _apply_checksum_pattern_update(app: Any, updates: dict[str, Any], changes: list[str]) -> None:
+    """Apply checksum pattern update and record change."""
     if "checksum_pattern" in updates:
         old_value = app.checksum.pattern
         app.checksum.pattern = updates["checksum_pattern"]
         changes.append(f"Checksum Pattern: {old_value} → {updates['checksum_pattern']}")
 
+
+def _apply_checksum_required_update(app: Any, updates: dict[str, Any], changes: list[str]) -> None:
+    """Apply checksum required update and record change."""
     if "checksum_required" in updates:
         old_value = "Yes" if app.checksum.required else "No"
         app.checksum.required = updates["checksum_required"]
         new_value = "Yes" if updates["checksum_required"] else "No"
         changes.append(f"Checksum Required: {old_value} → {new_value}")
+
+
+def apply_checksum_updates(app: Any, updates: dict[str, Any]) -> list[str]:
+    """Apply checksum-related updates."""
+    changes: list[str] = []
+
+    _apply_checksum_enabled_update(app, updates, changes)
+    _apply_checksum_algorithm_update(app, updates, changes)
+    _apply_checksum_pattern_update(app, updates, changes)
+    _apply_checksum_required_update(app, updates, changes)
 
     return changes
 

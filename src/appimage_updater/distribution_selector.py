@@ -223,10 +223,17 @@ class DistributionSelector:
     def _parse_asset_info(self, asset: Asset) -> AssetInfo:
         """Parse distribution and version information from asset filename."""
         filename = asset.name.lower()
-
         info = AssetInfo(asset=asset)
 
-        # Extract distribution information
+        self._extract_distribution_info(filename, info)
+        self._extract_architecture_info(filename, info)
+        self._extract_format_info(filename, info)
+
+        logger.debug(f"Parsed {asset.name}: dist={info.distribution}, version={info.version}, arch={info.arch}")
+        return info
+
+    def _extract_distribution_info(self, filename: str, info: AssetInfo) -> None:
+        """Extract distribution and version information from filename."""
         distrib_patterns = [
             (r"ubuntu[-_](\d+\.?\d*)", "ubuntu"),
             (r"fedora[-_]?v?([\d.]+)", "fedora"),  # Match fedora with optional version like fedora-v02.02.01.60
@@ -246,7 +253,8 @@ class DistributionSelector:
                     info.version_numeric = self._parse_version_number(match.group(1))
                 break
 
-        # Extract architecture
+    def _extract_architecture_info(self, filename: str, info: AssetInfo) -> None:
+        """Extract architecture information from filename."""
         arch_patterns = [
             r"x86_64",
             r"amd64",
@@ -264,17 +272,14 @@ class DistributionSelector:
                 info.arch = arch_pattern
                 break
 
-        # Extract format
+    def _extract_format_info(self, filename: str, info: AssetInfo) -> None:
+        """Extract file format information from filename."""
         if filename.endswith(".appimage"):
             info.format = "appimage"
         elif filename.endswith(".zip"):
             info.format = "zip"
         elif filename.endswith(".tar.gz"):
             info.format = "tar.gz"
-
-        logger.debug(f"Parsed {asset.name}: dist={info.distribution}, version={info.version}, arch={info.arch}")
-
-        return info
 
     def _calculate_compatibility_score(self, info: AssetInfo) -> float:
         """Calculate compatibility score for an asset."""

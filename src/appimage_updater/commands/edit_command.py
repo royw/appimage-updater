@@ -59,12 +59,28 @@ class EditCommand(Command):
 
     async def _execute_edit_operation(self) -> None:
         """Execute the core edit operation logic."""
+        config = self._load_config_with_error_handling()
+        app_names_to_edit = self._validate_app_names_provided()
+        found_apps = self._find_matching_applications(config, app_names_to_edit)
+        updates = self._collect_updates_from_parameters()
+
+        if not updates:
+            self.console.print("[yellow]No changes specified. Use --help to see available options.[/yellow]")
+            return
+
+        # Apply updates to each application
+        self._apply_updates_to_apps(found_apps, updates, config)
+
+        # Save updated configuration
+        self._save_config(config)
+
+    def _load_config_with_error_handling(self) -> Any:
+        """Load configuration with proper error handling."""
         from ..config_loader import ConfigLoadError
-        from ..config_operations import collect_edit_updates, load_config
-        from ..services import ApplicationService
+        from ..config_operations import load_config
 
         try:
-            config = load_config(self.params.config_file, self.params.config_dir)
+            return load_config(self.params.config_file, self.params.config_dir)
         except ConfigLoadError as e:
             if "No configuration found" in str(e):
                 self.console.print("[red]Configuration error: No configuration found[/red]")
@@ -72,13 +88,18 @@ class EditCommand(Command):
             self.console.print(f"[red]Configuration error: {e}[/red]")
             raise typer.Exit(1) from e
 
-        # Get app names to edit
+    def _validate_app_names_provided(self) -> list[str]:
+        """Validate that application names are provided."""
         app_names_to_edit = self.params.app_names or []
         if not app_names_to_edit:
             self.console.print("[red]No application names provided[/red]")
             raise typer.Exit(1)
+        return app_names_to_edit
 
-        # Find matching applications (case-insensitive)
+    def _find_matching_applications(self, config: Any, app_names_to_edit: list[str]) -> list[Any]:
+        """Find applications matching the provided names."""
+        from ..services import ApplicationService
+
         found_apps = ApplicationService.filter_apps_by_names(config.applications, app_names_to_edit)
         if not found_apps:
             available_apps = [app.name for app in config.applications]
@@ -86,9 +107,13 @@ class EditCommand(Command):
             if available_apps:
                 self.console.print(f"Available applications: {', '.join(available_apps)}")
             raise typer.Exit(1)
+        return found_apps
 
-        # Collect updates from parameters
-        updates = collect_edit_updates(
+    def _collect_updates_from_parameters(self) -> dict[str, Any]:
+        """Collect updates from command parameters."""
+        from ..config_operations import collect_edit_updates
+
+        return collect_edit_updates(
             url=self.params.url,
             download_dir=self.params.download_dir,
             pattern=self.params.pattern,
@@ -104,16 +129,6 @@ class EditCommand(Command):
             force=self.params.force,
             direct=self.params.direct,
         )
-
-        if not updates:
-            self.console.print("[yellow]No changes specified. Use --help to see available options.[/yellow]")
-            return
-
-        # Apply updates to each application
-        self._apply_updates_to_apps(found_apps, updates, config)
-
-        # Save updated configuration
-        self._save_config(config)
 
     def _apply_updates_to_apps(self, apps: list[ApplicationConfig], updates: dict[str, Any], config: Config) -> None:
         """Apply updates to applications with validation."""

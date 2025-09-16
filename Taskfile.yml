@@ -84,7 +84,7 @@ tasks:
   complexity:
     desc: Analyze code complexity with radon
     cmds:
-      - uv run radon cc {{.CLI_ARGS | default .SRC}} --min C
+      - uv run radon cc {{.CLI_ARGS | default .SRC}} --min B
 
   deadcode:
     desc: Find dead (unreachable/unused) code with deadcode

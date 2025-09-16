@@ -116,32 +116,46 @@ class ValidationService:
         Raises:
             ValueError: If directory is invalid or cannot be created
         """
-        if not download_dir or not download_dir.strip():
-            raise ValueError("Download directory cannot be empty")
-
+        self._validate_directory_input(download_dir)
         expanded_path = Path(download_dir).expanduser()
 
         if expanded_path.exists():
-            if not expanded_path.is_dir():
-                raise ValueError(f"Download path exists but is not a directory: {download_dir}")
-            if not expanded_path.stat().st_mode & 0o200:
-                raise ValueError(f"Download directory is not writable: {download_dir}")
+            self._validate_existing_directory(expanded_path, download_dir)
         elif create_dir:
-            try:
-                expanded_path.mkdir(parents=True, exist_ok=True)
-            except (OSError, PermissionError) as e:
-                raise ValueError(f"Cannot create download directory '{download_dir}': {e}") from e
+            self._create_directory_if_needed(expanded_path, download_dir)
         else:
-            # Check if parent directory exists and is writable
-            parent = expanded_path.parent
-            if not parent.exists():
-                raise ValueError(f"Parent directory does not exist: {parent}")
-            if not parent.is_dir():
-                raise ValueError(f"Parent path is not a directory: {parent}")
-            if not parent.stat().st_mode & 0o200:
-                raise ValueError(f"Parent directory is not writable: {parent}")
+            self._validate_parent_directory(expanded_path)
 
         return expanded_path
+
+    def _validate_directory_input(self, download_dir: str) -> None:
+        """Validate that directory input is not empty."""
+        if not download_dir or not download_dir.strip():
+            raise ValueError("Download directory cannot be empty")
+
+    def _validate_existing_directory(self, expanded_path: Path, download_dir: str) -> None:
+        """Validate that existing path is a writable directory."""
+        if not expanded_path.is_dir():
+            raise ValueError(f"Download path exists but is not a directory: {download_dir}")
+        if not expanded_path.stat().st_mode & 0o200:
+            raise ValueError(f"Download directory is not writable: {download_dir}")
+
+    def _create_directory_if_needed(self, expanded_path: Path, download_dir: str) -> None:
+        """Create directory if it doesn't exist."""
+        try:
+            expanded_path.mkdir(parents=True, exist_ok=True)
+        except (OSError, PermissionError) as e:
+            raise ValueError(f"Cannot create download directory '{download_dir}': {e}") from e
+
+    def _validate_parent_directory(self, expanded_path: Path) -> None:
+        """Validate that parent directory exists and is writable."""
+        parent = expanded_path.parent
+        if not parent.exists():
+            raise ValueError(f"Parent directory does not exist: {parent}")
+        if not parent.is_dir():
+            raise ValueError(f"Parent path is not a directory: {parent}")
+        if not parent.stat().st_mode & 0o200:
+            raise ValueError(f"Parent directory is not writable: {parent}")
 
     def validate_retain_count(self, retain_count: int) -> None:
         """Validate retain count for file rotation.
@@ -201,32 +215,43 @@ class ValidationService:
         Raises:
             ValueError: If any validation fails
         """
-        # Validate URL if provided
+        self._validate_url_update(updates)
+        self._validate_pattern_update(updates)
+        self._validate_download_directory_update(updates, create_dir)
+        self._validate_symlink_path_update(updates)
+        self._validate_retain_count_update(updates)
+        self._validate_checksum_algorithm_update(updates)
+        self.validate_rotation_consistency(app, updates)
+
+    def _validate_url_update(self, updates: dict[str, Any]) -> None:
+        """Validate URL if provided in updates."""
         if "url" in updates:
             force = updates.get("force", False)
             updates["url"] = self.validate_and_normalize_url(updates["url"], force)
 
-        # Validate pattern if provided
+    def _validate_pattern_update(self, updates: dict[str, Any]) -> None:
+        """Validate pattern if provided in updates."""
         if "pattern" in updates:
             self.validate_pattern(updates["pattern"])
 
-        # Validate download directory if provided
+    def _validate_download_directory_update(self, updates: dict[str, Any], create_dir: bool) -> None:
+        """Validate download directory if provided in updates."""
         if "download_dir" in updates:
             normalized_dir = self.validate_download_directory(updates["download_dir"], create_dir)
             updates["download_dir"] = str(normalized_dir)
 
-        # Validate symlink path if provided
+    def _validate_symlink_path_update(self, updates: dict[str, Any]) -> None:
+        """Validate symlink path if provided in updates."""
         if "symlink_path" in updates:
             normalized_path = self.validate_symlink_path(updates["symlink_path"])
             updates["symlink_path"] = str(normalized_path)
 
-        # Validate retain count if provided
+    def _validate_retain_count_update(self, updates: dict[str, Any]) -> None:
+        """Validate retain count if provided in updates."""
         if "retain_count" in updates:
             self.validate_retain_count(updates["retain_count"])
 
-        # Validate checksum algorithm if provided
+    def _validate_checksum_algorithm_update(self, updates: dict[str, Any]) -> None:
+        """Validate checksum algorithm if provided in updates."""
         if "checksum_algorithm" in updates:
             self.validate_checksum_algorithm(updates["checksum_algorithm"])
-
-        # Validate rotation consistency
-        self.validate_rotation_consistency(app, updates)

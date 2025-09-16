@@ -171,13 +171,28 @@ def _collect_advanced_add_settings(url: str) -> dict[str, Any]:
 def _display_add_summary(settings: dict[str, Any]) -> None:
     """Display configuration summary."""
     console.print("\n✨ [bold green]Configuration Summary[/bold green]")
+    _display_basic_summary_info(settings)
+    _display_rotation_summary_info(settings)
+    _display_feature_summary_info(settings)
+
+
+def _display_basic_summary_info(settings: dict[str, Any]) -> None:
+    """Display basic configuration information."""
     console.print(f"   Name: {settings['name']}")
     console.print(f"   URL: {settings['url']}")
     console.print(f"   Download Dir: {settings['download_dir'] or '[global default]'}")
+
+
+def _display_rotation_summary_info(settings: dict[str, Any]) -> None:
+    """Display rotation-related configuration information."""
     console.print(f"   Rotation: {'✅' if settings['rotation'] else '❌'}")
     if settings["rotation"]:
         console.print(f"   Retain: {settings['retain']} files")
         console.print(f"   Symlink: {settings['symlink'] or 'None'}")
+
+
+def _display_feature_summary_info(settings: dict[str, Any]) -> None:
+    """Display feature flags and settings."""
     console.print(f"   Checksum: {'✅' if settings['checksum'] else '❌'}")
     console.print(f"   Prerelease: {'✅' if settings['prerelease'] else '❌'}")
     console.print(f"   Auto-subdir: {'✅' if settings['auto_subdir'] else '❌'}")

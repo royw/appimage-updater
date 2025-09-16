@@ -37,10 +37,21 @@ def load_config_from_file(config_path: Path) -> Config:
 
 def load_configs_from_directory(config_dir: Path) -> Config:
     """Load and merge configuration from directory of JSON files."""
+    _validate_config_directory(config_dir)
+    config_files = _collect_config_files(config_dir)
+    merged_data = _merge_config_files(config_files)
+    return _parse_config_data(merged_data)
+
+
+def _validate_config_directory(config_dir: Path) -> None:
+    """Validate that config directory exists."""
     if not config_dir.is_dir():
         msg = f"Configuration directory not found: {config_dir}"
         raise ConfigLoadError(msg)
 
+
+def _collect_config_files(config_dir: Path) -> list[Path]:
+    """Collect all config files from directory and parent."""
     config_files = list(config_dir.glob("*.json"))
 
     # Also check for global config in parent directory
@@ -52,34 +63,48 @@ def load_configs_from_directory(config_dir: Path) -> Config:
         msg = f"No JSON configuration files found in {config_dir}"
         raise ConfigLoadError(msg)
 
-    # Start with empty config
+    return config_files
+
+
+def _merge_config_files(config_files: list[Path]) -> dict[str, Any]:
+    """Merge all config files into single configuration."""
     merged_data: dict[str, Any] = {"applications": []}
 
-    # Load and merge all config files
     for config_file in sorted(config_files):
-        try:
-            with config_file.open(encoding="utf-8") as f:
-                data = json.load(f)
-        except json.JSONDecodeError as e:
-            msg = f"Invalid JSON in {config_file}: {e}"
-            raise ConfigLoadError(msg) from e
+        data = _load_single_config_file(config_file)
+        _merge_single_config(merged_data, data, config_file)
 
-        if not isinstance(data, dict):
-            msg = f"Config file must contain JSON object: {config_file}"
+    return merged_data
+
+
+def _load_single_config_file(config_file: Path) -> dict[str, Any]:
+    """Load and validate a single config file."""
+    try:
+        with config_file.open(encoding="utf-8") as f:
+            data = json.load(f)
+    except json.JSONDecodeError as e:
+        msg = f"Invalid JSON in {config_file}: {e}"
+        raise ConfigLoadError(msg) from e
+
+    if not isinstance(data, dict):
+        msg = f"Config file must contain JSON object: {config_file}"
+        raise ConfigLoadError(msg)
+
+    return data
+
+
+def _merge_single_config(merged_data: dict[str, Any], data: dict[str, Any], config_file: Path) -> None:
+    """Merge a single config file's data into the merged configuration."""
+    # Merge global config (last one wins)
+    if "global_config" in data:
+        merged_data["global_config"] = data["global_config"]
+
+    # Collect all applications
+    if "applications" in data:
+        if not isinstance(data["applications"], list):
+            msg = f"Applications must be a list in {config_file}"
             raise ConfigLoadError(msg)
-
-        # Merge global config (last one wins)
-        if "global_config" in data:
-            merged_data["global_config"] = data["global_config"]
-
-        # Collect all applications
-        if "applications" in data:
-            if not isinstance(data["applications"], list):
-                msg = f"Applications must be a list in {config_file}"
-                raise ConfigLoadError(msg)
-            merged_data["applications"].extend(data["applications"])
-
-    return _parse_config_data(merged_data)
+        merged_data["applications"].extend(data["applications"])
 
 
 def _parse_config_data(data: dict[str, Any]) -> Config:

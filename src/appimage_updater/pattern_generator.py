@@ -44,34 +44,52 @@ def normalize_github_url(url: str) -> tuple[str, bool]:
     Returns (normalized_url, was_corrected) tuple.
     """
     try:
-        parsed = urllib.parse.urlparse(url)
-        if parsed.netloc.lower() not in ("github.com", "www.github.com"):
+        if not _is_github_url(url):
             return url, False
 
-        path_parts = parsed.path.strip("/").split("/")
+        path_parts = _extract_url_path_parts(url)
         if len(path_parts) < 2:
             return url, False
 
         owner, repo = path_parts[0], path_parts[1]
-
-        # Check if this is a download URL
-        if len(path_parts) >= 4 and path_parts[2] == "releases" and path_parts[3] == "download":
-            # This is a download URL like: https://github.com/owner/repo/releases/download/tag/file.AppImage
-            repo_url = f"https://github.com/{owner}/{repo}"
-            return repo_url, True
-
-        # Check if this has extra path components (not just owner/repo)
-        if len(path_parts) > 2:
-            # This might be a path like: https://github.com/owner/repo/releases or /issues
-            repo_url = f"https://github.com/{owner}/{repo}"
-            return repo_url, True
-
-        # Already a clean repository URL
-        return url, False
+        return _normalize_github_path(path_parts, owner, repo, url)
 
     except Exception as e:
         logger.debug(f"Failed to normalize GitHub URL {url}: {e}")
         return url, False
+
+
+def _is_github_url(url: str) -> bool:
+    """Check if URL is a GitHub URL."""
+    parsed = urllib.parse.urlparse(url)
+    return parsed.netloc.lower() in ("github.com", "www.github.com")
+
+
+def _extract_url_path_parts(url: str) -> list[str]:
+    """Extract path parts from URL."""
+    parsed = urllib.parse.urlparse(url)
+    return parsed.path.strip("/").split("/")
+
+
+def _normalize_github_path(path_parts: list[str], owner: str, repo: str, original_url: str) -> tuple[str, bool]:
+    """Normalize GitHub path and determine if correction was needed."""
+    # Check if this is a download URL
+    if _is_download_url(path_parts):
+        repo_url = f"https://github.com/{owner}/{repo}"
+        return repo_url, True
+
+    # Check if this has extra path components (not just owner/repo)
+    if len(path_parts) > 2:
+        repo_url = f"https://github.com/{owner}/{repo}"
+        return repo_url, True
+
+    # Already a clean repository URL
+    return original_url, False
+
+
+def _is_download_url(path_parts: list[str]) -> bool:
+    """Check if path represents a GitHub download URL."""
+    return len(path_parts) >= 4 and path_parts[2] == "releases" and path_parts[3] == "download"
 
 
 async def generate_appimage_pattern_async(app_name: str, url: str) -> str:
@@ -356,35 +374,51 @@ async def should_enable_prerelease(url: str) -> bool:
         bool: True if only prereleases are found, False if stable releases exist or on error
     """
     try:
-        # Create repository client with shorter timeout for this check
-        client = get_repository_client(url, timeout=10)
-
-        # Get recent releases to analyze
-        releases = await client.get_releases(url, limit=10)
-
+        releases = await _fetch_releases_for_prerelease_check(url)
         if not releases:
-            logger.debug(f"No releases found for {url}, not enabling prerelease")
             return False
 
-        # Filter out drafts
-        valid_releases = [r for r in releases if not r.is_draft]
-
+        valid_releases = _filter_valid_releases(releases, url)
         if not valid_releases:
-            logger.debug(f"No non-draft releases found for {url}, not enabling prerelease")
             return False
 
-        # Check if we have any non-prerelease versions
-        stable_releases = [r for r in valid_releases if not r.is_prerelease]
-        prerelease_only = len(stable_releases) == 0
-
-        if prerelease_only:
-            logger.debug(f"Repository {url} contains only prerelease versions, enabling prerelease support")
-        else:
-            logger.debug(f"Repository {url} has stable releases, not auto-enabling prerelease")
-
-        return prerelease_only
+        return _analyze_prerelease_status(valid_releases, url)
 
     except Exception as e:
         # Don't fail the add command if prerelease detection fails
         logger.debug(f"Failed to check prerelease status for {url}: {e}")
         return False
+
+
+async def _fetch_releases_for_prerelease_check(url: str) -> list[Release]:
+    """Fetch releases from repository for prerelease analysis."""
+    client = get_repository_client(url, timeout=10)
+    releases = await client.get_releases(url, limit=10)
+
+    if not releases:
+        logger.debug(f"No releases found for {url}, not enabling prerelease")
+
+    return releases
+
+
+def _filter_valid_releases(releases: list[Release], url: str) -> list[Release]:
+    """Filter out draft releases and return valid releases."""
+    valid_releases = [r for r in releases if not r.is_draft]
+
+    if not valid_releases:
+        logger.debug(f"No non-draft releases found for {url}, not enabling prerelease")
+
+    return valid_releases
+
+
+def _analyze_prerelease_status(valid_releases: list[Release], url: str) -> bool:
+    """Analyze releases to determine if only prereleases exist."""
+    stable_releases = [r for r in valid_releases if not r.is_prerelease]
+    prerelease_only = len(stable_releases) == 0
+
+    if prerelease_only:
+        logger.debug(f"Repository {url} contains only prerelease versions, enabling prerelease support")
+    else:
+        logger.debug(f"Repository {url} has stable releases, not auto-enabling prerelease")
+
+    return prerelease_only

@@ -67,29 +67,48 @@ class RemoveCommand(Command):
         try:
             config = self._load_config()
 
-            # Check if there are any applications configured
-            if not config.applications:
-                self.console.print("No JSON configuration files found")
+            if not self._validate_applications_exist(config):
                 return CommandResult(success=False, exit_code=1)
 
             found_apps = self._validate_and_filter_apps(config, self.params.app_names or [])
 
-            if not self.params.force and not self._get_user_confirmation(found_apps):
+            if not self._should_proceed_with_removal(found_apps):
                 return CommandResult(success=True, exit_code=0)
 
-            updated_config = self._remove_apps_from_config(config, found_apps)
-            self._save_config(updated_config, found_apps)
-
+            self._perform_removal(config, found_apps)
             return CommandResult(success=True, exit_code=0)
 
         except ConfigLoadError:
-            # Handle empty config directory case
-            self.console.print("No JSON configuration files found")
-            return CommandResult(success=False, exit_code=1)
+            return self._handle_config_load_error()
         except Exception as e:
-            logger.error(f"Unexpected error in remove command: {e}")
-            logger.exception("Full exception details")
+            self._handle_unexpected_error(e)
             raise
+
+    def _validate_applications_exist(self, config: Config) -> bool:
+        """Check if there are any applications configured."""
+        if not config.applications:
+            self.console.print("No JSON configuration files found")
+            return False
+        return True
+
+    def _should_proceed_with_removal(self, found_apps: list[ApplicationConfig]) -> bool:
+        """Determine if removal should proceed based on force flag and user confirmation."""
+        return self.params.force or self._get_user_confirmation(found_apps)
+
+    def _perform_removal(self, config: Config, found_apps: list[ApplicationConfig]) -> None:
+        """Perform the actual removal of applications."""
+        updated_config = self._remove_apps_from_config(config, found_apps)
+        self._save_config(updated_config, found_apps)
+
+    def _handle_config_load_error(self) -> CommandResult:
+        """Handle configuration load errors."""
+        self.console.print("No JSON configuration files found")
+        return CommandResult(success=False, exit_code=1)
+
+    def _handle_unexpected_error(self, error: Exception) -> None:
+        """Handle unexpected errors during removal."""
+        logger.error(f"Unexpected error in remove command: {error}")
+        logger.exception("Full exception details")
 
     def _load_config(self) -> Config:
         """Load configuration with error handling."""

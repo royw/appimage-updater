@@ -276,18 +276,17 @@ def version_callback(value: bool) -> None:
         raise typer.Exit()
 
 
-def _check_configuration_warnings(app_config: dict[str, Any], download_dir: str) -> None:
-    """Check for potential configuration issues and display warnings."""
-    warnings = []
-
-    # Check if rotation is enabled but no symlink is configured
+def _check_rotation_warning(app_config: dict[str, Any], warnings: list[str]) -> None:
+    """Check if rotation is enabled but no symlink is configured."""
     if app_config.get("rotation", False) and not app_config.get("symlink"):
         warnings.append(
             "⚠️  Rotation is enabled but no symlink path is configured. "
             "Consider adding --symlink for easier access to the latest version."
         )
 
-    # Check if download directory doesn't exist
+
+def _check_download_directory_warning(download_dir: str, warnings: list[str]) -> None:
+    """Check if download directory doesn't exist."""
     from pathlib import Path
 
     if not Path(download_dir).exists():
@@ -296,14 +295,18 @@ def _check_configuration_warnings(app_config: dict[str, Any], download_dir: str)
             "Use --create-dir to create it immediately."
         )
 
-    # Check if checksum is disabled
+
+def _check_checksum_warning(app_config: dict[str, Any], warnings: list[str]) -> None:
+    """Check if checksum verification is disabled."""
     if not app_config.get("checksum", True):
         warnings.append(
             "⚠️  Checksum verification is disabled. This reduces security. "
             "Consider enabling with --checksum for better integrity checks."
         )
 
-    # Check for potentially problematic patterns
+
+def _check_pattern_warning(app_config: dict[str, Any], warnings: list[str]) -> None:
+    """Check for potentially problematic patterns."""
     pattern = app_config.get("pattern", "")
     if ".*" in pattern and not pattern.endswith("$"):
         warnings.append(
@@ -311,11 +314,24 @@ def _check_configuration_warnings(app_config: dict[str, Any], download_dir: str)
             "Consider making the pattern more specific."
         )
 
-    # Display warnings if any
+
+def _display_warnings(warnings: list[str]) -> None:
+    """Display configuration warnings if any exist."""
     if warnings:
         console.print("\n[yellow]⚠️  Configuration Warnings:")
         for warning in warnings:
             console.print(f"[yellow]   {warning}")
+
+
+def _check_configuration_warnings(app_config: dict[str, Any], download_dir: str) -> None:
+    """Check for potential configuration issues and display warnings."""
+    warnings: list[str] = []
+
+    _check_rotation_warning(app_config, warnings)
+    _check_download_directory_warning(download_dir, warnings)
+    _check_checksum_warning(app_config, warnings)
+    _check_pattern_warning(app_config, warnings)
+    _display_warnings(warnings)
 
 
 def _show_add_examples() -> None:
@@ -543,6 +559,21 @@ def _log_repository_auth_status(url: str) -> None:
         logger.debug(f"Could not determine repository authentication status: {e}")
 
 
+def _get_parameter_status(original_value: Any, resolved_value: Any) -> str:
+    """Determine the status label for a parameter value."""
+    if original_value is None and resolved_value is not None:
+        return "[dim](default)[/dim]"
+    elif original_value != resolved_value:
+        return "[yellow](resolved)[/yellow]"
+    else:
+        return "[green](provided)[/green]"
+
+
+def _format_parameter_display_value(value: Any) -> str:
+    """Format a parameter value for console display."""
+    return value if value is not None else "[dim]None[/dim]"
+
+
 def _log_resolved_parameters(
     command_name: str,
     resolved_params: dict[str, Any],
@@ -554,20 +585,47 @@ def _log_resolved_parameters(
 
     for param_name, resolved_value in resolved_params.items():
         original_value = original_params.get(param_name)
-
-        # Determine if value was provided or is a default
-        if original_value is None and resolved_value is not None:
-            status = "[dim](default)[/dim]"
-        elif original_value != resolved_value:
-            status = "[yellow](resolved)[/yellow]"
-        else:
-            status = "[green](provided)[/green]"
-
-        # Format the value for display
-        display_value = resolved_value if resolved_value is not None else "[dim]None[/dim]"
+        status = _get_parameter_status(original_value, resolved_value)
+        display_value = _format_parameter_display_value(resolved_value)
         console.print(f"  {param_name:20} = {display_value} {status}")
 
     console.print()
+
+
+def _display_dry_run_header(name: str) -> None:
+    """Display the header for dry-run configuration preview."""
+    console.print(
+        f"\n[bold yellow]DRY RUN: Would add application '{name}' with the following configuration:[/bold yellow]"
+    )
+    console.print("=" * 70)
+
+
+def _display_basic_config_info(name: str, validated_url: str, expanded_download_dir: str, pattern: str) -> None:
+    """Display basic configuration information."""
+    console.print(f"[blue]Name: {name}")
+    console.print(f"[blue]Source: {validated_url}")
+    console.print(f"[blue]Download Directory: {expanded_download_dir}")
+    console.print(f"[blue]Pattern: {pattern}")
+
+
+def _display_rotation_config(app_config: dict[str, Any]) -> None:
+    """Display rotation configuration details."""
+    rotation_enabled = app_config.get("rotation", False)
+    console.print(f"[blue]Rotation: {'Enabled' if rotation_enabled else 'Disabled'}")
+    if rotation_enabled:
+        console.print(f"[blue]  Retain Count: {app_config.get('retain', 3)}")
+        if app_config.get("symlink"):
+            console.print(f"[blue]  Symlink: {app_config['symlink']}")
+
+
+def _display_checksum_config(app_config: dict[str, Any]) -> None:
+    """Display checksum configuration details."""
+    checksum_enabled = app_config.get("checksum", True)
+    console.print(f"[blue]Checksum: {'Enabled' if checksum_enabled else 'Disabled'}")
+    if checksum_enabled:
+        console.print(f"[blue]  Algorithm: {app_config.get('checksum_algorithm', 'sha256')}")
+        console.print(f"[blue]  Pattern: {app_config.get('checksum_pattern', '{filename}-SHA256.txt')}")
+        console.print(f"[blue]  Required: {'Yes' if app_config.get('checksum_required', False) else 'No'}")
 
 
 def _display_dry_run_config(
@@ -578,34 +636,21 @@ def _display_dry_run_config(
     prerelease_auto_enabled: bool,
 ) -> None:
     """Display configuration that would be created in dry-run mode."""
-    console.print(
-        f"\n[bold yellow]DRY RUN: Would add application '{name}' with the following configuration:[/bold yellow]"
-    )
-    console.print("=" * 70)
-    console.print(f"[blue]Name: {name}")
-    console.print(f"[blue]Source: {validated_url}")
-    console.print(f"[blue]Download Directory: {expanded_download_dir}")
-    console.print(f"[blue]Pattern: {app_config['pattern']}")
-    console.print(f"[blue]Rotation: {'Enabled' if app_config.get('rotation', False) else 'Disabled'}")
-    if app_config.get("rotation", False):
-        console.print(f"[blue]  Retain Count: {app_config.get('retain', 3)}")
-        if app_config.get("symlink"):
-            console.print(f"[blue]  Symlink: {app_config['symlink']}")
+    _display_dry_run_header(name)
+    _display_basic_config_info(name, validated_url, expanded_download_dir, app_config["pattern"])
+    _display_rotation_config(app_config)
+
     console.print(f"[blue]Prerelease: {'Enabled' if app_config.get('prerelease', False) else 'Disabled'}")
-    console.print(f"[blue]Checksum: {'Enabled' if app_config.get('checksum', True) else 'Disabled'}")
-    if app_config.get("checksum", True):
-        console.print(f"[blue]  Algorithm: {app_config.get('checksum_algorithm', 'sha256')}")
-        console.print(f"[blue]  Pattern: {app_config.get('checksum_pattern', '{filename}-SHA256.txt')}")
-        console.print(f"[blue]  Required: {'Yes' if app_config.get('checksum_required', False) else 'No'}")
+    _display_checksum_config(app_config)
 
     # Show prerelease auto-detection feedback
     if prerelease_auto_enabled:
-        console.print("[cyan]🔍 Auto-detected continuous builds - would enable prerelease support")
+        console.print("[cyan]Auto-detected continuous builds - would enable prerelease support")
 
     # Check for potential configuration issues and warn user
     _check_configuration_warnings(app_config, expanded_download_dir)
 
-    console.print("\n[yellow]💡 Run without --dry-run to actually add this configuration")
+    console.print("\n[yellow]Run without --dry-run to actually add this configuration")
 
 
 def _display_add_success(
@@ -661,6 +706,32 @@ def _load_global_config(config_file: Path | None, config_dir: Path | None) -> Gl
         return GlobalConfig()
 
 
+def _resolve_rotation_parameter(rotation: bool | None, global_config: GlobalConfig) -> bool:
+    """Resolve rotation parameter using global defaults."""
+    return rotation if rotation is not None else global_config.defaults.rotation_enabled
+
+
+def _resolve_prerelease_parameter(prerelease: bool | None) -> bool:
+    """Resolve prerelease parameter (no global default)."""
+    return prerelease if prerelease is not None else False
+
+
+def _resolve_checksum_parameters(
+    checksum: bool | None, checksum_required: bool | None, global_config: GlobalConfig
+) -> tuple[bool, bool]:
+    """Resolve checksum-related parameters using global defaults."""
+    resolved_checksum = checksum if checksum is not None else global_config.defaults.checksum_enabled
+    resolved_checksum_required = (
+        checksum_required if checksum_required is not None else global_config.defaults.checksum_required
+    )
+    return resolved_checksum, resolved_checksum_required
+
+
+def _resolve_direct_parameter(direct: bool | None) -> bool:
+    """Resolve direct parameter (no global default)."""
+    return direct if direct is not None else False
+
+
 def _resolve_add_parameters(
     download_dir: str | None,
     auto_subdir: bool | None,
@@ -674,13 +745,12 @@ def _resolve_add_parameters(
 ) -> tuple[str, bool, bool, bool, bool, bool]:
     """Resolve all add command parameters using global defaults."""
     resolved_download_dir = _resolve_download_directory(download_dir, auto_subdir, global_config, name)
-    resolved_rotation = rotation if rotation is not None else global_config.defaults.rotation_enabled
-    resolved_prerelease = prerelease if prerelease is not None else False  # No global default for prerelease
-    resolved_checksum = checksum if checksum is not None else global_config.defaults.checksum_enabled
-    resolved_checksum_required = (
-        checksum_required if checksum_required is not None else global_config.defaults.checksum_required
+    resolved_rotation = _resolve_rotation_parameter(rotation, global_config)
+    resolved_prerelease = _resolve_prerelease_parameter(prerelease)
+    resolved_checksum, resolved_checksum_required = _resolve_checksum_parameters(
+        checksum, checksum_required, global_config
     )
-    resolved_direct = direct if direct is not None else False
+    resolved_direct = _resolve_direct_parameter(direct)
 
     return (
         resolved_download_dir,
@@ -857,6 +927,29 @@ async def _add(
         raise typer.Exit(1) from e
 
 
+def _display_edit_verbose_info(updates: dict[str, Any]) -> None:
+    """Display verbose parameter information for edit command."""
+    console.print("[blue]Resolved edit parameters:")
+    for key, value in updates.items():
+        if value is not None:
+            status = "[green](provided)" if value != "" else "[yellow](resolved)"
+            console.print(f"  {key}: {value} {status}")
+    console.print()
+
+
+def _display_edit_dry_run_preview(apps_to_edit: list[ApplicationConfig], updates: dict[str, Any]) -> None:
+    """Display dry-run preview for edit command."""
+    console.print("[yellow]DRY RUN: Configuration changes preview (not saved)")
+    console.print(f"[blue]Would edit {len(apps_to_edit)} application(s):")
+    for app in apps_to_edit:
+        console.print(f"  - {app.name}")
+    console.print("\n[blue]Changes to apply:")
+    for key, value in updates.items():
+        if value is not None:
+            console.print(f"  {key}: {value}")
+    console.print("\n[dim]Run without --dry-run to apply these changes")
+
+
 def _handle_edit_preview_modes(
     verbose: bool, dry_run: bool, updates: dict[str, Any], apps_to_edit: list[ApplicationConfig]
 ) -> bool:
@@ -864,26 +957,11 @@ def _handle_edit_preview_modes(
 
     Returns True if the command should exit early (dry-run mode), False otherwise.
     """
-    # Show verbose parameter information if requested
     if verbose:
-        console.print("[blue]Resolved edit parameters:")
-        for key, value in updates.items():
-            if value is not None:
-                status = "[green](provided)" if value != "" else "[yellow](resolved)"
-                console.print(f"  {key}: {value} {status}")
-        console.print()
+        _display_edit_verbose_info(updates)
 
-    # Handle dry-run mode
     if dry_run:
-        console.print("[yellow]DRY RUN: Configuration changes preview (not saved)")
-        console.print(f"[blue]Would edit {len(apps_to_edit)} application(s):")
-        for app in apps_to_edit:
-            console.print(f"  - {app.name}")
-        console.print("\n[blue]Changes to apply:")
-        for key, value in updates.items():
-            if value is not None:
-                console.print(f"  {key}: {value}")
-        console.print("\n[dim]Run without --dry-run to apply these changes")
+        _display_edit_dry_run_preview(apps_to_edit, updates)
         return True
 
     return False
@@ -1118,6 +1196,42 @@ def repository(
         raise typer.Exit(result.exit_code)
 
 
+def _load_config_for_repository_examination(config_file: Path | None, config_dir: Path | None) -> Any:
+    """Load configuration for repository examination."""
+    return load_config(config_file, config_dir)
+
+
+def _filter_apps_for_examination(applications: list[Any], app_names: list[str]) -> list[Any]:
+    """Filter applications by names for examination."""
+    return ApplicationService.filter_apps_by_names(applications, app_names)
+
+
+def _display_dry_run_repository_info(apps_to_examine: list[Any]) -> None:
+    """Display dry-run information for repository examination."""
+    console.print("[yellow]DRY RUN: Repository URLs that would be examined (no data fetched)")
+    console.print(f"[blue]Would examine {len(apps_to_examine)} application(s):")
+    for app in apps_to_examine:
+        console.print(f"  - {app.name}: {app.url}")
+    console.print("\n[dim]Run without --dry-run to fetch and display repository data")
+
+
+async def _examine_apps_repositories(apps_to_examine: list[Any], limit: int, show_assets: bool) -> None:
+    """Examine repository information for each application."""
+    console.print(f"[blue]Examining repository information for {len(apps_to_examine)} application(s)...")
+    console.print()
+
+    for app in apps_to_examine:
+        await _display_repository_info(app, limit, show_assets)
+        console.print()  # Add spacing between apps
+
+
+def _handle_repository_examination_error(e: Exception, app_names: list[str]) -> None:
+    """Handle errors during repository examination."""
+    console.print(f"[red]Error examining repositories: {e}")
+    logger.error(f"Error examining repositories for '{app_names}': {e}")
+    logger.exception("Full exception details")
+
+
 async def _examine_repositories(
     config_file: Path | None,
     config_dir: Path | None,
@@ -1128,36 +1242,21 @@ async def _examine_repositories(
 ) -> None:
     """Examine repository information for applications."""
     try:
-        # Load configuration
-        config = load_config(config_file, config_dir)
+        config = _load_config_for_repository_examination(config_file, config_dir)
+        apps_to_examine = _filter_apps_for_examination(config.applications, app_names)
 
-        # Filter applications by names
-        apps_to_examine = ApplicationService.filter_apps_by_names(config.applications, app_names)
-
-        # Handle dry-run mode
         if dry_run:
-            console.print("[yellow]DRY RUN: Repository URLs that would be examined (no data fetched)")
-            console.print(f"[blue]Would examine {len(apps_to_examine)} application(s):")
-            for app in apps_to_examine:
-                console.print(f"  - {app.name}: {app.url}")
-            console.print("\n[dim]Run without --dry-run to fetch and display repository data")
+            _display_dry_run_repository_info(apps_to_examine)
             return
 
-        console.print(f"[blue]Examining repository information for {len(apps_to_examine)} application(s)...")
-        console.print()
-
-        for app in apps_to_examine:
-            await _display_repository_info(app, limit, show_assets)
-            console.print()  # Add spacing between apps
+        await _examine_apps_repositories(apps_to_examine, limit, show_assets)
 
     except ConfigLoadError as e:
         console.print(f"[red]Configuration error: {e}")
         logger.error(f"Configuration error: {e}")
         raise typer.Exit(1) from e
     except Exception as e:
-        console.print(f"[red]Error examining repositories: {e}")
-        logger.error(f"Error examining repositories for '{app_names}': {e}")
-        logger.exception("Full exception details")
+        _handle_repository_examination_error(e, app_names)
         raise typer.Exit(1) from e
 
 
@@ -1253,6 +1352,48 @@ def _display_pattern_summary(pattern: str, releases: list[Any]) -> None:
     console.print(f"[blue]Pattern '{pattern}' matches {total_matching} assets across {len(releases)} releases")
 
 
+def _normalize_app_names(app_names: list[str] | str | None) -> list[str]:
+    """Normalize app names parameter to a list."""
+    if isinstance(app_names, str):
+        return [app_names]
+    elif app_names is None:
+        return []
+    return app_names
+
+
+def _display_check_verbose_info(
+    app_names: list[str], dry_run: bool, yes: bool, no_interactive: bool, enabled_apps_count: int
+) -> None:
+    """Display verbose parameter information for check command."""
+    console.print("[blue]Resolved check parameters:")
+    console.print(f"  dry_run: {dry_run}")
+    console.print(f"  app_names: {app_names if app_names else 'all enabled apps'}")
+    console.print(f"  yes: {yes}")
+    console.print(f"  no_interactive: {no_interactive}")
+    console.print(f"  enabled_apps_count: {enabled_apps_count}")
+    console.print()
+
+
+async def _handle_no_updates_scenario(config: Any, enabled_apps: list[Any]) -> None:
+    """Handle scenario when no updates are available."""
+    await _setup_existing_files_rotation(config, enabled_apps)
+    console.print("[green]All applications are up to date!")
+    logger.debug("No updates available, exiting")
+
+
+def _handle_check_errors(e: Exception) -> None:
+    """Handle errors during check process."""
+    if isinstance(e, ConfigLoadError):
+        console.print(f"[red]Configuration error: {e}")
+        logger.error(f"Configuration error: {e}")
+        raise typer.Exit(1) from e
+    else:
+        console.print(f"[red]Unexpected error: {e}")
+        logger.error(f"Unexpected error: {e}")
+        logger.exception("Full exception details")
+        raise typer.Exit(1) from e
+
+
 async def _check_updates(
     config_file: Path | None,
     config_dir: Path | None,
@@ -1268,12 +1409,7 @@ async def _check_updates(
         app_names: List of app names, single app name, or None for all apps
     """
     logger.debug("Starting update check process")
-    # Handle backward compatibility - convert single string to list
-    if isinstance(app_names, str):
-        app_names = [app_names]
-    elif app_names is None:
-        app_names = []
-
+    app_names = _normalize_app_names(app_names)
     logger.debug(f"Config file: {config_file}, Config dir: {config_dir}, Dry run: {dry_run}, App filters: {app_names}")
 
     try:
@@ -1287,13 +1423,7 @@ async def _check_updates(
 
         # Show verbose parameter information if requested
         if verbose:
-            console.print("[blue]Resolved check parameters:")
-            console.print(f"  dry_run: {dry_run}")
-            console.print(f"  app_names: {app_names if app_names else 'all enabled apps'}")
-            console.print(f"  yes: {yes}")
-            console.print(f"  no_interactive: {no_interactive}")
-            console.print(f"  enabled_apps_count: {len(enabled_apps)}")
-            console.print()
+            _display_check_verbose_info(app_names, dry_run, yes, no_interactive, len(enabled_apps))
 
         # Perform update checks
         check_results = await _perform_update_checks(config, enabled_apps, no_interactive)
@@ -1302,10 +1432,7 @@ async def _check_updates(
         candidates = _get_update_candidates(check_results, dry_run)
 
         if not candidates:
-            # Even if no updates are available, check for existing files that need rotation setup
-            await _setup_existing_files_rotation(config, enabled_apps)
-            console.print("[green]All applications are up to date!")
-            logger.debug("No updates available, exiting")
+            await _handle_no_updates_scenario(config, enabled_apps)
             return
 
         # Handle downloads if not dry run
@@ -1315,15 +1442,8 @@ async def _check_updates(
             console.print("[blue]Dry run mode - no downloads performed")
             logger.debug("Dry run mode enabled, skipping downloads")
 
-    except ConfigLoadError as e:
-        console.print(f"[red]Configuration error: {e}")
-        logger.error(f"Configuration error: {e}")
-        raise typer.Exit(1) from e
     except Exception as e:
-        console.print(f"[red]Unexpected error: {e}")
-        logger.error(f"Unexpected error: {e}")
-        logger.exception("Full exception details")
-        raise typer.Exit(1) from e
+        _handle_check_errors(e)
 
 
 def _is_symlink_valid(symlink_path: Path, download_dir: Path) -> bool:
@@ -1392,34 +1512,57 @@ async def _setup_rotation_for_file(app_config: ApplicationConfig, latest_file: P
     logger.info(f"Set up rotation and symlink for existing file: {app_config.name}")
 
 
+def _should_skip_rotation_setup(app_config: ApplicationConfig) -> bool:
+    """Check if rotation setup should be skipped for this app."""
+    return not app_config.rotation_enabled or not app_config.symlink_path
+
+
+def _should_skip_download_dir(download_dir: Path) -> bool:
+    """Check if download directory should be skipped."""
+    return not download_dir.exists()
+
+
+def _should_skip_existing_symlink(app_config: ApplicationConfig, download_dir: Path) -> bool:
+    """Check if symlink is already properly set up."""
+    if app_config.symlink_path is None:
+        return False
+    return _is_symlink_valid(app_config.symlink_path, download_dir)
+
+
+def _get_latest_appimage_file(download_dir: Path) -> Path | None:
+    """Get the most recent AppImage file from directory."""
+    appimage_files = _find_unrotated_appimages(download_dir)
+    if not appimage_files:
+        return None
+    return max(appimage_files, key=lambda f: f.stat().st_mtime)
+
+
+async def _setup_rotation_safely(app_config: ApplicationConfig, latest_file: Path, config: Config) -> None:
+    """Set up rotation for file with error handling."""
+    try:
+        await _setup_rotation_for_file(app_config, latest_file, config)
+    except Exception as e:
+        logger.warning(f"Failed to set up rotation for {app_config.name}: {e}")
+
+
 async def _setup_existing_files_rotation(config: Config, enabled_apps: list[ApplicationConfig]) -> None:
     """Set up rotation and symlinks for existing files that need it."""
     for app_config in enabled_apps:
-        # Skip if rotation is not enabled or no symlink path configured
-        if not app_config.rotation_enabled or not app_config.symlink_path:
+        if _should_skip_rotation_setup(app_config):
             continue
 
         download_dir = Path(app_config.download_dir)
-        if not download_dir.exists():
+        if _should_skip_download_dir(download_dir):
             continue
 
-        # Check if symlink already exists and is valid
-        if _is_symlink_valid(app_config.symlink_path, download_dir):
+        if _should_skip_existing_symlink(app_config, download_dir):
             continue  # Symlink is already properly set up
 
-        # Find unrotated AppImage files
-        appimage_files = _find_unrotated_appimages(download_dir)
-        if not appimage_files:
+        latest_file = _get_latest_appimage_file(download_dir)
+        if latest_file is None:
             continue
 
-        # Get the most recent AppImage file
-        latest_file = max(appimage_files, key=lambda f: f.stat().st_mtime)
-
-        # Set up rotation for this file
-        try:
-            await _setup_rotation_for_file(app_config, latest_file, config)
-        except Exception as e:
-            logger.warning(f"Failed to set up rotation for {app_config.name}: {e}")
+        await _setup_rotation_safely(app_config, latest_file, config)
 
 
 async def _load_and_filter_config(
@@ -1466,27 +1609,33 @@ async def _perform_update_checks(config: Any, enabled_apps: list[Any], no_intera
     return check_results
 
 
-def _get_update_candidates(check_results: list[Any], dry_run: bool = False) -> list[Any]:
-    """Process check results and extract update candidates."""
-    # Display results
+def _display_check_results(check_results: list[Any], dry_run: bool) -> None:
+    """Display check results."""
     logger.debug("Displaying check results")
     display_check_results(check_results, show_urls=dry_run)
 
-    # Filter successful results with updates
+
+def _filter_update_candidates(check_results: list[Any]) -> list[Any]:
+    """Filter successful results with updates."""
     logger.debug("Filtering results for update candidates")
-    candidates = [
+    return [
         result.candidate
         for result in check_results
         if result.success and result.candidate and result.candidate.needs_update
     ]
 
+
+def _log_check_statistics(check_results: list[Any], candidates: list[Any]) -> None:
+    """Log statistics about check results."""
     successful_checks = sum(1 for r in check_results if r.success)
     failed_checks = len(check_results) - successful_checks
     logger.debug(
         f"Check results: {successful_checks} successful, {failed_checks} failed, {len(candidates)} updates available"
     )
 
-    # Display summary message about updates
+
+def _display_update_summary(candidates: list[Any]) -> None:
+    """Display summary message about available updates."""
     if candidates:
         if len(candidates) == 1:
             console.print("\n[yellow]1 update available")
@@ -1494,6 +1643,13 @@ def _get_update_candidates(check_results: list[Any], dry_run: bool = False) -> l
             console.print(f"\n[yellow]{len(candidates)} updates available")
         logger.debug(f"Found {len(candidates)} updates available")
 
+
+def _get_update_candidates(check_results: list[Any], dry_run: bool = False) -> list[Any]:
+    """Process check results and extract update candidates."""
+    _display_check_results(check_results, dry_run)
+    candidates = _filter_update_candidates(check_results)
+    _log_check_statistics(check_results, candidates)
+    _display_update_summary(candidates)
     return candidates
 
 
