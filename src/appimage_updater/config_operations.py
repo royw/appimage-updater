@@ -178,26 +178,37 @@ def handle_add_directory_creation(download_dir: str, create_dir: bool, yes: bool
     expanded_download_dir = str(Path(download_dir).expanduser())
     download_path = Path(expanded_download_dir)
 
-    # Check if download directory exists and handle creation
-    if not download_path.exists():
-        from .display import _replace_home_with_tilde
+    if download_path.exists():
+        return expanded_download_dir
 
-        display_path = _replace_home_with_tilde(str(download_path))
-        console.print(f"[yellow]Download directory does not exist: {display_path}")
-        should_create = create_dir or yes
-
-        if not should_create:
-            should_create = _prompt_for_directory_creation()
-
-        if should_create:
-            if not _create_directory(download_path):
-                # Directory creation failed, but don't exit - just warn
-                console.print("[yellow]Directory creation failed, but configuration will still be saved.")
-                console.print("[yellow]You will need to create the directory manually before downloading updates.")
-        else:
-            _handle_directory_creation_declined()
-
+    _handle_missing_directory(download_path, create_dir, yes)
     return expanded_download_dir
+
+def _handle_missing_directory(download_path: Path, create_dir: bool, yes: bool) -> None:
+    """Handle missing download directory creation."""
+    from .display import _replace_home_with_tilde
+
+    display_path = _replace_home_with_tilde(str(download_path))
+    console.print(f"[yellow]Download directory does not exist: {display_path}")
+
+    should_create = _determine_creation_choice(create_dir, yes)
+
+    if should_create:
+        _attempt_directory_creation(download_path)
+    else:
+        _handle_directory_creation_declined()
+
+def _determine_creation_choice(create_dir: bool, yes: bool) -> bool:
+    """Determine whether to create directory based on flags and user input."""
+    if create_dir or yes:
+        return True
+    return _prompt_for_directory_creation()
+
+def _attempt_directory_creation(download_path: Path) -> None:
+    """Attempt to create directory and handle failure."""
+    if not _create_directory(download_path):
+        console.print("[yellow]Directory creation failed, but configuration will still be saved.")
+        console.print("[yellow]You will need to create the directory manually before downloading updates.")
 
 
 async def generate_default_config(

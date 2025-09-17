@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from loguru import logger
 from rich.console import Console
 
@@ -58,34 +60,38 @@ class ShowCommand(Command):
             True if operation succeeded, False if it failed.
         """
         try:
-            # Import required modules
-            from ..config_operations import load_config
-            from ..display import display_application_details
-            from ..services import ApplicationService
-
-            # Load configuration
-            config = load_config(self.params.config_file, self.params.config_dir)
-
-            # Filter applications by names
-            found_apps = ApplicationService.filter_apps_by_names(config.applications, self.params.app_names or [])
+            config = self._load_configuration()
+            found_apps = self._filter_applications(config)
             if found_apps is None:
-                # Error already displayed by ApplicationService
                 return False
 
-            # Determine config source info for display
-            config_source_info = self._get_config_source_info()
-
-            # Display information for found applications
-            for i, app in enumerate(found_apps):
-                if i > 0:
-                    self.console.print()  # Add spacing between multiple apps
-                display_application_details(app, config_source_info)
-
+            self._display_applications(found_apps)
             return True
         except Exception as e:
             logger.error(f"Unexpected error in show command: {e}")
             logger.exception("Full exception details")
             raise
+
+    def _load_configuration(self) -> Any:
+        """Load configuration from file or directory."""
+        from ..config_operations import load_config
+        return load_config(self.params.config_file, self.params.config_dir)
+
+    def _filter_applications(self, config: Any) -> Any:
+        """Filter applications by names."""
+        from ..services import ApplicationService
+        return ApplicationService.filter_apps_by_names(config.applications, self.params.app_names or [])
+
+    def _display_applications(self, found_apps: Any) -> None:
+        """Display information for found applications."""
+        from ..display import display_application_details
+
+        config_source_info = self._get_config_source_info()
+
+        for i, app in enumerate(found_apps):
+            if i > 0:
+                self.console.print()  # Add spacing between multiple apps
+            display_application_details(app, config_source_info)
 
     def _get_config_source_info(self) -> dict[str, str]:
         """Get configuration source information for display."""
