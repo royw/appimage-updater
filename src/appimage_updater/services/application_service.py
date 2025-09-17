@@ -14,8 +14,12 @@ class ApplicationService:
     """Service for application-related operations."""
 
     @staticmethod
-    def filter_apps_by_names(enabled_apps: list[Any], app_names: list[str]) -> list[Any]:
-        """Filter applications by multiple names or glob patterns."""
+    def filter_apps_by_names(enabled_apps: list[Any], app_names: list[str]) -> list[Any] | None:
+        """Filter applications by multiple names or glob patterns.
+        
+        Returns:
+            List of matching applications, or None if some applications were not found.
+        """
         logger.debug(f"Filtering applications for: {app_names} (case-insensitive, supports glob patterns)")
 
         if not app_names:
@@ -25,7 +29,9 @@ class ApplicationService:
         unique_matches = ApplicationService._remove_duplicate_apps(all_matches)
 
         if not_found:
-            ApplicationService._handle_apps_not_found(not_found, enabled_apps)
+            success = ApplicationService._handle_apps_not_found(not_found, enabled_apps)
+            if not success:
+                return None  # Indicate error occurred
 
         logger.debug(f"Found {len(unique_matches)} unique application(s) matching the criteria")
         return unique_matches
@@ -100,8 +106,12 @@ class ApplicationService:
         return unique_matches
 
     @staticmethod
-    def _handle_apps_not_found(not_found: list[str], enabled_apps: list[Any]) -> None:
-        """Handle error cases when apps are not found."""
+    def _handle_apps_not_found(not_found: list[str], enabled_apps: list[Any]) -> bool:
+        """Handle error cases when apps are not found.
+        
+        Returns:
+            False to indicate that applications were not found (error condition).
+        """
         import sys
 
         available_apps = [app.name for app in enabled_apps]
@@ -113,7 +123,7 @@ class ApplicationService:
         ApplicationService._print_troubleshooting_tips_plain(available_apps)
 
         logger.error(f"Applications not found: {not_found}. Available: {available_apps}")
-        raise typer.Exit(1)
+        return False
 
     @staticmethod
     def _print_troubleshooting_tips(console: Console, available_apps: list[str]) -> None:

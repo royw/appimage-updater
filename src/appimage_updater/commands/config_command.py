@@ -67,23 +67,33 @@ class ConfigCommand(Command):
                 return CommandResult(success=False, message=error_msg, exit_code=1)
 
             # Execute the config operation
-            await self._execute_config_operation()
-
-            return CommandResult(success=True, message="Config operation completed successfully")
+            success = await self._execute_config_operation()
+            
+            if success:
+                return CommandResult(success=True, message="Config operation completed successfully")
+            else:
+                return CommandResult(success=False, message="Configuration operation failed", exit_code=1)
 
         except Exception as e:
             logger.error(f"Unexpected error in config command: {e}")
             logger.exception("Full exception details")
             return CommandResult(success=False, message=str(e), exit_code=1)
 
-    async def _execute_config_operation(self) -> None:
-        """Execute the core config operation logic."""
+    async def _execute_config_operation(self) -> bool:
+        """Execute the core config operation logic.
+        
+        Returns:
+            True if operation succeeded, False if it failed.
+        """
         action_handlers = self._get_action_handlers()
         handler = action_handlers.get(self.params.action)
         if handler:
-            handler()
+            result = handler()
+            # If handler returns False, it indicates an error occurred
+            return result is not False
+        return True
 
-    def _get_action_handlers(self) -> dict[str, Callable[[], None]]:
+    def _get_action_handlers(self) -> dict[str, Callable[[], None | bool]]:
         """Get mapping of actions to their handler functions."""
         from ..config_command import (
             list_available_settings,

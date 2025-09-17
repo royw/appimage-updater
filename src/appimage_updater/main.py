@@ -1341,7 +1341,8 @@ def _load_config_for_repository_examination(config_file: Path | None, config_dir
 
 def _filter_apps_for_examination(applications: list[Any], app_names: list[str]) -> list[Any]:
     """Filter applications by names for examination."""
-    return ApplicationService.filter_apps_by_names(applications, app_names)
+    result = ApplicationService.filter_apps_by_names(applications, app_names)
+    return result if result is not None else []
 
 
 def _display_dry_run_repository_info(apps_to_examine: list[Any]) -> None:
@@ -1536,15 +1537,18 @@ async def _check_updates(
     config_file: Path | None,
     config_dir: Path | None,
     dry_run: bool,
-    app_names: list[str] | str | None = None,
-    yes: bool = False,
-    no_interactive: bool = False,
-    verbose: bool = False,
-) -> None:
+    app_names: list[str] | str | None,
+    yes: bool,
+    no_interactive: bool,
+    verbose: bool,
+) -> bool:
     """Internal async function to check for updates.
 
     Args:
         app_names: List of app names, single app name, or None for all apps
+        
+    Returns:
+        True if successful, False if applications not found
     """
     _log_check_start(config_file, config_dir, dry_run, app_names)
 
@@ -1552,12 +1556,17 @@ async def _check_updates(
         config, enabled_apps = await _prepare_check_environment(
             config_file, config_dir, app_names, verbose, dry_run, yes, no_interactive
         )
+        if enabled_apps is None:
+            # Applications not found - return False to indicate error
+            return False
         if not enabled_apps:
-            return
+            return True  # No apps to check, but not an error
 
         await _execute_update_workflow(config, enabled_apps, dry_run, yes, no_interactive)
+        return True
     except Exception as e:
         _handle_check_errors(e)
+        return False
 
 
 def _log_check_start(
@@ -1579,11 +1588,15 @@ async def _prepare_check_environment(
     dry_run: bool,
     yes: bool,
     no_interactive: bool,
-) -> tuple[Any, list[Any]]:
+) -> tuple[Any, list[Any] | None]:
     """Prepare the environment for update checks."""
     normalized_names = _normalize_app_names(app_names)
     config, enabled_apps = await _load_and_filter_config(config_file, config_dir, normalized_names)
 
+    if enabled_apps is None:
+        # Applications not found - this is an error condition
+        return config, None
+    
     if not enabled_apps:
         console.print("[yellow]No enabled applications found in configuration")
         logger.warning("No enabled applications found, exiting")
@@ -1738,11 +1751,14 @@ async def _load_and_filter_config(
     config_file: Path | None,
     config_dir: Path | None,
     app_names: list[str] | None,
-) -> tuple[Any, list[Any]]:
+) -> tuple[Any, list[Any] | None]:
     """Load configuration and filter applications.
 
     Args:
         app_names: List of app names to filter by, or None for all apps
+        
+    Raises:
+        typer.Exit: If specified applications are not found
     """
     logger.debug("Loading configuration")
     config = load_config(config_file, config_dir)
@@ -1751,6 +1767,9 @@ async def _load_and_filter_config(
     # Filter by app names if specified
     if app_names:
         enabled_apps = ApplicationService.filter_apps_by_names(enabled_apps, app_names)
+        if enabled_apps is None:
+            # Error already displayed by ApplicationService, return special marker
+            return config, None  # Use None to indicate "apps not found" vs empty list for "no enabled apps"
 
     filter_msg = " (filtered)" if app_names else ""
     logger.debug(f"Found {len(config.applications)} total applications, {len(enabled_apps)} enabled{filter_msg}")
@@ -1929,23 +1948,44 @@ def config(
 
 def cli_main() -> None:
     """Main CLI entry point with proper exception handling."""
+    import sys
+
+    # Override sys.excepthook to prevent stack traces from being displayed
+    def clean_excepthook(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: Any) -> None:
+        """Clean exception handler that doesn't show stack traces for user errors."""
+        # For typer.Exit and click.exceptions.Exit, just exit cleanly
+        if exc_type.__name__ in ("Exit", "ClickException") or issubclass(exc_type, SystemExit):
+            if hasattr(exc_value, "exit_code"):
+                sys.exit(exc_value.exit_code)
+            else:
+                sys.exit(getattr(exc_value, "code", 1))
+
+        # For other exceptions, show a clean error message without stack trace
+        from rich.console import Console
+
+        console = Console(stderr=True)
+        console.print(f"[red]Error: {exc_value}[/red]")
+        sys.exit(1)
+
+    # Install our clean exception handler
+    sys.excepthook = clean_excepthook
+
     try:
         app()
-    except typer.Exit as e:
-        # Handle typer.Exit cleanly without showing stack trace
-        import sys
-        sys.exit(e.exit_code)
+    except (typer.Exit, SystemExit) as e:
+        # Handle exits cleanly without showing stack trace
+        sys.exit(getattr(e, "exit_code", getattr(e, "code", 1)))
     except KeyboardInterrupt:
         # Handle Ctrl+C gracefully
-        import sys
         from rich.console import Console
+
         console = Console(stderr=True)
         console.print("\n[yellow]Operation cancelled by user.[/yellow]")
         sys.exit(130)  # Standard exit code for SIGINT
     except Exception as e:
         # Handle unexpected exceptions with clean error message
-        import sys
         from rich.console import Console
+
         console = Console(stderr=True)
         console.print(f"[red]Error: {e}[/red]")
         sys.exit(1)

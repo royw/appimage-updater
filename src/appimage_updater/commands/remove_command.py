@@ -81,6 +81,9 @@ class RemoveCommand(Command):
             return CommandResult(success=False, exit_code=1)
 
         found_apps = self._validate_and_filter_apps(config, self.params.app_names or [])
+        if found_apps is None:
+            # Error already displayed by ApplicationService
+            return CommandResult(success=False, exit_code=1)
 
         if not self._should_proceed_with_removal(found_apps):
             return CommandResult(success=True, exit_code=0)
@@ -119,8 +122,12 @@ class RemoveCommand(Command):
         config = load_config(self.params.config_file, self.params.config_dir)
         return config  # type: ignore[no-any-return]
 
-    def _validate_and_filter_apps(self, config: Config, app_names_to_remove: list[str]) -> list[ApplicationConfig]:
-        """Find matching applications and handle not found cases."""
+    def _validate_and_filter_apps(self, config: Config, app_names_to_remove: list[str]) -> list[ApplicationConfig] | None:
+        """Find matching applications and handle not found cases.
+        
+        Returns:
+            List of matching applications, or None if some applications were not found.
+        """
 
         # Use ApplicationService for consistent error handling and output
         return ApplicationService.filter_apps_by_names(config.applications, app_names_to_remove)

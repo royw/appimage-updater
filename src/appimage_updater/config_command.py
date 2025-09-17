@@ -91,9 +91,7 @@ def _add_directory_rows(defaults_table: Table, defaults: Any) -> None:
 
 def _add_rotation_rows(defaults_table: Table, defaults: Any) -> None:
     """Add rotation-related rows to the table."""
-    defaults_table.add_row(
-        "Rotation Enabled", "[dim](rotation)[/dim]", "Yes" if defaults.rotation_enabled else "No"
-    )
+    defaults_table.add_row("Rotation Enabled", "[dim](rotation)[/dim]", "Yes" if defaults.rotation_enabled else "No")
     defaults_table.add_row("Retain Count", "[dim](retain-count)[/dim]", str(defaults.retain_count))
 
 
@@ -112,9 +110,7 @@ def _add_symlink_rows(defaults_table: Table, defaults: Any) -> None:
 
 def _add_checksum_rows(defaults_table: Table, defaults: Any) -> None:
     """Add checksum-related rows to the table."""
-    defaults_table.add_row(
-        "Checksum Enabled", "[dim](checksum)[/dim]", "Yes" if defaults.checksum_enabled else "No"
-    )
+    defaults_table.add_row("Checksum Enabled", "[dim](checksum)[/dim]", "Yes" if defaults.checksum_enabled else "No")
     defaults_table.add_row("Checksum Algorithm", "[dim](checksum-algorithm)[/dim]", defaults.checksum_algorithm.upper())
     defaults_table.add_row("Checksum Pattern", "[dim](checksum-pattern)[/dim]", defaults.checksum_pattern)
     defaults_table.add_row(
@@ -226,8 +222,12 @@ def set_global_config_value(
     value: str,
     config_file: Path | None = None,
     config_dir: Path | None = None,
-) -> None:
-    """Set a global configuration value."""
+) -> bool:
+    """Set a global configuration value.
+    
+    Returns:
+        True if the setting was applied successfully, False otherwise.
+    """
     try:
         config = load_config(config_file, config_dir)
     except ConfigLoadError:
@@ -235,14 +235,20 @@ def set_global_config_value(
         config = Config()
 
     # Apply the setting change
-    _apply_setting_change(config, setting, value)
+    if not _apply_setting_change(config, setting, value):
+        return False  # Error already displayed
 
     # Save the updated configuration
     _save_config(config, config_file, config_dir)
+    return True
 
 
-def _apply_setting_change(config: Config, setting: str, value: str) -> None:
-    """Apply a single setting change to the configuration."""
+def _apply_setting_change(config: Config, setting: str, value: str) -> bool:
+    """Apply a single setting change to the configuration.
+    
+    Returns:
+        True if the setting was applied successfully, False otherwise.
+    """
     # Define setting type mappings
     setting_handlers = {
         "path": (_is_path_setting, _apply_path_setting),
@@ -255,15 +261,15 @@ def _apply_setting_change(config: Config, setting: str, value: str) -> None:
     for _, (checker, applier) in setting_handlers.items():
         if checker(setting):
             applier(config, setting, value)
-            return
+            return True
 
     # Handle special case
     if setting == "checksum-algorithm":
         _apply_checksum_algorithm_setting(config, value)
-        return
+        return True
 
     # Unknown setting
-    _show_available_settings(setting)
+    return _show_available_settings(setting)
 
 
 def _is_path_setting(setting: str) -> bool:
@@ -442,15 +448,15 @@ def _apply_checksum_algorithm_setting(config: Config, value: str) -> None:
     console.print(f"[green]Set default checksum algorithm to: {value.upper()}")
 
 
-def _show_available_settings(setting: str) -> None:
-    """Show available settings and exit."""
+def _show_available_settings(setting: str) -> bool:
+    """Show available settings and return False to indicate error."""
     console.print(f"[red]Unknown setting: {setting}")
     console.print("[yellow]Available settings:")
     console.print("  download-dir, symlink-dir, symlink-pattern, auto-subdir")
     console.print("  rotation, symlink-enabled, retain-count")
     console.print("  checksum, checksum-algorithm, checksum-pattern, checksum-required")
     console.print("  prerelease, concurrent-downloads, timeout-seconds")
-    raise typer.Exit(1) from None
+    return False
 
 
 def list_available_settings() -> None:

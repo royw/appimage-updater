@@ -39,17 +39,24 @@ class ShowCommand(Command):
                 return CommandResult(success=False, message=error_msg, exit_code=1)
 
             # Execute the show operation
-            await self._execute_show_operation()
-
-            return CommandResult(success=True, message="Show completed successfully")
+            success = await self._execute_show_operation()
+            
+            if success:
+                return CommandResult(success=True, message="Show completed successfully")
+            else:
+                return CommandResult(success=False, message="Show operation failed", exit_code=1)
 
         except Exception as e:
             logger.error(f"Unexpected error in show command: {e}")
             logger.exception("Full exception details")
             return CommandResult(success=False, message=str(e), exit_code=1)
 
-    async def _execute_show_operation(self) -> None:
-        """Execute the core show operation logic."""
+    async def _execute_show_operation(self) -> bool:
+        """Execute the core show operation logic.
+        
+        Returns:
+            True if operation succeeded, False if it failed.
+        """
         try:
             # Import required modules
             from ..config_operations import load_config
@@ -61,6 +68,9 @@ class ShowCommand(Command):
 
             # Filter applications by names
             found_apps = ApplicationService.filter_apps_by_names(config.applications, self.params.app_names or [])
+            if found_apps is None:
+                # Error already displayed by ApplicationService
+                return False
 
             # Determine config source info for display
             config_source_info = self._get_config_source_info()
@@ -70,6 +80,8 @@ class ShowCommand(Command):
                 if i > 0:
                     self.console.print()  # Add spacing between multiple apps
                 display_application_details(app, config_source_info)
+            
+            return True
         except Exception as e:
             logger.error(f"Unexpected error in show command: {e}")
             logger.exception("Full exception details")

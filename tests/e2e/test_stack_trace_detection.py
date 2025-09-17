@@ -4,6 +4,7 @@ These tests run the actual CLI as a subprocess to catch stack traces
 that might not appear in unit test environments.
 """
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -19,6 +20,12 @@ def run_cli_command(args: list[str]) -> tuple[int, str, str]:
     # Run with uv to match user environment
     cmd = ["uv", "run", "python", "-m", "appimage_updater"] + args
     
+    # Set environment to disable rich traceback
+    env = dict(os.environ)
+    env['_RICH_TRACEBACK'] = '0'
+    env['RICH_TRACEBACK'] = '0'
+    env['NO_COLOR'] = '1'  # Also disable colors to make output more predictable
+    
     try:
         result = subprocess.run(
             cmd,
@@ -26,6 +33,7 @@ def run_cli_command(args: list[str]) -> tuple[int, str, str]:
             text=True,
             timeout=30,  # Prevent hanging
             cwd=Path(__file__).parent.parent.parent,
+            env=env,
         )
         return result.returncode, result.stdout, result.stderr
     except subprocess.TimeoutExpired:

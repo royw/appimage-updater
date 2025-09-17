@@ -135,6 +135,9 @@ class CheckService:
             return enabled_apps
 
         apps_to_check = self.application_service.filter_apps_by_names(enabled_apps, app_names)
+        if apps_to_check is None:
+            # Error already displayed by ApplicationService
+            return []
         if not apps_to_check:
             logger.error(f"No applications found matching: {', '.join(app_names)}")
             return []

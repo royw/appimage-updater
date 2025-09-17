@@ -28,20 +28,27 @@ class CheckCommand(Command):
 
         try:
             # Execute the check operation
-            await self._execute_check_operation()
-
-            return CommandResult(success=True, message="Check completed successfully")
+            success = await self._execute_check_operation()
+            
+            if success:
+                return CommandResult(success=True, message="Check completed successfully")
+            else:
+                return CommandResult(success=False, message="Applications not found", exit_code=1)
 
         except Exception as e:
             logger.error(f"Unexpected error in check command: {e}")
             logger.exception("Full exception details")
             return CommandResult(success=False, message=str(e), exit_code=1)
 
-    async def _execute_check_operation(self) -> None:
-        """Execute the core check operation logic."""
+    async def _execute_check_operation(self) -> bool:
+        """Execute the core check operation logic.
+        
+        Returns:
+            True if successful, False if applications not found
+        """
         from ..main import _check_updates
 
-        await _check_updates(
+        success = await _check_updates(
             config_file=self.params.config_file,
             config_dir=self.params.config_dir,
             dry_run=self.params.dry_run,
@@ -50,3 +57,4 @@ class CheckCommand(Command):
             no_interactive=self.params.no_interactive,
             verbose=self.params.verbose,
         )
+        return success
