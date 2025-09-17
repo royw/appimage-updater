@@ -6,7 +6,7 @@ and determining prerelease-only repositories.
 
 from loguru import logger
 
-from ..models import Release
+from ..core.models import Release
 
 
 def _categorize_asset_by_type_and_stability(asset_name: str, is_prerelease: bool, groups: dict[str, list[str]]) -> None:

@@ -7,8 +7,8 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
-from ..interactive import interactive_add_command
-from ..logging_config import configure_logging
+from ..ui.interactive import interactive_add_command
+from ..utils.logging_config import configure_logging
 from .base import Command, CommandResult
 from .parameters import AddParams
 
@@ -141,7 +141,7 @@ class AddCommand(Command):
             True if successful, False if validation failed
         """
         # This delegates to the CLI add command logic
-        from ..cli.add_command_logic import _add
+        from ..ui.cli.add_command_logic import _add
 
         success = await _add(
             name=self.params.name or "",
@@ -169,6 +169,6 @@ class AddCommand(Command):
 
     def _show_add_examples(self) -> None:
         """Show usage examples for the add command."""
-        from ..cli.validation_utilities import _show_add_examples
+        from ..ui.cli.validation_utilities import _show_add_examples
 
         _show_add_examples()

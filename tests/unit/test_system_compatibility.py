@@ -2,14 +2,19 @@
 
 from datetime import datetime
 
-from appimage_updater.models import Asset, Release
-from appimage_updater.system_info import (
-    SystemDetector,
-    get_system_info,
-    is_compatible_architecture,
-    is_compatible_platform,
-    is_supported_format,
-)
+from appimage_updater.core.models import Asset, Release
+from appimage_updater.core.system_info import SystemDetector, is_compatible_architecture, is_compatible_platform, \
+    is_supported_format, get_system_info
+
+
+# from appimage_updater.models import Asset, Release
+# from appimage_updater.system_info import (
+#     SystemDetector,
+#     get_system_info,
+#     is_compatible_architecture,
+#     is_compatible_platform,
+#     is_supported_format,
+# )
 
 
 class TestSystemDetector:

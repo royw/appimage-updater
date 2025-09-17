@@ -7,7 +7,7 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
-from ..logging_config import configure_logging
+from ..utils.logging_config import configure_logging
 from .base import Command, CommandResult
 from .parameters import ShowParams
 
@@ -74,7 +74,7 @@ class ShowCommand(Command):
 
     def _load_configuration(self) -> Any:
         """Load configuration from file or directory."""
-        from ..config_operations import load_config
+        from ..config.operations import load_config
 
         return load_config(self.params.config_file, self.params.config_dir)
 
@@ -86,7 +86,7 @@ class ShowCommand(Command):
 
     def _display_applications(self, found_apps: Any) -> None:
         """Display information for found applications."""
-        from ..display import display_application_details
+        from ..ui.display import display_application_details
 
         config_source_info = self._get_config_source_info()
 
@@ -97,7 +97,7 @@ class ShowCommand(Command):
 
     def _get_config_source_info(self) -> dict[str, str]:
         """Get configuration source information for display."""
-        from ..config_loader import get_default_config_dir, get_default_config_path
+        from ..config.loader import get_default_config_dir, get_default_config_path
 
         if self.params.config_file:
             return {

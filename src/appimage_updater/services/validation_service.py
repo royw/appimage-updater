@@ -8,8 +8,8 @@ from typing import Any
 
 from rich.console import Console
 
-from ..config_loader import ConfigLoadError
-from ..repositories import get_repository_client
+from ..config.loader import ConfigLoadError
+from ..repositories.factory import get_repository_client
 
 
 class ValidationService:

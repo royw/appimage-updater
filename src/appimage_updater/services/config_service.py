@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ..config import Config
-from ..config_operations import load_config
+from ..config.models import Config
+from ..config.operations import load_config
 
 
 class ConfigService:
@@ -53,7 +53,7 @@ class ConfigService:
             self._add_to_config_directory(app_config, self.config_dir)
         else:
             # Use default location
-            from ..config_loader import get_default_config_dir
+            from ..config.loader import get_default_config_dir
 
             default_dir = get_default_config_dir()
             self._add_to_config_directory(app_config, default_dir)

@@ -1,17 +1,19 @@
-"""Tests for repositories/__init__.py module."""
+"""Tests for repositories package modules."""
+
+from appimage_updater.repositories.base import RepositoryClient, RepositoryError
+from appimage_updater.repositories.direct_download_repository import DirectDownloadRepository
+from appimage_updater.repositories.dynamic_download_repository import DynamicDownloadRepository
+from appimage_updater.repositories.factory import detect_repository_type, get_repository_client
+from appimage_updater.repositories.github_repository import GitHubRepository
 
 
 def test_imports_available() -> None:
-    """Test that all expected imports are available."""
-    from appimage_updater.repositories import (
-        DirectDownloadRepository,
-        DynamicDownloadRepository,
-        GitHubRepository,
-        RepositoryClient,
-        RepositoryError,
-        detect_repository_type,
-        get_repository_client,
-    )
+    """Test that all expected imports are available from their specific modules."""
+    from appimage_updater.repositories.base import RepositoryClient, RepositoryError
+    from appimage_updater.repositories.direct_download_repository import DirectDownloadRepository
+    from appimage_updater.repositories.dynamic_download_repository import DynamicDownloadRepository
+    from appimage_updater.repositories.factory import detect_repository_type, get_repository_client
+    from appimage_updater.repositories.github_repository import GitHubRepository
 
     # All imports should be available
     assert RepositoryClient is not None
@@ -24,30 +26,31 @@ def test_imports_available() -> None:
 
 
 def test_all_exports() -> None:
-    """Test that __all__ contains expected exports."""
-    from appimage_updater import repositories
+    """Test that all expected classes and functions are available from their specific modules."""
+    # Since we don't use __all__ in __init__.py files, test direct module imports
+    from appimage_updater.repositories.base import RepositoryClient, RepositoryError
+    from appimage_updater.repositories.direct_download_repository import DirectDownloadRepository
+    from appimage_updater.repositories.dynamic_download_repository import DynamicDownloadRepository
+    from appimage_updater.repositories.factory import detect_repository_type, get_repository_client
+    from appimage_updater.repositories.github_repository import GitHubRepository
 
-    expected_exports = [
-        "RepositoryClient",
-        "RepositoryError",
-        "GitHubRepository",
-        "DirectDownloadRepository",
-        "DynamicDownloadRepository",
-        "get_repository_client",
-        "detect_repository_type",
+    # Verify all expected classes and functions are importable
+    expected_classes = [
+        RepositoryClient,
+        RepositoryError,
+        GitHubRepository,
+        DirectDownloadRepository,
+        DynamicDownloadRepository,
+        get_repository_client,
+        detect_repository_type,
     ]
 
-    # Check that __all__ is defined and contains expected items
-    assert hasattr(repositories, '__all__')
-    assert isinstance(repositories.__all__, list)
-
-    for export in expected_exports:
-        assert export in repositories.__all__
+    for item in expected_classes:
+        assert item is not None
 
 
 def test_repository_client_is_abstract() -> None:
     """Test that RepositoryClient is an abstract base class."""
-    from appimage_updater.repositories import RepositoryClient
 
     # Should be a class
     assert isinstance(RepositoryClient, type)
@@ -63,7 +66,6 @@ def test_repository_client_is_abstract() -> None:
 
 def test_repository_error_is_exception() -> None:
     """Test that RepositoryError is an exception class."""
-    from appimage_updater.repositories import RepositoryError
 
     # Should be an exception class
     assert issubclass(RepositoryError, Exception)
@@ -75,7 +77,9 @@ def test_repository_error_is_exception() -> None:
 
 def test_concrete_repository_classes() -> None:
     """Test that concrete repository classes are available."""
-    from appimage_updater.repositories import DirectDownloadRepository, DynamicDownloadRepository, GitHubRepository
+    from appimage_updater.repositories.direct_download_repository import DirectDownloadRepository
+    from appimage_updater.repositories.dynamic_download_repository import DynamicDownloadRepository
+    from appimage_updater.repositories.github_repository import GitHubRepository
 
     # Should all be classes
     assert isinstance(GitHubRepository, type)
@@ -85,7 +89,6 @@ def test_concrete_repository_classes() -> None:
 
 def test_factory_functions() -> None:
     """Test that factory functions are callable."""
-    from appimage_updater.repositories import detect_repository_type, get_repository_client
 
     # Should be callable functions
     assert callable(get_repository_client)

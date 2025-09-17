@@ -12,9 +12,10 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from src.appimage_updater.distribution_selector import DistributionSelector
-from src.appimage_updater.models import Asset, Release
-from src.appimage_updater.system_info import get_system_info
+from appimage_updater.core.system_info import get_system_info
+from appimage_updater.distribution_selector import DistributionSelector
+
+from ..core.models import Asset, Release
 
 
 def main():

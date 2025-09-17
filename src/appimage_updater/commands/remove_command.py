@@ -5,12 +5,13 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from appimage_updater.config import Config
-from appimage_updater.config_loader import ConfigLoadError
-from appimage_updater.config_operations import load_config
-from appimage_updater.models import ApplicationConfig
-from appimage_updater.services.application_service import ApplicationService
-
+from ..config.loader import ConfigLoadError
+from ..config.models import Config
+from ..config.operations import load_config
+from ..core.models import ApplicationConfig
+from ..services.application_service import ApplicationService
+from ..ui.display import _replace_home_with_tilde
+from ..utils.logging_config import configure_logging
 from .base import Command, CommandResult
 from .parameters import RemoveParams
 
@@ -37,8 +38,6 @@ class RemoveCommand(Command):
 
     async def execute(self) -> CommandResult:
         """Execute the remove command."""
-        from appimage_updater.logging_config import configure_logging
-
         configure_logging(debug=self.params.debug)
 
         try:
@@ -140,8 +139,6 @@ class RemoveCommand(Command):
 
         self.console.print(f"Found {len(found_apps)} application(s) to remove:")
         for app in found_apps:
-            from ..display import _replace_home_with_tilde
-
             display_dir = _replace_home_with_tilde(str(app.download_dir))
             self.console.print(f"  • {app.name} ({app.url})")
             self.console.print(f"    Download directory: {display_dir}")
@@ -163,8 +160,6 @@ class RemoveCommand(Command):
         """Remove applications from configuration."""
         for app in apps_to_remove:
             config.applications = [a for a in config.applications if a.name != app.name]
-            from ..display import _replace_home_with_tilde
-
             display_dir = _replace_home_with_tilde(str(app.download_dir))
             self.console.print(f"Successfully removed application '{app.name}' from configuration")
             self.console.print(f"Files in {display_dir} were not deleted")

@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from appimage_updater.models import Asset, Release
+from appimage_updater.core.models import Asset, Release
 from appimage_updater.repositories.base import RepositoryClient, RepositoryError
 
 logger = logging.getLogger(__name__)

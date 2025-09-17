@@ -4,9 +4,15 @@ from __future__ import annotations
 
 from typing import Any
 
+from loguru import logger
 from rich.console import Console
 
-from ..logging_config import configure_logging, logger
+from ..config.loader import ConfigLoadError
+from ..config.operations import load_config
+from ..ui.display import display_applications_list
+from ..utils.logging_config import configure_logging
+
+# from ..logging_config import configure_logging, logger
 from .base import Command, CommandResult
 from .parameters import ListParams
 
@@ -68,9 +74,6 @@ class ListCommand(Command):
             Config object if successful, None if config error, False if no applications
         """
 
-        from ..config_loader import ConfigLoadError
-        from ..config_operations import load_config
-
         try:
             config = load_config(self.params.config_file, self.params.config_dir)
         except ConfigLoadError:
@@ -85,8 +88,6 @@ class ListCommand(Command):
 
     def _display_applications_and_summary(self, config: Any) -> None:
         """Display applications list and summary statistics."""
-        from ..display import display_applications_list
-
         display_applications_list(config.applications)
 
         # Calculate and display summary

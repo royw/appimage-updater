@@ -6,7 +6,7 @@ distribution information and asset metadata.
 
 from dataclasses import dataclass
 
-from ..models import Asset
+from ..core.models import Asset
 
 
 @dataclass

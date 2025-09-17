@@ -172,7 +172,6 @@ def test_freecad_stable_vs_prerelease_prioritization(mock_fetch_pattern):
         assert "\\.(?:zip|AppImage)(\\.(|current|old))?$" in pattern or "\\.(zip|AppImage)" in pattern
 
         # Test that it matches various FreeCAD file types
-        import re
         pattern_compiled = re.compile(pattern)
         test_files = [
             "FreeCAD_1.0.2-conda-Linux-x86_64-py311.AppImage",  # Stable

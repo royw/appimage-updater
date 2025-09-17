@@ -5,7 +5,7 @@ from __future__ import annotations
 from loguru import logger
 from rich.console import Console
 
-from ..logging_config import configure_logging
+from ..utils.logging_config import configure_logging
 from .base import Command, CommandResult
 from .parameters import RepositoryParams
 

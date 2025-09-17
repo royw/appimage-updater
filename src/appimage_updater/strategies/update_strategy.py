@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from ..models import ApplicationConfig, UpdateCandidate
+from ..core.models import ApplicationConfig, UpdateCandidate
 from ..repositories.base import RepositoryClient
 
 
@@ -54,7 +54,7 @@ class GitHubUpdateStrategy(UpdateStrategy):
         Returns:
             List of available update candidates
         """
-        from ..version_checker import VersionChecker
+        from ..core.version_checker import VersionChecker
 
         # Use existing version checker logic
         checker = VersionChecker(repository_client)

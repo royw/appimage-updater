@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from typer.testing import CliRunner
 
-from appimage_updater.github_auth import GitHubAuth, get_github_auth
-from appimage_updater.github_client import GitHubClient
+from appimage_updater.github.auth import GitHubAuth, get_github_auth
+from appimage_updater.github.client import GitHubClient
 from appimage_updater.main import app
 
 
@@ -314,7 +314,7 @@ class TestGitHubClientAuthentication:
             mock_client.get.side_effect = rate_limit_error
             mock_client_class.return_value.__aenter__.return_value = mock_client
 
-            from appimage_updater.github_client import GitHubClientError
+            from appimage_updater.github.client import GitHubClientError
 
             client = GitHubClient()
             with pytest.raises(GitHubClientError) as exc_info:

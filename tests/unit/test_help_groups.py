@@ -5,7 +5,7 @@ from __future__ import annotations
 from rich.console import Console
 from rich.panel import Panel
 
-from appimage_updater.help_groups import (
+from appimage_updater.ui.help_groups import (
     ADVANCED_GROUP,
     ADVANCED_HELP,
     BASIC_OPTIONS_GROUP,

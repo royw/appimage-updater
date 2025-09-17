@@ -11,7 +11,7 @@ from appimage_updater.distribution_selector import (
     DistributionSelector,
     select_best_distribution_asset,
 )
-from appimage_updater.models import Asset
+from appimage_updater.core.models import Asset
 
 
 class TestDistributionSelector:

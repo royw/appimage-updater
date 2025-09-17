@@ -8,9 +8,17 @@ import typer
 from loguru import logger
 from rich.console import Console
 
-from appimage_updater.config import Config
-from appimage_updater.models import ApplicationConfig
-
+from ..config.loader import ConfigLoadError
+from ..config.models import ApplicationConfig, Config
+from ..config.operations import (
+    apply_configuration_updates,
+    collect_edit_updates,
+    handle_directory_creation,
+    load_config,
+    validate_edit_updates,
+)
+from ..ui.display import display_edit_summary
+from ..utils.logging_config import configure_logging
 from .base import Command, CommandResult
 from .parameters import EditParams
 
@@ -33,7 +41,6 @@ class EditCommand(Command):
 
     async def execute(self) -> CommandResult:
         """Execute the edit command."""
-        from ..logging_config import configure_logging
 
         configure_logging(debug=self.params.debug)
 
@@ -96,8 +103,6 @@ class EditCommand(Command):
         Returns:
             Config object if successful, None if error occurred
         """
-        from ..config_loader import ConfigLoadError
-        from ..config_operations import load_config
 
         try:
             return load_config(self.params.config_file, self.params.config_dir)
@@ -139,7 +144,6 @@ class EditCommand(Command):
 
     def _collect_updates_from_parameters(self) -> dict[str, Any]:
         """Collect updates from command parameters."""
-        from ..config_operations import collect_edit_updates
 
         return collect_edit_updates(
             url=self.params.url,
@@ -161,7 +165,6 @@ class EditCommand(Command):
 
     def _apply_updates_to_apps(self, apps: list[ApplicationConfig], updates: dict[str, Any], config: Config) -> None:
         """Apply updates to applications with validation."""
-        from ..config_operations import handle_directory_creation, validate_edit_updates
 
         for app in apps:
             try:
@@ -172,8 +175,6 @@ class EditCommand(Command):
                 handle_directory_creation(updates, self.params.create_dir, self.params.yes)
 
                 # Apply updates to the application and track changes
-                from ..config_operations import apply_configuration_updates
-                from ..display import display_edit_summary
 
                 changes = apply_configuration_updates(app, updates)
 

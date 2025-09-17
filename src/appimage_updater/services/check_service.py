@@ -9,9 +9,9 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
-from ..display import display_check_results
-from ..downloader import Downloader
-from ..version_checker import VersionChecker
+from ..core.downloader import Downloader
+from ..core.version_checker import VersionChecker
+from ..ui.display import display_check_results
 from .application_service import ApplicationService
 from .config_service import ConfigService
 
@@ -172,7 +172,6 @@ class CheckService:
 
     def _get_update_candidates(self, check_results: list[Any], dry_run: bool = False) -> list[Any]:
         """Process check results and extract update candidates."""
-        from ..display import display_check_results
 
         # Display results
         logger.debug("Displaying check results")

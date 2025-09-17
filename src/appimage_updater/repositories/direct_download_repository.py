@@ -14,7 +14,7 @@ from typing import Any, cast
 import httpx
 from loguru import logger
 
-from ..models import Asset, Release
+from ..core.models import Asset, Release
 from .base import RepositoryClient, RepositoryError
 
 

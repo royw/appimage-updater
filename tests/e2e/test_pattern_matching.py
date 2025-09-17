@@ -2,8 +2,9 @@ import json
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
+from appimage_updater.core.version_checker import VersionChecker
 from appimage_updater.main import app
-from appimage_updater.models import Asset, CheckResult, UpdateCandidate
+from appimage_updater.core.models import Asset, CheckResult, UpdateCandidate
 
 
 class TestPatternMatching:
@@ -14,7 +15,7 @@ class TestPatternMatching:
         for filename in filenames:
             (directory / filename).touch()
 
-    @patch('appimage_updater.repositories.get_repository_client')
+    @patch('appimage_updater.repositories.factory.get_repository_client')
     @patch('appimage_updater.main.VersionChecker')
     def test_pattern_matching_with_suffixes(
         self, mock_version_checker_class, mock_repo_client_factory,
@@ -86,8 +87,6 @@ class TestPatternMatching:
 
 def test_version_extraction_patterns():
     """Test version extraction from various filename formats."""
-    from appimage_updater.version_checker import VersionChecker
-
     checker = VersionChecker()
 
     test_cases = [

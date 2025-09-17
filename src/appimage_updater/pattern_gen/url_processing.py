@@ -8,6 +8,8 @@ import urllib.parse
 
 from loguru import logger
 
+from appimage_updater.repositories.factory import detect_repository_type
+
 
 def parse_github_url(url: str) -> tuple[str, str] | None:
     """Parse GitHub URL and extract owner/repo information.
@@ -87,6 +89,4 @@ def _is_download_url(path_parts: list[str]) -> bool:
 
 def detect_source_type(url: str) -> str:
     """Detect the source type based on the URL."""
-    from ..repositories import detect_repository_type
-
     return detect_repository_type(url)

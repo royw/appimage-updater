@@ -12,8 +12,8 @@ import urllib.parse
 
 from loguru import logger
 
-from .models import Release
-from .repositories import get_repository_client
+from .core.models import Release
+from .repositories.factory import get_repository_client
 
 
 def parse_github_url(url: str) -> tuple[str, str] | None:
@@ -398,7 +398,7 @@ def generate_fallback_pattern(app_name: str, url: str) -> str:
 
 def detect_source_type(url: str) -> str:
     """Detect the source type based on the URL."""
-    from .repositories import detect_repository_type
+    from .repositories.factory import detect_repository_type
 
     return detect_repository_type(url)
 

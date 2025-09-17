@@ -12,8 +12,22 @@ from loguru import logger
 from rich.console import Console
 
 from ._version import __version__
-from .cli.validation_utilities import _check_configuration_warnings
-from .cli_options import (
+from .commands import CommandFactory
+from .config.loader import ConfigLoadError
+from .config.models import ApplicationConfig, Config, GlobalConfig
+from .config.operations import (
+    apply_configuration_updates,
+    load_config,
+    save_updated_configuration,
+    validate_edit_updates,
+)
+from .core.downloader import Downloader
+from .core.models import InteractiveResult, rebuild_models
+from .core.version_checker import VersionChecker
+from .repositories.factory import get_repository_client
+from .services.application_service import ApplicationService
+from .ui.cli.validation_utilities import _check_configuration_warnings
+from .ui.cli_options import (
     CHECK_APP_NAME_ARGUMENT,
     CONFIG_DIR_OPTION,
     CONFIG_FILE_OPTION,
@@ -43,26 +57,13 @@ from .cli_options import (
     VERBOSE_OPTION,
     YES_OPTION,
 )
-from .commands import CommandFactory
-from .config import ApplicationConfig, Config, GlobalConfig
-from .config_loader import ConfigLoadError
-from .config_operations import (
-    apply_configuration_updates,
-    load_config,
-    save_updated_configuration,
-    validate_edit_updates,
-)
-from .display import (
+from .ui.display import (
+    _replace_home_with_tilde,
     display_check_results,
     display_download_results,
     display_edit_summary,
 )
-from .downloader import Downloader
-from .logging_config import configure_logging
-from .models import InteractiveResult, rebuild_models
-from .repositories import get_repository_client
-from .services import ApplicationService
-from .version_checker import VersionChecker
+from .utils.logging_config import configure_logging
 
 # Rebuild models to resolve forward references
 rebuild_models()
@@ -513,7 +514,7 @@ def _log_repository_auth_status(url: str) -> None:
         repo_client = get_repository_client(url)
         if hasattr(repo_client, "github_client"):
             # This is a GitHub repository, show GitHub-specific auth info
-            from .github_auth import get_github_auth
+            from .github.auth import get_github_auth
 
             auth = get_github_auth()
             rate_info = auth.get_rate_limit_info()
@@ -572,8 +573,6 @@ def _display_dry_run_header(name: str) -> None:
 
 def _display_basic_config_info(name: str, validated_url: str, expanded_download_dir: str, pattern: str) -> None:
     """Display basic configuration information."""
-    from .display import _replace_home_with_tilde
-
     display_dir = _replace_home_with_tilde(expanded_download_dir)
     console.print(f"[blue]Name: {name}")
     console.print(f"[blue]Source: {validated_url}")
@@ -588,8 +587,6 @@ def _display_rotation_config(app_config: dict[str, Any]) -> None:
     if rotation_enabled:
         console.print(f"[blue]  Retain Count: {app_config.get('retain', 3)}")
         if app_config.get("symlink"):
-            from .display import _replace_home_with_tilde
-
             display_symlink = _replace_home_with_tilde(app_config["symlink"])
             console.print(f"[blue]  Symlink: {display_symlink}")
 
@@ -637,8 +634,6 @@ def _display_add_success(
     prerelease_auto_enabled: bool,
 ) -> None:
     """Display success message after adding configuration."""
-    from .display import _replace_home_with_tilde
-
     display_dir = _replace_home_with_tilde(expanded_download_dir)
     console.print(f"[green]✅ Successfully added application '{name}'")
     console.print(f"[blue]📍 Source: {validated_url}")
@@ -1502,8 +1497,8 @@ async def _setup_rotation_for_file(app_config: ApplicationConfig, latest_file: P
     """Set up rotation for a single file."""
     from datetime import datetime
 
-    from .downloader import Downloader
-    from .models import Asset, UpdateCandidate
+    from .core.downloader import Downloader
+    from .core.models import Asset, UpdateCandidate
 
     downloader = Downloader(
         timeout=config.global_config.timeout_seconds * 10,

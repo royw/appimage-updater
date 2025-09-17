@@ -9,8 +9,8 @@ from unittest.mock import patch
 
 import pytest
 
-from appimage_updater.downloader import Downloader
-from appimage_updater.models import Asset, UpdateCandidate
+from appimage_updater.core.downloader import Downloader
+from appimage_updater.core.models import Asset, UpdateCandidate
 
 
 @pytest.fixture
@@ -91,7 +91,7 @@ async def test_extract_multiple_appimages_uses_first(mock_candidate, downloader)
         mock_candidate.download_path = zip_path
 
         # Should log a warning and use the first one
-        with patch("appimage_updater.downloader.logger") as mock_logger:
+        with patch("appimage_updater.core.downloader.logger") as mock_logger:
             await downloader._extract_if_zip(mock_candidate)
             mock_logger.warning.assert_called_once()
             assert "Multiple AppImage files found" in mock_logger.warning.call_args[0][0]

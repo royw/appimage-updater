@@ -2,7 +2,7 @@
 
 import pytest
 
-from appimage_updater.dependency_injection import DIContainer, get_container
+from appimage_updater.utils.dependency_injection import DIContainer, get_container
 
 
 class MockService:

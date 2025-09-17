@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from ..downloader import Downloader
-from ..models import DownloadResult, UpdateCandidate
+from ..core.downloader import Downloader
+from ..core.models import DownloadResult, UpdateCandidate
 
 
 class UpdateService:

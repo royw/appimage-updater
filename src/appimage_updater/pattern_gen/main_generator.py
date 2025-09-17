@@ -6,8 +6,8 @@ URL processing, release analysis, and pattern creation.
 
 from loguru import logger
 
-from ..models import Release
-from ..repositories import get_repository_client
+from ..core.models import Release
+from ..repositories.factory import get_repository_client
 from .pattern_generation import create_pattern_from_filenames, generate_fallback_pattern
 from .release_analysis import (
     _analyze_prerelease_status,

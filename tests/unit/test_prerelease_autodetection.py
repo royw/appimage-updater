@@ -8,7 +8,7 @@ import pytest
 from typer.testing import CliRunner
 
 from appimage_updater.main import app
-from appimage_updater.models import Asset, Release
+from appimage_updater.core.models import Asset, Release
 from appimage_updater.pattern_generator import should_enable_prerelease
 
 
@@ -176,8 +176,8 @@ class TestPrereleaseAutoDetection:
         ]
 
         with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
-             patch("appimage_updater.config_operations.get_repository_client") as mock_config_client, \
-             patch("appimage_updater.config_operations.should_enable_prerelease") as mock_should_enable:
+             patch("appimage_updater.config.operations.get_repository_client") as mock_config_client, \
+             patch("appimage_updater.pattern_generator.should_enable_prerelease") as mock_should_enable:
 
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
@@ -225,8 +225,8 @@ class TestPrereleaseAutoDetection:
         ]
 
         with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
-             patch("appimage_updater.config_operations.get_repository_client") as mock_config_client, \
-             patch("appimage_updater.config_operations.should_enable_prerelease") as mock_should_enable:
+             patch("appimage_updater.config.operations.get_repository_client") as mock_config_client, \
+             patch("appimage_updater.pattern_generator.should_enable_prerelease") as mock_should_enable:
 
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
@@ -274,7 +274,7 @@ class TestPrereleaseAutoDetection:
         ]
 
         with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
-             patch("appimage_updater.config_operations.get_repository_client") as mock_config_client:
+             patch("appimage_updater.config.operations.get_repository_client") as mock_config_client:
 
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
@@ -321,7 +321,7 @@ class TestPrereleaseAutoDetection:
         ]
 
         with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
-             patch("appimage_updater.config_operations.get_repository_client") as mock_config_client:
+             patch("appimage_updater.config.operations.get_repository_client") as mock_config_client:
 
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases

@@ -8,7 +8,7 @@ import re
 
 from loguru import logger
 
-from ..models import Asset
+from ..core.models import Asset
 from .models import AssetInfo
 
 

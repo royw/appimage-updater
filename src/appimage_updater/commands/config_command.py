@@ -7,7 +7,14 @@ from collections.abc import Callable
 from loguru import logger
 from rich.console import Console
 
-from ..logging_config import configure_logging
+from ..config.command import (
+    list_available_settings,
+    reset_global_config,
+    set_global_config_value,
+    show_effective_config,
+    show_global_config,
+)
+from ..utils.logging_config import configure_logging
 from .base import Command, CommandResult
 from .parameters import ConfigParams
 
@@ -108,13 +115,6 @@ class ConfigCommand(Command):
 
     def _get_action_handlers(self) -> dict[str, Callable[[], None | bool]]:
         """Get mapping of actions to their handler functions."""
-        from ..config_command import (
-            list_available_settings,
-            reset_global_config,
-            set_global_config_value,
-            show_effective_config,
-            show_global_config,
-        )
 
         return {
             "show": lambda: show_global_config(self.params.config_file, self.params.config_dir),

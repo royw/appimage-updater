@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from appimage_updater.config_command import set_global_config_value
-from appimage_updater.cli.add_command_logic import _add
+from appimage_updater.config.command import set_global_config_value
+from appimage_updater.ui.cli.add_command_logic import _add
 
 
 class TestDefaultsRegression:

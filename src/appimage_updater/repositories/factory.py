@@ -11,7 +11,6 @@ from typing import Any
 from .base import RepositoryClient, RepositoryError
 from .direct_download_repository import DirectDownloadRepository
 from .dynamic_download_repository import DynamicDownloadRepository
-from .github_repository import GitHubRepository
 
 
 def get_repository_client(
@@ -38,6 +37,9 @@ def get_repository_client(
     """
     # If explicit source type is provided, use it directly
     if source_type:
+        # Import GitHubRepository locally to avoid circular imports
+        from ..github.repository import GitHubRepository
+
         # Map source types to repository classes
         type_mapping = {
             "github": GitHubRepository,
@@ -54,6 +56,9 @@ def get_repository_client(
             raise RepositoryError(f"Unsupported source type: {source_type}")
 
     # Fall back to URL-based detection if no explicit source type
+    # Import GitHubRepository locally to avoid circular imports
+    from ..github.repository import GitHubRepository
+
     # Try each repository type in order of preference
     # Order matters: more specific types should come first
     repository_types = [
@@ -84,6 +89,9 @@ def detect_repository_type(url: str) -> str:
     Raises:
         RepositoryError: If repository type cannot be determined
     """
+    # Import GitHubRepository locally to avoid circular imports
+    from ..github.repository import GitHubRepository
+
     repository_types = [
         GitHubRepository,
         DynamicDownloadRepository,  # Check dynamic before direct (more specific)

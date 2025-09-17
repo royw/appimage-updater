@@ -18,8 +18,13 @@ from rich.console import Console
 from rich.prompt import Prompt
 from rich.table import Table
 
-from .models import Asset
-from .system_info import get_system_info, is_compatible_architecture, is_compatible_platform, is_supported_format
+from appimage_updater.core.models import Asset
+from appimage_updater.core.system_info import (
+    get_system_info,
+    is_compatible_architecture,
+    is_compatible_platform,
+    is_supported_format,
+)
 
 
 @dataclass
