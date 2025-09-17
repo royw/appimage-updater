@@ -67,6 +67,7 @@ def _create_default_global_config(config_parent_dir: Path) -> None:
         json.dump(config_data, f, indent=2)
 
     from ..display import _replace_home_with_tilde
+
     display_path = _replace_home_with_tilde(str(config_file))
     logger.info(f"Created global configuration file: {display_path}")
 
@@ -120,7 +121,7 @@ def add_to_config_file(app_config: dict[str, Any], config_file: Path) -> None:
 def add_to_config_directory(app_config: dict[str, Any], config_dir: Path) -> None:
     """Add application to a directory-based config structure."""
     import re
-    
+
     config_dir.mkdir(parents=True, exist_ok=True)
 
     # Create a filename based on the app name (sanitized)
@@ -356,13 +357,21 @@ def convert_app_to_dict(app: Any) -> dict[str, Any]:
             "required": app.checksum.required,
         },
         # Add optional fields if they exist
-        **({
-            "rotation_enabled": app.rotation_enabled,
-            "retain_count": getattr(app, "retain_count", 3),
-        } if hasattr(app, "rotation_enabled") and app.rotation_enabled else {}),
-        **({
-            "symlink_path": str(app.symlink_path),
-        } if hasattr(app, "symlink_path") and app.symlink_path else {}),
+        **(
+            {
+                "rotation_enabled": app.rotation_enabled,
+                "retain_count": getattr(app, "retain_count", 3),
+            }
+            if hasattr(app, "rotation_enabled") and app.rotation_enabled
+            else {}
+        ),
+        **(
+            {
+                "symlink_path": str(app.symlink_path),
+            }
+            if hasattr(app, "symlink_path") and app.symlink_path
+            else {}
+        ),
     }
 
 
