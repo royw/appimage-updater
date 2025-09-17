@@ -7,9 +7,7 @@ import contextlib
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable
-from typing import Any, TypeVar
-
-EventType = TypeVar("EventType", bound="Event")
+from typing import Any
 
 
 class Event(ABC):
@@ -34,39 +32,6 @@ class EventBus:
         """Initialize event bus."""
         self._subscribers: dict[type[Event], list[Callable[[Event], None]]] = defaultdict(list)
         self._async_subscribers: dict[type[Event], list[Callable[[Event], Any]]] = defaultdict(list)
-
-    def subscribe(self, event_type: type[EventType], handler: Callable[[EventType], None]) -> None:
-        """Subscribe to events of a specific type.
-
-        Args:
-            event_type: Type of event to subscribe to
-            handler: Function to call when event is published
-        """
-        # Cast to the expected type for the internal storage
-        self._subscribers[event_type].append(handler)  # type: ignore[arg-type]
-
-    def unsubscribe(self, event_type: type[EventType], handler: Callable[[EventType], None]) -> None:
-        """Unsubscribe from events of a specific type.
-
-        Args:
-            event_type: Type of event to unsubscribe from
-            handler: Handler function to remove
-        """
-        if handler in self._subscribers[event_type]:
-            self._subscribers[event_type].remove(handler)  # type: ignore[arg-type]
-
-    def clear_subscribers(self, event_type: type[EventType] | None = None) -> None:
-        """Clear all subscribers for a specific event type or all events.
-
-        Args:
-            event_type: Specific event type to clear, or None for all
-        """
-        if event_type:
-            self._subscribers[event_type].clear()
-            self._async_subscribers[event_type].clear()
-        else:
-            self._subscribers.clear()
-            self._async_subscribers.clear()
 
     def publish(self, event: Event) -> None:
         """Publish an event to all subscribers.

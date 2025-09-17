@@ -153,24 +153,6 @@ class ValidationHelper:
 
         return errors
 
-    def validate_directory_path(self, path: Path, create_if_missing: bool = False) -> list[str]:
-        """Validate directory path and optionally create it.
-
-        Args:
-            path: Directory path to validate
-            create_if_missing: Whether to create the directory if it doesn't exist
-
-        Returns:
-            List of validation error messages
-        """
-        if not path.exists():
-            return self._handle_missing_directory(path, create_if_missing)
-
-        if not path.is_dir():
-            return [f"Path '{path}' exists but is not a directory"]
-
-        return self._validate_directory_writable(path)
-
     def _handle_missing_directory(self, path: Path, create_if_missing: bool) -> list[str]:
         """Handle missing directory validation and creation."""
         if not create_if_missing:
@@ -181,16 +163,6 @@ class ValidationHelper:
             return []
         except (OSError, PermissionError) as e:
             return [f"Cannot create directory '{path}': {e}"]
-
-    def _validate_directory_writable(self, path: Path) -> list[str]:
-        """Validate that directory is writable."""
-        try:
-            test_file = path / ".write_test"
-            test_file.touch()
-            test_file.unlink()
-            return []
-        except (OSError, PermissionError):
-            return [f"Directory '{path}' is not writable"]
 
     def check_configuration_warnings(
         self,

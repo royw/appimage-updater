@@ -1166,12 +1166,6 @@ def _load_config_for_repository_examination(config_file: Path | None, config_dir
     return load_config(config_file, config_dir)
 
 
-def _filter_apps_for_examination(applications: list[Any], app_names: list[str]) -> list[Any]:
-    """Filter applications by names for examination."""
-    result = ApplicationService.filter_apps_by_names(applications, app_names)
-    return result if result is not None else []
-
-
 def _display_dry_run_repository_info(apps_to_examine: list[Any]) -> None:
     """Display dry-run information for repository examination."""
     console.print("[yellow]DRY RUN: Repository URLs that would be examined (no data fetched)")
@@ -1812,6 +1806,7 @@ def cli_main() -> None:
         sys.exit(1)
 
     # Install our clean exception handler
+    # Note: excepthook assignment is intentional for global error handling
     sys.excepthook = clean_excepthook
 
     try:

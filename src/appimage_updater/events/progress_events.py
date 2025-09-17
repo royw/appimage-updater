@@ -32,7 +32,6 @@ class ProgressEvent(Event):
         self.current = current
         self.total = total
         self.message = message
-        self.percentage = (current / total * 100) if total > 0 else 0
 
 
 class DownloadProgressEvent(ProgressEvent):

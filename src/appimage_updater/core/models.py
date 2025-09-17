@@ -316,11 +316,6 @@ class InteractiveResult(BaseModel):
         """Create a cancelled result."""
         return cls(success=False, cancelled=True, reason=reason)
 
-    @classmethod
-    def error_result(cls, reason: str) -> InteractiveResult:
-        """Create an error result."""
-        return cls(success=False, reason=reason)
-
 
 # Export all models for proper type checking
 __all__ = [

@@ -53,15 +53,3 @@ def _prompt_user_selection(asset_infos: list[AssetInfo], console: Console) -> As
             # Handle non-interactive environments
             console.print("[yellow]Non-interactive environment detected, using best match[/yellow]")
             return asset_infos[0]
-
-
-def _validate_choice_range(choice: str, max_choice: int) -> int:
-    """Validate user choice is within valid range."""
-    try:
-        index = int(choice) - 1
-        if 0 <= index < max_choice:
-            return index
-        else:
-            raise ValueError("Invalid choice range")
-    except ValueError as e:
-        raise ValueError("Invalid choice range") from e

@@ -84,13 +84,6 @@ CREATE_DIR_OPTION = typer.Option(
 # Add command feature options
 
 
-# Edit command options
-EDIT_APP_NAME_ARGUMENT = typer.Argument(
-    ...,
-    help="Names of applications to edit (case-insensitive, supports glob patterns like 'Orca*'). "
-    "Multiple names can be specified.",
-)
-
 EDIT_URL_OPTION = typer.Option(None, "--url", help="Update the repository URL")
 EDIT_DOWNLOAD_DIR_OPTION = typer.Option(None, "--download-dir", help="Update the download directory")
 EDIT_PATTERN_OPTION = typer.Option(None, "--pattern", help="Update the file pattern (regex)")

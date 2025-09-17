@@ -109,7 +109,7 @@ tasks:
         "resolve_prerelease_parameter" "resolve_checksum_parameters" "resolve_symlink_parameters"
         "check_configuration_warnings" "list_applications" "show_application" "initialize_config"
         "get_global_config" "set_global_config" "validate_configuration" "add_app" "check_updates"
-        "list_apps" "AppImageUpdaterFacade" "_extract_version_from_filename"
+        "list_apps" "AppImageUpdaterFacade" "_extract_version_from_filename" "excepthook"
 
   # === Testing ===
   test:

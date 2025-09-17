@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from ...config.models import GlobalConfig
 
@@ -147,38 +146,3 @@ class ParameterResolver:
             )
 
         return resolved_path, resolved_pattern
-
-    def get_parameter_status(self) -> dict[str, Any]:
-        """Get current parameter resolution status for display.
-
-        Returns:
-            Dictionary of parameter names and their resolved values
-        """
-        if not self.global_config:
-            return {
-                "download_dir": "Not set",
-                "auto_subdir": False,
-                "rotation_enabled": False,
-                "prerelease": False,
-                "checksum_required": False,
-                "checksum_algorithm": "Not set",
-                "checksum_pattern": "Not set",
-                "symlink_dir": "Not set",
-                "symlink_pattern": "Not set",
-            }
-
-        return {
-            "download_dir": (
-                str(self.global_config.defaults.download_dir) if self.global_config.defaults.download_dir else "Not set"
-            ),
-            "auto_subdir": self.global_config.defaults.auto_subdir,
-            "rotation_enabled": self.global_config.defaults.rotation_enabled,
-            "prerelease": self.global_config.defaults.prerelease,
-            "checksum_required": self.global_config.defaults.checksum_required,
-            "checksum_algorithm": self.global_config.defaults.checksum_algorithm,
-            "checksum_pattern": self.global_config.defaults.checksum_pattern,
-            "symlink_dir": (
-                str(self.global_config.defaults.symlink_dir) if self.global_config.defaults.symlink_dir else "Not set"
-            ),
-            "symlink_pattern": self.global_config.defaults.symlink_pattern,
-        }

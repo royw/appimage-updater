@@ -12,8 +12,7 @@ from loguru import logger
 
 from ...pattern_generator import detect_source_type, generate_appimage_pattern_async, should_enable_prerelease
 from ...ui.display import _replace_home_with_tilde
-from ..loader import get_default_config_dir
-from ..models import Config, GlobalConfig
+from ..models import GlobalConfig
 
 
 def _create_default_global_config(config_parent_dir: Path) -> None:
@@ -192,19 +191,3 @@ def _apply_rotation_config(
     if rotation_enabled:
         _apply_retain_count(config, retain, defaults)
         _apply_symlink_path(config, symlink, defaults, name)
-
-
-def create_default_config_structure() -> Any:
-    """Create default configuration structure when no config exists."""
-    logger.info("No configuration found, creating default directory structure")
-    # Create default config directory structure automatically
-    default_dir = get_default_config_dir()
-    default_dir.mkdir(parents=True, exist_ok=True)
-    logger.debug(f"Created default config directory: {default_dir}")
-
-    # Create global config.json file with default settings
-    _create_default_global_config(default_dir.parent)
-
-    # Return empty config that will be populated when first app is added
-
-    return Config(global_config=GlobalConfig(), applications=[])

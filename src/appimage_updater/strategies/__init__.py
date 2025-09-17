@@ -1,25 +1,5 @@
-"""Strategy patterns for different update mechanisms."""
+"""Strategy patterns for different update mechanisms.
 
-from .update_strategy import (
-    DirectDownloadUpdateStrategy,
-    GitHubUpdateStrategy,
-    UpdateStrategy,
-    UpdateStrategyFactory,
-)
-from .validation_strategy import (
-    ChecksumValidationStrategy,
-    NoValidationStrategy,
-    ValidationStrategy,
-    ValidationStrategyFactory,
-)
-
-__all__ = [
-    "UpdateStrategy",
-    "GitHubUpdateStrategy",
-    "DirectDownloadUpdateStrategy",
-    "UpdateStrategyFactory",
-    "ValidationStrategy",
-    "ChecksumValidationStrategy",
-    "NoValidationStrategy",
-    "ValidationStrategyFactory",
-]
+This package is reserved for future strategy pattern implementations.
+Currently, update and validation logic is handled directly in the core modules.
+"""
