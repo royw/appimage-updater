@@ -112,11 +112,13 @@ Look for these key indicators in debug output:
 
 **Solutions**:
 
-1. **Initialize configuration**:
+1. **Run any command to create configuration automatically**:
 
    ```bash
-   appimage-updater init
+   appimage-updater list
    ```
+
+   This will automatically create the configuration directory and files.
 
 1. **Specify config location**:
 
@@ -124,7 +126,7 @@ Look for these key indicators in debug output:
    appimage-updater --config-dir ~/.config/appimage-updater check
    ```
 
-1. **Create minimal config**:
+1. **Manually create minimal config** (if automatic creation fails):
 
    ```bash
    mkdir -p ~/.config/appimage-updater
@@ -154,7 +156,8 @@ Look for these key indicators in debug output:
 
    ```bash
    cp ~/.config/appimage-updater/config.json ~/.config/appimage-updater/config.json.backup
-   appimage-updater init
+   rm ~/.config/appimage-updater/config.json
+   appimage-updater list  # This will recreate the config automatically
    ```
 
 ### Application Not Found

@@ -317,8 +317,7 @@ For complete command documentation including all options and examples, see the [
 
 | Command | Purpose |
 |---------|---------|
-| `appimage-updater init` | Initialize configuration |
-| `appimage-updater add` | Add new application |
+| `appimage-updater add` | Add new application (creates config automatically) |
 | `appimage-updater list` | List all applications |
 | `appimage-updater check [apps...]` | Check for updates (all or specific apps) |
 | `appimage-updater show <apps...>` | Show app details (supports multiple apps) |

@@ -293,7 +293,7 @@ If config files are compromised:
 1. **Regenerate config** if needed:
    ```bash
    mv ~/.config/appimage-updater ~/.config/appimage-updater.backup
-   appimage-updater init
+   appimage-updater list  # This will recreate config automatically
    ```
 
 ## Security Checklist

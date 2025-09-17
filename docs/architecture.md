@@ -639,4 +639,54 @@ Future plugin system for:
 - Application popularity
 - Error categorization
 
+## Error Handling Architecture
+
+### Clean Exit Strategy
+
+AppImage Updater implements a professional error handling architecture that eliminates stack traces from user-facing output:
+
+```mermaid
+flowchart TD
+    A[Business Logic] --> B[Return Results]
+    B --> C[Command Classes]
+    C --> D[CommandResult]
+    D --> E[CLI Handlers]
+    E --> F[typer.Exit]
+    F --> G[Main Exception Handler]
+    G --> H[sys.exit]
+    
+    I[Interactive Functions] --> J[InteractiveResult]
+    J --> K[Success/Cancelled/Error]
+    K --> C
+```
+
+### Error Flow Layers
+
+1. **Business Logic Layer** - Functions return results instead of raising exceptions
+   - Configuration operations return `bool` or `None` on error
+   - Interactive functions return `InteractiveResult` objects
+   - Validation functions return `None` on failure
+
+2. **Command Layer** - Coordinates business logic and returns `CommandResult`
+   - Handles `None` returns from business logic
+   - Converts errors to appropriate `CommandResult` objects
+   - Maintains proper exit codes (1 for errors, 0 for success)
+
+3. **CLI Layer** - Single exit point per command
+   - Only place where `typer.Exit` is called
+   - Clean separation between business logic and CLI concerns
+   - Professional user experience with helpful error messages
+
+4. **Exception Handler** - Final safety net
+   - Catches unexpected exceptions
+   - Provides clean error messages without stack traces
+   - Ensures proper exit codes in all scenarios
+
+### Benefits
+
+- **Professional UX** - No stack traces shown to users
+- **Testable Code** - All functions return results that can be unit tested
+- **Consistent Patterns** - All commands follow the same error handling approach
+- **Clean Architecture** - Clear separation of concerns between layers
+
 This architecture provides a robust, maintainable, and extensible foundation for AppImage management automation.

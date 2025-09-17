@@ -28,6 +28,26 @@ For installation instructions, see the [Installation Guide](installation.md).
    appimage-updater list
    ```
 
+## User-Friendly Help System
+
+AppImage Updater provides helpful usage information when you run commands without required arguments, making it easy to explore available options:
+
+```bash
+# Shows complete config command help with examples
+appimage-updater config
+
+# Shows show command help with usage patterns
+appimage-updater show
+
+# Shows edit command help with all options
+appimage-updater edit
+
+# Shows remove command help
+appimage-updater remove
+```
+
+This eliminates the need to remember `--help` flags and provides immediate guidance on proper command usage.
+
 ## Commands
 
 ### CLI Setting Name Consistency

@@ -573,12 +573,12 @@ See the `examples/` directory for complete configuration examples:
 - `examples/freecad.json` - Single application
 - `examples/comprehensive.json` - Multiple applications with global config
 
-## Initialization
+## Automatic Configuration Creation
 
-Create a default configuration:
+Configuration files are created automatically when you first use any command:
 
 ```bash
-appimage-updater init
+appimage-updater list
 ```
 
-This creates `~/.config/appimage-updater/apps/freecad.json` with a FreeCAD example.
+This creates the configuration directory structure and `~/.config/appimage-updater/config.json` with default global settings.

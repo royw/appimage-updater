@@ -38,13 +38,7 @@ AppImage Updater monitors configured applications (like FreeCAD, OrcaSlicer, etc
    pipx install appimage-updater
    ```
 
-1. **Initialize** configuration:
-
-   ```bash
-   appimage-updater init
-   ```
-
-1. **Add** an application:
+1. **Add** an application (configuration is created automatically):
 
    ```bash
    appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
