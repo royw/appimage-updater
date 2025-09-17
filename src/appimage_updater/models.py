@@ -298,6 +298,30 @@ def rebuild_models() -> None:
         CheckResult.model_rebuild()
 
 
+class InteractiveResult(BaseModel):
+    """Result from interactive operations."""
+
+    success: bool = Field(description="Whether the operation completed successfully")
+    cancelled: bool = Field(default=False, description="Whether the operation was cancelled by user")
+    reason: str | None = Field(default=None, description="Reason for cancellation or failure")
+    data: dict[str, Any] | None = Field(default=None, description="Operation result data")
+
+    @classmethod
+    def success_result(cls, data: dict[str, Any] | None = None) -> InteractiveResult:
+        """Create a successful result."""
+        return cls(success=True, data=data)
+
+    @classmethod
+    def cancelled_result(cls, reason: str) -> InteractiveResult:
+        """Create a cancelled result."""
+        return cls(success=False, cancelled=True, reason=reason)
+
+    @classmethod
+    def error_result(cls, reason: str) -> InteractiveResult:
+        """Create an error result."""
+        return cls(success=False, reason=reason)
+
+
 # Export all models for proper type checking
 __all__ = [
     "Asset",
@@ -306,6 +330,7 @@ __all__ = [
     "CheckResult",
     "ChecksumResult",
     "DownloadResult",
+    "InteractiveResult",
     "ApplicationConfig",
     "rebuild_models",
 ]

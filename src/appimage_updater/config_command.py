@@ -9,7 +9,6 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-import typer
 from rich.console import Console
 from rich.table import Table
 
@@ -123,11 +122,15 @@ def _add_misc_rows(defaults_table: Table, defaults: Any) -> None:
     defaults_table.add_row("Prerelease", "[dim](prerelease)[/dim]", "Yes" if defaults.prerelease else "No")
 
 
-def _handle_config_load_error(e: ConfigLoadError) -> None:
-    """Handle configuration load errors."""
+def _handle_config_load_error(e: ConfigLoadError) -> bool:
+    """Handle configuration load errors.
+
+    Returns:
+        False to indicate error occurred
+    """
     console.print(f"[red]Error loading configuration: {e}")
     console.print("[yellow]Run 'appimage-updater init' to create a configuration.")
-    raise typer.Exit(1) from e
+    return False
 
 
 def show_effective_config(app_name: str, config_file: Path | None = None, config_dir: Path | None = None) -> None:
@@ -138,6 +141,7 @@ def show_effective_config(app_name: str, config_file: Path | None = None, config
 
         if effective_config is None:
             _handle_app_not_found(app_name)
+            return  # Error already handled
 
         _print_effective_config_header(app_name)
         _print_main_config_table(effective_config)
@@ -147,10 +151,14 @@ def show_effective_config(app_name: str, config_file: Path | None = None, config
         _handle_config_load_error(e)
 
 
-def _handle_app_not_found(app_name: str) -> None:
-    """Handle case where application is not found."""
+def _handle_app_not_found(app_name: str) -> bool:
+    """Handle case where application is not found.
+
+    Returns:
+        False to indicate error occurred
+    """
     console.print(f"[red]Application '{app_name}' not found in configuration.")
-    raise typer.Exit(1)
+    return False
 
 
 def _print_effective_config_header(app_name: str) -> None:
@@ -266,8 +274,7 @@ def _apply_setting_change(config: Config, setting: str, value: str) -> bool:
 
     # Handle special case
     if setting == "checksum-algorithm":
-        _apply_checksum_algorithm_setting(config, value)
-        return True
+        return _apply_checksum_algorithm_setting(config, value)
 
     # Unknown setting
     return _show_available_settings(setting)
@@ -457,8 +464,12 @@ def _apply_timeout_setting(config: Config, value: int) -> bool:
         return False
 
 
-def _apply_checksum_algorithm_setting(config: Config, value: str) -> None:
-    """Apply checksum algorithm setting change."""
+def _apply_checksum_algorithm_setting(config: Config, value: str) -> bool:
+    """Apply checksum algorithm setting change.
+
+    Returns:
+        True if successful, False if invalid value
+    """
     algorithm_lower = value.lower()
     if algorithm_lower == "sha256":
         config.global_config.defaults.checksum_algorithm = "sha256"
@@ -468,9 +479,10 @@ def _apply_checksum_algorithm_setting(config: Config, value: str) -> None:
         config.global_config.defaults.checksum_algorithm = "md5"
     else:
         console.print("[red]Checksum algorithm must be one of: sha256, sha1, md5")
-        raise typer.Exit(1) from None
+        return False
 
     console.print(f"[green]Set default checksum algorithm to: {value.upper()}")
+    return True
 
 
 def _show_available_settings(setting: str) -> bool:
@@ -586,13 +598,17 @@ def list_available_settings() -> None:
     console.print("[dim]💡 Tip: Use 'appimage-updater config show' to see current values[/dim]")
 
 
-def reset_global_config(config_file: Path | None = None, config_dir: Path | None = None) -> None:
-    """Reset global configuration to defaults."""
+def reset_global_config(config_file: Path | None = None, config_dir: Path | None = None) -> bool:
+    """Reset global configuration to defaults.
+
+    Returns:
+        True if successful, False if error occurred
+    """
     try:
         config = load_config(config_file, config_dir)
     except ConfigLoadError:
         console.print("[yellow]No existing configuration found. Nothing to reset.")
-        raise typer.Exit(1) from None
+        return False
 
     # Reset to defaults
     config.global_config = GlobalConfig()
@@ -601,6 +617,7 @@ def reset_global_config(config_file: Path | None = None, config_dir: Path | None
 
     # Save the updated configuration
     _save_config(config, config_file, config_dir)
+    return True
 
 
 def _save_config(config: Config, config_file: Path | None, config_dir: Path | None) -> None:

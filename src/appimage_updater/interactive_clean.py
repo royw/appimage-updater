@@ -15,32 +15,38 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, IntPrompt, Prompt
 
+from .models import InteractiveResult
 from .repositories.factory import get_repository_client
 
 console = Console()
 
 
-def interactive_add_command() -> dict[str, Any]:
+def interactive_add_command() -> InteractiveResult:
     """Interactive mode for the add command."""
     _display_welcome_message()
 
-    # Collect all settings through helper functions
-    basic_settings = _collect_basic_add_settings()
-    rotation_settings = _collect_rotation_add_settings(basic_settings["name"])
-    checksum_settings = _collect_checksum_add_settings()
-    advanced_settings = _collect_advanced_add_settings(basic_settings["url"])
+    try:
+        # Collect all settings through helper functions
+        basic_settings = _collect_basic_add_settings()
+        rotation_settings = _collect_rotation_add_settings(basic_settings["name"])
+        checksum_settings = _collect_checksum_add_settings()
+        advanced_settings = _collect_advanced_add_settings(basic_settings["url"])
 
-    # Combine all settings
-    all_settings = {**basic_settings, **rotation_settings, **checksum_settings, **advanced_settings}
+        # Combine all settings
+        all_settings = {**basic_settings, **rotation_settings, **checksum_settings, **advanced_settings}
 
-    # Display summary and confirm
-    _display_add_summary(all_settings)
+        # Display summary and confirm
+        _display_add_summary(all_settings)
 
-    if not Confirm.ask("\n🎯 Add this application?", default=True):
-        console.print("❌ [yellow]Operation cancelled[/yellow]")
-        raise typer.Exit(0)
+        if not Confirm.ask("\n🎯 Add this application?", default=True):
+            console.print("❌ [yellow]Operation cancelled[/yellow]")
+            return InteractiveResult.cancelled_result("user_cancelled")
 
-    return all_settings
+        return InteractiveResult.success_result(all_settings)
+
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Operation cancelled[/yellow]")
+        return InteractiveResult.cancelled_result("keyboard_interrupt")
 
 
 def _display_welcome_message() -> None:
@@ -288,7 +294,7 @@ def _collect_advanced_settings() -> dict[str, Any]:
     return updates
 
 
-def interactive_edit_command(app_names: list[str]) -> dict[str, Any]:
+def interactive_edit_command(app_names: list[str]) -> InteractiveResult:
     """Interactive mode for the edit command."""
     console.print(
         Panel.fit(
@@ -297,27 +303,32 @@ def interactive_edit_command(app_names: list[str]) -> dict[str, Any]:
         )
     )
 
-    # Collect all updates from different sections
-    updates = {}
-    updates.update(_collect_basic_edit_settings())
-    updates.update(_collect_rotation_settings())
-    updates.update(_collect_checksum_settings())
-    updates.update(_collect_advanced_settings())
+    try:
+        # Collect all updates from different sections
+        updates = {}
+        updates.update(_collect_basic_edit_settings())
+        updates.update(_collect_rotation_settings())
+        updates.update(_collect_checksum_settings())
+        updates.update(_collect_advanced_settings())
 
-    if not updates:
-        console.print("ℹ️  [yellow]No changes specified[/yellow]")
-        raise typer.Exit(0)
+        if not updates:
+            console.print("ℹ️  [yellow]No changes specified[/yellow]")
+            return InteractiveResult.cancelled_result("no_changes")
 
-    # Summary
-    console.print("\n✨ [bold green]Changes Summary[/bold green]")
-    for key, value in updates.items():
-        console.print(f"   {key}: {value}")
+        # Summary
+        console.print("\n✨ [bold green]Changes Summary[/bold green]")
+        for key, value in updates.items():
+            console.print(f"   {key}: {value}")
 
-    if not Confirm.ask("\n🎯 Apply these changes?", default=True):
-        console.print("❌ [yellow]Operation cancelled[/yellow]")
-        raise typer.Exit(0)
+        if not Confirm.ask("\n🎯 Apply these changes?", default=True):
+            console.print("❌ [yellow]Operation cancelled[/yellow]")
+            return InteractiveResult.cancelled_result("user_cancelled")
 
-    return updates
+        return InteractiveResult.success_result(updates)
+
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Operation cancelled[/yellow]")
+        return InteractiveResult.cancelled_result("keyboard_interrupt")
 
 
 def _prompt_with_validation(prompt: str, validator: Callable[[str], bool], error_msg: str, **kwargs: Any) -> str:

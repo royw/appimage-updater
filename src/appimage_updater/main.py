@@ -63,7 +63,7 @@ from .display import (
 )
 from .downloader import Downloader
 from .logging_config import configure_logging
-from .models import rebuild_models
+from .models import InteractiveResult, rebuild_models
 from .repositories import get_repository_client
 from .services import ApplicationService
 from .version_checker import VersionChecker
@@ -1864,19 +1864,23 @@ def _get_update_candidates(check_results: list[Any], dry_run: bool = False) -> l
     return candidates
 
 
-def _prompt_for_download_confirmation() -> bool:
-    """Prompt user for download confirmation."""
+def _prompt_for_download_confirmation() -> InteractiveResult:
+    """Prompt user for download confirmation.
+
+    Returns:
+        InteractiveResult indicating user's choice
+    """
     logger.debug("Prompting user for download confirmation")
     try:
         if not typer.confirm("Download all updates?"):
             console.print("[yellow]Download cancelled")
             logger.debug("User cancelled download")
-            return False
+            return InteractiveResult.cancelled_result("user_cancelled")
     except (EOFError, KeyboardInterrupt, typer.Abort):
         console.print("[yellow]Running in non-interactive mode. Use --yes to automatically confirm downloads.")
         logger.debug("Non-interactive mode detected, download cancelled")
-        return False
-    return True
+        return InteractiveResult.cancelled_result("non_interactive")
+    return InteractiveResult.success_result()
 
 
 def _create_downloader(config: Any) -> Downloader:
@@ -1903,8 +1907,9 @@ async def _handle_downloads(config: Any, candidates: list[Any], yes: bool = Fals
     """Handle the download process."""
     # Prompt for download unless --yes flag is used
     if not yes:
-        if not _prompt_for_download_confirmation():
-            return
+        confirmation_result = _prompt_for_download_confirmation()
+        if not confirmation_result.success:
+            return  # User cancelled or non-interactive mode
     else:
         logger.debug("Auto-confirming downloads due to --yes flag")
 

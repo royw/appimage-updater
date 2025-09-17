@@ -48,9 +48,17 @@ class AddCommand(Command):
 
             # Handle interactive mode
             if self.params.interactive:
-                interactive_params = interactive_add_command()
+                interactive_result = interactive_add_command()
+                # Check if interactive mode was successful
+                if not interactive_result.success:
+                    if interactive_result.cancelled:
+                        return CommandResult(success=True, message="Operation cancelled by user", exit_code=0)
+                    else:
+                        reason = interactive_result.reason or "Interactive mode failed"
+                        return CommandResult(success=False, message=reason, exit_code=1)
+
                 # Update params with interactive values
-                self._update_params_from_interactive(interactive_params)
+                self._update_params_from_interactive(interactive_result.data or {})
 
             # Validate required parameters
             validation_errors = self.validate()

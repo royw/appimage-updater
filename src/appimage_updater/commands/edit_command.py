@@ -46,7 +46,9 @@ class EditCommand(Command):
                 return CommandResult(success=False, message=error_msg, exit_code=1)
 
             # Execute the edit operation
-            await self._execute_edit_operation()
+            result = await self._execute_edit_operation()
+            if result is not None:
+                return result
 
             return CommandResult(success=True, message="Edit completed successfully")
 
@@ -57,25 +59,43 @@ class EditCommand(Command):
             logger.exception("Full exception details")
             return CommandResult(success=False, message=str(e), exit_code=1)
 
-    async def _execute_edit_operation(self) -> None:
-        """Execute the core edit operation logic."""
+    async def _execute_edit_operation(self) -> CommandResult | None:
+        """Execute the core edit operation logic.
+
+        Returns:
+            CommandResult if error occurred, None if successful
+        """
         config = self._load_config_with_error_handling()
+        if config is None:
+            return CommandResult(success=False, message="Configuration error", exit_code=1)
+
         app_names_to_edit = self._validate_app_names_provided()
+        if app_names_to_edit is None:
+            return CommandResult(success=False, message="No application names provided", exit_code=1)
+
         found_apps = self._find_matching_applications(config, app_names_to_edit)
+        if found_apps is None:
+            return CommandResult(success=False, message="Applications not found", exit_code=1)
+
         updates = self._collect_updates_from_parameters()
 
         if not updates:
             self.console.print("[yellow]No changes specified. Use --help to see available options.[/yellow]")
-            return
+            return None
 
         # Apply updates to each application
         self._apply_updates_to_apps(found_apps, updates, config)
 
         # Save updated configuration
         self._save_config(config)
+        return None
 
-    def _load_config_with_error_handling(self) -> Any:
-        """Load configuration with proper error handling."""
+    def _load_config_with_error_handling(self) -> Any | None:
+        """Load configuration with proper error handling.
+
+        Returns:
+            Config object if successful, None if error occurred
+        """
         from ..config_loader import ConfigLoadError
         from ..config_operations import load_config
 
@@ -84,20 +104,28 @@ class EditCommand(Command):
         except ConfigLoadError as e:
             if "No configuration found" in str(e):
                 self.console.print("[red]Configuration error: No configuration found[/red]")
-                raise typer.Exit(1) from e
-            self.console.print(f"[red]Configuration error: {e}[/red]")
-            raise typer.Exit(1) from e
+            else:
+                self.console.print(f"[red]Configuration error: {e}[/red]")
+            return None
 
-    def _validate_app_names_provided(self) -> list[str]:
-        """Validate that application names are provided."""
+    def _validate_app_names_provided(self) -> list[str] | None:
+        """Validate that application names are provided.
+
+        Returns:
+            List of app names if provided, None if validation failed
+        """
         app_names_to_edit = self.params.app_names or []
         if not app_names_to_edit:
             self.console.print("[red]No application names provided[/red]")
-            raise typer.Exit(1)
+            return None
         return app_names_to_edit
 
-    def _find_matching_applications(self, config: Any, app_names_to_edit: list[str]) -> list[Any]:
-        """Find applications matching the provided names."""
+    def _find_matching_applications(self, config: Any, app_names_to_edit: list[str]) -> list[Any] | None:
+        """Find applications matching the provided names.
+
+        Returns:
+            List of found applications if successful, None if no matches found
+        """
         from ..services import ApplicationService
 
         found_apps = ApplicationService.filter_apps_by_names(config.applications, app_names_to_edit)
@@ -106,7 +134,7 @@ class EditCommand(Command):
             self.console.print(f"[red]Applications not found: {', '.join(app_names_to_edit)}[/red]")
             if available_apps:
                 self.console.print(f"Available applications: {', '.join(available_apps)}")
-            raise typer.Exit(1)
+            return None
         return found_apps
 
     def _collect_updates_from_parameters(self) -> dict[str, Any]:
