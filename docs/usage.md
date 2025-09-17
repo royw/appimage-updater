@@ -30,6 +30,22 @@ For installation instructions, see the [Installation Guide](installation.md).
 
 ## Commands
 
+### CLI Setting Name Consistency
+
+AppImage Updater uses consistent naming across all commands for the same functionality:
+
+| Setting | `add` Command | `edit` Command | `config` Setting |
+|---------|---------------|----------------|------------------|
+| **Rotation** | `--rotation` | `--rotation` | `rotation` |
+| **Retain Count** | `--retain-count` | `--retain-count` | `retain-count` |
+| **Symlink Path** | `--symlink-path` | `--symlink-path` | `symlink-dir` |
+| **Auto Subdir** | `--auto-subdir` | `--auto-subdir` | `auto-subdir` |
+| **Checksum** | `--checksum` | `--checksum` | `checksum` |
+| **Download Dir** | `--download-dir` | `--download-dir` | `download-dir` |
+| **Prerelease** | `--prerelease` | `--prerelease` | `prerelease` |
+
+This consistency means you can use the same flag names across commands and easily translate between CLI options and config settings.
+
 ### `check`
 
 Check for and optionally download updates.
