@@ -74,10 +74,13 @@ rebuild_models()
 app = typer.Typer(name="appimage-updater", help="AppImage update manager")
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 
+
 # Global state for CLI options
 class GlobalState:
     """Global state for CLI options that need to be accessible across commands."""
+
     debug: bool = False
+
 
 global_state = GlobalState()
 
@@ -279,7 +282,7 @@ def version_callback(value: bool) -> None:
 
 
 # Common options that should be available on all commands
-def get_debug_option() -> typer.Option:
+def get_debug_option() -> Any:
     """Get debug option for commands."""
     return typer.Option(
         False,
@@ -288,7 +291,7 @@ def get_debug_option() -> typer.Option:
     )
 
 
-def get_version_option() -> typer.Option:
+def get_version_option() -> Any:
     """Get version option for commands."""
     return typer.Option(
         False,

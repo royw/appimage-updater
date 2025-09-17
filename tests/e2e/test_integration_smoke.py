@@ -15,9 +15,7 @@ def test_integration_smoke_test(runner):
     assert result.exit_code == 0
     assert "Check for updates to configured applications" in result.stdout
 
-    result = runner.invoke(app, ["init", "--help"])
-    assert result.exit_code == 0
-    assert "Initialize configuration directory" in result.stdout
+    # init command removed - config directory is now created automatically
 
     result = runner.invoke(app, ["list", "--help"])
     assert result.exit_code == 0

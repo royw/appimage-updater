@@ -9,33 +9,7 @@ from appimage_updater.models import Asset, CheckResult, UpdateCandidate
 class TestE2EFunctionality:
     """Test end-to-end functionality."""
 
-    def test_init_command_creates_config_directory(self, runner):
-        """Test that init command creates configuration directory and example files."""
-        import tempfile
-        # Create a fresh temp directory that doesn't exist yet
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            config_dir = Path(tmp_dir) / "config"
-            result = runner.invoke(app, ["init", "--config-dir", str(config_dir)])
-
-            assert result.exit_code == 0
-            assert config_dir.exists()
-            assert (config_dir / "freecad.json").exists()
-
-            # Verify example config content
-            with (config_dir / "freecad.json").open() as f:
-                config = json.load(f)
-            assert "applications" in config
-            assert len(config["applications"]) == 1
-            assert config["applications"][0]["name"] == "FreeCAD"
-
-    def test_init_command_skips_existing_directory(self, runner, temp_config_dir):
-        """Test that init command skips creation if directory already exists."""
-        temp_config_dir.mkdir(exist_ok=True)
-
-        result = runner.invoke(app, ["init", "--config-dir", str(temp_config_dir)])
-
-        assert result.exit_code == 0
-        assert "already exists" in result.stdout
+    # init command tests removed - config directory is now created automatically
 
     @patch('appimage_updater.repositories.get_repository_client')
     @patch('appimage_updater.main.VersionChecker')

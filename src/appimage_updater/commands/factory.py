@@ -8,6 +8,7 @@ from .add_command import AddCommand
 from .check_command import CheckCommand
 from .config_command import ConfigCommand
 from .edit_command import EditCommand
+
 # InitCommand removed
 from .list_command import ListCommand
 from .parameters import (

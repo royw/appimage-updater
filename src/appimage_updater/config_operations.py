@@ -62,12 +62,14 @@ def load_config(config_file: Path | None, config_dir: Path | None) -> Any:
 
     # Return empty config that will be populated when first app is added
     from .config import Config, GlobalConfig
+
     return Config(global_config=GlobalConfig(), applications=[])
 
 
 def _create_default_global_config(config_parent_dir: Path) -> None:
     """Create default global config.json file."""
     import json
+
     from .config import GlobalConfig
 
     config_file = config_parent_dir / "config.json"
@@ -82,8 +84,9 @@ def _create_default_global_config(config_parent_dir: Path) -> None:
     # Write the global config file
     with config_file.open("w") as f:
         json.dump(config_data, f, indent=2)
-    
+
     from .display import _replace_home_with_tilde
+
     display_path = _replace_home_with_tilde(str(config_file))
     logger.info(f"Created global configuration file: {display_path}")
 
