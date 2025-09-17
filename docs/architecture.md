@@ -61,16 +61,16 @@ The entry point for all user interactions, built with [Typer](https://typer.tian
 - Async command execution
 - Structured error handling with clean user messages
 - **Modular architecture** with extracted functionality:
-  - `display.py` - Console output formatting and display functions
+  - `ui/display.py` - Console output formatting and display functions
   - `pattern_generator.py` - GitHub URL parsing and intelligent pattern generation
-  - `config_operations.py` - Configuration management and persistence operations
+  - `config/operations.py` - Configuration management and persistence operations
   - `distribution_selector.py` - Intelligent asset selection for multi-platform releases
-  - `system_info.py` - System detection for compatibility filtering
-  - `github_auth.py` - GitHub authentication management
+  - `core/system_info.py` - System detection for compatibility filtering
+  - `github/auth.py` - GitHub authentication management
 
 #### Supporting Modules
 
-**Display Module (`display.py`)**
+**Display Module (`ui/display.py`)**
 
 - Console output formatting and styling
 - Table generation and data presentation
@@ -87,7 +87,7 @@ The entry point for all user interactions, built with [Typer](https://typer.tian
 - Fallback pattern generation strategies
 - Source type detection and URL normalization
 
-**Configuration Operations (`config_operations.py`)**
+**Configuration Operations (`config/operations.py`)**
 
 - Application configuration loading and saving
 - Configuration file and directory management
@@ -104,7 +104,7 @@ The entry point for all user interactions, built with [Typer](https://typer.tian
 - Support for Ubuntu, Fedora, Arch, openSUSE, and other distributions
 - Version compatibility scoring and selection
 
-**System Information (`system_info.py`)**
+**System Information (`core/system_info.py`)**
 
 - Comprehensive system detection (architecture, platform, distribution)
 - Architecture compatibility checking (x86_64, arm64, i686, etc.)
@@ -112,7 +112,7 @@ The entry point for all user interactions, built with [Typer](https://typer.tian
 - Supported format detection (.AppImage, .deb, .rpm, etc.)
 - Distribution family identification for compatibility
 
-**GitHub Authentication (`github_auth.py`)**
+**GitHub Authentication (`github/auth.py`)**
 
 - GitHub token discovery from multiple sources
 - Environment variable and config file token support
@@ -122,7 +122,7 @@ The entry point for all user interactions, built with [Typer](https://typer.tian
 
 ### Configuration System
 
-#### Configuration Models (`config.py`)
+#### Configuration Models (`config/models.py`)
 
 Pydantic-based models providing type-safe configuration validation.
 
@@ -130,10 +130,10 @@ Pydantic-based models providing type-safe configuration validation.
 
 - `GlobalConfig` - Global settings (timeouts, concurrency, logging)
 - `ChecksumConfig` - Checksum verification settings
-- `FrequencyConfig` - Update frequency configuration
+- `DefaultsConfig` - Global default settings for applications
 - `ApplicationConfig` - Per-application settings
 
-#### Configuration Loader (`config_loader.py`)
+#### Configuration Loader (`config/loader.py`)
 
 Handles loading and validation of configuration files.
 
@@ -143,8 +143,9 @@ Handles loading and validation of configuration files.
 - Hierarchical configuration merging
 - Path expansion and validation
 - Error reporting with context
+- Automatic configuration directory creation
 
-### Data Models (`models.py`)
+### Data Models (`core/models.py`)
 
 Core data structures used throughout the application.
 
@@ -156,6 +157,8 @@ Core data structures used throughout the application.
 - `CheckResult` - Update check results
 - `DownloadResult` - Download operation results
 - `ChecksumResult` - Checksum verification results
+- `InteractiveResult` - Interactive command results
+- `CommandResult` - CLI command execution results
 
 ### Repository Abstraction Layer (`repositories/`)
 
@@ -214,7 +217,7 @@ def detect_repository_type(url: str) -> str:
 
 #### GitHub Repository Implementation (`repositories/github_repository.py`)
 
-Wrapper around the existing GitHub client maintaining full compatibility:
+Wrapper around the existing GitHub client (`github/repository.py`) maintaining full compatibility:
 
 **Features:**
 
@@ -233,13 +236,19 @@ Wrapper around the existing GitHub client maintaining full compatibility:
 - `filter_assets_by_pattern()` - Pattern-based asset filtering
 - `get_release_by_tag()` - Fetch specific release by tag
 
-### Legacy GitHub Integration (`github_client.py`)
+### GitHub Integration (`github/`)
 
-Direct GitHub API client used internally by the GitHub repository implementation.
+Direct GitHub API integration with comprehensive authentication and client functionality.
 
-**Note:** This module is now wrapped by `GitHubRepository` and accessed through the repository abstraction layer.
+**Components:**
 
-### Version Management (`version_checker.py`)
+- `github/client.py` - Direct GitHub API client
+- `github/auth.py` - Authentication management and token discovery
+- `github/repository.py` - Repository implementation for the abstraction layer
+
+**Note:** The GitHub client is now wrapped by `GitHubRepository` and accessed through the repository abstraction layer.
+
+### Version Management (`core/version_checker.py`)
 
 Handles version detection and comparison logic with intelligent fallback strategies.
 
@@ -267,7 +276,7 @@ Bambu_Studio_ubuntu-24.04_PR-8017.zip.info # Metadata: "Version: v02.02.01.60"
 - Supports complex filename patterns and multi-format releases
 - Automatically rotates metadata files alongside main files
 
-### Download Engine (`downloader.py`)
+### Download Engine (`core/downloader.py`)
 
 Concurrent download manager with comprehensive features.
 
@@ -292,7 +301,7 @@ Concurrent download manager with comprehensive features.
 - Comprehensive error handling for invalid ZIP files
 - Seamless integration with rotation and checksum systems
 
-### Logging (`logging_config.py`)
+### Logging (`utils/logging_config.py`)
 
 Centralized logging configuration using [Loguru](https://loguru.readthedocs.io/).
 
@@ -457,16 +466,106 @@ All downloads support checksum verification:
 - Progressive loading of configuration
 - Efficient regex pattern reuse
 
+## Package Organization
+
+### Current Package Structure
+
+```text
+src/appimage_updater/
+├── main.py                   # CLI entry point
+├── pattern_generator.py      # Pattern generation and URL processing
+├── distribution_selector.py  # Asset selection for multi-platform releases
+│
+├── config/                   # Configuration management
+│   ├── models.py            # Pydantic configuration models
+│   ├── loader.py            # Configuration loading and validation
+│   ├── operations.py        # Configuration CRUD operations
+│   ├── command.py           # Config command implementation
+│   ├── cmd/                 # Config command utilities
+│   └── ops/                 # Configuration operations utilities
+│
+├── core/                     # Core business logic
+│   ├── models.py            # Core data models
+│   ├── version_checker.py   # Version detection and comparison
+│   ├── downloader.py        # Download engine
+│   └── system_info.py       # System detection
+│
+├── github/                   # GitHub integration
+│   ├── client.py            # GitHub API client
+│   ├── auth.py              # Authentication management
+│   └── repository.py        # Repository abstraction implementation
+│
+├── repositories/             # Repository abstraction layer
+│   ├── base.py              # Abstract base class
+│   ├── factory.py           # Repository client factory
+│   ├── github_repository.py # GitHub implementation wrapper
+│   ├── direct_download_repository.py  # Direct download handler
+│   └── dynamic_download_repository.py # Dynamic download handler
+│
+├── services/                 # Service layer
+│   ├── application_service.py # Application management
+│   ├── check_service.py     # Update checking service
+│   ├── config_service.py    # Configuration service
+│   ├── update_service.py    # Update operations
+│   └── validation_service.py # Validation service
+│
+├── ui/                       # User interface components
+│   ├── display.py           # Console output and formatting
+│   ├── interactive.py       # Interactive command handling
+│   ├── cli_options.py       # CLI option definitions
+│   ├── help_groups.py       # Help text organization
+│   ├── cli/                 # CLI utilities
+│   └── display_utils/       # Display formatting utilities
+│
+├── utils/                    # Utility modules
+│   ├── logging_config.py    # Logging configuration
+│   ├── dependency_injection.py # DI container
+│   ├── facade.py            # Facade pattern implementation
+│   └── helpers/             # Helper utilities
+│
+├── strategies/               # Strategy pattern implementations
+│   ├── update_strategy.py   # Update strategies
+│   └── validation_strategy.py # Validation strategies
+│
+├── events/                   # Event system
+│   ├── event_bus.py         # Event bus implementation
+│   └── progress_events.py   # Progress event definitions
+│
+├── dist_selector/            # Distribution selection utilities
+│   └── [various modules]    # Distribution-specific logic
+│
+└── pattern_gen/              # Pattern generation utilities
+    └── [various modules]     # Pattern generation logic
+```
+
+### Architecture Principles
+
+- **Empty `__init__.py` Files**: All `__init__.py` files contain only documentation, no code or imports
+- **Direct Module Imports**: All imports use specific module paths (e.g., `from appimage_updater.core.models import Release`)
+- **Clean Separation**: Each package has a clear, single responsibility
+- **Modular Design**: Components can be easily tested and maintained independently
+
 ## Testing Architecture
 
 ### Test Organization
 
 ```text
 tests/
-├── test_e2e.py              # End-to-end integration tests
-├── test_edit_command.py     # CLI command testing
-├── test_edit_validation_fixes.py  # Validation testing
-└── test_rotation.py         # File rotation testing
+├── unit/                     # Unit tests for individual components
+│   ├── test_config_operations.py
+│   ├── test_repositories_init.py
+│   ├── test_logging_config.py
+│   └── [other unit tests]
+├── functional/               # Functional tests
+│   ├── test_rotation.py
+│   └── [other functional tests]
+├── e2e/                      # End-to-end integration tests
+│   ├── test_cli_commands.py
+│   ├── test_add_remove_commands.py
+│   └── test_pattern_matching.py
+└── regression/               # Regression tests
+    ├── test_add_regression.py
+    └── test_defaults_regression.py
 ```
 
 ### Testing Strategies
