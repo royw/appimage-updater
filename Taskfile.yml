@@ -92,24 +92,13 @@ tasks:
       - >
         uv run deadcode {{.CLI_ARGS | default .SRC}}
         --ignore-if-decorated-with "@app.command" "@app.callback" "@field_validator" 
-        --ignore-names "main" "check" "init" "list_apps" "show" "edit" "DownloadError" "model_post_init"
-        "validate_pattern" "validate_download_dir" "validate_symlink_path" "generate_appimage_pattern"
-        "created_at" "tag_name" "checked_at" "expected" "actual" "duration_seconds"
-        "message" "validate_paths" "apply_global_defaults_to_config" "remove_application_from_config"
-        "protocol" "codename" "HelpGroup" "add_option" "format_grouped_help" "BASIC_OPTIONS_GROUP"
-        "CONFIGURATION_GROUP" "FILE_MANAGEMENT_GROUP" "CHECKSUM_GROUP" "ADVANCED_GROUP" "OUTPUT_GROUP"
-        "BASIC_OPTIONS_HELP" "CONFIGURATION_HELP" "FILE_MANAGEMENT_HELP" "CHECKSUM_HELP" "ADVANCED_HELP"
-        "OUTPUT_HELP" "interactive_edit_command" "_validate_directory_path" "_resolve_add_parameters"
-        "_handle_verbose_logging" "_handle_edit_preview_modes" "_apply_edit_updates_to_apps" "repository"
+        --ignore-names "main" "model_post_init" "validate_pattern" "validate_download_dir" "validate_symlink_path"
+        "created_at" "tag_name" "checked_at" "expected" "actual" "duration_seconds" "message"
+        "validate_paths" "apply_global_defaults_to_config" "protocol" "codename" "distribution_family"
+        "_extract_version_from_filename" "excepthook" "remove_from_config_file" "remove_from_config_directory"
         "generate_pattern_from_releases" "get_supported_repository_types" "_print_troubleshooting_tips"
-        "perform_update_checks" "get_update_candidates" "reload_config" "distribution_family"
-        "create_configuration_table" "create_repository_table" "create_update_candidates_table" "format_file_size"
-        "format_version_comparison" "display_dry_run_header" "display_success_message" "display_warning_message"
-        "display_error_message" "display_info_message" "resolve_download_directory" "resolve_rotation_parameter"
-        "resolve_prerelease_parameter" "resolve_checksum_parameters" "resolve_symlink_parameters"
-        "check_configuration_warnings" "list_applications" "show_application" "initialize_config"
-        "get_global_config" "set_global_config" "validate_configuration" "add_app" "check_updates"
-        "list_apps" "AppImageUpdaterFacade" "_extract_version_from_filename" "excepthook"
+        "interactive_edit_command" "_validate_directory_path" "_handle_edit_preview_modes" "_apply_edit_updates_to_apps"
+        "check" "list_apps" "edit" "show" "repository" "add" "remove" "config"
 
   # === Testing ===
   test:

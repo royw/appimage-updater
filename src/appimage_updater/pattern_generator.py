@@ -403,17 +403,6 @@ def detect_source_type(url: str) -> str:
     return detect_repository_type(url)
 
 
-def generate_appimage_pattern(app_name: str, url: str) -> str:
-    """Synchronous wrapper for pattern generation - primarily for tests.
-
-    This is a convenience wrapper around generate_appimage_pattern_async()
-    for use in synchronous contexts like tests.
-    """
-    import asyncio
-
-    return asyncio.run(generate_appimage_pattern_async(app_name, url))
-
-
 async def should_enable_prerelease(url: str) -> bool:
     """Check if prerelease should be automatically enabled for a repository.
 

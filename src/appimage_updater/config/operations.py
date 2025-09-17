@@ -427,28 +427,6 @@ def add_to_config_directory(app_config: dict[str, Any], config_dir: Path) -> Non
         json.dump(config_data, f, indent=2)
 
 
-def remove_application_from_config(
-    app_name: str, config: Any, config_file: Path | None, config_dir: Path | None
-) -> None:
-    """Remove an application configuration from the config file or directory."""
-    # Determine target configuration location
-    if config_file:
-        remove_from_config_file(app_name, config_file)
-    elif config_dir:
-        remove_from_config_directory(app_name, config_dir)
-    else:
-        # Use default location - check what exists
-        default_dir = get_default_config_dir()
-        default_file = get_default_config_path()
-
-        if default_dir.exists():
-            remove_from_config_directory(app_name, default_dir)
-        elif default_file.exists():
-            remove_from_config_file(app_name, default_file)
-        else:
-            raise ValueError("No configuration found to remove application from")
-
-
 def _validate_config_file_exists(config_file: Path) -> None:
     """Validate that config file exists."""
     if not config_file.exists():

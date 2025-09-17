@@ -26,10 +26,6 @@ from ..events.progress_events import DownloadProgressEvent
 from .models import ChecksumResult, DownloadResult, UpdateCandidate
 
 
-class DownloadError(Exception):
-    """Raised when download operations fail."""
-
-
 class Downloader:
     """Handles downloading AppImage files."""
 
