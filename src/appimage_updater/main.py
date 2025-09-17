@@ -1328,6 +1328,7 @@ def repository(
     DETAILED INSPECTION:
         appimage-updater repository OrcaSlicer --assets    # Include asset details
         appimage-updater repository OrcaSlicer --limit 5   # Limit number of releases
+        appimage-updater repository OrcaSlicer --dry-run   # Preview without fetching data
         appimage-updater repository OrcaSlicer --limit 3 --assets  # Combined options
     """
     command = CommandFactory.create_repository_command(
