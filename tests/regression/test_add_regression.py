@@ -195,13 +195,13 @@ class TestAddRegression:
             if original_config.get("rotation_enabled", False):
                 cmd_args.append("--rotation")
                 if "retain_count" in original_config and original_config["retain_count"] != 3:
-                    cmd_args.extend(["--retain", str(original_config["retain_count"])])
+                    cmd_args.extend(["--retain-count", str(original_config["retain_count"])])
             else:
                 cmd_args.append("--no-rotation")
 
             # Add symlink path if present
             if "symlink_path" in original_config:
-                cmd_args.extend(["--symlink", original_config["symlink_path"]])
+                cmd_args.extend(["--symlink-path", original_config["symlink_path"]])
 
             # Add checksum settings
             checksum_config = original_config.get("checksum", {})
@@ -457,7 +457,7 @@ class TestAddRegression:
         if original_config.get("rotation_enabled", False):
             cmd_args.append("--rotation")
         if "symlink_path" in original_config:
-            cmd_args.extend(["--symlink", original_config["symlink_path"]])
+            cmd_args.extend(["--symlink-path", original_config["symlink_path"]])
 
         # Execute add command
         result = runner.invoke(app, cmd_args)

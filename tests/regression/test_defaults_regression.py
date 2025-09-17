@@ -29,7 +29,7 @@ class TestDefaultsRegression:
         # Set global defaults to match expected FreeCAD configuration
         test_apps_dir = temp_config_dir / "test-apps"
         set_global_config_value("download-dir", str(test_apps_dir), None, temp_config_dir)
-        set_global_config_value("checksum-enabled", "true", None, temp_config_dir)
+        set_global_config_value("checksum", "true", None, temp_config_dir)
         set_global_config_value("checksum-algorithm", "sha256", None, temp_config_dir)
         set_global_config_value("checksum-pattern", "{filename}-SHA256.txt", None, temp_config_dir)
         set_global_config_value("checksum-required", "false", None, temp_config_dir)
@@ -99,11 +99,11 @@ class TestDefaultsRegression:
         # Set global defaults to match expected FreeCAD_weekly configuration
         test_apps_dir = temp_config_dir / "test-apps"
         set_global_config_value("download-dir", str(test_apps_dir), None, temp_config_dir)
-        set_global_config_value("checksum-enabled", "true", None, temp_config_dir)
+        set_global_config_value("checksum", "true", None, temp_config_dir)
         set_global_config_value("checksum-algorithm", "sha256", None, temp_config_dir)
         set_global_config_value("checksum-pattern", "{filename}-SHA256.txt", None, temp_config_dir)
         set_global_config_value("checksum-required", "false", None, temp_config_dir)
-        set_global_config_value("rotation-enabled", "true", None, temp_config_dir)
+        set_global_config_value("rotation", "true", None, temp_config_dir)
         set_global_config_value("retain-count", "3", None, temp_config_dir)
         set_global_config_value("prerelease", "true", None, temp_config_dir)
         set_global_config_value("auto-subdir", "true", None, temp_config_dir)
@@ -179,7 +179,7 @@ class TestDefaultsRegression:
         test_apps_dir = temp_config_dir / "test-apps"
         set_global_config_value("download-dir", str(test_apps_dir), None, temp_config_dir)
         set_global_config_value("auto-subdir", "true", None, temp_config_dir)
-        set_global_config_value("checksum-enabled", "true", None, temp_config_dir)
+        set_global_config_value("checksum", "true", None, temp_config_dir)
 
         # Add application with minimal parameters - use the default download dir
         # Note: We need to provide the download_dir because the add function
@@ -224,7 +224,7 @@ class TestDefaultsRegression:
     async def test_defaults_override_with_explicit_parameters(self, temp_config_dir):
         """Test that explicit parameters override global defaults."""
         # Set defaults
-        set_global_config_value("checksum-enabled", "true", None, temp_config_dir)
+        set_global_config_value("checksum", "true", None, temp_config_dir)
         set_global_config_value("prerelease", "false", None, temp_config_dir)
         set_global_config_value("auto-subdir", "true", None, temp_config_dir)
 
