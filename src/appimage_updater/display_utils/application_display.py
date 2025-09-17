@@ -354,6 +354,7 @@ def get_symlinks_info(app: Any) -> str:
     symlink_path = Path(app.symlink_path)
 
     from .path_formatting import _replace_home_with_tilde
+
     display_path = _replace_home_with_tilde(str(symlink_path))
 
     if not symlink_path.exists():
