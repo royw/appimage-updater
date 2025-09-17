@@ -149,7 +149,7 @@ def _normalize_symlink_path(expanded_path: Path, original_path: str) -> Path:
             expanded_path = Path.cwd() / expanded_path
 
         # Manually resolve . and .. components without following symlinks
-        parts = []
+        parts: list[str] = []
         for part in expanded_path.parts:
             _process_path_segment(part, parts)
 

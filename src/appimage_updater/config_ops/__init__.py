@@ -35,11 +35,9 @@ __all__ = [
     "save_updated_configuration",
     "convert_app_to_dict",
     "determine_save_target",
-
     # Directory utilities
     "handle_add_directory_creation",
     "handle_directory_creation",
-
     # Validation utilities
     "validate_and_normalize_add_url",
     "validate_add_rotation_config",
