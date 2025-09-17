@@ -1927,5 +1927,29 @@ def config(
         raise typer.Exit(result.exit_code)
 
 
+def cli_main() -> None:
+    """Main CLI entry point with proper exception handling."""
+    try:
+        app()
+    except typer.Exit as e:
+        # Handle typer.Exit cleanly without showing stack trace
+        import sys
+        sys.exit(e.exit_code)
+    except KeyboardInterrupt:
+        # Handle Ctrl+C gracefully
+        import sys
+        from rich.console import Console
+        console = Console(stderr=True)
+        console.print("\n[yellow]Operation cancelled by user.[/yellow]")
+        sys.exit(130)  # Standard exit code for SIGINT
+    except Exception as e:
+        # Handle unexpected exceptions with clean error message
+        import sys
+        from rich.console import Console
+        console = Console(stderr=True)
+        console.print(f"[red]Error: {e}[/red]")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    app()
+    cli_main()
