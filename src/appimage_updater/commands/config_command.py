@@ -68,7 +68,7 @@ class ConfigCommand(Command):
 
             # Execute the config operation
             success = await self._execute_config_operation()
-            
+
             if success:
                 return CommandResult(success=True, message="Config operation completed successfully")
             else:
@@ -81,7 +81,7 @@ class ConfigCommand(Command):
 
     async def _execute_config_operation(self) -> bool:
         """Execute the core config operation logic.
-        
+
         Returns:
             True if operation succeeded, False if it failed.
         """

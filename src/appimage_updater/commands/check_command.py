@@ -29,7 +29,7 @@ class CheckCommand(Command):
         try:
             # Execute the check operation
             success = await self._execute_check_operation()
-            
+
             if success:
                 return CommandResult(success=True, message="Check completed successfully")
             else:
@@ -42,7 +42,7 @@ class CheckCommand(Command):
 
     async def _execute_check_operation(self) -> bool:
         """Execute the core check operation logic.
-        
+
         Returns:
             True if successful, False if applications not found
         """

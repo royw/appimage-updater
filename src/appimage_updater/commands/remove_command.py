@@ -122,9 +122,11 @@ class RemoveCommand(Command):
         config = load_config(self.params.config_file, self.params.config_dir)
         return config  # type: ignore[no-any-return]
 
-    def _validate_and_filter_apps(self, config: Config, app_names_to_remove: list[str]) -> list[ApplicationConfig] | None:
+    def _validate_and_filter_apps(
+        self, config: Config, app_names_to_remove: list[str]
+    ) -> list[ApplicationConfig] | None:
         """Find matching applications and handle not found cases.
-        
+
         Returns:
             List of matching applications, or None if some applications were not found.
         """

@@ -40,7 +40,7 @@ class ShowCommand(Command):
 
             # Execute the show operation
             success = await self._execute_show_operation()
-            
+
             if success:
                 return CommandResult(success=True, message="Show completed successfully")
             else:
@@ -53,7 +53,7 @@ class ShowCommand(Command):
 
     async def _execute_show_operation(self) -> bool:
         """Execute the core show operation logic.
-        
+
         Returns:
             True if operation succeeded, False if it failed.
         """
@@ -80,7 +80,7 @@ class ShowCommand(Command):
                 if i > 0:
                     self.console.print()  # Add spacing between multiple apps
                 display_application_details(app, config_source_info)
-            
+
             return True
         except Exception as e:
             logger.error(f"Unexpected error in show command: {e}")

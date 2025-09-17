@@ -91,8 +91,12 @@ def _create_default_global_config(config_parent_dir: Path) -> None:
     logger.info(f"Created global configuration file: {display_path}")
 
 
-def validate_and_normalize_add_url(url: str) -> str:
-    """Validate and normalize URL for add command."""
+def validate_and_normalize_add_url(url: str) -> str | None:
+    """Validate and normalize URL for add command.
+
+    Returns:
+        Normalized URL if valid, None if invalid
+    """
     try:
         repo_client = get_repository_client(url)
         normalized_url, was_corrected = repo_client.normalize_repo_url(url)
@@ -103,7 +107,7 @@ def validate_and_normalize_add_url(url: str) -> str:
     except Exception as e:
         console.print(f"[red]Error: Invalid repository URL: {url}")
         console.print(f"[yellow]Error details: {e}")
-        raise typer.Exit(1) from e
+        return None
 
     # Inform user if we corrected the URL
     if was_corrected:
@@ -115,14 +119,19 @@ def validate_and_normalize_add_url(url: str) -> str:
     return normalized_url
 
 
-def validate_add_rotation_config(rotation: bool | None, symlink: str | None) -> None:
-    """Validate rotation and symlink combination for add command."""
+def validate_add_rotation_config(rotation: bool | None, symlink: str | None) -> bool:
+    """Validate rotation and symlink combination for add command.
+
+    Returns:
+        True if valid, False if invalid
+    """
     if rotation is True and symlink is None:
         console.print("[red]Error: --rotation requires a symlink path")
         console.print("[yellow]File rotation needs a managed symlink to work properly.")
         console.print("[yellow]Either provide --symlink PATH or use --no-rotation to disable rotation.")
         console.print("[yellow]Example: --rotation --symlink ~/bin/myapp.AppImage")
-        raise typer.Exit(1)
+        return False
+    return True
 
 
 def _prompt_for_directory_creation() -> bool:
@@ -137,8 +146,12 @@ def _prompt_for_directory_creation() -> bool:
         return False
 
 
-def _create_directory(download_path: Path) -> None:
-    """Create the download directory with error handling."""
+def _create_directory(download_path: Path) -> bool:
+    """Create the download directory with error handling.
+
+    Returns:
+        True if successful, False if failed
+    """
     try:
         download_path.mkdir(parents=True, exist_ok=True)
         from .display import _replace_home_with_tilde
@@ -146,10 +159,11 @@ def _create_directory(download_path: Path) -> None:
         display_path = _replace_home_with_tilde(str(download_path))
         console.print(f"[green]Created directory: {display_path}")
         logger.debug(f"Created download directory: {download_path}")
+        return True
     except OSError as e:
         console.print(f"[red]Failed to create directory: {e}")
         logger.error(f"Failed to create download directory {download_path}: {e}")
-        raise typer.Exit(1) from e
+        return False
 
 
 def _handle_directory_creation_declined() -> None:
@@ -176,7 +190,10 @@ def handle_add_directory_creation(download_dir: str, create_dir: bool, yes: bool
             should_create = _prompt_for_directory_creation()
 
         if should_create:
-            _create_directory(download_path)
+            if not _create_directory(download_path):
+                # Directory creation failed, but don't exit - just warn
+                console.print("[yellow]Directory creation failed, but configuration will still be saved.")
+                console.print("[yellow]You will need to create the directory manually before downloading updates.")
         else:
             _handle_directory_creation_declined()
 

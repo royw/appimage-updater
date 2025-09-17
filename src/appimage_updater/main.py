@@ -910,8 +910,12 @@ async def _add(
     auto_subdir: bool | None,
     verbose: bool,
     dry_run: bool,
-) -> None:
-    """Async implementation of the add command."""
+) -> bool:
+    """Async implementation of the add command.
+
+    Returns:
+        True if successful, False if validation failed
+    """
     try:
         logger.debug(f"Adding new application: {name}")
 
@@ -920,9 +924,14 @@ async def _add(
 
         # Validate and normalize URL
         validated_url = validate_and_normalize_add_url(url)
+        if validated_url is None:
+            # Error already displayed by validation function
+            return False
 
         # Validate rotation/symlink consistency
-        validate_add_rotation_config(rotation, symlink)
+        if not validate_add_rotation_config(rotation, symlink):
+            # Error already displayed by validation function
+            return False
 
         # Load global configuration for defaults
         global_config = _load_global_config(config_file, config_dir)
@@ -959,18 +968,20 @@ async def _add(
             # Dry run mode - show what would be configured without saving
             _display_dry_run_config(name, validated_url, expanded_download_dir, app_config, prerelease_auto_enabled)
             logger.debug(f"Dry run completed for application '{name}'")
+            return True
         else:
             # Normal mode - actually add the configuration
             add_application_to_config(app_config, config_file, config_dir)
             _display_add_success(name, validated_url, expanded_download_dir, app_config, prerelease_auto_enabled)
             logger.debug(f"Successfully added application '{name}' to configuration")
+            return True
 
     except typer.Exit:
         # Re-raise typer.Exit without logging - these are intentional exits
         raise
     except Exception as e:
         _handle_add_error(e, name)
-        raise typer.Exit(1) from e
+        return False
 
 
 def _display_edit_verbose_info(updates: dict[str, Any]) -> None:
@@ -1378,25 +1389,37 @@ async def _examine_repositories(
     limit: int,
     show_assets: bool,
     dry_run: bool = False,
-) -> None:
-    """Examine repository information for applications."""
+) -> bool:
+    """Examine repository information for applications.
+
+    Returns:
+        True if successful, False if applications not found or other error
+    """
     try:
         config = _load_config_for_repository_examination(config_file, config_dir)
-        apps_to_examine = _filter_apps_for_examination(config.applications, app_names)
+
+        # Check if apps were found using the original filter method to detect None
+        filtered_result = ApplicationService.filter_apps_by_names(config.applications, app_names)
+        if filtered_result is None:
+            # Applications not found - error already displayed
+            return False
+
+        apps_to_examine = filtered_result
 
         if dry_run:
             _display_dry_run_repository_info(apps_to_examine)
-            return
+            return True
 
         await _examine_apps_repositories(apps_to_examine, limit, show_assets)
+        return True
 
     except ConfigLoadError as e:
         console.print(f"[red]Configuration error: {e}")
         logger.error(f"Configuration error: {e}")
-        raise typer.Exit(1) from e
+        return False
     except Exception as e:
         _handle_repository_examination_error(e, app_names)
-        raise typer.Exit(1) from e
+        return False
 
 
 async def _display_repository_info(app: ApplicationConfig, limit: int, show_assets: bool) -> None:
@@ -1546,7 +1569,7 @@ async def _check_updates(
 
     Args:
         app_names: List of app names, single app name, or None for all apps
-        
+
     Returns:
         True if successful, False if applications not found
     """
@@ -1596,7 +1619,7 @@ async def _prepare_check_environment(
     if enabled_apps is None:
         # Applications not found - this is an error condition
         return config, None
-    
+
     if not enabled_apps:
         console.print("[yellow]No enabled applications found in configuration")
         logger.warning("No enabled applications found, exiting")
@@ -1756,7 +1779,7 @@ async def _load_and_filter_config(
 
     Args:
         app_names: List of app names to filter by, or None for all apps
-        
+
     Raises:
         typer.Exit: If specified applications are not found
     """

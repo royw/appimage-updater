@@ -225,7 +225,7 @@ class TestAddCommand:
             "https://github.com/user/testapp",
             "/tmp/test-download",
             "--rotation",
-            "--symlink", "~/bin/testapp.AppImage",
+            "--symlink-path", "~/bin/testapp.AppImage",
             "--config-dir", str(temp_config_dir)
         ])
 
@@ -398,7 +398,7 @@ class TestAddCommand:
             "--direct",
             "--prerelease",
             "--rotation",
-            "--symlink", symlink_path,
+            "--symlink-path", symlink_path,
             "--config-dir", str(temp_config_dir),
             "--create-dir"
         ])

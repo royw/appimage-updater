@@ -224,7 +224,7 @@ def set_global_config_value(
     config_dir: Path | None = None,
 ) -> bool:
     """Set a global configuration value.
-    
+
     Returns:
         True if the setting was applied successfully, False otherwise.
     """
@@ -245,7 +245,7 @@ def set_global_config_value(
 
 def _apply_setting_change(config: Config, setting: str, value: str) -> bool:
     """Apply a single setting change to the configuration.
-    
+
     Returns:
         True if the setting was applied successfully, False otherwise.
     """
@@ -260,8 +260,9 @@ def _apply_setting_change(config: Config, setting: str, value: str) -> bool:
     # Try each handler type
     for _, (checker, applier) in setting_handlers.items():
         if checker(setting):
-            applier(config, setting, value)
-            return True
+            result = applier(config, setting, value)
+            # Handle boolean return values (for validation)
+            return result is not False
 
     # Handle special case
     if setting == "checksum-algorithm":
@@ -382,54 +383,78 @@ def _apply_boolean_setting(config: Config, setting: str, value: str) -> None:
         handler(config, bool_value)
 
 
-def _apply_numeric_setting(config: Config, setting: str, value: str) -> None:
-    """Apply numeric setting changes."""
+def _apply_numeric_setting(config: Config, setting: str, value: str) -> bool:
+    """Apply numeric setting changes.
+
+    Returns:
+        True if successful, False if validation failed
+    """
     try:
         numeric_value = int(value)
-        _validate_and_apply_numeric_value(config, setting, numeric_value)
+        return _validate_and_apply_numeric_value(config, setting, numeric_value)
     except ValueError:
         console.print(f"[red]{setting.replace('-', ' ').title()} must be a number")
-        raise typer.Exit(1) from None
+        return False
 
 
-def _validate_and_apply_numeric_value(config: Config, setting: str, numeric_value: int) -> None:
-    """Validate and apply a numeric setting value."""
+def _validate_and_apply_numeric_value(config: Config, setting: str, numeric_value: int) -> bool:
+    """Validate and apply a numeric setting value.
+
+    Returns:
+        True if successful, False if validation failed
+    """
     if setting == "retain-count":
-        _apply_retain_count_setting(config, numeric_value)
+        return _apply_retain_count_setting(config, numeric_value)
     elif setting == "concurrent-downloads":
-        _apply_concurrent_downloads_setting(config, numeric_value)
+        return _apply_concurrent_downloads_setting(config, numeric_value)
     elif setting == "timeout-seconds":
-        _apply_timeout_setting(config, numeric_value)
+        return _apply_timeout_setting(config, numeric_value)
+    return False
 
 
-def _apply_retain_count_setting(config: Config, value: int) -> None:
-    """Apply retain count setting with validation."""
+def _apply_retain_count_setting(config: Config, value: int) -> bool:
+    """Apply retain count setting with validation.
+
+    Returns:
+        True if successful, False if validation failed
+    """
     if 1 <= value <= 10:
         config.global_config.defaults.retain_count = value
         console.print(f"[green]Set default retain count to: {value}")
+        return True
     else:
         console.print("[red]Retain count must be between 1 and 10")
-        raise typer.Exit(1) from None
+        return False
 
 
-def _apply_concurrent_downloads_setting(config: Config, value: int) -> None:
-    """Apply concurrent downloads setting with validation."""
+def _apply_concurrent_downloads_setting(config: Config, value: int) -> bool:
+    """Apply concurrent downloads setting with validation.
+
+    Returns:
+        True if successful, False if validation failed
+    """
     if 1 <= value <= 10:
         config.global_config.concurrent_downloads = value
         console.print(f"[green]Set concurrent downloads to: {value}")
+        return True
     else:
         console.print("[red]Concurrent downloads must be between 1 and 10")
-        raise typer.Exit(1) from None
+        return False
 
 
-def _apply_timeout_setting(config: Config, value: int) -> None:
-    """Apply timeout setting with validation."""
+def _apply_timeout_setting(config: Config, value: int) -> bool:
+    """Apply timeout setting with validation.
+
+    Returns:
+        True if successful, False if validation failed
+    """
     if 5 <= value <= 300:
         config.global_config.timeout_seconds = value
         console.print(f"[green]Set timeout to: {value} seconds")
+        return True
     else:
         console.print("[red]Timeout must be between 5 and 300 seconds")
-        raise typer.Exit(1) from None
+        return False
 
 
 def _apply_checksum_algorithm_setting(config: Config, value: str) -> None:

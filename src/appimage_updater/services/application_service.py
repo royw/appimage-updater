@@ -5,7 +5,6 @@ from __future__ import annotations
 import fnmatch
 from typing import Any
 
-import typer
 from loguru import logger
 from rich.console import Console
 
@@ -16,7 +15,7 @@ class ApplicationService:
     @staticmethod
     def filter_apps_by_names(enabled_apps: list[Any], app_names: list[str]) -> list[Any] | None:
         """Filter applications by multiple names or glob patterns.
-        
+
         Returns:
             List of matching applications, or None if some applications were not found.
         """
@@ -108,7 +107,7 @@ class ApplicationService:
     @staticmethod
     def _handle_apps_not_found(not_found: list[str], enabled_apps: list[Any]) -> bool:
         """Handle error cases when apps are not found.
-        
+
         Returns:
             False to indicate that applications were not found (error condition).
         """

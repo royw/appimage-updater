@@ -66,9 +66,12 @@ class AddCommand(Command):
                 return CommandResult(success=False, message=error_msg, exit_code=1)
 
             # Execute the add operation
-            await self._execute_add_operation()
+            success = await self._execute_add_operation()
 
-            return CommandResult(success=True, message=f"Successfully added application '{self.params.name}'")
+            if success:
+                return CommandResult(success=True, message=f"Successfully added application '{self.params.name}'")
+            else:
+                return CommandResult(success=False, message="Add operation failed", exit_code=1)
 
         except Exception as e:
             logger.error(f"Unexpected error in add command: {e}")
@@ -96,13 +99,17 @@ class AddCommand(Command):
         self.params.verbose = interactive_params["verbose"]
         self.params.dry_run = interactive_params["dry_run"]
 
-    async def _execute_add_operation(self) -> None:
-        """Execute the core add operation logic."""
+    async def _execute_add_operation(self) -> bool:
+        """Execute the core add operation logic.
+
+        Returns:
+            True if successful, False if validation failed
+        """
         # This delegates to the existing _add function logic
         # We'll import and call the existing implementation
         from ..main import _add
 
-        await _add(
+        success = await _add(
             name=self.params.name or "",
             url=self.params.url or "",
             download_dir=self.params.download_dir,
@@ -124,6 +131,7 @@ class AddCommand(Command):
             verbose=self.params.verbose,
             dry_run=self.params.dry_run,
         )
+        return success
 
     def _show_add_examples(self) -> None:
         """Show usage examples for the add command."""

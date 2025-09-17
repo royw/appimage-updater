@@ -29,44 +29,57 @@ class ListCommand(Command):
 
         try:
             # Execute the list operation
-            await self._execute_list_operation()
+            success = await self._execute_list_operation()
 
-            return CommandResult(success=True, message="List completed successfully")
+            if success:
+                return CommandResult(success=True, message="List completed successfully")
+            else:
+                return CommandResult(success=False, message="Configuration error", exit_code=1)
 
         except Exception as e:
             logger.error(f"Unexpected error in list command: {e}")
             logger.exception("Full exception details")
             return CommandResult(success=False, message=str(e), exit_code=1)
 
-    async def _execute_list_operation(self) -> None:
-        """Execute the core list operation logic."""
+    async def _execute_list_operation(self) -> bool:
+        """Execute the core list operation logic.
+
+        Returns:
+            True if successful, False if configuration error
+        """
         try:
             config = self._load_and_validate_config()
-            if not config:
-                return
+            if config is None:
+                return False  # Configuration error
+            elif config is False:
+                return True  # No applications configured (success case)
 
             self._display_applications_and_summary(config)
+            return True
         except Exception as e:
             logger.error(f"Unexpected error in list command: {e}")
             logger.exception("Full exception details")
             raise
 
-    def _load_and_validate_config(self) -> Any | None:
-        """Load and validate configuration."""
-        import typer
+    def _load_and_validate_config(self) -> Any | None | bool:
+        """Load and validate configuration.
+
+        Returns:
+            Config object if successful, None if config error, False if no applications
+        """
 
         from ..config_loader import ConfigLoadError
         from ..config_operations import load_config
 
         try:
             config = load_config(self.params.config_file, self.params.config_dir)
-        except ConfigLoadError as e:
+        except ConfigLoadError:
             self.console.print("Configuration error")
-            raise typer.Exit(1) from e
+            return None
 
         if not config.applications:
             self.console.print("No applications configured")
-            return None
+            return False  # No applications configured (success case)
 
         return config
 

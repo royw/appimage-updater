@@ -41,7 +41,7 @@ class RepositoryCommand(Command):
             # Import and delegate to existing implementation
             from ..main import _examine_repositories
 
-            await _examine_repositories(
+            success = await _examine_repositories(
                 config_file=self.params.config_file,
                 config_dir=self.params.config_dir,
                 app_names=self.params.app_names or [],
@@ -50,7 +50,10 @@ class RepositoryCommand(Command):
                 dry_run=self.params.dry_run,
             )
 
-            return CommandResult(success=True, message="Repository examination completed successfully")
+            if success:
+                return CommandResult(success=True, message="Repository examination completed successfully")
+            else:
+                return CommandResult(success=False, message="Repository examination failed", exit_code=1)
 
         except Exception as e:
             logger.error(f"Unexpected error in repository command: {e}")
