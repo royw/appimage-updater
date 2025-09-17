@@ -46,14 +46,9 @@ from .commands import CommandFactory
 from .config import ApplicationConfig, Config, GlobalConfig
 from .config_loader import ConfigLoadError
 from .config_operations import (
-    add_application_to_config,
     apply_configuration_updates,
-    generate_default_config,
-    handle_add_directory_creation,
     load_config,
     save_updated_configuration,
-    validate_add_rotation_config,
-    validate_and_normalize_add_url,
     validate_edit_updates,
 )
 from .display import (
@@ -356,73 +351,14 @@ def _check_pattern_warning(app_config: dict[str, Any], warnings: list[str]) -> N
         )
 
 
-def _display_warnings(warnings: list[str]) -> None:
-    """Display configuration warnings if any exist."""
-    if warnings:
-        console.print("\n[yellow]⚠️  Configuration Warnings:")
-        for warning in warnings:
-            console.print(f"[yellow]   {warning}")
 
 
-def _check_configuration_warnings(app_config: dict[str, Any], download_dir: str) -> None:
-    """Check for potential configuration issues and display warnings."""
-    warnings: list[str] = []
-
-    _check_rotation_warning(app_config, warnings)
-    _check_download_directory_warning(download_dir, warnings)
-    _check_checksum_warning(app_config, warnings)
-    _check_pattern_warning(app_config, warnings)
-    _display_warnings(warnings)
-
-
-def _show_add_examples() -> None:
-    """Display detailed examples for the add command."""
-    console.print("\n[bold cyan]📚 ADD COMMAND EXAMPLES[/bold cyan]\n")
-
-    console.print("[bold yellow]🔹 BASIC USAGE[/bold yellow]")
-    console.print("  # Add application with minimal options (uses intelligent defaults)")
-    console.print("  [green]appimage-updater add GitHubDesktop https://github.com/shiftkey/desktop[/green]\n")
-
-    console.print("[bold yellow]🔹 FILE MANAGEMENT[/bold yellow]")
-    console.print("  # Specify custom download directory")
-    console.print("  [green]appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD[/green]\n")
-
-    console.print("  # Enable file rotation with symlink")
-    console.print("  [green]appimage-updater add OrcaSlicer https://github.com/SoftFever/OrcaSlicer \\[/green]")
-    console.print("  [green]    --rotation --symlink ~/bin/orcaslicer --retain 5[/green]\n")
-
-    console.print("[bold yellow]🔹 CHECKSUM VERIFICATION[/bold yellow]")
-    console.print("  # Configure checksum validation")
-    console.print("  [green]appimage-updater add MyApp https://github.com/user/myapp \\[/green]")
-    console.print("  [green]    --checksum --checksum-required --checksum-algorithm sha512[/green]\n")
-
-    console.print("[bold yellow]🔹 ADVANCED OPTIONS[/bold yellow]")
-    console.print("  # Direct download with custom pattern")
-    console.print("  [green]appimage-updater add CustomApp https://releases.example.com/app.AppImage \\[/green]")
-    console.print("  [green]    --direct --pattern '.*x86_64.*\\.AppImage$'[/green]\n")
-
-    console.print("  # Interactive mode for guided setup")
-    console.print("  [green]appimage-updater add --interactive[/green]\n")
-
-    console.print("[bold yellow]🔹 COMMON WORKFLOWS[/bold yellow]")
-    console.print("  # Preview configuration before saving")
-    console.print("  [green]appimage-updater add MyApp https://github.com/user/myapp --dry-run --verbose[/green]\n")
-
-    console.print("  # Auto-create directory and confirm all prompts")
-    console.print("  [green]appimage-updater add MyApp https://github.com/user/myapp --create-dir --yes[/green]\n")
 
 
 @app.callback()
 def main(
-    debug: bool = _DEBUG_OPTION,
-    version: bool = typer.Option(
-        False,
-        "--version",
-        "-V",
-        help="Show version and exit",
-        callback=version_callback,
-        is_eager=True,
-    ),
+    debug: bool = get_debug_option(),
+    version: bool = get_version_option(),
 ) -> None:
     """AppImage update manager with optional debug logging."""
     # Store global state
@@ -869,186 +805,6 @@ def _handle_verbose_logging(
         "auto_subdir": resolved_auto_subdir,
     }
     _log_resolved_parameters("add", resolved_params, original_params)
-
-
-def _handle_add_error(e: Exception, name: str) -> None:
-    """Handle and display add command errors with appropriate messaging."""
-    error_msg = str(e)
-    if "rate limit" in error_msg.lower():
-        if "github" in error_msg.lower():
-            console.print(f"[red]GitHub API rate limit exceeded: {e}")
-            console.print("[yellow]💡 To avoid rate limits, set a GitHub token:")
-            console.print("[yellow]   export GITHUB_TOKEN=your_token_here")
-            console.print("[yellow]   Get a token at: https://github.com/settings/tokens")
-            console.print("[yellow]   Only 'public_repo' permission is needed for public repositories")
-        else:
-            console.print(f"[red]Repository API rate limit exceeded: {e}")
-    else:
-        console.print(f"[red]Error adding application: {e}")
-    logger.error(f"Error adding application '{name}': {e}")
-    logger.exception("Full exception details")
-
-
-async def _add(
-    name: str,
-    url: str,
-    download_dir: str | None,
-    create_dir: bool,
-    yes: bool,
-    config_file: Path | None,
-    config_dir: Path | None,
-    rotation: bool | None,
-    retain: int,
-    symlink: str | None,
-    prerelease: bool | None,
-    checksum: bool | None,
-    checksum_algorithm: str,
-    checksum_pattern: str,
-    checksum_required: bool | None,
-    pattern: str | None,
-    direct: bool | None,
-    auto_subdir: bool | None,
-    verbose: bool,
-    dry_run: bool,
-) -> bool:
-    """Async implementation of the add command.
-
-    Returns:
-        True if successful, False if validation failed
-    """
-    try:
-        logger.debug(f"Adding new application: {name}")
-        _log_repository_auth_status(url)
-
-        # Validate inputs
-        if not _validate_add_inputs(url, rotation, symlink):
-            return False
-
-        # Prepare configuration
-        config_data = await _prepare_add_configuration(
-            name,
-            url,
-            download_dir,
-            auto_subdir,
-            config_file,
-            config_dir,
-            rotation,
-            retain,
-            symlink,
-            prerelease,
-            checksum,
-            checksum_algorithm,
-            checksum_pattern,
-            checksum_required,
-            pattern,
-            direct,
-            create_dir,
-            yes,
-            dry_run,
-        )
-        if config_data is None:
-            return False
-
-        # Execute add operation
-        return _execute_add_operation(config_data, dry_run, config_file, config_dir)
-
-    except typer.Exit:
-        raise
-    except Exception as e:
-        _handle_add_error(e, name)
-        return False
-
-
-def _validate_add_inputs(url: str, rotation: bool | None, symlink: str | None) -> bool:
-    """Validate add command inputs."""
-    validated_url = validate_and_normalize_add_url(url)
-    if validated_url is None:
-        return False
-
-    return validate_add_rotation_config(rotation, symlink)
-
-
-async def _prepare_add_configuration(
-    name: str,
-    url: str,
-    download_dir: str | None,
-    auto_subdir: bool | None,
-    config_file: Path | None,
-    config_dir: Path | None,
-    rotation: bool | None,
-    retain: int,
-    symlink: str | None,
-    prerelease: bool | None,
-    checksum: bool | None,
-    checksum_algorithm: str,
-    checksum_pattern: str,
-    checksum_required: bool | None,
-    pattern: str | None,
-    direct: bool | None,
-    create_dir: bool,
-    yes: bool,
-    dry_run: bool,
-) -> dict[str, Any] | None:
-    """Prepare configuration data for add operation."""
-    validated_url = validate_and_normalize_add_url(url)
-    if validated_url is None:
-        return None
-
-    global_config = _load_global_config(config_file, config_dir)
-    resolved_download_dir = _resolve_download_directory(download_dir, auto_subdir, global_config, name)
-
-    # Handle directory creation
-    if dry_run:
-        expanded_download_dir = str(Path(resolved_download_dir).expanduser().resolve())
-    else:
-        expanded_download_dir = handle_add_directory_creation(resolved_download_dir, create_dir, yes)
-
-    # Generate application configuration
-    app_config, prerelease_auto_enabled = await generate_default_config(
-        name,
-        validated_url,
-        expanded_download_dir,
-        rotation,
-        retain,
-        symlink,
-        prerelease,
-        checksum,
-        checksum_algorithm,
-        checksum_pattern,
-        checksum_required,
-        pattern,
-        direct,
-        global_config,
-    )
-
-    return {
-        "name": name,
-        "validated_url": validated_url,
-        "expanded_download_dir": expanded_download_dir,
-        "app_config": app_config,
-        "prerelease_auto_enabled": prerelease_auto_enabled,
-    }
-
-
-def _execute_add_operation(
-    config_data: dict[str, Any], dry_run: bool, config_file: Path | None, config_dir: Path | None
-) -> bool:
-    """Execute the add operation (dry-run or actual)."""
-    name = config_data["name"]
-    validated_url = config_data["validated_url"]
-    expanded_download_dir = config_data["expanded_download_dir"]
-    app_config = config_data["app_config"]
-    prerelease_auto_enabled = config_data["prerelease_auto_enabled"]
-
-    if dry_run:
-        _display_dry_run_config(name, validated_url, expanded_download_dir, app_config, prerelease_auto_enabled)
-        logger.debug(f"Dry run completed for application '{name}'")
-    else:
-        add_application_to_config(app_config, config_file, config_dir)
-        _display_add_success(name, validated_url, expanded_download_dir, app_config, prerelease_auto_enabled)
-        logger.debug(f"Successfully added application '{name}' to configuration")
-
-    return True
 
 
 def _display_edit_verbose_info(updates: dict[str, Any]) -> None:

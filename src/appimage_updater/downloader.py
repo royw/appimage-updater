@@ -237,7 +237,6 @@ class Downloader:
             "event_interval": 0.5,  # Publish events every 0.5 seconds
         }
 
-
     async def _download_file_chunks(
         self,
         response: Any,
