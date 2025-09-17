@@ -18,7 +18,6 @@ from .cli_options import (
     CONFIG_FILE_OPTION,
     CREATE_DIR_OPTION,
     DRY_RUN_OPTION,
-    EDIT_APP_NAME_ARGUMENT,
     EDIT_CHECKSUM_ALGORITHM_OPTION,
     EDIT_CHECKSUM_OPTION,
     EDIT_CHECKSUM_PATTERN_OPTION,
@@ -135,9 +134,19 @@ _SHOW_APP_NAME_ARGUMENT = typer.Argument(
     help="Names of applications to display information for (case-insensitive, supports glob patterns like 'Orca*'). "
     "Multiple names can be specified."
 )
+_SHOW_APP_NAME_ARGUMENT_OPTIONAL = typer.Argument(
+    default=None,
+    help="Names of applications to display information for (case-insensitive, supports glob patterns like 'Orca*'). "
+    "Multiple names can be specified.",
+)
 _REMOVE_APP_NAME_ARGUMENT = typer.Argument(
     help="Names of applications to remove from configuration (case-insensitive, supports glob patterns like 'Orca*'). "
     "Multiple names can be specified."
+)
+_REMOVE_APP_NAME_ARGUMENT_OPTIONAL = typer.Argument(
+    default=None,
+    help="Names of applications to remove from configuration (case-insensitive, supports glob patterns like 'Orca*'). "
+    "Multiple names can be specified.",
 )
 _FORCE_OPTION = typer.Option(
     False,
@@ -229,7 +238,11 @@ _INTERACTIVE_OPTION = typer.Option(
 
 # Edit command arguments and options
 _EDIT_APP_NAME_ARGUMENT = typer.Argument(
-    ...,
+    help="Names of applications to edit (case-insensitive, supports glob patterns like 'Orca*'). "
+    "Multiple names can be specified.",
+)
+_EDIT_APP_NAME_ARGUMENT_OPTIONAL = typer.Argument(
+    default=None,
     help="Names of applications to edit (case-insensitive, supports glob patterns like 'Orca*'). "
     "Multiple names can be specified.",
 )
@@ -1029,7 +1042,7 @@ def _apply_edit_updates_to_apps(
 
 @app.command()
 def edit(
-    app_names: list[str] = EDIT_APP_NAME_ARGUMENT,
+    app_names: list[str] | None = _EDIT_APP_NAME_ARGUMENT_OPTIONAL,
     config_file: Path | None = CONFIG_FILE_OPTION,
     config_dir: Path | None = CONFIG_DIR_OPTION,
     # Basic configuration options
@@ -1067,15 +1080,15 @@ def edit(
         --url URL                    Update repository URL
         --download-dir PATH          Update download directory
         --pattern REGEX              Update file pattern
-        --enable/--disable           Enable or disable the application
-        --prerelease/--no-prerelease Enable or disable prerelease versions
+        --enable/--disable           Enable or disable application
+        --prerelease/--no-prerelease Enable or disable prereleases
 
-    FILE ROTATION:
+    ROTATION CONFIGURATION:
         --rotation/--no-rotation     Enable or disable file rotation
-        --symlink-path PATH          Set symlink path for rotation
-        --retain-count N             Number of old files to retain (1-10)
+        --symlink-path PATH          Set symlink path (required for rotation)
+        --retain-count N             Number of old files to keep (1-10)
 
-    CHECKSUM VERIFICATION:
+    CHECKSUM CONFIGURATION:
         --checksum/--no-checksum     Enable or disable checksum verification
         --checksum-algorithm ALG     Set algorithm (sha256, sha1, md5)
         --checksum-pattern PATTERN   Set checksum file pattern
@@ -1097,6 +1110,40 @@ def edit(
         # Update URL after repository move
         appimage-updater edit OldApp --url https://github.com/newowner/newrepo
     """
+    # Show help if no app names are provided
+    if app_names is None:
+        typer.echo("Usage: appimage-updater edit [OPTIONS] APP_NAMES...")
+        typer.echo("")
+        typer.echo("Edit configuration for existing applications.")
+        typer.echo("")
+        typer.echo("Arguments:")
+        typer.echo("  APP_NAMES...  Names of applications to edit")
+        typer.echo("                (case-insensitive, supports glob patterns like 'Orca*').")
+        typer.echo("                Multiple names can be specified.")
+        typer.echo("")
+        typer.echo("Options:")
+        typer.echo("  --url TEXT                      Update repository URL")
+        typer.echo("  --download-dir TEXT             Update download directory")
+        typer.echo("  --pattern TEXT                  Update file pattern (regex)")
+        typer.echo("  --enable/--disable              Enable/disable the application")
+        typer.echo("  --prerelease/--no-prerelease    Enable/disable prereleases")
+        typer.echo("  --rotation/--no-rotation        Enable/disable file rotation")
+        typer.echo("  --symlink-path TEXT             Update symlink path")
+        typer.echo("  --retain-count INTEGER          Number of old files to retain")
+        typer.echo("  --checksum/--no-checksum        Enable/disable checksum verification")
+        typer.echo("  --force                         Skip URL validation")
+        typer.echo("  --verbose                       Show detailed parameter information")
+        typer.echo("  --dry-run                       Preview changes without saving")
+        typer.echo("  --debug                         Enable debug logging")
+        typer.echo("  --version, -V                   Show version and exit")
+        typer.echo("  --help                          Show this message and exit.")
+        typer.echo("")
+        typer.echo("Examples:")
+        typer.echo("  appimage-updater edit FreeCAD --prerelease")
+        typer.echo("  appimage-updater edit OrcaSlicer --rotation --symlink-path ~/bin/orca.AppImage")
+        typer.echo("  appimage-updater edit 'Orca*' --enable")
+        raise typer.Exit(0)
+
     command = CommandFactory.create_edit_command(
         app_names=app_names,
         config_file=config_file,
@@ -1129,7 +1176,7 @@ def edit(
 
 @app.command()
 def show(
-    app_names: list[str] = _SHOW_APP_NAME_ARGUMENT,
+    app_names: list[str] | None = _SHOW_APP_NAME_ARGUMENT_OPTIONAL,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     debug: bool = get_debug_option(),
@@ -1144,6 +1191,30 @@ def show(
     CUSTOM CONFIG:
         appimage-updater show --config-dir ~/.config/appimage-updater OrcaSlicer
     """
+    # Show help if no app names are provided
+    if app_names is None:
+        typer.echo("Usage: appimage-updater show [OPTIONS] APP_NAMES...")
+        typer.echo("")
+        typer.echo("Show detailed information about a specific application.")
+        typer.echo("")
+        typer.echo("Arguments:")
+        typer.echo("  APP_NAMES...  Names of applications to display information for")
+        typer.echo("                (case-insensitive, supports glob patterns like 'Orca*').")
+        typer.echo("                Multiple names can be specified.")
+        typer.echo("")
+        typer.echo("Options:")
+        typer.echo("  --config, -c PATH               Configuration file path")
+        typer.echo("  --config-dir, -d PATH           Configuration directory path")
+        typer.echo("  --debug                         Enable debug logging")
+        typer.echo("  --version, -V                   Show version and exit")
+        typer.echo("  --help                          Show this message and exit.")
+        typer.echo("")
+        typer.echo("Examples:")
+        typer.echo("  appimage-updater show FreeCAD")
+        typer.echo("  appimage-updater show FreeCAD OrcaSlicer")
+        typer.echo("  appimage-updater show 'Orca*'")
+        raise typer.Exit(0)
+
     command = CommandFactory.create_show_command(
         app_names=app_names,
         config_file=config_file,
@@ -1158,7 +1229,7 @@ def show(
 
 @app.command()
 def remove(
-    app_names: list[str] = _REMOVE_APP_NAME_ARGUMENT,
+    app_names: list[str] | None = _REMOVE_APP_NAME_ARGUMENT_OPTIONAL,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     force: bool = _FORCE_OPTION,
@@ -1178,6 +1249,34 @@ def remove(
         appimage-updater remove --force MyApp     # Skip confirmation prompt
         appimage-updater remove --config-dir ~/.config/appimage-updater MyApp
     """
+    # Show help if no app names are provided
+    if app_names is None:
+        typer.echo("Usage: appimage-updater remove [OPTIONS] APP_NAMES...")
+        typer.echo("")
+        typer.echo("Remove applications from the configuration.")
+        typer.echo("")
+        typer.echo("This command will delete the applications' configuration. It does NOT delete")
+        typer.echo("downloaded AppImage files or symlinks - only the configuration entries.")
+        typer.echo("")
+        typer.echo("Arguments:")
+        typer.echo("  APP_NAMES...  Names of applications to remove from configuration")
+        typer.echo("                (case-insensitive, supports glob patterns like 'Orca*').")
+        typer.echo("                Multiple names can be specified.")
+        typer.echo("")
+        typer.echo("Options:")
+        typer.echo("  --force, -f                     Force operation without confirmation")
+        typer.echo("  --config, -c PATH               Configuration file path")
+        typer.echo("  --config-dir, -d PATH           Configuration directory path")
+        typer.echo("  --debug                         Enable debug logging")
+        typer.echo("  --version, -V                   Show version and exit")
+        typer.echo("  --help                          Show this message and exit.")
+        typer.echo("")
+        typer.echo("Examples:")
+        typer.echo("  appimage-updater remove FreeCAD")
+        typer.echo("  appimage-updater remove FreeCAD OrcaSlicer")
+        typer.echo("  appimage-updater remove --force MyApp")
+        raise typer.Exit(0)
+
     command = CommandFactory.create_remove_command(
         app_names=app_names,
         config_file=config_file,
@@ -1781,7 +1880,7 @@ async def _handle_downloads(config: Any, candidates: list[Any], yes: bool = Fals
 
 @app.command()
 def config(
-    action: str = typer.Argument(help="Action: show, set, reset, show-effective, list"),
+    action: str = typer.Argument(default="", help="Action: show, set, reset, show-effective, list"),
     setting: str = typer.Argument(default="", help="Setting name (for 'set' action)"),
     value: str = typer.Argument(default="", help="Setting value (for 'set' action)"),
     app_name: str = typer.Option("", "--app", help="Application name (for 'show-effective' action)"),
@@ -1791,6 +1890,25 @@ def config(
     version: bool = get_version_option(),
 ) -> None:
     """Manage global configuration settings."""
+    # Show help if no action is provided
+    if not action:
+        typer.echo("Usage: appimage-updater config [OPTIONS] ACTION [SETTING] [VALUE]")
+        typer.echo("")
+        typer.echo("Manage global configuration settings.")
+        typer.echo("")
+        typer.echo("Arguments:")
+        typer.echo("  ACTION     Action: show, set, reset, show-effective, list")
+        typer.echo("  [SETTING]  Setting name (for 'set' action)")
+        typer.echo("  [VALUE]    Setting value (for 'set' action)")
+        typer.echo("")
+        typer.echo("Options:")
+        typer.echo("  --app TEXT                      Application name (for 'show-effective' action)")
+        typer.echo("  --config, -c PATH               Configuration file path")
+        typer.echo("  --config-dir, -d PATH           Configuration directory path")
+        typer.echo("  --debug                         Enable debug logging")
+        typer.echo("  --version, -V                   Show version and exit")
+        typer.echo("  --help                          Show this message and exit.")
+        raise typer.Exit(0)
     command = CommandFactory.create_config_command(
         action=action,
         setting=setting,
