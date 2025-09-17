@@ -4,21 +4,26 @@
 
 This guide will walk you through setting up AppImage Updater and managing your first applications.
 
-## Initialization
+## Quick Start
 
-Before using AppImage Updater, initialize your configuration directory:
+AppImage Updater automatically creates the configuration directory when you first use any command - no manual initialization is required!
 
-```bash
-appimage-updater init
-```
+### Exploring Commands
 
-This creates the configuration directory at `~/.config/appimage-updater/` with example configurations you can customize.
-
-You can also specify a custom configuration directory:
+AppImage Updater provides helpful usage information when you run commands without required arguments:
 
 ```bash
-appimage-updater init --config-dir /path/to/custom/config
+# See config command help
+appimage-updater config
+
+# See show command help  
+appimage-updater show
+
+# See edit command help
+appimage-updater edit
 ```
+
+This makes it easy to explore available options and learn the CLI without needing to remember `--help` flags.
 
 ## Adding Applications
 

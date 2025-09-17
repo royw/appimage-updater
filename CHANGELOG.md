@@ -6,6 +6,25 @@ All notable changes to AppImage Updater will be documented in this file.
 
 ### New Features
 
+- **User Experience**: Help Messages Instead of Errors for Missing Arguments
+
+  - **PROBLEM SOLVED**: Commands now show helpful usage information instead of cryptic error messages when required arguments are missing
+  - **IMPROVED UX**: Follows modern CLI patterns used by tools like `git`, `docker`, and `kubectl`
+  - **COMMANDS ENHANCED**:
+    - `appimage-updater config` - Shows help when ACTION argument is missing
+    - `appimage-updater show` - Shows help when APP_NAMES argument is missing
+    - `appimage-updater edit` - Shows help when APP_NAMES argument is missing
+    - `appimage-updater remove` - Shows help when APP_NAMES argument is missing
+  - **BEFORE/AFTER EXAMPLE**:
+    - Before: `appimage-updater config` → "Error: Missing argument 'ACTION'"
+    - After: `appimage-updater config` → Shows complete usage help with examples and options
+  - **USER BENEFITS**:
+    - No need to remember to add `--help` when exploring commands
+    - Immediate access to usage information and examples
+    - Reduced friction for new users learning the CLI
+    - More discoverable and user-friendly interface
+  - **TECHNICAL**: Preserved all existing functionality when arguments are provided
+
 - **MAJOR**: Multi-App CLI Operations Support
 
   - **PROBLEM SOLVED**: Users can now operate on multiple applications simultaneously instead of one at a time

@@ -4,6 +4,26 @@
 
 This guide covers common issues, error messages, and solutions for AppImage Updater.
 
+## Getting Help
+
+### Command Usage Help
+
+AppImage Updater provides helpful usage information when you run commands without required arguments:
+
+```bash
+# Get help for any command by running it without arguments
+appimage-updater config     # Shows config command help
+appimage-updater show       # Shows show command help
+appimage-updater edit       # Shows edit command help
+appimage-updater remove     # Shows remove command help
+
+# Or use the traditional --help flag
+appimage-updater config --help
+appimage-updater --help     # Main help
+```
+
+This makes it easy to explore available options without needing to remember help flags.
+
 ## Quick Diagnostics
 
 ### Check System Status
