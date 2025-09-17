@@ -14,35 +14,29 @@ def _check_rotation_warning(app_config: dict[str, Any], warnings: list[str]) -> 
     """Check if rotation is enabled but no symlink is configured."""
     if app_config.get("rotation", False) and not app_config.get("symlink"):
         warnings.append(
-            "Rotation is enabled but no symlink path is configured. Files will be rotated but no symlink will be created."
+            "Rotation is enabled but no symlink path is configured. "
+            "Files will be rotated but no symlink will be created."
         )
 
 
 def _check_download_directory_warning(download_dir: str, warnings: list[str]) -> None:
     """Check if download directory doesn't exist."""
-    from pathlib import Path
 
     if not Path(download_dir).exists():
-        warnings.append(
-            f"Download directory '{download_dir}' does not exist. You may need to create it manually."
-        )
+        warnings.append(f"Download directory '{download_dir}' does not exist. You may need to create it manually.")
 
 
 def _check_checksum_warning(app_config: dict[str, Any], warnings: list[str]) -> None:
     """Check if checksum verification is disabled."""
     if not app_config.get("checksum", True):
-        warnings.append(
-            "Checksum verification is disabled. Downloaded files will not be verified for integrity."
-        )
+        warnings.append("Checksum verification is disabled. Downloaded files will not be verified for integrity.")
 
 
 def _check_pattern_warning(app_config: dict[str, Any], warnings: list[str]) -> None:
     """Check for potentially problematic patterns."""
     pattern = app_config.get("pattern", "")
     if ".*" in pattern and not pattern.endswith("$"):
-        warnings.append(
-            f"Pattern '{pattern}' contains '.*' but doesn't end with '$'. This may match unintended files."
-        )
+        warnings.append(f"Pattern '{pattern}' contains '.*' but doesn't end with '$'. This may match unintended files.")
 
 
 def _display_warnings(warnings: list[str]) -> None:

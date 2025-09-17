@@ -12,6 +12,7 @@ from loguru import logger
 from rich.console import Console
 
 from ._version import __version__
+from .cli.validation_utilities import _check_configuration_warnings
 from .cli_options import (
     CHECK_APP_NAME_ARGUMENT,
     CONFIG_DIR_OPTION,
@@ -349,10 +350,6 @@ def _check_pattern_warning(app_config: dict[str, Any], warnings: list[str]) -> N
             "⚠️  File pattern may be too broad and could match unintended files. "
             "Consider making the pattern more specific."
         )
-
-
-
-
 
 
 @app.callback()

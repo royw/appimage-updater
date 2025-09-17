@@ -56,8 +56,16 @@ async def _prepare_add_configuration(
 
     # Resolve parameters using global defaults
     resolved_params = _resolve_add_parameters(
-        download_dir, auto_subdir, rotation, prerelease, checksum,
-        checksum_required, direct, config_file, config_dir, name
+        download_dir,
+        auto_subdir,
+        rotation,
+        prerelease,
+        checksum,
+        checksum_required,
+        direct,
+        config_file,
+        config_dir,
+        name,
     )
 
     # Handle download directory creation
@@ -142,14 +150,32 @@ async def _add(
 
         # Handle verbose logging
         resolved_params = _resolve_add_parameters(
-            download_dir, auto_subdir, rotation, prerelease, checksum,
-            checksum_required, direct, config_file, config_dir, name
+            download_dir,
+            auto_subdir,
+            rotation,
+            prerelease,
+            checksum,
+            checksum_required,
+            direct,
+            config_file,
+            config_dir,
+            name,
         )
 
         _handle_verbose_logging(
-            verbose, name, url, download_dir, auto_subdir, rotation, prerelease,
-            checksum, checksum_required, direct, str(config_file) if config_file else None,
-            str(config_dir) if config_dir else None, resolved_params
+            verbose,
+            name,
+            url,
+            download_dir,
+            auto_subdir,
+            rotation,
+            prerelease,
+            checksum,
+            checksum_required,
+            direct,
+            str(config_file) if config_file else None,
+            str(config_dir) if config_dir else None,
+            resolved_params,
         )
 
         # Prepare configuration

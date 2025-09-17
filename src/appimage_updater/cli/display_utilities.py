@@ -38,6 +38,7 @@ def _display_rotation_config(app_config: dict[str, Any]) -> None:
         symlink_path = app_config.get("symlink_path")
         if symlink_path:
             from ..display import _replace_home_with_tilde
+
             display_symlink = _replace_home_with_tilde(symlink_path)
             console.print(f"[blue]  Symlink: {display_symlink}")
 
@@ -61,17 +62,17 @@ def _display_dry_run_config(
     """Display complete dry-run configuration preview."""
     _display_dry_run_header(name)
     _display_basic_config_info(name, validated_url, expanded_download_dir, pattern)
-    
+
     # Display additional configuration
     prerelease = app_config.get("prerelease", False)
     console.print(f"[blue]Prerelease: {'Enabled' if prerelease else 'Disabled'}")
-    
+
     direct = app_config.get("direct", False)
     console.print(f"[blue]Direct Download: {'Enabled' if direct else 'Disabled'}")
-    
+
     _display_rotation_config(app_config)
     _display_checksum_config(app_config)
-    
+
     console.print("\n[yellow]Run without --dry-run to actually add this configuration")
 
 
@@ -90,13 +91,11 @@ def _display_add_success(
     console.print(f"[blue]URL: {validated_url}")
     console.print(f"[blue]Download Directory: {display_download_dir}")
     console.print(f"[blue]Pattern: {pattern}")
-    
+
     if prerelease_auto_enabled:
-        console.print(
-            "[yellow]ℹ️  Prerelease downloads have been automatically enabled for this repository"
-        )
+        console.print("[yellow]ℹ️  Prerelease downloads have been automatically enabled for this repository")
         console.print("[yellow]   (detected as a repository that primarily uses prerelease versions)")
-    
+
     console.print(f"\n[yellow]💡 Tip: Use 'appimage-updater show {name}' to view full configuration")
 
 

@@ -140,9 +140,8 @@ class AddCommand(Command):
         Returns:
             True if successful, False if validation failed
         """
-        # This delegates to the existing _add function logic
-        # We'll import and call the existing implementation
-        from ..main import _add
+        # This delegates to the CLI add command logic
+        from ..cli.add_command_logic import _add
 
         success = await _add(
             name=self.params.name or "",
@@ -170,6 +169,6 @@ class AddCommand(Command):
 
     def _show_add_examples(self) -> None:
         """Show usage examples for the add command."""
-        from ..main import _show_add_examples
+        from ..cli.validation_utilities import _show_add_examples
 
         _show_add_examples()
