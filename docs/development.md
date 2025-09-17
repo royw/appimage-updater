@@ -155,8 +155,8 @@ For detailed code organization and module descriptions, see the [Architecture Gu
 1. Use Typer for CLI interface
 1. Add comprehensive error handling
 1. Include help text and examples
-1. Extract display logic to `display.py` if complex
-1. Use `config_operations.py` for configuration management
+1. Extract display logic to `ui/display.py` if complex
+1. Use `config/operations.py` for configuration management
 1. Add tests for the new command
 
 Example:

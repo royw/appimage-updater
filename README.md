@@ -28,7 +28,6 @@ appimage-updater list
 
 # Help is available:
 appimage-updater --help
-appimage-updater init --help
 appimage-updater list --help
 appimage-updater add --help
 appimage-updater edit --help
@@ -266,10 +265,7 @@ For detailed installation instructions and troubleshooting, see the [Installatio
 **Quick Commands:**
 
 ```bash
-# Initialize configuration
-appimage-updater init
-
-# Add applications
+# Add applications (configuration is created automatically)
 appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
 appimage-updater add --prerelease --rotation VSCode https://github.com/microsoft/vscode ~/Apps/VSCode
 

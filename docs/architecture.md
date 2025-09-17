@@ -503,29 +503,22 @@ src/appimage_updater/
 │   └── dynamic_download_repository.py # Dynamic download handler
 │
 ├── services/                 # Service layer
-│   ├── application_service.py # Application management
-│   ├── check_service.py     # Update checking service
-│   ├── config_service.py    # Configuration service
-│   ├── update_service.py    # Update operations
-│   └── validation_service.py # Validation service
+│   └── application_service.py # Application management
 │
 ├── ui/                       # User interface components
 │   ├── display.py           # Console output and formatting
 │   ├── interactive.py       # Interactive command handling
 │   ├── cli_options.py       # CLI option definitions
-│   ├── help_groups.py       # Help text organization
 │   ├── cli/                 # CLI utilities
 │   └── display_utils/       # Display formatting utilities
 │
 ├── utils/                    # Utility modules
 │   ├── logging_config.py    # Logging configuration
-│   ├── dependency_injection.py # DI container
 │   ├── facade.py            # Facade pattern implementation
 │   └── helpers/             # Helper utilities
 │
-├── strategies/               # Strategy pattern implementations
-│   ├── update_strategy.py   # Update strategies
-│   └── validation_strategy.py # Validation strategies
+├── strategies/               # Strategy pattern implementations (placeholder)
+│   └── __init__.py          # Reserved for future strategy implementations
 │
 ├── events/                   # Event system
 │   ├── event_bus.py         # Event bus implementation
@@ -534,8 +527,6 @@ src/appimage_updater/
 ├── dist_selector/            # Distribution selection utilities
 │   └── [various modules]    # Distribution-specific logic
 │
-└── pattern_gen/              # Pattern generation utilities
-    └── [various modules]     # Pattern generation logic
 ```
 
 ### Architecture Principles

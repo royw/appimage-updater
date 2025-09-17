@@ -355,9 +355,9 @@ Downloader
 ### Key Components
 
 - **`pattern_generator.py`**: Enhanced with dual-format support
-- **`downloader.py`**: ZIP extraction and error handling
-- **`github_client.py`**: Asset analysis and release fetching
-- **`models.py`**: Extended asset properties for format detection
+- **`core/downloader.py`**: ZIP extraction and error handling
+- **`github/client.py`**: Asset analysis and release fetching
+- **`core/models.py`**: Extended asset properties for format detection
 
 ### Testing Coverage
 

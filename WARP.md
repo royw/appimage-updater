@@ -569,9 +569,9 @@ The application follows a modular async architecture with clear separation of co
    - Typer-based CLI with rich console output
    - Async command handling with proper error management
    - Modular design with extracted functionality:
-     - `display.py`: Console output formatting and user interface functions
+     - `ui/display.py`: Console output formatting and user interface functions
      - `pattern_generator.py`: GitHub URL parsing and AppImage pattern generation
-     - `config_operations.py`: Configuration loading, saving, and management operations
+     - `config/operations.py`: Configuration loading, saving, and management operations
 
 ### Key Architectural Patterns
 
