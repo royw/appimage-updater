@@ -5,6 +5,7 @@ application configuration management:
 
 - loading_operations: Configuration loading and saving operations
 - directory_utilities: Directory creation and management utilities
+- validation_utilities: Configuration validation and consistency checks
 """
 
 # Import key functions for backward compatibility
@@ -20,6 +21,11 @@ from .loading_operations import (
     remove_application_from_config,
     save_updated_configuration,
 )
+from .validation_utilities import (
+    validate_add_rotation_config,
+    validate_and_normalize_add_url,
+    validate_edit_updates,
+)
 
 __all__ = [
     # Loading operations
@@ -33,4 +39,9 @@ __all__ = [
     # Directory utilities
     "handle_add_directory_creation",
     "handle_directory_creation",
+
+    # Validation utilities
+    "validate_and_normalize_add_url",
+    "validate_add_rotation_config",
+    "validate_edit_updates",
 ]
