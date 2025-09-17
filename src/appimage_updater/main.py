@@ -533,6 +533,8 @@ def add(
     dry_run: bool = _DRY_RUN_OPTION,
     interactive: bool = _INTERACTIVE_OPTION,
     examples: bool = typer.Option(False, "--examples", help="Show usage examples and exit"),
+    debug: bool = get_debug_option(),
+    version: bool = get_version_option(),
 ) -> None:
     """Add a new application to the configuration.
 
@@ -574,7 +576,7 @@ def add(
         dry_run=dry_run,
         interactive=interactive,
         examples=examples,
-        debug=global_state.debug,
+        debug=debug,
     )
 
     result = asyncio.run(command.execute())
@@ -1076,6 +1078,8 @@ def edit(
     direct: bool | None = EDIT_DIRECT_OPTION,
     verbose: bool = VERBOSE_OPTION,
     dry_run: bool = EDIT_DRY_RUN_OPTION,
+    debug: bool = get_debug_option(),
+    version: bool = get_version_option(),
 ) -> None:
     """Edit configuration for existing applications.
 
@@ -1139,7 +1143,7 @@ def edit(
         direct=direct,
         verbose=verbose,
         dry_run=dry_run,
-        debug=global_state.debug,
+        debug=debug,
     )
 
     result = asyncio.run(command.execute())
@@ -1152,6 +1156,8 @@ def show(
     app_names: list[str] = _SHOW_APP_NAME_ARGUMENT,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
+    debug: bool = get_debug_option(),
+    version: bool = get_version_option(),
 ) -> None:
     """Show detailed information about a specific application.
 
@@ -1166,7 +1172,7 @@ def show(
         app_names=app_names,
         config_file=config_file,
         config_dir=config_dir,
-        debug=global_state.debug,
+        debug=debug,
     )
 
     result = asyncio.run(command.execute())
@@ -1180,6 +1186,8 @@ def remove(
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     force: bool = _FORCE_OPTION,
+    debug: bool = get_debug_option(),
+    version: bool = get_version_option(),
 ) -> None:
     """Remove applications from the configuration.
 
@@ -1199,7 +1207,7 @@ def remove(
         config_file=config_file,
         config_dir=config_dir,
         force=force,
-        debug=global_state.debug,
+        debug=debug,
     )
 
     result = asyncio.run(command.execute())
@@ -1215,6 +1223,8 @@ def repository(
     limit: int = REPOSITORY_LIMIT_OPTION,
     assets: bool = REPOSITORY_ASSETS_OPTION,
     dry_run: bool = REPOSITORY_DRY_RUN_OPTION,
+    debug: bool = get_debug_option(),
+    version: bool = get_version_option(),
 ) -> None:
     """Examine repository information for configured applications.
 
@@ -1238,7 +1248,7 @@ def repository(
         limit=limit,
         assets=assets,
         dry_run=dry_run,
-        debug=global_state.debug,
+        debug=debug,
     )
 
     result = asyncio.run(command.execute())
@@ -1801,6 +1811,8 @@ def config(
     app_name: str = typer.Option("", "--app", help="Application name (for 'show-effective' action)"),
     config_file: Path = _CONFIG_FILE_OPTION,
     config_dir: Path = _CONFIG_DIR_OPTION,
+    debug: bool = get_debug_option(),
+    version: bool = get_version_option(),
 ) -> None:
     """Manage global configuration settings."""
     command = CommandFactory.create_config_command(
@@ -1810,7 +1822,7 @@ def config(
         app_name=app_name,
         config_file=config_file,
         config_dir=config_dir,
-        debug=global_state.debug,
+        debug=debug,
     )
 
     result = asyncio.run(command.execute())
