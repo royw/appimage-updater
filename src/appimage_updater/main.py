@@ -74,6 +74,13 @@ rebuild_models()
 app = typer.Typer(name="appimage-updater", help="AppImage update manager")
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 
+# Global state for CLI options
+class GlobalState:
+    """Global state for CLI options that need to be accessible across commands."""
+    debug: bool = False
+
+global_state = GlobalState()
+
 # Dependency injection container removed as unused
 
 # Module-level typer.Option definitions
@@ -277,6 +284,28 @@ def version_callback(value: bool) -> None:
         raise typer.Exit()
 
 
+# Common options that should be available on all commands
+def get_debug_option() -> typer.Option:
+    """Get debug option for commands."""
+    return typer.Option(
+        False,
+        "--debug",
+        help="Enable debug logging",
+    )
+
+
+def get_version_option() -> typer.Option:
+    """Get version option for commands."""
+    return typer.Option(
+        False,
+        "--version",
+        "-V",
+        help="Show version and exit",
+        callback=version_callback,
+        is_eager=True,
+    )
+
+
 def _check_rotation_warning(app_config: dict[str, Any], warnings: list[str]) -> None:
     """Check if rotation is enabled but no symlink is configured."""
     if app_config.get("rotation", False) and not app_config.get("symlink"):
@@ -385,6 +414,8 @@ def main(
     ),
 ) -> None:
     """AppImage update manager with optional debug logging."""
+    # Store global state
+    global_state.debug = debug
     configure_logging(debug=debug)
 
 
@@ -398,6 +429,14 @@ def check(
     no_interactive: bool = NO_INTERACTIVE_OPTION,
     verbose: bool = VERBOSE_OPTION,
     debug: bool = _DEBUG_OPTION,
+    version: bool = typer.Option(
+        False,
+        "--version",
+        "-V",
+        help="Show version and exit",
+        callback=version_callback,
+        is_eager=True,
+    ),
 ) -> None:
     """Check for updates to configured applications.
 
@@ -428,6 +467,14 @@ def check(
 def init(
     config_dir: Path | None = _INIT_CONFIG_DIR_OPTION,
     debug: bool = _DEBUG_OPTION,
+    version: bool = typer.Option(
+        False,
+        "--version",
+        "-V",
+        help="Show version and exit",
+        callback=version_callback,
+        is_eager=True,
+    ),
 ) -> None:
     """Initialize configuration directory with examples."""
     command = CommandFactory.create_init_command(
@@ -444,7 +491,8 @@ def init(
 def list_apps(
     config_file: Path | None = CONFIG_FILE_OPTION,
     config_dir: Path | None = CONFIG_DIR_OPTION,
-    debug: bool = _DEBUG_OPTION,
+    debug: bool = get_debug_option(),
+    version: bool = get_version_option(),
 ) -> None:
     """List all configured applications.
 
@@ -485,7 +533,6 @@ def add(
     dry_run: bool = _DRY_RUN_OPTION,
     interactive: bool = _INTERACTIVE_OPTION,
     examples: bool = typer.Option(False, "--examples", help="Show usage examples and exit"),
-    debug: bool = _DEBUG_OPTION,
 ) -> None:
     """Add a new application to the configuration.
 
@@ -527,7 +574,7 @@ def add(
         dry_run=dry_run,
         interactive=interactive,
         examples=examples,
-        debug=debug,
+        debug=global_state.debug,
     )
 
     result = asyncio.run(command.execute())
@@ -1029,7 +1076,6 @@ def edit(
     direct: bool | None = EDIT_DIRECT_OPTION,
     verbose: bool = VERBOSE_OPTION,
     dry_run: bool = EDIT_DRY_RUN_OPTION,
-    debug: bool = _DEBUG_OPTION,
 ) -> None:
     """Edit configuration for existing applications.
 
@@ -1093,7 +1139,7 @@ def edit(
         direct=direct,
         verbose=verbose,
         dry_run=dry_run,
-        debug=debug,
+        debug=global_state.debug,
     )
 
     result = asyncio.run(command.execute())
@@ -1106,7 +1152,6 @@ def show(
     app_names: list[str] = _SHOW_APP_NAME_ARGUMENT,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
-    debug: bool = _DEBUG_OPTION,
 ) -> None:
     """Show detailed information about a specific application.
 
@@ -1121,7 +1166,7 @@ def show(
         app_names=app_names,
         config_file=config_file,
         config_dir=config_dir,
-        debug=debug,
+        debug=global_state.debug,
     )
 
     result = asyncio.run(command.execute())
@@ -1135,7 +1180,6 @@ def remove(
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     force: bool = _FORCE_OPTION,
-    debug: bool = _DEBUG_OPTION,
 ) -> None:
     """Remove applications from the configuration.
 
@@ -1155,7 +1199,7 @@ def remove(
         config_file=config_file,
         config_dir=config_dir,
         force=force,
-        debug=debug,
+        debug=global_state.debug,
     )
 
     result = asyncio.run(command.execute())
@@ -1171,7 +1215,6 @@ def repository(
     limit: int = REPOSITORY_LIMIT_OPTION,
     assets: bool = REPOSITORY_ASSETS_OPTION,
     dry_run: bool = REPOSITORY_DRY_RUN_OPTION,
-    debug: bool = _DEBUG_OPTION,
 ) -> None:
     """Examine repository information for configured applications.
 
@@ -1195,7 +1238,7 @@ def repository(
         limit=limit,
         assets=assets,
         dry_run=dry_run,
-        debug=debug,
+        debug=global_state.debug,
     )
 
     result = asyncio.run(command.execute())
@@ -1758,7 +1801,6 @@ def config(
     app_name: str = typer.Option("", "--app", help="Application name (for 'show-effective' action)"),
     config_file: Path = _CONFIG_FILE_OPTION,
     config_dir: Path = _CONFIG_DIR_OPTION,
-    debug: bool = _DEBUG_OPTION,
 ) -> None:
     """Manage global configuration settings."""
     command = CommandFactory.create_config_command(
@@ -1768,7 +1810,7 @@ def config(
         app_name=app_name,
         config_file=config_file,
         config_dir=config_dir,
-        debug=debug,
+        debug=global_state.debug,
     )
 
     result = asyncio.run(command.execute())
