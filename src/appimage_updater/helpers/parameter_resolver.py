@@ -32,17 +32,19 @@ class ParameterResolver:
         if download_dir:
             return download_dir
 
-        # Use global config default
-        if self.global_config and self.global_config.defaults.download_dir:
-            base_dir = self.global_config.defaults.download_dir
-        else:
-            # Fallback to default
-            base_dir = Path.home() / "Applications"
+        base_dir = self._get_base_download_directory()
+        return self._apply_auto_subdir(base_dir, app_name)
 
-        # Apply auto-subdir if enabled and app_name provided
+    def _get_base_download_directory(self) -> Path:
+        """Get base download directory from config or default."""
+        if self.global_config and self.global_config.defaults.download_dir:
+            return self.global_config.defaults.download_dir
+        return Path.home() / "Applications"
+
+    def _apply_auto_subdir(self, base_dir: Path, app_name: str | None) -> Path:
+        """Apply auto-subdir if enabled and app name provided."""
         if self.global_config and self.global_config.defaults.auto_subdir and app_name:
             return base_dir / app_name
-
         return base_dir
 
     def resolve_rotation_parameter(self, rotation: bool | None) -> bool:
@@ -93,27 +95,31 @@ class ParameterResolver:
         Returns:
             Tuple of (required, algorithm, pattern)
         """
-        # Resolve checksum required
-        if checksum_required is not None:
-            resolved_required = checksum_required
-        else:
-            resolved_required = self.global_config.defaults.checksum_required if self.global_config else False
-
-        # Resolve checksum algorithm
-        if checksum_algorithm:
-            resolved_algorithm = checksum_algorithm
-        else:
-            resolved_algorithm = self.global_config.defaults.checksum_algorithm if self.global_config else "sha256"
-
-        # Resolve checksum pattern
-        if checksum_pattern:
-            resolved_pattern = checksum_pattern
-        else:
-            resolved_pattern = (
-                self.global_config.defaults.checksum_pattern if self.global_config else "{filename}-SHA256.txt"
-            )
+        resolved_required = self._resolve_checksum_required(checksum_required)
+        resolved_algorithm = self._resolve_checksum_algorithm(checksum_algorithm)
+        resolved_pattern = self._resolve_checksum_pattern(checksum_pattern)
 
         return resolved_required, resolved_algorithm, resolved_pattern
+
+    def _resolve_checksum_required(self, checksum_required: bool | None) -> bool:
+        """Resolve checksum required setting with global default."""
+        if checksum_required is not None:
+            return checksum_required
+        return self.global_config.defaults.checksum_required if self.global_config else False
+
+    def _resolve_checksum_algorithm(self, checksum_algorithm: str | None) -> str:
+        """Resolve checksum algorithm with global default."""
+        if checksum_algorithm:
+            return checksum_algorithm
+        return self.global_config.defaults.checksum_algorithm if self.global_config else "sha256"
+
+    def _resolve_checksum_pattern(self, checksum_pattern: str | None) -> str:
+        """Resolve checksum pattern with global default."""
+        if checksum_pattern:
+            return checksum_pattern
+        return (
+            self.global_config.defaults.checksum_pattern if self.global_config else "{filename}-SHA256.txt"
+        )
 
     def resolve_symlink_parameters(
         self,

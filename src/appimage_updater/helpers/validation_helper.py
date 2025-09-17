@@ -122,21 +122,31 @@ class ValidationHelper:
         Returns:
             List of validation error messages
         """
+        if not symlink_path:
+            return []
+
+        errors: list[str] = []
+        errors.extend(self._validate_symlink_parent(symlink_path))
+        errors.extend(self._validate_existing_symlink(symlink_path))
+        return errors
+
+    def _validate_symlink_parent(self, symlink_path: Path) -> list[str]:
+        """Validate symlink parent directory."""
+        errors: list[str] = []
+        parent = symlink_path.parent
+
+        if not parent.exists():
+            errors.append(f"Symlink parent directory '{parent}' does not exist")
+        elif not parent.is_dir():
+            errors.append(f"Symlink parent path '{parent}' is not a directory")
+
+        return errors
+
+    def _validate_existing_symlink(self, symlink_path: Path) -> list[str]:
+        """Validate existing symlink target."""
         errors: list[str] = []
 
-        if not symlink_path:
-            return errors
-
-        # Check if parent directory exists
-        if not symlink_path.parent.exists():
-            errors.append(f"Symlink parent directory '{symlink_path.parent}' does not exist")
-
-        # Check if parent is writable
-        elif not symlink_path.parent.is_dir():
-            errors.append(f"Symlink parent path '{symlink_path.parent}' is not a directory")
-
-        # Check if symlink already exists and points elsewhere
-        elif symlink_path.exists() and symlink_path.is_symlink():
+        if symlink_path.exists() and symlink_path.is_symlink():
             target = symlink_path.readlink()
             if not target.exists():
                 errors.append(f"Existing symlink '{symlink_path}' points to non-existent target '{target}'")
@@ -153,28 +163,34 @@ class ValidationHelper:
         Returns:
             List of validation error messages
         """
-        errors = []
-
         if not path.exists():
-            if create_if_missing:
-                try:
-                    path.mkdir(parents=True, exist_ok=True)
-                except (OSError, PermissionError) as e:
-                    errors.append(f"Cannot create directory '{path}': {e}")
-            else:
-                errors.append(f"Directory '{path}' does not exist")
-        elif not path.is_dir():
-            errors.append(f"Path '{path}' exists but is not a directory")
-        else:
-            # Check if directory is writable
-            try:
-                test_file = path / ".write_test"
-                test_file.touch()
-                test_file.unlink()
-            except (OSError, PermissionError):
-                errors.append(f"Directory '{path}' is not writable")
+            return self._handle_missing_directory(path, create_if_missing)
 
-        return errors
+        if not path.is_dir():
+            return [f"Path '{path}' exists but is not a directory"]
+
+        return self._validate_directory_writable(path)
+
+    def _handle_missing_directory(self, path: Path, create_if_missing: bool) -> list[str]:
+        """Handle missing directory validation and creation."""
+        if not create_if_missing:
+            return [f"Directory '{path}' does not exist"]
+
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+            return []
+        except (OSError, PermissionError) as e:
+            return [f"Cannot create directory '{path}': {e}"]
+
+    def _validate_directory_writable(self, path: Path) -> list[str]:
+        """Validate that directory is writable."""
+        try:
+            test_file = path / ".write_test"
+            test_file.touch()
+            test_file.unlink()
+            return []
+        except (OSError, PermissionError):
+            return [f"Directory '{path}' is not writable"]
 
     def check_configuration_warnings(
         self,
