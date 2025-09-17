@@ -103,6 +103,13 @@ tasks:
         "_handle_verbose_logging" "_handle_edit_preview_modes" "_apply_edit_updates_to_apps" "repository"
         "generate_pattern_from_releases" "get_supported_repository_types" "_print_troubleshooting_tips"
         "perform_update_checks" "get_update_candidates" "reload_config" "distribution_family"
+        "create_configuration_table" "create_repository_table" "create_update_candidates_table" "format_file_size"
+        "format_version_comparison" "display_dry_run_header" "display_success_message" "display_warning_message"
+        "display_error_message" "display_info_message" "resolve_download_directory" "resolve_rotation_parameter"
+        "resolve_prerelease_parameter" "resolve_checksum_parameters" "resolve_symlink_parameters"
+        "check_configuration_warnings" "list_applications" "show_application" "initialize_config"
+        "get_global_config" "set_global_config" "validate_configuration" "add_app" "check_updates"
+        "list_apps" "AppImageUpdaterFacade" "_extract_version_from_filename"
 
   # === Testing ===
   test:

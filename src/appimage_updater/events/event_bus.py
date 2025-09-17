@@ -45,16 +45,6 @@ class EventBus:
         # Cast to the expected type for the internal storage
         self._subscribers[event_type].append(handler)  # type: ignore[arg-type]
 
-    def subscribe_async(self, event_type: type[EventType], handler: Callable[[EventType], Any]) -> None:
-        """Subscribe to events of a specific type with async handler.
-
-        Args:
-            event_type: Type of event to subscribe to
-            handler: Async function to call when event is published
-        """
-        # Cast to the expected type for the internal storage
-        self._async_subscribers[event_type].append(handler)  # type: ignore[arg-type]
-
     def unsubscribe(self, event_type: type[EventType], handler: Callable[[EventType], None]) -> None:
         """Unsubscribe from events of a specific type.
 
@@ -65,15 +55,18 @@ class EventBus:
         if handler in self._subscribers[event_type]:
             self._subscribers[event_type].remove(handler)  # type: ignore[arg-type]
 
-    def unsubscribe_async(self, event_type: type[EventType], handler: Callable[[EventType], Any]) -> None:
-        """Unsubscribe from events of a specific type with async handler.
+    def clear_subscribers(self, event_type: type[EventType] | None = None) -> None:
+        """Clear all subscribers for a specific event type or all events.
 
         Args:
-            event_type: Type of event to unsubscribe from
-            handler: Async handler function to remove
+            event_type: Specific event type to clear, or None for all
         """
-        if handler in self._async_subscribers[event_type]:
-            self._async_subscribers[event_type].remove(handler)  # type: ignore[arg-type]
+        if event_type:
+            self._subscribers[event_type].clear()
+            self._async_subscribers[event_type].clear()
+        else:
+            self._subscribers.clear()
+            self._async_subscribers.clear()
 
     def publish(self, event: Event) -> None:
         """Publish an event to all subscribers.
@@ -109,19 +102,6 @@ class EventBus:
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
-    def clear_subscribers(self, event_type: type[EventType] | None = None) -> None:
-        """Clear all subscribers for a specific event type or all events.
-
-        Args:
-            event_type: Specific event type to clear, or None for all
-        """
-        if event_type:
-            self._subscribers[event_type].clear()
-            self._async_subscribers[event_type].clear()
-        else:
-            self._subscribers.clear()
-            self._async_subscribers.clear()
-
 
 # Global event bus instance
 _global_event_bus = EventBus()
@@ -134,22 +114,3 @@ def get_event_bus() -> EventBus:
         Global event bus
     """
     return _global_event_bus
-
-
-def publish_event(event: Event) -> None:
-    """Convenience function to publish event to global bus.
-
-    Args:
-        event: Event to publish
-    """
-    _global_event_bus.publish(event)
-
-
-def subscribe_to_event(event_type: type[EventType], handler: Callable[[EventType], None]) -> None:
-    """Convenience function to subscribe to global bus.
-
-    Args:
-        event_type: Type of event to subscribe to
-        handler: Handler function
-    """
-    _global_event_bus.subscribe(event_type, handler)

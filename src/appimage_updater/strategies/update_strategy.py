@@ -115,31 +115,6 @@ class UpdateStrategyFactory:
         DirectDownloadUpdateStrategy(),
     ]
 
-    @classmethod
-    def get_strategy(cls, app_config: ApplicationConfig) -> UpdateStrategy:
-        """Get the appropriate update strategy for an application.
+    # get_strategy method removed as unused
 
-        Args:
-            app_config: Application configuration
-
-        Returns:
-            Appropriate update strategy
-
-        Raises:
-            ValueError: If no suitable strategy is found
-        """
-        for strategy in cls._strategies:
-            if strategy.supports_application(app_config):
-                return strategy
-
-        # Default to GitHub strategy if no specific match
-        return cls._strategies[0]
-
-    @classmethod
-    def register_strategy(cls, strategy: UpdateStrategy) -> None:
-        """Register a new update strategy.
-
-        Args:
-            strategy: Update strategy to register
-        """
-        cls._strategies.insert(0, strategy)  # Insert at beginning for priority
+    # register_strategy method removed as unused

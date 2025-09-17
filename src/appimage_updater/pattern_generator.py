@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import re
 import urllib.parse
-from typing import TypedDict
 
 from loguru import logger
 
@@ -113,11 +112,7 @@ async def generate_appimage_pattern_async(app_name: str, url: str) -> str:
     return generate_fallback_pattern(app_name, url)
 
 
-class ReleaseGroups(TypedDict):
-    stable_app: list[str]
-    stable_zip: list[str]
-    pre_app: list[str]
-    pre_zip: list[str]
+# ReleaseGroups TypedDict removed as unused
 
 
 async def fetch_appimage_pattern_from_github(url: str) -> str | None:
@@ -157,7 +152,7 @@ def _process_release_assets(release: Release, groups: dict[str, list[str]]) -> N
         _categorize_asset_by_type_and_stability(asset.name, release.is_prerelease, groups)
 
 
-def _collect_release_files(releases: list[Release]) -> ReleaseGroups:
+def _collect_release_files(releases: list[Release]) -> dict[str, list[str]]:
     """Collect filenames grouped by stability and extension."""
     groups: dict[str, list[str]] = {
         "stable_app": [],
@@ -169,15 +164,10 @@ def _collect_release_files(releases: list[Release]) -> ReleaseGroups:
     for release in releases:
         _process_release_assets(release, groups)
 
-    return ReleaseGroups(
-        stable_app=groups["stable_app"],
-        stable_zip=groups["stable_zip"],
-        pre_app=groups["pre_app"],
-        pre_zip=groups["pre_zip"],
-    )
+    return groups
 
 
-def _select_stable_files(groups: ReleaseGroups) -> list[str] | None:
+def _select_stable_files(groups: dict[str, list[str]]) -> list[str] | None:
     """Select stable files, preferring AppImage over ZIP."""
     if groups["stable_app"] or groups["stable_zip"]:
         target: list[str] = groups["stable_app"] if groups["stable_app"] else groups["stable_zip"]
@@ -186,7 +176,7 @@ def _select_stable_files(groups: ReleaseGroups) -> list[str] | None:
     return None
 
 
-def _select_prerelease_files(groups: ReleaseGroups) -> list[str] | None:
+def _select_prerelease_files(groups: dict[str, list[str]]) -> list[str] | None:
     """Select prerelease files, preferring AppImage over ZIP."""
     if groups["pre_app"] or groups["pre_zip"]:
         target: list[str] = groups["pre_app"] if groups["pre_app"] else groups["pre_zip"]
@@ -195,7 +185,7 @@ def _select_prerelease_files(groups: ReleaseGroups) -> list[str] | None:
     return None
 
 
-def _select_target_files(groups: ReleaseGroups) -> list[str] | None:
+def _select_target_files(groups: dict[str, list[str]]) -> list[str] | None:
     """Choose best filenames: prefer stable, prefer AppImage over ZIP."""
     # Try stable files first
     stable_files = _select_stable_files(groups)

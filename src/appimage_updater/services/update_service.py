@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from ..downloader import Downloader
 from ..models import DownloadResult, UpdateCandidate
 
@@ -40,61 +38,8 @@ class UpdateService:
         """
         return await self.downloader.download_updates(candidates, show_progress)
 
-    async def download_single_update(
-        self,
-        candidate: UpdateCandidate,
-        show_progress: bool = True,
-    ) -> DownloadResult:
-        """Download a single update.
+    # download_single_update method removed as unused
 
-        Args:
-            candidate: Update candidate to download
-            show_progress: Whether to show download progress
+    # create_download_directory method removed as unused
 
-        Returns:
-            Download result
-        """
-        results = await self.download_updates([candidate], show_progress)
-        return results[0]
-
-    def create_download_directory(self, path: Path, create_parents: bool = True) -> None:
-        """Create download directory if it doesn't exist.
-
-        Args:
-            path: Directory path to create
-            create_parents: Whether to create parent directories
-        """
-        if create_parents:
-            path.mkdir(parents=True, exist_ok=True)
-        else:
-            path.mkdir(exist_ok=True)
-
-    def validate_download_path(self, path: Path) -> bool:
-        """Validate that a download path is writable.
-
-        Args:
-            path: Path to validate
-
-        Returns:
-            True if path is valid and writable
-        """
-        try:
-            return self._check_path_writability(path)
-        except (OSError, PermissionError):
-            return False
-
-    def _check_path_writability(self, path: Path) -> bool:
-        """Check if path or its parent is writable."""
-        if path.exists():
-            return self._is_existing_path_writable(path)
-        else:
-            return self._is_parent_path_writable(path)
-
-    def _is_existing_path_writable(self, path: Path) -> bool:
-        """Check if existing path is a writable directory."""
-        return path.is_dir() and bool(path.stat().st_mode & 0o200)
-
-    def _is_parent_path_writable(self, path: Path) -> bool:
-        """Check if parent directory is writable for new path creation."""
-        parent = path.parent
-        return parent.exists() and parent.is_dir() and bool(parent.stat().st_mode & 0o200)
+    # validate_download_path method and related helpers removed as unused

@@ -43,18 +43,7 @@ class ValidationService:
             msg = f"Invalid repository URL '{url}': {e}"
             raise ConfigLoadError(msg) from e
 
-    def validate_rotation_config(self, rotation: bool | None, symlink: str | None) -> None:
-        """Validate rotation and symlink combination.
-
-        Args:
-            rotation: Whether rotation is enabled
-            symlink: Symlink path
-
-        Raises:
-            ValueError: If rotation is enabled without symlink
-        """
-        if rotation is True and symlink is None:
-            raise ValueError("Rotation requires a symlink path")
+    # validate_rotation_config method removed as unused
 
     def validate_pattern(self, pattern: str) -> None:
         """Validate regex pattern.

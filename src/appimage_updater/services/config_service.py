@@ -58,37 +58,9 @@ class ConfigService:
             default_dir = get_default_config_dir()
             self._add_to_config_directory(app_config, default_dir)
 
-    def remove_application(self, app_name: str) -> None:
-        """Remove an application configuration.
+    # remove_application method removed as unused
 
-        Args:
-            app_name: Name of application to remove
-        """
-        if self.config_file:
-            self._remove_from_config_file(app_name, self.config_file)
-        elif self.config_dir:
-            self._remove_from_config_directory(app_name, self.config_dir)
-        else:
-            raise ValueError("No configuration found to remove application from")
-
-    def save_configuration_updates(self, app_name: str, updates: dict[str, Any]) -> None:
-        """Save configuration updates for an application.
-
-        Args:
-            app_name: Application name
-            updates: Configuration updates to apply
-        """
-        config = self.load_config()
-
-        # Find and update the application
-        for app in config.applications:
-            if app.name.lower() == app_name.lower():
-                for key, value in updates.items():
-                    setattr(app, key, value)
-                break
-
-        # Save the updated configuration
-        self._save_config(config)
+    # save_configuration_updates method removed as unused
 
     def _add_to_config_file(self, app_config: dict[str, Any], config_file: Path) -> None:
         """Add application to a single JSON config file."""
