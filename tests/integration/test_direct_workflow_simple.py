@@ -93,8 +93,8 @@ class TestDirectWorkflowIntegration:
                 "--direct",
                 "--prerelease",
                 "--rotation",
-                "--retain", "5",
-                "--symlink", symlink_path,
+                "--retain-count", "5",
+                "--symlink-path", symlink_path,
                 "--checksum-required",
                 "--checksum-algorithm", "sha1",
                 "--config-dir", str(temp_config_dir),
@@ -102,7 +102,7 @@ class TestDirectWorkflowIntegration:
             ])
 
             assert result.exit_code == 0
-            assert "Successfully added application 'ComplexApp'" in result.stdout
+            assert "✓ Successfully added application 'ComplexApp'" in result.stdout
 
             # Verify all configuration options were applied correctly
             config_file = temp_config_dir / "complexapp.json"
