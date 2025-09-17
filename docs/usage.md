@@ -4,16 +4,10 @@
 
 For installation instructions, see the [Installation Guide](installation.md).
 
-1. **Initialize configuration**:
+1. **Add your first application** (configuration is created automatically):
 
    ```bash
-   appimage-updater init
-   ```
-
-1. **Edit configuration** to add your applications:
-
-   ```bash
-   $EDITOR ~/.config/appimage-updater/apps/freecad.json
+   appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD
    ```
 
 1. **Check for updates**:
@@ -25,7 +19,13 @@ For installation instructions, see the [Installation Guide](installation.md).
 1. **Download updates** (will prompt for confirmation):
 
    ```bash
-   appimage-updater check
+   appimage-updater check --yes
+   ```
+
+1. **List your configured applications**:
+
+   ```bash
+   appimage-updater list
    ```
 
 ## Commands
@@ -81,26 +81,36 @@ appimage-updater check --verbose
 appimage-updater check FreeCAD --verbose
 ```
 
-### `init`
+## Global Configuration
 
-Initialize configuration directory with examples.
+AppImage Updater uses a two-tier configuration system that provides intelligent defaults and per-application customization:
+
+### Configuration Structure
+
+- **Global Configuration**: `~/.config/appimage-updater/config.json` - Contains default settings for all applications
+- **Application Configurations**: `~/.config/appimage-updater/apps/{appname}.json` - Individual application settings
+
+### How Defaults Work
+
+When you add a new application, the global configuration provides default values for:
+
+- Download directory (with optional auto-subdirectory creation)
+- File rotation and symlink settings
+- Checksum verification preferences
+- Prerelease handling
+- Network timeout and concurrency settings
+
+### Automatic Configuration Creation
+
+The configuration directory and global settings file are created automatically when you first use any command. No manual initialization is required.
+
+**Example automatic setup:**
 
 ```bash
-appimage-updater init [OPTIONS]
-```
-
-**Options:**
-
-- `--config-dir, -d PATH`: Directory to create (default: ~/.config/appimage-updater/apps)
-
-**Examples:**
-
-```bash
-# Create default config directory
-appimage-updater init
-
-# Create config in custom location
-appimage-updater init --config-dir ~/my-configs/
+# First command automatically creates:
+# ~/.config/appimage-updater/config.json (global defaults)
+# ~/.config/appimage-updater/apps/ (directory for app configs)
+appimage-updater list
 ```
 
 ### `add`
@@ -108,14 +118,14 @@ appimage-updater init --config-dir ~/my-configs/
 Add a new application to the configuration.
 
 ```bash
-appimage-updater add [OPTIONS] NAME URL DOWNLOAD_DIR
+appimage-updater add [OPTIONS] NAME URL [DOWNLOAD_DIR]
 ```
 
 **Arguments:**
 
 - `NAME`: Name for the application (used for identification)
 - `URL`: Repository URL (e.g., GitHub repository)
-- `DOWNLOAD_DIR`: Directory where AppImage files will be downloaded
+- `DOWNLOAD_DIR`: Directory where AppImage files will be downloaded (optional - uses global default if not specified)
 
 **Options:**
 
@@ -136,8 +146,11 @@ appimage-updater add [OPTIONS] NAME URL DOWNLOAD_DIR
 **Examples:**
 
 ```bash
-# Basic usage with auto-detection
+# Basic usage with explicit download directory
 appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
+
+# Using global default download directory (DOWNLOAD_DIR optional)
+appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD
 
 # With prerelease enabled
 appimage-updater add --prerelease VSCode-Insiders https://github.com/microsoft/vscode ~/Dev/VSCode
@@ -493,61 +506,77 @@ This command is particularly useful for:
 
 ## Configuration Examples
 
-### Single Application
+### Global Configuration File
+
+**File**: `~/.config/appimage-updater/config.json`
 
 ```json
 {
-  "applications": [
-    {
-      "name": "FreeCAD_weekly",
-      "source_type": "github",
-      "url": "https://github.com/FreeCAD/FreeCAD",
-      "download_dir": "/home/royw/Applications/FreeCAD_weekly",
-      "pattern": "(?i)FreeCAD.*\\.(zip|AppImage)(\\.(|current|old))?$",
-      "enabled": true,
-      "prerelease": true,
-      "checksum": {
-        "enabled": true,
-        "pattern": "{filename}-SHA256.txt",
-        "algorithm": "sha256",
-        "required": false
-      },
-      "rotation_enabled": true,
-      "retain_count": 3,
-      "symlink_path": "/home/royw/Applications/FreeCAD_weekly.AppImage"
-    }
-  ]
+  "concurrent_downloads": 3,
+  "timeout_seconds": 30,
+  "user_agent": "AppImage-Updater/0.2.26",
+  "defaults": {
+    "download_dir": null,
+    "rotation_enabled": false,
+    "retain_count": 3,
+    "symlink_enabled": false,
+    "symlink_dir": null,
+    "symlink_pattern": "{appname}.AppImage",
+    "auto_subdir": false,
+    "checksum_enabled": true,
+    "checksum_algorithm": "sha256",
+    "checksum_pattern": "{filename}-SHA256.txt",
+    "checksum_required": false,
+    "prerelease": false
+  }
 }
 ```
 
-### Multiple Applications with Global Settings
+### Individual Application Configuration
+
+**File**: `~/.config/appimage-updater/apps/freecad_weekly.json`
 
 ```json
 {
-  "global_config": {
-    "concurrent_downloads": 2,
-    "timeout_seconds": 60
+  "name": "FreeCAD_weekly",
+  "source_type": "github",
+  "url": "https://github.com/FreeCAD/FreeCAD",
+  "download_dir": "/home/royw/Applications/FreeCAD_weekly",
+  "pattern": "(?i)FreeCAD.*\\.(zip|AppImage)(\\.(|current|old))?$",
+  "enabled": true,
+  "prerelease": true,
+  "checksum": {
+    "enabled": true,
+    "pattern": "{filename}-SHA256.txt",
+    "algorithm": "sha256",
+    "required": false
   },
-  "applications": [
-    {
-      "name": "BambuStudio",
-      "source_type": "github",
-      "url": "https://github.com/bambulab/BambuStudio",
-      "download_dir": "~/Applications/BambuStudio",
-      "pattern": ".*linux.*\\.AppImage$",
-      "enabled": true
-    },
-    {
-      "name": "GitHub Desktop", 
-      "source_type": "github",
-      "url": "https://github.com/desktop/desktop",
-      "download_dir": "~/Applications/GitHubDesktop",
-      "pattern": ".*linux.*\\.AppImage$",
-      "enabled": true
-    }
-  ]
+  "rotation_enabled": true,
+  "retain_count": 3,
+  "symlink_path": "/home/royw/Applications/FreeCAD_weekly.AppImage"
 }
 ```
+
+### Directory Structure Overview
+
+The complete configuration structure looks like this:
+
+```text
+~/.config/appimage-updater/
+├── config.json              # Global settings and defaults
+└── apps/                    # Individual application configs
+    ├── freecad.json
+    ├── orcaslicer.json
+    ├── bambu_studio.json
+    └── ...
+```
+
+**Key Benefits:**
+
+- **Organized**: Each application has its own configuration file
+- **Maintainable**: Easy to edit, backup, or share individual app configs
+- **Flexible**: Global defaults reduce repetition while allowing per-app customization
+- **Automatic**: Configuration structure is created automatically when needed
 
 ## Global Options
 
@@ -557,16 +586,20 @@ These options work with any command:
 - `--version, -V`: Show version and exit
 - `--help`: Show help message and exit
 
-## Configuration
+## Configuration Details
 
 ### Configuration Locations
 
-- **Default directory**: `~/.config/appimage-updater/`
-- **Single file**: `~/.config/appimage-updater/config.json`
-- **Directory-based**: Individual JSON files in config directory
+- **Global config**: `~/.config/appimage-updater/config.json` (default settings)
+- **App configs**: `~/.config/appimage-updater/apps/{appname}.json` (individual applications)
 - **Log file**: `~/.local/share/appimage-updater/appimage-updater.log`
 
-### Configuration Structure
+### Configuration Management
+
+- **Automatic creation**: Configuration files are created automatically when needed
+- **Global defaults**: The `config.json` file provides default values for all applications
+- **Per-app overrides**: Individual app configs can override global defaults
+- **No initialization required**: Start using the tool immediately - no setup needed
 
 See the [Configuration Examples](#configuration-examples) section for detailed JSON structure.
 
