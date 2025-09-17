@@ -181,14 +181,12 @@ class CommandFactory:
     def create_list_command(
         config_file: Path | None = None,
         config_dir: Path | None = None,
-        verbose: bool = False,
         debug: bool = False,
     ) -> ListCommand:
         """Create a ListCommand instance."""
         params = ListParams(
             config_file=config_file,
             config_dir=config_dir,
-            verbose=verbose,
             debug=debug,
         )
         return ListCommand(params)

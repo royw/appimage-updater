@@ -34,7 +34,6 @@ from .cli_options import (
     EDIT_ROTATION_OPTION,
     EDIT_SYMLINK_PATH_OPTION,
     EDIT_URL_OPTION,
-    LIST_VERBOSE_OPTION,
     NO_INTERACTIVE_OPTION,
     REPOSITORY_APP_NAME_ARGUMENT,
     REPOSITORY_ASSETS_OPTION,
@@ -445,18 +444,15 @@ def init(
 def list_apps(
     config_file: Path | None = CONFIG_FILE_OPTION,
     config_dir: Path | None = CONFIG_DIR_OPTION,
-    verbose: bool = LIST_VERBOSE_OPTION,
     debug: bool = _DEBUG_OPTION,
 ) -> None:
     """List all configured applications.
 
     Shows a summary of all applications in the configuration with their current status.
-    Use --verbose to see additional details like configuration file paths.
     """
     command = CommandFactory.create_list_command(
         config_file=config_file,
         config_dir=config_dir,
-        verbose=verbose,
         debug=debug,
     )
 

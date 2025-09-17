@@ -83,10 +83,12 @@ class ShowParams(BaseParams):
 
 
 @dataclass
-class ListParams(BaseParams):
+class ListParams:
     """Parameters for list command."""
 
-    pass  # Only uses base parameters
+    config_file: Path | None = None
+    config_dir: Path | None = None
+    debug: bool = False
 
 
 @dataclass

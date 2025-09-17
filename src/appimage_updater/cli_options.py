@@ -135,9 +135,3 @@ REPOSITORY_ASSETS_OPTION = typer.Option(
 )
 
 # Verbose options for different commands
-LIST_VERBOSE_OPTION = typer.Option(
-    False,
-    "--verbose",
-    "-v",
-    help="Show configuration file paths and additional details",
-)
