@@ -249,20 +249,30 @@ class VersionChecker:
 
     def _get_version_for_release(self, release: Release, asset: Asset) -> str:
         """Get version string for a release, handling nightly builds."""
-        # Check if this looks like a nightly build
+        if self._is_nightly_release(release) and asset.created_at:
+            return self._create_nightly_version(asset)
+
+        return self._get_regular_version(release)
+
+    def _is_nightly_release(self, release: Release) -> bool:
+        """Check if release appears to be a nightly build."""
         nightly_keywords = ["nightly", "build", "snapshot", "dev", "daily"]
 
         release_name_lower = release.name.lower() if release.name else ""
         tag_name_lower = release.tag_name.lower() if release.tag_name else ""
 
-        is_nightly = any(keyword in release_name_lower or keyword in tag_name_lower for keyword in nightly_keywords)
+        return any(
+            keyword in release_name_lower or keyword in tag_name_lower
+            for keyword in nightly_keywords
+        )
 
-        if is_nightly and asset.created_at:
-            # Use asset creation date for nightly builds
-            date_str = asset.created_at.strftime("%Y-%m-%d")
-            return f"v{date_str}"
+    def _create_nightly_version(self, asset: Asset) -> str:
+        """Create version string for nightly builds using asset creation date."""
+        date_str = asset.created_at.strftime("%Y-%m-%d")
+        return f"v{date_str}"
 
-        # Use tag name for regular releases
+    def _get_regular_version(self, release: Release) -> str:
+        """Get version string for regular releases."""
         return release.tag_name or release.name or "unknown"
 
     def _select_best_candidate(self, candidates: list[UpdateCandidate]) -> UpdateCandidate:
@@ -298,32 +308,49 @@ class VersionChecker:
     def _extract_version_from_filename(self, filename: str) -> str | None:
         """Extract version from filename using common patterns."""
         # Test each pattern in order of specificity
+        patterns = [
+            self._extract_prerelease_version,
+            self._extract_date_version,
+            self._extract_semantic_version,
+            self._extract_two_part_version,
+            self._extract_single_number_version,
+        ]
 
-        # Handle pre-release versions like "2.3.1-alpha" but only if followed by word boundary
-        # This ensures "1.0.2-conda" doesn't match as "1.0.2-conda" isn't a valid pre-release
-        match = re.search(r"[vV]?(\d+\.\d+\.\d+(?:\.\d+)?-(?:alpha|beta|rc|dev|pre))(?=\W|$)", filename, re.IGNORECASE)
-        if match:
-            return match.group(1)
-
-        # Handle date formats like "2025.09.03"
-        match = re.search(r"(\d{4}[.-]\d{2}[.-]\d{2})(?=\W|$)", filename)
-        if match:
-            return match.group(1)
-
-        # Handle semantic versions like "1.0.2" (stop at dash or other delimiter)
-        match = re.search(r"[vV]?(\d+\.\d+\.\d+(?:\.\d+)?)(?=[-._\s]|$)", filename)
-        if match:
-            return match.group(1)
-
-        # Handle two-part versions like "1.0"
-        match = re.search(r"[vV]?(\d+\.\d+)(?=[-._\s]|$)", filename)
-        if match:
-            return match.group(1)
-
-        # Handle single numbers
-        match = re.search(r"[vV]?(\d+)(?=[-._\s]|$)", filename)
-        if match:
-            return match.group(1)
+        for pattern_extractor in patterns:
+            result = pattern_extractor(filename)
+            if result:
+                return result
 
         # Fallback: return the filename if no version pattern found
         return filename
+
+    def _extract_prerelease_version(self, filename: str) -> str | None:
+        """Extract pre-release versions like '2.3.1-alpha'."""
+        # Only match if followed by word boundary to avoid false matches like '1.0.2-conda'
+        pattern = r"[vV]?(\d+\.\d+\.\d+(?:\.\d+)?-(?:alpha|beta|rc|dev|pre))(?=\W|$)"
+        match = re.search(pattern, filename, re.IGNORECASE)
+        return match.group(1) if match else None
+
+    def _extract_date_version(self, filename: str) -> str | None:
+        """Extract date formats like '2025.09.03'."""
+        pattern = r"(\d{4}[.-]\d{2}[.-]\d{2})(?=\W|$)"
+        match = re.search(pattern, filename)
+        return match.group(1) if match else None
+
+    def _extract_semantic_version(self, filename: str) -> str | None:
+        """Extract semantic versions like '1.0.2'."""
+        pattern = r"[vV]?(\d+\.\d+\.\d+(?:\.\d+)?)(?=[-._\s]|$)"
+        match = re.search(pattern, filename)
+        return match.group(1) if match else None
+
+    def _extract_two_part_version(self, filename: str) -> str | None:
+        """Extract two-part versions like '1.0'."""
+        pattern = r"[vV]?(\d+\.\d+)(?=[-._\s]|$)"
+        match = re.search(pattern, filename)
+        return match.group(1) if match else None
+
+    def _extract_single_number_version(self, filename: str) -> str | None:
+        """Extract single number versions."""
+        pattern = r"[vV]?(\d+)(?=[-._\s]|$)"
+        match = re.search(pattern, filename)
+        return match.group(1) if match else None

@@ -51,33 +51,46 @@ class ConfigCommand(Command):
         configure_logging(debug=self.params.debug)
 
         try:
-            # Validate required parameters
-            validation_errors = self.validate()
-            if validation_errors:
-                error_msg = f"Validation errors: {', '.join(validation_errors)}"
-                self.console.print(f"[red]Error: {error_msg}[/red]")
-
-                if self.params.action == "set":
-                    self.console.print("[yellow]Usage: appimage-updater config set <setting> <value>")
-                elif self.params.action == "show-effective":
-                    self.console.print("[yellow]Usage: appimage-updater config show-effective --app <app-name>")
-                else:
-                    self.console.print("[yellow]Available actions: show, set, reset, show-effective, list")
-
-                return CommandResult(success=False, message=error_msg, exit_code=1)
+            # Validate parameters
+            validation_result = self._validate_and_show_help()
+            if validation_result:
+                return validation_result
 
             # Execute the config operation
             success = await self._execute_config_operation()
-
-            if success:
-                return CommandResult(success=True, message="Config operation completed successfully")
-            else:
-                return CommandResult(success=False, message="Configuration operation failed", exit_code=1)
+            return self._create_result(success)
 
         except Exception as e:
             logger.error(f"Unexpected error in config command: {e}")
             logger.exception("Full exception details")
             return CommandResult(success=False, message=str(e), exit_code=1)
+
+    def _validate_and_show_help(self) -> CommandResult | None:
+        """Validate parameters and show helpful error messages."""
+        validation_errors = self.validate()
+        if not validation_errors:
+            return None
+
+        error_msg = f"Validation errors: {', '.join(validation_errors)}"
+        self.console.print(f"[red]Error: {error_msg}[/red]")
+        self._show_usage_help()
+        return CommandResult(success=False, message=error_msg, exit_code=1)
+
+    def _show_usage_help(self) -> None:
+        """Show contextual usage help based on action."""
+        if self.params.action == "set":
+            self.console.print("[yellow]Usage: appimage-updater config set <setting> <value>")
+        elif self.params.action == "show-effective":
+            self.console.print("[yellow]Usage: appimage-updater config show-effective --app <app-name>")
+        else:
+            self.console.print("[yellow]Available actions: show, set, reset, show-effective, list")
+
+    def _create_result(self, success: bool) -> CommandResult:
+        """Create command result based on operation success."""
+        if success:
+            return CommandResult(success=True, message="Config operation completed successfully")
+        else:
+            return CommandResult(success=False, message="Configuration operation failed", exit_code=1)
 
     async def _execute_config_operation(self) -> bool:
         """Execute the core config operation logic.
