@@ -18,7 +18,7 @@ def _wrap_generic_url(url: str, max_width: int) -> str:
     protocol, rest = url.split("://", 1)
     if "/" in rest:
         domain, path = rest.split("/", 1)
-        return f"{protocol}://{domain}/...{path[-(max_width - len(protocol) - len(domain) - 10):]}"
+        return f"{protocol}://{domain}/...{path[-(max_width - len(protocol) - len(domain) - 10) :]}"
     return url
 
 

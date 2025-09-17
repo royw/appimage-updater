@@ -18,9 +18,9 @@ console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 
 def display_applications_list(applications: list[Any]) -> None:
     """Display applications list in a table."""
-    from .url_formatting import _wrap_url
     from .path_formatting import _wrap_path
-    
+    from .url_formatting import _wrap_url
+
     table = Table(title="Configured Applications")
     table.add_column("Application", style="cyan", no_wrap=False)
     table.add_column("Status", style="green")
@@ -125,7 +125,7 @@ def _get_success_status_and_indicator(candidate: Any) -> tuple[str, str]:
 def _format_success_versions(candidate: Any) -> tuple[str, str]:
     """Format current and latest versions for display."""
     from .version_formatting import _format_version_display
-    
+
     current = _format_version_display(candidate.current_version) or "[dim]None"
     latest = _format_version_display(candidate.latest_version)
     return current, latest
