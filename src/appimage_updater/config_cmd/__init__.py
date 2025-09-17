@@ -30,13 +30,10 @@ __all__ = [
     "_print_effective_config_header",
     "_print_main_config_table",
     "_print_checksum_config_table",
-    
     # Setting operations
     "_apply_setting_change",
-    
     # File operations
     "_save_config",
-    
     # Error handling
     "_handle_config_load_error",
     "_handle_app_not_found",

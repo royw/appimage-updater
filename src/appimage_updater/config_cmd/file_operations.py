@@ -54,12 +54,16 @@ def _build_config_dict(config: Config) -> dict[str, Any]:
             "concurrent_downloads": config.global_config.concurrent_downloads,
             "timeout_seconds": config.global_config.timeout_seconds,
             "defaults": {
-                "download_dir": str(config.global_config.defaults.download_dir) if config.global_config.defaults.download_dir else None,
+                "download_dir": str(config.global_config.defaults.download_dir)
+                if config.global_config.defaults.download_dir
+                else None,
                 "auto_subdir": config.global_config.defaults.auto_subdir,
                 "rotation_enabled": config.global_config.defaults.rotation_enabled,
                 "retain_count": config.global_config.defaults.retain_count,
                 "symlink_enabled": config.global_config.defaults.symlink_enabled,
-                "symlink_dir": str(config.global_config.defaults.symlink_dir) if config.global_config.defaults.symlink_dir else None,
+                "symlink_dir": str(config.global_config.defaults.symlink_dir)
+                if config.global_config.defaults.symlink_dir
+                else None,
                 "symlink_pattern": config.global_config.defaults.symlink_pattern,
                 "checksum_enabled": config.global_config.defaults.checksum_enabled,
                 "checksum_algorithm": config.global_config.defaults.checksum_algorithm,

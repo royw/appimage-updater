@@ -204,7 +204,7 @@ def _show_available_settings(setting: str) -> bool:
 
     # Checksum settings
     defaults_table.add_row("checksum", "Enable checksum verification", "true/false")
-    defaults_table.add_row("checksum-algorithm", "Checksum algorithm", "sha256/sha512/md5")
+    defaults_table.add_row("checksum-algorithm", "Checksum algorithm", "sha256/sha1/md5")
     defaults_table.add_row("checksum-pattern", "Checksum file pattern", "pattern string")
     defaults_table.add_row("checksum-required", "Require checksum verification", "true/false")
 

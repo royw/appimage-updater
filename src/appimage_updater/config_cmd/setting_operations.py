@@ -7,7 +7,6 @@ validating setting values, and managing different setting types.
 import os
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
 
 from rich.console import Console
 
@@ -38,6 +37,7 @@ def _apply_setting_change(config: Config, setting: str, value: str) -> bool:
         return _apply_checksum_algorithm_setting(config, value)
     else:
         from .display_utilities import _show_available_settings
+
         return _show_available_settings(setting)
 
 
@@ -232,11 +232,14 @@ def _apply_checksum_algorithm_setting(config: Config, value: str) -> bool:
     Returns:
         True if setting was applied successfully, False otherwise.
     """
-    valid_algorithms = ["sha256", "sha512", "md5"]
+    from typing import Literal, cast
+
+    valid_algorithms = ["sha256", "sha1", "md5"]
     algorithm = value.lower()
 
     if algorithm in valid_algorithms:
-        config.global_config.defaults.checksum_algorithm = algorithm
+        # Cast to the expected literal type for MyPy
+        config.global_config.defaults.checksum_algorithm = cast(Literal["sha256", "sha1", "md5"], algorithm)
         console.print(f"[green]Set default checksum algorithm to: {algorithm.upper()}")
         return True
     else:
