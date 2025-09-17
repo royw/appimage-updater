@@ -184,6 +184,7 @@ def handle_add_directory_creation(download_dir: str, create_dir: bool, yes: bool
     _handle_missing_directory(download_path, create_dir, yes)
     return expanded_download_dir
 
+
 def _handle_missing_directory(download_path: Path, create_dir: bool, yes: bool) -> None:
     """Handle missing download directory creation."""
     from .display import _replace_home_with_tilde
@@ -198,11 +199,13 @@ def _handle_missing_directory(download_path: Path, create_dir: bool, yes: bool) 
     else:
         _handle_directory_creation_declined()
 
+
 def _determine_creation_choice(create_dir: bool, yes: bool) -> bool:
     """Determine whether to create directory based on flags and user input."""
     if create_dir or yes:
         return True
     return _prompt_for_directory_creation()
+
 
 def _attempt_directory_creation(download_path: Path) -> None:
     """Attempt to create directory and handle failure."""

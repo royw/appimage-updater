@@ -203,13 +203,21 @@ class Downloader:
         timeout_config = self._create_timeout_config()
         download_state = self._initialize_download_state()
 
-        async with self._create_http_client(timeout_config, candidate) as (client, response):
+        async with (
+            httpx.AsyncClient(
+                timeout=timeout_config,
+                follow_redirects=True,
+            ) as client,
+            client.stream(
+                "GET",
+                candidate.asset.url,
+                headers={"User-Agent": self.user_agent},
+            ) as response,
+        ):
             response.raise_for_status()
             total_bytes = int(response.headers.get("content-length", 0))
 
-            await self._download_file_chunks(
-                response, candidate, progress, task_id, total_bytes, download_state
-            )
+            await self._download_file_chunks(response, candidate, progress, task_id, total_bytes, download_state)
 
     def _create_timeout_config(self) -> httpx.Timeout:
         """Create HTTP timeout configuration for downloads."""
@@ -229,20 +237,6 @@ class Downloader:
             "event_interval": 0.5,  # Publish events every 0.5 seconds
         }
 
-    def _create_http_client(
-        self, timeout_config: httpx.Timeout, candidate: UpdateCandidate
-    ) -> tuple[httpx.AsyncClient, Any]:
-        """Create HTTP client and response stream context manager."""
-        client = httpx.AsyncClient(
-            timeout=timeout_config,
-            follow_redirects=True,
-        )
-        response_stream = client.stream(
-            "GET",
-            candidate.asset.url,
-            headers={"User-Agent": self.user_agent},
-        )
-        return client, response_stream
 
     async def _download_file_chunks(
         self,
@@ -260,9 +254,7 @@ class Downloader:
                 download_state["downloaded_bytes"] += len(chunk)
 
                 self._update_progress(progress, task_id, len(chunk))
-                self._publish_progress_event(
-                    chunk, candidate, total_bytes, download_state
-                )
+                self._publish_progress_event(chunk, candidate, total_bytes, download_state)
 
     def _update_progress(self, progress: Progress | None, task_id: TaskID | None, chunk_size: int) -> None:
         """Update progress bar if available."""

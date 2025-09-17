@@ -663,21 +663,25 @@ flowchart TD
 ### Error Flow Layers
 
 1. **Business Logic Layer** - Functions return results instead of raising exceptions
+
    - Configuration operations return `bool` or `None` on error
    - Interactive functions return `InteractiveResult` objects
    - Validation functions return `None` on failure
 
-2. **Command Layer** - Coordinates business logic and returns `CommandResult`
+1. **Command Layer** - Coordinates business logic and returns `CommandResult`
+
    - Handles `None` returns from business logic
    - Converts errors to appropriate `CommandResult` objects
    - Maintains proper exit codes (1 for errors, 0 for success)
 
-3. **CLI Layer** - Single exit point per command
+1. **CLI Layer** - Single exit point per command
+
    - Only place where `typer.Exit` is called
    - Clean separation between business logic and CLI concerns
    - Professional user experience with helpful error messages
 
-4. **Exception Handler** - Final safety net
+1. **Exception Handler** - Final safety net
+
    - Catches unexpected exceptions
    - Provides clean error messages without stack traces
    - Ensures proper exit codes in all scenarios

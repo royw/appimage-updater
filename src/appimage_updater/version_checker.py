@@ -261,10 +261,7 @@ class VersionChecker:
         release_name_lower = release.name.lower() if release.name else ""
         tag_name_lower = release.tag_name.lower() if release.tag_name else ""
 
-        return any(
-            keyword in release_name_lower or keyword in tag_name_lower
-            for keyword in nightly_keywords
-        )
+        return any(keyword in release_name_lower or keyword in tag_name_lower for keyword in nightly_keywords)
 
     def _create_nightly_version(self, asset: Asset) -> str:
         """Create version string for nightly builds using asset creation date."""

@@ -926,9 +926,25 @@ async def _add(
 
         # Prepare configuration
         config_data = await _prepare_add_configuration(
-            name, url, download_dir, auto_subdir, config_file, config_dir,
-            rotation, retain, symlink, prerelease, checksum, checksum_algorithm,
-            checksum_pattern, checksum_required, pattern, direct, create_dir, yes, dry_run
+            name,
+            url,
+            download_dir,
+            auto_subdir,
+            config_file,
+            config_dir,
+            rotation,
+            retain,
+            symlink,
+            prerelease,
+            checksum,
+            checksum_algorithm,
+            checksum_pattern,
+            checksum_required,
+            pattern,
+            direct,
+            create_dir,
+            yes,
+            dry_run,
         )
         if config_data is None:
             return False
@@ -942,6 +958,7 @@ async def _add(
         _handle_add_error(e, name)
         return False
 
+
 def _validate_add_inputs(url: str, rotation: bool | None, symlink: str | None) -> bool:
     """Validate add command inputs."""
     validated_url = validate_and_normalize_add_url(url)
@@ -950,12 +967,27 @@ def _validate_add_inputs(url: str, rotation: bool | None, symlink: str | None) -
 
     return validate_add_rotation_config(rotation, symlink)
 
+
 async def _prepare_add_configuration(
-    name: str, url: str, download_dir: str | None, auto_subdir: bool | None,
-    config_file: Path | None, config_dir: Path | None, rotation: bool | None,
-    retain: int, symlink: str | None, prerelease: bool | None, checksum: bool | None,
-    checksum_algorithm: str, checksum_pattern: str, checksum_required: bool | None,
-    pattern: str | None, direct: bool | None, create_dir: bool, yes: bool, dry_run: bool
+    name: str,
+    url: str,
+    download_dir: str | None,
+    auto_subdir: bool | None,
+    config_file: Path | None,
+    config_dir: Path | None,
+    rotation: bool | None,
+    retain: int,
+    symlink: str | None,
+    prerelease: bool | None,
+    checksum: bool | None,
+    checksum_algorithm: str,
+    checksum_pattern: str,
+    checksum_required: bool | None,
+    pattern: str | None,
+    direct: bool | None,
+    create_dir: bool,
+    yes: bool,
+    dry_run: bool,
 ) -> dict[str, Any] | None:
     """Prepare configuration data for add operation."""
     validated_url = validate_and_normalize_add_url(url)
@@ -973,9 +1005,20 @@ async def _prepare_add_configuration(
 
     # Generate application configuration
     app_config, prerelease_auto_enabled = await generate_default_config(
-        name, validated_url, expanded_download_dir, rotation, retain, symlink,
-        prerelease, checksum, checksum_algorithm, checksum_pattern,
-        checksum_required, pattern, direct, global_config
+        name,
+        validated_url,
+        expanded_download_dir,
+        rotation,
+        retain,
+        symlink,
+        prerelease,
+        checksum,
+        checksum_algorithm,
+        checksum_pattern,
+        checksum_required,
+        pattern,
+        direct,
+        global_config,
     )
 
     return {
@@ -985,6 +1028,7 @@ async def _prepare_add_configuration(
         "app_config": app_config,
         "prerelease_auto_enabled": prerelease_auto_enabled,
     }
+
 
 def _execute_add_operation(
     config_data: dict[str, Any], dry_run: bool, config_file: Path | None, config_dir: Path | None

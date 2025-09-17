@@ -117,9 +117,7 @@ class ParameterResolver:
         """Resolve checksum pattern with global default."""
         if checksum_pattern:
             return checksum_pattern
-        return (
-            self.global_config.defaults.checksum_pattern if self.global_config else "{filename}-SHA256.txt"
-        )
+        return self.global_config.defaults.checksum_pattern if self.global_config else "{filename}-SHA256.txt"
 
     def resolve_symlink_parameters(
         self,

@@ -75,11 +75,13 @@ class ShowCommand(Command):
     def _load_configuration(self) -> Any:
         """Load configuration from file or directory."""
         from ..config_operations import load_config
+
         return load_config(self.params.config_file, self.params.config_dir)
 
     def _filter_applications(self, config: Any) -> Any:
         """Filter applications by names."""
         from ..services import ApplicationService
+
         return ApplicationService.filter_apps_by_names(config.applications, self.params.app_names or [])
 
     def _display_applications(self, found_apps: Any) -> None:
