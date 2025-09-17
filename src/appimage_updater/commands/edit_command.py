@@ -128,6 +128,7 @@ class EditCommand(Command):
             checksum_required=self.params.checksum_required,
             force=self.params.force,
             direct=self.params.direct,
+            auto_subdir=self.params.auto_subdir,
         )
 
     def _apply_updates_to_apps(self, apps: list[ApplicationConfig], updates: dict[str, Any], config: Config) -> None:

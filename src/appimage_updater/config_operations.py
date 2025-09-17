@@ -575,6 +575,7 @@ def collect_basic_edit_updates(
     prerelease: bool | None,
     force: bool = False,
     direct: bool | None = None,
+    auto_subdir: bool | None = None,
     app: Any = None,
 ) -> dict[str, Any]:
     """Collect basic configuration updates."""
@@ -587,6 +588,9 @@ def collect_basic_edit_updates(
 
     if direct is not None:
         _add_source_type_update(updates, direct, app)
+
+    if auto_subdir is not None:
+        updates["auto_subdir"] = auto_subdir
 
     return updates
 
@@ -645,13 +649,16 @@ def collect_edit_updates(
     checksum_required: bool | None,
     force: bool = False,
     direct: bool | None = None,
+    auto_subdir: bool | None = None,
     app: Any = None,
 ) -> dict[str, Any]:
     """Collect all edit updates from all categories."""
     updates = {}
 
     # Collect basic updates
-    updates.update(collect_basic_edit_updates(url, download_dir, pattern, enable, prerelease, force, direct, app))
+    updates.update(
+        collect_basic_edit_updates(url, download_dir, pattern, enable, prerelease, force, direct, auto_subdir, app)
+    )
 
     # Collect rotation updates
     updates.update(collect_rotation_edit_updates(rotation, symlink_path, retain_count))

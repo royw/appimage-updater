@@ -111,6 +111,9 @@ EDIT_FORCE_OPTION = typer.Option(False, "--force", help="Skip URL validation and
 EDIT_DIRECT_OPTION = typer.Option(
     None, "--direct/--no-direct", help="Treat URL as direct download link (bypasses repository detection)"
 )
+EDIT_AUTO_SUBDIR_OPTION = typer.Option(
+    None, "--auto-subdir/--no-auto-subdir", help="Enable or disable automatic subdirectory creation"
+)
 
 # Repository command options
 REPOSITORY_APP_NAME_ARGUMENT = typer.Argument(

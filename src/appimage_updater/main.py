@@ -18,6 +18,7 @@ from .cli_options import (
     CONFIG_FILE_OPTION,
     CREATE_DIR_OPTION,
     DRY_RUN_OPTION,
+    EDIT_AUTO_SUBDIR_OPTION,
     EDIT_CHECKSUM_ALGORITHM_OPTION,
     EDIT_CHECKSUM_OPTION,
     EDIT_CHECKSUM_PATTERN_OPTION,
@@ -179,14 +180,14 @@ _ROTATION_OPTION = typer.Option(
 )
 _RETAIN_OPTION = typer.Option(
     3,
-    "--retain",
+    "--retain-count",
     help="Number of old files to retain when rotation is enabled (default: 3)",
     min=1,
     max=10,
 )
 _SYMLINK_OPTION = typer.Option(
     None,
-    "--symlink",
+    "--symlink-path",
     help="Path for managed symlink to latest version (enables rotation automatically)",
 )
 _ADD_PRERELEASE_OPTION = typer.Option(
@@ -1065,6 +1066,7 @@ def edit(
     yes: bool = YES_OPTION,
     force: bool = EDIT_FORCE_OPTION,
     direct: bool | None = EDIT_DIRECT_OPTION,
+    auto_subdir: bool | None = EDIT_AUTO_SUBDIR_OPTION,
     verbose: bool = VERBOSE_OPTION,
     dry_run: bool = EDIT_DRY_RUN_OPTION,
     debug: bool = get_debug_option(),
@@ -1164,6 +1166,7 @@ def edit(
         yes=yes,
         force=force,
         direct=direct,
+        auto_subdir=auto_subdir,
         verbose=verbose,
         dry_run=dry_run,
         debug=debug,

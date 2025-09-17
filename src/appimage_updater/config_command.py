@@ -92,7 +92,7 @@ def _add_directory_rows(defaults_table: Table, defaults: Any) -> None:
 def _add_rotation_rows(defaults_table: Table, defaults: Any) -> None:
     """Add rotation-related rows to the table."""
     defaults_table.add_row(
-        "Rotation Enabled", "[dim](rotation-enabled)[/dim]", "Yes" if defaults.rotation_enabled else "No"
+        "Rotation Enabled", "[dim](rotation)[/dim]", "Yes" if defaults.rotation_enabled else "No"
     )
     defaults_table.add_row("Retain Count", "[dim](retain-count)[/dim]", str(defaults.retain_count))
 
@@ -113,7 +113,7 @@ def _add_symlink_rows(defaults_table: Table, defaults: Any) -> None:
 def _add_checksum_rows(defaults_table: Table, defaults: Any) -> None:
     """Add checksum-related rows to the table."""
     defaults_table.add_row(
-        "Checksum Enabled", "[dim](checksum-enabled)[/dim]", "Yes" if defaults.checksum_enabled else "No"
+        "Checksum Enabled", "[dim](checksum)[/dim]", "Yes" if defaults.checksum_enabled else "No"
     )
     defaults_table.add_row("Checksum Algorithm", "[dim](checksum-algorithm)[/dim]", defaults.checksum_algorithm.upper())
     defaults_table.add_row("Checksum Pattern", "[dim](checksum-pattern)[/dim]", defaults.checksum_pattern)
@@ -279,9 +279,9 @@ def _is_string_setting(setting: str) -> bool:
 def _is_boolean_setting(setting: str) -> bool:
     """Check if setting is a boolean-based setting."""
     return setting in (
-        "rotation-enabled",
+        "rotation",
         "symlink-enabled",
-        "checksum-enabled",
+        "checksum",
         "checksum-required",
         "prerelease",
         "auto-subdir",
@@ -358,9 +358,9 @@ def _apply_auto_subdir_setting(config: Config, bool_value: bool) -> None:
 def _get_boolean_setting_handler(setting: str) -> Callable[[Config, bool], None] | None:
     """Get the appropriate handler function for a boolean setting."""
     handlers = {
-        "rotation-enabled": _apply_rotation_enabled_setting,
+        "rotation": _apply_rotation_enabled_setting,
         "symlink-enabled": _apply_symlink_enabled_setting,
-        "checksum-enabled": _apply_checksum_enabled_setting,
+        "checksum": _apply_checksum_enabled_setting,
         "checksum-required": _apply_checksum_required_setting,
         "prerelease": _apply_prerelease_setting,
         "auto-subdir": _apply_auto_subdir_setting,
@@ -447,8 +447,8 @@ def _show_available_settings(setting: str) -> None:
     console.print(f"[red]Unknown setting: {setting}")
     console.print("[yellow]Available settings:")
     console.print("  download-dir, symlink-dir, symlink-pattern, auto-subdir")
-    console.print("  rotation-enabled, symlink-enabled, retain-count")
-    console.print("  checksum-enabled, checksum-algorithm, checksum-pattern, checksum-required")
+    console.print("  rotation, symlink-enabled, retain-count")
+    console.print("  checksum, checksum-algorithm, checksum-pattern, checksum-required")
     console.print("  prerelease, concurrent-downloads, timeout-seconds")
     raise typer.Exit(1) from None
 
@@ -502,10 +502,10 @@ def list_available_settings() -> None:
 
     # Rotation settings
     defaults_table.add_row(
-        "rotation-enabled",
+        "rotation",
         "Enable file rotation by default",
         "true/false, yes/no, 1/0",
-        "config set rotation-enabled true",
+        "config set rotation true",
     )
     defaults_table.add_row("retain-count", "Number of old files to keep", "1-10", "config set retain-count 3")
     defaults_table.add_row(
@@ -514,10 +514,10 @@ def list_available_settings() -> None:
 
     # Checksum settings
     defaults_table.add_row(
-        "checksum-enabled",
+        "checksum",
         "Enable checksum verification",
         "true/false, yes/no, 1/0",
-        "config set checksum-enabled true",
+        "config set checksum true",
     )
     defaults_table.add_row(
         "checksum-algorithm", "Default checksum algorithm", "sha256, sha1, md5", "config set checksum-algorithm sha256"
@@ -548,7 +548,7 @@ def list_available_settings() -> None:
     console.print("  [cyan]appimage-updater config list[/cyan]                    # Show this help")
     console.print("  [cyan]appimage-updater config show[/cyan]                    # Show current settings")
     console.print("  [cyan]appimage-updater config set download-dir ~/Apps[/cyan] # Set download directory")
-    console.print("  [cyan]appimage-updater config set rotation-enabled true[/cyan] # Enable rotation")
+    console.print("  [cyan]appimage-updater config set rotation true[/cyan] # Enable rotation")
     console.print("  [cyan]appimage-updater config reset[/cyan]                   # Reset to defaults")
     console.print()
 

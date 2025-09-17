@@ -72,6 +72,7 @@ class EditParams(BaseParams):
     force: bool = False
     create_dir: bool = False
     yes: bool = False
+    auto_subdir: bool | None = None
     dry_run: bool = False
 
 
