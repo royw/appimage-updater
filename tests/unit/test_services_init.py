@@ -3,11 +3,9 @@
 
 def test_imports_available() -> None:
     """Test that all expected imports are available."""
-    from appimage_updater.services import (
-        ApplicationService,
-        CheckService,
-        ConfigService,
-    )
+    from appimage_updater.services.application_service import ApplicationService
+    from appimage_updater.services.check_service import CheckService
+    from appimage_updater.services.config_service import ConfigService
 
     # All imports should be available
     assert ApplicationService is not None
@@ -15,31 +13,11 @@ def test_imports_available() -> None:
     assert ConfigService is not None
 
 
-def test_all_exports() -> None:
-    """Test that __all__ contains expected exports."""
-    from appimage_updater import services
-
-    expected_exports = [
-        "ApplicationService",
-        "CheckService",
-        "ConfigService",
-    ]
-
-    # Check that __all__ is defined and contains expected items
-    assert hasattr(services, '__all__')
-    assert isinstance(services.__all__, list)
-
-    for export in expected_exports:
-        assert export in services.__all__
-
-
 def test_service_classes_are_classes() -> None:
     """Test that all service exports are classes."""
-    from appimage_updater.services import (
-        ApplicationService,
-        CheckService,
-        ConfigService,
-    )
+    from appimage_updater.services.application_service import ApplicationService
+    from appimage_updater.services.check_service import CheckService
+    from appimage_updater.services.config_service import ConfigService
 
     # Should all be classes
     assert isinstance(ApplicationService, type)
@@ -49,11 +27,9 @@ def test_service_classes_are_classes() -> None:
 
 def test_service_classes_instantiable() -> None:
     """Test that service classes can be instantiated."""
-    from appimage_updater.services import (
-        ApplicationService,
-        CheckService,
-        ConfigService,
-    )
+    from appimage_updater.services.application_service import ApplicationService
+    from appimage_updater.services.check_service import CheckService
+    from appimage_updater.services.config_service import ConfigService
 
     # Should be able to create instances
     app_service = ApplicationService()

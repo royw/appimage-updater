@@ -21,7 +21,8 @@ from rich.progress import (
     TransferSpeedColumn,
 )
 
-from ..events import DownloadProgressEvent, get_event_bus
+from ..events.event_bus import get_event_bus
+from ..events.progress_events import DownloadProgressEvent
 from .models import ChecksumResult, DownloadResult, UpdateCandidate
 
 

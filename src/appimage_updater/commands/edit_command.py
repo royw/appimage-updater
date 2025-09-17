@@ -17,6 +17,7 @@ from ..config.operations import (
     load_config,
     validate_edit_updates,
 )
+from ..services.application_service import ApplicationService
 from ..ui.display import display_edit_summary
 from ..utils.logging_config import configure_logging
 from .base import Command, CommandResult
@@ -131,8 +132,6 @@ class EditCommand(Command):
         Returns:
             List of found applications if successful, None if no matches found
         """
-        from ..services import ApplicationService
-
         found_apps = ApplicationService.filter_apps_by_names(config.applications, app_names_to_edit)
         if not found_apps:
             available_apps = [app.name for app in config.applications]

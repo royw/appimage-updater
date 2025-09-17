@@ -1,11 +1,14 @@
 """Tests for command pattern implementation."""
+from appimage_updater.commands.base import CommandResult
+from appimage_updater.commands.factory import CommandFactory
+from appimage_updater.commands.parameters import AddParams
 
 
-from appimage_updater.commands import (
-    AddParams,
-    CommandFactory,
-    CommandResult,
-)
+# from appimage_updater.commands import (
+#     AddParams,
+#     CommandFactory,
+#     CommandResult,
+# )
 
 
 class TestCommandFactory:

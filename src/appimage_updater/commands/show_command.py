@@ -7,6 +7,7 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
+from ..services.application_service import ApplicationService
 from ..utils.logging_config import configure_logging
 from .base import Command, CommandResult
 from .parameters import ShowParams
@@ -80,8 +81,6 @@ class ShowCommand(Command):
 
     def _filter_applications(self, config: Any) -> Any:
         """Filter applications by names."""
-        from ..services import ApplicationService
-
         return ApplicationService.filter_apps_by_names(config.applications, self.params.app_names or [])
 
     def _display_applications(self, found_apps: Any) -> None:

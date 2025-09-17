@@ -11,8 +11,9 @@ import typer
 from loguru import logger
 from rich.console import Console
 
+from appimage_updater.commands.factory import CommandFactory
+
 from ._version import __version__
-from .commands import CommandFactory
 from .config.loader import ConfigLoadError
 from .config.models import ApplicationConfig, Config, GlobalConfig
 from .config.operations import (

@@ -11,7 +11,8 @@ from packaging import version
 
 from ..config.models import ApplicationConfig
 from ..distribution_selector import select_best_distribution_asset
-from ..events import UpdateCheckEvent, get_event_bus
+from ..events.event_bus import get_event_bus
+from ..events.progress_events import UpdateCheckEvent
 from ..repositories.base import RepositoryClient, RepositoryError
 from ..repositories.factory import get_repository_client
 from .models import Asset, CheckResult, Release, UpdateCandidate
