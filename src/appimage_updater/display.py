@@ -365,13 +365,13 @@ def get_checksum_status(result: Any) -> str:
         return " [yellow]⚠[/yellow]"
 
 
-def display_application_details(app: Any) -> None:
+def display_application_details(app: Any, config_source_info: dict[str, str] | None = None) -> None:
     """Display detailed information about a specific application."""
     console.print(f"\n[bold cyan]Application: {app.name}[/bold cyan]")
     console.print("=" * (len(app.name) + 14))
 
     # Configuration section
-    config_info = get_configuration_info(app)
+    config_info = get_configuration_info(app, config_source_info)
     config_panel = Panel(config_info, title="Configuration", border_style="blue")
 
     # Files section
@@ -395,15 +395,36 @@ def display_edit_summary(app_name: str, changes: list[str]) -> None:
         console.print(f"  • {change}")
 
 
-def get_configuration_info(app: Any) -> str:
+def get_configuration_info(app: Any, config_source_info: dict[str, str] | None = None) -> str:
     """Get formatted configuration information for an application."""
     config_lines = get_basic_config_lines(app)
+
+    # Add config file path if available
+    if config_source_info:
+        config_path = _get_app_config_path(app, config_source_info)
+        if config_path:
+            config_lines.append(f"[bold]Config File:[/bold] {config_path}")
 
     add_optional_config_lines(app, config_lines)
     add_checksum_config_lines(app, config_lines)
     add_rotation_config_lines(app, config_lines)
 
     return "\n".join(config_lines)
+
+
+def _get_app_config_path(app: Any, config_source_info: dict[str, str]) -> str | None:
+    """Get the configuration file path for an application."""
+    if config_source_info["type"] == "file":
+        # Single config file - return with tilde replacement
+        return _replace_home_with_tilde(config_source_info["path"])
+    elif config_source_info["type"] == "directory":
+        # Directory-based config - construct app-specific path
+        from pathlib import Path
+
+        config_dir = Path(config_source_info["path"])
+        app_config_file = config_dir / f"{app.name}.json"
+        return _replace_home_with_tilde(str(app_config_file))
+    return None
 
 
 def get_basic_config_lines(app: Any) -> list[str]:
@@ -413,7 +434,7 @@ def get_basic_config_lines(app: Any) -> list[str]:
         f"[bold]Status:[/bold] {'[green]Enabled[/green]' if app.enabled else '[red]Disabled[/red]'}",
         f"[bold]Source:[/bold] {app.source_type.title()}",
         f"[bold]URL:[/bold] {app.url}",
-        f"[bold]Download Directory:[/bold] {app.download_dir}",
+        f"[bold]Download Directory:[/bold] {_replace_home_with_tilde(str(app.download_dir))}",
         f"[bold]File Pattern:[/bold] {app.pattern}",
     ]
 
@@ -424,7 +445,8 @@ def add_optional_config_lines(app: Any, config_lines: list[str]) -> None:
         config_lines.append(f"[bold]Prerelease:[/bold] {'Yes' if app.prerelease else 'No'}")
 
     if hasattr(app, "symlink_path") and app.symlink_path:
-        config_lines.append(f"[bold]Symlink Path:[/bold] {app.symlink_path}")
+        display_symlink = _replace_home_with_tilde(str(app.symlink_path))
+        config_lines.append(f"[bold]Symlink Path:[/bold] {display_symlink}")
 
 
 def add_checksum_config_lines(app: Any, config_lines: list[str]) -> None:
@@ -469,7 +491,8 @@ def _add_retain_count_line(app: Any, config_lines: list[str]) -> None:
 def _add_managed_symlink_line(app: Any, config_lines: list[str]) -> None:
     """Add managed symlink line if applicable."""
     if hasattr(app, "symlink_path") and app.symlink_path:
-        config_lines.append(f"  [dim]Managed Symlink:[/dim] {app.symlink_path}")
+        display_symlink = _replace_home_with_tilde(str(app.symlink_path))
+        config_lines.append(f"  [dim]Managed Symlink:[/dim] {display_symlink}")
 
 
 def add_rotation_config_lines(app: Any, config_lines: list[str]) -> None:
@@ -874,7 +897,11 @@ def format_single_symlink(symlink_path: Path, target_path: Path) -> list[str]:
     target_status = _get_target_status(target_path)
     status_icon = _get_status_icon(target_status)
 
-    lines = [f"[bold]{symlink_path}[/bold] {status_icon}", f"  [dim]→[/dim] {target_path}"]
+    # Apply home path replacement for display
+    display_symlink = _replace_home_with_tilde(str(symlink_path))
+    display_target = _replace_home_with_tilde(str(target_path))
+
+    lines = [f"[bold]{display_symlink}[/bold] {status_icon}", f"  [dim]→[/dim] {display_target}"]
 
     status_message = _get_status_message(target_status)
     if status_message:

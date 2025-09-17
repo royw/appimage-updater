@@ -62,12 +62,39 @@ class ShowCommand(Command):
             # Filter applications by names
             found_apps = ApplicationService.filter_apps_by_names(config.applications, self.params.app_names or [])
 
+            # Determine config source info for display
+            config_source_info = self._get_config_source_info()
+
             # Display information for found applications
             for i, app in enumerate(found_apps):
                 if i > 0:
                     self.console.print()  # Add spacing between multiple apps
-                display_application_details(app)
+                display_application_details(app, config_source_info)
         except Exception as e:
             logger.error(f"Unexpected error in show command: {e}")
             logger.exception("Full exception details")
             raise
+
+    def _get_config_source_info(self) -> dict[str, str]:
+        """Get configuration source information for display."""
+        from ..config_loader import get_default_config_dir, get_default_config_path
+
+        if self.params.config_file:
+            return {
+                "type": "file",
+                "path": str(self.params.config_file),
+            }
+
+        config_dir = self.params.config_dir or get_default_config_dir()
+        if config_dir.exists():
+            return {
+                "type": "directory",
+                "path": str(config_dir),
+            }
+
+        # Fallback to default file
+        default_file = get_default_config_path()
+        return {
+            "type": "file",
+            "path": str(default_file),
+        }
