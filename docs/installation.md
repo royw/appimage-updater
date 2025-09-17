@@ -99,7 +99,7 @@ appimage-updater, version 0.2.0
 
 Once installed, you can:
 
-1. [Initialize your configuration](getting-started.md#initialization)
+1. [Get started quickly](getting-started.md#quick-start)
 1. [Add your first application](getting-started.md#adding-applications)
 1. [Start checking for updates](getting-started.md#checking-updates)
 
