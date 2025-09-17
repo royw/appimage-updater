@@ -41,50 +41,77 @@ class AddCommand(Command):
         configure_logging(debug=self.params.debug)
 
         try:
-            # Handle examples flag
-            if self.params.examples:
-                self._show_add_examples()
-                return CommandResult(success=True, message="Examples displayed")
+            # Handle special modes
+            special_result = self._handle_special_modes()
+            if special_result:
+                return special_result
 
-            # Handle interactive mode
-            if self.params.interactive:
-                interactive_result = interactive_add_command()
-                # Check if interactive mode was successful
-                if not interactive_result.success:
-                    if interactive_result.cancelled:
-                        return CommandResult(success=True, message="Operation cancelled by user", exit_code=0)
-                    else:
-                        reason = interactive_result.reason or "Interactive mode failed"
-                        return CommandResult(success=False, message=reason, exit_code=1)
-
-                # Update params with interactive values
-                self._update_params_from_interactive(interactive_result.data or {})
-
-            # Validate required parameters
-            validation_errors = self.validate()
-            if validation_errors:
-                error_msg = f"Validation errors: {', '.join(validation_errors)}"
-                self.console.print(f"[red]Error: {error_msg}[/red]")
-                self.console.print("[yellow]💡 Try one of these options:")
-                self.console.print(
-                    "[yellow]   • Provide both NAME and URL: appimage-updater add MyApp https://github.com/user/repo"
-                )
-                self.console.print("[yellow]   • Use interactive mode: appimage-updater add --interactive")
-                self.console.print("[yellow]   • See examples: appimage-updater add --examples")
-                return CommandResult(success=False, message=error_msg, exit_code=1)
+            # Validate parameters
+            validation_result = self._validate_parameters()
+            if validation_result:
+                return validation_result
 
             # Execute the add operation
             success = await self._execute_add_operation()
-
-            if success:
-                return CommandResult(success=True, message=f"Successfully added application '{self.params.name}'")
-            else:
-                return CommandResult(success=False, message="Add operation failed", exit_code=1)
+            return self._create_execution_result(success)
 
         except Exception as e:
             logger.error(f"Unexpected error in add command: {e}")
             logger.exception("Full exception details")
             return CommandResult(success=False, message=str(e), exit_code=1)
+
+    def _handle_special_modes(self) -> CommandResult | None:
+        """Handle examples and interactive modes."""
+        if self.params.examples:
+            self._show_add_examples()
+            return CommandResult(success=True, message="Examples displayed")
+
+        if self.params.interactive:
+            return self._handle_interactive_mode()
+
+        return None
+
+    def _handle_interactive_mode(self) -> CommandResult | None:
+        """Handle interactive mode execution."""
+        interactive_result = interactive_add_command()
+
+        if not interactive_result.success:
+            if interactive_result.cancelled:
+                return CommandResult(success=True, message="Operation cancelled by user", exit_code=0)
+            else:
+                reason = interactive_result.reason or "Interactive mode failed"
+                return CommandResult(success=False, message=reason, exit_code=1)
+
+        # Update params with interactive values
+        self._update_params_from_interactive(interactive_result.data or {})
+        return None
+
+    def _validate_parameters(self) -> CommandResult | None:
+        """Validate command parameters and show helpful messages on error."""
+        validation_errors = self.validate()
+        if not validation_errors:
+            return None
+
+        error_msg = f"Validation errors: {', '.join(validation_errors)}"
+        self._show_validation_help(error_msg)
+        return CommandResult(success=False, message=error_msg, exit_code=1)
+
+    def _show_validation_help(self, error_msg: str) -> None:
+        """Show helpful validation error messages."""
+        self.console.print(f"[red]Error: {error_msg}[/red]")
+        self.console.print("[yellow]💡 Try one of these options:")
+        self.console.print(
+            "[yellow]   • Provide both NAME and URL: appimage-updater add MyApp https://github.com/user/repo"
+        )
+        self.console.print("[yellow]   • Use interactive mode: appimage-updater add --interactive")
+        self.console.print("[yellow]   • See examples: appimage-updater add --examples")
+
+    def _create_execution_result(self, success: bool) -> CommandResult:
+        """Create the final command result."""
+        if success:
+            return CommandResult(success=True, message=f"Successfully added application '{self.params.name}'")
+        else:
+            return CommandResult(success=False, message="Add operation failed", exit_code=1)
 
     def _update_params_from_interactive(self, interactive_params: dict[str, Any]) -> None:
         """Update parameters from interactive input."""

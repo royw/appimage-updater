@@ -7,6 +7,7 @@ import hashlib
 import time
 import zipfile
 from pathlib import Path
+from typing import Any
 
 import httpx
 from loguru import logger
@@ -199,61 +200,102 @@ class Downloader:
         task_id: TaskID | None,
     ) -> None:
         """Perform the actual file download."""
-        # Download file with appropriate timeouts for large files
-        timeout_config = httpx.Timeout(
+        timeout_config = self._create_timeout_config()
+        download_state = self._initialize_download_state()
+
+        async with self._create_http_client(timeout_config, candidate) as (client, response):
+            response.raise_for_status()
+            total_bytes = int(response.headers.get("content-length", 0))
+
+            await self._download_file_chunks(
+                response, candidate, progress, task_id, total_bytes, download_state
+            )
+
+    def _create_timeout_config(self) -> httpx.Timeout:
+        """Create HTTP timeout configuration for downloads."""
+        return httpx.Timeout(
             connect=30.0,  # 30 seconds to establish connection
             read=60.0,  # 60 seconds for each chunk read
             write=30.0,  # 30 seconds for writes
             pool=self.timeout,  # Overall pool timeout
         )
 
-        event_bus = get_event_bus()
-        downloaded_bytes = 0
-        last_event_time = time.time()
-        event_interval = 0.5  # Publish events every 0.5 seconds
+    def _initialize_download_state(self) -> dict[str, Any]:
+        """Initialize download state tracking variables."""
+        return {
+            "event_bus": get_event_bus(),
+            "downloaded_bytes": 0,
+            "last_event_time": time.time(),
+            "event_interval": 0.5,  # Publish events every 0.5 seconds
+        }
 
-        async with (
-            httpx.AsyncClient(
-                timeout=timeout_config,
-                follow_redirects=True,
-            ) as client,
-            client.stream(
-                "GET",
-                candidate.asset.url,
-                headers={"User-Agent": self.user_agent},
-            ) as response,
-        ):
-            response.raise_for_status()
+    def _create_http_client(
+        self, timeout_config: httpx.Timeout, candidate: UpdateCandidate
+    ) -> tuple[httpx.AsyncClient, Any]:
+        """Create HTTP client and response stream context manager."""
+        client = httpx.AsyncClient(
+            timeout=timeout_config,
+            follow_redirects=True,
+        )
+        response_stream = client.stream(
+            "GET",
+            candidate.asset.url,
+            headers={"User-Agent": self.user_agent},
+        )
+        return client, response_stream
 
-            # Get total file size from response headers
-            total_bytes = int(response.headers.get("content-length", 0))
+    async def _download_file_chunks(
+        self,
+        response: Any,
+        candidate: UpdateCandidate,
+        progress: Progress | None,
+        task_id: TaskID | None,
+        total_bytes: int,
+        download_state: dict[str, Any],
+    ) -> None:
+        """Download file chunks and handle progress tracking."""
+        with candidate.download_path.open("wb") as f:
+            async for chunk in response.aiter_bytes(chunk_size=8192):
+                f.write(chunk)
+                download_state["downloaded_bytes"] += len(chunk)
 
-            with candidate.download_path.open("wb") as f:
-                async for chunk in response.aiter_bytes(chunk_size=8192):
-                    f.write(chunk)
-                    downloaded_bytes += len(chunk)
+                self._update_progress(progress, task_id, len(chunk))
+                self._publish_progress_event(
+                    chunk, candidate, total_bytes, download_state
+                )
 
-                    current_time = time.time()
+    def _update_progress(self, progress: Progress | None, task_id: TaskID | None, chunk_size: int) -> None:
+        """Update progress bar if available."""
+        if progress and task_id is not None:
+            progress.update(task_id, advance=chunk_size)
 
-                    if progress and task_id is not None:
-                        progress.update(task_id, advance=len(chunk))
+    def _publish_progress_event(
+        self,
+        chunk: bytes,
+        candidate: UpdateCandidate,
+        total_bytes: int,
+        download_state: dict[str, Any],
+    ) -> None:
+        """Publish download progress events at intervals."""
+        current_time = time.time()
 
-                    # Publish download progress events at intervals
-                    if current_time - last_event_time >= event_interval or downloaded_bytes == total_bytes:
-                        # Calculate download speed
-                        time_elapsed = current_time - last_event_time
-                        speed_bps = len(chunk) / time_elapsed if time_elapsed > 0 else 0
+        # Check if we should publish an event
+        time_since_last = current_time - download_state["last_event_time"]
+        is_complete = download_state["downloaded_bytes"] == total_bytes
 
-                        event = DownloadProgressEvent(
-                            app_name=candidate.app_name,
-                            filename=candidate.download_path.name,
-                            downloaded_bytes=downloaded_bytes,
-                            total_bytes=total_bytes,
-                            speed_bps=speed_bps,
-                            source="downloader",
-                        )
-                        event_bus.publish(event)
-                        last_event_time = current_time
+        if time_since_last >= download_state["event_interval"] or is_complete:
+            speed_bps = len(chunk) / time_since_last if time_since_last > 0 else 0
+
+            event = DownloadProgressEvent(
+                app_name=candidate.app_name,
+                filename=candidate.download_path.name,
+                downloaded_bytes=download_state["downloaded_bytes"],
+                total_bytes=total_bytes,
+                speed_bps=speed_bps,
+                source="downloader",
+            )
+            download_state["event_bus"].publish(event)
+            download_state["last_event_time"] = current_time
 
     def _make_appimage_executable(self, candidate: UpdateCandidate) -> None:
         """Make AppImage file executable if it's an AppImage."""

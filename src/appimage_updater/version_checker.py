@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import tempfile
 from pathlib import Path
+from typing import Any
 
 from packaging import version
 
@@ -83,52 +84,73 @@ class VersionChecker:
         try:
             releases = await self._get_repository_releases(app_config)
             if not releases:
-                return CheckResult(
-                    app_name=app_config.name,
-                    success=False,
-                    error_message="No releases found",
-                )
+                return self._create_no_releases_result(app_config)
 
             current_version = self._get_current_version(app_config)
             update_candidates = self._find_update_candidates(releases, app_config, current_version)
 
             if not update_candidates:
-                return CheckResult(
-                    app_name=app_config.name,
-                    success=True,
-                    current_version=current_version,
-                    available_version=current_version,
-                    update_available=False,
-                    message="No suitable updates found",
-                )
+                return self._create_no_updates_result(app_config, current_version)
 
-            best_candidate = self._select_best_candidate(update_candidates)
-            latest_version = best_candidate.version
-
-            update_available = self._is_update_available(current_version, latest_version)
-
-            return CheckResult(
-                app_name=app_config.name,
-                success=True,
-                current_version=current_version,
-                available_version=latest_version,
-                update_available=update_available,
-                download_url=best_candidate.asset.download_url if best_candidate.asset else None,
-                asset=best_candidate.asset,
-            )
+            return self._create_update_available_result(app_config, current_version, update_candidates)
 
         except RepositoryError as e:
-            return CheckResult(
-                app_name=app_config.name,
-                success=False,
-                error_message=f"Repository error: {e}",
-            )
+            return self._create_repository_error_result(app_config, e)
         except Exception as e:
-            return CheckResult(
-                app_name=app_config.name,
-                success=False,
-                error_message=f"Unexpected error: {e}",
-            )
+            return self._create_unexpected_error_result(app_config, e)
+
+    def _create_no_releases_result(self, app_config: ApplicationConfig) -> CheckResult:
+        """Create result for when no releases are found."""
+        return CheckResult(
+            app_name=app_config.name,
+            success=False,
+            error_message="No releases found",
+        )
+
+    def _create_no_updates_result(self, app_config: ApplicationConfig, current_version: str | None) -> CheckResult:
+        """Create result for when no suitable updates are found."""
+        return CheckResult(
+            app_name=app_config.name,
+            success=True,
+            current_version=current_version,
+            available_version=current_version,
+            update_available=False,
+            message="No suitable updates found",
+        )
+
+    def _create_update_available_result(
+        self, app_config: ApplicationConfig, current_version: str | None, update_candidates: list[Any]
+    ) -> CheckResult:
+        """Create result for when updates are available."""
+        best_candidate = self._select_best_candidate(update_candidates)
+        latest_version = best_candidate.version
+        update_available = self._is_update_available(current_version, latest_version)
+
+        return CheckResult(
+            app_name=app_config.name,
+            success=True,
+            current_version=current_version,
+            available_version=latest_version,
+            update_available=update_available,
+            download_url=best_candidate.asset.download_url if best_candidate.asset else None,
+            asset=best_candidate.asset,
+        )
+
+    def _create_repository_error_result(self, app_config: ApplicationConfig, error: RepositoryError) -> CheckResult:
+        """Create result for repository errors."""
+        return CheckResult(
+            app_name=app_config.name,
+            success=False,
+            error_message=f"Repository error: {error}",
+        )
+
+    def _create_unexpected_error_result(self, app_config: ApplicationConfig, error: Exception) -> CheckResult:
+        """Create result for unexpected errors."""
+        return CheckResult(
+            app_name=app_config.name,
+            success=False,
+            error_message=f"Unexpected error: {error}",
+        )
 
     def _get_current_version(self, app_config: ApplicationConfig) -> str | None:
         """Get current version from .info file."""
@@ -168,31 +190,30 @@ class VersionChecker:
         if not version_string:
             return version_string
 
-        # If already in date format (YYYY-MM-DD), preserve it
-        if re.match(r"^v?\d{4}-\d{2}-\d{2}$", version_string):
+        if self._is_already_date_format(version_string):
             return version_string
 
-        # Handle various nightly build patterns
-        nightly_patterns = [
-            r"nightly",
-            r"build",
-            r"snapshot",
-            r"dev",
-            r"daily",
-        ]
+        if self._is_nightly_build(version_string):
+            return self._extract_nightly_date(version_string)
 
+        return version_string
+
+    def _is_already_date_format(self, version_string: str) -> bool:
+        """Check if version string is already in date format (YYYY-MM-DD)."""
+        return bool(re.match(r"^v?\d{4}-\d{2}-\d{2}$", version_string))
+
+    def _is_nightly_build(self, version_string: str) -> bool:
+        """Check if version string indicates a nightly build."""
+        nightly_patterns = ["nightly", "build", "snapshot", "dev", "daily"]
         version_lower = version_string.lower()
-        for pattern in nightly_patterns:
-            if pattern in version_lower:
-                # For nightly builds, try to extract date or use current date format
-                date_match = re.search(r"(\d{4})-?(\d{2})-?(\d{2})", version_string)
-                if date_match:
-                    year, month, day = date_match.groups()
-                    return f"v{year}-{month}-{day}"
+        return any(pattern in version_lower for pattern in nightly_patterns)
 
-                # If no date found, return as-is but mark as nightly
-                return version_string
-
+    def _extract_nightly_date(self, version_string: str) -> str:
+        """Extract date from nightly build version string."""
+        date_match = re.search(r"(\d{4})-?(\d{2})-?(\d{2})", version_string)
+        if date_match:
+            year, month, day = date_match.groups()
+            return f"v{year}-{month}-{day}"
         return version_string
 
     def _find_update_candidates(
