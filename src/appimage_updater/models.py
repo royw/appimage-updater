@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Union
 
 from pydantic import BaseModel, Field
 
@@ -27,7 +27,7 @@ class Asset(BaseModel):
     url: str = Field(description="Download URL")
     size: int = Field(description="File size in bytes")
     created_at: datetime = Field(description="Asset creation time")
-    checksum_asset: Asset | None = Field(
+    checksum_asset: Union[Asset, None] = Field(
         default=None,
         description="Associated checksum file asset",
     )
@@ -131,7 +131,7 @@ class Release(BaseModel):
 
     version: str = Field(description="Release version")
     tag_name: str = Field(description="Git tag name")
-    name: str | None = Field(default=None, description="Release name")
+    name: Union[str, None] = Field(default=None, description="Release name")
     published_at: datetime = Field(description="Release publication time")
     assets: list[Asset] = Field(description="Available assets")
     is_prerelease: bool = Field(default=False, description="Is prerelease")
@@ -221,7 +221,7 @@ class UpdateCandidate(BaseModel):
     """Represents an available update."""
 
     app_name: str = Field(description="Application name")
-    current_version: str | None = Field(description="Currently installed version")
+    current_version: Union[str, None] = Field(description="Currently installed version")
     latest_version: str = Field(description="Latest available version")
     asset: Asset = Field(description="Asset to download")
     download_path: Path = Field(description="Local download path")
@@ -231,11 +231,11 @@ class UpdateCandidate(BaseModel):
         description="Whether checksum verification is required",
     )
     # Adding app_config for access to rotation settings
-    app_config: ApplicationConfig | None = Field(
+    app_config: Union[ApplicationConfig, None] = Field(
         default=None,
         description="Application configuration for rotation settings",
     )
-    release: Release | None = Field(default=None, description="Associated release")
+    release: Union[Release, None] = Field(default=None, description="Associated release")
 
     @property
     def version(self) -> str:
@@ -253,27 +253,27 @@ class CheckResult(BaseModel):
 
     app_name: str = Field(description="Application name")
     success: bool = Field(description="Whether check was successful")
-    error_message: str | None = Field(default=None, description="Error message if failed")
-    candidate: UpdateCandidate | None = Field(default=None, description="Update candidate")
+    error_message: Union[str, None] = Field(default=None, description="Error message if failed")
+    candidate: Union[UpdateCandidate, None] = Field(default=None, description="Update candidate")
     checked_at: datetime = Field(default_factory=datetime.now, description="Check time")
 
     # Additional fields used by version_checker
-    current_version: str | None = Field(default=None, description="Current version")
-    available_version: str | None = Field(default=None, description="Available version")
+    current_version: Union[str, None] = Field(default=None, description="Current version")
+    available_version: Union[str, None] = Field(default=None, description="Available version")
     update_available: bool = Field(default=False, description="Whether update is available")
-    message: str | None = Field(default=None, description="Status message")
-    download_url: str | None = Field(default=None, description="Download URL")
-    asset: Asset | None = Field(default=None, description="Associated asset")
+    message: Union[str, None] = Field(default=None, description="Status message")
+    download_url: Union[str, None] = Field(default=None, description="Download URL")
+    asset: Union[Asset, None] = Field(default=None, description="Associated asset")
 
 
 class ChecksumResult(BaseModel):
     """Result of checksum verification."""
 
     verified: bool = Field(description="Whether checksum was verified")
-    expected: str | None = Field(default=None, description="Expected checksum")
-    actual: str | None = Field(default=None, description="Actual checksum")
-    algorithm: str | None = Field(default=None, description="Hash algorithm used")
-    error_message: str | None = Field(default=None, description="Error if verification failed")
+    expected: Union[str, None] = Field(default=None, description="Expected checksum")
+    actual: Union[str, None] = Field(default=None, description="Actual checksum")
+    algorithm: Union[str, None] = Field(default=None, description="Hash algorithm used")
+    error_message: Union[str, None] = Field(default=None, description="Error if verification failed")
 
 
 class DownloadResult(BaseModel):
