@@ -7,6 +7,7 @@ application configuration management:
 - directory_utilities: Directory creation and management utilities
 - validation_utilities: Configuration validation and consistency checks
 - generation_utilities: Configuration generation and defaults management
+- management_utilities: Configuration updates and application management
 """
 
 # Import key functions for backward compatibility
@@ -25,6 +26,10 @@ from .loading_operations import (
     remove_application_from_config,
     save_updated_configuration,
 )
+from .management_utilities import (
+    apply_configuration_updates,
+    collect_edit_updates,
+)
 from .validation_utilities import (
     validate_add_rotation_config,
     validate_and_normalize_add_url,
@@ -42,9 +47,12 @@ __all__ = [
     # Directory utilities
     "handle_add_directory_creation",
     "handle_directory_creation",
-
     # Generation utilities
     "generate_default_config",
+
+    # Management utilities
+    "collect_edit_updates",
+    "apply_configuration_updates",
 
     # Validation utilities
     "validate_and_normalize_add_url",
