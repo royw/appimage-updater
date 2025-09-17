@@ -24,6 +24,31 @@ from .models import CheckResult
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 
 
+def _replace_home_with_tilde(path_str: str) -> str:
+    """Replace home directory path with ~ for display purposes.
+
+    Args:
+        path_str: Path string that may contain home directory
+
+    Returns:
+        Path string with home directory replaced by ~
+    """
+    if not path_str:
+        return path_str
+
+    home_path = str(Path.home())
+    if path_str.startswith(home_path):
+        # Replace home path with ~ and handle the separator
+        relative_path = path_str[len(home_path) :]
+        if relative_path.startswith(os.sep):
+            return "~" + relative_path
+        elif relative_path == "":
+            return "~"
+        else:
+            return "~" + os.sep + relative_path
+    return path_str
+
+
 def _build_path_from_parts(parts: list[str], max_width: int) -> tuple[list[str], int]:
     """Build path parts list from end to beginning within width limit."""
     result_parts: list[str] = []
@@ -49,11 +74,14 @@ def _add_ellipsis_if_truncated(result_parts: list[str], original_parts: list[str
 
 def _wrap_path(path: str, max_width: int = 40) -> str:
     """Wrap a path by breaking on path separators."""
-    if len(path) <= max_width:
-        return path
+    # First replace home directory with ~ for display
+    display_path = _replace_home_with_tilde(path)
+
+    if len(display_path) <= max_width:
+        return display_path
 
     # Try to break on path separators
-    parts = path.replace("\\", "/").split("/")
+    parts = display_path.replace("\\", "/").split("/")
     if len(parts) > 1:
         # Start from the end and work backwards to preserve meaningful parts
         result_parts, _ = _build_path_from_parts(parts, max_width)
@@ -61,7 +89,7 @@ def _wrap_path(path: str, max_width: int = 40) -> str:
         return "/".join(result_parts)
 
     # Fallback to simple truncation if no separators
-    return "..." + path[-(max_width - 3) :]
+    return "..." + display_path[-(max_width - 3) :]
 
 
 def _wrap_github_url(url: str) -> str:

@@ -604,9 +604,12 @@ def _display_dry_run_header(name: str) -> None:
 
 def _display_basic_config_info(name: str, validated_url: str, expanded_download_dir: str, pattern: str) -> None:
     """Display basic configuration information."""
+    from .display import _replace_home_with_tilde
+
+    display_dir = _replace_home_with_tilde(expanded_download_dir)
     console.print(f"[blue]Name: {name}")
     console.print(f"[blue]Source: {validated_url}")
-    console.print(f"[blue]Download Directory: {expanded_download_dir}")
+    console.print(f"[blue]Download Directory: {display_dir}")
     console.print(f"[blue]Pattern: {pattern}")
 
 
@@ -617,7 +620,10 @@ def _display_rotation_config(app_config: dict[str, Any]) -> None:
     if rotation_enabled:
         console.print(f"[blue]  Retain Count: {app_config.get('retain', 3)}")
         if app_config.get("symlink"):
-            console.print(f"[blue]  Symlink: {app_config['symlink']}")
+            from .display import _replace_home_with_tilde
+
+            display_symlink = _replace_home_with_tilde(app_config["symlink"])
+            console.print(f"[blue]  Symlink: {display_symlink}")
 
 
 def _display_checksum_config(app_config: dict[str, Any]) -> None:
@@ -663,9 +669,12 @@ def _display_add_success(
     prerelease_auto_enabled: bool,
 ) -> None:
     """Display success message after adding configuration."""
+    from .display import _replace_home_with_tilde
+
+    display_dir = _replace_home_with_tilde(expanded_download_dir)
     console.print(f"[green]✅ Successfully added application '{name}'")
     console.print(f"[blue]📍 Source: {validated_url}")
-    console.print(f"[blue]📁 Download Directory: {expanded_download_dir}")
+    console.print(f"[blue]📁 Download Directory: {display_dir}")
     console.print(f"[blue]🔍 Pattern: {app_config['pattern']}")
 
     # Show prerelease auto-detection feedback

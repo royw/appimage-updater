@@ -178,17 +178,27 @@ def _display_add_summary(settings: dict[str, Any]) -> None:
 
 def _display_basic_summary_info(settings: dict[str, Any]) -> None:
     """Display basic configuration information."""
+    from .display import _replace_home_with_tilde
+
     console.print(f"   Name: {settings['name']}")
     console.print(f"   URL: {settings['url']}")
-    console.print(f"   Download Dir: {settings['download_dir'] or '[global default]'}")
+    download_dir = settings["download_dir"] or "[global default]"
+    if download_dir != "[global default]":
+        download_dir = _replace_home_with_tilde(download_dir)
+    console.print(f"   Download Dir: {download_dir}")
 
 
 def _display_rotation_summary_info(settings: dict[str, Any]) -> None:
     """Display rotation-related configuration information."""
+    from .display import _replace_home_with_tilde
+
     console.print(f"   Rotation: {'✅' if settings['rotation'] else '❌'}")
     if settings["rotation"]:
         console.print(f"   Retain: {settings['retain']} files")
-        console.print(f"   Symlink: {settings['symlink'] or 'None'}")
+        symlink_path = settings["symlink"] or "None"
+        if symlink_path != "None":
+            symlink_path = _replace_home_with_tilde(symlink_path)
+        console.print(f"   Symlink: {symlink_path}")
 
 
 def _display_feature_summary_info(settings: dict[str, Any]) -> None:

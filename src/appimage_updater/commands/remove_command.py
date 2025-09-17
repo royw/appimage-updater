@@ -131,8 +131,11 @@ class RemoveCommand(Command):
 
         self.console.print(f"Found {len(found_apps)} application(s) to remove:")
         for app in found_apps:
+            from ..display import _replace_home_with_tilde
+
+            display_dir = _replace_home_with_tilde(str(app.download_dir))
             self.console.print(f"  • {app.name} ({app.url})")
-            self.console.print(f"    Download directory: {app.download_dir}")
+            self.console.print(f"    Download directory: {display_dir}")
 
         self.console.print("\n[yellow]This will only remove the configuration entries.[/yellow]")
         self.console.print("[yellow]Downloaded files and symlinks will NOT be deleted.[/yellow]")
@@ -151,8 +154,11 @@ class RemoveCommand(Command):
         """Remove applications from configuration."""
         for app in apps_to_remove:
             config.applications = [a for a in config.applications if a.name != app.name]
+            from ..display import _replace_home_with_tilde
+
+            display_dir = _replace_home_with_tilde(str(app.download_dir))
             self.console.print(f"Successfully removed application '{app.name}' from configuration")
-            self.console.print(f"Files in {app.download_dir} were not deleted")
+            self.console.print(f"Files in {display_dir} were not deleted")
         return config
 
     def _save_single_file_config(self, config: Config) -> None:

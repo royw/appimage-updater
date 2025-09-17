@@ -107,7 +107,10 @@ def _create_directory(download_path: Path) -> None:
     """Create the download directory with error handling."""
     try:
         download_path.mkdir(parents=True, exist_ok=True)
-        console.print(f"[green]Created directory: {download_path}")
+        from .display import _replace_home_with_tilde
+
+        display_path = _replace_home_with_tilde(str(download_path))
+        console.print(f"[green]Created directory: {display_path}")
         logger.debug(f"Created download directory: {download_path}")
     except OSError as e:
         console.print(f"[red]Failed to create directory: {e}")
@@ -129,7 +132,10 @@ def handle_add_directory_creation(download_dir: str, create_dir: bool, yes: bool
 
     # Check if download directory exists and handle creation
     if not download_path.exists():
-        console.print(f"[yellow]Download directory does not exist: {download_path}")
+        from .display import _replace_home_with_tilde
+
+        display_path = _replace_home_with_tilde(str(download_path))
+        console.print(f"[yellow]Download directory does not exist: {display_path}")
         should_create = create_dir or yes
 
         if not should_create:
@@ -703,7 +709,10 @@ def _create_directory_if_needed(expanded_path: Path, should_create: bool) -> Non
     if should_create:
         try:
             expanded_path.mkdir(parents=True, exist_ok=True)
-            console.print(f"[green]Created directory: {expanded_path}")
+            from .display import _replace_home_with_tilde
+
+            display_path = _replace_home_with_tilde(str(expanded_path))
+            console.print(f"[green]Created directory: {display_path}")
         except OSError as e:
             raise ValueError(f"Failed to create directory {expanded_path}: {e}") from e
     else:
