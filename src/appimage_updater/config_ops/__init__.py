@@ -49,11 +49,9 @@ __all__ = [
     "handle_directory_creation",
     # Generation utilities
     "generate_default_config",
-
     # Management utilities
     "collect_edit_updates",
     "apply_configuration_updates",
-
     # Validation utilities
     "validate_and_normalize_add_url",
     "validate_add_rotation_config",
