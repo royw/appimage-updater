@@ -158,7 +158,8 @@ class TestAddCommand:
             "add", "DuplicateApp",
             "https://github.com/user/app1",
             "/tmp/app1",
-            "--config-dir", str(temp_config_dir)
+            "--config-dir", str(temp_config_dir),
+            "--create-dir"
         ])
 
         assert result1.exit_code == 0
@@ -168,11 +169,12 @@ class TestAddCommand:
             "add", "DuplicateApp",
             "https://github.com/user/app2",
             "/tmp/app2",
-            "--config-dir", str(temp_config_dir)
+            "--config-dir", str(temp_config_dir),
+            "--create-dir"
         ])
 
         assert result2.exit_code == 1
-        assert "Error adding application" in result2.stdout
+        assert "already exists for application 'DuplicateApp'" in result2.stderr
 
     def test_add_command_path_expansion(self, runner, temp_config_dir):
         """Test add command expands user paths correctly."""
@@ -335,7 +337,7 @@ class TestAddCommand:
         ])
 
         assert result.exit_code == 0
-        assert "✅ Successfully added application 'DirectApp'" in result.stdout
+        assert "✓ Successfully added application 'DirectApp'" in result.stdout
 
         # Verify config was saved with source_type: 'direct'
         config_file = temp_config_dir / "directapp.json"

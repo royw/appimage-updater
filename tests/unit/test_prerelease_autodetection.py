@@ -199,7 +199,7 @@ class TestPrereleaseAutoDetection:
             ])
 
         assert result.exit_code == 0
-        assert "Auto-detected continuous builds - enabled prerelease support" in result.stdout
+        assert "Prerelease downloads have been automatically enabled for this repository" in result.stdout
 
         # Check that the configuration file was created with prerelease enabled
         config_file = temp_config_dir / "test_app.json"
