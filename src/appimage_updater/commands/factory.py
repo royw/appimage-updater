@@ -8,14 +8,13 @@ from .add_command import AddCommand
 from .check_command import CheckCommand
 from .config_command import ConfigCommand
 from .edit_command import EditCommand
-from .init_command import InitCommand
+# InitCommand removed
 from .list_command import ListCommand
 from .parameters import (
     AddParams,
     CheckParams,
     ConfigParams,
     EditParams,
-    InitParams,
     ListParams,
     RemoveParams,
     RepositoryParams,
@@ -235,17 +234,7 @@ class CommandFactory:
         )
         return RepositoryCommand(params)
 
-    @staticmethod
-    def create_init_command(
-        config_dir: Path | None = None,
-        debug: bool = False,
-    ) -> InitCommand:
-        """Create an InitCommand instance."""
-        params = InitParams(
-            config_dir=config_dir,
-            debug=debug,
-        )
-        return InitCommand(params)
+    # create_init_command removed with InitCommand
 
     @staticmethod
     def create_config_command(

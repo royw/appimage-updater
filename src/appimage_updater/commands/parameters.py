@@ -110,11 +110,7 @@ class RepositoryParams(BaseParams):
     dry_run: bool = False
 
 
-@dataclass
-class InitParams(BaseParams):
-    """Parameters for init command."""
-
-    pass  # Only uses base parameters
+# InitParams removed with init command
 
 
 @dataclass

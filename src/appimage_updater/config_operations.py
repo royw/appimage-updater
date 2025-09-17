@@ -17,7 +17,6 @@ from loguru import logger
 from rich.console import Console
 
 from .config_loader import (
-    ConfigLoadError,
     get_default_config_dir,
     get_default_config_path,
     load_config_from_file,
@@ -52,9 +51,41 @@ def load_config(config_file: Path | None, config_dir: Path | None) -> Any:
         logger.debug(f"Loading configuration from default file: {default_file}")
         return load_config_from_file(default_file)
 
-    logger.error("No configuration found in any expected location")
-    msg = "No configuration found. Run 'appimage-updater init' or provide --config"
-    raise ConfigLoadError(msg)
+    logger.info("No configuration found, creating default directory structure")
+    # Create default config directory structure automatically
+    default_dir = get_default_config_dir()
+    default_dir.mkdir(parents=True, exist_ok=True)
+    logger.debug(f"Created default config directory: {default_dir}")
+
+    # Create global config.json file with default settings
+    _create_default_global_config(default_dir.parent)
+
+    # Return empty config that will be populated when first app is added
+    from .config import Config, GlobalConfig
+    return Config(global_config=GlobalConfig(), applications=[])
+
+
+def _create_default_global_config(config_parent_dir: Path) -> None:
+    """Create default global config.json file."""
+    import json
+    from .config import GlobalConfig
+
+    config_file = config_parent_dir / "config.json"
+    if config_file.exists():
+        logger.debug(f"Global config file already exists: {config_file}")
+        return
+
+    # Create default global config
+    global_config = GlobalConfig()
+    config_data = global_config.model_dump()
+
+    # Write the global config file
+    with config_file.open("w") as f:
+        json.dump(config_data, f, indent=2)
+    
+    from .display import _replace_home_with_tilde
+    display_path = _replace_home_with_tilde(str(config_file))
+    logger.info(f"Created global configuration file: {display_path}")
 
 
 def validate_and_normalize_add_url(url: str) -> str:

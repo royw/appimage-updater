@@ -160,12 +160,6 @@ _CREATE_DIR_OPTION = typer.Option(
     "--create-dir",
     help="Automatically create download directory if it doesn't exist (no prompt)",
 )
-_INIT_CONFIG_DIR_OPTION = typer.Option(
-    None,
-    "--config-dir",
-    "-d",
-    help="Configuration directory to create",
-)
 _ROTATION_OPTION = typer.Option(
     None,
     "--rotation/--no-rotation",
@@ -463,28 +457,7 @@ def check(
         raise typer.Exit(result.exit_code)
 
 
-@app.command()
-def init(
-    config_dir: Path | None = _INIT_CONFIG_DIR_OPTION,
-    debug: bool = _DEBUG_OPTION,
-    version: bool = typer.Option(
-        False,
-        "--version",
-        "-V",
-        help="Show version and exit",
-        callback=version_callback,
-        is_eager=True,
-    ),
-) -> None:
-    """Initialize configuration directory with examples."""
-    command = CommandFactory.create_init_command(
-        config_dir=config_dir,
-        debug=debug,
-    )
-
-    result = asyncio.run(command.execute())
-    if not result.success:
-        raise typer.Exit(result.exit_code)
+# init command removed - config directory is now created automatically when needed
 
 
 @app.command(name="list")
