@@ -110,7 +110,7 @@ def test_check_command_with_debug_shows_asset_selection():
     assert "1 updates available" in debug_output, "Backend should find updates"  
     assert "available" in debug_output, "Frontend should show update available"
     
-    print("✅ SUCCESS: Both backend logic and frontend display work correctly")
+    print("SUCCESS: Both backend logic and frontend display work correctly")
 
 
 if __name__ == "__main__":
@@ -119,13 +119,13 @@ if __name__ == "__main__":
     
     try:
         test_check_command_with_debug_shows_asset_selection()
-        print("✅ Debug test passed - regression confirmed")
+        print("SUCCESS: Debug test passed - regression confirmed")
     except AssertionError as e:
-        print(f"❌ Debug test failed: {e}")
+        print(f"FAILED: Debug test failed: {e}")
     
     try:
         test_check_command_finds_candidates()
-        print("✅ Main test passed - check command works correctly")
+        print("SUCCESS: Main test passed - check command works correctly")
     except AssertionError as e:
-        print(f"❌ Main test failed (expected): {e}")
+        print(f"FAILED: Main test failed (expected): {e}")
         print("This confirms the regression exists")

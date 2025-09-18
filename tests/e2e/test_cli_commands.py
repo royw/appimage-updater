@@ -442,8 +442,8 @@ class TestE2EFunctionality:
         assert "Files" in result.stdout
         assert "DetailedApp-1.0.0-Linux.AppImage.current" in result.stdout
         assert "DetailedApp-0.9.0-Linux.AppImage.old" in result.stdout
-        assert "Executable: ✓" in result.stdout  # Current file should be executable
-        assert "Executable: ✗" in result.stdout  # Old file should not be executable
+        assert "Executable: executable" in result.stdout  # Current file should be executable
+        assert "Executable: not executable" in result.stdout  # Old file should not be executable
 
         # Check symlinks section
         assert "Symlinks" in result.stdout
@@ -582,7 +582,7 @@ class TestE2EFunctionality:
 
         assert result.exit_code == 0
         assert "SymlinkApp-1.0.0-Linux.AppImage.current" in result.stdout
-        assert "SymlinkApp-current.AppImage ✓" in result.stdout
+        assert "SymlinkApp-current.AppImage executable" in result.stdout
         assert "→" in result.stdout  # Arrow showing symlink target
 
     def test_show_command_with_configured_symlink_path(self, runner, temp_config_dir, temp_download_dir):
