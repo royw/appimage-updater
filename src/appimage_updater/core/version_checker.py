@@ -386,7 +386,45 @@ class VersionChecker:
 
     def _get_regular_version(self, release: Release) -> str:
         """Get version string for regular releases."""
-        return release.tag_name or release.name or "unknown"
+        version = release.tag_name or release.name or "unknown"
+        return self._normalize_version_string(version)
+
+    def _normalize_version_string(self, version: str) -> str:
+        """Normalize version string to the current scheme."""
+        # Remove 'v' prefix if present
+        if version.startswith("v") or version.startswith("V"):
+            version = version[1:]
+
+        import re
+
+        # Handle versions that already have dash-separated suffixes (e.g., "2.3.1-beta")
+        dash_match = re.match(r"^(\d+\.\d+(?:\.\d+)?)-(\w+)$", version)
+        if dash_match:
+            core_version = dash_match.group(1)
+            pre_release = dash_match.group(2)
+            if pre_release.lower() in ["beta", "alpha", "rc"]:
+                return f"{core_version}-{pre_release.lower()}"
+            return version  # Return as-is if suffix is not recognized
+
+        # Handle versions with space-separated suffixes (e.g., "OrcaSlicer 2.3.1 beta Release")
+        space_match = re.search(r"(\d+\.\d+\.\d+)(?:\s+(\w+))?", version)
+        if space_match:
+            core_version = space_match.group(1)
+            pre_release = space_match.group(2)
+            if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
+                return f"{core_version}-{pre_release.lower()}"
+            return core_version
+
+        # Fallback for simpler version patterns
+        simple_match = re.search(r"(\d+\.\d+)(?:\s+(\w+))?", version)
+        if simple_match:
+            core_version = simple_match.group(1)
+            pre_release = simple_match.group(2)
+            if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
+                return f"{core_version}-{pre_release.lower()}"
+            return core_version
+
+        return version
 
     def _select_best_candidate(self, candidates: list[UpdateCandidate]) -> UpdateCandidate:
         """Select the best update candidate."""

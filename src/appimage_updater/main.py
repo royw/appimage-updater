@@ -1554,24 +1554,31 @@ def _normalize_version_string(version: str) -> str:
     if version.startswith("v") or version.startswith("V"):
         version = version[1:]
 
-    # Remove any extra text after the version number
-    # Example: "OrcaSlicer 2.3.1 beta Release" -> "2.3.1-beta"
     import re
 
-    # Extract the core version number and any pre-release identifier
-    match = re.search(r"(\d+\.\d+\.\d+)(?:\s+(\w+))?", version)
-    if match:
-        core_version = match.group(1)
-        pre_release = match.group(2)
+    # Handle versions that already have dash-separated suffixes (e.g., "2.3.1-beta")
+    dash_match = re.match(r"^(\d+\.\d+(?:\.\d+)?)-(\w+)$", version)
+    if dash_match:
+        core_version = dash_match.group(1)
+        pre_release = dash_match.group(2)
+        if pre_release.lower() in ["beta", "alpha", "rc"]:
+            return f"{core_version}-{pre_release.lower()}"
+        return version  # Return as-is if suffix is not recognized
+
+    # Handle versions with space-separated suffixes (e.g., "OrcaSlicer 2.3.1 beta Release")
+    space_match = re.search(r"(\d+\.\d+\.\d+)(?:\s+(\w+))?", version)
+    if space_match:
+        core_version = space_match.group(1)
+        pre_release = space_match.group(2)
         if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
             return f"{core_version}-{pre_release.lower()}"
         return core_version
 
     # Fallback for simpler version patterns
-    match = re.search(r"(\d+\.\d+)(?:\s+(\w+))?", version)
-    if match:
-        core_version = match.group(1)
-        pre_release = match.group(2)
+    simple_match = re.search(r"(\d+\.\d+)(?:\s+(\w+))?", version)
+    if simple_match:
+        core_version = simple_match.group(1)
+        pre_release = simple_match.group(2)
         if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
             return f"{core_version}-{pre_release.lower()}"
         return core_version
