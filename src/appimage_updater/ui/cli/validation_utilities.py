@@ -42,7 +42,7 @@ def _check_pattern_warning(app_config: dict[str, Any], warnings: list[str]) -> N
 def _display_warnings(warnings: list[str]) -> None:
     """Display configuration warnings if any exist."""
     if warnings:
-        console.print("\n[yellow]⚠️  Configuration Warnings:")
+        console.print("\n[yellow]Configuration Warnings:")
         for warning in warnings:
             console.print(f"[yellow]   {warning}")
 

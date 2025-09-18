@@ -87,16 +87,16 @@ def _display_add_success(
     from ..display import _replace_home_with_tilde
 
     display_download_dir = _replace_home_with_tilde(expanded_download_dir)
-    console.print(f"\n[green]✓ Successfully added application '{name}'[/green]")
+    console.print(f"\n[green]Successfully added application '{name}'[/green]")
     console.print(f"[blue]URL: {validated_url}")
     console.print(f"[blue]Download Directory: {display_download_dir}")
     console.print(f"[blue]Pattern: {pattern}")
 
     if prerelease_auto_enabled:
-        console.print("[yellow]ℹ️  Prerelease downloads have been automatically enabled for this repository")
+        console.print("[yellow]Note: Prerelease downloads have been automatically enabled for this repository")
         console.print("[yellow]   (detected as a repository that primarily uses prerelease versions)")
 
-    console.print(f"\n[yellow]💡 Tip: Use 'appimage-updater show {name}' to view full configuration")
+    console.print(f"\n[yellow]Tip: Use 'appimage-updater show {name}' to view full configuration")
 
 
 def _log_resolved_parameters(

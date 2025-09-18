@@ -31,7 +31,7 @@ def display_successful_downloads(successful: list[Any]) -> None:
     for result in successful:
         size_mb = result.download_size / (1024 * 1024)
         checksum_status = get_checksum_status(result)
-        console.print(f"  ✓ {result.app_name} ({size_mb:.1f} MB){checksum_status}")
+        console.print(f"  Downloaded: {result.app_name} ({size_mb:.1f} MB){checksum_status}")
 
 
 def display_failed_downloads(failed: list[Any]) -> None:
@@ -41,7 +41,7 @@ def display_failed_downloads(failed: list[Any]) -> None:
 
     console.print(f"\n[red]Failed to download {len(failed)} updates:")
     for result in failed:
-        console.print(f"  ✗ {result.app_name}: {result.error_message}")
+        console.print(f"  Failed: {result.app_name}: {result.error_message}")
 
 
 def get_checksum_status(result: Any) -> str:
@@ -49,6 +49,6 @@ def get_checksum_status(result: Any) -> str:
     if not result.checksum_result:
         return ""
     elif result.checksum_result.verified:
-        return " [green]✓[/green]"
+        return " [green]verified[/green]"
     else:
-        return " [yellow]⚠[/yellow]"
+        return " [yellow]unverified[/yellow]"

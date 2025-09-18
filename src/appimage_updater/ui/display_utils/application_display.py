@@ -41,7 +41,7 @@ def display_application_details(app: Any, config_source_info: dict[str, str] | N
 
 def display_edit_summary(app_name: str, changes: list[str]) -> None:
     """Display a summary of changes made during edit operation."""
-    console.print(f"\n[green]✓ Successfully updated configuration for '{app_name}'[/green]")
+    console.print(f"\n[green]Successfully updated configuration for '{app_name}'[/green]")
     console.print("[blue]Changes made:[/blue]")
     for change in changes:
         console.print(f"  • {change}")
@@ -262,7 +262,7 @@ def format_single_file_info(file_path: Path) -> list[str]:
     mtime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(mtime))
 
     # Check if file is executable
-    executable = "[green]✓[/green]" if os.access(file_path, os.X_OK) else "[red]✗[/red]"
+    executable = "[green]executable[/green]" if os.access(file_path, os.X_OK) else "[red]not executable[/red]"
 
     # Identify rotation suffix for better display
     rotation_indicator = get_rotation_indicator(file_path.name)
@@ -368,7 +368,7 @@ def get_symlinks_info(app: Any) -> str:
         target_display = _replace_home_with_tilde(str(target))
 
         # Check if target exists
-        status = "[green]✓[/green]" if target.exists() else "[red]✗ (broken)[/red]"
+        status = "[green]valid[/green]" if target.exists() else "[red]broken[/red]"
 
         return f"{display_path} → {target_display} {status}"
     except OSError as e:

@@ -614,7 +614,7 @@ class Downloader:
         """Log the checksum verification result."""
         logger.debug(
             f"Checksum verification for {candidate.app_name}: "
-            f"{'✓ PASS' if result.verified else '✗ FAIL'} "
+            f"{'PASS' if result.verified else 'FAIL'} "
             f"({algorithm.upper()})"
         )
 

@@ -138,7 +138,7 @@ def display_applications_list(applications: list[Any]) -> None:
     table.add_column("Download Directory", style="magenta", no_wrap=False)
 
     for app in applications:
-        status = "✅ Enabled" if app.enabled else "⏸️ Disabled"
+        status = "Enabled" if app.enabled else "Disabled"
 
         # Format source with better wrapping
         source_url = _wrap_url(app.url, 45)
@@ -200,7 +200,7 @@ def _create_error_row(result: CheckResult, show_urls: bool) -> list[str]:
     """Create row for error results."""
     row = [
         result.app_name,
-        "❌ Error",
+        "Error",
         "-",
         "-",
         result.error_message or "Unknown error",
@@ -214,7 +214,7 @@ def _create_no_candidate_row(result: CheckResult, show_urls: bool) -> list[str]:
     """Create row for results with no candidate."""
     row = [
         result.app_name,
-        "⚠️ No candidate",
+        "No candidate",
         "-",
         "-",
         result.error_message or "No matching assets",
@@ -227,9 +227,9 @@ def _create_no_candidate_row(result: CheckResult, show_urls: bool) -> list[str]:
 def _get_success_status_and_indicator(candidate: Any) -> tuple[str, str]:
     """Get status text and update indicator for successful results."""
     if candidate.needs_update:
-        return "⬆️ Update available", "⬆️"
+        return "Update available", "Update available"
     else:
-        return "✅ Up to date", "✅"
+        return "Up to date", "Up to date"
 
 
 def _format_success_versions(candidate: Any) -> tuple[str, str]:
@@ -347,7 +347,7 @@ def display_successful_downloads(successful: list[Any]) -> None:
     for result in successful:
         size_mb = result.download_size / (1024 * 1024)
         checksum_status = get_checksum_status(result)
-        console.print(f"  ✓ {result.app_name} ({size_mb:.1f} MB){checksum_status}")
+        console.print(f"  Downloaded: {result.app_name} ({size_mb:.1f} MB){checksum_status}")
 
 
 def display_failed_downloads(failed: list[Any]) -> None:
@@ -357,7 +357,7 @@ def display_failed_downloads(failed: list[Any]) -> None:
 
     console.print(f"\n[red]Failed to download {len(failed)} updates:")
     for result in failed:
-        console.print(f"  ✗ {result.app_name}: {result.error_message}")
+        console.print(f"  Failed: {result.app_name}: {result.error_message}")
 
 
 def get_checksum_status(result: Any) -> str:
@@ -366,9 +366,9 @@ def get_checksum_status(result: Any) -> str:
         return ""
 
     if result.checksum_result.verified:
-        return " [green]✓[/green]"
+        return " [green]verified[/green]"
     else:
-        return " [yellow]⚠[/yellow]"
+        return " [yellow]unverified[/yellow]"
 
 
 def display_application_details(app: Any, config_source_info: dict[str, str] | None = None) -> None:
@@ -395,7 +395,7 @@ def display_application_details(app: Any, config_source_info: dict[str, str] | N
 
 def display_edit_summary(app_name: str, changes: list[str]) -> None:
     """Display a summary of changes made during edit operation."""
-    console.print(f"\n[green]✓ Successfully updated configuration for '{app_name}'[/green]")
+    console.print(f"\n[green]Successfully updated configuration for '{app_name}'[/green]")
     console.print("[blue]Changes made:[/blue]")
     for change in changes:
         console.print(f"  • {change}")
@@ -610,7 +610,7 @@ def format_single_file_info(file_path: Path) -> list[str]:
     mtime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(mtime))
 
     # Check if file is executable
-    executable = "[green]✓[/green]" if os.access(file_path, os.X_OK) else "[red]✗[/red]"
+    executable = "[green]executable[/green]" if os.access(file_path, os.X_OK) else "[red]not executable[/red]"
 
     # Identify rotation suffix for better display
     rotation_indicator = get_rotation_indicator(file_path.name)
@@ -927,7 +927,7 @@ def _get_target_status(target_path: Path) -> str:
 
 def _get_status_icon(status: str) -> str:
     """Get status icon based on target status."""
-    return "[green]✓[/green]" if status == "valid" else "[red]✗[/red]"
+    return "[green]valid[/green]" if status == "valid" else "[red]invalid[/red]"
 
 
 def _get_status_message(status: str) -> str | None:

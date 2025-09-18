@@ -38,8 +38,8 @@ def interactive_add_command() -> InteractiveResult:
         # Display summary and confirm
         _display_add_summary(all_settings)
 
-        if not Confirm.ask("\n🎯 Add this application?", default=True):
-            console.print("❌ [yellow]Operation cancelled[/yellow]")
+        if not Confirm.ask("\nAdd this application?", default=True):
+            console.print("[yellow]Operation cancelled[/yellow]")
             return InteractiveResult.cancelled_result("user_cancelled")
 
         return InteractiveResult.success_result(all_settings)
@@ -198,7 +198,7 @@ def _display_rotation_summary_info(settings: dict[str, Any]) -> None:
     """Display rotation-related configuration information."""
     from .display import _replace_home_with_tilde
 
-    console.print(f"   Rotation: {'✅' if settings['rotation'] else '❌'}")
+    console.print(f"   Rotation: {'Yes' if settings['rotation'] else 'No'}")
     if settings["rotation"]:
         console.print(f"   Retain: {settings['retain']} files")
         symlink_path = settings["symlink"] or "None"
@@ -209,16 +209,16 @@ def _display_rotation_summary_info(settings: dict[str, Any]) -> None:
 
 def _display_feature_summary_info(settings: dict[str, Any]) -> None:
     """Display feature flags and settings."""
-    console.print(f"   Checksum: {'✅' if settings['checksum'] else '❌'}")
-    console.print(f"   Prerelease: {'✅' if settings['prerelease'] else '❌'}")
-    console.print(f"   Auto-subdir: {'✅' if settings['auto_subdir'] else '❌'}")
+    console.print(f"   Checksum: {'Yes' if settings['checksum'] else 'No'}")
+    console.print(f"   Prerelease: {'Yes' if settings['prerelease'] else 'No'}")
+    console.print(f"   Auto-subdir: {'Yes' if settings['auto_subdir'] else 'No'}")
 
 
 def interactive_edit_command(app_names: list[str]) -> InteractiveResult:
     """Interactive mode for the edit command."""
     console.print(
         Panel.fit(
-            f"✏️  [bold cyan]Interactive Edit Mode[/bold cyan]\nLet's edit configuration for: {', '.join(app_names)}",
+            f"[bold cyan]Interactive Edit Mode[/bold cyan]\nLet's edit configuration for: {', '.join(app_names)}",
             border_style="cyan",
         )
     )
@@ -232,16 +232,16 @@ def interactive_edit_command(app_names: list[str]) -> InteractiveResult:
         updates.update(_collect_advanced_settings())
 
         if not updates:
-            console.print("ℹ️  [yellow]No changes specified[/yellow]")
+            console.print("[yellow]No changes specified[/yellow]")
             return InteractiveResult.cancelled_result("no_changes")
 
         # Summary
-        console.print("\n✨ [bold green]Changes Summary[/bold green]")
+        console.print("\n[bold green]Changes Summary[/bold green]")
         for key, value in updates.items():
             console.print(f"   {key}: {value}")
 
-        if not Confirm.ask("\n🎯 Apply these changes?", default=True):
-            console.print("❌ [yellow]Operation cancelled[/yellow]")
+        if not Confirm.ask("\nApply these changes?", default=True):
+            console.print("[yellow]Operation cancelled[/yellow]")
             return InteractiveResult.cancelled_result("user_cancelled")
 
         return InteractiveResult.success_result(updates)
@@ -338,7 +338,7 @@ def _prompt_with_validation(prompt: str, validator: Callable[[str], bool], error
             value = Prompt.ask(prompt, **kwargs)
             if validator(value):
                 return str(value)
-            console.print(f"[red]⚠ {error_msg}[/red]")
+            console.print(f"[red]Warning: {error_msg}[/red]")
         except KeyboardInterrupt:
             console.print("\n[yellow]Operation cancelled[/yellow]")
             raise typer.Exit(0) from None

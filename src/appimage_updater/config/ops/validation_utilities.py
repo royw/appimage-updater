@@ -67,7 +67,7 @@ def validate_url_update(updates: dict[str, Any]) -> None:
 
     if force:
         # Skip validation and normalization when --force is used
-        console.print("[yellow]⚠️  Using --force: Skipping URL validation and normalization")
+        console.print("[yellow]Warning: Using --force: Skipping URL validation and normalization")
         logger.debug(f"Skipping URL validation for '{url}' due to --force flag")
         # Remove the force flag from updates as it's not needed for config storage
         updates.pop("force", None)

@@ -319,7 +319,7 @@ def _check_rotation_warning(app_config: dict[str, Any], warnings: list[str]) -> 
     """Check if rotation is enabled but no symlink is configured."""
     if app_config.get("rotation", False) and not app_config.get("symlink"):
         warnings.append(
-            "⚠️  Rotation is enabled but no symlink path is configured. "
+            "Warning: Rotation is enabled but no symlink path is configured. "
             "Consider adding --symlink for easier access to the latest version."
         )
 
@@ -330,7 +330,7 @@ def _check_download_directory_warning(download_dir: str, warnings: list[str]) ->
 
     if not Path(download_dir).exists():
         warnings.append(
-            "⚠️  Download directory doesn't exist and will be created on first update. "
+            "Warning: Download directory doesn't exist and will be created on first update. "
             "Use --create-dir to create it immediately."
         )
 
@@ -339,7 +339,7 @@ def _check_checksum_warning(app_config: dict[str, Any], warnings: list[str]) -> 
     """Check if checksum verification is disabled."""
     if not app_config.get("checksum", True):
         warnings.append(
-            "⚠️  Checksum verification is disabled. This reduces security. "
+            "Warning: Checksum verification is disabled. This reduces security. "
             "Consider enabling with --checksum for better integrity checks."
         )
 
@@ -349,7 +349,7 @@ def _check_pattern_warning(app_config: dict[str, Any], warnings: list[str]) -> N
     pattern = app_config.get("pattern", "")
     if ".*" in pattern and not pattern.endswith("$"):
         warnings.append(
-            "⚠️  File pattern may be too broad and could match unintended files. "
+            "Warning: File pattern may be too broad and could match unintended files. "
             "Consider making the pattern more specific."
         )
 
@@ -636,19 +636,19 @@ def _display_add_success(
 ) -> None:
     """Display success message after adding configuration."""
     display_dir = _replace_home_with_tilde(expanded_download_dir)
-    console.print(f"[green]✅ Successfully added application '{name}'")
-    console.print(f"[blue]📍 Source: {validated_url}")
-    console.print(f"[blue]📁 Download Directory: {display_dir}")
-    console.print(f"[blue]🔍 Pattern: {app_config['pattern']}")
+    console.print(f"[green]Successfully added application '{name}'")
+    console.print(f"[blue]Source: {validated_url}")
+    console.print(f"[blue]Download Directory: {display_dir}")
+    console.print(f"[blue]Pattern: {app_config['pattern']}")
 
     # Show prerelease auto-detection feedback
     if prerelease_auto_enabled:
-        console.print("[cyan]🔍 Auto-detected continuous builds - enabled prerelease support")
+        console.print("[cyan]Auto-detected continuous builds - enabled prerelease support")
 
     # Check for potential configuration issues and warn user
     _check_configuration_warnings(app_config, expanded_download_dir)
 
-    console.print(f"\n[yellow]💡 Tip: Use 'appimage-updater show {name}' to view full configuration")
+    console.print(f"\n[yellow]Tip: Use 'appimage-updater show {name}' to view full configuration")
 
 
 def _resolve_download_directory(
@@ -1300,8 +1300,8 @@ def _populate_repository_table(table: Any, releases: list[Any], pattern: str, sh
         table.add_row(
             release.tag_name,
             published,
-            "✓" if release.is_prerelease else "✗",
-            "✓" if release.is_draft else "✗",
+            "Yes" if release.is_prerelease else "No",
+            "Yes" if release.is_draft else "No",
             assets_display,
         )
 
