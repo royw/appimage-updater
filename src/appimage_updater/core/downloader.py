@@ -399,7 +399,7 @@ class Downloader:
 
     def _write_metadata_file(self, info_file_path: Path, version_info: str) -> None:
         """Write the metadata content to file."""
-        metadata_content = f"Version: v{version_info}\n"
+        metadata_content = f"Version: {version_info}\n"
         info_file_path.write_text(metadata_content)
         logger.debug(f"Created version metadata file: {info_file_path.name}")
 

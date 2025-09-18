@@ -172,7 +172,8 @@ class VersionChecker:
             # e.g., "v2.2.1.60 Public Release (Hotfix)" -> "v2.2.1.60"
             content = self._extract_version_number(content)
 
-            # Clean up double "v" prefix (e.g., "vv3.3.0" -> "v3.3.0")
+            # Clean up double "v" prefix from legacy .info files (e.g., "vv3.3.0" -> "v3.3.0")
+            # This handles .info files created before the fix
             if content.startswith("vv"):
                 content = content[1:]  # Remove one "v"
 
