@@ -164,7 +164,9 @@ class VersionChecker:
         try:
             content = info_file.read_text().strip()
             processed_content = self._process_version_content(content)
-            return self._convert_nightly_version_string(processed_content)
+            nightly_converted = self._convert_nightly_version_string(processed_content)
+            # Apply the same normalization as we do for latest versions
+            return self._normalize_version_string(nightly_converted)
         except Exception:
             return None
 
@@ -382,7 +384,7 @@ class VersionChecker:
     def _create_nightly_version(self, asset: Asset) -> str:
         """Create version string for nightly builds using asset creation date."""
         date_str = asset.created_at.strftime("%Y-%m-%d")
-        return f"v{date_str}"
+        return date_str
 
     def _get_regular_version(self, release: Release) -> str:
         """Get version string for regular releases."""
@@ -401,10 +403,18 @@ class VersionChecker:
         dash_match = re.match(r"^(\d+\.\d+(?:\.\d+)?)-(\w+)$", version)
         if dash_match:
             core_version = dash_match.group(1)
-            pre_release = dash_match.group(2)
-            if pre_release.lower() in ["beta", "alpha", "rc"]:
-                return f"{core_version}-{pre_release.lower()}"
-            return version  # Return as-is if suffix is not recognized
+            suffix = dash_match.group(2)
+            # Keep pre-release identifiers
+            if suffix.lower() in ["beta", "alpha", "rc"]:
+                return f"{core_version}-{suffix.lower()}"
+            # Strip architecture identifiers and other non-version suffixes
+            elif suffix.lower() in [
+                "x86", "x64", "amd64", "arm64", "i386", "i686",
+                "linux", "win32", "win64", "macos", "darwin"
+            ]:
+                return core_version
+            # For unknown suffixes, return just the core version to be safe
+            return core_version
 
         # Handle versions with space-separated suffixes (e.g., "OrcaSlicer 2.3.1 beta Release")
         space_match = re.search(r"(\d+\.\d+\.\d+)(?:\s+(\w+))?", version)
