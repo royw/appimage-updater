@@ -163,10 +163,24 @@ class VersionChecker:
 
         try:
             content = info_file.read_text().strip()
+
+            # Handle "Version: " prefix from .info files
+            if content.startswith("Version: "):
+                content = content[9:]  # Remove "Version: " prefix
+
+            # Extract just the version number from complex version strings
+            # e.g., "v2.2.1.60 Public Release (Hotfix)" -> "v2.2.1.60"
+            content = self._extract_version_number(content)
+
+            # Clean up double "v" prefix (e.g., "vv3.3.0" -> "v3.3.0")
+            if content.startswith("vv"):
+                content = content[1:]  # Remove one "v"
+
             # Handle rotation suffixes (.current, .old, etc.)
             if content.endswith((".current", ".old", ".backup")):
                 # Remove rotation suffix to get actual version
                 content = content.rsplit(".", 1)[0]
+
             return self._convert_nightly_version_string(content)
         except Exception:
             return None
@@ -175,18 +189,60 @@ class VersionChecker:
         """Get path to .info file for application."""
         # Use download_dir if available, otherwise use a default
         download_dir = getattr(app_config, "download_dir", None) or Path.home() / "Downloads"
-        app_files = list(download_dir.glob(f"{app_config.name}*"))
+
+        # Try multiple glob patterns to find files
+        # Handle cases like BambuStudio -> Bambu_Studio_*
+        patterns = [
+            f"{app_config.name}*",  # Exact match
+            f"{app_config.name.replace('Studio', '_Studio')}*",  # BambuStudio -> Bambu_Studio
+            "*"  # Fallback to all files
+        ]
+
+        app_files = []
+        for pattern in patterns:
+            potential_files = list(download_dir.glob(pattern))
+            # Filter to only include files that might belong to this app
+            for f in potential_files:
+                name_lower = f.name.lower()
+                app_name_lower = app_config.name.lower()
+                if (name_lower.startswith(app_name_lower) or
+                    app_name_lower.replace('studio', '_studio') in name_lower or
+                    name_lower.startswith(app_name_lower.replace('studio', '_studio'))):
+                    app_files.append(f)
+            if app_files:
+                break
 
         # Look for .current files first (prioritize for rotation)
         current_files = [f for f in app_files if f.name.endswith(".current")]
         if current_files:
-            # Use the .current file to determine base name
+            # Use the .current file to find corresponding .info file
             current_file = current_files[0]
+            # Look for .current.info file first (rotation naming)
+            current_info_file = download_dir / f"{current_file.name}.info"
+            if current_info_file.exists():
+                return current_info_file
+            # Fallback to base name without .current
             base_name = current_file.name.replace(".current", "")
             return download_dir / f"{base_name}.info"
 
         # Fallback to standard naming
         return download_dir / f"{app_config.name}.info"
+
+    def _extract_version_number(self, version_string: str) -> str:
+        """Extract just the version number from complex version strings."""
+        if not version_string:
+            return version_string
+
+        # Use regex to extract version-like patterns
+        # Matches patterns like: v1.2.3, 1.2.3.4, v2.2.1.60, etc.
+        import re
+        version_pattern = r'(v?\d+(?:\.\d+)*(?:-[a-zA-Z0-9]+)*)'
+        match = re.search(version_pattern, version_string)
+        if match:
+            return match.group(1)
+
+        # If no version pattern found, return the first word (fallback)
+        return version_string.split()[0] if version_string else version_string
 
     def _convert_nightly_version_string(self, version_string: str) -> str:
         """Convert nightly build version strings to comparable format."""
