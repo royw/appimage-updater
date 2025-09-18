@@ -196,7 +196,7 @@ class VersionChecker:
         patterns = [
             f"{app_config.name}*",  # Exact match
             f"{app_config.name.replace('Studio', '_Studio')}*",  # BambuStudio -> Bambu_Studio
-            "*"  # Fallback to all files
+            "*",  # Fallback to all files
         ]
 
         app_files = []
@@ -206,9 +206,11 @@ class VersionChecker:
             for f in potential_files:
                 name_lower = f.name.lower()
                 app_name_lower = app_config.name.lower()
-                if (name_lower.startswith(app_name_lower) or
-                    app_name_lower.replace('studio', '_studio') in name_lower or
-                    name_lower.startswith(app_name_lower.replace('studio', '_studio'))):
+                if (
+                    name_lower.startswith(app_name_lower)
+                    or app_name_lower.replace("studio", "_studio") in name_lower
+                    or name_lower.startswith(app_name_lower.replace("studio", "_studio"))
+                ):
                     app_files.append(f)
             if app_files:
                 break
@@ -237,7 +239,8 @@ class VersionChecker:
         # Use regex to extract version-like patterns
         # Matches patterns like: v1.2.3, 1.2.3.4, v2.2.1.60, etc.
         import re
-        version_pattern = r'(v?\d+(?:\.\d+)*(?:-[a-zA-Z0-9]+)*)'
+
+        version_pattern = r"(v?\d+(?:\.\d+)*(?:-[a-zA-Z0-9]+)*)"
         match = re.search(version_pattern, version_string)
         if match:
             return match.group(1)

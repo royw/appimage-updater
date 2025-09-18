@@ -259,10 +259,7 @@ def _create_success_row(result: CheckResult, show_urls: bool) -> list[str]:
     current, latest = _format_success_versions(candidate)
 
     # Show version in Update column when update is needed, just emoji when up to date
-    if candidate.needs_update:
-        update_display = latest
-    else:
-        update_display = update_indicator
+    update_display = latest if candidate.needs_update else update_indicator
 
     row = [
         result.app_name,
