@@ -285,6 +285,10 @@ class VersionChecker:
             if not release.assets:
                 continue
 
+            # Skip prerelease versions if not enabled in config
+            if release.is_prerelease and not app_config.prerelease:
+                continue
+
             # Select best asset for this release
             try:
                 best_asset = select_best_distribution_asset(release.assets)
