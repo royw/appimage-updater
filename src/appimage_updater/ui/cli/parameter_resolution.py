@@ -34,17 +34,22 @@ def _resolve_download_directory(
     if download_dir:
         return download_dir
 
-    # Use global config default
-    if global_config and global_config.defaults.download_dir:
-        base_dir = global_config.defaults.download_dir
-    else:
-        # Fallback to default
-        base_dir = Path.home() / "Applications"
+    base_dir = _get_base_download_directory(global_config)
+    return _apply_auto_subdir(base_dir, global_config, name)
 
-    # Apply auto-subdir if enabled and name provided
+
+def _get_base_download_directory(global_config: Any) -> Path:
+    """Get base download directory from config or default."""
+    if global_config and global_config.defaults.download_dir:
+        return global_config.defaults.download_dir
+    else:
+        return Path.home() / "Applications"
+
+
+def _apply_auto_subdir(base_dir: Path, global_config: Any, name: str) -> str:
+    """Apply auto-subdir logic if enabled."""
     if global_config and global_config.defaults.auto_subdir and name:
         return str(base_dir / name)
-
     return str(base_dir)
 
 
