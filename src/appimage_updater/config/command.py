@@ -595,7 +595,7 @@ def list_available_settings() -> None:
     console.print("  [cyan]appimage-updater config reset[/cyan]                   # Reset to defaults")
     console.print()
 
-    console.print("[dim]💡 Tip: Use 'appimage-updater config show' to see current values[/dim]")
+    console.print("[dim]Tip: Use 'appimage-updater config show' to see current values[/dim]")
 
 
 def reset_global_config(config_file: Path | None = None, config_dir: Path | None = None) -> bool:

@@ -28,7 +28,7 @@ def display_applications_list(applications: list[Any]) -> None:
     table.add_column("Download Directory", style="magenta", no_wrap=False)
 
     for app in applications:
-        status = "✅ Enabled" if app.enabled else "⏸️ Disabled"
+        status = "Enabled" if app.enabled else "Disabled"
 
         # Format source with better wrapping
         source_url = _wrap_url(app.url, 45)
@@ -90,7 +90,7 @@ def _create_error_row(result: CheckResult, show_urls: bool) -> list[str]:
     """Create row for error results."""
     row = [
         result.app_name,
-        "❌ Error",
+        "Error",
         "-",
         "-",
         "-",
@@ -104,7 +104,7 @@ def _create_no_candidate_row(result: CheckResult, show_urls: bool) -> list[str]:
     """Create row for results with no candidate."""
     row = [
         result.app_name,
-        "⚠️ No updates",
+        "No updates",
         "-",
         "-",
         "-",
@@ -117,9 +117,9 @@ def _create_no_candidate_row(result: CheckResult, show_urls: bool) -> list[str]:
 def _get_success_status_and_indicator(candidate: Any) -> tuple[str, str]:
     """Get status text and update indicator for successful results."""
     if candidate.needs_update:
-        return "⬆️ Update available", "⬆️"
+        return "Update available", "Update available"
     else:
-        return "✅ Up to date", "✅"
+        return "Up to date", "Up to date"
 
 
 def _format_success_versions(candidate: Any) -> tuple[str, str]:

@@ -99,7 +99,7 @@ class AddCommand(Command):
     def _show_validation_help(self, error_msg: str) -> None:
         """Show helpful validation error messages."""
         self.console.print(f"[red]Error: {error_msg}[/red]")
-        self.console.print("[yellow]💡 Try one of these options:")
+        self.console.print("[yellow]Try one of these options:")
         self.console.print(
             "[yellow]   • Provide both NAME and URL: appimage-updater add MyApp https://github.com/user/repo"
         )

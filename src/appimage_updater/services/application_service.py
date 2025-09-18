@@ -117,7 +117,7 @@ class ApplicationService:
 
         # Use print to ensure output is captured by test framework
         print(f"Applications not found: {', '.join(not_found)}", file=sys.stdout)  # noqa: T201
-        print("💡 Troubleshooting:", file=sys.stdout)  # noqa: T201
+        print("Troubleshooting:", file=sys.stdout)  # noqa: T201
 
         ApplicationService._print_troubleshooting_tips_plain(available_apps)
 

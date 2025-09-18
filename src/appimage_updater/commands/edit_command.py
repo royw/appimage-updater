@@ -223,11 +223,11 @@ class EditCommand(Command):
         """Show helpful hints based on validation error."""
         if "File rotation requires a symlink path" in error_message:
             self.console.print(
-                "[yellow]💡 Either disable rotation or specify a symlink path with --symlink-path[/yellow]"
+                "[yellow]Either disable rotation or specify a symlink path with --symlink-path[/yellow]"
             )
         elif "invalid characters" in error_message:
-            self.console.print("[yellow]💡 Symlink paths cannot contain newlines or other control characters[/yellow]")
+            self.console.print("[yellow]Symlink paths cannot contain newlines or other control characters[/yellow]")
         elif "should end with '.AppImage'" in error_message:
-            self.console.print("[yellow]💡 Symlink paths should end with .AppImage extension[/yellow]")
+            self.console.print("[yellow]Symlink paths should end with .AppImage extension[/yellow]")
         elif "Invalid checksum algorithm" in error_message:
-            self.console.print("[yellow]💡 Valid algorithms: sha256, sha1, md5[/yellow]")
+            self.console.print("[yellow]Valid algorithms: sha256, sha1, md5[/yellow]")

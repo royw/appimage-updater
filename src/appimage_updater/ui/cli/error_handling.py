@@ -14,18 +14,18 @@ def _handle_add_error(e: Exception, name: str) -> None:
     """Handle and display add command errors with appropriate messaging."""
     error_msg = str(e)
     if "rate limit" in error_msg.lower():
-        console.print(f"[red]✗ Failed to add application '{name}': GitHub API rate limit exceeded[/red]")
-        console.print("[yellow]💡 Try again later or set up GitHub authentication to increase rate limits")
+        console.print(f"[red]Failed to add application '{name}': GitHub API rate limit exceeded[/red]")
+        console.print("[yellow]Try again later or set up GitHub authentication to increase rate limits")
         console.print("[yellow]   See: https://docs.github.com/en/authentication")
     elif "not found" in error_msg.lower() or "404" in error_msg:
-        console.print(f"[red]✗ Failed to add application '{name}': Repository not found[/red]")
-        console.print("[yellow]💡 Please check that the URL is correct and the repository exists")
+        console.print(f"[red]Failed to add application '{name}': Repository not found[/red]")
+        console.print("[yellow]Please check that the URL is correct and the repository exists")
     elif "network" in error_msg.lower() or "connection" in error_msg.lower():
-        console.print(f"[red]✗ Failed to add application '{name}': Network connection error[/red]")
-        console.print("[yellow]💡 Please check your internet connection and try again")
+        console.print(f"[red]Failed to add application '{name}': Network connection error[/red]")
+        console.print("[yellow]Please check your internet connection and try again")
     else:
-        console.print(f"[red]✗ Failed to add application '{name}': {error_msg}[/red]")
-        console.print("[yellow]💡 Use --debug for more detailed error information")
+        console.print(f"[red]Failed to add application '{name}': {error_msg}[/red]")
+        console.print("[yellow]Use --debug for more detailed error information")
 
     logger.exception("Full exception details")
 

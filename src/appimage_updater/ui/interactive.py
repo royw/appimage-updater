@@ -53,7 +53,7 @@ def _display_welcome_message() -> None:
     """Display the welcome message for interactive add mode."""
     console.print(
         Panel.fit(
-            "🚀 [bold cyan]Interactive Add Mode[/bold cyan]\nLet's add a new AppImage application step by step!",
+            "[bold cyan]Interactive Add Mode[/bold cyan]\nLet's add a new AppImage application step by step!",
             border_style="cyan",
         )
     )
@@ -65,19 +65,19 @@ def _collect_basic_add_settings() -> dict[str, Any]:
 
     # Required parameters with validation
     name = _prompt_with_validation(
-        "\n📱 [bold]Application name[/bold]",
+        "\n[bold]Application name[/bold]",
         validator=_validate_app_name,
         error_msg="Application name cannot be empty and should not contain special characters",
     )
 
     url = _prompt_with_validation(
-        "\n🔗 [bold]Repository or download URL[/bold]",
+        "\n[bold]Repository or download URL[/bold]",
         validator=_validate_url,
         error_msg="Please enter a valid repository URL (e.g., https://github.com/user/repo)",
     )
 
     # Optional download directory
-    console.print("\n📁 [bold]Download Directory[/bold]")
+    console.print("\n[bold]Download Directory[/bold]")
     console.print("   Where should AppImage files be downloaded?")
     console.print("   [dim]Leave empty to use global default with auto-subdir[/dim]")
 
@@ -86,7 +86,7 @@ def _collect_basic_add_settings() -> dict[str, Any]:
     # Directory creation
     create_dir = False
     if download_dir:
-        create_dir = Confirm.ask("\n🔨 Create directory if it doesn't exist?", default=True)
+        create_dir = Confirm.ask("\nCreate directory if it doesn't exist?", default=True)
 
     return {
         "name": name,
@@ -103,7 +103,7 @@ def _collect_basic_add_settings() -> dict[str, Any]:
 def _collect_rotation_add_settings(name: str) -> dict[str, Any]:
     """Collect file rotation settings."""
     console.print("\n[dim]Step 2 of 4: File Rotation Settings[/dim]")
-    console.print("\n🔄 [bold]File Rotation Settings[/bold]")
+    console.print("\n[bold]File Rotation Settings[/bold]")
     console.print("   Keep multiple versions and manage symlinks")
 
     rotation = Confirm.ask("   Enable file rotation?", default=True)
@@ -128,7 +128,7 @@ def _collect_rotation_add_settings(name: str) -> dict[str, Any]:
 def _collect_checksum_add_settings() -> dict[str, Any]:
     """Collect checksum verification settings."""
     console.print("\n[dim]Step 3 of 4: Checksum Verification[/dim]")
-    console.print("\n🔐 [bold]Checksum Verification[/bold]")
+    console.print("\n[bold]Checksum Verification[/bold]")
     console.print("   Verify file integrity after download")
 
     checksum = Confirm.ask("   Enable checksum verification?", default=True)
@@ -157,7 +157,7 @@ def _collect_checksum_add_settings() -> dict[str, Any]:
 def _collect_advanced_add_settings(url: str) -> dict[str, Any]:
     """Collect advanced settings."""
     console.print("\n[dim]Step 4 of 4: Advanced Settings[/dim]")
-    console.print("\n⚙️  [bold]Advanced Settings[/bold]")
+    console.print("\n[bold]Advanced Settings[/bold]")
 
     prerelease = Confirm.ask("   Include prerelease versions?", default=False)
 
@@ -176,7 +176,7 @@ def _collect_advanced_add_settings(url: str) -> dict[str, Any]:
 
 def _display_add_summary(settings: dict[str, Any]) -> None:
     """Display configuration summary."""
-    console.print("\n✨ [bold green]Configuration Summary[/bold green]")
+    console.print("\n[bold green]Configuration Summary[/bold green]")
     _display_basic_summary_info(settings)
     _display_rotation_summary_info(settings)
     _display_feature_summary_info(settings)
@@ -254,7 +254,7 @@ def interactive_edit_command(app_names: list[str]) -> InteractiveResult:
 def _collect_basic_edit_settings() -> dict[str, Any]:
     """Collect basic settings updates."""
     updates = {}
-    console.print("\n📝 [bold]Basic Settings[/bold]")
+    console.print("\n[bold]Basic Settings[/bold]")
 
     if Confirm.ask("   Update repository URL?", default=False):
         updates["url"] = Prompt.ask("   New URL")
@@ -274,7 +274,7 @@ def _collect_basic_edit_settings() -> dict[str, Any]:
 def _collect_rotation_settings() -> dict[str, Any]:
     """Collect rotation settings updates."""
     updates = {}
-    console.print("\n🔄 [bold]File Rotation[/bold]")
+    console.print("\n[bold]File Rotation[/bold]")
 
     if Confirm.ask("   Update rotation settings?", default=False):
         updates["rotation"] = Confirm.ask("   Enable rotation?", default=False)
@@ -295,7 +295,7 @@ def _collect_rotation_settings() -> dict[str, Any]:
 def _collect_checksum_settings() -> dict[str, Any]:
     """Collect checksum settings updates."""
     updates = {}
-    console.print("\n🔐 [bold]Checksum Settings[/bold]")
+    console.print("\n[bold]Checksum Settings[/bold]")
 
     if Confirm.ask("   Update checksum settings?", default=False):
         updates["checksum"] = Confirm.ask("   Enable checksum verification?", default=True)
@@ -320,7 +320,7 @@ def _collect_checksum_settings() -> dict[str, Any]:
 def _collect_advanced_settings() -> dict[str, Any]:
     """Collect advanced settings updates."""
     updates = {}
-    console.print("\n⚙️  [bold]Advanced Settings[/bold]")
+    console.print("\n[bold]Advanced Settings[/bold]")
 
     if Confirm.ask("   Update prerelease setting?", default=False):
         updates["prerelease"] = Confirm.ask("   Include prereleases?")
@@ -359,7 +359,7 @@ def _check_basic_url_format(url: str) -> bool:
         return False
 
     if not (url.startswith("http://") or url.startswith("https://")):
-        console.print("[yellow]💡 URL should start with http:// or https://[/yellow]")
+        console.print("[yellow]URL should start with http:// or https://[/yellow]")
         return False
 
     return True
@@ -378,14 +378,14 @@ def _normalize_and_validate_repository_url(url: str) -> bool:
         return True
 
     except Exception as e:
-        console.print(f"[yellow]💡 {str(e)}[/yellow]")
+        console.print(f"[yellow]{str(e)}[/yellow]")
         return False
 
 
 def _show_url_correction_if_needed(normalized_url: str, was_corrected: bool) -> None:
     """Show URL correction message if URL was normalized."""
     if was_corrected:
-        console.print(f"[yellow]📝 Detected download URL, will use repository URL: {normalized_url}[/yellow]")
+        console.print(f"[yellow]Detected download URL, will use repository URL: {normalized_url}[/yellow]")
 
 
 def _validate_url(url: str) -> bool:

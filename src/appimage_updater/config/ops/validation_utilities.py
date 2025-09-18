@@ -31,7 +31,7 @@ def validate_and_normalize_add_url(url: str) -> str | None:
         repo_client.parse_repo_url(normalized_url)
 
         if was_corrected:
-            console.print("[yellow]📝 Detected download URL, using repository URL instead:")
+            console.print("[yellow]Detected download URL, using repository URL instead:")
             console.print(f"[dim]   Original: {url}")
             console.print(f"[dim]   Corrected: {normalized_url}")
             logger.debug(f"Corrected URL from '{url}' to '{normalized_url}'")
@@ -87,7 +87,7 @@ def validate_url_update(updates: dict[str, Any]) -> None:
 
     # Show correction to user if URL was corrected
     if was_corrected:
-        console.print("[yellow]📝 Detected download URL, using repository URL instead:")
+        console.print("[yellow]Detected download URL, using repository URL instead:")
         console.print(f"[dim]   Original: {url}")
         console.print(f"[dim]   Corrected: {normalized_url}")
         logger.debug(f"Corrected URL from '{url}' to '{normalized_url}'")

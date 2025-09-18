@@ -61,7 +61,7 @@ def _check_configuration_warnings(app_config: dict[str, Any], download_dir: str)
 
 def _show_add_examples() -> None:
     """Display detailed examples for the add command."""
-    console.print("\n[bold cyan]📚 ADD COMMAND EXAMPLES[/bold cyan]\n")
+    console.print("\n[bold cyan]ADD COMMAND EXAMPLES[/bold cyan]\n")
 
     console.print("[bold]Basic Usage:[/bold]")
     console.print("  appimage-updater add MyApp https://github.com/user/repo")
