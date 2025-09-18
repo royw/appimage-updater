@@ -102,7 +102,7 @@ class TestDirectWorkflowIntegration:
             ])
 
             assert result.exit_code == 0
-            assert "✓ Successfully added application 'ComplexApp'" in result.stdout
+            assert "Successfully added application 'ComplexApp'" in result.stdout
 
             # Verify all configuration options were applied correctly
             config_file = temp_config_dir / "complexapp.json"

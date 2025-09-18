@@ -31,7 +31,7 @@ class TestGetChecksumStatus:
         result.checksum_result.verified = True
         
         status = get_checksum_status(result)
-        assert status == " [green]✓[/green]"
+        assert status == " [green]verified[/green]"
 
     def test_get_checksum_status_not_verified(self) -> None:
         """Test checksum status when checksum is not verified."""
@@ -40,7 +40,7 @@ class TestGetChecksumStatus:
         result.checksum_result.verified = False
         
         status = get_checksum_status(result)
-        assert status == " [yellow]⚠[/yellow]"
+        assert status == " [yellow]unverified[/yellow]"
 
     def test_get_checksum_status_falsy_checksum_result(self) -> None:
         """Test checksum status when checksum result is falsy."""
@@ -75,7 +75,7 @@ class TestDisplaySuccessfulDownloads:
         # Should print header and result
         assert mock_console.print.call_count == 2
         mock_console.print.assert_any_call("\n[green]Successfully downloaded 1 updates:")
-        mock_console.print.assert_any_call("  ✓ TestApp (1.0 MB)")
+        mock_console.print.assert_any_call("  Downloaded: TestApp (1.0 MB)")
 
     @patch('appimage_updater.ui.display_utils.results_display.console')
     def test_display_successful_downloads_multiple_results(self, mock_console: Mock) -> None:
@@ -96,8 +96,8 @@ class TestDisplaySuccessfulDownloads:
         # Should print header and both results
         assert mock_console.print.call_count == 3
         mock_console.print.assert_any_call("\n[green]Successfully downloaded 2 updates:")
-        mock_console.print.assert_any_call("  ✓ App1 (2.0 MB)")
-        mock_console.print.assert_any_call("  ✓ App2 (5.0 MB) [green]✓[/green]")
+        mock_console.print.assert_any_call("  Downloaded: App1 (2.0 MB)")
+        mock_console.print.assert_any_call("  Downloaded: App2 (5.0 MB) [green]verified[/green]")
 
     @patch('appimage_updater.ui.display_utils.results_display.console')
     def test_display_successful_downloads_with_checksum_warning(self, mock_console: Mock) -> None:
@@ -110,7 +110,7 @@ class TestDisplaySuccessfulDownloads:
         
         display_successful_downloads([result])
         
-        mock_console.print.assert_any_call("  ✓ TestApp (1.5 MB) [yellow]⚠[/yellow]")
+        mock_console.print.assert_any_call("  Downloaded: TestApp (1.5 MB) [yellow]unverified[/yellow]")
 
 
 class TestDisplayFailedDownloads:
@@ -136,7 +136,7 @@ class TestDisplayFailedDownloads:
         # Should print header and result
         assert mock_console.print.call_count == 2
         mock_console.print.assert_any_call("\n[red]Failed to download 1 updates:")
-        mock_console.print.assert_any_call("  ✗ FailedApp: Network timeout")
+        mock_console.print.assert_any_call("  Failed: FailedApp: Network timeout")
 
     @patch('appimage_updater.ui.display_utils.results_display.console')
     def test_display_failed_downloads_multiple_results(self, mock_console: Mock) -> None:
@@ -154,8 +154,8 @@ class TestDisplayFailedDownloads:
         # Should print header and both results
         assert mock_console.print.call_count == 3
         mock_console.print.assert_any_call("\n[red]Failed to download 2 updates:")
-        mock_console.print.assert_any_call("  ✗ App1: File not found")
-        mock_console.print.assert_any_call("  ✗ App2: Permission denied")
+        mock_console.print.assert_any_call("  Failed: App1: File not found")
+        mock_console.print.assert_any_call("  Failed: App2: Permission denied")
 
 
 class TestDisplayDownloadResults:

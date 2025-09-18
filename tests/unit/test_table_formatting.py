@@ -125,7 +125,7 @@ class TestCreateResultRow:
     @patch('appimage_updater.ui.display_utils.table_formatting._create_error_row')
     def test_error_result(self, mock_error: Mock) -> None:
         """Test creating row for error result."""
-        mock_error.return_value = ["TestApp", "❌ Error", "-", "-", "-"]
+        mock_error.return_value = ["TestApp", "Error", "-", "-", "-"]
         
         result = Mock()
         result.success = False
@@ -201,7 +201,7 @@ class TestDisplayCheckResults:
     def test_display_basic(self, mock_row: Mock, mock_table: Mock, mock_console: Mock) -> None:
         """Test basic display functionality."""
         mock_table.return_value = Mock()
-        mock_row.return_value = ["TestApp", "✅ Up to date", "1.0.0", "1.0.0", "✅"]
+        mock_row.return_value = ["TestApp", "Up to date", "1.0.0", "1.0.0", "Up to date"]
         
         results = [Mock()]
         display_check_results(results, False)

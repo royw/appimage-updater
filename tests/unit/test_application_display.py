@@ -353,7 +353,7 @@ class TestDisplayEditSummary:
         
         # Verify console.print was called with expected messages
         assert mock_console.print.call_count == 5  # Header + "Changes made:" + 3 changes
-        mock_console.print.assert_any_call("\n[green]✓ Successfully updated configuration for 'TestApp'[/green]")
+        mock_console.print.assert_any_call("\n[green]Successfully updated configuration for 'TestApp'[/green]")
         mock_console.print.assert_any_call("[blue]Changes made:[/blue]")
         mock_console.print.assert_any_call("  • Updated URL")
         mock_console.print.assert_any_call("  • Changed pattern")

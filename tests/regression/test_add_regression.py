@@ -64,7 +64,7 @@ class TestAddRegression:
         runner = CliRunner()
         config_files = self.discover_existing_configs()
 
-        print(f"\n📋 Found {len(config_files)} config files to test:")
+        print(f"\nFound {len(config_files)} config files to test:")
         for cf in config_files:
             print(f"  • {cf.name}")
 
@@ -73,7 +73,7 @@ class TestAddRegression:
         failed_recreations = []
 
         for config_file in config_files:
-            print(f"\n🔍 Testing config file: {config_file.name}")
+            print(f"\nTesting config file: {config_file.name}")
             applications = self.load_applications_from_config(config_file)
 
             for app_config in applications:
@@ -84,17 +84,17 @@ class TestAddRegression:
                     success = self._test_single_application_recreation(runner, app_config, app_name)
                     if success:
                         successful_recreations += 1
-                        print(f"  ✅ {app_name}: Recreation successful")
+                        print(f"  SUCCESS {app_name}: Recreation successful")
                     else:
                         failed_recreations.append(f"{config_file.name}:{app_name}")
-                        print(f"  ❌ {app_name}: Recreation failed")
+                        print(f"  FAILED {app_name}: Recreation failed")
 
                 except Exception as e:
                     failed_recreations.append(f"{config_file.name}:{app_name}")
-                    print(f"  💥 {app_name}: Exception during test: {e}")
+                    print(f"  ERROR {app_name}: Exception during test: {e}")
 
         # Print summary
-        print("\n📊 Regression Test Summary:")
+        print("\nRegression Test Summary:")
         print(f"  • Total applications tested: {total_applications}")
         print(f"  • Successful recreations: {successful_recreations}")
         print(f"  • Failed recreations: {len(failed_recreations)}")
@@ -119,14 +119,14 @@ class TestAddRegression:
         runner = CliRunner()
         config_files = self.discover_existing_configs()
 
-        print(f"\n🔧 Comprehensive command testing on {len(config_files)} config files")
+        print(f"\nComprehensive command testing on {len(config_files)} config files")
 
         total_applications = 0
         successful_tests = 0
         failed_tests = []
 
         for config_file in config_files:
-            print(f"\n🔍 Testing commands for config file: {config_file.name}")
+            print(f"\nTesting commands for config file: {config_file.name}")
             applications = self.load_applications_from_config(config_file)
 
             for app_config in applications:
@@ -137,17 +137,17 @@ class TestAddRegression:
                     success = self._test_comprehensive_commands(runner, app_config, app_name)
                     if success:
                         successful_tests += 1
-                        print(f"  ✅ {app_name}: All commands successful")
+                        print(f"  SUCCESS {app_name}: All commands successful")
                     else:
                         failed_tests.append(f"{config_file.name}:{app_name}")
-                        print(f"  ❌ {app_name}: Command tests failed")
+                        print(f"  FAILED {app_name}: Command tests failed")
 
                 except Exception as e:
                     failed_tests.append(f"{config_file.name}:{app_name}")
-                    print(f"  💥 {app_name}: Exception during command tests: {e}")
+                    print(f"  ERROR {app_name}: Exception during command tests: {e}")
 
         # Print summary
-        print("\n📊 Comprehensive Command Test Summary:")
+        print("\nComprehensive Command Test Summary:")
         print(f"  • Total applications tested: {total_applications}")
         print(f"  • Successful command tests: {successful_tests}")
         print(f"  • Failed command tests: {len(failed_tests)}")
@@ -171,7 +171,7 @@ class TestAddRegression:
         download_dir = original_config.get("download_dir")
 
         if not source_url or not download_dir:
-            print("    ⚠️  Missing required fields (url or download_dir)")
+            print("    WARNING: Missing required fields (url or download_dir)")
             return False
 
         # Create temporary directory for testing
@@ -227,19 +227,19 @@ class TestAddRegression:
                     else:
                         cmd_args.append("--checksum-optional")
 
-            print(f"    🔧 Command: {' '.join(cmd_args)}")
+            print(f"    Command: {' '.join(cmd_args)}")
 
             # Use add command to recreate the application
             add_result = runner.invoke(app, cmd_args)
 
             if add_result.exit_code != 0:
-                print(f"    ❌ Add command failed: {add_result.stdout}")
+                print(f"    FAILED: Add command failed: {add_result.stdout}")
                 return False
 
             # Find the generated config file
             generated_files = list(temp_config_dir.glob("*.json"))
             if not generated_files:
-                print("    ❌ No config file generated")
+                print("    FAILED: No config file generated")
                 return False
 
             # Load the generated configuration
@@ -249,13 +249,13 @@ class TestAddRegression:
                     generated_data = json.load(f)
 
                 if "applications" not in generated_data or not generated_data["applications"]:
-                    print("    ❌ Generated config has no applications")
+                    print("    FAILED: Generated config has no applications")
                     return False
 
                 generated_config = generated_data["applications"][0]
 
             except (json.JSONDecodeError, KeyError, IndexError) as e:
-                print(f"    ❌ Could not parse generated config: {e}")
+                print(f"    FAILED: Could not parse generated config: {e}")
                 return False
 
             # Compare configurations
@@ -286,7 +286,7 @@ class TestAddRegression:
             generated_value = generated.get(field)
 
             if original_value != generated_value:
-                print(f"    ❌ Field '{field}' mismatch: {original_value} != {generated_value}")
+                print(f"    FAILED: Field '{field}' mismatch: {original_value} != {generated_value}")
                 return False
 
         # Check optional fields - only compare if present in original
@@ -296,7 +296,7 @@ class TestAddRegression:
                 generated_value = generated.get(field)
 
                 if original_value != generated_value:
-                    print(f"    ❌ Optional field '{field}' mismatch: {original_value} != {generated_value}")
+                    print(f"    FAILED: Optional field '{field}' mismatch: {original_value} != {generated_value}")
                     return False
 
 
@@ -311,10 +311,10 @@ class TestAddRegression:
                 generated_value = generated_checksum.get(field)
 
                 if original_value != generated_value:
-                    print(f"    ❌ Checksum.{field} mismatch: {original_value} != {generated_value}")
+                    print(f"    FAILED: Checksum.{field} mismatch: {original_value} != {generated_value}")
                     return False
         elif original_checksum != generated_checksum:
-            print(f"    ❌ Checksum mismatch: {original_checksum} != {generated_checksum}")
+            print(f"    FAILED: Checksum mismatch: {original_checksum} != {generated_checksum}")
             return False
 
         # Pattern field: Allow improvement due to intelligent pattern generation
@@ -322,14 +322,14 @@ class TestAddRegression:
         generated_pattern = generated.get("pattern", "")
 
         if not self._patterns_are_equivalent(original_pattern, generated_pattern):
-            print(f"    ⚠️  Pattern different: '{original_pattern}' vs '{generated_pattern}'")
+            print(f"    WARNING: Pattern different: '{original_pattern}' vs '{generated_pattern}'")
             # Don't fail the test for pattern differences - intelligent generation is an improvement
-            print("    ✅ Allowing pattern improvement due to intelligent generation")
+            print("    SUCCESS: Allowing pattern improvement due to intelligent generation")
 
 
         # Checksum field: Allow reasonable defaults
         if not self._checksum_configs_equivalent(original.get("checksum", {}), generated.get("checksum", {})):
-            print("    ❌ Checksum config mismatch")
+            print("    FAILED: Checksum config mismatch")
             return False
 
         return True
@@ -391,15 +391,15 @@ class TestAddRegression:
         app_config = applications[0]
         app_name = app_config.get("name", "TestApp")
 
-        print(f"\n🔍 Detailed test of application: {app_name}")
-        print(f"📁 From config file: {first_config.name}")
-        print("📋 Original config:")
+        print(f"\nDetailed test of application: {app_name}")
+        print(f"From config file: {first_config.name}")
+        print("Original config:")
         print(json.dumps(app_config, indent=2))
 
         success = self._test_single_application_recreation(runner, app_config, app_name)
 
         assert success, f"Detailed recreation test failed for {app_name}"
-        print(f"✅ Detailed test passed for {app_name}")
+        print(f"SUCCESS: Detailed test passed for {app_name}")
 
     def _test_comprehensive_commands(self, runner: CliRunner, original_config: dict[str, Any], app_name: str) -> bool:
         """Test all commands (add, list, show, check, remove) on a single application."""
@@ -407,7 +407,7 @@ class TestAddRegression:
         download_dir = original_config.get("download_dir")
 
         if not source_url or not download_dir:
-            print("    ⚠️  Missing required fields (url or download_dir)")
+            print("    WARNING: Missing required fields (url or download_dir)")
             return False
 
         # Create temporary directory for testing
@@ -416,27 +416,27 @@ class TestAddRegression:
             temp_config_dir.mkdir()
 
             # Step 1: Add the application
-            print(f"    🔧 Testing add command for {app_name}")
+            print(f"    Testing add command for {app_name}")
             if not self._test_add_command(runner, original_config, app_name, temp_config_dir):
                 return False
 
             # Step 2: Test list command
-            print("    📋 Testing list command")
+            print("    Testing list command")
             if not self._test_list_command(runner, app_name, temp_config_dir):
                 return False
 
             # Step 3: Test show command
-            print("    👁️  Testing show command")
+            print("    Testing show command")
             if not self._test_show_command(runner, app_name, temp_config_dir):
                 return False
 
             # Step 4: Test check --dry-run command
-            print("    🔍 Testing check --dry-run command")
+            print("    Testing check --dry-run command")
             if not self._test_check_command(runner, app_name, temp_config_dir):
                 return False
 
             # Step 5: Test remove command
-            print("    🗑️  Testing remove command")
+            print("    Testing remove command")
             if not self._test_remove_command(runner, app_name, temp_config_dir):
                 return False
 
@@ -461,13 +461,13 @@ class TestAddRegression:
         # Execute add command
         result = runner.invoke(app, cmd_args)
         if result.exit_code != 0:
-            print(f"      ❌ Add command failed: {result.stdout}")
+            print(f"      FAILED: Add command failed: {result.stdout}")
             return False
 
         # Verify config file was created
         config_files = list(temp_config_dir.glob("*.json"))
         if not config_files:
-            print("      ❌ No config file created")
+            print("      FAILED: No config file created")
             return False
 
         return True
@@ -477,12 +477,12 @@ class TestAddRegression:
         result = runner.invoke(app, ["list", "--config-dir", str(temp_config_dir)])
 
         if result.exit_code != 0:
-            print(f"      ❌ List command failed: {result.stdout}")
+            print(f"      FAILED: List command failed: {result.stdout}")
             return False
 
         # Check that the application appears in the list
         if app_name not in result.stdout:
-            print(f"      ❌ Application {app_name} not found in list output")
+            print(f"      FAILED: Application {app_name} not found in list output")
             return False
 
         return True
@@ -492,19 +492,19 @@ class TestAddRegression:
         result = runner.invoke(app, ["show", app_name, "--config-dir", str(temp_config_dir)])
 
         if result.exit_code != 0:
-            print(f"      ❌ Show command failed: {result.stdout}")
+            print(f"      FAILED: Show command failed: {result.stdout}")
             return False
 
         # Check that the output contains application details
         if app_name not in result.stdout:
-            print(f"      ❌ Application {app_name} not found in show output")
+            print(f"      FAILED: Application {app_name} not found in show output")
             return False
 
         # Check for key configuration elements
         expected_elements = ["Configuration", "Source", "Download Directory"]
         for element in expected_elements:
             if element not in result.stdout:
-                print(f"      ❌ Missing '{element}' in show output")
+                print(f"      FAILED: Missing '{element}' in show output")
                 return False
 
         return True
@@ -514,17 +514,17 @@ class TestAddRegression:
         result = runner.invoke(app, ["check", app_name, "--dry-run", "--config-dir", str(temp_config_dir)])
 
         if result.exit_code != 0:
-            print(f"      ❌ Check command failed: {result.stdout}")
+            print(f"      FAILED: Check command failed: {result.stdout}")
             return False
 
         # Check that the output contains update check results
         if "Update Check Results" not in result.stdout:
-            print("      ❌ Missing 'Update Check Results' in check output")
+            print("      FAILED: Missing 'Update Check Results' in check output")
             return False
 
         # Check that the application appears in results
         if app_name not in result.stdout:
-            print(f"      ❌ Application {app_name} not found in check output")
+            print(f"      FAILED: Application {app_name} not found in check output")
             return False
 
         return True
@@ -535,14 +535,14 @@ class TestAddRegression:
         result = runner.invoke(app, ["remove", app_name, "--config-dir", str(temp_config_dir)], input="y\n")
 
         if result.exit_code != 0:
-            print(f"      ❌ Remove command failed: {result.stdout}")
+            print(f"      FAILED: Remove command failed: {result.stdout}")
             return False
 
         # Verify the application was removed by trying to list it
         list_result = runner.invoke(app, ["list", "--config-dir", str(temp_config_dir)])
 
         if list_result.exit_code == 0 and app_name in list_result.stdout:
-            print(f"      ❌ Application {app_name} still appears after removal")
+            print(f"      FAILED: Application {app_name} still appears after removal")
             return False
 
         return True
