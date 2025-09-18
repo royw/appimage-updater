@@ -224,8 +224,8 @@ class TestMultiAppEdit:
         ])
 
         assert result.exit_code == 0
-        assert "✓ Successfully updated configuration for 'App1'" in result.stdout
-        assert "✓ Successfully updated configuration for 'App2'" in result.stdout
+        assert "Successfully updated configuration for 'App1'" in result.stdout
+        assert "Successfully updated configuration for 'App2'" in result.stdout
 
     def test_edit_multiple_apps_enabled(self, runner, temp_config_dir, multi_app_config):
         """Test edit command updating enabled status for multiple apps."""
@@ -240,8 +240,8 @@ class TestMultiAppEdit:
         ])
 
         assert result.exit_code == 0
-        assert "✓ Successfully updated configuration for 'App1'" in result.stdout
-        assert "✓ Successfully updated configuration for 'App2'" in result.stdout
+        assert "Successfully updated configuration for 'App1'" in result.stdout
+        assert "Successfully updated configuration for 'App2'" in result.stdout
 
     def test_edit_nonexistent_apps(self, runner, temp_config_dir, multi_app_config):
         """Test edit command with non-existent app names."""

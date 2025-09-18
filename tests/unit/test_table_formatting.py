@@ -25,8 +25,8 @@ class TestGetSuccessStatusAndIndicator:
         candidate.needs_update = True
         
         status, indicator = _get_success_status_and_indicator(candidate)
-        assert status == "⬆️ Update available"
-        assert indicator == "⬆️"
+        assert status == "Update available"
+        assert indicator == "Update available"
 
     def test_up_to_date(self) -> None:
         """Test status when up to date."""
@@ -34,8 +34,8 @@ class TestGetSuccessStatusAndIndicator:
         candidate.needs_update = False
         
         status, indicator = _get_success_status_and_indicator(candidate)
-        assert status == "✅ Up to date"
-        assert indicator == "✅"
+        assert status == "Up to date"
+        assert indicator == "Up to date"
 
 
 class TestFormatSuccessVersions:
@@ -96,7 +96,7 @@ class TestCreateErrorRow:
         result.app_name = "TestApp"
         
         row = _create_error_row(result, False)
-        assert row == ["TestApp", "❌ Error", "-", "-", "-"]
+        assert row == ["TestApp", "Error", "-", "-", "-"]
 
     def test_with_urls(self) -> None:
         """Test creating error row with URLs."""
@@ -104,7 +104,7 @@ class TestCreateErrorRow:
         result.app_name = "TestApp"
         
         row = _create_error_row(result, True)
-        assert row == ["TestApp", "❌ Error", "-", "-", "-", "-"]
+        assert row == ["TestApp", "Error", "-", "-", "-", "-"]
 
 
 class TestCreateNoCandidateRow:
@@ -116,7 +116,7 @@ class TestCreateNoCandidateRow:
         result.app_name = "TestApp"
         
         row = _create_no_candidate_row(result, False)
-        assert row == ["TestApp", "⚠️ No updates", "-", "-", "-"]
+        assert row == ["TestApp", "No updates", "-", "-", "-"]
 
 
 class TestCreateResultRow:
