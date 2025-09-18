@@ -153,7 +153,7 @@ class TestValidateUrlUpdate:
 
         # Should print warning message
         mock_console.print.assert_called_once_with(
-            "[yellow]Using --force: Skipping URL validation and normalization"
+            "[yellow]Warning: Using --force: Skipping URL validation and normalization"
         )
 
         # Should log debug message

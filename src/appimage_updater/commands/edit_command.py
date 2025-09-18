@@ -222,9 +222,7 @@ class EditCommand(Command):
     def _show_validation_hints(self, error_message: str) -> None:
         """Show helpful hints based on validation error."""
         if "File rotation requires a symlink path" in error_message:
-            self.console.print(
-                "[yellow]Either disable rotation or specify a symlink path with --symlink-path[/yellow]"
-            )
+            self.console.print("[yellow]Either disable rotation or specify a symlink path with --symlink-path[/yellow]")
         elif "invalid characters" in error_message:
             self.console.print("[yellow]Symlink paths cannot contain newlines or other control characters[/yellow]")
         elif "should end with '.AppImage'" in error_message:

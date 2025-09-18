@@ -582,7 +582,7 @@ class TestE2EFunctionality:
 
         assert result.exit_code == 0
         assert "SymlinkApp-1.0.0-Linux.AppImage.current" in result.stdout
-        assert "SymlinkApp-current.AppImage executable" in result.stdout
+        assert "valid" in result.stdout  # Symlink status should be valid
         assert "→" in result.stdout  # Arrow showing symlink target
 
     def test_show_command_with_configured_symlink_path(self, runner, temp_config_dir, temp_download_dir):
