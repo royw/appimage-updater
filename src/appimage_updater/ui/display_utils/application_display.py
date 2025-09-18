@@ -352,9 +352,12 @@ def get_symlinks_info(app: Any) -> str:
         return "[dim]No symlinks configured[/dim]"
 
     symlink_path = Path(app.symlink_path)
+    return _analyze_symlink_path(symlink_path)
 
+
+def _analyze_symlink_path(symlink_path: Path) -> str:
+    """Analyze symlink path and return status information."""
     from .path_formatting import _replace_home_with_tilde
-
     display_path = _replace_home_with_tilde(str(symlink_path))
 
     if not symlink_path.exists():
@@ -363,13 +366,17 @@ def get_symlinks_info(app: Any) -> str:
     if not symlink_path.is_symlink():
         return f"[red]Path exists but is not a symlink:[/red] {display_path}"
 
+    return _get_symlink_target_info(symlink_path, display_path)
+
+
+def _get_symlink_target_info(symlink_path: Path, display_path: str) -> str:
+    """Get symlink target information and status."""
     try:
         target = symlink_path.readlink()
+        from .path_formatting import _replace_home_with_tilde
         target_display = _replace_home_with_tilde(str(target))
-
-        # Check if target exists
+        
         status = "[green]valid[/green]" if target.exists() else "[red]broken[/red]"
-
         return f"{display_path} → {target_display} {status}"
     except OSError as e:
         return f"[red]Error reading symlink:[/red] {display_path} ({e})"

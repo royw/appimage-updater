@@ -163,73 +163,103 @@ class VersionChecker:
 
         try:
             content = info_file.read_text().strip()
-
-            # Handle "Version: " prefix from .info files
-            if content.startswith("Version: "):
-                content = content[9:]  # Remove "Version: " prefix
-
-            # Extract just the version number from complex version strings
-            # e.g., "v2.2.1.60 Public Release (Hotfix)" -> "v2.2.1.60"
-            content = self._extract_version_number(content)
-
-            # Clean up double "v" prefix from legacy .info files (e.g., "vv3.3.0" -> "v3.3.0")
-            # This handles .info files created before the fix
-            if content.startswith("vv"):
-                content = content[1:]  # Remove one "v"
-
-            # Handle rotation suffixes (.current, .old, etc.)
-            if content.endswith((".current", ".old", ".backup")):
-                # Remove rotation suffix to get actual version
-                content = content.rsplit(".", 1)[0]
-
-            return self._convert_nightly_version_string(content)
+            processed_content = self._process_version_content(content)
+            return self._convert_nightly_version_string(processed_content)
         except Exception:
             return None
+            
+    def _process_version_content(self, content: str) -> str:
+        """Process version content from info file."""
+        # Handle "Version: " prefix from .info files
+        if content.startswith("Version: "):
+            content = content[9:]  # Remove "Version: " prefix
+
+        # Extract just the version number from complex version strings
+        content = self._extract_version_number(content)
+        
+        # Clean up legacy formatting issues
+        content = self._clean_legacy_version_format(content)
+        
+        # Handle rotation suffixes
+        return self._remove_rotation_suffixes(content)
+        
+    def _clean_legacy_version_format(self, content: str) -> str:
+        """Clean up legacy version formatting issues."""
+        # Clean up double "v" prefix from legacy .info files (e.g., "vv3.3.0" -> "v3.3.0")
+        if content.startswith("vv"):
+            content = content[1:]  # Remove one "v"
+        return content
+        
+    def _remove_rotation_suffixes(self, content: str) -> str:
+        """Remove rotation suffixes from version content."""
+        # Handle rotation suffixes (.current, .old, etc.)
+        if content.endswith((".current", ".old", ".backup")):
+            # Remove rotation suffix to get actual version
+            content = content.rsplit(".", 1)[0]
+        return content
 
     def _get_info_file_path(self, app_config: ApplicationConfig) -> Path:
         """Get path to .info file for application."""
-        # Use download_dir if available, otherwise use a default
         download_dir = getattr(app_config, "download_dir", None) or Path.home() / "Downloads"
-
-        # Try multiple glob patterns to find files
-        # Handle cases like BambuStudio -> Bambu_Studio_*
+        app_files = self._find_app_files(app_config, download_dir)
+        
+        # Try to find info file from current files first
+        info_path = self._get_info_from_current_files(app_files, download_dir)
+        if info_path:
+            return info_path
+            
+        # Fallback to standard naming
+        return download_dir / f"{app_config.name}.info"
+        
+    def _find_app_files(self, app_config: ApplicationConfig, download_dir: Path) -> list[Path]:
+        """Find application files using various naming patterns."""
         patterns = [
             f"{app_config.name}*",  # Exact match
             f"{app_config.name.replace('Studio', '_Studio')}*",  # BambuStudio -> Bambu_Studio
             "*",  # Fallback to all files
         ]
 
-        app_files = []
         for pattern in patterns:
             potential_files = list(download_dir.glob(pattern))
-            # Filter to only include files that might belong to this app
-            for f in potential_files:
-                name_lower = f.name.lower()
-                app_name_lower = app_config.name.lower()
-                if (
-                    name_lower.startswith(app_name_lower)
-                    or app_name_lower.replace("studio", "_studio") in name_lower
-                    or name_lower.startswith(app_name_lower.replace("studio", "_studio"))
-                ):
-                    app_files.append(f)
+            app_files = self._filter_app_files(potential_files, app_config.name)
             if app_files:
-                break
-
-        # Look for .current files first (prioritize for rotation)
+                return app_files
+        return []
+        
+    def _filter_app_files(self, files: list[Path], app_name: str) -> list[Path]:
+        """Filter files to only include those that belong to the app."""
+        app_files = []
+        app_name_lower = app_name.lower()
+        
+        for f in files:
+            name_lower = f.name.lower()
+            if self._file_matches_app(name_lower, app_name_lower):
+                app_files.append(f)
+        return app_files
+        
+    def _file_matches_app(self, filename_lower: str, app_name_lower: str) -> bool:
+        """Check if a filename matches the application name."""
+        return (
+            filename_lower.startswith(app_name_lower)
+            or app_name_lower.replace("studio", "_studio") in filename_lower
+            or filename_lower.startswith(app_name_lower.replace("studio", "_studio"))
+        )
+        
+    def _get_info_from_current_files(self, app_files: list[Path], download_dir: Path) -> Path | None:
+        """Get info file path from current files if available."""
         current_files = [f for f in app_files if f.name.endswith(".current")]
-        if current_files:
-            # Use the .current file to find corresponding .info file
-            current_file = current_files[0]
-            # Look for .current.info file first (rotation naming)
-            current_info_file = download_dir / f"{current_file.name}.info"
-            if current_info_file.exists():
-                return current_info_file
-            # Fallback to base name without .current
-            base_name = current_file.name.replace(".current", "")
-            return download_dir / f"{base_name}.info"
-
-        # Fallback to standard naming
-        return download_dir / f"{app_config.name}.info"
+        if not current_files:
+            return None
+            
+        current_file = current_files[0]
+        # Look for .current.info file first (rotation naming)
+        current_info_file = download_dir / f"{current_file.name}.info"
+        if current_info_file.exists():
+            return current_info_file
+            
+        # Fallback to base name without .current
+        base_name = current_file.name.replace(".current", "")
+        return download_dir / f"{base_name}.info"
 
     def _extract_version_number(self, version_string: str) -> str:
         """Extract just the version number from complex version strings."""
@@ -284,38 +314,54 @@ class VersionChecker:
     ) -> list[UpdateCandidate]:
         """Find potential update candidates from releases."""
         candidates = []
-
+        
         for release in releases:
-            if not release.assets:
-                continue
-
-            # Skip prerelease versions if not enabled in config
-            if release.is_prerelease and not app_config.prerelease:
-                continue
-
-            # Select best asset for this release
-            try:
-                best_asset = select_best_distribution_asset(release.assets)
-            except ValueError:
-                # No suitable assets found for this release
-                continue
-
-            if best_asset:
-                # Use asset creation date for nightly builds
-                release_version = self._get_version_for_release(release, best_asset)
-
-                candidate = UpdateCandidate(
-                    app_name=app_config.name,
-                    current_version=current_version,
-                    latest_version=release_version,
-                    asset=best_asset,
-                    download_path=Path(tempfile.gettempdir()) / best_asset.name,  # Secure temp path
-                    is_newer=True,  # Will be determined later
-                    release=release,
-                )
+            candidate = self._process_release_for_candidate(release, app_config, current_version)
+            if candidate:
                 candidates.append(candidate)
-
+                
         return candidates
+        
+    def _process_release_for_candidate(
+        self, release: Release, app_config: ApplicationConfig, current_version: str | None
+    ) -> UpdateCandidate | None:
+        """Process a single release to create an update candidate."""
+        if not release.assets:
+            return None
+            
+        # Skip prerelease versions if not enabled in config
+        if release.is_prerelease and not app_config.prerelease:
+            return None
+            
+        best_asset = self._get_best_asset_for_release(release)
+        if not best_asset:
+            return None
+            
+        return self._create_update_candidate(release, best_asset, app_config, current_version)
+        
+    def _get_best_asset_for_release(self, release: Release) -> Any | None:
+        """Get the best asset for a release."""
+        try:
+            return select_best_distribution_asset(release.assets)
+        except ValueError:
+            # No suitable assets found for this release
+            return None
+            
+    def _create_update_candidate(
+        self, release: Release, best_asset: Any, app_config: ApplicationConfig, current_version: str | None
+    ) -> UpdateCandidate:
+        """Create an update candidate from release and asset."""
+        release_version = self._get_version_for_release(release, best_asset)
+        
+        return UpdateCandidate(
+            app_name=app_config.name,
+            current_version=current_version,
+            latest_version=release_version,
+            asset=best_asset,
+            download_path=Path(tempfile.gettempdir()) / best_asset.name,  # Secure temp path
+            is_newer=True,  # Will be determined later
+            release=release,
+        )
 
     def _get_version_for_release(self, release: Release, asset: Asset) -> str:
         """Get version string for a release, handling nightly builds."""

@@ -111,24 +111,38 @@ def _parse_issue_file() -> DistributionInfo | None:
 
     try:
         content = issue_path.read_text().lower()
-        # Look for common distribution patterns
-        if "ubuntu" in content:
-            import re
-
-            version_match = re.search(r"(\d+\.\d+)", content)
-            if version_match:
-                version = version_match.group(1)
-                return DistributionInfo(id="ubuntu", version=version, version_numeric=_parse_version_number(version))
-        elif "fedora" in content:
-            import re
-
-            version_match = re.search(r"(\d+)", content)
-            if version_match:
-                version = version_match.group(1)
-                return DistributionInfo(id="fedora", version=version, version_numeric=float(version))
+        return _parse_issue_content(content)
     except OSError:
         pass
+    return None
 
+
+def _parse_issue_content(content: str) -> DistributionInfo | None:
+    """Parse issue file content for distribution info."""
+    if "ubuntu" in content:
+        return _parse_ubuntu_issue(content)
+    elif "fedora" in content:
+        return _parse_fedora_issue(content)
+    return None
+
+
+def _parse_ubuntu_issue(content: str) -> DistributionInfo | None:
+    """Parse Ubuntu distribution info from issue content."""
+    import re
+    version_match = re.search(r"(\d+\.\d+)", content)
+    if version_match:
+        version = version_match.group(1)
+        return DistributionInfo(id="ubuntu", version=version, version_numeric=_parse_version_number(version))
+    return None
+
+
+def _parse_fedora_issue(content: str) -> DistributionInfo | None:
+    """Parse Fedora distribution info from issue content."""
+    import re
+    version_match = re.search(r"(\d+)", content)
+    if version_match:
+        version = version_match.group(1)
+        return DistributionInfo(id="fedora", version=version, version_numeric=float(version))
     return None
 
 

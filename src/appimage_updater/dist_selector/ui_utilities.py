@@ -14,7 +14,15 @@ from .models import AssetInfo
 def _prompt_user_selection(asset_infos: list[AssetInfo], console: Console) -> AssetInfo:
     """Prompt user to select from multiple assets."""
     console.print("\n[yellow]Multiple compatible assets found. Please select one:[/yellow]")
+    
+    table = _create_asset_selection_table(asset_infos)
+    console.print(table)
+    
+    return _get_user_choice(asset_infos, console)
 
+
+def _create_asset_selection_table(asset_infos: list[AssetInfo]) -> Table:
+    """Create table for asset selection display."""
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("#", style="dim", width=3)
     table.add_column("Asset Name", style="cyan")
@@ -32,9 +40,11 @@ def _prompt_user_selection(asset_infos: list[AssetInfo], console: Console) -> As
             info.arch or "Any",
             f"{info.score:.1f}",
         )
+    return table
 
-    console.print(table)
 
+def _get_user_choice(asset_infos: list[AssetInfo], console: Console) -> AssetInfo:
+    """Get user's asset selection choice."""
     while True:
         try:
             choice = Prompt.ask(

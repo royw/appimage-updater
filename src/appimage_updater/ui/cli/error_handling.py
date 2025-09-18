@@ -13,43 +13,68 @@ console = Console()
 def _handle_add_error(e: Exception, name: str) -> None:
     """Handle and display add command errors with appropriate messaging."""
     error_msg = str(e)
-    if "rate limit" in error_msg.lower():
+    error_type = _classify_error(error_msg)
+    _display_error_message(error_type, name, error_msg)
+    logger.exception("Full exception details")
+
+
+def _classify_error(error_msg: str) -> str:
+    """Classify error message into specific error types."""
+    error_lower = error_msg.lower()
+    if "rate limit" in error_lower:
+        return "rate_limit"
+    elif "not found" in error_lower or "404" in error_msg:
+        return "not_found"
+    elif "network" in error_lower or "connection" in error_lower:
+        return "network"
+    else:
+        return "generic"
+
+
+def _display_error_message(error_type: str, name: str, error_msg: str) -> None:
+    """Display appropriate error message based on error type."""
+    if error_type == "rate_limit":
         console.print(f"[red]Failed to add application '{name}': GitHub API rate limit exceeded[/red]")
         console.print("[yellow]Try again later or set up GitHub authentication to increase rate limits")
         console.print("[yellow]   See: https://docs.github.com/en/authentication")
-    elif "not found" in error_msg.lower() or "404" in error_msg:
+    elif error_type == "not_found":
         console.print(f"[red]Failed to add application '{name}': Repository not found[/red]")
         console.print("[yellow]Please check that the URL is correct and the repository exists")
-    elif "network" in error_msg.lower() or "connection" in error_msg.lower():
+    elif error_type == "network":
         console.print(f"[red]Failed to add application '{name}': Network connection error[/red]")
         console.print("[yellow]Please check your internet connection and try again")
     else:
         console.print(f"[red]Failed to add application '{name}': {error_msg}[/red]")
         console.print("[yellow]Use --debug for more detailed error information")
 
-    logger.exception("Full exception details")
-
 
 def _log_repository_auth_status(url: str) -> None:
     """Log repository authentication status for debugging."""
     try:
         from ...repositories.factory import get_repository_client
-
         repo_client = get_repository_client(url)
-        if hasattr(repo_client, "_client"):
-            # GitHub repository
-            github_client = repo_client._client
-            if hasattr(github_client, "auth") and github_client.auth:
-                if hasattr(github_client.auth, "token") and github_client.auth.token:
-                    logger.debug("GitHub authentication: Token configured")
-                else:
-                    logger.debug("GitHub authentication: No token configured")
-            else:
-                logger.debug("GitHub authentication: No authentication configured")
-        else:
-            logger.debug(f"Repository client type: {type(repo_client).__name__}")
+        _log_client_auth_status(repo_client)
     except Exception as e:
         logger.debug(f"Could not determine repository authentication status: {e}")
+
+
+def _log_client_auth_status(repo_client) -> None:
+    """Log authentication status for a repository client."""
+    if hasattr(repo_client, "_client"):
+        _log_github_auth_status(repo_client._client)
+    else:
+        logger.debug(f"Repository client type: {type(repo_client).__name__}")
+
+
+def _log_github_auth_status(github_client) -> None:
+    """Log GitHub authentication status."""
+    if hasattr(github_client, "auth") and github_client.auth:
+        if hasattr(github_client.auth, "token") and github_client.auth.token:
+            logger.debug("GitHub authentication: Token configured")
+        else:
+            logger.debug("GitHub authentication: No token configured")
+    else:
+        logger.debug("GitHub authentication: No authentication configured")
 
 
 def _handle_verbose_logging(

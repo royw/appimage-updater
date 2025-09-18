@@ -95,30 +95,42 @@ def validate_url_update(updates: dict[str, Any]) -> None:
 
 def validate_basic_field_updates(updates: dict[str, Any]) -> None:
     """Validate basic field updates."""
-    # Validate pattern if provided
     if "pattern" in updates:
-        try:
-            regex_module.compile(updates["pattern"])
-        except regex_module.error as e:
-            raise ValueError(f"Invalid regex pattern: {e}") from e
-
-    # Validate checksum algorithm if provided
+        _validate_pattern(updates["pattern"])
+    
     if "checksum_algorithm" in updates:
-        valid_algorithms = ["sha256", "sha1", "md5"]
-        algorithm = updates["checksum_algorithm"].lower()
-        if algorithm not in valid_algorithms:
-            raise ValueError(f"Invalid checksum algorithm '{algorithm}'. Valid options: {', '.join(valid_algorithms)}")
-        updates["checksum_algorithm"] = algorithm
-
-    # Validate retain count if provided
+        updates["checksum_algorithm"] = _validate_checksum_algorithm(updates["checksum_algorithm"])
+    
     if "retain_count" in updates:
-        try:
-            retain_count = int(updates["retain_count"])
-            if retain_count < 1 or retain_count > 10:
-                raise ValueError("Retain count must be between 1 and 10")
-            updates["retain_count"] = retain_count
-        except (ValueError, TypeError) as e:
-            raise ValueError(f"Invalid retain count: {e}") from e
+        updates["retain_count"] = _validate_retain_count(updates["retain_count"])
+
+
+def _validate_pattern(pattern: str) -> None:
+    """Validate regex pattern."""
+    try:
+        regex_module.compile(pattern)
+    except regex_module.error as e:
+        raise ValueError(f"Invalid regex pattern: {e}") from e
+
+
+def _validate_checksum_algorithm(algorithm: str) -> str:
+    """Validate and normalize checksum algorithm."""
+    valid_algorithms = ["sha256", "sha1", "md5"]
+    algorithm_lower = algorithm.lower()
+    if algorithm_lower not in valid_algorithms:
+        raise ValueError(f"Invalid checksum algorithm '{algorithm}'. Valid options: {', '.join(valid_algorithms)}")
+    return algorithm_lower
+
+
+def _validate_retain_count(retain_count: Any) -> int:
+    """Validate retain count value."""
+    try:
+        count = int(retain_count)
+        if count < 1 or count > 10:
+            raise ValueError("Retain count must be between 1 and 10")
+        return count
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"Invalid retain count: {e}") from e
 
 
 def validate_symlink_path_exists(symlink_path: str) -> None:
