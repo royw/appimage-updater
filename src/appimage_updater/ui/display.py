@@ -258,12 +258,18 @@ def _create_success_row(result: CheckResult, show_urls: bool) -> list[str]:
     status, update_indicator = _get_success_status_and_indicator(candidate)
     current, latest = _format_success_versions(candidate)
 
+    # Show version in Update column when update is needed, just emoji when up to date
+    if candidate.needs_update:
+        update_display = latest
+    else:
+        update_display = update_indicator
+
     row = [
         result.app_name,
         status,
         current,
         latest,
-        update_indicator,
+        update_display,
     ]
 
     return _add_url_if_requested(row, show_urls, candidate)
