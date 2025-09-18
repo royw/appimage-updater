@@ -193,15 +193,6 @@ class RemoveCommand(Command):
             with global_config_file.open("w") as f:
                 json.dump(config.global_config.model_dump(), f, indent=2, default=str)
 
-    def _save_directory_based_config(self, config: Config, removed_apps: list[ApplicationConfig]) -> None:
-        """Save directory-based configuration."""
-        from pathlib import Path
-
-        if self.params.config_dir:
-            config_dir = Path(self.params.config_dir)
-            self._delete_removed_app_files(config_dir, removed_apps)
-            self._update_global_config_file(config_dir, config)
-
     def _save_directory_based_config_with_path(
         self, config: Config, removed_apps: list[ApplicationConfig], config_dir: Path
     ) -> None:
