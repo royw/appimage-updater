@@ -394,9 +394,9 @@ Checksum verification works for both ZIP files and extracted AppImages:
 
 ```bash
 # Checksum verified for ZIP file before extraction
-✓ ZIP checksum verified (SHA256)
-✓ AppImage extracted and made executable
-✓ Final AppImage ready for use
+ZIP checksum verified (SHA256)
+AppImage extracted and made executable
+Final AppImage ready for use
 ```
 
 ### Distribution Selection with ZIP Files

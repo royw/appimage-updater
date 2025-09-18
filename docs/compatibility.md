@@ -126,10 +126,10 @@ On Ubuntu 22.04, x86_64 system:
 
 | Asset | Arch Score | Platform Score | Format Score | Total | Action |
 |-------|------------|----------------|--------------|-------|---------|
-| `app-linux-x86_64.AppImage` | 100 | 100 | 70 | 270 | ✅ Compatible |
-| `app-linux-amd64.deb` | 80 | 100 | 65 | 245 | ✅ Compatible |
-| `app-linux-arm64.AppImage` | 0 | 100 | 70 | 70 | ❌ Filtered out |
-| `app-darwin-x86_64.dmg` | 100 | 0 | 70 | 70 | ❌ Filtered out |
+| `app-linux-x86_64.AppImage` | 100 | 100 | 70 | 270 | Compatible |
+| `app-linux-amd64.deb` | 80 | 100 | 65 | 245 | Compatible |
+| `app-linux-arm64.AppImage` | 0 | 100 | 70 | 70 | Filtered out |
+| `app-darwin-x86_64.dmg` | 100 | 0 | 70 | 70 | Filtered out |
 
 ## Interactive Selection
 

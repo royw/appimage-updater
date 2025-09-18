@@ -190,7 +190,7 @@ AppImage Updater automatically discovers tokens from multiple sources:
 1. **Configure**:
    - Name: `AppImage-Updater`
    - Expiration: Your preference (90 days, 1 year, or no expiration)
-   - **Select ONLY**: ☑️ `public_repo` (under "repo" section)
+   - **Select ONLY**: `public_repo` (under "repo" section)
 1. **Generate**: Click "Generate token"
 1. **Copy**: Save the token immediately (you won't see it again)
 

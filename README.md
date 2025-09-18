@@ -149,7 +149,7 @@ Total: 10 applications (10 enabled, 0 disabled)
 Check for any updates:
 
 ```bash
-~ ➤ appimage-updater check 
+152:~ $ appimage-updater check 
 Checking 10 applications for updates...
                                                      Update Check Results                                                     
 ┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
@@ -183,7 +183,7 @@ Notice the first download attempt failed, while the retry succeeded.
 And that the file structure is updated:
 
 ```bash
-~/Applications ➤ ls -l Free*                                                                                                                                               Python 3.13.3 royw@roy-kubuntu2504
+~/Applications $ ls -l Free*
 -rw-rw-r-- 1 royw royw 2361 Oct 31  2023 FreeCAD.readme
 lrwxrwxrwx 1 royw royw  100 Sep 11 14:46 FreeCAD_weekly.AppImage -> /home/royw/Applications/FreeCAD_weekly/FreeCAD_weekly-2025.09.11-Linux-x86_64-py311.AppImage.current
 
