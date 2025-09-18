@@ -49,6 +49,7 @@ class CheckParams(BaseParams):
     dry_run: bool = False
     yes: bool = False
     no_interactive: bool = False
+    info: bool = False
 
 
 @dataclass

@@ -93,6 +93,7 @@ class CommandFactory:
         no_interactive: bool = False,
         verbose: bool = False,
         debug: bool = False,
+        info: bool = False,
     ) -> CheckCommand:
         """Create a CheckCommand instance."""
         params = CheckParams(
@@ -104,6 +105,7 @@ class CommandFactory:
             no_interactive=no_interactive,
             verbose=verbose,
             debug=debug,
+            info=info,
         )
         return CheckCommand(params)
 

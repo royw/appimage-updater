@@ -375,6 +375,11 @@ def check(
     no_interactive: bool = NO_INTERACTIVE_OPTION,
     verbose: bool = VERBOSE_OPTION,
     debug: bool = _DEBUG_OPTION,
+    info: bool = typer.Option(
+        False,
+        "--info",
+        help="Update or create .info files with current version scheme for selected applications",
+    ),
     version: bool = typer.Option(
         False,
         "--version",
@@ -402,6 +407,7 @@ def check(
         no_interactive=no_interactive,
         verbose=verbose,
         debug=debug,
+        info=info,
     )
 
     result = asyncio.run(command.execute())
@@ -1375,6 +1381,7 @@ async def _check_updates(
     yes: bool,
     no_interactive: bool,
     verbose: bool,
+    info: bool = False,
 ) -> bool:
     """Internal async function to check for updates.
 
@@ -1396,11 +1403,186 @@ async def _check_updates(
         if not enabled_apps:
             return True  # No apps to check, but not an error
 
-        await _execute_update_workflow(config, enabled_apps, dry_run, yes, no_interactive)
+        if info:
+            await _execute_info_update_workflow(enabled_apps)
+        else:
+            await _execute_update_workflow(config, enabled_apps, dry_run, yes, no_interactive)
         return True
     except Exception as e:
         _handle_check_errors(e)
         return False
+
+
+async def _execute_info_update_workflow(enabled_apps: list[ApplicationConfig]) -> None:
+    """Execute the info file update workflow for all enabled applications."""
+    console = Console()
+    console.print(f"\n[bold blue]Updating .info files for {len(enabled_apps)} applications...[/bold blue]")
+
+    for app_config in enabled_apps:
+        try:
+            await _update_info_file_for_app(app_config, console)
+        except Exception as e:
+            console.print(f"[red]Error updating info file for {app_config.name}: {e}[/red]")
+            logger.exception(f"Error updating info file for {app_config.name}")
+
+    console.print("\n[bold green]Info file update completed![/bold green]")
+
+
+async def _update_info_file_for_app(app_config: ApplicationConfig, console: Console) -> None:
+    """Update or create the .info file for a single application."""
+    from pathlib import Path
+
+    # Get the download directory
+    download_dir = Path(app_config.download_dir).expanduser()
+    if not download_dir.exists():
+        console.print(f"[yellow]Skipping {app_config.name}: download directory does not exist: {download_dir}[/yellow]")
+        return
+
+    # Find the current AppImage file
+    current_file = _find_current_appimage_file(app_config, download_dir)
+    if not current_file:
+        console.print(f"[yellow]Skipping {app_config.name}: no current AppImage file found in {download_dir}[/yellow]")
+        return
+
+    # Extract version from the current file
+    version = await _extract_version_from_current_file(app_config, current_file)
+    if not version:
+        console.print(
+            f"[yellow]Skipping {app_config.name}: could not determine version from {current_file.name}[/yellow]"
+        )
+        return
+
+    # Create or update the .info file
+    info_file = current_file.with_suffix(current_file.suffix + ".info")
+    _write_info_file(info_file, version)
+
+    console.print(f"[green]Updated {info_file.name} with version: {version}[/green]")
+
+
+def _find_current_appimage_file(app_config: ApplicationConfig, download_dir: Path) -> Path | None:
+    """Find the current AppImage file for an application."""
+    # Look for .current files first (rotation naming)
+    current_files = list(download_dir.glob(f"{app_config.name}*.current"))
+    if current_files:
+        return current_files[0]
+
+    # Look for regular AppImage files
+    appimage_files = list(download_dir.glob(f"{app_config.name}*.AppImage"))
+    if appimage_files:
+        # Return the most recently modified file
+        return max(appimage_files, key=lambda f: f.stat().st_mtime)
+
+    return None
+
+
+async def _extract_version_from_current_file(app_config: ApplicationConfig, current_file: Path) -> str | None:
+    """Extract version information from the current AppImage file."""
+    try:
+        # Try to get version from repository first
+        version = await _get_version_from_repository(app_config, current_file)
+        if version:
+            return _normalize_version_string(version)
+
+        # Fallback to extracting from filename
+        return _extract_version_from_filename(current_file.name, app_config.name)
+    except Exception as e:
+        logger.debug(f"Error extracting version for {app_config.name}: {e}")
+        return None
+
+
+async def _get_version_from_repository(app_config: ApplicationConfig, current_file: Path) -> str | None:
+    """Try to get version information from the repository."""
+    try:
+        from .repositories.factory import get_repository_client
+
+        repo_client = get_repository_client(app_config.url)
+        releases = await repo_client.get_releases(app_config.url, limit=10)
+
+        if not releases:
+            return None
+
+        # Find the release that matches the current file
+        for release in releases:
+            if release.assets:
+                for asset in release.assets:
+                    if _files_match(current_file.name, asset.name, app_config.name):
+                        return release.tag_name.lstrip("v")
+
+        return None
+    except Exception:
+        return None
+
+
+def _files_match(current_filename: str, asset_name: str, app_name: str) -> bool:
+    """Check if the current file matches the asset from repository."""
+    # Remove .current suffix for comparison
+    current_base = current_filename.replace(".current", "")
+
+    # Simple matching - could be enhanced
+    return (
+        current_base == asset_name
+        or current_base.startswith(asset_name.split(".")[0])
+        or asset_name.startswith(current_base.split(".")[0])
+    )
+
+
+def _extract_version_from_filename(filename: str, app_name: str) -> str | None:
+    """Extract version from filename as fallback."""
+    import re
+
+    # Remove app name and common suffixes
+    clean_name = filename.replace(app_name, "").replace(".AppImage", "").replace(".current", "")
+
+    # Look for version patterns
+    version_patterns = [
+        r"[vV]?(\d+\.\d+\.\d+(?:-\w+)?)",  # v1.2.3 or v1.2.3-beta
+        r"[vV]?(\d+\.\d+(?:-\w+)?)",  # v1.2 or v1.2-beta
+        r"(\d{4}-\d{2}-\d{2})",  # Date format
+    ]
+
+    for pattern in version_patterns:
+        match = re.search(pattern, clean_name)
+        if match:
+            return match.group(1)
+
+    return None
+
+
+def _normalize_version_string(version: str) -> str:
+    """Normalize version string to the current scheme."""
+    # Remove 'v' prefix if present
+    if version.startswith("v") or version.startswith("V"):
+        version = version[1:]
+
+    # Remove any extra text after the version number
+    # Example: "OrcaSlicer 2.3.1 beta Release" -> "2.3.1-beta"
+    import re
+
+    # Extract the core version number and any pre-release identifier
+    match = re.search(r"(\d+\.\d+\.\d+)(?:\s+(\w+))?", version)
+    if match:
+        core_version = match.group(1)
+        pre_release = match.group(2)
+        if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
+            return f"{core_version}-{pre_release.lower()}"
+        return core_version
+
+    # Fallback for simpler version patterns
+    match = re.search(r"(\d+\.\d+)(?:\s+(\w+))?", version)
+    if match:
+        core_version = match.group(1)
+        pre_release = match.group(2)
+        if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
+            return f"{core_version}-{pre_release.lower()}"
+        return core_version
+
+    return version
+
+
+def _write_info_file(info_file: Path, version: str) -> None:
+    """Write the .info file with the normalized version."""
+    content = f"Version: {version}\n"
+    info_file.write_text(content)
 
 
 def _log_check_start(

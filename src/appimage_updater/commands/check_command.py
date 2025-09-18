@@ -56,5 +56,6 @@ class CheckCommand(Command):
             yes=self.params.yes,
             no_interactive=self.params.no_interactive,
             verbose=self.params.verbose,
+            info=self.params.info,
         )
         return success
