@@ -79,49 +79,50 @@ tasks:
   lint:emoji:
     desc: Search for emojis in source code, docs, and configuration files
     cmds:
-      - |
-        echo "🔍 Searching for emojis in codebase..."
-        EMOJI_FOUND=0
-        
-        # Define emoji regex pattern (matches most common emoji ranges)
-        EMOJI_PATTERN='[\x{1F600}-\x{1F64F}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{1F1E0}-\x{1F1FF}]|[\x{2600}-\x{26FF}]|[\x{2700}-\x{27BF}]|[\x{1F900}-\x{1F9FF}]|[\x{1F018}-\x{1F270}]|[\x{238C}-\x{2454}]|[\x{20D0}-\x{20FF}]'
-        
-        # Search in source code
-        if grep -rn --include="*.py" -P "$EMOJI_PATTERN" src/ 2>/dev/null; then
-          echo "❌ Emojis found in source code (src/)"
-          EMOJI_FOUND=1
-        fi
-        
-        # Search in tests
-        if grep -rn --include="*.py" -P "$EMOJI_PATTERN" tests/ 2>/dev/null; then
-          echo "❌ Emojis found in tests (tests/)"
-          EMOJI_FOUND=1
-        fi
-        
-        # Search in docs
-        if grep -rn --include="*.md" -P "$EMOJI_PATTERN" docs/ 2>/dev/null; then
-          echo "❌ Emojis found in documentation (docs/)"
-          EMOJI_FOUND=1
-        fi
-        
-        # Search in README.md
-        if grep -rn -P "$EMOJI_PATTERN" README.md 2>/dev/null; then
-          echo "❌ Emojis found in README.md"
-          EMOJI_FOUND=1
-        fi
-        
-        # Search in mkdocs.yml
-        if grep -rn -P "$EMOJI_PATTERN" mkdocs.yml 2>/dev/null; then
-          echo "❌ Emojis found in mkdocs.yml"
-          EMOJI_FOUND=1
-        fi
-        
-        if [ $EMOJI_FOUND -eq 0 ]; then
-          echo "✅ No emojis found in codebase"
-        else
-          echo "❌ Emoji check failed - emojis found in codebase"
-          exit 1
-        fi
+      - cmd: |
+          echo "🔍 Searching for emojis in codebase..."
+          EMOJI_FOUND=0
+          
+          # Define emoji regex pattern (matches most common emoji ranges)
+          EMOJI_PATTERN='[\x{1F600}-\x{1F64F}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{1F1E0}-\x{1F1FF}]|[\x{2600}-\x{26FF}]|[\x{2700}-\x{27BF}]|[\x{1F900}-\x{1F9FF}]|[\x{1F018}-\x{1F270}]|[\x{238C}-\x{2454}]|[\x{20D0}-\x{20FF}]'
+          
+          # Search in source code
+          if grep -rn --include="*.py" -P "$EMOJI_PATTERN" src/ 2>/dev/null; then
+            echo "❌ Emojis found in source code (src/)"
+            EMOJI_FOUND=1
+          fi
+          
+          # Search in tests
+          if grep -rn --include="*.py" -P "$EMOJI_PATTERN" tests/ 2>/dev/null; then
+            echo "❌ Emojis found in tests (tests/)"
+            EMOJI_FOUND=1
+          fi
+          
+          # Search in docs
+          if grep -rn --include="*.md" -P "$EMOJI_PATTERN" docs/ 2>/dev/null; then
+            echo "❌ Emojis found in documentation (docs/)"
+            EMOJI_FOUND=1
+          fi
+          
+          # Search in README.md
+          if grep -rn -P "$EMOJI_PATTERN" README.md 2>/dev/null; then
+            echo "❌ Emojis found in README.md"
+            EMOJI_FOUND=1
+          fi
+          
+          # Search in mkdocs.yml
+          if grep -rn -P "$EMOJI_PATTERN" mkdocs.yml 2>/dev/null; then
+            echo "❌ Emojis found in mkdocs.yml"
+            EMOJI_FOUND=1
+          fi
+          
+          if [ $EMOJI_FOUND -eq 0 ]; then
+            echo "✅ No emojis found in codebase"
+          else
+            echo "❌ Emoji check failed - emojis found in codebase"
+            exit 1
+          fi
+        silent: true
 
   typecheck:
     desc: Run type checking with mypy
