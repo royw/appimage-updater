@@ -15,6 +15,7 @@ from ..events.event_bus import get_event_bus
 from ..events.progress_events import UpdateCheckEvent
 from ..repositories.base import RepositoryClient, RepositoryError
 from ..repositories.factory import get_repository_client
+from ..utils.version_utils import create_nightly_version, normalize_version_string
 from .models import Asset, CheckResult, Release, UpdateCandidate
 
 
@@ -166,7 +167,7 @@ class VersionChecker:
             processed_content = self._process_version_content(content)
             nightly_converted = self._convert_nightly_version_string(processed_content)
             # Apply the same normalization as we do for latest versions
-            return self._normalize_version_string(nightly_converted)
+            return normalize_version_string(nightly_converted)
         except Exception:
             return None
 
@@ -383,58 +384,12 @@ class VersionChecker:
 
     def _create_nightly_version(self, asset: Asset) -> str:
         """Create version string for nightly builds using asset creation date."""
-        date_str = asset.created_at.strftime("%Y-%m-%d")
-        return date_str
+        return create_nightly_version(asset)
 
     def _get_regular_version(self, release: Release) -> str:
         """Get version string for regular releases."""
-        version = release.tag_name or release.name or "unknown"
-        return self._normalize_version_string(version)
-
-    def _normalize_version_string(self, version: str) -> str:
-        """Normalize version string to the current scheme."""
-        # Remove 'v' prefix if present
-        if version.startswith("v") or version.startswith("V"):
-            version = version[1:]
-
-        import re
-
-        # Handle versions that already have dash-separated suffixes (e.g., "2.3.1-beta")
-        dash_match = re.match(r"^(\d+\.\d+(?:\.\d+)?)-(\w+)$", version)
-        if dash_match:
-            core_version = dash_match.group(1)
-            suffix = dash_match.group(2)
-            # Keep pre-release identifiers
-            if suffix.lower() in ["beta", "alpha", "rc"]:
-                return f"{core_version}-{suffix.lower()}"
-            # Strip architecture identifiers and other non-version suffixes
-            elif suffix.lower() in [
-                "x86", "x64", "amd64", "arm64", "i386", "i686",
-                "linux", "win32", "win64", "macos", "darwin"
-            ]:
-                return core_version
-            # For unknown suffixes, return just the core version to be safe
-            return core_version
-
-        # Handle versions with space-separated suffixes (e.g., "OrcaSlicer 2.3.1 beta Release")
-        space_match = re.search(r"(\d+\.\d+\.\d+)(?:\s+(\w+))?", version)
-        if space_match:
-            core_version = space_match.group(1)
-            pre_release = space_match.group(2)
-            if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
-                return f"{core_version}-{pre_release.lower()}"
-            return core_version
-
-        # Fallback for simpler version patterns
-        simple_match = re.search(r"(\d+\.\d+)(?:\s+(\w+))?", version)
-        if simple_match:
-            core_version = simple_match.group(1)
-            pre_release = simple_match.group(2)
-            if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
-                return f"{core_version}-{pre_release.lower()}"
-            return core_version
-
-        return version
+        # Version is already normalized at the repository parser level
+        return release.tag_name or release.name or "unknown"
 
     def _select_best_candidate(self, candidates: list[UpdateCandidate]) -> UpdateCandidate:
         """Select the best update candidate."""

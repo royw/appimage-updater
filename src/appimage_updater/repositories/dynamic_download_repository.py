@@ -16,6 +16,7 @@ import httpx
 
 from appimage_updater.core.models import Asset, Release
 from appimage_updater.repositories.base import RepositoryClient, RepositoryError
+from appimage_updater.utils.version_utils import normalize_version_string
 
 logger = logging.getLogger(__name__)
 
@@ -88,9 +89,11 @@ class DynamicDownloadRepository(RepositoryClient):
                 created_at=datetime.now(),
             )
 
+            # Create release with normalized version
+            normalized_version = normalize_version_string(version)
             release = Release(
-                version=version,
-                tag_name=version,
+                version=normalized_version,
+                tag_name=normalized_version,
                 published_at=datetime.now(),
                 assets=[asset],
                 is_prerelease=False,

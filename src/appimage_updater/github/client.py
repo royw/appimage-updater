@@ -11,6 +11,7 @@ from loguru import logger
 from pydantic import ValidationError
 
 from ..core.models import Asset, Release
+from ..utils.version_utils import normalize_version_string
 from .auth import GitHubAuth, get_github_auth
 
 
@@ -164,10 +165,14 @@ class GitHubClient:
             # Associate checksum files with their corresponding assets
             self._associate_checksum_files(assets)
 
-            # Parse release
+            # Parse release with normalized versions
+            raw_version = data["name"] or data["tag_name"]
+            raw_tag_name = data["tag_name"]
+
             return Release(
-                version=data["name"] or data["tag_name"],
-                tag_name=data["tag_name"],
+                version=normalize_version_string(raw_version),
+                tag_name=normalize_version_string(raw_tag_name),
+                name=normalize_version_string(data["name"]) if data["name"] else None,
                 published_at=datetime.fromisoformat(data["published_at"].replace("Z", "+00:00")),
                 assets=assets,
                 is_prerelease=data.get("prerelease", False),

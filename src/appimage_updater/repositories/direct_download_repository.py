@@ -15,6 +15,7 @@ import httpx
 from loguru import logger
 
 from ..core.models import Asset, Release
+from ..utils.version_utils import normalize_version_string
 from .base import RepositoryClient, RepositoryError
 
 
@@ -102,10 +103,11 @@ class DirectDownloadRepository(RepositoryClient):
             created_at=file_date,
         )
 
-        # Create release object
+        # Create release object with normalized version
+        normalized_version = normalize_version_string(version)
         release = Release(
-            version=version,
-            tag_name=version,
+            version=normalized_version,
+            tag_name=normalized_version,
             published_at=file_date,
             assets=[asset],
             is_prerelease=False,
@@ -167,9 +169,11 @@ class DirectDownloadRepository(RepositoryClient):
             created_at=file_date,
         )
 
+        # Create release with normalized version
+        normalized_version = normalize_version_string(version)
         release = Release(
-            version=version,
-            tag_name=version,
+            version=normalized_version,
+            tag_name=normalized_version,
             published_at=file_date,
             assets=[asset],
             is_prerelease=False,

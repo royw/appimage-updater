@@ -62,7 +62,10 @@ from .ui.display import (
     _replace_home_with_tilde,
     display_check_results,
     display_download_results,
-    display_edit_summary,
+)
+from .utils.version_utils import (
+    extract_version_from_filename,
+    normalize_version_string,
 )
 from .utils.logging_config import configure_logging
 
@@ -1481,10 +1484,10 @@ async def _extract_version_from_current_file(app_config: ApplicationConfig, curr
         # Try to get version from repository first
         version = await _get_version_from_repository(app_config, current_file)
         if version:
-            return _normalize_version_string(version)
+            return normalize_version_string(version)
 
         # Fallback to extracting from filename
-        return _extract_version_from_filename(current_file.name, app_config.name)
+        return extract_version_from_filename(current_file.name, app_config.name)
     except Exception as e:
         logger.debug(f"Error extracting version for {app_config.name}: {e}")
         return None
@@ -1524,66 +1527,6 @@ def _files_match(current_filename: str, asset_name: str, app_name: str) -> bool:
         or current_base.startswith(asset_name.split(".")[0])
         or asset_name.startswith(current_base.split(".")[0])
     )
-
-
-def _extract_version_from_filename(filename: str, app_name: str) -> str | None:
-    """Extract version from filename as fallback."""
-    import re
-
-    # Remove app name and common suffixes
-    clean_name = filename.replace(app_name, "").replace(".AppImage", "").replace(".current", "")
-
-    # Look for version patterns
-    version_patterns = [
-        r"[vV]?(\d+\.\d+\.\d+(?:-\w+)?)",  # v1.2.3 or v1.2.3-beta
-        r"[vV]?(\d+\.\d+(?:-\w+)?)",  # v1.2 or v1.2-beta
-        r"(\d{4}-\d{2}-\d{2})",  # Date format
-    ]
-
-    for pattern in version_patterns:
-        match = re.search(pattern, clean_name)
-        if match:
-            return match.group(1)
-
-    return None
-
-
-def _normalize_version_string(version: str) -> str:
-    """Normalize version string to the current scheme."""
-    # Remove 'v' prefix if present
-    if version.startswith("v") or version.startswith("V"):
-        version = version[1:]
-
-    import re
-
-    # Handle versions that already have dash-separated suffixes (e.g., "2.3.1-beta")
-    dash_match = re.match(r"^(\d+\.\d+(?:\.\d+)?)-(\w+)$", version)
-    if dash_match:
-        core_version = dash_match.group(1)
-        pre_release = dash_match.group(2)
-        if pre_release.lower() in ["beta", "alpha", "rc"]:
-            return f"{core_version}-{pre_release.lower()}"
-        return version  # Return as-is if suffix is not recognized
-
-    # Handle versions with space-separated suffixes (e.g., "OrcaSlicer 2.3.1 beta Release")
-    space_match = re.search(r"(\d+\.\d+\.\d+)(?:\s+(\w+))?", version)
-    if space_match:
-        core_version = space_match.group(1)
-        pre_release = space_match.group(2)
-        if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
-            return f"{core_version}-{pre_release.lower()}"
-        return core_version
-
-    # Fallback for simpler version patterns
-    simple_match = re.search(r"(\d+\.\d+)(?:\s+(\w+))?", version)
-    if simple_match:
-        core_version = simple_match.group(1)
-        pre_release = simple_match.group(2)
-        if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
-            return f"{core_version}-{pre_release.lower()}"
-        return core_version
-
-    return version
 
 
 def _write_info_file(info_file: Path, version: str) -> None:

@@ -19,6 +19,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from ..core.models import CheckResult
+from ..utils.version_utils import format_version_display
 
 # Console instance for all display operations
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
@@ -234,8 +235,8 @@ def _get_success_status_and_indicator(candidate: Any) -> tuple[str, str]:
 
 def _format_success_versions(candidate: Any) -> tuple[str, str]:
     """Format current and latest versions for display."""
-    current = _format_version_display(candidate.current_version) or "[dim]None"
-    latest = _format_version_display(candidate.latest_version)
+    current = format_version_display(candidate.current_version) or "[dim]None"
+    latest = format_version_display(candidate.latest_version)
     return current, latest
 
 
@@ -270,23 +271,6 @@ def _create_success_row(result: CheckResult, show_urls: bool) -> list[str]:
     ]
 
     return _add_url_if_requested(row, show_urls, candidate)
-
-
-def _format_version_display(version: str | None) -> str:
-    """Format version for display, showing dates in a user-friendly format."""
-    if not version:
-        return ""
-
-    # Check if version is in date format (YYYY-MM-DD or YYYYMMDD)
-    if re.match(r"^\d{4}-\d{2}-\d{2}$", version):
-        # Already in YYYY-MM-DD format, return as-is
-        return version
-    elif re.match(r"^\d{8}$", version):
-        # Convert YYYYMMDD to YYYY-MM-DD format
-        return f"{version[:4]}-{version[4:6]}-{version[6:8]}"
-    else:
-        # Regular semantic version or other format
-        return version
 
 
 def _extract_url_results(results: list[CheckResult]) -> list[tuple[str, str]]:
