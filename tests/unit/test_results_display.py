@@ -5,12 +5,12 @@ from unittest.mock import Mock, patch
 
 from rich.console import Console
 
-from appimage_updater.ui.display_utils.results_display import (
+from appimage_updater.ui.display import (
     display_download_results,
     display_failed_downloads,
     display_successful_downloads,
-    get_checksum_status,
 )
+from appimage_updater.ui.display import get_checksum_status
 
 
 class TestGetChecksumStatus:
@@ -54,7 +54,7 @@ class TestGetChecksumStatus:
 class TestDisplaySuccessfulDownloads:
     """Test cases for display_successful_downloads function."""
 
-    @patch('appimage_updater.ui.display_utils.results_display.console')
+    @patch('appimage_updater.ui.display.console')
     def test_display_successful_downloads_empty_list(self, mock_console: Mock) -> None:
         """Test displaying empty successful downloads list."""
         display_successful_downloads([])
@@ -62,7 +62,7 @@ class TestDisplaySuccessfulDownloads:
         # Should not print anything for empty list
         mock_console.print.assert_not_called()
 
-    @patch('appimage_updater.ui.display_utils.results_display.console')
+    @patch('appimage_updater.ui.display.console')
     def test_display_successful_downloads_single_result(self, mock_console: Mock) -> None:
         """Test displaying single successful download."""
         result = Mock()
@@ -77,7 +77,7 @@ class TestDisplaySuccessfulDownloads:
         mock_console.print.assert_any_call("\n[green]Successfully downloaded 1 updates:")
         mock_console.print.assert_any_call("  Downloaded: TestApp (1.0 MB)")
 
-    @patch('appimage_updater.ui.display_utils.results_display.console')
+    @patch('appimage_updater.ui.display.console')
     def test_display_successful_downloads_multiple_results(self, mock_console: Mock) -> None:
         """Test displaying multiple successful downloads."""
         result1 = Mock()
@@ -99,7 +99,7 @@ class TestDisplaySuccessfulDownloads:
         mock_console.print.assert_any_call("  Downloaded: App1 (2.0 MB)")
         mock_console.print.assert_any_call("  Downloaded: App2 (5.0 MB) [green]verified[/green]")
 
-    @patch('appimage_updater.ui.display_utils.results_display.console')
+    @patch('appimage_updater.ui.display.console')
     def test_display_successful_downloads_with_checksum_warning(self, mock_console: Mock) -> None:
         """Test displaying successful download with checksum warning."""
         result = Mock()
@@ -116,7 +116,7 @@ class TestDisplaySuccessfulDownloads:
 class TestDisplayFailedDownloads:
     """Test cases for display_failed_downloads function."""
 
-    @patch('appimage_updater.ui.display_utils.results_display.console')
+    @patch('appimage_updater.ui.display.console')
     def test_display_failed_downloads_empty_list(self, mock_console: Mock) -> None:
         """Test displaying empty failed downloads list."""
         display_failed_downloads([])
@@ -124,7 +124,7 @@ class TestDisplayFailedDownloads:
         # Should not print anything for empty list
         mock_console.print.assert_not_called()
 
-    @patch('appimage_updater.ui.display_utils.results_display.console')
+    @patch('appimage_updater.ui.display.console')
     def test_display_failed_downloads_single_result(self, mock_console: Mock) -> None:
         """Test displaying single failed download."""
         result = Mock()
@@ -138,7 +138,7 @@ class TestDisplayFailedDownloads:
         mock_console.print.assert_any_call("\n[red]Failed to download 1 updates:")
         mock_console.print.assert_any_call("  Failed: FailedApp: Network timeout")
 
-    @patch('appimage_updater.ui.display_utils.results_display.console')
+    @patch('appimage_updater.ui.display.console')
     def test_display_failed_downloads_multiple_results(self, mock_console: Mock) -> None:
         """Test displaying multiple failed downloads."""
         result1 = Mock()

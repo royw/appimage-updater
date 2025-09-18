@@ -152,6 +152,7 @@ def extract_version_from_filename(filename: str, app_name: str) -> str | None:
     for pattern in version_patterns:
         match = re.search(pattern, clean_name)
         if match:
-            return match.group(1)
+            # Normalize the extracted version
+            return normalize_version_string(match.group(1))
 
     return None

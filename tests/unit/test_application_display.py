@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from appimage_updater.ui.display_utils.application_display import (
+from appimage_updater.ui.display import (
     _add_checksum_details,
     _add_checksum_status_line,
     _add_managed_symlink_line,
@@ -103,7 +103,7 @@ class TestGetRotationIndicator:
 class TestGetAppConfigPath:
     """Test cases for _get_app_config_path function."""
 
-    @patch('appimage_updater.ui.display_utils.path_formatting._replace_home_with_tilde')
+    @patch('appimage_updater.ui.display._replace_home_with_tilde')
     def test_file_config(self, mock_tilde: Mock) -> None:
         """Test getting config path for file-based config."""
         mock_tilde.return_value = "~/config.json"
@@ -114,7 +114,7 @@ class TestGetAppConfigPath:
         result = _get_app_config_path(app, config_info)
         assert result == "~/config.json"
 
-    @patch('appimage_updater.ui.display_utils.path_formatting._replace_home_with_tilde')
+    @patch('appimage_updater.ui.display._replace_home_with_tilde')
     def test_directory_config(self, mock_tilde: Mock) -> None:
         """Test getting config path for directory-based config."""
         mock_tilde.return_value = "~/config/myapp.json"
@@ -292,7 +292,7 @@ class TestIsMatchingAppImageFile:
 class TestGetBasicConfigLines:
     """Test cases for get_basic_config_lines function."""
 
-    @patch('appimage_updater.ui.display_utils.path_formatting._replace_home_with_tilde')
+    @patch('appimage_updater.ui.display._replace_home_with_tilde')
     def test_enabled_app(self, mock_tilde: Mock) -> None:
         """Test basic config lines for enabled app."""
         mock_tilde.return_value = "~/downloads"
@@ -316,7 +316,7 @@ class TestGetBasicConfigLines:
         ]
         assert result == expected
 
-    @patch('appimage_updater.ui.display_utils.path_formatting._replace_home_with_tilde')
+    @patch('appimage_updater.ui.display._replace_home_with_tilde')
     def test_disabled_app(self, mock_tilde: Mock) -> None:
         """Test basic config lines for disabled app."""
         mock_tilde.return_value = "~/downloads"
@@ -378,8 +378,8 @@ class TestGetSymlinksInfo:
         result = get_symlinks_info(app)
         assert result == "[dim]No symlinks configured[/dim]"
 
-    @patch('appimage_updater.ui.display_utils.application_display.Path')
-    @patch('appimage_updater.ui.display_utils.path_formatting._replace_home_with_tilde')
+    @patch('appimage_updater.ui.display.Path')
+    @patch('appimage_updater.ui.display._replace_home_with_tilde')
     def test_symlink_does_not_exist(self, mock_tilde: Mock, mock_path_class: Mock) -> None:
         """Test symlink that doesn't exist."""
         mock_tilde.return_value = "~/bin/app"
@@ -394,8 +394,8 @@ class TestGetSymlinksInfo:
         result = get_symlinks_info(app)
         assert result == "[yellow]Symlink does not exist:[/yellow] ~/bin/app"
 
-    @patch('appimage_updater.ui.display_utils.application_display.Path')
-    @patch('appimage_updater.ui.display_utils.path_formatting._replace_home_with_tilde')
+    @patch('appimage_updater.ui.display.Path')
+    @patch('appimage_updater.ui.display._replace_home_with_tilde')
     def test_path_not_symlink(self, mock_tilde: Mock, mock_path_class: Mock) -> None:
         """Test path that exists but is not a symlink."""
         mock_tilde.return_value = "~/bin/app"

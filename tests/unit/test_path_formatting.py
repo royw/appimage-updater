@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from unittest.mock import patch
 
-from appimage_updater.ui.display_utils.path_formatting import (
+from appimage_updater.ui.display import (
     _add_ellipsis_if_truncated,
     _build_path_from_parts,
     _replace_home_with_tilde,

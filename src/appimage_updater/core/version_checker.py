@@ -432,10 +432,11 @@ class VersionChecker:
             self._extract_single_number_version,
         ]
 
-        for pattern_extractor in patterns:
-            result = pattern_extractor(filename)
+        for pattern_func in patterns:
+            result = pattern_func(filename)
             if result:
-                return result
+                # Normalize the extracted version
+                return normalize_version_string(result)
 
         # Fallback: return the filename if no version pattern found
         return filename
