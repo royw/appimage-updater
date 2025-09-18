@@ -202,9 +202,19 @@ class RemoveCommand(Command):
             self._delete_removed_app_files(config_dir, removed_apps)
             self._update_global_config_file(config_dir, config)
 
+    def _save_directory_based_config_with_path(
+        self, config: Config, removed_apps: list[ApplicationConfig], config_dir: Path
+    ) -> None:
+        """Save directory-based configuration to specified path."""
+        self._delete_removed_app_files(config_dir, removed_apps)
+        self._update_global_config_file(config_dir, config)
+
     def _save_config(self, config: Config, removed_apps: list[ApplicationConfig]) -> None:
         """Save the updated configuration."""
         if self.params.config_file:
             self._save_single_file_config(config)
-        elif self.params.config_dir:
-            self._save_directory_based_config(config, removed_apps)
+        else:
+            # Use default config directory if none specified (same logic as load_config)
+            from ..config.loader import get_default_config_dir
+            config_dir = self.params.config_dir or get_default_config_dir()
+            self._save_directory_based_config_with_path(config, removed_apps, config_dir)

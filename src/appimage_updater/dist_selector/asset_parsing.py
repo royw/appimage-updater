@@ -29,7 +29,7 @@ def _extract_distribution_info(filename: str, info: AssetInfo) -> None:
     """Extract distribution and version information from filename."""
     distrib_patterns = [
         (r"ubuntu[-_](\d+\.?\d*)", "ubuntu"),
-        (r"fedora[-_](\d+)", "fedora"),
+        (r"fedora[-_]?v?([\d.]+)", "fedora"),  # Match fedora with optional version like fedora-v02.02.01.60
         (r"centos[-_](\d+)", "centos"),
         (r"rhel[-_](\d+)", "rhel"),
         (r"debian[-_](\d+)", "debian"),

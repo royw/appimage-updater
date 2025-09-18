@@ -136,6 +136,7 @@ class VersionChecker:
             update_available=update_available,
             download_url=best_candidate.asset.download_url if best_candidate.asset else None,
             asset=best_candidate.asset,
+            candidate=best_candidate,  # This was the missing field!
         )
 
     def _create_repository_error_result(self, app_config: ApplicationConfig, error: RepositoryError) -> CheckResult:
@@ -229,23 +230,26 @@ class VersionChecker:
                 continue
 
             # Select best asset for this release
-            best_asset = select_best_distribution_asset(release.assets)
+            try:
+                best_asset = select_best_distribution_asset(release.assets)
+            except ValueError:
+                # No suitable assets found for this release
+                continue
 
             if best_asset:
                 # Use asset creation date for nightly builds
                 release_version = self._get_version_for_release(release, best_asset)
 
-                candidates.append(
-                    UpdateCandidate(
-                        app_name=app_config.name,
-                        current_version=current_version,
-                        latest_version=release_version,
-                        asset=best_asset,
-                        download_path=Path(tempfile.gettempdir()) / best_asset.name,  # Secure temp path
-                        is_newer=True,  # Will be determined later
-                        release=release,
-                    )
+                candidate = UpdateCandidate(
+                    app_name=app_config.name,
+                    current_version=current_version,
+                    latest_version=release_version,
+                    asset=best_asset,
+                    download_path=Path(tempfile.gettempdir()) / best_asset.name,  # Secure temp path
+                    is_newer=True,  # Will be determined later
+                    release=release,
                 )
+                candidates.append(candidate)
 
         return candidates
 

@@ -6,11 +6,11 @@ from datetime import datetime
 from unittest.mock import patch
 
 from appimage_updater.distribution_selector import (
-    AssetInfo,
-    DistributionInfo,
     DistributionSelector,
     select_best_distribution_asset,
 )
+from appimage_updater.dist_selector.asset_parsing import _parse_asset_info
+from appimage_updater.dist_selector.models import AssetInfo, DistributionInfo
 from appimage_updater.core.models import Asset
 
 
@@ -35,7 +35,6 @@ class TestDistributionSelector:
 
     def test_parse_asset_info_ubuntu(self):
         """Test parsing Ubuntu asset information."""
-        selector = DistributionSelector(interactive=False)
 
         assets = [
             Asset(
@@ -58,7 +57,7 @@ class TestDistributionSelector:
             ),
         ]
 
-        parsed = [selector._parse_asset_info(asset) for asset in assets]
+        parsed = [_parse_asset_info(asset) for asset in assets]
 
         # First asset: Ubuntu 22.04 ZIP
         assert parsed[0].distribution == "ubuntu"

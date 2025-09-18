@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import re
 import subprocess
-from dataclasses import dataclass
 from pathlib import Path
 
 from loguru import logger
@@ -25,29 +24,8 @@ from appimage_updater.core.system_info import (
     is_compatible_platform,
     is_supported_format,
 )
-
-
-@dataclass
-class DistributionInfo:
-    """Information about a Linux distribution."""
-
-    id: str  # ubuntu, fedora, arch, etc.
-    version: str  # 24.04, 38, rolling, etc.
-    version_numeric: float  # 24.04 -> 24.04, 38 -> 38.0
-    codename: str | None = None  # jammy, noble, etc.
-
-
-@dataclass
-class AssetInfo:
-    """Information extracted from an asset filename."""
-
-    asset: Asset
-    distribution: str | None = None  # ubuntu, fedora, etc.
-    version: str | None = None  # 24.04, 38, etc.
-    version_numeric: float | None = None  # For comparison
-    arch: str | None = None  # x86_64, amd64, etc.
-    format: str | None = None  # AppImage, zip, etc.
-    score: float = 0.0  # Compatibility score
+from appimage_updater.dist_selector.asset_parsing import _parse_asset_info
+from appimage_updater.dist_selector.models import AssetInfo, DistributionInfo
 
 
 class DistributionSelector:
@@ -121,7 +99,7 @@ class DistributionSelector:
         return self._handle_user_input_selection(asset_infos, best_info)
 
     def _parse_assets(self, assets: list[Asset]) -> list[AssetInfo]:
-        return [self._parse_asset_info(a) for a in assets]
+        return [_parse_asset_info(a) for a in assets]
 
     def _score_and_sort(self, asset_infos: list[AssetInfo]) -> list[AssetInfo]:
         for info in asset_infos:
@@ -260,67 +238,6 @@ class DistributionSelector:
                 return float(f"{parts[0]}.{parts[1]}")
         except (ValueError, IndexError):
             return 0.0
-
-    def _parse_asset_info(self, asset: Asset) -> AssetInfo:
-        """Parse distribution and version information from asset filename."""
-        filename = asset.name.lower()
-        info = AssetInfo(asset=asset)
-
-        self._extract_distribution_info(filename, info)
-        self._extract_architecture_info(filename, info)
-        self._extract_format_info(filename, info)
-
-        logger.debug(f"Parsed {asset.name}: dist={info.distribution}, version={info.version}, arch={info.arch}")
-        return info
-
-    def _extract_distribution_info(self, filename: str, info: AssetInfo) -> None:
-        """Extract distribution and version information from filename."""
-        distrib_patterns = [
-            (r"ubuntu[-_](\d+\.?\d*)", "ubuntu"),
-            (r"fedora[-_]?v?([\d.]+)", "fedora"),  # Match fedora with optional version like fedora-v02.02.01.60
-            (r"debian[-_](\d+)", "debian"),
-            (r"centos[-_](\d+)", "centos"),
-            (r"rhel[-_](\d+)", "rhel"),
-            (r"opensuse[-_](\d+\.?\d*)", "opensuse"),
-            (r"arch", "arch"),  # Arch Linux doesn't typically have versions in filenames
-        ]
-
-        for pattern, dist_name in distrib_patterns:
-            match = re.search(pattern, filename)
-            if match:
-                info.distribution = dist_name
-                if len(match.groups()) > 0:
-                    info.version = match.group(1)
-                    info.version_numeric = self._parse_version_number(match.group(1))
-                break
-
-    def _extract_architecture_info(self, filename: str, info: AssetInfo) -> None:
-        """Extract architecture information from filename."""
-        arch_patterns = [
-            r"x86_64",
-            r"amd64",
-            r"x64",
-            r"aarch64",
-            r"arm64",
-            r"armv7",
-            r"armhf",
-            r"i386",
-            r"i686",
-        ]
-
-        for arch_pattern in arch_patterns:
-            if re.search(arch_pattern, filename):
-                info.arch = arch_pattern
-                break
-
-    def _extract_format_info(self, filename: str, info: AssetInfo) -> None:
-        """Extract file format information from filename."""
-        if filename.endswith(".appimage"):
-            info.format = "appimage"
-        elif filename.endswith(".zip"):
-            info.format = "zip"
-        elif filename.endswith(".tar.gz"):
-            info.format = "tar.gz"
 
     def _calculate_compatibility_score(self, info: AssetInfo) -> float:
         """Calculate compatibility score for an asset."""
