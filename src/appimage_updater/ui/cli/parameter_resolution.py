@@ -41,7 +41,7 @@ def _resolve_download_directory(
 def _get_base_download_directory(global_config: Any) -> Path:
     """Get base download directory from config or default."""
     if global_config and global_config.defaults.download_dir:
-        return global_config.defaults.download_dir
+        return Path(global_config.defaults.download_dir)
     else:
         return Path.home() / "Applications"
 

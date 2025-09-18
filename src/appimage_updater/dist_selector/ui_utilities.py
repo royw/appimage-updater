@@ -14,10 +14,10 @@ from .models import AssetInfo
 def _prompt_user_selection(asset_infos: list[AssetInfo], console: Console) -> AssetInfo:
     """Prompt user to select from multiple assets."""
     console.print("\n[yellow]Multiple compatible assets found. Please select one:[/yellow]")
-    
+
     table = _create_asset_selection_table(asset_infos)
     console.print(table)
-    
+
     return _get_user_choice(asset_infos, console)
 
 

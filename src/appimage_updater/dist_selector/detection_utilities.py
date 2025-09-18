@@ -129,6 +129,7 @@ def _parse_issue_content(content: str) -> DistributionInfo | None:
 def _parse_ubuntu_issue(content: str) -> DistributionInfo | None:
     """Parse Ubuntu distribution info from issue content."""
     import re
+
     version_match = re.search(r"(\d+\.\d+)", content)
     if version_match:
         version = version_match.group(1)
@@ -139,6 +140,7 @@ def _parse_ubuntu_issue(content: str) -> DistributionInfo | None:
 def _parse_fedora_issue(content: str) -> DistributionInfo | None:
     """Parse Fedora distribution info from issue content."""
     import re
+
     version_match = re.search(r"(\d+)", content)
     if version_match:
         version = version_match.group(1)

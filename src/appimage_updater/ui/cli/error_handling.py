@@ -52,13 +52,14 @@ def _log_repository_auth_status(url: str) -> None:
     """Log repository authentication status for debugging."""
     try:
         from ...repositories.factory import get_repository_client
+
         repo_client = get_repository_client(url)
         _log_client_auth_status(repo_client)
     except Exception as e:
         logger.debug(f"Could not determine repository authentication status: {e}")
 
 
-def _log_client_auth_status(repo_client) -> None:
+def _log_client_auth_status(repo_client: Any) -> None:
     """Log authentication status for a repository client."""
     if hasattr(repo_client, "_client"):
         _log_github_auth_status(repo_client._client)
@@ -66,7 +67,7 @@ def _log_client_auth_status(repo_client) -> None:
         logger.debug(f"Repository client type: {type(repo_client).__name__}")
 
 
-def _log_github_auth_status(github_client) -> None:
+def _log_github_auth_status(github_client: Any) -> None:
     """Log GitHub authentication status."""
     if hasattr(github_client, "auth") and github_client.auth:
         if hasattr(github_client.auth, "token") and github_client.auth.token:

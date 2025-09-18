@@ -97,10 +97,10 @@ def validate_basic_field_updates(updates: dict[str, Any]) -> None:
     """Validate basic field updates."""
     if "pattern" in updates:
         _validate_pattern(updates["pattern"])
-    
+
     if "checksum_algorithm" in updates:
         updates["checksum_algorithm"] = _validate_checksum_algorithm(updates["checksum_algorithm"])
-    
+
     if "retain_count" in updates:
         updates["retain_count"] = _validate_retain_count(updates["retain_count"])
 
