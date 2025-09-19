@@ -180,15 +180,17 @@ def display_applications_list(applications: list[Any]) -> None:
 
         # Wrap download directory path
         download_dir = _wrap_path(str(app.download_dir), 35)
+        wrapped_path = _wrap_path(str(app.download_dir), 20)
 
         table.add_row(
             app.name,
             status,
             source_display,
+            wrapped_path,
             download_dir,
         )
 
-    console.print(table)
+    console.print(table, overflow="fold")
 
 
 def display_check_results(results: list[CheckResult], show_urls: bool = False) -> None:
@@ -199,7 +201,7 @@ def display_check_results(results: list[CheckResult], show_urls: bool = False) -
         row = _create_result_row(result, show_urls)
         table.add_row(*row)
 
-    console.print(table)
+    console.print(table, overflow="fold")
 
     if show_urls:
         _display_url_table(results)
@@ -350,7 +352,7 @@ def _display_url_table(results: list[CheckResult]) -> None:
     _populate_url_table(url_table, url_results)
 
     console.print()  # Add spacing
-    console.print(url_table)
+    console.print(url_table, overflow="fold")
 
 
 def display_download_results(results: list[Any]) -> None:
