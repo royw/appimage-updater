@@ -17,7 +17,6 @@ from loguru import logger
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
 
 from ..core.models import CheckResult
 from ..utils.version_utils import format_version_display
@@ -279,9 +278,8 @@ def _add_url_if_requested(row: list[str], show_urls: bool, candidate: Any) -> li
     if show_urls:
         if candidate and candidate.asset:
             url = candidate.asset.url
-            # For the main table, use our wrappable URL approach
-            wrappable_url = _make_url_wrappable(url)
-            row.append(wrappable_url)
+            # Use raw URL to maintain clickability - Rich will handle wrapping with no_wrap=False
+            row.append(url)
         else:
             row.append("-")
     return row
@@ -328,29 +326,17 @@ def _create_url_table() -> Table:
     return url_table
 
 
-def _make_url_wrappable(url: str) -> Text:
-    """Create a Rich Text object that can wrap URLs on forward slashes."""
-    # Use Rich's built-in URL wrapping by inserting soft breaks after slashes
-    text = Text()
-    
-    # Split on forward slashes and add break opportunities
-    parts = url.split('/')
-    for i, part in enumerate(parts):
-        if i > 0:
-            # Add slash with a soft break opportunity after it
-            text.append('/', style="blue")
-            # Add a zero-width space to enable breaking
-            text.append('\u200b', style="blue")  # Zero-width space
-        text.append(part, style="blue")
-    
-    return text
+def _make_url_wrappable(url: str) -> str:
+    """Create a URL string that Rich can wrap more intelligently."""
+    # Instead of zero-width spaces, let's go back to our original smart truncation
+    # but remove the manual wrapping since Rich handles it better with no_wrap=False
+    return url
 
 
 def _populate_url_table(url_table: Table, url_results: list[tuple[str, str]]) -> None:
     """Populate URL table with results."""
     for app_name, url in url_results:
-        wrappable_url = _make_url_wrappable(url)
-        url_table.add_row(app_name, wrappable_url)
+        url_table.add_row(app_name, url)
 
 
 def _display_url_table(results: list[CheckResult]) -> None:
