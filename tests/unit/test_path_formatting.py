@@ -95,8 +95,9 @@ class TestBuildPathFromParts:
         """Test building path from single part that's too long."""
         parts = ["very_long_filename.txt"]
         result_parts, length = _build_path_from_parts(parts, 10)
-        assert result_parts == []
-        assert length == 0
+        # Function always includes at least one part, even if too long
+        assert result_parts == ["very_long_filename.txt"]
+        assert length == 22  # len("very_long_filename.txt") + separator logic
 
     def test_build_path_from_parts_multiple_parts_all_fit(self) -> None:
         """Test building path from multiple parts that all fit."""

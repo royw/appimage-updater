@@ -106,8 +106,13 @@ def _wrap_generic_url(url: str, max_width: int) -> str:
     protocol, rest = url.split("://", 1)
     if "/" in rest:
         domain, path = rest.split("/", 1)
-        if len(domain) + len(path) + 4 > max_width:  # +4 for ://
-            return f"{domain}/...{path[-(max_width - len(domain) - 7) :]}"
+        if len(url) > max_width:  # Check if full URL exceeds max_width
+            # Calculate available space for path after protocol, domain, and formatting
+            available_space = max_width - len(protocol) - len(domain) - 7  # 7 for "://" + "/" + "..."
+            if available_space > 0:
+                return f"{protocol}://{domain}/...{path[-available_space:]}"
+            else:
+                return f"{protocol}://{domain}/..."
     return url
 
 
