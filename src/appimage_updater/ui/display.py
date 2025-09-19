@@ -93,74 +93,6 @@ def _wrap_path(path: str, max_width: int = 40) -> str:
     return "..." + display_path[-(max_width - 3) :]
 
 
-def _wrap_github_url(url: str, max_width: int = 50) -> str:
-    """Wrap GitHub URL by breaking on meaningful separators."""
-    parts = url.split("/")
-    if len(parts) < 5:  # Not a proper GitHub URL
-        return url
-
-    # For release download URLs: https://github.com/user/repo/releases/download/tag/filename
-    if len(parts) >= 8 and "releases/download" in url:
-        if len(url) <= max_width:
-            return url
-
-        filename = parts[-1] if len(parts) > 8 else ""
-
-        # Try different levels of truncation
-        # Level 1: Try github.com/user/repo/releases/download/tag/filename
-        short_base = f"{parts[2]}/{parts[3]}/{parts[4]}/releases/download/{parts[7]}"
-        if len(short_base) + len(filename) + 1 <= max_width:
-            return f"{short_base}/{filename}"
-
-        # Level 2: Try github.com/user/repo/...filename
-        repo_base = f"{parts[2]}/{parts[3]}/{parts[4]}"
-        if len(repo_base) + len(filename) + 4 <= max_width:  # +4 for "/..."
-            return f"{repo_base}/...{filename}"
-
-        # Level 3: Just show the filename if it fits
-        if len(filename) <= max_width:
-            return filename
-
-        # Level 4: Truncate filename
-        if max_width > 3:
-            return filename[: max_width - 3] + "..."
-
-    # For regular GitHub URLs, show user/repo (original behavior)
-    return f"{parts[2]}/{parts[3]}/{parts[4]}"
-
-
-def _wrap_generic_url(url: str, max_width: int) -> str:
-    """Wrap generic URL by preserving domain and truncating path."""
-    protocol, rest = url.split("://", 1)
-    if "/" in rest:
-        domain, path = rest.split("/", 1)
-        if len(url) > max_width:  # Check if full URL exceeds max_width
-            # Calculate available space for path after protocol, domain, and formatting
-            available_space = max_width - len(protocol) - len(domain) - 7  # 7 for "://" + "/" + "..."
-            if available_space > 0:
-                return f"{protocol}://{domain}/...{path[-available_space:]}"
-            else:
-                return f"{protocol}://{domain}/..."
-    return url
-
-
-def _wrap_url(url: str, max_width: int = 50) -> str:
-    """Wrap a URL by breaking on meaningful separators."""
-    if len(url) <= max_width:
-        return url
-
-    # For GitHub URLs, preserve the important parts
-    if "github.com" in url:
-        return _wrap_github_url(url, max_width)
-
-    # For other URLs, try to preserve domain and path
-    if "://" in url:
-        wrapped = _wrap_generic_url(url, max_width)
-        if wrapped != url:
-            return wrapped
-
-    # Fallback truncation
-    return url[: max_width - 3] + "..."
 
 
 def display_applications_list(applications: list[Any]) -> None:
@@ -168,15 +100,14 @@ def display_applications_list(applications: list[Any]) -> None:
     table = Table(title="Configured Applications")
     table.add_column("Application", style="cyan", no_wrap=False)
     table.add_column("Status", style="green")
-    table.add_column("Source", style="yellow", no_wrap=False)
+    table.add_column("Source", style="yellow", no_wrap=False, overflow="fold")
     table.add_column("Download Directory", style="magenta", no_wrap=False)
 
     for app in applications:
         status = "Enabled" if app.enabled else "Disabled"
 
-        # Format source with better wrapping
-        source_url = _wrap_url(app.url, 45)
-        source_display = f"{app.source_type.title()}: {source_url}"
+        # Format source - let table handle wrapping with overflow='fold'
+        source_display = f"{app.source_type.title()}: {app.url}"
 
         # Wrap download directory path
         download_dir = _wrap_path(str(app.download_dir), 35)
@@ -326,8 +257,6 @@ def _create_url_table() -> Table:
     url_table.add_column("Application", style="cyan")
     url_table.add_column("Download URL", style="blue", no_wrap=False, overflow="fold")
     return url_table
-
-
 
 
 def _populate_url_table(url_table: Table, url_results: list[tuple[str, str]]) -> None:
