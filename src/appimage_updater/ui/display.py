@@ -190,7 +190,7 @@ def display_applications_list(applications: list[Any]) -> None:
             download_dir,
         )
 
-    console.print(table, overflow="fold")
+    console.print(table)
 
 
 def display_check_results(results: list[CheckResult], show_urls: bool = False) -> None:
@@ -201,7 +201,7 @@ def display_check_results(results: list[CheckResult], show_urls: bool = False) -
         row = _create_result_row(result, show_urls)
         table.add_row(*row)
 
-    console.print(table, overflow="fold")
+    console.print(table)
 
     if show_urls:
         _display_url_table(results)
@@ -217,7 +217,7 @@ def _create_results_table(show_urls: bool) -> Table:
     table.add_column("Update", style="bold")
 
     if show_urls:
-        table.add_column("Download URL", style="blue", max_width=60, no_wrap=False)
+        table.add_column("Download URL", style="blue", no_wrap=False, overflow="fold")
 
     return table
 
@@ -324,7 +324,7 @@ def _create_url_table() -> Table:
     """Create and configure URL table."""
     url_table = Table(title="Download URLs")
     url_table.add_column("Application", style="cyan")
-    url_table.add_column("Download URL", style="blue", no_wrap=False)
+    url_table.add_column("Download URL", style="blue", no_wrap=False, overflow="fold")
     return url_table
 
 
