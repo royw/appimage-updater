@@ -94,17 +94,19 @@ class TestCreateErrorRow:
         """Test creating error row without URLs."""
         result = Mock()
         result.app_name = "TestApp"
+        result.error_message = "Test error"
         
         row = _create_error_row(result, False)
-        assert row == ["TestApp", "Error", "-", "-", "-"]
+        assert row == ["TestApp", "Error", "-", "-", "Test error"]
 
     def test_with_urls(self) -> None:
         """Test creating error row with URLs."""
         result = Mock()
         result.app_name = "TestApp"
+        result.error_message = "Test error"
         
         row = _create_error_row(result, True)
-        assert row == ["TestApp", "Error", "-", "-", "-", "-"]
+        assert row == ["TestApp", "Error", "-", "-", "Test error", "-"]
 
 
 class TestCreateNoCandidateRow:
@@ -114,9 +116,10 @@ class TestCreateNoCandidateRow:
         """Test creating no candidate row without URLs."""
         result = Mock()
         result.app_name = "TestApp"
+        result.error_message = "No matching assets"
         
         row = _create_no_candidate_row(result, False)
-        assert row == ["TestApp", "No updates", "-", "-", "-"]
+        assert row == ["TestApp", "No candidate", "-", "-", "No matching assets"]
 
 
 class TestCreateResultRow:

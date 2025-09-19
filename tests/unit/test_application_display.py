@@ -344,7 +344,7 @@ class TestGetBasicConfigLines:
 class TestDisplayEditSummary:
     """Test cases for display_edit_summary function."""
 
-    @patch('appimage_updater.ui.display_utils.application_display.console')
+    @patch('appimage_updater.ui.display.console')
     def test_display_edit_summary(self, mock_console: Mock) -> None:
         """Test displaying edit summary."""
         changes = ["Updated URL", "Changed pattern", "Enabled prerelease"]
