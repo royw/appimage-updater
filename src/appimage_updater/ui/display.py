@@ -280,7 +280,7 @@ def _add_url_if_requested(row: list[str], show_urls: bool, candidate: Any) -> li
     if show_urls:
         if candidate and candidate.asset:
             url = candidate.asset.url
-            # Use raw URL to maintain clickability - Rich will handle wrapping with no_wrap=False
+            # Show URL as plain text for information - no clicking needed
             row.append(url)
         else:
             row.append("-")
@@ -338,6 +338,7 @@ def _make_url_wrappable(url: str) -> str:
 def _populate_url_table(url_table: Table, url_results: list[tuple[str, str]]) -> None:
     """Populate URL table with results."""
     for app_name, url in url_results:
+        # Show URL as plain text for information - no clicking needed
         url_table.add_row(app_name, url)
 
 
