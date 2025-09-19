@@ -16,6 +16,16 @@ class TestWrapGithubUrl:
         result = _wrap_github_url(url)
         assert result == "github.com/user/repo"
 
+    def test_wrap_github_url_release_download(self) -> None:
+        """Test wrapping GitHub release download URL - regression test."""
+        url = "https://github.com/bambulab/BambuStudio/releases/download/v02.02.02.56/Bambu_Studio_ubuntu-24.04_PR-8184.AppImage"
+        result = _wrap_github_url(url, 60)
+        # Should show meaningful content, not truncated with "Bam..."
+        assert not result.endswith("...")  # No truncation with ellipsis
+        assert len(result) <= 60
+        # Should show either the filename or include repo info
+        assert "Bambu_Studio" in result or "bambulab" in result
+
     def test_wrap_github_url_with_path(self) -> None:
         """Test wrapping GitHub URL with additional path."""
         url = "https://github.com/user/repo/releases/tag/v1.0.0"

@@ -93,12 +93,40 @@ def _wrap_path(path: str, max_width: int = 40) -> str:
     return "..." + display_path[-(max_width - 3) :]
 
 
-def _wrap_github_url(url: str) -> str:
-    """Extract key parts from GitHub URL for display."""
+def _wrap_github_url(url: str, max_width: int = 50) -> str:
+    """Wrap GitHub URL by breaking on meaningful separators."""
     parts = url.split("/")
-    if len(parts) >= 5:  # https://github.com/user/repo
-        return f"{parts[2]}/{parts[3]}/{parts[4]}"
-    return url
+    if len(parts) < 5:  # Not a proper GitHub URL
+        return url
+    
+    # For release download URLs: https://github.com/user/repo/releases/download/tag/filename
+    if len(parts) >= 8 and "releases/download" in url:
+        if len(url) <= max_width:
+            return url
+            
+        filename = parts[-1] if len(parts) > 8 else ""
+        
+        # Try different levels of truncation
+        # Level 1: Try github.com/user/repo/releases/download/tag/filename
+        short_base = f"{parts[2]}/{parts[3]}/{parts[4]}/releases/download/{parts[7]}"
+        if len(short_base) + len(filename) + 1 <= max_width:
+            return f"{short_base}/{filename}"
+            
+        # Level 2: Try github.com/user/repo/...filename
+        repo_base = f"{parts[2]}/{parts[3]}/{parts[4]}"
+        if len(repo_base) + len(filename) + 4 <= max_width:  # +4 for "/..."
+            return f"{repo_base}/...{filename}"
+            
+        # Level 3: Just show the filename if it fits
+        if len(filename) <= max_width:
+            return filename
+            
+        # Level 4: Truncate filename
+        if max_width > 3:
+            return filename[:max_width-3] + "..."
+    
+    # For regular GitHub URLs, show user/repo (original behavior)
+    return f"{parts[2]}/{parts[3]}/{parts[4]}"
 
 
 def _wrap_generic_url(url: str, max_width: int) -> str:
@@ -123,7 +151,7 @@ def _wrap_url(url: str, max_width: int = 50) -> str:
 
     # For GitHub URLs, preserve the important parts
     if "github.com" in url:
-        return _wrap_github_url(url)
+        return _wrap_github_url(url, max_width)
 
     # For other URLs, try to preserve domain and path
     if "://" in url:
@@ -187,7 +215,7 @@ def _create_results_table(show_urls: bool) -> Table:
     table.add_column("Update", style="bold")
 
     if show_urls:
-        table.add_column("Download URL", style="blue", max_width=60)
+        table.add_column("Download URL", style="blue", max_width=60, no_wrap=False)
 
     return table
 
@@ -291,7 +319,7 @@ def _create_url_table() -> Table:
     """Create and configure URL table."""
     url_table = Table(title="Download URLs")
     url_table.add_column("Application", style="cyan")
-    url_table.add_column("Download URL", style="blue", no_wrap=True)
+    url_table.add_column("Download URL", style="blue", no_wrap=False)
     return url_table
 
 
