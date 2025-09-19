@@ -104,7 +104,9 @@ class DistributionSelector:
     def _score_and_sort(self, asset_infos: list[AssetInfo]) -> list[AssetInfo]:
         for info in asset_infos:
             info.score = self._calculate_compatibility_score(info)
-        asset_infos.sort(key=lambda x: x.score, reverse=True)
+        # Sort by score (descending), then by creation time (descending for newer first)
+        # This ensures that when scores are tied, newer assets are preferred
+        asset_infos.sort(key=lambda x: (x.score, x.asset.created_at), reverse=True)
         return asset_infos
 
     def _filter_compatible(self, asset_infos: list[AssetInfo]) -> list[AssetInfo]:
@@ -271,6 +273,7 @@ class DistributionSelector:
         score += self._score_format(asset_properties["format"])
         score += self._score_distribution(info)
         score += self._score_version(info)
+        score += self._score_filename_indicators(info)
         return max(0.0, score)
 
     def _is_architecture_compatible(self, asset_arch: str | None) -> bool:
@@ -557,6 +560,29 @@ class DistributionSelector:
         else:
             self.console.print(f"[red]Please enter a number between 1 and {len(asset_infos)}[/red]")
             raise ValueError("Invalid choice range")
+
+    def _score_filename_indicators(self, info: AssetInfo) -> float:
+        """Score based on filename indicators like PR numbers, build numbers, etc.
+        
+        This provides a small bonus to help with tiebreaking when compatibility scores are equal.
+        """
+        filename = info.asset.name.lower()
+        score = 0.0
+        
+        # Extract PR number if present (e.g., PR-8184)
+        import re
+        pr_match = re.search(r'pr[-_](\d+)', filename)
+        if pr_match:
+            pr_number = int(pr_match.group(1))
+            # Give a small bonus based on PR number (higher = newer)
+            # Scale it to be a small tiebreaker (max ~1.0 point)
+            score += min(1.0, pr_number / 10000.0)
+        
+        # Prefer AppImage over other formats for Linux apps (small bonus)
+        if filename.endswith('.appimage'):
+            score += 0.1
+            
+        return score
 
 
 def select_best_distribution_asset(
