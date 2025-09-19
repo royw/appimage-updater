@@ -568,7 +568,7 @@ class DistributionSelector:
         """
         filename = info.asset.name.lower()
         score = 0.0
-        
+
         # Extract PR number if present (e.g., PR-8184)
         import re
         pr_match = re.search(r'pr[-_](\d+)', filename)
@@ -577,11 +577,11 @@ class DistributionSelector:
             # Give a small bonus based on PR number (higher = newer)
             # Scale it to be a small tiebreaker (max ~1.0 point)
             score += min(1.0, pr_number / 10000.0)
-        
+
         # Prefer AppImage over other formats for Linux apps (small bonus)
         if filename.endswith('.appimage'):
             score += 0.1
-            
+
         return score
 
 

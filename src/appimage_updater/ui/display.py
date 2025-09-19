@@ -98,33 +98,33 @@ def _wrap_github_url(url: str, max_width: int = 50) -> str:
     parts = url.split("/")
     if len(parts) < 5:  # Not a proper GitHub URL
         return url
-    
+
     # For release download URLs: https://github.com/user/repo/releases/download/tag/filename
     if len(parts) >= 8 and "releases/download" in url:
         if len(url) <= max_width:
             return url
-            
+
         filename = parts[-1] if len(parts) > 8 else ""
-        
+
         # Try different levels of truncation
         # Level 1: Try github.com/user/repo/releases/download/tag/filename
         short_base = f"{parts[2]}/{parts[3]}/{parts[4]}/releases/download/{parts[7]}"
         if len(short_base) + len(filename) + 1 <= max_width:
             return f"{short_base}/{filename}"
-            
+
         # Level 2: Try github.com/user/repo/...filename
         repo_base = f"{parts[2]}/{parts[3]}/{parts[4]}"
         if len(repo_base) + len(filename) + 4 <= max_width:  # +4 for "/..."
             return f"{repo_base}/...{filename}"
-            
+
         # Level 3: Just show the filename if it fits
         if len(filename) <= max_width:
             return filename
-            
+
         # Level 4: Truncate filename
         if max_width > 3:
             return filename[:max_width-3] + "..."
-    
+
     # For regular GitHub URLs, show user/repo (original behavior)
     return f"{parts[2]}/{parts[3]}/{parts[4]}"
 
