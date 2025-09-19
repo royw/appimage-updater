@@ -563,7 +563,7 @@ class DistributionSelector:
 
     def _score_filename_indicators(self, info: AssetInfo) -> float:
         """Score based on filename indicators like PR numbers, build numbers, etc.
-        
+
         This provides a small bonus to help with tiebreaking when compatibility scores are equal.
         """
         filename = info.asset.name.lower()
@@ -571,7 +571,8 @@ class DistributionSelector:
 
         # Extract PR number if present (e.g., PR-8184)
         import re
-        pr_match = re.search(r'pr[-_](\d+)', filename)
+
+        pr_match = re.search(r"pr[-_](\d+)", filename)
         if pr_match:
             pr_number = int(pr_match.group(1))
             # Give a small bonus based on PR number (higher = newer)
@@ -579,7 +580,7 @@ class DistributionSelector:
             score += min(1.0, pr_number / 10000.0)
 
         # Prefer AppImage over other formats for Linux apps (small bonus)
-        if filename.endswith('.appimage'):
+        if filename.endswith(".appimage"):
             score += 0.1
 
         return score

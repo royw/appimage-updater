@@ -123,7 +123,7 @@ def _wrap_github_url(url: str, max_width: int = 50) -> str:
 
         # Level 4: Truncate filename
         if max_width > 3:
-            return filename[:max_width-3] + "..."
+            return filename[: max_width - 3] + "..."
 
     # For regular GitHub URLs, show user/repo (original behavior)
     return f"{parts[2]}/{parts[3]}/{parts[4]}"
@@ -328,11 +328,6 @@ def _create_url_table() -> Table:
     return url_table
 
 
-def _make_url_wrappable(url: str) -> str:
-    """Create a URL string that Rich can wrap more intelligently."""
-    # Instead of zero-width spaces, let's go back to our original smart truncation
-    # but remove the manual wrapping since Rich handles it better with no_wrap=False
-    return url
 
 
 def _populate_url_table(url_table: Table, url_results: list[tuple[str, str]]) -> None:

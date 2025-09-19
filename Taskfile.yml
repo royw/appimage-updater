@@ -67,6 +67,14 @@ tasks:
       - mdformat {{.CLI_ARGS | default "*.md docs/ *.md"}}
 
   lint:
+    desc: Run all linting tasks
+    cmds:
+      - task: lint:ruff
+      - task: lint:mypy
+      - task: lint:emoji
+      - task: lint:deadcode
+
+  lint:ruff:
     desc: Run linting with ruff
     cmds:
       - uv run ruff check {{.CLI_ARGS | default .SRC}}
@@ -124,7 +132,7 @@ tasks:
           fi
         silent: true
 
-  typecheck:
+  lint:mypy:
     desc: Run type checking with mypy
     cmds:
       - uv run mypy {{.CLI_ARGS | default .SRC}}
@@ -134,7 +142,7 @@ tasks:
     cmds:
       - uv run radon cc {{.CLI_ARGS | default .SRC}} --min B
 
-  deadcode:
+  lint:deadcode:
     desc: Find dead (unreachable/unused) code with deadcode
     cmds:
       - >
@@ -214,9 +222,7 @@ tasks:
   check:
     desc: Run all code quality checks including end-to-end tests
     cmds:
-      - task: lint:fix
       - task: format
-      - task: typecheck
       - task: lint
       - task: complexity
       - task: test:parallel
@@ -346,9 +352,7 @@ tasks:
       - task: output
         vars:
           MESSAGE: "🚀 Starting CI pipeline..."
-      - task: lint:emoji
       - task: check
-      - task: deadcode
       - task: build
       - task: docs:build
       - task: version
