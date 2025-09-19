@@ -93,24 +93,36 @@ class Downloader:
         self, candidate: UpdateCandidate, progress: Progress | None, start_time: float
     ) -> DownloadResult:
         """Execute a single download attempt with all processing steps."""
+        logger.debug(f"Starting download execution for {candidate.app_name}")
+        logger.debug(f"Download URL: {candidate.asset.download_url}")
+        logger.debug(f"Target path: {candidate.download_path}")
         # Setup for download
         task_id = self._setup_download(candidate, progress)
+        logger.debug(f"Download setup completed for {candidate.app_name}")
 
         # Perform the download
         await self._perform_download(candidate, progress, task_id)
+        file_size_msg = candidate.download_path.stat().st_size if candidate.download_path.exists() else 'FILE NOT FOUND'
+        logger.debug(f"Download completed for {candidate.app_name}, file size: {file_size_msg}")
 
         # Post-process the downloaded file
         checksum_result = await self._post_process_download(candidate)
+        logger.debug(f"Post-processing completed for {candidate.app_name}")
 
         # Create version metadata file
         await self._create_version_metadata(candidate)
+        logger.debug(f"Metadata creation completed for {candidate.app_name}")
 
         # Handle image rotation if enabled
+        logger.debug(f"Starting rotation handling for {candidate.app_name}")
         final_path = await self._handle_rotation(candidate)
+        logger.debug(f"Rotation completed for {candidate.app_name}, final path: {final_path}")
 
         # Return successful result
         duration = time.time() - start_time
         file_size = final_path.stat().st_size if final_path.exists() else 0
+        logger.debug(f"Download execution completed for {candidate.app_name}, final file size: {file_size}")
+
         return DownloadResult(
             app_name=candidate.app_name,
             success=True,
@@ -638,9 +650,12 @@ class Downloader:
     async def _perform_rotation(self, candidate: UpdateCandidate) -> Path:
         """Perform the actual image rotation and symlink update."""
         if not candidate.app_config:
+            logger.debug(f"No app config for {candidate.app_name}, skipping rotation")
             return candidate.download_path
 
         download_dir = candidate.download_path.parent
+        logger.debug(f"Starting rotation for {candidate.app_name} in directory: {download_dir}")
+        logger.debug(f"Original download path: {candidate.download_path}")
         # For AppImage files, treat the full filename as the base (including .AppImage)
         # so rotation suffixes go AFTER .AppImage: filename.AppImage.current
         if candidate.download_path.suffix.lower() == ".appimage":
@@ -650,10 +665,14 @@ class Downloader:
             base_name = candidate.download_path.stem  # filename without extension
             extension = candidate.download_path.suffix  # original extension
 
+        logger.debug(f"Rotation base_name: '{base_name}', extension: '{extension}'")
+
         # Define the current file path
         current_path = download_dir / f"{base_name}.current{extension}"
+        logger.debug(f"Target current path: {current_path}")
 
         # Step 1: Rotate existing files
+        logger.debug(f"Step 1: Rotating existing files with retain_count={candidate.app_config.retain_count}")
         await self._rotate_existing_files(download_dir, base_name, extension, candidate.app_config.retain_count)
 
         # Step 2: Move downloaded file to .current
@@ -661,43 +680,63 @@ class Downloader:
         original_info_path = candidate.download_path.with_suffix(candidate.download_path.suffix + ".info")
         current_info_path = current_path.with_suffix(current_path.suffix + ".info")
 
-        candidate.download_path.rename(current_path)
-        logger.debug(f"Moved {candidate.download_path.name} to {current_path.name}")
+        logger.debug(f"Step 2: Moving {candidate.download_path} to {current_path}")
+        if candidate.download_path.exists():
+            candidate.download_path.rename(current_path)
+            logger.debug(f"Successfully moved {candidate.download_path.name} to {current_path.name}")
+        else:
+            logger.error(f"Source file does not exist: {candidate.download_path}")
 
         # Move metadata file if it exists
         if original_info_path.exists():
+            logger.debug(f"Moving metadata file: {original_info_path} to {current_info_path}")
             original_info_path.rename(current_info_path)
-            logger.debug(f"Moved {original_info_path.name} to {current_info_path.name}")
+            logger.debug(f"Successfully moved {original_info_path.name} to {current_info_path.name}")
+        else:
+            logger.debug(f"No metadata file to move: {original_info_path}")
 
         # Step 3: Update symlink
         if candidate.app_config.symlink_path:
+            logger.debug(f"Step 3: Updating symlink to {candidate.app_config.symlink_path}")
             await self._update_symlink(current_path, candidate.app_config.symlink_path)
+        else:
+            logger.debug("No symlink configured, skipping symlink update")
 
+        logger.debug(f"Rotation completed. Final path: {current_path}")
         return current_path
 
     async def _rotate_existing_files(
         self, download_dir: Path, base_name: str, extension: str, retain_count: int
     ) -> None:
         """Rotate existing files (.current -> .old, .old -> .old2, etc.)."""
+        logger.debug(f"Rotating existing files in {download_dir} with base_name='{base_name}', extension='{extension}'")
+        
         # For apps with varying filenames (like BambuStudio), we need to find ALL .current files
         # that match the app pattern, not just files with the exact same base name
         current_files = self._find_current_files_by_pattern(download_dir)
+        logger.debug(f"Found {len(current_files)} current files: {[f.name for f in current_files]}")
 
         if not current_files:
+            logger.debug("No current files found, skipping rotation")
             return
 
         # Process each current file found
         for current_file in current_files:
+            logger.debug(f"Processing current file: {current_file.name}")
             current_base_name = self._extract_base_name_from_current(current_file)
             current_extension = ""  # Already handled in base name for AppImage files
+            logger.debug(f"Extracted base name: '{current_base_name}'")
 
             # Step 1: Rotate numbered files in reverse order for this specific base name
+            logger.debug(f"Step 1: Rotating numbered files for base '{current_base_name}'")
             self._rotate_numbered_files(download_dir, current_base_name, current_extension, retain_count)
 
             # Step 2: Move this .current to .old
+            logger.debug(f"Step 2: Moving {current_file.name} to .old")
             self._move_current_to_old(download_dir, current_base_name, current_extension)
 
             # Step 3: Clean up excess files beyond retain count for this base name
+            logger.debug(f"Step 3: Cleaning up excess files for base '{current_base_name}'")
             self._cleanup_excess_files(download_dir, current_base_name, current_extension, retain_count)
 
     def _find_current_files_by_pattern(self, download_dir: Path) -> list[Path]:

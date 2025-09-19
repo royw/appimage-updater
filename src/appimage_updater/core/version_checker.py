@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -361,9 +360,10 @@ class VersionChecker:
             current_version=current_version,
             latest_version=release_version,
             asset=best_asset,
-            download_path=Path(tempfile.gettempdir()) / best_asset.name,  # Secure temp path
+            download_path=app_config.download_dir / best_asset.name,  # Use configured download directory
             is_newer=True,  # Will be determined later
             release=release,
+            app_config=app_config,  # Include app_config for rotation settings
         )
 
     def _get_version_for_release(self, release: Release, asset: Asset) -> str:
