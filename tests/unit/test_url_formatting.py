@@ -1,6 +1,6 @@
 """Unit tests for ui.display_utils.url_formatting module."""
 
-from appimage_updater.ui.display_utils.url_formatting import (
+from appimage_updater.ui.display import (
     _wrap_generic_url,
     _wrap_github_url,
     _wrap_url,

@@ -180,7 +180,7 @@ class TestWrapPath:
         result = _wrap_path("", 20)
         assert result == ""
 
-    @patch('appimage_updater.ui.display_utils.path_formatting._replace_home_with_tilde')
+    @patch('appimage_updater.ui.display._replace_home_with_tilde')
     def test_wrap_path_short_path(self, mock_replace: object) -> None:
         """Test wrapping path that's already short enough."""
         mock_replace.return_value = "/short/path"
@@ -188,7 +188,7 @@ class TestWrapPath:
         result = _wrap_path("/short/path", 20)
         assert result == "/short/path"
 
-    @patch('appimage_updater.ui.display_utils.path_formatting._replace_home_with_tilde')
+    @patch('appimage_updater.ui.display._replace_home_with_tilde')
     def test_wrap_path_long_path_with_separators(self, mock_replace: object) -> None:
         """Test wrapping long path with separators."""
         mock_replace.return_value = "/very/long/path/to/file.txt"
@@ -198,7 +198,7 @@ class TestWrapPath:
         assert "..." in result
         assert "file.txt" in result
 
-    @patch('appimage_updater.ui.display_utils.path_formatting._replace_home_with_tilde')
+    @patch('appimage_updater.ui.display._replace_home_with_tilde')
     def test_wrap_path_windows_separators(self, mock_replace: object) -> None:
         """Test wrapping path with Windows separators."""
         mock_replace.return_value = "C:\\Users\\Name\\Documents\\file.txt"
@@ -208,7 +208,7 @@ class TestWrapPath:
         assert "\\" not in result
         assert "/" in result or result.startswith("...")
 
-    @patch('appimage_updater.ui.display_utils.path_formatting._replace_home_with_tilde')
+    @patch('appimage_updater.ui.display._replace_home_with_tilde')
     def test_wrap_path_no_separators_fallback(self, mock_replace: object) -> None:
         """Test wrapping path with no separators (fallback to truncation)."""
         mock_replace.return_value = "verylongfilenamewithoutseparators"
@@ -227,7 +227,7 @@ class TestWrapPath:
         assert len(long_path) > 40
         assert len(result) <= 40
 
-    @patch('appimage_updater.ui.display_utils.path_formatting._replace_home_with_tilde')
+    @patch('appimage_updater.ui.display._replace_home_with_tilde')
     def test_wrap_path_exact_max_width(self, mock_replace: object) -> None:
         """Test wrapping path that's exactly at max width."""
         path = "/exact/width/path"  # 18 characters

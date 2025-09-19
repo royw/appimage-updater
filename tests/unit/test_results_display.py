@@ -161,8 +161,8 @@ class TestDisplayFailedDownloads:
 class TestDisplayDownloadResults:
     """Test cases for display_download_results function."""
 
-    @patch('appimage_updater.ui.display_utils.results_display.display_failed_downloads')
-    @patch('appimage_updater.ui.display_utils.results_display.display_successful_downloads')
+    @patch('appimage_updater.ui.display.display_failed_downloads')
+    @patch('appimage_updater.ui.display.display_successful_downloads')
     def test_display_download_results_mixed(self, mock_successful: Mock, mock_failed: Mock) -> None:
         """Test displaying mixed successful and failed results."""
         successful_result = Mock()
@@ -179,8 +179,8 @@ class TestDisplayDownloadResults:
         mock_successful.assert_called_once_with([successful_result])
         mock_failed.assert_called_once_with([failed_result])
 
-    @patch('appimage_updater.ui.display_utils.results_display.display_failed_downloads')
-    @patch('appimage_updater.ui.display_utils.results_display.display_successful_downloads')
+    @patch('appimage_updater.ui.display.display_failed_downloads')
+    @patch('appimage_updater.ui.display.display_successful_downloads')
     def test_display_download_results_all_successful(self, mock_successful: Mock, mock_failed: Mock) -> None:
         """Test displaying all successful results."""
         result1 = Mock()
@@ -195,8 +195,8 @@ class TestDisplayDownloadResults:
         mock_successful.assert_called_once_with([result1, result2])
         mock_failed.assert_called_once_with([])
 
-    @patch('appimage_updater.ui.display_utils.results_display.display_failed_downloads')
-    @patch('appimage_updater.ui.display_utils.results_display.display_successful_downloads')
+    @patch('appimage_updater.ui.display.display_failed_downloads')
+    @patch('appimage_updater.ui.display.display_successful_downloads')
     def test_display_download_results_all_failed(self, mock_successful: Mock, mock_failed: Mock) -> None:
         """Test displaying all failed results."""
         result1 = Mock()
@@ -211,8 +211,8 @@ class TestDisplayDownloadResults:
         mock_successful.assert_called_once_with([])
         mock_failed.assert_called_once_with([result1, result2])
 
-    @patch('appimage_updater.ui.display_utils.results_display.display_failed_downloads')
-    @patch('appimage_updater.ui.display_utils.results_display.display_successful_downloads')
+    @patch('appimage_updater.ui.display.display_failed_downloads')
+    @patch('appimage_updater.ui.display.display_successful_downloads')
     def test_display_download_results_empty(self, mock_successful: Mock, mock_failed: Mock) -> None:
         """Test displaying empty results list."""
         display_download_results([])
@@ -227,7 +227,7 @@ class TestResultsDisplayIntegration:
     def test_console_initialization(self) -> None:
         """Test that console is properly initialized."""
         # Import the console to test it exists and is configured
-        from appimage_updater.ui.display_utils.results_display import console
+        from appimage_updater.ui.display import console
         
         assert isinstance(console, Console)
         # Console should respect NO_COLOR environment variable
@@ -238,10 +238,10 @@ class TestResultsDisplayIntegration:
         """Test console respects NO_COLOR environment variable."""
         # Re-import to get fresh console with NO_COLOR set
         import importlib
-        import appimage_updater.ui.display_utils.results_display
-        importlib.reload(appimage_updater.ui.display_utils.results_display)
+        import appimage_updater.ui.display
+        importlib.reload(appimage_updater.ui.display)
         
-        from appimage_updater.ui.display_utils.results_display import console
+        from appimage_updater.ui.display import console
         # Test that console was created with no_color=True
         # The exact attribute name may vary, so just test that it was configured
         assert hasattr(console, '_no_color') or hasattr(console, 'options')

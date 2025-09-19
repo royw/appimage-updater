@@ -38,27 +38,27 @@ class TestGetBaseAppImageName:
     def test_no_rotation_suffix(self) -> None:
         """Test filename without rotation suffix."""
         result = get_base_appimage_name("app.AppImage")
-        assert result == "app.AppImage"
+        assert result == "app"
 
     def test_current_suffix(self) -> None:
         """Test filename with .current suffix."""
-        result = get_base_appimage_name("app.current.AppImage")
-        assert result == "app.AppImage"
+        result = get_base_appimage_name("app.AppImage.current")
+        assert result == "app"
 
     def test_old_suffix(self) -> None:
         """Test filename with .old suffix."""
-        result = get_base_appimage_name("app.old.AppImage")
-        assert result == "app.AppImage"
+        result = get_base_appimage_name("app.AppImage.old")
+        assert result == "app"
 
     def test_old_numbered_suffix(self) -> None:
         """Test filename with numbered .old suffix."""
-        result = get_base_appimage_name("app.old.1.AppImage")
-        assert result == "app.AppImage"
+        result = get_base_appimage_name("app.AppImage.old2")
+        assert result == "app"
 
     def test_complex_filename(self) -> None:
         """Test complex filename with rotation suffix."""
-        result = get_base_appimage_name("MyApp-1.2.3.current.AppImage")
-        assert result == "MyApp-1.2.3.AppImage"
+        result = get_base_appimage_name("MyApp-1.2.3.AppImage.current")
+        assert result == "MyApp-1.2.3"
 
 
 class TestHasRotationSuffix:
@@ -70,15 +70,15 @@ class TestHasRotationSuffix:
 
     def test_current_suffix(self) -> None:
         """Test filename with .current suffix."""
-        assert has_rotation_suffix("app.current.AppImage")
+        assert has_rotation_suffix("app.AppImage.current")
 
     def test_old_suffix(self) -> None:
         """Test filename with .old suffix."""
-        assert has_rotation_suffix("app.old.AppImage")
+        assert has_rotation_suffix("app.AppImage.old")
 
     def test_old_numbered_suffix(self) -> None:
         """Test filename with numbered .old suffix."""
-        assert has_rotation_suffix("app.old.2.AppImage")
+        assert has_rotation_suffix("app.AppImage.old2")
 
 
 class TestGetRotationIndicator:
@@ -91,13 +91,13 @@ class TestGetRotationIndicator:
 
     def test_current_indicator(self) -> None:
         """Test filename with current indicator."""
-        result = get_rotation_indicator("app.current.AppImage")
+        result = get_rotation_indicator("app.AppImage.current")
         assert result == " [green](current)[/green]"
 
     def test_old_indicator(self) -> None:
         """Test filename with old indicator."""
-        result = get_rotation_indicator("app.old.AppImage")
-        assert result == " [yellow](old)[/yellow]"
+        result = get_rotation_indicator("app.AppImage.old")
+        assert result == " [yellow](previous)[/yellow]"
 
 
 class TestGetAppConfigPath:
