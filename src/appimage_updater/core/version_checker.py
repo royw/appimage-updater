@@ -156,19 +156,57 @@ class VersionChecker:
         )
 
     def _get_current_version(self, app_config: ApplicationConfig) -> str | None:
-        """Get current version from .info file."""
+        """Get current version from .info file or by analyzing existing files."""
+        # First try to get version from .info file (for apps with rotation enabled)
         info_file = self._get_info_file_path(app_config)
-        if not info_file.exists():
+        if info_file.exists():
+            try:
+                content = info_file.read_text().strip()
+                processed_content = self._process_version_content(content)
+                nightly_converted = self._convert_nightly_version_string(processed_content)
+                # Apply the same normalization as we do for latest versions
+                return normalize_version_string(nightly_converted)
+            except Exception:
+                pass
+
+        # For apps without rotation, analyze existing files to determine current version
+        if not getattr(app_config, 'rotation_enabled', True):
+            return self._get_current_version_from_files(app_config)
+
+        return None
+
+    def _get_current_version_from_files(self, app_config: ApplicationConfig) -> str | None:
+        """Determine current version by analyzing existing files in download directory."""
+        download_dir = getattr(app_config, "download_dir", None) or Path.home() / "Downloads"
+        if not download_dir.exists():
             return None
 
-        try:
-            content = info_file.read_text().strip()
-            processed_content = self._process_version_content(content)
-            nightly_converted = self._convert_nightly_version_string(processed_content)
-            # Apply the same normalization as we do for latest versions
-            return normalize_version_string(nightly_converted)
-        except Exception:
+        # Find all AppImage files in the directory
+        app_files = []
+        for pattern in ["*.AppImage", "*.appimage"]:
+            app_files.extend(download_dir.glob(pattern))
+
+        if not app_files:
             return None
+
+        # Extract versions from filenames and find the newest
+        version_files = []
+        for file_path in app_files:
+            version = self._extract_version_from_filename(file_path.name)
+            if version:
+                version_files.append((version, file_path.stat().st_mtime, file_path))
+
+        if not version_files:
+            return None
+
+        # Sort by version (descending) then by modification time (newest first)
+        try:
+            version_files.sort(key=lambda x: (version.parse(x[0].lstrip("v")), x[1]), reverse=True)
+            return normalize_version_string(version_files[0][0])
+        except Exception:
+            # Fallback to sorting by modification time only
+            version_files.sort(key=lambda x: x[1], reverse=True)
+            return normalize_version_string(version_files[0][0])
 
     def _process_version_content(self, content: str) -> str:
         """Process version content from info file."""
