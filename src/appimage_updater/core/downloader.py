@@ -102,7 +102,7 @@ class Downloader:
 
         # Perform the download
         await self._perform_download(candidate, progress, task_id)
-        file_size_msg = candidate.download_path.stat().st_size if candidate.download_path.exists() else 'FILE NOT FOUND'
+        file_size_msg = candidate.download_path.stat().st_size if candidate.download_path.exists() else "FILE NOT FOUND"
         logger.debug(f"Download completed for {candidate.app_name}, file size: {file_size_msg}")
 
         # Post-process the downloaded file
@@ -710,7 +710,7 @@ class Downloader:
     ) -> None:
         """Rotate existing files (.current -> .old, .old -> .old2, etc.)."""
         logger.debug(f"Rotating existing files in {download_dir} with base_name='{base_name}', extension='{extension}'")
-        
+
         # For apps with varying filenames (like BambuStudio), we need to find ALL .current files
         # that match the app pattern, not just files with the exact same base name
         current_files = self._find_current_files_by_pattern(download_dir)

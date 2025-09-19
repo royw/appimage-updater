@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from loguru import logger
 from packaging import version
 
 from ..config.models import ApplicationConfig
@@ -166,11 +167,11 @@ class VersionChecker:
                 nightly_converted = self._convert_nightly_version_string(processed_content)
                 # Apply the same normalization as we do for latest versions
                 return normalize_version_string(nightly_converted)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to parse version from info file: {e}")
 
         # For apps without rotation, analyze existing files to determine current version
-        if not getattr(app_config, 'rotation_enabled', True):
+        if not getattr(app_config, "rotation_enabled", True):
             return self._get_current_version_from_files(app_config)
 
         return None
@@ -182,7 +183,7 @@ class VersionChecker:
             return None
 
         # Find all AppImage files in the directory
-        app_files = []
+        app_files: list[Path] = []
         for pattern in ["*.AppImage", "*.appimage"]:
             app_files.extend(download_dir.glob(pattern))
 
@@ -192,9 +193,9 @@ class VersionChecker:
         # Extract versions from filenames and find the newest
         version_files = []
         for file_path in app_files:
-            version = self._extract_version_from_filename(file_path.name)
-            if version:
-                version_files.append((version, file_path.stat().st_mtime, file_path))
+            version_str = self._extract_version_from_filename(file_path.name)
+            if version_str:
+                version_files.append((version_str, file_path.stat().st_mtime, file_path))
 
         if not version_files:
             return None
