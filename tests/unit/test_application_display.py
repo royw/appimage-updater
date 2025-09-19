@@ -363,50 +363,72 @@ class TestDisplayEditSummary:
 class TestGetSymlinksInfo:
     """Test cases for get_symlinks_info function."""
 
-    def test_no_symlink_configured(self) -> None:
+    @patch('appimage_updater.ui.display.find_appimage_symlinks')
+    @patch('appimage_updater.ui.display.Path')
+    def test_no_symlink_configured(self, mock_path: Mock, mock_find_symlinks: Mock) -> None:
         """Test app with no symlink configured."""
-        app = Mock(spec=[])  # No symlink_path attribute
+        app = Mock()
+        app.download_dir = "/tmp/test"
+        
+        # Mock Path to return an object that exists
+        mock_path_instance = Mock()
+        mock_path_instance.exists.return_value = True
+        mock_path.return_value = mock_path_instance
+        
+        mock_find_symlinks.return_value = []
         
         result = get_symlinks_info(app)
-        assert result == "[dim]No symlinks configured[/dim]"
+        assert result == "[yellow]No symlinks found pointing to AppImage files[/yellow]"
 
-    def test_none_symlink_path(self) -> None:
+    @patch('appimage_updater.ui.display.find_appimage_symlinks')
+    @patch('appimage_updater.ui.display.Path')
+    def test_none_symlink_path(self, mock_path: Mock, mock_find_symlinks: Mock) -> None:
         """Test app with None symlink path."""
         app = Mock()
+        app.download_dir = "/tmp/test"
         app.symlink_path = None
         
+        # Mock Path to return an object that exists
+        mock_path_instance = Mock()
+        mock_path_instance.exists.return_value = True
+        mock_path.return_value = mock_path_instance
+        
+        mock_find_symlinks.return_value = []
+        
         result = get_symlinks_info(app)
-        assert result == "[dim]No symlinks configured[/dim]"
+        assert result == "[yellow]No symlinks found pointing to AppImage files[/yellow]"
 
-    @patch('appimage_updater.ui.display.Path')
-    @patch('appimage_updater.ui.display._replace_home_with_tilde')
-    def test_symlink_does_not_exist(self, mock_tilde: Mock, mock_path_class: Mock) -> None:
-        """Test symlink that doesn't exist."""
-        mock_tilde.return_value = "~/bin/app"
-        
-        mock_symlink = Mock()
-        mock_symlink.exists.return_value = False
-        mock_path_class.return_value = mock_symlink
-        
+
+    @patch('appimage_updater.ui.display.find_appimage_symlinks')
+    def test_symlink_does_not_exist(self, mock_find_symlinks: Mock) -> None:
+        """Test when download directory doesn't exist."""
         app = Mock()
+        app.download_dir = "/nonexistent/path"
+        
+        with patch('appimage_updater.ui.display.Path') as mock_path:
+            mock_path_instance = Mock()
+            mock_path_instance.exists.return_value = False
+            mock_path.return_value = mock_path_instance
+            
+            result = get_symlinks_info(app)
+            assert result == "[yellow]Download directory does not exist[/yellow]"
+
+    @patch('appimage_updater.ui.display.format_symlink_info')
+    @patch('appimage_updater.ui.display.find_appimage_symlinks')
+    @patch('appimage_updater.ui.display.Path')
+    def test_path_not_symlink(self, mock_path: Mock, mock_find_symlinks: Mock, mock_format: Mock) -> None:
+        """Test path with found symlinks."""
+        app = Mock()
+        app.download_dir = "/tmp/test"
         app.symlink_path = "/home/user/bin/app"
         
-        result = get_symlinks_info(app)
-        assert result == "[yellow]Symlink does not exist:[/yellow] ~/bin/app"
-
-    @patch('appimage_updater.ui.display.Path')
-    @patch('appimage_updater.ui.display._replace_home_with_tilde')
-    def test_path_not_symlink(self, mock_tilde: Mock, mock_path_class: Mock) -> None:
-        """Test path that exists but is not a symlink."""
-        mock_tilde.return_value = "~/bin/app"
+        # Mock Path to return an object that exists
+        mock_path_instance = Mock()
+        mock_path_instance.exists.return_value = True
+        mock_path.return_value = mock_path_instance
         
-        mock_symlink = Mock()
-        mock_symlink.exists.return_value = True
-        mock_symlink.is_symlink.return_value = False
-        mock_path_class.return_value = mock_symlink
-        
-        app = Mock()
-        app.symlink_path = "/home/user/bin/app"
+        mock_find_symlinks.return_value = ["/path/to/symlink"]
+        mock_format.return_value = "Formatted symlink info"
         
         result = get_symlinks_info(app)
-        assert result == "[red]Path exists but is not a symlink:[/red] ~/bin/app"
+        assert result == "Formatted symlink info"
