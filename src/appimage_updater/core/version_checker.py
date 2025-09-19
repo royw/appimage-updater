@@ -308,8 +308,6 @@ class VersionChecker:
 
         # Use regex to extract version-like patterns
         # Matches patterns like: v1.2.3, 1.2.3.4, v2.2.1.60, etc.
-        import re
-
         version_pattern = r"(v?\d+(?:\.\d+)*(?:-[a-zA-Z0-9]+)*)"
         match = re.search(version_pattern, version_string)
         if match:

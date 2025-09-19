@@ -9,8 +9,14 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 from loguru import logger
+
+try:
+    from .._version import __version__
+except ImportError:
+    __version__ = "unknown"
 
 
 class GitHubAuth:
@@ -230,10 +236,8 @@ class GitHubAuth:
             User-Agent string
         """
         try:
-            from .._version import __version__
-
             return f"AppImage-Updater/{__version__}"
-        except ImportError:
+        except NameError:
             return "AppImage-Updater/dev"
 
     def get_rate_limit_info(self) -> dict[str, int | str]:

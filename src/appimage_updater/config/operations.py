@@ -708,11 +708,9 @@ def validate_basic_field_updates(updates: dict[str, Any]) -> None:
     """Validate basic field updates."""
     # Validate pattern if provided
     if "pattern" in updates:
-        import re as regex_module
-
         try:
-            regex_module.compile(updates["pattern"])
-        except regex_module.error as e:
+            re.compile(updates["pattern"])
+        except re.error as e:
             raise ValueError(f"Invalid regex pattern: {e}") from e
 
     # Validate checksum algorithm if provided

@@ -570,8 +570,6 @@ class DistributionSelector:
         score = 0.0
 
         # Extract PR number if present (e.g., PR-8184)
-        import re
-
         pr_match = re.search(r"pr[-_](\d+)", filename)
         if pr_match:
             pr_number = int(pr_match.group(1))

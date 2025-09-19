@@ -147,8 +147,6 @@ class Release(BaseModel):
         Returns:
             List of matching assets, optionally filtered for compatibility
         """
-        import re
-
         regex = re.compile(pattern)
         matching_assets = [asset for asset in self.assets if regex.search(asset.name)]
 

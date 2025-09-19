@@ -5,6 +5,7 @@ or directories, and saving application configurations back to storage.
 """
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -119,8 +120,6 @@ def add_to_config_file(app_config: dict[str, Any], config_file: Path) -> None:
 
 def add_to_config_directory(app_config: dict[str, Any], config_dir: Path) -> None:
     """Add application to a directory-based config structure."""
-    import re
-
     config_dir.mkdir(parents=True, exist_ok=True)
 
     # Create a filename based on the app name (sanitized)

@@ -7,6 +7,7 @@ validating setting values, and managing different setting types.
 import os
 from collections.abc import Callable
 from pathlib import Path
+from typing import Literal, cast
 
 from rich.console import Console
 
@@ -232,8 +233,6 @@ def _apply_checksum_algorithm_setting(config: Config, value: str) -> bool:
     Returns:
         True if setting was applied successfully, False otherwise.
     """
-    from typing import Literal, cast
-
     valid_algorithms = ["sha256", "sha1", "md5"]
     algorithm = value.lower()
 

@@ -374,8 +374,6 @@ def _get_app_config_path(app: Any, config_source_info: dict[str, str]) -> str | 
         return _replace_home_with_tilde(config_source_info["path"])
     elif config_source_info["type"] == "directory":
         # Directory-based config - construct app-specific path
-        from pathlib import Path
-
         config_dir = Path(config_source_info["path"])
         app_config_file = config_dir / f"{app.name}.json"
         return _replace_home_with_tilde(str(app_config_file))
