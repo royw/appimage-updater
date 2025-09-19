@@ -93,8 +93,6 @@ def _wrap_path(path: str, max_width: int = 40) -> str:
     return "..." + display_path[-(max_width - 3) :]
 
 
-
-
 def display_applications_list(applications: list[Any]) -> None:
     """Display applications list in a table."""
     table = Table(title="Configured Applications")
