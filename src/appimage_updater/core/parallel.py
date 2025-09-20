@@ -50,6 +50,10 @@ class ConcurrentProcessor:
             return results
         else:
             logger.debug(f"Processing {len(items)} items concurrently with async tasks")
-            # Use concurrent processing for multiple items - this is where the performance gain happens
+            # Use asyncio.gather() for concurrent processing instead of TaskGroup for several reasons:
+            # 1. Compatibility: gather() works with Python 3.7+, TaskGroup requires 3.11+
+            # 2. Simplicity: Perfect for straightforward I/O-bound network operations
+            # 3. Ordered results: Results match input order automatically
+            # 4. Clean error handling: Exceptions propagate naturally
             tasks = [async_worker_func(item) for item in items]
             return await asyncio.gather(*tasks)
