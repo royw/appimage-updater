@@ -609,7 +609,7 @@ class TestRemoveCommand:
         ])
 
         assert result.exit_code == 1
-        assert "No JSON configuration files found" in result.stdout
+        assert "No applications found" in result.stdout
 
     def test_remove_command_non_interactive(self, runner, temp_config_dir):
         """Test remove command in non-interactive environment."""
