@@ -13,21 +13,25 @@ graph TB
     B --> F[Downloader]
     B --> G[Distribution Selector]
     B --> H[System Info]
+    B --> I[HTTP Instrumentation]
     
-    C --> I[JSON Config Files]
-    D --> J[GitHub Repository]
-    D --> K[GitLab Repository]
-    D --> L[Other Repositories]
-    J --> M[GitHub Client]
-    J --> N[GitHub Auth]
-    M --> O[GitHub API]
-    E --> P[Version Comparison]
-    F --> Q[Concurrent Downloads]
-    F --> R[ZIP Extraction]
-    F --> S[Checksum Verification]
-    F --> T[File Rotation]
-    G --> U[Platform Detection]
-    H --> V[Architecture Detection]
+    C --> J[JSON Config Files]
+    D --> K[GitHub Repository]
+    D --> L[GitLab Repository]
+    D --> M[Other Repositories]
+    K --> N[GitHub Client]
+    K --> O[GitHub Auth]
+    N --> P[GitHub API]
+    E --> Q[Version Comparison]
+    F --> R[Concurrent Downloads]
+    F --> S[ZIP Extraction]
+    F --> T[Checksum Verification]
+    F --> U[File Rotation]
+    G --> V[Platform Detection]
+    H --> W[Architecture Detection]
+    I --> X[HTTP Tracker]
+    I --> Y[Logger Interface]
+    I --> Z[Progressive Timeouts]
     
     style A fill:#e1f5fe
     style B fill:#f3e5f5
@@ -37,9 +41,10 @@ graph TB
     style F fill:#e8f5e8
     style G fill:#fff3e0
     style H fill:#fff3e0
-    style J fill:#4caf50
+    style I fill:#ff9800
     style K fill:#4caf50
     style L fill:#4caf50
+    style M fill:#4caf50
 ```
 
 ## Core Components
@@ -746,6 +751,170 @@ Future plugin system for:
 - Environment variable overrides
 - Configuration validation and migration
 - Backup and restore utilities
+
+## HTTP Instrumentation and Dependency Injection
+
+### HTTP Instrumentation System (`instrumentation/`)
+
+AppImage Updater includes a sophisticated HTTP instrumentation system with dependency injection for flexible logging and monitoring of HTTP requests.
+
+#### Architecture Overview
+
+```mermaid
+graph TB
+    A[CheckCommand] --> B[HTTPTracker Factory]
+    B --> C[HTTPTracker]
+    C --> D[HTTPLogger Interface]
+    D --> E[LoguruHTTPLogger]
+    D --> F[ConfigurableHTTPLogger]
+    D --> G[SilentHTTPLogger]
+    
+    C --> H[httpx.AsyncClient]
+    H --> I[Monkey Patching]
+    I --> J[Request Wrapper]
+    J --> K[Original Request]
+    K --> L[Response Tracking]
+    
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style C fill:#e8f5e8
+    style D fill:#ffeb3b
+    style E fill:#4caf50
+    style F fill:#4caf50
+    style G fill:#4caf50
+```
+
+#### Key Components
+
+**HTTP Logger Interface (`logging_interface.py`)**
+
+Defines a protocol-based interface for HTTP logging with multiple implementations:
+
+```python
+class HTTPLogger(Protocol):
+    def debug(self, message: str, **kwargs: Any) -> None: ...
+    def info(self, message: str, **kwargs: Any) -> None: ...
+    def warning(self, message: str, **kwargs: Any) -> None: ...
+    def error(self, message: str, **kwargs: Any) -> None: ...
+```
+
+**Logger Implementations:**
+
+- `LoguruHTTPLogger` - Production logging using loguru
+- `ConfigurableHTTPLogger` - Customizable log levels for different message types
+- `SilentHTTPLogger` - No-op logger for testing environments
+
+**HTTP Tracker (`http_tracker.py`)**
+
+Core instrumentation component that tracks HTTP requests using monkey patching:
+
+- **Request Interception** - Patches `httpx.AsyncClient.request` method
+- **Call Stack Capture** - Records calling context for debugging
+- **Response Tracking** - Captures status codes, timing, and errors
+- **Header Tracking** - Optional request header capture
+- **Dependency Injection** - Accepts logger instances for flexible logging
+
+**Factory Pattern (`factory.py`)**
+
+Provides factory functions for easy HTTP tracker creation:
+
+```python
+def create_http_tracker_from_params(params: CheckParams) -> HTTPTracker | None:
+    """Create tracker based on command parameters."""
+
+def create_silent_http_tracker() -> HTTPTracker:
+    """Create tracker with silent logging for testing."""
+
+def create_verbose_http_tracker() -> HTTPTracker:
+    """Create tracker with verbose logging for debugging."""
+```
+
+#### Dependency Injection Benefits
+
+**Configurable Logging Levels:**
+
+```python
+# Debug-level logging (default)
+tracker = create_http_tracker_from_params(params)
+
+# Verbose logging for debugging
+verbose_logger = create_default_http_logger(verbose=True)
+tracker = HTTPTracker(logger=verbose_logger)
+
+# Silent logging for testing
+silent_logger = create_silent_http_logger()
+tracker = HTTPTracker(logger=silent_logger)
+
+# Custom configuration
+custom_logger = ConfigurableHTTPLogger(
+    LoguruHTTPLogger(),
+    tracking_level="info",    # Start/stop messages
+    request_level="debug",    # Individual requests
+    error_level="warning"     # HTTP errors
+)
+```
+
+**Command Integration:**
+
+```python
+# CLI creates tracker based on parameters
+http_tracker = create_http_tracker_from_params(command.params)
+
+# Inject into command execution
+result = await command.execute(http_tracker=http_tracker)
+```
+
+#### Progressive Timeout Strategy (`core/timeout_strategy.py`)
+
+Complementary system providing intelligent timeout handling for different HTTP operations:
+
+- **Quick Check** (5s) - Connectivity and existence verification
+- **Page Scraping** (10s) - HTML parsing for download links
+- **API Requests** (15s) - GitHub API calls
+- **Downloads** (300s) - File download operations
+- **Fallback** (30s) - Default timeout for other operations
+
+#### Usage Examples
+
+**CLI Usage:**
+
+```bash
+# Enable HTTP tracking with debug logging
+appimage-updater check --instrument-http --dry-run
+
+# Verbose HTTP tracking
+appimage-updater --debug check --instrument-http
+
+# Configure tracking options
+appimage-updater check --instrument-http --http-stack-depth 5 --http-track-headers
+```
+
+**Programmatic Usage:**
+
+```python
+# Create command with HTTP tracking
+command = CheckCommand(params)
+tracker = create_http_tracker_from_params(params)
+result = await command.execute(http_tracker=tracker)
+
+# Analyze captured requests
+for request in tracker.requests:
+    print(f"{request.method} {request.url} -> {request.response_status}")
+```
+
+#### Testing Integration
+
+The dependency injection architecture enables clean testing:
+
+```python
+# Silent tracking for tests
+silent_tracker = create_silent_http_tracker()
+result = await command.execute(http_tracker=silent_tracker)
+
+# Verify HTTP behavior without log noise
+assert len(silent_tracker.requests) == expected_count
+assert silent_tracker.requests[0].url == expected_url
+```
 
 ## Monitoring and Observability
 

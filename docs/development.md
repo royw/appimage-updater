@@ -149,6 +149,72 @@ task check
 
 For detailed code organization and module descriptions, see the [Architecture Guide](architecture.md).
 
+### HTTP Instrumentation and Logging
+
+The project includes a sophisticated HTTP instrumentation system with dependency injection for flexible logging control.
+
+#### HTTP Tracker Usage
+
+```bash
+# Enable HTTP request tracking with debug-level logging
+appimage-updater check --instrument-http --dry-run
+
+# Enable HTTP tracking with verbose logging (in debug mode)
+appimage-updater --debug check --instrument-http --dry-run
+
+# Configure stack depth for call stack capture
+appimage-updater check --instrument-http --http-stack-depth 5
+
+# Track request headers (for debugging)
+appimage-updater check --instrument-http --http-track-headers
+```
+
+#### HTTP Logger Dependency Injection
+
+The HTTP tracker uses dependency injection for configurable logging:
+
+```python
+from appimage_updater.instrumentation.factory import (
+    create_http_tracker_from_params,
+    create_silent_http_tracker,
+    create_verbose_http_tracker
+)
+
+# Create tracker based on command parameters
+tracker = create_http_tracker_from_params(params)
+
+# Create silent tracker for testing
+silent_tracker = create_silent_http_tracker()
+
+# Create verbose tracker for debugging
+verbose_tracker = create_verbose_http_tracker()
+
+# Inject tracker into command execution
+result = await command.execute(http_tracker=tracker)
+```
+
+#### Custom HTTP Loggers
+
+```python
+from appimage_updater.instrumentation.logging_interface import (
+    create_default_http_logger,
+    create_silent_http_logger,
+    ConfigurableHTTPLogger,
+    LoguruHTTPLogger
+)
+
+# Create configurable logger with custom levels
+custom_logger = ConfigurableHTTPLogger(
+    LoguruHTTPLogger(),
+    tracking_level="info",    # Start/stop messages
+    request_level="debug",    # Individual requests
+    error_level="warning"     # HTTP errors
+)
+
+# Use with HTTP tracker
+tracker = HTTPTracker(logger=custom_logger)
+```
+
 ### Adding New Commands
 
 1. Add command function to `main.py`
