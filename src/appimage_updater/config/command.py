@@ -120,6 +120,12 @@ def _add_checksum_rows(defaults_table: Table, defaults: Any) -> None:
 def _add_misc_rows(defaults_table: Table, defaults: Any) -> None:
     """Add miscellaneous rows to the table."""
     defaults_table.add_row("Prerelease", "[dim](prerelease)[/dim]", "Yes" if defaults.prerelease else "No")
+    defaults_table.add_row(
+        "Multiple Processes",
+        "[dim](enable-multiple-processes)[/dim]",
+        "Yes" if defaults.enable_multiple_processes else "No",
+    )
+    defaults_table.add_row("Process Pool Size", "[dim](process-pool-size)[/dim]", str(defaults.process_pool_size))
 
 
 def _handle_config_load_error(e: ConfigLoadError) -> bool:
@@ -299,12 +305,13 @@ def _is_boolean_setting(setting: str) -> bool:
         "checksum-required",
         "prerelease",
         "auto-subdir",
+        "enable-multiple-processes",
     )
 
 
 def _is_numeric_setting(setting: str) -> bool:
     """Check if setting is a numeric-based setting."""
-    return setting in ("retain-count", "concurrent-downloads", "timeout-seconds")
+    return setting in ("retain-count", "concurrent-downloads", "timeout-seconds", "process-pool-size")
 
 
 def _apply_path_setting(config: Config, setting: str, value: str) -> None:
@@ -369,6 +376,12 @@ def _apply_auto_subdir_setting(config: Config, bool_value: bool) -> None:
     console.print(f"[green]Set automatic subdirectory creation to: {bool_value}")
 
 
+def _apply_enable_multiple_processes_setting(config: Config, bool_value: bool) -> None:
+    """Apply enable-multiple-processes setting."""
+    config.global_config.defaults.enable_multiple_processes = bool_value
+    console.print(f"[green]Set multiple processes enabled to: {bool_value}")
+
+
 def _get_boolean_setting_handler(setting: str) -> Callable[[Config, bool], None] | None:
     """Get the appropriate handler function for a boolean setting."""
     handlers = {
@@ -378,6 +391,7 @@ def _get_boolean_setting_handler(setting: str) -> Callable[[Config, bool], None]
         "checksum-required": _apply_checksum_required_setting,
         "prerelease": _apply_prerelease_setting,
         "auto-subdir": _apply_auto_subdir_setting,
+        "enable-multiple-processes": _apply_enable_multiple_processes_setting,
     }
     return handlers.get(setting)
 
@@ -416,6 +430,8 @@ def _validate_and_apply_numeric_value(config: Config, setting: str, numeric_valu
         return _apply_concurrent_downloads_setting(config, numeric_value)
     elif setting == "timeout-seconds":
         return _apply_timeout_setting(config, numeric_value)
+    elif setting == "process-pool-size":
+        return _apply_process_pool_size_setting(config, numeric_value)
     return False
 
 
@@ -464,6 +480,21 @@ def _apply_timeout_setting(config: Config, value: int) -> bool:
         return False
 
 
+def _apply_process_pool_size_setting(config: Config, value: int) -> bool:
+    """Apply process pool size setting with validation.
+
+    Returns:
+        True if successful, False if validation failed
+    """
+    if 1 <= value <= 16:
+        config.global_config.defaults.process_pool_size = value
+        console.print(f"[green]Set process pool size to: {value}")
+        return True
+    else:
+        console.print("[red]Process pool size must be between 1 and 16")
+        return False
+
+
 def _apply_checksum_algorithm_setting(config: Config, value: str) -> bool:
     """Apply checksum algorithm setting change.
 
@@ -493,6 +524,7 @@ def _show_available_settings(setting: str) -> bool:
     console.print("  rotation, symlink-enabled, retain-count")
     console.print("  checksum, checksum-algorithm, checksum-pattern, checksum-required")
     console.print("  prerelease, concurrent-downloads, timeout-seconds")
+    console.print("  enable-multiple-processes, process-pool-size")
     return False
 
 
@@ -581,6 +613,17 @@ def list_available_settings() -> None:
     # Other settings
     defaults_table.add_row(
         "prerelease", "Include prerelease versions", "true/false, yes/no, 1/0", "config set prerelease false"
+    )
+
+    # Parallelization settings
+    defaults_table.add_row(
+        "enable-multiple-processes",
+        "Enable parallel processing",
+        "true/false, yes/no, 1/0",
+        "config set enable-multiple-processes true",
+    )
+    defaults_table.add_row(
+        "process-pool-size", "Number of parallel processes", "1-16", "config set process-pool-size 4"
     )
 
     console.print(defaults_table)
@@ -683,6 +726,8 @@ def _build_defaults_dict(defaults: Any) -> dict[str, Any]:
         "checksum_pattern": defaults.checksum_pattern,
         "checksum_required": defaults.checksum_required,
         "prerelease": defaults.prerelease,
+        "enable_multiple_processes": defaults.enable_multiple_processes,
+        "process_pool_size": defaults.process_pool_size,
     }
 
 

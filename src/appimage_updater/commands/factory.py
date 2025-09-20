@@ -92,6 +92,8 @@ class CommandFactory:
         yes: bool = False,
         no_interactive: bool = False,
         verbose: bool = False,
+        enable_multiple_processes: bool | None = None,
+        process_pool_size: int | None = None,
         debug: bool = False,
         info: bool = False,
     ) -> CheckCommand:
@@ -104,6 +106,8 @@ class CommandFactory:
             yes=yes,
             no_interactive=no_interactive,
             verbose=verbose,
+            enable_multiple_processes=enable_multiple_processes,
+            process_pool_size=process_pool_size,
             debug=debug,
             info=info,
         )
@@ -223,6 +227,8 @@ class CommandFactory:
         assets: bool = False,
         limit: int = 10,
         dry_run: bool = False,
+        enable_multiple_processes: bool | None = None,
+        process_pool_size: int | None = None,
         verbose: bool = False,
         debug: bool = False,
     ) -> RepositoryCommand:
@@ -234,6 +240,8 @@ class CommandFactory:
             assets=assets,
             limit=limit,
             dry_run=dry_run,
+            enable_multiple_processes=enable_multiple_processes,
+            process_pool_size=process_pool_size,
             verbose=verbose,
             debug=debug,
         )

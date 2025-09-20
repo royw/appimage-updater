@@ -16,7 +16,7 @@ class TestPatternMatching:
             (directory / filename).touch()
 
     @patch('appimage_updater.repositories.factory.get_repository_client')
-    @patch('appimage_updater.main.VersionChecker')
+    @patch('appimage_updater.core.version_checker.VersionChecker')
     def test_pattern_matching_with_suffixes(
         self, mock_version_checker_class, mock_repo_client_factory,
         runner, temp_config_dir, temp_download_dir

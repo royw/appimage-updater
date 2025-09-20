@@ -57,5 +57,7 @@ class CheckCommand(Command):
             no_interactive=self.params.no_interactive,
             verbose=self.params.verbose,
             info=self.params.info,
+            enable_multiple_processes=self.params.enable_multiple_processes,
+            process_pool_size=self.params.process_pool_size,
         )
         return success

@@ -24,7 +24,6 @@ from .config.operations import (
 )
 from .core.downloader import Downloader
 from .core.models import InteractiveResult, rebuild_models
-from .core.version_checker import VersionChecker
 from .repositories.factory import get_repository_client
 from .services.application_service import ApplicationService
 from .ui.cli.validation_utilities import _check_configuration_warnings
@@ -50,7 +49,9 @@ from .ui.cli_options import (
     EDIT_ROTATION_OPTION,
     EDIT_SYMLINK_PATH_OPTION,
     EDIT_URL_OPTION,
+    ENABLE_MULTIPLE_PROCESSES_OPTION,
     NO_INTERACTIVE_OPTION,
+    PROCESS_POOL_SIZE_OPTION,
     REPOSITORY_APP_NAME_ARGUMENT,
     REPOSITORY_ASSETS_OPTION,
     REPOSITORY_DRY_RUN_OPTION,
@@ -378,6 +379,8 @@ def check(
     yes: bool = YES_OPTION,
     no_interactive: bool = NO_INTERACTIVE_OPTION,
     verbose: bool = VERBOSE_OPTION,
+    enable_multiple_processes: bool | None = ENABLE_MULTIPLE_PROCESSES_OPTION,
+    process_pool_size: int | None = PROCESS_POOL_SIZE_OPTION,
     debug: bool = _DEBUG_OPTION,
     info: bool = typer.Option(
         False,
@@ -410,6 +413,8 @@ def check(
         yes=yes,
         no_interactive=no_interactive,
         verbose=verbose,
+        enable_multiple_processes=enable_multiple_processes,
+        process_pool_size=process_pool_size,
         debug=debug,
         info=info,
     )
@@ -1138,6 +1143,8 @@ def repository(
     limit: int = REPOSITORY_LIMIT_OPTION,
     assets: bool = REPOSITORY_ASSETS_OPTION,
     dry_run: bool = REPOSITORY_DRY_RUN_OPTION,
+    enable_multiple_processes: bool | None = ENABLE_MULTIPLE_PROCESSES_OPTION,
+    process_pool_size: int | None = PROCESS_POOL_SIZE_OPTION,
     debug: bool = get_debug_option(),
     version: bool = get_version_option(),
 ) -> None:
@@ -1164,6 +1171,8 @@ def repository(
         limit=limit,
         assets=assets,
         dry_run=dry_run,
+        enable_multiple_processes=enable_multiple_processes,
+        process_pool_size=process_pool_size,
         debug=debug,
     )
 
@@ -1210,6 +1219,8 @@ async def _examine_repositories(
     limit: int,
     show_assets: bool,
     dry_run: bool = False,
+    enable_multiple_processes: bool | None = None,
+    process_pool_size: int | None = None,
 ) -> bool:
     """Examine repository information for applications.
 
@@ -1386,6 +1397,8 @@ async def _check_updates(
     no_interactive: bool,
     verbose: bool,
     info: bool = False,
+    enable_multiple_processes: bool | None = None,
+    process_pool_size: int | None = None,
 ) -> bool:
     """Internal async function to check for updates.
 
@@ -1410,7 +1423,9 @@ async def _check_updates(
         if info:
             await _execute_info_update_workflow(enabled_apps)
         else:
-            await _execute_update_workflow(config, enabled_apps, dry_run, yes, no_interactive)
+            await _execute_update_workflow(
+                config, enabled_apps, dry_run, yes, no_interactive, enable_multiple_processes, process_pool_size
+            )
         return True
     except Exception as e:
         _handle_check_errors(e)
@@ -1572,14 +1587,24 @@ async def _prepare_check_environment(
     if verbose:
         _display_check_verbose_info(normalized_names, dry_run, yes, no_interactive, len(enabled_apps))
 
+    filter_msg = " (filtered)" if app_names else ""
+    logger.debug(f"Found {len(config.applications)} total applications, {len(enabled_apps)} enabled{filter_msg}")
     return config, enabled_apps
 
 
 async def _execute_update_workflow(
-    config: Any, enabled_apps: list[Any], dry_run: bool, yes: bool, no_interactive: bool
+    config: Any,
+    enabled_apps: list[Any],
+    dry_run: bool,
+    yes: bool,
+    no_interactive: bool,
+    enable_multiple_processes: bool | None = None,
+    process_pool_size: int | None = None,
 ) -> None:
     """Execute the main update workflow."""
-    check_results = await _perform_update_checks(config, enabled_apps, no_interactive)
+    check_results = await _perform_update_checks(
+        config, enabled_apps, no_interactive, enable_multiple_processes, process_pool_size
+    )
     candidates = _get_update_candidates(check_results, dry_run)
 
     if not candidates:
@@ -1743,24 +1768,35 @@ async def _load_and_filter_config(
     return config, enabled_apps
 
 
-async def _perform_update_checks(config: Any, enabled_apps: list[Any], no_interactive: bool = False) -> list[Any]:
+async def _perform_update_checks(
+    config: Any,
+    enabled_apps: list[Any],
+    no_interactive: bool = False,
+    enable_multiple_processes: bool | None = None,
+    process_pool_size: int | None = None,
+) -> list[Any]:
     """Initialize clients and perform update checks."""
     console.print(f"[blue]Checking {len(enabled_apps)} applications for updates...")
     logger.debug(f"Starting update checks for {len(enabled_apps)} applications")
 
-    # Initialize version checker (repository clients will be created per-app as needed)
-    version_checker = VersionChecker(interactive=not no_interactive)
-    logger.debug("Version checker initialized")
+    # Get effective parallelization settings
+    from .core.parallel import ParallelProcessor, check_app_worker, get_effective_parallelization_settings
 
-    # Check for updates
-    logger.debug("Creating update check tasks")
-    check_tasks = [version_checker.check_for_updates(app) for app in enabled_apps]
-    logger.debug(f"Created {len(check_tasks)} concurrent check tasks")
+    enable_parallel, pool_size = get_effective_parallelization_settings(
+        config, enable_multiple_processes, process_pool_size
+    )
 
-    logger.debug("Executing update checks concurrently")
-    check_results = await asyncio.gather(*check_tasks)
+    # Log the processing method being used
+    if enable_parallel and len(enabled_apps) > 1:
+        logger.info(f"Using parallel processing with {pool_size} processes for {len(enabled_apps)} applications")
+    else:
+        logger.info(f"Using sequential processing for {len(enabled_apps)} applications")
+
+    # Create parallel processor and run checks
+    processor = ParallelProcessor(enable_parallel, pool_size)
+    check_results = await processor.process_applications(enabled_apps, check_app_worker)
+
     logger.debug(f"Completed {len(check_results)} update checks")
-
     return check_results
 
 

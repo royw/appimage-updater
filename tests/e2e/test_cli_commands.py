@@ -12,7 +12,7 @@ class TestE2EFunctionality:
     # init command tests removed - config directory is now created automatically
 
     @patch('appimage_updater.repositories.factory.get_repository_client')
-    @patch('appimage_updater.main.VersionChecker')
+    @patch('appimage_updater.core.version_checker.VersionChecker')
     def test_check_command_dry_run_no_updates_needed(
         self, mock_version_checker_class, mock_repo_client_factory,
         runner, temp_config_dir, sample_config, temp_download_dir
@@ -56,7 +56,7 @@ class TestE2EFunctionality:
         assert "Up to date" in result.stdout or "All applications are up to date" in result.stdout
 
     @patch('appimage_updater.repositories.factory.get_repository_client')
-    @patch('appimage_updater.main.VersionChecker')
+    @patch('appimage_updater.core.version_checker.VersionChecker')
     def test_check_command_dry_run_with_updates_available(
         self, mock_version_checker_class, mock_repo_client_factory,
         runner, temp_config_dir, sample_config, temp_download_dir
@@ -102,7 +102,7 @@ class TestE2EFunctionality:
         assert "Dry run mode" in result.stdout
 
     @patch('appimage_updater.repositories.factory.get_repository_client')
-    @patch('appimage_updater.main.VersionChecker')
+    @patch('appimage_updater.core.version_checker.VersionChecker')
     def test_check_command_with_app_filter(
         self, mock_version_checker_class, mock_repo_client_factory,
         runner, temp_config_dir, sample_config, temp_download_dir
@@ -171,7 +171,7 @@ class TestE2EFunctionality:
         assert "Configuration error" in result.stdout
 
     @patch('appimage_updater.repositories.factory.get_repository_client')
-    @patch('appimage_updater.main.VersionChecker')
+    @patch('appimage_updater.core.version_checker.VersionChecker')
     def test_check_command_with_failed_version_check(
         self, mock_version_checker_class, mock_repo_client_factory,
         runner, temp_config_dir, sample_config
@@ -207,7 +207,7 @@ class TestE2EFunctionality:
 
         # Mock to prevent actual network calls
         with patch('appimage_updater.repositories.factory.get_repository_client'), \
-             patch('appimage_updater.main.VersionChecker') as mock_vc:
+             patch('appimage_updater.core.version_checker.VersionChecker') as mock_vc:
 
             mock_check_result = CheckResult(
                 app_name="TestApp",
