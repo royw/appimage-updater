@@ -6,13 +6,13 @@ that might not appear in unit test environments.
 
 import os
 import subprocess
-import sys
+import tempfile
 from pathlib import Path
 
 import pytest
 
 
-def run_cli_command(args: list[str]) -> tuple[int, str, str]:
+def run_cli_command(args: list[str], temp_home: Path | None = None) -> tuple[int, str, str]:
     """Run CLI command as subprocess and return exit code, stdout, stderr."""
     # Get the path to the CLI entry point
     cli_path = Path(__file__).parent.parent.parent / "src" / "appimage_updater" / "__main__.py"
@@ -20,11 +20,16 @@ def run_cli_command(args: list[str]) -> tuple[int, str, str]:
     # Run with uv to match user environment
     cmd = ["uv", "run", "python", "-m", "appimage_updater"] + args
     
-    # Set environment to disable rich traceback
+    # Set environment to disable rich traceback and create clean environment
     env = dict(os.environ)
     env['_RICH_TRACEBACK'] = '0'
     env['RICH_TRACEBACK'] = '0'
     env['NO_COLOR'] = '1'  # Also disable colors to make output more predictable
+    
+    # Use temporary home directory if provided to isolate from user config
+    if temp_home:
+        env['HOME'] = str(temp_home)
+        env['XDG_CONFIG_HOME'] = str(temp_home / '.config')
     
     try:
         result = subprocess.run(
@@ -105,11 +110,13 @@ class TestShowCommandStackTraces:
     
     def test_nonexistent_application_e2e(self):
         """Test that showing nonexistent app shows clean error in real CLI."""
-        exit_code, stdout, stderr = run_cli_command(["show", "NonExistentApp"])
-        
-        assert exit_code == 1
-        assert_no_stack_trace_in_output(stdout, stderr, "show NonExistentApp")
-        assert any(phrase in stdout for phrase in ["not found", "No applications found"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            exit_code, stdout, stderr = run_cli_command(["show", "NonExistentApp"], temp_home)
+            
+            assert exit_code == 1
+            assert_no_stack_trace_in_output(stdout, stderr, "show NonExistentApp")
+            assert any(phrase in stdout for phrase in ["not found", "No applications found"])
     
     def test_multiple_nonexistent_applications_e2e(self):
         """Test that showing multiple nonexistent apps shows clean error in real CLI."""
@@ -137,11 +144,14 @@ class TestRemoveCommandStackTraces:
     
     def test_nonexistent_application_e2e(self):
         """Test that removing nonexistent app shows clean error in real CLI."""
-        exit_code, stdout, stderr = run_cli_command(["remove", "NonExistentApp"])
-        
-        assert exit_code == 1
-        assert_no_stack_trace_in_output(stdout, stderr, "remove NonExistentApp")
-        assert any(phrase in stdout for phrase in ["not found", "No applications found"])
+        # Create a temporary directory to isolate from user config
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            exit_code, stdout, stderr = run_cli_command(["remove", "NonExistentApp"], temp_home)
+            
+            assert exit_code == 1
+            assert_no_stack_trace_in_output(stdout, stderr, "remove NonExistentApp")
+            assert any(phrase in stdout for phrase in ["not found", "No applications found"])
 
 
 class TestAddCommandStackTraces:
@@ -161,11 +171,13 @@ class TestCheckCommandStackTraces:
     
     def test_nonexistent_application_e2e(self):
         """Test that checking nonexistent app shows clean error in real CLI."""
-        exit_code, stdout, stderr = run_cli_command(["check", "NonExistentApp"])
-        
-        assert exit_code == 1
-        assert_no_stack_trace_in_output(stdout, stderr, "check NonExistentApp")
-        assert any(phrase in stdout for phrase in ["not found", "No applications found"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            exit_code, stdout, stderr = run_cli_command(["check", "NonExistentApp"], temp_home)
+            
+            assert exit_code == 1
+            assert_no_stack_trace_in_output(stdout, stderr, "check NonExistentApp")
+            assert any(phrase in stdout for phrase in ["not found", "No applications found"])
 
 
 class TestRepositoryCommandStackTraces:

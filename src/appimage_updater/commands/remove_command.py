@@ -93,7 +93,7 @@ class RemoveCommand(Command):
     def _validate_applications_exist(self, config: Config) -> bool:
         """Check if there are any applications configured."""
         if not config.applications:
-            self.console.print("No JSON configuration files found")
+            self.console.print("No applications found")
             return False
         return True
 
@@ -108,7 +108,7 @@ class RemoveCommand(Command):
 
     def _handle_config_load_error(self) -> CommandResult:
         """Handle configuration load errors."""
-        self.console.print("No JSON configuration files found")
+        self.console.print("No applications found")
         return CommandResult(success=False, exit_code=1)
 
     def _handle_unexpected_error(self, error: Exception) -> None:
