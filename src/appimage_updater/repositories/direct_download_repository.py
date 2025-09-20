@@ -54,17 +54,20 @@ class DirectDownloadRepository(RepositoryClient):
     async def get_releases(self, url: str, limit: int = 10) -> list[Release]:
         """Get releases for direct download URL."""
         try:
-            # Configure client to handle redirects properly
-            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True, max_redirects=10) as client:
-                # Check if this is a releases page that needs parsing
-                # Exclude direct AppImage URLs from releases page handling
-                if any(
-                    pattern in url.lower() for pattern in ["releases.html", "releases/", "openrgb.org/releases"]
-                ) and not url.endswith(".AppImage"):
-                    return await self._handle_releases_page(client, url)
-                else:
-                    # Handle direct download URLs
-                    return await self._handle_direct_download(client, url)
+            from ..core.timeout_strategy import create_progressive_client
+
+            # Use progressive timeout strategy for better performance
+            progressive_client = create_progressive_client(self.timeout)
+
+            # Check if this is a releases page that needs parsing
+            # Exclude direct AppImage URLs from releases page handling
+            if any(
+                pattern in url.lower() for pattern in ["releases.html", "releases/", "openrgb.org/releases"]
+            ) and not url.endswith(".AppImage"):
+                return await self._handle_releases_page_progressive(progressive_client, url)
+            else:
+                # Handle direct download URLs
+                return await self._handle_direct_download_progressive(progressive_client, url)
 
         except Exception as e:
             logger.error(f"Failed to get releases for {url}: {e}")
@@ -338,3 +341,123 @@ class DirectDownloadRepository(RepositoryClient):
         except Exception as e:
             logger.error(f"Failed to generate pattern for {url}: {e}")
             return None
+
+    async def _handle_releases_page_progressive(self, progressive_client: Any, url: str) -> list[Release]:
+        """Handle releases pages with progressive timeout strategy."""
+        # Try with quick timeout first, then fallback to longer timeout
+        response = await progressive_client.get_with_progressive_timeout(
+            url, operation_types=["page_scraping", "fallback"]
+        )
+
+        content = response.text
+
+        # Look for AppImage download links in both HTML and markdown formats
+        html_quoted_pattern = r'href="([^"]*\.AppImage[^"]*)"'
+        html_unquoted_pattern = r"href=([^\s>]*\.AppImage[^\s>]*)"
+        markdown_pattern = r"\]\(([^)]*\.AppImage[^)]*)\)"
+
+        html_quoted_matches = re.findall(html_quoted_pattern, content, re.IGNORECASE)
+        html_unquoted_matches = re.findall(html_unquoted_pattern, content, re.IGNORECASE)
+        markdown_matches = re.findall(markdown_pattern, content, re.IGNORECASE)
+
+        matches = html_quoted_matches + html_unquoted_matches + markdown_matches
+
+        if not matches:
+            raise RepositoryError(f"No AppImage downloads found on {url}")
+
+        # Use the first match (most recent/latest)
+        download_url = matches[0]
+        if not download_url.startswith("http"):
+            from urllib.parse import urljoin
+
+            download_url = urljoin(url, download_url)
+
+        # Extract version from the download URL
+        version = self._extract_version_from_url(download_url)
+        filename = self._extract_filename_from_url(download_url)
+
+        # Create asset
+        from datetime import datetime
+
+        asset = Asset(
+            name=filename,
+            url=download_url,
+            size=0,  # Size unknown for scraped releases
+            created_at=datetime.now(),
+        )
+
+        # Create release object
+        from ..utils.version_utils import normalize_version_string
+
+        normalized_version = normalize_version_string(version)
+        release = Release(
+            version=normalized_version,
+            tag_name=normalized_version,
+            published_at=datetime.now(),
+            assets=[asset],
+            is_prerelease=False,
+            is_draft=False,
+        )
+
+        return [release]
+
+    async def _handle_direct_download_progressive(self, progressive_client: Any, url: str) -> list[Release]:
+        """Handle direct download URLs with progressive timeout strategy."""
+        # Extract original filename before making requests
+        original_filename = self._extract_filename_from_url(url)
+
+        # For URLs ending with -latest or similar, use progressive timeout to handle redirects
+        if "-latest" in url or "latest" in url:
+            try:
+                # Try quick check first for redirect resolution
+                response = await progressive_client.get_with_progressive_timeout(
+                    url, operation_types=["quick_check", "fallback"]
+                )
+
+                # Get the final URL after redirects
+                final_url = str(response.url)
+                filename = self._extract_filename_from_url(final_url)
+
+                # If we got a different filename from the redirect, use it
+                if filename != original_filename:
+                    logger.debug(f"Redirect resolved: {original_filename} -> {filename}")
+                else:
+                    filename = original_filename
+
+            except Exception as e:
+                logger.debug(f"Failed to resolve redirect for {url}: {e}")
+                # Fall back to original filename if redirect resolution fails
+                filename = original_filename
+                final_url = url
+        else:
+            # For direct URLs, no need to make a request, just use the URL as-is
+            filename = original_filename
+            final_url = url
+
+        # Extract version from filename or URL
+        version = self._extract_version_from_url(final_url)
+
+        # Create asset
+        from datetime import datetime
+
+        asset = Asset(
+            name=filename,
+            url=final_url,
+            size=0,  # Size unknown for direct downloads
+            created_at=datetime.now(),
+        )
+
+        # Create release object
+        from ..utils.version_utils import normalize_version_string
+
+        normalized_version = normalize_version_string(version)
+        release = Release(
+            version=normalized_version,
+            tag_name=normalized_version,
+            published_at=datetime.now(),
+            assets=[asset],
+            is_prerelease=False,
+            is_draft=False,
+        )
+
+        return [release]

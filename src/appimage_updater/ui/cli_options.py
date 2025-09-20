@@ -60,6 +60,27 @@ NO_INTERACTIVE_OPTION = typer.Option(
     help="Disable interactive distribution selection (use best match automatically)",
 )
 
+# HTTP instrumentation options
+INSTRUMENT_HTTP_OPTION = typer.Option(
+    False,
+    "--instrument-http",
+    help="Enable HTTP request tracking to analyze duplicate requests and performance",
+)
+
+HTTP_STACK_DEPTH_OPTION = typer.Option(
+    4,
+    "--http-stack-depth",
+    help="Number of call stack frames to capture for each HTTP request (1-10)",
+    min=1,
+    max=10,
+)
+
+HTTP_TRACK_HEADERS_OPTION = typer.Option(
+    False,
+    "--http-track-headers",
+    help="Include request headers in HTTP tracking (may contain sensitive data)",
+)
+
 # Arguments for application names
 CHECK_APP_NAME_ARGUMENT = typer.Argument(
     default=None,

@@ -94,6 +94,9 @@ class CommandFactory:
         verbose: bool = False,
         debug: bool = False,
         info: bool = False,
+        instrument_http: bool = False,
+        http_stack_depth: int = 4,
+        http_track_headers: bool = False,
     ) -> CheckCommand:
         """Create a CheckCommand instance."""
         params = CheckParams(
@@ -106,6 +109,9 @@ class CommandFactory:
             verbose=verbose,
             debug=debug,
             info=info,
+            instrument_http=instrument_http,
+            http_stack_depth=http_stack_depth,
+            http_track_headers=http_track_headers,
         )
         return CheckCommand(params)
 

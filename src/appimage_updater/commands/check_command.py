@@ -1,6 +1,6 @@
 """Check command implementation."""
 
-from __future__ import annotations
+from typing import Any
 
 from loguru import logger
 from rich.console import Console
@@ -22,18 +22,49 @@ class CheckCommand(Command):
         # Check command has no required parameters
         return []
 
-    async def execute(self) -> CommandResult:
-        """Execute the check command."""
+    async def execute(self, http_tracker: Any = None) -> CommandResult:
+        """Execute the check command.
+
+        Args:
+            http_tracker: Optional HTTP tracker for instrumentation
+        """
         configure_logging(debug=self.params.debug)
 
         try:
-            # Execute the check operation
-            success = await self._execute_check_operation()
+            # Start tracking if tracker is provided
+            if http_tracker:
+                http_tracker.start_tracking()
 
-            if success:
-                return CommandResult(success=True, message="Check completed successfully")
-            else:
-                return CommandResult(success=False, message="Applications not found", exit_code=1)
+            try:
+                # Execute the check operation
+                success = await self._execute_check_operation()
+
+                # Stop HTTP tracking if it was enabled
+                if http_tracker:
+                    http_tracker.stop_tracking()
+
+                    # Print basic summary
+                    self.console.print("\n[bold blue]HTTP Tracking Summary[/bold blue]")
+                    self.console.print(f"Total requests: {len(http_tracker.requests)}")
+
+                    # Show some request details
+                    for i, request in enumerate(http_tracker.requests[:5]):  # Show first 5
+                        status = request.response_status or "ERROR"
+                        time_str = f"{request.response_time:.3f}s" if request.response_time else "N/A"
+                        self.console.print(f"  {i + 1}. {request.method} {request.url} -> {status} ({time_str})")
+
+                    if len(http_tracker.requests) > 5:
+                        self.console.print(f"  ... and {len(http_tracker.requests) - 5} more requests")
+
+                if success:
+                    return CommandResult(success=True, message="Check completed successfully")
+                else:
+                    return CommandResult(success=False, message="Applications not found", exit_code=1)
+
+            finally:
+                # Ensure HTTP tracking is stopped even if an error occurs
+                if http_tracker:
+                    http_tracker.stop_tracking()
 
         except Exception as e:
             logger.error(f"Unexpected error in check command: {e}")

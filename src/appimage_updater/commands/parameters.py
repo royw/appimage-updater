@@ -50,6 +50,10 @@ class CheckParams(BaseParams):
     yes: bool = False
     no_interactive: bool = False
     info: bool = False
+    # HTTP instrumentation options
+    instrument_http: bool = False
+    http_stack_depth: int = 4
+    http_track_headers: bool = False
 
 
 @dataclass

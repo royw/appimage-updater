@@ -32,7 +32,7 @@ def _create_default_global_config(config_parent_dir: Path) -> None:
         json.dump(config_data, f, indent=2)
 
     display_path = _replace_home_with_tilde(str(config_file))
-    logger.info(f"Created global configuration file: {display_path}")
+    logger.debug(f"Created global configuration file: {display_path}")
 
 
 async def generate_default_config(

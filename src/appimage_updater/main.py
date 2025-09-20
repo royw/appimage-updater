@@ -49,6 +49,9 @@ from .ui.cli_options import (
     EDIT_ROTATION_OPTION,
     EDIT_SYMLINK_PATH_OPTION,
     EDIT_URL_OPTION,
+    HTTP_STACK_DEPTH_OPTION,
+    HTTP_TRACK_HEADERS_OPTION,
+    INSTRUMENT_HTTP_OPTION,
     NO_INTERACTIVE_OPTION,
     REPOSITORY_APP_NAME_ARGUMENT,
     REPOSITORY_ASSETS_OPTION,
@@ -383,6 +386,9 @@ def check(
         "--info",
         help="Update or create .info files with current version scheme for selected applications",
     ),
+    instrument_http: bool = INSTRUMENT_HTTP_OPTION,
+    http_stack_depth: int = HTTP_STACK_DEPTH_OPTION,
+    http_track_headers: bool = HTTP_TRACK_HEADERS_OPTION,
     version: bool = typer.Option(
         False,
         "--version",
@@ -411,9 +417,17 @@ def check(
         verbose=verbose,
         debug=debug,
         info=info,
+        instrument_http=instrument_http,
+        http_stack_depth=http_stack_depth,
+        http_track_headers=http_track_headers,
     )
 
-    result = asyncio.run(command.execute())
+    # Create HTTP tracker based on parameters
+    from .instrumentation.factory import create_http_tracker_from_params
+
+    http_tracker = create_http_tracker_from_params(command.params)
+
+    result = asyncio.run(command.execute(http_tracker=http_tracker))
     if not result.success:
         raise typer.Exit(result.exit_code)
 
@@ -1660,7 +1674,7 @@ async def _setup_rotation_for_file(app_config: ApplicationConfig, latest_file: P
 
     # Use the existing rotation logic
     await downloader._handle_rotation(candidate)
-    logger.info(f"Set up rotation and symlink for existing file: {app_config.name}")
+    logger.debug(f"Set up rotation and symlink for existing file: {app_config.name}")
 
 
 def _should_skip_rotation_setup(app_config: ApplicationConfig) -> bool:
@@ -1765,9 +1779,9 @@ async def _perform_update_checks(
 
     # Log the processing method being used
     if len(enabled_apps) > 1:
-        logger.info(f"Using concurrent async processing for {len(enabled_apps)} applications")
+        logger.debug(f"Using concurrent async processing for {len(enabled_apps)} applications")
     else:
-        logger.info(f"Using sequential processing for {len(enabled_apps)} applications")
+        logger.debug(f"Using sequential processing for {len(enabled_apps)} applications")
 
     # Create concurrent processor and run checks using async concurrency
     processor = ConcurrentProcessor()

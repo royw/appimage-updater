@@ -40,7 +40,7 @@ def load_config(config_file: Path | None, config_dir: Path | None) -> Any:
         logger.debug(f"Loading configuration from default file: {default_file}")
         return load_config_from_file(default_file)
 
-    logger.info("No configuration found, creating default directory structure")
+    logger.debug("No configuration found, creating default directory structure")
     # Create default config directory structure automatically
     default_dir = get_default_config_dir()
     default_dir.mkdir(parents=True, exist_ok=True)
@@ -69,7 +69,7 @@ def _create_default_global_config(config_parent_dir: Path) -> None:
         json.dump(config_data, f, indent=2)
 
     display_path = _replace_home_with_tilde(str(config_file))
-    logger.info(f"Created global configuration file: {display_path}")
+    logger.debug(f"Created global configuration file: {display_path}")
 
 
 def add_application_to_config(app_config: dict[str, Any], config_file: Path | None, config_dir: Path | None) -> None:
