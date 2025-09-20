@@ -54,6 +54,8 @@ class CheckParams(BaseParams):
     instrument_http: bool = False
     http_stack_depth: int = 4
     http_track_headers: bool = False
+    # Output formatting options
+    format: str = "rich"
 
 
 @dataclass

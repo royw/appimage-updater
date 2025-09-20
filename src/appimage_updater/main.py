@@ -49,6 +49,7 @@ from .ui.cli_options import (
     EDIT_ROTATION_OPTION,
     EDIT_SYMLINK_PATH_OPTION,
     EDIT_URL_OPTION,
+    FORMAT_OPTION,
     HTTP_STACK_DEPTH_OPTION,
     HTTP_TRACK_HEADERS_OPTION,
     INSTRUMENT_HTTP_OPTION,
@@ -60,6 +61,7 @@ from .ui.cli_options import (
     VERBOSE_OPTION,
     YES_OPTION,
 )
+from .ui.output.interface import OutputFormat
 from .ui.display import (
     _replace_home_with_tilde,
     display_check_results,
@@ -381,6 +383,7 @@ def check(
     no_interactive: bool = NO_INTERACTIVE_OPTION,
     verbose: bool = VERBOSE_OPTION,
     debug: bool = _DEBUG_OPTION,
+    format: OutputFormat = FORMAT_OPTION,
     info: bool = typer.Option(
         False,
         "--info",
@@ -420,14 +423,23 @@ def check(
         instrument_http=instrument_http,
         http_stack_depth=http_stack_depth,
         http_track_headers=http_track_headers,
+        format=format,
     )
 
     # Create HTTP tracker based on parameters
     from .instrumentation.factory import create_http_tracker_from_params
+    from .ui.output.factory import create_output_formatter_from_params
 
     http_tracker = create_http_tracker_from_params(command.params)
+    output_formatter = create_output_formatter_from_params(command.params)
 
-    result = asyncio.run(command.execute(http_tracker=http_tracker))
+    result = asyncio.run(command.execute(http_tracker=http_tracker, output_formatter=output_formatter))
+    
+    # Handle format-specific finalization
+    if format in [OutputFormat.JSON, OutputFormat.HTML]:
+        final_output = output_formatter.finalize()
+        if final_output:
+            print(final_output)
     if not result.success:
         raise typer.Exit(result.exit_code)
 

@@ -22,11 +22,12 @@ class CheckCommand(Command):
         # Check command has no required parameters
         return []
 
-    async def execute(self, http_tracker: Any = None) -> CommandResult:
+    async def execute(self, http_tracker: Any = None, output_formatter: Any = None) -> CommandResult:
         """Execute the check command.
 
         Args:
             http_tracker: Optional HTTP tracker for instrumentation
+            output_formatter: Optional output formatter for display
         """
         configure_logging(debug=self.params.debug)
 

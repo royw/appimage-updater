@@ -6,6 +6,8 @@ to keep them organized and reusable across commands.
 
 import typer
 
+from .output.interface import OutputFormat
+
 # Common options used across multiple commands
 
 VERBOSE_OPTION = typer.Option(
@@ -33,6 +35,14 @@ DRY_RUN_OPTION = typer.Option(
     False,
     "--dry-run",
     help="Check for updates without downloading",
+)
+
+FORMAT_OPTION = typer.Option(
+    OutputFormat.RICH,
+    "--format",
+    "-f",
+    help="Output format: rich (default), plain, json, or html",
+    case_sensitive=False,
 )
 
 EDIT_DRY_RUN_OPTION = typer.Option(
