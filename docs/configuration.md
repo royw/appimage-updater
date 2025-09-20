@@ -87,13 +87,6 @@ appimage-updater config set rotation-enabled true
 appimage-updater config set concurrent-downloads 5
 appimage-updater config set timeout-seconds 60
 
-# Configure parallel processing for faster update checks
-appimage-updater config set enable-multiple-processes true
-appimage-updater config set process-pool-size 8
-
-# Disable parallel processing (use sequential processing)
-appimage-updater config set enable-multiple-processes false
-
 # Reset all settings to defaults
 appimage-updater config reset
 ```
@@ -132,8 +125,6 @@ The setting names in parentheses (e.g., `(download-dir)`) are what you use with 
 
 - `concurrent-downloads`: Number of simultaneous downloads (1-10)
 - `timeout-seconds`: HTTP request timeout in seconds (5-300)
-- `enable-multiple-processes`: Enable parallel processing for update checks (true/false)
-- `process-pool-size`: Number of processes to use in the process pool (1-16)
 
 **Default Settings for New Applications:**
 

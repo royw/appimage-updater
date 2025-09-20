@@ -50,8 +50,6 @@ class CheckParams(BaseParams):
     yes: bool = False
     no_interactive: bool = False
     info: bool = False
-    enable_multiple_processes: bool | None = None
-    process_pool_size: int | None = None
 
 
 @dataclass
@@ -112,8 +110,6 @@ class RepositoryParams(BaseParams):
     assets: bool = False
     limit: int = 10
     dry_run: bool = False
-    enable_multiple_processes: bool | None = None
-    process_pool_size: int | None = None
 
 
 # InitParams removed with init command

@@ -130,19 +130,5 @@ REPOSITORY_ASSETS_OPTION = typer.Option(
     help="Show detailed asset information for each release",
 )
 
-# Parallelization options
-ENABLE_MULTIPLE_PROCESSES_OPTION = typer.Option(
-    None,
-    "--enable-multiple-processes/--disable-multiple-processes",
-    help="Enable or disable multiple processes for parallel checking (overrides global default)",
-)
-
-PROCESS_POOL_SIZE_OPTION = typer.Option(
-    None,
-    "--process-pool-size",
-    help="Number of processes to use in the process pool (1-16, overrides global default)",
-    min=1,
-    max=16,
-)
 
 # Verbose options for different commands

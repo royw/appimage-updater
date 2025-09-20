@@ -148,16 +148,6 @@ class DefaultsConfig(BaseModel):
         default=False,
         description="Include prerelease versions by default",
     )
-    enable_multiple_processes: bool = Field(
-        default=True,
-        description="Enable multiple processes for parallel checking of applications",
-    )
-    process_pool_size: int = Field(
-        default=4,
-        ge=1,
-        le=16,
-        description="Number of processes to use in the process pool (1-16)",
-    )
 
     @field_validator("download_dir", "symlink_dir")
     @classmethod

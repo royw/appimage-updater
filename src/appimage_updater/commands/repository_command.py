@@ -48,8 +48,6 @@ class RepositoryCommand(Command):
                 limit=self.params.limit,
                 show_assets=self.params.assets,
                 dry_run=self.params.dry_run,
-                enable_multiple_processes=self.params.enable_multiple_processes,
-                process_pool_size=self.params.process_pool_size,
             )
 
             if success:
