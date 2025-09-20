@@ -120,12 +120,6 @@ def _add_checksum_rows(defaults_table: Table, defaults: Any) -> None:
 def _add_misc_rows(defaults_table: Table, defaults: Any) -> None:
     """Add miscellaneous rows to the table."""
     defaults_table.add_row("Prerelease", "[dim](prerelease)[/dim]", "Yes" if defaults.prerelease else "No")
-    defaults_table.add_row(
-        "Multiple Processes",
-        "[dim](enable-multiple-processes)[/dim]",
-        "Yes" if defaults.enable_multiple_processes else "No",
-    )
-    defaults_table.add_row("Process Pool Size", "[dim](process-pool-size)[/dim]", str(defaults.process_pool_size))
 
 
 def _handle_config_load_error(e: ConfigLoadError) -> bool:
@@ -376,12 +370,6 @@ def _apply_auto_subdir_setting(config: Config, bool_value: bool) -> None:
     console.print(f"[green]Set automatic subdirectory creation to: {bool_value}")
 
 
-def _apply_enable_multiple_processes_setting(config: Config, bool_value: bool) -> None:
-    """Apply enable-multiple-processes setting."""
-    config.global_config.defaults.enable_multiple_processes = bool_value
-    console.print(f"[green]Set multiple processes enabled to: {bool_value}")
-
-
 def _get_boolean_setting_handler(setting: str) -> Callable[[Config, bool], None] | None:
     """Get the appropriate handler function for a boolean setting."""
     handlers = {
@@ -391,7 +379,6 @@ def _get_boolean_setting_handler(setting: str) -> Callable[[Config, bool], None]
         "checksum-required": _apply_checksum_required_setting,
         "prerelease": _apply_prerelease_setting,
         "auto-subdir": _apply_auto_subdir_setting,
-        "enable-multiple-processes": _apply_enable_multiple_processes_setting,
     }
     return handlers.get(setting)
 
@@ -430,8 +417,6 @@ def _validate_and_apply_numeric_value(config: Config, setting: str, numeric_valu
         return _apply_concurrent_downloads_setting(config, numeric_value)
     elif setting == "timeout-seconds":
         return _apply_timeout_setting(config, numeric_value)
-    elif setting == "process-pool-size":
-        return _apply_process_pool_size_setting(config, numeric_value)
     return False
 
 
@@ -476,30 +461,16 @@ def _apply_timeout_setting(config: Config, value: int) -> bool:
         console.print(f"[green]Set timeout to: {value} seconds")
         return True
     else:
-        console.print("[red]Timeout must be between 5 and 300 seconds")
-        return False
-
-
-def _apply_process_pool_size_setting(config: Config, value: int) -> bool:
-    """Apply process pool size setting with validation.
-
-    Returns:
-        True if successful, False if validation failed
-    """
-    if 1 <= value <= 16:
-        config.global_config.defaults.process_pool_size = value
-        console.print(f"[green]Set process pool size to: {value}")
-        return True
-    else:
-        console.print("[red]Process pool size must be between 1 and 16")
+        console.print(f"[red]Timeout must be between 5 and 300 seconds, got: {value}")
         return False
 
 
 def _apply_checksum_algorithm_setting(config: Config, value: str) -> bool:
     """Apply checksum algorithm setting change.
 
-    Returns:
-        True if successful, False if invalid value
+    {{ ... }}
+        Returns:
+            True if successful, False if invalid value
     """
     algorithm_lower = value.lower()
     if algorithm_lower == "sha256":
@@ -726,8 +697,6 @@ def _build_defaults_dict(defaults: Any) -> dict[str, Any]:
         "checksum_pattern": defaults.checksum_pattern,
         "checksum_required": defaults.checksum_required,
         "prerelease": defaults.prerelease,
-        "enable_multiple_processes": defaults.enable_multiple_processes,
-        "process_pool_size": defaults.process_pool_size,
     }
 
 

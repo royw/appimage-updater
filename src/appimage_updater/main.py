@@ -1409,9 +1409,7 @@ async def _check_updates(
         if info:
             await _execute_info_update_workflow(enabled_apps)
         else:
-            await _execute_update_workflow(
-                config, enabled_apps, dry_run, yes, no_interactive
-            )
+            await _execute_update_workflow(config, enabled_apps, dry_run, yes, no_interactive)
         return True
     except Exception as e:
         _handle_check_errors(e)
@@ -1586,9 +1584,7 @@ async def _execute_update_workflow(
     no_interactive: bool,
 ) -> None:
     """Execute the main update workflow."""
-    check_results = await _perform_update_checks(
-        config, enabled_apps, no_interactive
-    )
+    check_results = await _perform_update_checks(config, enabled_apps, no_interactive)
     candidates = _get_update_candidates(check_results, dry_run)
 
     if not candidates:
@@ -1762,8 +1758,8 @@ async def _perform_update_checks(
     logger.debug(f"Starting update checks for {len(enabled_apps)} applications")
 
     # Create version checker for async processing
-    from .core.version_checker import VersionChecker
     from .core.parallel import ConcurrentProcessor
+    from .core.version_checker import VersionChecker
 
     version_checker = VersionChecker(interactive=not no_interactive)
 

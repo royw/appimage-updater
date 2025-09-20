@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from typing import Any, Protocol
 
 from loguru import logger
@@ -11,7 +12,7 @@ from loguru import logger
 class AsyncWorkerFunction(Protocol):
     """Protocol for async worker functions that can be used in concurrent processing."""
 
-    async def __call__(self, item: Any) -> Any:
+    def __call__(self, item: Any) -> Awaitable[Any]:
         """Process a single item asynchronously and return results."""
         ...
 
@@ -27,7 +28,9 @@ class ConcurrentProcessor:
         """Initialize the concurrent processor."""
         pass
 
-    async def process_items_async(self, items: list[Any], async_worker_func: AsyncWorkerFunction) -> list[Any]:
+    async def process_items_async(
+        self, items: list[Any], async_worker_func: Callable[[Any], Awaitable[Any]]
+    ) -> list[Any]:
         """Process items using concurrent async tasks for I/O-bound operations.
 
         Args:
