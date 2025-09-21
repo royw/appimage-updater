@@ -26,6 +26,11 @@ appimage-updater check
 # List configured applications
 appimage-updater list
 
+# Use different output formats (rich, plain, json, html)
+appimage-updater list --format json
+appimage-updater check --format plain
+appimage-updater show MyApp --format html
+
 # Help is available:
 appimage-updater --help
 appimage-updater list --help

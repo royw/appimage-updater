@@ -48,6 +48,64 @@ appimage-updater remove
 
 This eliminates the need to remember `--help` flags and provides immediate guidance on proper command usage.
 
+## Output Formats
+
+AppImage Updater supports multiple output formats for all commands, making it suitable for both interactive use and automation:
+
+### Available Formats
+
+- **`rich`** (default) - Beautiful, colorized output with tables and formatting
+- **`plain`** - Simple text output without colors or special formatting
+- **`json`** - Structured JSON output for programmatic processing
+- **`html`** - HTML formatted output for web integration
+
+### Using Format Options
+
+All commands that produce output support the `--format` option:
+
+```bash
+# Interactive use with rich formatting (default)
+appimage-updater list
+appimage-updater check --format rich
+
+# Plain text for simple terminals or scripts
+appimage-updater list --format plain
+appimage-updater show MyApp --format plain
+
+# JSON for automation and scripting
+appimage-updater list --format json
+appimage-updater config get --format json
+
+# HTML for web integration
+appimage-updater show MyApp --format html
+appimage-updater check --format html
+```
+
+### Short Form Option
+
+You can use the short form `-f` instead of `--format`:
+
+```bash
+appimage-updater list -f json
+appimage-updater check -f plain
+appimage-updater show MyApp -f html
+```
+
+### Automation Examples
+
+The JSON format is particularly useful for automation and integration:
+
+```bash
+# Get application list as JSON for processing
+apps=$(appimage-updater list --format json)
+
+# Check for updates and parse results
+updates=$(appimage-updater check --format json)
+
+# Get configuration in structured format
+config=$(appimage-updater config get --format json)
+```
+
 ## Commands
 
 ### CLI Setting Name Consistency

@@ -2,6 +2,45 @@
 
 AppImage Updater has comprehensive test coverage to ensure reliability and correctness.
 
+## Test Infrastructure
+
+AppImage Updater features a robust test infrastructure with advanced isolation and reliability features:
+
+### Test Isolation
+
+Tests run in complete isolation with temporary configuration to prevent interference with user data:
+
+- **Environment Variable Override**: `APPIMAGE_UPDATER_TEST_CONFIG_DIR` automatically set for all tests
+- **Temporary Configuration**: Each test session gets a clean, empty configuration directory
+- **User Data Protection**: No access to real user configuration during testing
+- **Regression Test Exclusion**: Regression tests can still access real configuration when needed
+
+### Timeout Protection
+
+All tests are protected against hanging with `pytest-timeout`:
+
+- **Automatic Timeout**: Tests fail after 30 seconds instead of hanging indefinitely
+- **Fast Execution**: Most tests complete in 1-7 seconds
+- **CI/CD Reliability**: Prevents build pipelines from hanging on network issues
+
+### Network Blocking
+
+Sophisticated network blocking prevents unintended external calls during testing:
+
+- **Local Operations Allowed**: Unix sockets and localhost connections work normally
+- **External Requests Blocked**: HTTP requests to external hosts are prevented
+- **Regression Test Override**: Network calls allowed for integration tests when needed
+- **Clear Error Messages**: Helpful messages when network calls are blocked
+
+### Format Validation
+
+Comprehensive testing of universal format support across all commands:
+
+- **Dynamic Command Discovery**: Tests automatically find and validate all CLI commands
+- **Format Option Validation**: Ensures all commands support `--format` with proper help text
+- **Multi-Format Testing**: Validates rich, plain, JSON, and HTML output formats
+- **Future-Proof**: New commands automatically tested for format support
+
 ## Test Organization
 
 The test suite is organized into focused test files:
@@ -71,7 +110,36 @@ uv run pytest --no-cov
 
 # Show coverage report
 uv run pytest --cov-report=html
+
+# Run with timeout protection (prevents hanging tests)
+uv run pytest --timeout=30
+
+# Run functional tests with format validation
+uv run pytest tests/functional/test_format_options.py
+
+# Run HTTP tracker tests with dry-run validation
+uv run pytest tests/functional/test_http_tracker_dry_run.py
 ```
+
+### Environment Variables for Testing
+
+Control test behavior with environment variables:
+
+```bash
+# Allow network calls during testing (for debugging)
+PYTEST_ALLOW_NETWORK=1 uv run pytest
+
+# Disable test isolation (use real user config - DANGEROUS)
+APPIMAGE_UPDATER_DISABLE_TEST_ISOLATION=1 uv run pytest
+
+# Manually set test config directory
+APPIMAGE_UPDATER_TEST_CONFIG_DIR=/tmp/my_test_config uv run pytest
+
+# Run regression tests (automatically allows network and real config)
+uv run pytest tests/e2e/regression/
+```
+
+**⚠️ Warning**: Disabling test isolation can modify your real configuration. Only use for debugging specific issues.
 
 ### Multi-Core Testing
 

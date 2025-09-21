@@ -9,7 +9,9 @@ This project follows modern Python practices:
 - Code complexity kept under 10 (cyclomatic complexity)
 - Full type checking with mypy
 - Code formatting with ruff
-- Testing with pytest
+- Testing with pytest and advanced test isolation
+- **Universal format support** across all CLI commands (rich|plain|json|html)
+- **Professional test infrastructure** with timeout protection and network blocking
 
 ## Project Structure
 

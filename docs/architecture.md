@@ -14,6 +14,7 @@ graph TB
     B --> G[Distribution Selector]
     B --> H[System Info]
     B --> I[HTTP Instrumentation]
+    B --> Z[Output System]
     
     C --> J[JSON Config Files]
     D --> K[GitHub Repository]
@@ -28,6 +29,10 @@ graph TB
     F --> T[Checksum Verification]
     F --> U[File Rotation]
     G --> V[Platform Detection]
+    Z --> AA[Rich Formatter]
+    Z --> BB[Plain Formatter]
+    Z --> CC[JSON Formatter]
+    Z --> DD[HTML Formatter]
     H --> W[Architecture Detection]
     I --> X[HTTP Tracker]
     I --> Y[Logger Interface]
