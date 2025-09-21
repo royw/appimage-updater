@@ -1727,7 +1727,7 @@ async def _execute_update_workflow(
     no_interactive: bool,
 ) -> None:
     """Execute the main update workflow."""
-    check_results = await _perform_update_checks(config, enabled_apps, no_interactive)
+    check_results = await _perform_update_checks(config, enabled_apps, no_interactive, dry_run)
     candidates = _get_update_candidates(check_results, dry_run)
 
     if not candidates:
@@ -1895,10 +1895,34 @@ async def _perform_update_checks(
     config: Any,
     enabled_apps: list[Any],
     no_interactive: bool = False,
+    dry_run: bool = False,
 ) -> list[Any]:
     """Initialize clients and perform update checks."""
     console.print(f"[blue]Checking {len(enabled_apps)} applications for updates...")
     logger.debug(f"Starting update checks for {len(enabled_apps)} applications")
+
+    # Handle dry-run mode - skip actual HTTP calls
+    if dry_run:
+        logger.debug("Dry run mode: Skipping HTTP requests, returning mock results")
+        console.print("[yellow]Dry run mode - skipping HTTP requests")
+        
+        # Return mock results for dry-run
+        from .core.models import CheckResult
+        mock_results = []
+        for app_config in enabled_apps:
+            # Create a mock result indicating no update available (safe for dry-run)
+            mock_result = CheckResult(
+                app_config=app_config,
+                success=True,
+                current_version="mock-current",
+                latest_version="mock-current",  # Same version = no update
+                update_available=False,
+                error_message=None,
+                download_url=None,
+                asset_name=None,
+            )
+            mock_results.append(mock_result)
+        return mock_results
 
     # Create version checker for async processing
     from .core.parallel import ConcurrentProcessor
