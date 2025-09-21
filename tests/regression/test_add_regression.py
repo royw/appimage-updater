@@ -367,11 +367,8 @@ class TestAddRegression:
         orig_algo = original.get("algorithm", "sha256")
         gen_algo = generated.get("algorithm", "sha256")
 
-        if orig_algo != gen_algo:
-            return False
-
         # Other fields are less critical - allow reasonable variations
-        return True
+        return orig_algo == gen_algo
 
     def test_add_regression_single_app_detailed(self):
         """Detailed test of a single application for debugging purposes."""
@@ -437,10 +434,7 @@ class TestAddRegression:
 
             # Step 5: Test remove command
             print("    Testing remove command")
-            if not self._test_remove_command(runner, app_name, temp_config_dir):
-                return False
-
-            return True
+            return self._test_remove_command(runner, app_name, temp_config_dir)
 
     def _test_add_command(self, runner: CliRunner, original_config: dict[str, Any], app_name: str,
                           temp_config_dir: Path) -> bool:

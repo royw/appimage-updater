@@ -258,8 +258,10 @@ class TestPromptUserSelection:
 
         mock_console = Mock()
 
-        with patch('appimage_updater.dist_selector.ui_utilities.Prompt.ask', return_value="1"):
-            with patch('appimage_updater.dist_selector.ui_utilities.Table') as mock_table_class:
+        with (
+            patch('appimage_updater.dist_selector.ui_utilities.Prompt.ask', return_value="1"),
+            patch('appimage_updater.dist_selector.ui_utilities.Table') as mock_table_class
+        ):
                 mock_table = Mock()
                 mock_table_class.return_value = mock_table
 

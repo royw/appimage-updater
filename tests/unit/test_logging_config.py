@@ -35,18 +35,18 @@ def test_configure_logging_log_directory_creation() -> None:
     """Test that log directory is created."""
     from appimage_updater.utils.logging_config import configure_logging
 
-    with patch('appimage_updater.utils.logging_config.logger'):
-        with patch('appimage_updater.utils.logging_config.Path.home') as mock_home:
-            mock_log_dir = Mock()
-            mock_home.return_value = Path("/mock/home")
+    with (
+        patch('appimage_updater.utils.logging_config.logger'),
+        patch('appimage_updater.utils.logging_config.Path.home') as mock_home,
+        patch('pathlib.Path.mkdir')
+    ):
+        mock_home.return_value = Path("/mock/home")
 
-            # Mock the path operations
-            with patch('pathlib.Path.mkdir') as mock_mkdir:
-                configure_logging()
+        configure_logging()
 
-                # Directory creation should be attempted
-                # (We can't easily test the exact call due to path operations)
-                assert mock_home.called
+        # Directory creation should be attempted
+        # (We can't easily test the exact call due to path operations)
+        assert mock_home.called
 
 
 def test_configure_logging_file_handler_settings() -> None:

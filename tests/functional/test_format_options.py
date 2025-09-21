@@ -63,11 +63,11 @@ class TestFormatOptions:
                         decorator.attr == 'command'):
                     has_command_decorator = True
                     command_name = node.name.lstrip('_')
-            elif isinstance(decorator, ast.Call):
-                if (isinstance(decorator.func, ast.Attribute) and
-                        isinstance(decorator.func.value, ast.Name) and
-                        decorator.func.value.id == 'app' and
-                        decorator.func.attr == 'command'):
+            elif (isinstance(decorator, ast.Call) and
+                  isinstance(decorator.func, ast.Attribute) and
+                  isinstance(decorator.func.value, ast.Name) and
+                  decorator.func.value.id == 'app' and
+                  decorator.func.attr == 'command'):
                     has_command_decorator = True
                     # Check if command name is specified in decorator kwargs
                     command_name = node.name.lstrip('_')  # default to function name
