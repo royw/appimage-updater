@@ -215,8 +215,6 @@ def test_symlink_path_with_invalid_characters(runner, test_config_file):
     assert "Traceback" not in clean_output
 
 
-
-
 def test_symlink_path_with_double_extension(runner, test_config_file):
     """Test validation of symlink paths with double extensions."""
     result = runner.invoke(

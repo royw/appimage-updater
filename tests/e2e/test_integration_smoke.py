@@ -29,6 +29,7 @@ def test_integration_smoke_test(runner):
     assert result.exit_code == 0
     assert "Add a new application to the configuration" in result.stdout
 
+
 def test_version_option(runner):
     """Test the --version option displays version and exits."""
     import re

@@ -18,8 +18,8 @@ class TestPatternMatching:
     @patch('appimage_updater.repositories.factory.get_repository_client')
     @patch('appimage_updater.core.version_checker.VersionChecker')
     def test_pattern_matching_with_suffixes(
-        self, mock_version_checker_class, mock_repo_client_factory,
-        runner, temp_config_dir, temp_download_dir
+            self, mock_version_checker_class, mock_repo_client_factory,
+            runner, temp_config_dir, temp_download_dir
     ):
         """Test that patterns correctly match files with various suffixes."""
         # Create config with pattern that should match files with suffixes
@@ -54,7 +54,7 @@ class TestPatternMatching:
         mock_version_checker = Mock()
 
         # This should simulate finding the current version from existing files
-        def mock_check_for_updates(config):
+        def mock_check_for_updates(_config):
             # The version checker should have found one of the TestApp files
             return CheckResult(
                 app_name="TestApp",
@@ -84,6 +84,7 @@ class TestPatternMatching:
         # Should detect that we have a current version (not show "None")
         # This validates our pattern matching fix
         assert "Current" in result.stdout
+
 
 def test_version_extraction_patterns():
     """Test version extraction from various filename formats."""

@@ -46,7 +46,6 @@ class TestDirectWorkflowIntegration:
             assert app_config["source_type"] == "direct"
             assert app_config["url"] == direct_url
 
-
     def test_add_no_direct_flag_defaults_to_github(self):
         """Test that add without --direct flag defaults to GitHub detection."""
         runner = CliRunner(env={"NO_COLOR": "1", "TERM": "dumb"})

@@ -74,6 +74,7 @@ class TestAddCommand:
         # Mock async pattern generation to return OrcaSlicer-based pattern
         async def mock_async_pattern_gen(*args, **kwargs):
             return "(?i)OrcaSlicer_Linux_AppImage.*\\.AppImage(\\.(|current|old))?$"
+
         mock_pattern_gen.side_effect = mock_async_pattern_gen
 
         result = runner.invoke(app, [
@@ -149,7 +150,7 @@ class TestAddCommand:
             config_data = json.load(f)
 
         assert len(config_data["applications"]) == 2
-        app_names = [app["name"] for app in config_data["applications"]]
+        app_names = [_app["name"] for _app in config_data["applications"]]
         assert "ExistingApp" in app_names
         assert "NewApp" in app_names
 
@@ -311,7 +312,8 @@ class TestAddCommand:
     @patch('appimage_updater.pattern_generator.should_enable_prerelease')
     @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
-    def test_add_command_with_direct_flag(self, mock_repo_client, mock_pattern_gen, mock_prerelease, runner, temp_config_dir):
+    def test_add_command_with_direct_flag(self, mock_repo_client, mock_pattern_gen, mock_prerelease, runner,
+                                          temp_config_dir):
         """Test add command with --direct flag sets source_type to 'direct'."""
         direct_url = "https://nightly.example.com/app.AppImage"
 
@@ -322,11 +324,13 @@ class TestAddCommand:
         # Mock pattern generation for direct downloads
         async def mock_async_pattern_gen(*args, **kwargs):
             return "(?i)DirectApp.*\\.AppImage(\\.(|current|old))?$"
+
         mock_pattern_gen.side_effect = mock_async_pattern_gen
 
         # Mock prerelease check to avoid network calls
         async def mock_async_prerelease_check(*args, **kwargs):
             return False  # Don't enable prerelease for direct downloads
+
         mock_prerelease.side_effect = mock_async_prerelease_check
 
         result = runner.invoke(app, [
@@ -381,7 +385,8 @@ class TestAddCommand:
 
     @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
-    def test_add_command_direct_with_prerelease_and_rotation(self, mock_repo_client, mock_pattern_gen, runner, temp_config_dir):
+    def test_add_command_direct_with_prerelease_and_rotation(self, mock_repo_client, mock_pattern_gen, runner,
+                                                             temp_config_dir):
         """Test add command with --direct combined with other options."""
         direct_url = "https://ci.example.com/artifacts/latest.AppImage"
         symlink_path = str(temp_config_dir / "bin" / "ciapp.AppImage")
@@ -393,6 +398,7 @@ class TestAddCommand:
         # Mock pattern generation for direct downloads
         async def mock_async_pattern_gen(*args, **kwargs):
             return "(?i)CIApp.*\\.AppImage(\\.(|current|old))?$"
+
         mock_pattern_gen.side_effect = mock_async_pattern_gen
 
         result = runner.invoke(app, [
@@ -449,6 +455,7 @@ class TestAddCommand:
         assert app_config["name"] == "DefaultApp"
         assert app_config["source_type"] == "github"
         assert app_config["url"] == "https://github.com/user/defaultapp"
+
 
 class TestRemoveCommand:
     """Test the remove command functionality."""

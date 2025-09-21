@@ -386,7 +386,6 @@ class TestGetSymlinksInfo:
         result = get_symlinks_info(app)
         assert result == "[yellow]No symlinks found pointing to AppImage files[/yellow]"
 
-
     @patch('appimage_updater.ui.display.find_appimage_symlinks')
     def test_symlink_does_not_exist(self, mock_find_symlinks: Mock) -> None:
         """Test when download directory doesn't exist."""

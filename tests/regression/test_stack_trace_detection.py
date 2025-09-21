@@ -59,8 +59,8 @@ def assert_no_stack_trace_in_output(stdout: str, stderr: str, command: str) -> N
         "raise typer.Exit",
         "└ <function",  # Rich traceback function indicators
         "│    │      └",  # Rich traceback nested indicators
-        "at 0x7",      # Memory addresses
-        "> File \"/",    # Rich traceback file indicators
+        "at 0x7",  # Memory addresses
+        "> File \"/",  # Rich traceback file indicators
         "appimage_updater/main.py\", line",  # Direct file references
         "appimage_updater/commands/",  # Command file references
         "appimage_updater/config_command.py",  # Config command references

@@ -115,7 +115,8 @@ class TestPrereleaseAutoDetection:
                 version="v1.0.0",
                 tag_name="v1.0.0",
                 published_at=datetime.now(),
-                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000, created_at=datetime.now())],
+                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000,
+                              created_at=datetime.now())],
                 is_prerelease=False,
                 is_draft=False,
             ),
@@ -165,7 +166,8 @@ class TestPrereleaseAutoDetection:
                 version="Draft v1.0.0",
                 tag_name="v1.0.0",
                 published_at=datetime.now(),
-                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000, created_at=datetime.now())],
+                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000,
+                              created_at=datetime.now())],
                 is_prerelease=True,
                 is_draft=True,
             )
@@ -199,16 +201,16 @@ class TestPrereleaseAutoDetection:
                 version="Continuous Build",
                 tag_name="continuous",
                 published_at=datetime.now(),
-                assets=[Asset(name="appimaged.AppImage", url="http://test.com/appimaged.AppImage", size=1000, created_at=datetime.now())],
+                assets=[Asset(name="appimaged.AppImage", url="http://test.com/appimaged.AppImage", size=1000,
+                              created_at=datetime.now())],
                 is_prerelease=True,
                 is_draft=False,
             )
         ]
 
         with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
-             patch("appimage_updater.config.operations.get_repository_client") as mock_config_client, \
-             patch("appimage_updater.pattern_generator.should_enable_prerelease") as mock_should_enable:
-
+                patch("appimage_updater.config.operations.get_repository_client") as mock_config_client, \
+                patch("appimage_updater.pattern_generator.should_enable_prerelease") as mock_should_enable:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             # Synchronous methods need regular return values, not async
@@ -248,16 +250,16 @@ class TestPrereleaseAutoDetection:
                 version="v1.0.0",
                 tag_name="v1.0.0",
                 published_at=datetime.now(),
-                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000, created_at=datetime.now())],
+                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000,
+                              created_at=datetime.now())],
                 is_prerelease=False,
                 is_draft=False,
             )
         ]
 
         with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
-             patch("appimage_updater.config.operations.get_repository_client") as mock_config_client, \
-             patch("appimage_updater.pattern_generator.should_enable_prerelease") as mock_should_enable:
-
+                patch("appimage_updater.config.operations.get_repository_client") as mock_config_client, \
+                patch("appimage_updater.pattern_generator.should_enable_prerelease") as mock_should_enable:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             # Synchronous methods need regular return values, not async
@@ -297,15 +299,15 @@ class TestPrereleaseAutoDetection:
                 version="v1.0.0",
                 tag_name="v1.0.0",
                 published_at=datetime.now(),
-                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000, created_at=datetime.now())],
+                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000,
+                              created_at=datetime.now())],
                 is_prerelease=False,
                 is_draft=False,
             )
         ]
 
         with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
-             patch("appimage_updater.config.operations.get_repository_client") as mock_config_client:
-
+                patch("appimage_updater.config.operations.get_repository_client") as mock_config_client:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             # Synchronous methods need regular return values, not async
@@ -344,15 +346,15 @@ class TestPrereleaseAutoDetection:
                 version="Continuous Build",
                 tag_name="continuous",
                 published_at=datetime.now(),
-                assets=[Asset(name="appimaged.AppImage", url="http://test.com/appimaged.AppImage", size=1000, created_at=datetime.now())],
+                assets=[Asset(name="appimaged.AppImage", url="http://test.com/appimaged.AppImage", size=1000,
+                              created_at=datetime.now())],
                 is_prerelease=True,
                 is_draft=False,
             )
         ]
 
         with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
-             patch("appimage_updater.config.operations.get_repository_client") as mock_config_client:
-
+                patch("appimage_updater.config.operations.get_repository_client") as mock_config_client:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             # Synchronous methods need regular return values, not async

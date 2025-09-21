@@ -30,15 +30,15 @@ def _is_allowed_socket_family(family: int) -> bool:
 class NetworkBlockingSocket(socket.socket):
     """Socket wrapper that blocks external network calls but allows local operations."""
 
-    def __init__(self, family: int = socket.AF_INET, type: int = socket.SOCK_STREAM,
+    def __init__(self, family: int = socket.AF_INET, _type: int = socket.SOCK_STREAM,
                  proto: int = 0, fileno: Any = None):
         # Allow local socket families and file descriptors
         if _is_allowed_socket_family(family) or fileno is not None:
-            super().__init__(family, type, proto, fileno)
+            super().__init__(family, _type, proto, fileno)
             return
 
         # For network families, create the socket but mark it as blocked
-        super().__init__(family, type, proto, fileno)
+        super().__init__(family, _type, proto, fileno)
         self._network_blocked = True
 
     def connect(self, address: Any) -> None:

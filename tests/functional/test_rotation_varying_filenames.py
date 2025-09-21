@@ -74,7 +74,7 @@ class TestRotationVaryingFilenames:
 
     @pytest.mark.anyio
     async def test_rotation_with_varying_filenames_bambu_scenario(
-        self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir
+            self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir
     ):
         """Test rotation handles different filenames correctly (BambuStudio scenario)."""
         # Create scenario: existing .current file with different filename
@@ -135,7 +135,7 @@ class TestRotationVaryingFilenames:
 
     @pytest.mark.anyio
     async def test_rotation_with_multiple_varying_current_files(
-        self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir
+            self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir
     ):
         """Test rotation handles multiple .current files with different base names."""
         # Create multiple existing .current files (simulate scenario with multiple versions)

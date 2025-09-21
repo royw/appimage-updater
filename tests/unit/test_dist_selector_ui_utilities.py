@@ -250,8 +250,8 @@ class TestPromptUserSelection:
             AssetInfo(
                 asset=asset2,
                 distribution=None,  # Should show as "Generic"
-                version=None,       # Should show as "Any"
-                arch=None,         # Should show as "Any"
+                version=None,  # Should show as "Any"
+                arch=None,  # Should show as "Any"
                 score=75.0
             )
         ]
@@ -342,5 +342,5 @@ class TestPromptUserSelection:
 
         # Should have printed error messages for each invalid attempt
         error_calls = [call for call in mock_console.print.call_args_list
-                      if "[red]" in str(call)]
+                       if "[red]" in str(call)]
         assert len(error_calls) >= 3  # At least 3 error messages

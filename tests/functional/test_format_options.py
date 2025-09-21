@@ -5,7 +5,9 @@ without running the built application, making them CI-compatible.
 """
 
 import ast
+from _ast import arg
 from pathlib import Path
+from typing import Any
 
 
 class TestFormatOptions:
@@ -49,7 +51,7 @@ class TestFormatOptions:
 
         return commands
 
-    def _extract_command_info(self, node: ast.FunctionDef) -> tuple[str, list[str]] | None:
+    def _extract_command_info(self, node: ast.FunctionDef) -> tuple[str | None | Any, list[arg]] | None:
         """Extract command name and parameters from a function node with @app.command decorator."""
         has_command_decorator = False
         command_name = None
@@ -57,15 +59,15 @@ class TestFormatOptions:
         for decorator in node.decorator_list:
             if isinstance(decorator, ast.Attribute):
                 if (isinstance(decorator.value, ast.Name) and
-                    decorator.value.id == 'app' and
-                    decorator.attr == 'command'):
+                        decorator.value.id == 'app' and
+                        decorator.attr == 'command'):
                     has_command_decorator = True
                     command_name = node.name.lstrip('_')
             elif isinstance(decorator, ast.Call):
                 if (isinstance(decorator.func, ast.Attribute) and
-                    isinstance(decorator.func.value, ast.Name) and
-                    decorator.func.value.id == 'app' and
-                    decorator.func.attr == 'command'):
+                        isinstance(decorator.func.value, ast.Name) and
+                        decorator.func.value.id == 'app' and
+                        decorator.func.attr == 'command'):
                     has_command_decorator = True
                     # Check if command name is specified in decorator kwargs
                     command_name = node.name.lstrip('_')  # default to function name
@@ -98,7 +100,8 @@ class TestFormatOptions:
 
         # Verify we discovered the expected commands
         discovered_set = set(commands_with_params.keys())
-        assert expected_commands.issubset(discovered_set), f"Missing expected commands: {expected_commands - discovered_set}"
+        assert expected_commands.issubset(
+            discovered_set), f"Missing expected commands: {expected_commands - discovered_set}"
 
         # Test each expected command has format parameter in function signature
         for command in expected_commands:
@@ -139,7 +142,8 @@ class TestFormatOptions:
         expected_commands = {"check", "list", "add", "edit", "show", "remove", "repository", "config"}
 
         # Source analysis should find at least the expected commands
-        assert expected_commands.issubset(source_commands), f"Source analysis missing commands: {expected_commands - source_commands}"
+        assert expected_commands.issubset(
+            source_commands), f"Source analysis missing commands: {expected_commands - source_commands}"
 
         # Print discovered commands for debugging
         print(f"Source analysis found commands: {sorted(source_commands)}")

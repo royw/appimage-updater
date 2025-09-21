@@ -151,9 +151,9 @@ class TestDistributionSelector:
 
         # Test compatibility
         assert selector._is_compatible_distribution("debian") == True  # Debian family
-        assert selector._is_compatible_distribution("mint") == True    # Debian family
-        assert selector._is_compatible_distribution("fedora") == False # Different family
-        assert selector._is_compatible_distribution("arch") == False   # Different family
+        assert selector._is_compatible_distribution("mint") == True  # Debian family
+        assert selector._is_compatible_distribution("fedora") == False  # Different family
+        assert selector._is_compatible_distribution("arch") == False  # Different family
 
     def test_is_uncommon_distribution(self):
         """Test uncommon distribution detection."""

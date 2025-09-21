@@ -48,9 +48,9 @@ def test_check_command_finds_candidates():
 
     # This is what we expect to see instead:
     expected_indicators = [
-        "available",           # Should show update available (part of "Update available" or "⬆️ Update available")
-        "appimaged",           # Should show the app name
-        "continuous",          # Should show version info, not just dashes
+        "available",  # Should show update available (part of "Update available" or "⬆️ Update available")
+        "appimaged",  # Should show the app name
+        "continuous",  # Should show version info, not just dashes
         "1 update available",  # Should show summary
     ]
 
@@ -83,10 +83,10 @@ def test_check_command_with_debug_shows_asset_selection():
 
     # Verify that backend logic is working correctly
     backend_indicators = [
-        "Auto-selected asset:",           # Distribution selector working
-        "Completed 1 update checks",     # Version checker working
-        "1 updates available",            # Should find updates
-        "available"                       # Should show update available (part of the text)
+        "Auto-selected asset:",  # Distribution selector working
+        "Completed 1 update checks",  # Version checker working
+        "1 updates available",  # Should find updates
+        "available"  # Should show update available (part of the text)
     ]
 
     missing_indicators = []

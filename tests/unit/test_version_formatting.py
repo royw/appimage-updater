@@ -65,7 +65,7 @@ class TestFormatVersionDisplay:
         # Invalid date-like formats (should pass through unchanged)
         assert format_version_display("2024-1-1") == "2024-1-1"  # Single digit month/day
         assert format_version_display("24-01-01") == "24-01-01"  # Two digit year
-        assert format_version_display("202401") == "202401"      # YYYYMM format
+        assert format_version_display("202401") == "202401"  # YYYYMM format
         assert format_version_display("2024010115") == "2024010115"  # Too many digits
 
     def testformat_version_display_numeric_only(self) -> None:

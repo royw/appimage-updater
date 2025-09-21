@@ -44,7 +44,7 @@ class TestAddRegression:
 
         return config_files
 
-    def load_applications_from_config(self, config_file: Path) -> list[dict[str, Any]]:
+    def load_applications_from_config(self, config_file: Path) -> list[Any] | None | Any:
         """Load application configurations from a JSON file."""
         try:
             with config_file.open() as f:
@@ -165,7 +165,8 @@ class TestAddRegression:
         assert success_rate >= 0.6, f"Comprehensive command test failed: only {success_rate:.1%} success rate"
         assert total_applications > 0, "No applications found to test"
 
-    def _test_single_application_recreation(self, runner: CliRunner, original_config: dict[str, Any], app_name: str) -> bool:
+    def _test_single_application_recreation(self, runner: CliRunner, original_config: dict[str, Any],
+                                            app_name: str) -> bool:
         """Test recreating a single application configuration."""
         # Extract required fields from original config
         source_url = original_config.get("url")
@@ -300,7 +301,6 @@ class TestAddRegression:
                     print(f"    FAILED: Optional field '{field}' mismatch: {original_value} != {generated_value}")
                     return False
 
-
         # Checksum field: Must match as dict (allowing for minor differences in optional fields)
         original_checksum = original.get("checksum", {})
         generated_checksum = generated.get("checksum", {})
@@ -326,7 +326,6 @@ class TestAddRegression:
             print(f"    WARNING: Pattern different: '{original_pattern}' vs '{generated_pattern}'")
             # Don't fail the test for pattern differences - intelligent generation is an improvement
             print("    SUCCESS: Allowing pattern improvement due to intelligent generation")
-
 
         # Checksum field: Allow reasonable defaults
         if not self._checksum_configs_equivalent(original.get("checksum", {}), generated.get("checksum", {})):
@@ -443,7 +442,8 @@ class TestAddRegression:
 
             return True
 
-    def _test_add_command(self, runner: CliRunner, original_config: dict[str, Any], app_name: str, temp_config_dir: Path) -> bool:
+    def _test_add_command(self, runner: CliRunner, original_config: dict[str, Any], app_name: str,
+                          temp_config_dir: Path) -> bool:
         """Test the add command."""
         source_url = original_config.get("url")
         download_dir = original_config.get("download_dir")

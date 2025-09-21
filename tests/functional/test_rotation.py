@@ -93,7 +93,8 @@ class TestRotationDisabled:
     """Test behavior when rotation is disabled."""
 
     @pytest.mark.anyio
-    async def test_rotation_disabled_returns_original_path(self, downloader, basic_app_config, sample_asset, temp_download_dir):
+    async def test_rotation_disabled_returns_original_path(self, downloader, basic_app_config, sample_asset,
+                                                           temp_download_dir):
         """Test that when rotation is disabled, the original download path is returned."""
         candidate = UpdateCandidate(
             app_name="TestApp",
@@ -113,7 +114,8 @@ class TestRotationDisabled:
         assert result_path == candidate.download_path
 
     @pytest.mark.anyio
-    async def test_rotation_disabled_no_symlink_created(self, downloader, basic_app_config, sample_asset, temp_download_dir):
+    async def test_rotation_disabled_no_symlink_created(self, downloader, basic_app_config, sample_asset,
+                                                        temp_download_dir):
         """Test that no symlink operations occur when rotation is disabled."""
         candidate = UpdateCandidate(
             app_name="TestApp",
@@ -144,7 +146,8 @@ class TestRotationEnabled:
     """Test behavior when rotation is enabled."""
 
     @pytest.mark.anyio
-    async def test_rotation_enabled_creates_current_file(self, downloader, rotation_app_config, sample_asset, temp_download_dir):
+    async def test_rotation_enabled_creates_current_file(self, downloader, rotation_app_config, sample_asset,
+                                                         temp_download_dir):
         """Test that rotation creates a .current file."""
         candidate = UpdateCandidate(
             app_name="TestApp",
@@ -171,7 +174,8 @@ class TestRotationEnabled:
         assert not candidate.download_path.exists()
 
     @pytest.mark.anyio
-    async def test_rotation_creates_symlink(self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir):
+    async def test_rotation_creates_symlink(self, downloader, rotation_app_config, sample_asset, temp_download_dir,
+                                            temp_symlink_dir):
         """Test that rotation creates and updates symlink."""
         candidate = UpdateCandidate(
             app_name="TestApp",
@@ -195,7 +199,8 @@ class TestRotationEnabled:
         assert symlink_path.resolve() == result_path.resolve()
 
     @pytest.mark.anyio
-    async def test_rotation_moves_existing_current_to_old(self, downloader, rotation_app_config, sample_asset, temp_download_dir):
+    async def test_rotation_moves_existing_current_to_old(self, downloader, rotation_app_config, sample_asset,
+                                                          temp_download_dir):
         """Test that existing .current file is moved to .old during rotation."""
         # Create existing .current file with SAME base name as the new download
         existing_current = temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.current"
@@ -229,7 +234,8 @@ class TestRotationEnabled:
         assert result_path == new_current
 
     @pytest.mark.anyio
-    async def test_rotation_sequence_old_to_old2_to_old3(self, downloader, rotation_app_config, sample_asset, temp_download_dir):
+    async def test_rotation_sequence_old_to_old2_to_old3(self, downloader, rotation_app_config, sample_asset,
+                                                         temp_download_dir):
         """Test full rotation sequence: .current -> .old -> .old2 -> .old3 (with retain_count=3)."""
         # Create existing files in rotation chain (all with SAME base name)
         files_to_create = [
@@ -259,9 +265,9 @@ class TestRotationEnabled:
 
         # Verify rotation sequence
         assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.current").exists()  # New current
-        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old").exists()     # Old current -> .old
-        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old2").exists()    # Old .old -> .old2
-        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old3").exists()    # Old .old2 -> .old3
+        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old").exists()  # Old current -> .old
+        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old2").exists()  # Old .old -> .old2
+        assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old3").exists()  # Old .old2 -> .old3
 
     @pytest.mark.anyio
     async def test_rotation_respects_retain_count(self, downloader, temp_download_dir, temp_symlink_dir, sample_asset):
@@ -318,7 +324,8 @@ class TestRotationEnabled:
         assert not (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old4").exists()
 
     @pytest.mark.anyio
-    async def test_symlink_update_replaces_existing(self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir):
+    async def test_symlink_update_replaces_existing(self, downloader, rotation_app_config, sample_asset,
+                                                    temp_download_dir, temp_symlink_dir):
         """Test that symlink is properly updated when it already exists."""
         # Create an existing symlink pointing to something else
         old_target = temp_download_dir / "old-target.AppImage"

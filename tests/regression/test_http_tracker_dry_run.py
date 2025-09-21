@@ -2,7 +2,9 @@
 
 import ast
 import subprocess
+from _ast import arg
 from pathlib import Path
+from typing import Any
 
 
 class TestHTTPTrackerDryRun:
@@ -56,7 +58,7 @@ class TestHTTPTrackerDryRun:
 
         return commands
 
-    def _extract_command_info(self, node: ast.FunctionDef) -> tuple[str, list[str]] | None:
+    def _extract_command_info(self, node: ast.FunctionDef) -> tuple[str | None | Any, list[arg]] | None:
         """Extract command name and parameters from a function node with @app.command decorator."""
         has_command_decorator = False
         command_name = None
@@ -64,15 +66,15 @@ class TestHTTPTrackerDryRun:
         for decorator in node.decorator_list:
             if isinstance(decorator, ast.Attribute):
                 if (isinstance(decorator.value, ast.Name) and
-                    decorator.value.id == 'app' and
-                    decorator.attr == 'command'):
+                        decorator.value.id == 'app' and
+                        decorator.attr == 'command'):
                     has_command_decorator = True
                     command_name = node.name.lstrip('_')
             elif isinstance(decorator, ast.Call):
                 if (isinstance(decorator.func, ast.Attribute) and
-                    isinstance(decorator.func.value, ast.Name) and
-                    decorator.func.value.id == 'app' and
-                    decorator.func.attr == 'command'):
+                        isinstance(decorator.func.value, ast.Name) and
+                        decorator.func.value.id == 'app' and
+                        decorator.func.attr == 'command'):
                     has_command_decorator = True
                     # Check if command name is specified in decorator kwargs
                     command_name = node.name.lstrip('_')  # default to function name
