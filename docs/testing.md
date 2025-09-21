@@ -139,7 +139,7 @@ APPIMAGE_UPDATER_TEST_CONFIG_DIR=/tmp/my_test_config uv run pytest
 uv run pytest tests/e2e/regression/
 ```
 
-**⚠️ Warning**: Disabling test isolation can modify your real configuration. Only use for debugging specific issues.
+**Warning**: Disabling test isolation can modify your real configuration. Only use for debugging specific issues.
 
 ### Multi-Core Testing
 

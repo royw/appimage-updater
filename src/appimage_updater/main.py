@@ -1913,14 +1913,13 @@ async def _perform_update_checks(
         for app_config in enabled_apps:
             # Create a mock result indicating no update available (safe for dry-run)
             mock_result = CheckResult(
-                app_config=app_config,
+                app_name=app_config.name,
                 success=True,
                 current_version="mock-current",
-                latest_version="mock-current",  # Same version = no update
+                available_version="mock-current",  # Same version = no update
                 update_available=False,
                 error_message=None,
                 download_url=None,
-                asset_name=None,
             )
             mock_results.append(mock_result)
         return mock_results
