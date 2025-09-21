@@ -149,7 +149,7 @@ tasks:
             uv tool install pymarkdownlnt
           fi
         silent: true
-      - uv run pymarkdownlnt --config .pymarkdown.json --disable-rules md013 scan {{.CLI_ARGS | default "*.md docs/*.md"}} || true
+      - uv run pymarkdownlnt --config .pymarkdown.json scan {{.CLI_ARGS | default "*.md docs/*.md"}} || true
 
   complexity:
     desc: Analyze code complexity with radon

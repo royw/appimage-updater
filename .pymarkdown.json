@@ -1,18 +1,36 @@
 {
   "plugins": {
-    "md013": false,
+    "md013": {
+      "enabled": false
+    },
     "md024": {
+      "enabled": true,
       "siblings_only": true
     },
     "md026": {
+      "enabled": true,
       "punctuation": ".,;:!?"
     },
-    "md033": false,
-    "md036": false,
-    "md041": false,
-    "md034": true,
-    "md042": true,
-    "md045": true,
-    "md047": true
+    "md033": {
+      "enabled": false
+    },
+    "md036": {
+      "enabled": false
+    },
+    "md041": {
+      "enabled": false
+    },
+    "md034": {
+      "enabled": true
+    },
+    "md042": {
+      "enabled": true
+    },
+    "md045": {
+      "enabled": true
+    },
+    "md047": {
+      "enabled": true
+    }
   }
 }
