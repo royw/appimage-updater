@@ -1,6 +1,6 @@
-*[Home](index.md) > Configuration Guide*
-
 # Configuration Guide
+
+*[Home](index.md) > Configuration Guide*
 
 AppImage Updater uses JSON configuration files to define which applications to monitor and how to update them.
 
@@ -268,7 +268,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
 
 You can split your applications across multiple JSON files in a directory:
 
-```
+```text
 ~/.config/appimage-updater/apps/
 ├── cad-tools.json          # FreeCAD, etc.
 ├── development.json        # GitHub Desktop, etc.
@@ -296,7 +296,7 @@ When file rotation is enabled:
 
 ### File Naming Convention
 
-```
+```text
 Download Directory/
 ├── MyApp_v2.1.0.AppImage.current    # ← Symlink points here (active version)
 ├── MyApp_v2.0.5.AppImage.old         # Previous version
@@ -507,14 +507,14 @@ Pattern configurations that work with both ZIP and AppImage formats:
 
 **Single AppImage in ZIP:**
 
-```
+```text
 download.zip → MyApp-1.2.3.AppImage
                 (ZIP file deleted, AppImage processed normally)
 ```
 
 **Multiple AppImages in ZIP:**
 
-```
+```text
 download.zip → MyApp-x86_64.AppImage  ← First one extracted and used
                MyApp-arm64.AppImage   ← Ignored (warning logged)
                 (ZIP file deleted, first AppImage processed)
@@ -522,7 +522,7 @@ download.zip → MyApp-x86_64.AppImage  ← First one extracted and used
 
 **AppImage in Subdirectory:**
 
-```
+```text
 download.zip/release/linux/MyApp.AppImage → MyApp.AppImage
                                             (Extracted to download root)
 ```

@@ -4,7 +4,7 @@
 
 Rotation is an advanced feature that maintains stable access to your AppImages while keeping previous versions for easy rollback. Instead of overwriting files, it creates a rotation system with symbolic links.
 
-## What is Rotation?
+## What is Rotation
 
 Rotation ensures your applications are always accessible through a stable path, even when updates are downloaded. It works by:
 

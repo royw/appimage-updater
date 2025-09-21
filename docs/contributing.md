@@ -1,6 +1,6 @@
-*[Home](index.md) > Contributing*
-
 # Contributing
+
+*[Home](index.md) > Contributing*
 
 Thank you for your interest in contributing to AppImage Updater! This guide will help you get started.
 

@@ -176,7 +176,7 @@ def generate_fallback_pattern(app_name: str, url: str) -> str:
 
 When a ZIP file doesn't contain AppImage files, users receive informative feedback:
 
-```
+```text
 No AppImage files found in zip: EdgeTX-Companion.zip. 
 Contains: companion.exe, companion.dll, readme.txt, lib/... 
 This project may have stopped providing AppImage format. 
@@ -211,7 +211,7 @@ Matches both `EdgeTX_Companion` and `EdgeTX-Companion` variations.
 
 **Problem**: Mixed release formats
 
-- Some releases: `BambuStudio_ubuntu-24.04_PR-8017.zip` (containing AppImage)
+- Some releases: `multi-app-bundle.zip` (containing AppImage)
 - Other releases: `Bambu_Studio_linux_fedora-v02.02.01.60.AppImage` (direct)
 
 **Solution**: Universal pattern
@@ -336,7 +336,7 @@ appimage-updater add EdgeTX_Companion https://github.com/EdgeTX/edgetx-companion
 
 ### Architecture Overview
 
-```
+```text
 GitHub Client
 ├── Release Fetching
 ├── Asset Analysis (AppImage + ZIP)

@@ -121,7 +121,7 @@ appimage-updater config show-effective MyApp
 
 ### With Global Defaults
 
-```
+```text
 ~/Downloads/AppImages/
 ├── Firefox/
 │   ├── firefox-latest.AppImage

@@ -1,6 +1,6 @@
-*[Home](index.md) > System Compatibility & Architecture Filtering*
+# Compatibility Guide
 
-# System Compatibility & Architecture Filtering
+*[Home](index.md) > Compatibility Guide*
 
 AppImage Updater provides intelligent system compatibility detection and filtering that automatically eliminates incompatible downloads based on your system's architecture, platform, and supported package formats.
 
@@ -135,7 +135,7 @@ On Ubuntu 22.04, x86_64 system:
 
 When multiple compatible options exist, users see a rich table:
 
-```
+```text
 ┌─────┬──────────────┬─────────┬──────────┬──────────┬───────────┬─────────────────────────────────┬────────┐
 │  #  │ Distribution │ Version │   Arch   │ Platform │  Format   │            Filename             │ Score  │
 ├─────┼──────────────┼─────────┼──────────┼──────────┼───────────┼─────────────────────────────────┼────────┤

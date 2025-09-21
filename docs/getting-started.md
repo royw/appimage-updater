@@ -1,6 +1,6 @@
-*[Home](index.md) > Getting Started*
-
 # Getting Started
+
+*[Home](index.md) > Getting Started*
 
 This guide will walk you through setting up AppImage Updater and managing your first applications.
 

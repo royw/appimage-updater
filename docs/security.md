@@ -6,7 +6,7 @@ This guide covers security considerations, best practices, and authentication me
 
 ## GitHub Authentication
 
-### Why Use Authentication?
+### Why Use Authentication
 
 GitHub API has rate limits that can affect update checking:
 
@@ -33,10 +33,10 @@ Authentication is recommended for:
 
 ```bash
 # Set environment variable (recommended)
-export GITHUB_TOKEN="your_token_here"
+export GITHUB_TOKEN="ghp_your_token_here"
 
 # Or add to shell profile
-echo 'export GITHUB_TOKEN="your_token_here"' >> ~/.bashrc
+echo 'export GITHUB_TOKEN="ghp_your_token_here"' >> ~/.bashrc
 ```
 
 1. **Verify Authentication**:
@@ -293,9 +293,8 @@ If config files are compromised:
 1. **Regenerate config** if needed:
   
    ```bash
-mv ~/.config/appimage-updater ~/.config/appimage-updater.backup
+   mv ~/.config/appimage-updater ~/.config/appimage-updater.backup
    appimage-updater list  # This will recreate config automatically
-
    ```
 
 ## Security Checklist
