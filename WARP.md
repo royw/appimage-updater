@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## 📚 Live Documentation
 
-**Complete documentation is available at: https://royw.github.io/appimage-updater/**
+**Complete documentation is available at: [https://royw.github.io/appimage-updater/](https://royw.github.io/appimage-updater/)**
 
 The documentation includes enhanced navigation with 🏠 home icons, clickable headers, keyboard shortcuts (Alt+H), and automatically updates on every commit to main branch.
 
@@ -38,7 +38,7 @@ The application now provides **comprehensive support** for downloading and autom
 
 **Example error when ZIP contains non-AppImage files:**
 
-```
+```text
 No AppImage files found in zip: EdgeTX-Companion.zip. 
 Contains: companion.exe, companion.dll, readme.txt...
 This project may have stopped providing AppImage format. 
@@ -107,7 +107,7 @@ appimage-updater add BelenaEtcher https://github.com/balena-io/etcher ~/Apps/Bel
 **📊 Enhanced Interactive Selection:**
 When multiple compatible options exist, users see a rich compatibility table:
 
-```
+```text
 ┌─────┬──────────────┬─────────┬──────────┬──────────┬───────────┬─────────────────────────────────┬────────┐
 │  #  │ Distribution │ Version │   Arch   │ Platform │  Format   │            Filename             │ Score  │
 ├─────┼──────────────┼─────────┼──────────┼──────────┼───────────┼─────────────────────────────────┼────────┤
@@ -793,7 +793,7 @@ Comprehensive security through checksum verification:
 
 1. **Rich Interactive Display**:
 
-   ```
+   ```text
    ┌─────┬──────────┬────────┬──────────┬──────────┬────────┐
    │  #  │    Arch  │ Platform │  Format   │ Filename │ Score  │
    ├─────┼──────────┼────────┼──────────┼────────┼────────┤

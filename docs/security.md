@@ -48,7 +48,7 @@ appimage-updater --debug check --dry-run
 
 Look for authentication status in debug output:
 
-```
+```text
 GitHub API authenticated: True
 Rate limit remaining: 4999/5000
 ```

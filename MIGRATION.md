@@ -95,7 +95,7 @@ WantedBy=timers.target
 1. **Simplified Configuration**: Fewer options to configure and maintain
 1. **Better Testing**: Eliminates dormant features that were hard to test
 
-### Questions?
+### Questions
 
 If you have questions about this migration, please:
 
