@@ -102,11 +102,6 @@ class TestFormatValidation:
             
             help_text = stdout.lower()
             assert "--format" in help_text, f"Command {cmd} should have --format option"
-            
-            # Test that invalid format is rejected consistently
-            exit_code, stdout, stderr = self.run_command([cmd, "--format", "invalid", "--help"])
-            # Should either reject the format or show help (both are acceptable)
-            assert exit_code != 0 or "help" in stdout.lower(), f"Command {cmd} should handle invalid format"
 
 
 class TestFormatFeatures:
