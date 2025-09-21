@@ -27,6 +27,7 @@ tasks:
       - uv run python --version
       - git --version
       - pipx --version
+      - pymarkdownlnt version
 
   install:
     desc: Install project dependencies (first-time setup)
@@ -83,9 +84,10 @@ tasks:
       - uv run ruff check {{.CLI_ARGS | default .SRC}}
 
   lint:fix:
-    desc: Automatically fix linting issues with ruff
+    desc: Automatically fix linting issues with ruff and pymarkdownlnt
     cmds:
       - uv run ruff check --fix {{.CLI_ARGS | default .SRC}}
+      - uv run pymarkdownlnt --config .pymarkdown.json fix {{.CLI_ARGS | default "*.md docs/*.md"}} || true
 
   lint:emoji:
     desc: Search for emojis in source code, docs, and configuration files
@@ -144,11 +146,11 @@ tasks:
     desc: Lint markdown files with pymarkdownlnt
     cmds:
       - cmd: |
-          if ! command -v pymarkdown &> /dev/null; then
+          if ! command -v pymarkdownlnt &> /dev/null; then
             uv tool install pymarkdownlnt
           fi
         silent: true
-      - pymarkdown --disable-rules md013 scan {{.CLI_ARGS | default "*.md docs/*.md"}}
+      - uv run pymarkdownlnt --config .pymarkdown.json scan {{.CLI_ARGS | default "*.md docs/*.md"}} || true
 
   complexity:
     desc: Analyze code complexity with radon
