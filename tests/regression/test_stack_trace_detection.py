@@ -73,7 +73,7 @@ def assert_no_stack_trace_in_output(stdout: str, stderr: str, command: str) -> N
             print(f"\n=== STDOUT ===\n{stdout}")
             print(f"\n=== STDERR ===\n{stderr}")
             print("=" * 60)
-            assert False, f"Found stack trace indicator '{indicator}' in command: {command}"
+            raise AssertionError(f"Found stack trace indicator '{indicator}' in command: {command}")
 
 
 class TestConfigCommandStackTraces:

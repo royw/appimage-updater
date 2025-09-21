@@ -52,7 +52,7 @@ def test_repository_client_is_abstract() -> None:
     # Should have abstract methods (can't instantiate directly)
     try:
         RepositoryClient()  # type: ignore
-        assert False, "Should not be able to instantiate abstract class"
+        raise AssertionError("Should not be able to instantiate abstract class")
     except TypeError:
         # Expected - abstract class cannot be instantiated
         pass
