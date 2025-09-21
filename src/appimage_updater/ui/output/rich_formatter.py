@@ -145,13 +145,12 @@ class RichOutputFormatter:
             name = app.get("name", "")
             status = "Enabled" if app.get("enabled", True) else "Disabled"
 
-            # Format source like the original display - let table handle wrapping with overflow='fold'
-            source_type = app.get("source_type", "github")
+            # Format source - let table handle wrapping with overflow='fold'
             url = app.get("url", "")
-            source_display = f"{source_type.title()}: {url}"
+            source_display = url
 
-            # Wrap download directory path
-            download_dir = self._wrap_path(app.get("download_dir", ""), 20)
+            # Wrap download directory path - increased width to show parent directory
+            download_dir = self._wrap_path(app.get("download_dir", ""), 30)
 
             table.add_row(name, status, source_display, download_dir)
 
@@ -211,7 +210,19 @@ class RichOutputFormatter:
         if len(display_path) <= max_width:
             return display_path
 
-        # If still too long, truncate with ellipsis
+        # Try to break on path separators
+        parts = display_path.replace("\\", "/").split("/")
+        if len(parts) > 1:
+            # For short paths with home substitution, be more lenient with the width
+            # Allow a few extra characters if it means showing a complete meaningful path
+            if display_path.startswith("~") and len(parts) <= 3 and len(display_path) <= max_width + 5:
+                return display_path
+            # Start from the end and work backwards to preserve meaningful parts
+            result_parts = self._build_path_from_parts(parts, max_width)
+            result_parts = self._add_ellipsis_if_truncated(result_parts, parts)
+            return "/".join(result_parts)
+
+        # Fallback to simple truncation if no separators
         return "..." + display_path[-(max_width - 3) :]
 
     def _replace_home_with_tilde(self, path_str: str) -> str:
@@ -229,6 +240,49 @@ class RichOutputFormatter:
             else:
                 return "~" + os.sep + relative_path
         return path_str
+
+    def _build_path_from_parts(self, parts: list[str], max_width: int) -> list[str]:
+        """Build path parts list from end to beginning within width limit.
+
+        Ensures at least one parent directory is included when possible.
+        For example: /a/b/c/d/ -> .../c/d/ (not just .../d/)
+        """
+        result_parts: list[str] = []
+        current_length = 0
+
+        # Reserve space for ellipsis if we need to truncate
+        ellipsis_length = 3  # "..."
+        effective_width = max_width - ellipsis_length
+
+        # First, always include the last part (final directory/file)
+        if parts:
+            last_part = parts[-1]
+            result_parts.append(last_part)
+            current_length = len(last_part)
+
+        # Then try to include at least one parent directory
+        min_parts_desired = 2  # final directory + at least one parent
+        parts_added = 1
+
+        for part in reversed(parts[:-1]):  # Skip the last part since we already added it
+            separator_length = 1  # +1 for separator
+            part_length = len(part) + separator_length
+
+            # Always try to include at least one parent, even if it makes us slightly over
+            if parts_added < min_parts_desired or current_length + part_length <= effective_width:
+                result_parts.insert(0, part)
+                current_length += part_length
+                parts_added += 1
+            else:
+                break
+
+        return result_parts
+
+    def _add_ellipsis_if_truncated(self, result_parts: list[str], original_parts: list[str]) -> list[str]:
+        """Add ellipsis at beginning if path was truncated."""
+        if len(result_parts) < len(original_parts):
+            result_parts.insert(0, "...")
+        return result_parts
 
     def _dict_to_check_result(self, result_data: dict[str, Any]) -> CheckResult:
         """Convert dictionary to CheckResult for compatibility."""

@@ -51,15 +51,37 @@ def _replace_home_with_tilde(path_str: str) -> str:
 
 
 def _build_path_from_parts(parts: list[str], max_width: int) -> tuple[list[str], int]:
-    """Build path parts list from end to beginning within width limit."""
+    """Build path parts list from end to beginning within width limit.
+
+    Ensures at least one parent directory is included when possible.
+    For example: /a/b/c/d/ -> .../c/d/ (not just .../d/)
+    """
     result_parts: list[str] = []
     current_length = 0
 
-    for part in reversed(parts):
-        part_length = len(part) + (1 if result_parts else 0)  # +1 for separator
-        if current_length + part_length <= max_width or not result_parts:
+    # Reserve space for ellipsis if we need to truncate
+    ellipsis_length = 3  # "..."
+    effective_width = max_width - ellipsis_length
+
+    # First, always include the last part (final directory/file)
+    if parts:
+        last_part = parts[-1]
+        result_parts.append(last_part)
+        current_length = len(last_part)
+
+    # Then try to include at least one parent directory
+    min_parts_desired = 2  # final directory + at least one parent
+    parts_added = 1
+
+    for part in reversed(parts[:-1]):  # Skip the last part since we already added it
+        separator_length = 1  # +1 for separator
+        part_length = len(part) + separator_length
+
+        # Always try to include at least one parent, even if it makes us slightly over
+        if parts_added < min_parts_desired or current_length + part_length <= effective_width:
             result_parts.insert(0, part)
             current_length += part_length
+            parts_added += 1
         else:
             break
 
@@ -84,6 +106,10 @@ def _wrap_path(path: str, max_width: int = 40) -> str:
     # Try to break on path separators
     parts = display_path.replace("\\", "/").split("/")
     if len(parts) > 1:
+        # For short paths with home substitution, be more lenient with the width
+        # Allow a few extra characters if it means showing a complete meaningful path
+        if display_path.startswith("~") and len(parts) <= 3 and len(display_path) <= max_width + 5:
+            return display_path
         # Start from the end and work backwards to preserve meaningful parts
         result_parts, _ = _build_path_from_parts(parts, max_width)
         result_parts = _add_ellipsis_if_truncated(result_parts, parts)
@@ -126,18 +152,16 @@ def display_applications_list(applications: list[Any]) -> None:
             status = "Enabled" if app.enabled else "Disabled"
 
             # Format source - let table handle wrapping with overflow='fold'
-            source_display = f"{app.source_type.title()}: {app.url}"
+            source_display = app.url
 
-            # Wrap download directory path
-            download_dir = _wrap_path(str(app.download_dir), 35)
-            wrapped_path = _wrap_path(str(app.download_dir), 20)
+            # Wrap download directory path - increased width to show parent directory
+            wrapped_path = _wrap_path(str(app.download_dir), 30)
 
             table.add_row(
                 app.name,
                 status,
                 source_display,
                 wrapped_path,
-                download_dir,
             )
 
         console.print(table)

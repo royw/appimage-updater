@@ -1901,28 +1901,50 @@ async def _perform_update_checks(
     console.print(f"[blue]Checking {len(enabled_apps)} applications for updates...")
     logger.debug(f"Starting update checks for {len(enabled_apps)} applications")
 
-    # Handle dry-run mode - skip actual HTTP calls
+    # Handle dry-run mode - skip actual HTTP calls but show real current versions
     if dry_run:
-        logger.debug("Dry run mode: Skipping HTTP requests, returning mock results")
+        logger.debug("Dry run mode: Skipping HTTP requests, showing current versions only")
         console.print("[yellow]Dry run mode - skipping HTTP requests")
 
-        # Return mock results for dry-run
+        # Create dry-run results with real current version detection
         from .core.models import CheckResult
+        from .core.version_checker import VersionChecker
 
-        mock_results = []
+        dry_run_results = []
+        version_checker = VersionChecker(interactive=not no_interactive)
+
         for app_config in enabled_apps:
-            # Create a mock result indicating no update available (safe for dry-run)
-            mock_result = CheckResult(
-                app_name=app_config.name,
-                success=True,
-                current_version="mock-current",
-                available_version="mock-current",  # Same version = no update
-                update_available=False,
-                error_message=None,
-                download_url=None,
-            )
-            mock_results.append(mock_result)
-        return mock_results
+            try:
+                # Get real current version from .info files or existing files
+                current_version = version_checker._get_current_version(app_config)
+
+                # Create result showing current version but no update check
+                dry_run_result = CheckResult(
+                    app_name=app_config.name,
+                    success=True,
+                    current_version=current_version,
+                    available_version="Not checked (dry-run)",
+                    update_available=False,
+                    error_message=None,
+                    download_url=app_config.url,
+                )
+                dry_run_results.append(dry_run_result)
+
+            except Exception as e:
+                logger.debug(f"Error getting current version for {app_config.name}: {e}")
+                # Create error result for apps that can't be processed
+                error_result = CheckResult(
+                    app_name=app_config.name,
+                    success=False,
+                    current_version=None,
+                    available_version=None,
+                    update_available=False,
+                    error_message=f"Error reading current version: {str(e)}",
+                    download_url=None,
+                )
+                dry_run_results.append(error_result)
+
+        return dry_run_results
 
     # Create version checker for async processing
     from .core.parallel import ConcurrentProcessor
@@ -1975,18 +1997,56 @@ def _extract_result_data(result: Any) -> dict[str, Any]:
     """Extract data from a single check result."""
     result_dict = {}
 
-    if hasattr(result, "app_name"):
+    # Extract application name
+    if hasattr(result, "app_name") and result.app_name:
         result_dict["Application"] = result.app_name
+    else:
+        result_dict["Application"] = "Unknown"
+
+    # Extract status
     if hasattr(result, "success"):
         result_dict["Status"] = "Success" if result.success else "Error"
+    else:
+        result_dict["Status"] = "Unknown"
 
+    # Try to extract data from candidate first, then from direct fields
     if hasattr(result, "candidate") and result.candidate:
         _extract_candidate_data(result.candidate, result_dict)
+    else:
+        # Extract from direct fields on CheckResult
+        _extract_direct_result_data(result, result_dict)
 
+    # Extract error message
     if hasattr(result, "error_message") and result.error_message:
-        result_dict["Error"] = result.error_message
+        result_dict["Update Available"] = result.error_message
+    elif "Update Available" not in result_dict:
+        result_dict["Update Available"] = "Unknown"
 
     return result_dict
+
+
+def _extract_direct_result_data(result: Any, result_dict: dict[str, Any]) -> None:
+    """Extract data directly from CheckResult fields."""
+    # Extract version information from direct fields
+    if hasattr(result, "current_version"):
+        result_dict["Current Version"] = str(result.current_version) if result.current_version else "N/A"
+    else:
+        result_dict["Current Version"] = "N/A"
+
+    if hasattr(result, "available_version"):
+        result_dict["Latest Version"] = str(result.available_version) if result.available_version else "N/A"
+    else:
+        result_dict["Latest Version"] = "N/A"
+
+    # Extract update availability
+    if hasattr(result, "update_available"):
+        result_dict["Update Available"] = "Yes" if result.update_available else "No"
+    else:
+        result_dict["Update Available"] = "Unknown"
+
+    # Extract download URL if available
+    if hasattr(result, "download_url") and result.download_url:
+        result_dict["Download URL"] = result.download_url
 
 
 def _extract_candidate_data(candidate: Any, result_dict: dict[str, Any]) -> None:
