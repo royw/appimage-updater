@@ -51,7 +51,7 @@ jobs:
         if: matrix.python-version == '3.11'
         uses: codecov/codecov-action@v4
         env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}  # TODO: Set up Codecov token in repository secrets
         with:
           file: ./coverage.xml
           fail_ci_if_error: false
@@ -92,7 +92,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: release
+      name: release  # TODO: Create 'release' environment in GitHub Settings → Environments before publishing
       url: https://pypi.org/p/appimage-updater
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
