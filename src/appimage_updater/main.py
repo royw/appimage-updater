@@ -67,8 +67,9 @@ from .ui.display import (
     display_download_results,
     display_edit_summary,
 )
-from .ui.output.interface import OutputFormat
 from .ui.output.context import OutputFormatterContext
+from .ui.output.factory import create_output_formatter_from_params
+from .ui.output.interface import OutputFormat
 from .utils.logging_config import configure_logging
 from .utils.version_utils import (
     extract_version_from_filename,
@@ -453,6 +454,7 @@ def list_apps(
     config_file: Path | None = CONFIG_FILE_OPTION,
     config_dir: Path | None = CONFIG_DIR_OPTION,
     debug: bool = get_debug_option(),
+    format: OutputFormat = FORMAT_OPTION,
     version: bool = get_version_option(),
 ) -> None:
     """List all configured applications.
@@ -463,9 +465,21 @@ def list_apps(
         config_file=config_file,
         config_dir=config_dir,
         debug=debug,
+        format=format,
     )
 
-    result = asyncio.run(command.execute())
+    # Create output formatter and execute with context
+    output_formatter = create_output_formatter_from_params(command.params)
+
+    # Handle format-specific finalization
+    if format in [OutputFormat.JSON, OutputFormat.HTML]:
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+        final_output = output_formatter.finalize()
+        if final_output:
+            output_formatter.print(final_output)
+    else:
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+
     if not result.success:
         raise typer.Exit(result.exit_code)
 
@@ -1046,6 +1060,7 @@ def show(
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     debug: bool = get_debug_option(),
+    format: OutputFormat = FORMAT_OPTION,
     version: bool = get_version_option(),
 ) -> None:
     """Show detailed information about a specific application.
@@ -1086,9 +1101,21 @@ def show(
         config_file=config_file,
         config_dir=config_dir,
         debug=debug,
+        format=format,
     )
 
-    result = asyncio.run(command.execute())
+    # Create output formatter and execute with context
+    output_formatter = create_output_formatter_from_params(command.params)
+
+    # Handle format-specific finalization
+    if format in [OutputFormat.JSON, OutputFormat.HTML]:
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+        final_output = output_formatter.finalize()
+        if final_output:
+            output_formatter.print(final_output)
+    else:
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+
     if not result.success:
         raise typer.Exit(result.exit_code)
 
@@ -1843,28 +1870,7 @@ def _display_check_results(check_results: list[Any], dry_run: bool) -> None:
     output_formatter = get_output_formatter()
 
     if output_formatter:
-        # Convert check results to dict format for output formatter
-        results_data = []
-        for result in check_results:
-            result_dict = {}
-            if hasattr(result, 'app_name'):
-                result_dict['Application'] = result.app_name
-            if hasattr(result, 'success'):
-                result_dict['Status'] = 'Success' if result.success else 'Error'
-            if hasattr(result, 'candidate') and result.candidate:
-                if hasattr(result.candidate, 'download_url'):
-                    result_dict['Download URL'] = result.candidate.download_url
-                if hasattr(result.candidate, 'current_version'):
-                    result_dict['Current Version'] = str(result.candidate.current_version) if result.candidate.current_version else 'N/A'
-                if hasattr(result.candidate, 'latest_version'):
-                    result_dict['Latest Version'] = str(result.candidate.latest_version) if result.candidate.latest_version else 'N/A'
-                if hasattr(result.candidate, 'needs_update'):
-                    result_dict['Update Available'] = 'Yes' if result.candidate.needs_update else 'No'
-            if hasattr(result, 'error_message') and result.error_message:
-                result_dict['Error'] = result.error_message
-            
-            results_data.append(result_dict)
-
+        results_data = _convert_check_results_to_dict(check_results)
         if dry_run:
             output_formatter.print_table(results_data, title="Download URLs")
         else:
@@ -1872,6 +1878,45 @@ def _display_check_results(check_results: list[Any], dry_run: bool) -> None:
     else:
         # Fallback to original display function
         display_check_results(check_results, show_urls=dry_run)
+
+
+def _convert_check_results_to_dict(check_results: list[Any]) -> list[dict[str, Any]]:
+    """Convert check results to dictionary format for output formatters."""
+    results_data = []
+    for result in check_results:
+        result_dict = _extract_result_data(result)
+        results_data.append(result_dict)
+    return results_data
+
+
+def _extract_result_data(result: Any) -> dict[str, Any]:
+    """Extract data from a single check result."""
+    result_dict = {}
+
+    if hasattr(result, "app_name"):
+        result_dict["Application"] = result.app_name
+    if hasattr(result, "success"):
+        result_dict["Status"] = "Success" if result.success else "Error"
+
+    if hasattr(result, "candidate") and result.candidate:
+        _extract_candidate_data(result.candidate, result_dict)
+
+    if hasattr(result, "error_message") and result.error_message:
+        result_dict["Error"] = result.error_message
+
+    return result_dict
+
+
+def _extract_candidate_data(candidate: Any, result_dict: dict[str, Any]) -> None:
+    """Extract candidate data into result dictionary."""
+    if hasattr(candidate, "download_url"):
+        result_dict["Download URL"] = candidate.download_url
+    if hasattr(candidate, "current_version"):
+        result_dict["Current Version"] = str(candidate.current_version) if candidate.current_version else "N/A"
+    if hasattr(candidate, "latest_version"):
+        result_dict["Latest Version"] = str(candidate.latest_version) if candidate.latest_version else "N/A"
+    if hasattr(candidate, "needs_update"):
+        result_dict["Update Available"] = "Yes" if candidate.needs_update else "No"
 
 
 def _filter_update_candidates(check_results: list[Any]) -> list[Any]:

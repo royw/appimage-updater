@@ -29,7 +29,7 @@ class ShowCommand(Command):
 
         return errors
 
-    async def execute(self) -> CommandResult:
+    async def execute(self, output_formatter: Any = None) -> CommandResult:
         """Execute the show command."""
         configure_logging(debug=self.params.debug)
 
@@ -41,13 +41,19 @@ class ShowCommand(Command):
                 self.console.print(f"[red]Error: {error_msg}[/red]")
                 return CommandResult(success=False, message=error_msg, exit_code=1)
 
-            # Execute the show operation
-            success = await self._execute_show_operation()
+            # Use context manager to make output formatter available throughout the execution
+            if output_formatter:
+                from ..ui.output.context import OutputFormatterContext
+
+                with OutputFormatterContext(output_formatter):
+                    success = await self._execute_show_operation()
+            else:
+                success = await self._execute_show_operation()
 
             if success:
                 return CommandResult(success=True, message="Show completed successfully")
             else:
-                return CommandResult(success=False, message="Show operation failed", exit_code=1)
+                return CommandResult(success=False, message="Applications not found", exit_code=1)
 
         except Exception as e:
             logger.error(f"Unexpected error in show command: {e}")

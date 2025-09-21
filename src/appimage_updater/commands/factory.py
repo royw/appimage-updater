@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from .add_command import AddCommand
 from .check_command import CheckCommand
@@ -178,6 +179,7 @@ class CommandFactory:
         config_dir: Path | None = None,
         verbose: bool = False,
         debug: bool = False,
+        format: Any = None,
     ) -> ShowCommand:
         """Create a ShowCommand instance."""
         params = ShowParams(
@@ -186,6 +188,7 @@ class CommandFactory:
             config_dir=config_dir,
             verbose=verbose,
             debug=debug,
+            format=format,
         )
         return ShowCommand(params)
 
@@ -194,12 +197,14 @@ class CommandFactory:
         config_file: Path | None = None,
         config_dir: Path | None = None,
         debug: bool = False,
+        format: Any = None,
     ) -> ListCommand:
         """Create a ListCommand instance."""
         params = ListParams(
             config_file=config_file,
             config_dir=config_dir,
             debug=debug,
+            format=format,
         )
         return ListCommand(params)
 

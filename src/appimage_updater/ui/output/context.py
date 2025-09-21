@@ -1,7 +1,7 @@
 """Output formatter context management."""
 
+from contextvars import ContextVar, Token
 from typing import Any
-from contextvars import ContextVar
 
 # Context variable to hold the current output formatter
 _output_formatter: ContextVar[Any] = ContextVar("output_formatter", default=None)
@@ -35,7 +35,7 @@ class OutputFormatterContext:
             formatter: Output formatter to use in this context
         """
         self.formatter = formatter
-        self.token = None
+        self.token: Token[Any] | None = None
 
     def __enter__(self) -> Any:
         """Enter context and set formatter."""

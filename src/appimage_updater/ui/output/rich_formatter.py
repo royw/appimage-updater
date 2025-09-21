@@ -136,17 +136,24 @@ class RichOutputFormatter:
         """
         table = Table(title="Configured Applications")
         table.add_column("Application", style="cyan", no_wrap=False)
-        table.add_column("URL", style="blue", no_wrap=False)
-        table.add_column("Download Directory", style="green", no_wrap=False)
-        table.add_column("Enabled", style="magenta")
+        table.add_column("Status", style="green")
+        table.add_column("Source", style="yellow", no_wrap=False, overflow="fold")
+        table.add_column("Download Directory", style="magenta", no_wrap=False)
 
         for app in applications:
             # Handle dict format as specified by interface
             name = app.get("name", "")
+            status = "Enabled" if app.get("enabled", True) else "Disabled"
+
+            # Format source like the original display - let table handle wrapping with overflow='fold'
+            source_type = app.get("source_type", "github")
             url = app.get("url", "")
-            download_dir = self._wrap_path(app.get("download_dir", ""))
-            enabled = "Yes" if app.get("enabled", True) else "No"
-            table.add_row(name, url, download_dir, enabled)
+            source_display = f"{source_type.title()}: {url}"
+
+            # Wrap download directory path
+            download_dir = self._wrap_path(app.get("download_dir", ""), 20)
+
+            table.add_row(name, status, source_display, download_dir)
 
         self.console.print(table)
 

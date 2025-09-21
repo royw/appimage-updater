@@ -29,13 +29,19 @@ class ListCommand(Command):
         # List command has no required parameters
         return []
 
-    async def execute(self) -> CommandResult:
+    async def execute(self, output_formatter: Any = None) -> CommandResult:
         """Execute the list command."""
         configure_logging(debug=self.params.debug)
 
         try:
-            # Execute the list operation
-            success = await self._execute_list_operation()
+            # Use context manager to make output formatter available throughout the execution
+            if output_formatter:
+                from ..ui.output.context import OutputFormatterContext
+
+                with OutputFormatterContext(output_formatter):
+                    success = await self._execute_list_operation()
+            else:
+                success = await self._execute_list_operation()
 
             if success:
                 return CommandResult(success=True, message="List completed successfully")

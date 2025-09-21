@@ -95,31 +95,52 @@ def _wrap_path(path: str, max_width: int = 40) -> str:
 
 def display_applications_list(applications: list[Any]) -> None:
     """Display applications list in a table."""
-    table = Table(title="Configured Applications")
-    table.add_column("Application", style="cyan", no_wrap=False)
-    table.add_column("Status", style="green")
-    table.add_column("Source", style="yellow", no_wrap=False, overflow="fold")
-    table.add_column("Download Directory", style="magenta", no_wrap=False)
+    from .output.context import get_output_formatter
 
-    for app in applications:
-        status = "Enabled" if app.enabled else "Disabled"
+    output_formatter = get_output_formatter()
 
-        # Format source - let table handle wrapping with overflow='fold'
-        source_display = f"{app.source_type.title()}: {app.url}"
+    if output_formatter:
+        # Convert applications to dict format for output formatter
+        apps_data = []
+        for app in applications:
+            app_dict = {
+                "name": app.name,
+                "url": app.url,
+                "download_dir": str(app.download_dir),
+                "enabled": app.enabled,
+                "status": "Enabled" if app.enabled else "Disabled",
+                "source_type": app.source_type,
+            }
+            apps_data.append(app_dict)
 
-        # Wrap download directory path
-        download_dir = _wrap_path(str(app.download_dir), 35)
-        wrapped_path = _wrap_path(str(app.download_dir), 20)
+        output_formatter.print_application_list(apps_data)
+    else:
+        # Fallback to Rich table display
+        table = Table(title="Configured Applications")
+        table.add_column("Application", style="cyan", no_wrap=False)
+        table.add_column("Status", style="green")
+        table.add_column("Source", style="yellow", no_wrap=False, overflow="fold")
+        table.add_column("Download Directory", style="magenta", no_wrap=False)
 
-        table.add_row(
-            app.name,
-            status,
-            source_display,
-            wrapped_path,
-            download_dir,
-        )
+        for app in applications:
+            status = "Enabled" if app.enabled else "Disabled"
 
-    console.print(table)
+            # Format source - let table handle wrapping with overflow='fold'
+            source_display = f"{app.source_type.title()}: {app.url}"
+
+            # Wrap download directory path
+            download_dir = _wrap_path(str(app.download_dir), 35)
+            wrapped_path = _wrap_path(str(app.download_dir), 20)
+
+            table.add_row(
+                app.name,
+                status,
+                source_display,
+                wrapped_path,
+                download_dir,
+            )
+
+        console.print(table)
 
 
 def display_check_results(results: list[CheckResult], show_urls: bool = False) -> None:
@@ -322,24 +343,53 @@ def get_checksum_status(result: Any) -> str:
 
 def display_application_details(app: Any, config_source_info: dict[str, str] | None = None) -> None:
     """Display detailed information about a specific application."""
-    console.print(f"\n[bold cyan]Application: {app.name}[/bold cyan]")
-    console.print("=" * (len(app.name) + 14))
+    from .output.context import get_output_formatter
 
-    # Configuration section
-    config_info = get_configuration_info(app, config_source_info)
-    config_panel = Panel(config_info, title="Configuration", border_style="blue")
+    output_formatter = get_output_formatter()
 
-    # Files section
-    files_info = get_files_info(app)
-    files_panel = Panel(files_info, title="Files", border_style="green")
+    if output_formatter and not hasattr(output_formatter, "console"):
+        # Only use structured format for non-Rich formatters (JSON, Plain, HTML)
+        # Rich formatter should use the original Rich panel display
+        app_details = {
+            "name": app.name,
+            "enabled": getattr(app, "enabled", True),
+            "url": getattr(app, "url", ""),
+            "download_dir": str(getattr(app, "download_dir", "")),
+            "source_type": getattr(app, "source_type", ""),
+            "pattern": getattr(app, "pattern", ""),
+            "config_source": config_source_info or {},
+        }
 
-    # Symlinks section
-    symlinks_info = get_symlinks_info(app)
-    symlinks_panel = Panel(symlinks_info, title="Symlinks", border_style="yellow")
+        # Add basic file and symlink information
+        app_details["files"] = {"status": "File information available in Rich format"}
+        app_details["symlinks"] = {"status": "Symlink information available in Rich format"}
 
-    console.print(config_panel)
-    console.print(files_panel)
-    console.print(symlinks_panel)
+        # Use a generic method for application details (we can add this to the interface later)
+        if hasattr(output_formatter, "print_application_details"):
+            output_formatter.print_application_details(app_details)
+        else:
+            # Fallback to table format
+            output_formatter.print_table([app_details], title=f"Application Details: {app.name}")
+    else:
+        # Fallback to Rich panel display
+        console.print(f"\n[bold cyan]Application: {app.name}[/bold cyan]")
+        console.print("=" * (len(app.name) + 14))
+
+        # Configuration section
+        config_info = get_configuration_info(app, config_source_info)
+        config_panel = Panel(config_info, title="Configuration", border_style="blue")
+
+        # Files section
+        files_info = get_files_info(app)
+        files_panel = Panel(files_info, title="Files", border_style="green")
+
+        # Symlinks section
+        symlinks_info = get_symlinks_info(app)
+        symlinks_panel = Panel(symlinks_info, title="Symlinks", border_style="yellow")
+
+        console.print(config_panel)
+        console.print(files_panel)
+        console.print(symlinks_panel)
 
 
 def display_edit_summary(app_name: str, changes: list[str]) -> None:

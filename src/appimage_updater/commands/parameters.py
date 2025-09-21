@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 
 @dataclass
@@ -88,6 +89,7 @@ class ShowParams(BaseParams):
     """Parameters for show command."""
 
     app_names: list[str] | None = None
+    format: Any = None  # OutputFormat, avoiding circular import
 
 
 @dataclass
@@ -97,6 +99,7 @@ class ListParams:
     config_file: Path | None = None
     config_dir: Path | None = None
     debug: bool = False
+    format: Any = None  # OutputFormat, avoiding circular import
 
 
 @dataclass
