@@ -121,18 +121,18 @@ class TestCompatibilityFunctions:
         """Test format compatibility for Linux."""
         # Test with explicit linux platform to avoid system-specific differences
         # Supported formats (universal Linux formats)
-        assert is_supported_format(".AppImage", "linux")[0] == True
-        assert is_supported_format(".tar.gz", "linux")[0] == True
-        assert is_supported_format(".tar.xz", "linux")[0] == True
-        assert is_supported_format(".zip", "linux")[0] == True
+        assert is_supported_format(".AppImage", "linux")[0]
+        assert is_supported_format(".tar.gz", "linux")[0]
+        assert is_supported_format(".tar.xz", "linux")[0]
+        assert is_supported_format(".zip", "linux")[0]
 
         # Format availability depends on distribution family, so test explicitly
         # .deb should be available on debian-family systems when using actual system detection
         system_info = get_system_info()
         if system_info.distribution_family == 'debian':
-            assert is_supported_format(".deb", "linux")[0] == True
+            assert is_supported_format(".deb", "linux")[0]
         elif system_info.distribution_family == 'redhat':
-            assert is_supported_format(".rpm", "linux")[0] == True
+            assert is_supported_format(".rpm", "linux")[0]
 
         # Unsupported formats
         assert is_supported_format(".exe", "linux") == (False, 0.0)
@@ -148,9 +148,9 @@ class TestCompatibilityFunctions:
     def test_format_compatibility_darwin(self):
         """Test format compatibility for macOS."""
         # Supported formats
-        assert is_supported_format(".dmg", "darwin")[0] == True
-        assert is_supported_format(".pkg", "darwin")[0] == True
-        assert is_supported_format(".zip", "darwin")[0] == True
+        assert is_supported_format(".dmg", "darwin")[0]
+        assert is_supported_format(".pkg", "darwin")[0]
+        assert is_supported_format(".zip", "darwin")[0]
 
         # Unsupported formats
         assert is_supported_format(".AppImage", "darwin") == (False, 0.0)
@@ -159,9 +159,9 @@ class TestCompatibilityFunctions:
     def test_format_compatibility_windows(self):
         """Test format compatibility for Windows."""
         # Supported formats
-        assert is_supported_format(".exe", "win32")[0] == True
-        assert is_supported_format(".msi", "win32")[0] == True
-        assert is_supported_format(".zip", "win32")[0] == True
+        assert is_supported_format(".exe", "win32")[0]
+        assert is_supported_format(".msi", "win32")[0]
+        assert is_supported_format(".zip", "win32")[0]
 
         # Unsupported formats
         assert is_supported_format(".AppImage", "win32") == (False, 0.0)

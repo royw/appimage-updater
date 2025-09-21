@@ -108,7 +108,7 @@ class TestRepositoryFactoryIntegration:
             "name": "DirectApp",
             "source_type": "direct",
             "url": "https://nightly.example.com/app.AppImage",
-            "download_dir": "/tmp/downloads/DirectApp",
+            "download_dir": "/home/user/downloads/DirectApp",
             "pattern": "app.*\\.AppImage$",
             "enabled": True
         }
@@ -125,7 +125,7 @@ class TestRepositoryFactoryIntegration:
             "name": "GitHubApp",
             "source_type": "github",
             "url": "https://github.com/user/app",
-            "download_dir": "/tmp/github",
+            "download_dir": "/home/user/downloads/github",
             "pattern": "app.*\\.AppImage$",
             "enabled": True
         }
@@ -140,7 +140,7 @@ class TestRepositoryFactoryIntegration:
         config = {
             "name": "LegacyApp",
             "url": "https://github.com/user/legacy",
-            "download_dir": "/tmp/legacy",
+            "download_dir": "/home/user/downloads/legacy",
             "pattern": "legacy.*\\.AppImage$",
             "enabled": True
         }
