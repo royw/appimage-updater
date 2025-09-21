@@ -6,6 +6,7 @@ vars:
     sh: cat .python-versions | grep -v '^$' | tr '\n' ' ' | sed 's/[[:space:]]*$//'
   PYTHON_VERSION:
     sh: cat .python-version | head -n1
+  TEST_TIMEOUT: 10
 
 tasks:
   output:
@@ -161,37 +162,38 @@ tasks:
   test:
     desc: Run tests with pytest (sequential) - excludes regression tests
     cmds:
-      - uv run pytest tests/unit tests/functional tests/e2e {{.CLI_ARGS}}
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/e2e {{.CLI_ARGS}}
 
   test:parallel:
     desc: Run tests with pytest using multiple CPU cores (faster) - excludes regression tests
     cmds:
-      - uv run pytest tests/unit tests/functional tests/e2e -n auto {{.CLI_ARGS}}
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/e2e -n auto {{.CLI_ARGS}}
 
   test:unit:
     desc: Run unit tests only
     cmds:
-      - uv run pytest tests/unit/ {{.CLI_ARGS}}
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/ {{.CLI_ARGS}}
 
   test:functional:
     desc: Run functional tests only
     cmds:
-      - uv run pytest tests/functional/ {{.CLI_ARGS}}
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/functional/ {{.CLI_ARGS}}
 
   test:e2e:
     desc: Run end-to-end tests to validate core functionality
     cmds:
-      - uv run pytest tests/e2e/ -v --tb=short --color=yes --no-cov -n auto
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/ -v --tb=short --color=yes --no-cov -n auto
 
   test:pattern-matching:
     desc: Test pattern matching functionality specifically
     cmds:
-      - uv run pytest tests/e2e/test_pattern_matching.py -v
-      - uv run pytest tests/unit/test_intelligent_pattern_generation.py -v
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/test_pattern_matching.py -v
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/test_intelligent_pattern_generation.py -v
 
   test:regression:
     desc: Run regression tests to validate fixed issues
     cmds:
+    # do not use timeout here as it will cause the test to fail
       - uv run pytest tests/regression/ -v --tb=short --color=yes
       - task: output
         vars:
@@ -207,14 +209,14 @@ tasks:
           split: ' '
         cmd: |
           echo "📋 Testing with Python {{.ITEM}}"
-          uv run --python {{.ITEM}} pytest tests/unit tests/functional tests/e2e --tb=short --color=yes
+          uv run --python {{.ITEM}} pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/e2e --tb=short --color=yes
       - cmd: echo "✅ All Python versions tested successfully!"
         silent: true
 
   test:coverage:
     desc: Run all tests with coverage reporting (excludes regression tests)
     cmds:
-      - uv run pytest tests/unit tests/functional tests/e2e --cov={{.SRC}}appimage_updater --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/e2e --cov={{.SRC}}appimage_updater --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
       - task: output
         vars:
           MESSAGE: "📊 Coverage report saved to htmlcov/index.html"

@@ -122,6 +122,9 @@ class RepositoryParams(BaseParams):
     assets: bool = False
     limit: int = 10
     dry_run: bool = False
+    instrument_http: bool = False
+    http_stack_depth: int = 3
+    http_track_headers: bool = False
     format: Any = None  # OutputFormat, avoiding circular import
 
 
