@@ -82,6 +82,30 @@ def blocked_getaddrinfo(host: str, *args: Any, **kwargs: Any) -> None:
     return socket._original_getaddrinfo(host, *args, **kwargs)  # type: ignore
 
 
+def blocked_http_request(*args: Any, **kwargs: Any) -> None:
+    """Block HTTP requests from requests library."""
+    raise NetworkBlockedError(
+        "HTTP request blocked during testing. "
+        "Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
+    )
+
+
+def blocked_urllib_request(*args: Any, **kwargs: Any) -> None:
+    """Block HTTP requests from urllib."""
+    raise NetworkBlockedError(
+        "urllib request blocked during testing. "
+        "Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
+    )
+
+
+def blocked_httpx_request(*args: Any, **kwargs: Any) -> None:
+    """Block HTTP requests from httpx."""
+    raise NetworkBlockedError(
+        "httpx request blocked during testing. "
+        "Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
+    )
+
+
 def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest with network blocking for non-regression tests."""
     # Check if we're running regression tests
@@ -107,10 +131,73 @@ def pytest_configure(config: pytest.Config) -> None:
         socket.create_connection = blocked_create_connection  # type: ignore
         socket.getaddrinfo = blocked_getaddrinfo  # type: ignore
 
+        # Block requests library if available
+        try:
+            import requests
+            # Store originals for restoration
+            requests._original_get = getattr(requests, 'get', None)
+            requests._original_post = getattr(requests, 'post', None)
+            requests._original_put = getattr(requests, 'put', None)
+            requests._original_delete = getattr(requests, 'delete', None)
+            requests._original_patch = getattr(requests, 'patch', None)
+            requests._original_head = getattr(requests, 'head', None)
+            requests._original_options = getattr(requests, 'options', None)
+            requests._original_request = getattr(requests, 'request', None)
+            
+            # Replace with blocking versions
+            requests.get = blocked_http_request  # type: ignore
+            requests.post = blocked_http_request  # type: ignore
+            requests.put = blocked_http_request  # type: ignore
+            requests.delete = blocked_http_request  # type: ignore
+            requests.patch = blocked_http_request  # type: ignore
+            requests.head = blocked_http_request  # type: ignore
+            requests.options = blocked_http_request  # type: ignore
+            requests.request = blocked_http_request  # type: ignore
+        except ImportError:
+            pass
+
+        # Block urllib if available
+        try:
+            import urllib.request
+            # Store originals for restoration
+            urllib.request._original_urlopen = getattr(urllib.request, 'urlopen', None)
+            urllib.request._original_urlretrieve = getattr(urllib.request, 'urlretrieve', None)
+            
+            # Replace with blocking versions
+            urllib.request.urlopen = blocked_urllib_request  # type: ignore
+            urllib.request.urlretrieve = blocked_urllib_request  # type: ignore
+        except ImportError:
+            pass
+
+        # Block httpx if available
+        try:
+            import httpx
+            # Store originals for restoration
+            httpx._original_get = getattr(httpx, 'get', None)
+            httpx._original_post = getattr(httpx, 'post', None)
+            httpx._original_put = getattr(httpx, 'put', None)
+            httpx._original_delete = getattr(httpx, 'delete', None)
+            httpx._original_patch = getattr(httpx, 'patch', None)
+            httpx._original_head = getattr(httpx, 'head', None)
+            httpx._original_options = getattr(httpx, 'options', None)
+            httpx._original_request = getattr(httpx, 'request', None)
+            
+            # Replace with blocking versions
+            httpx.get = blocked_httpx_request  # type: ignore
+            httpx.post = blocked_httpx_request  # type: ignore
+            httpx.put = blocked_httpx_request  # type: ignore
+            httpx.delete = blocked_httpx_request  # type: ignore
+            httpx.patch = blocked_httpx_request  # type: ignore
+            httpx.head = blocked_httpx_request  # type: ignore
+            httpx.options = blocked_httpx_request  # type: ignore
+            httpx.request = blocked_httpx_request  # type: ignore
+        except ImportError:
+            pass
+
 
 def pytest_unconfigure(config: pytest.Config) -> None:
-    """Restore original socket functions after tests complete."""
-    # Restore originals if they were stored
+    """Restore original socket functions and HTTP libraries after tests complete."""
+    # Restore socket originals if they were stored
     if hasattr(socket, '_original_socket'):
         socket.socket = socket._original_socket  # type: ignore
         delattr(socket, '_original_socket')
@@ -122,6 +209,78 @@ def pytest_unconfigure(config: pytest.Config) -> None:
     if hasattr(socket, '_original_getaddrinfo'):
         socket.getaddrinfo = socket._original_getaddrinfo  # type: ignore
         delattr(socket, '_original_getaddrinfo')
+
+    # Restore requests library if it was blocked
+    try:
+        import requests
+        if hasattr(requests, '_original_get'):
+            requests.get = requests._original_get
+            delattr(requests, '_original_get')
+        if hasattr(requests, '_original_post'):
+            requests.post = requests._original_post
+            delattr(requests, '_original_post')
+        if hasattr(requests, '_original_put'):
+            requests.put = requests._original_put
+            delattr(requests, '_original_put')
+        if hasattr(requests, '_original_delete'):
+            requests.delete = requests._original_delete
+            delattr(requests, '_original_delete')
+        if hasattr(requests, '_original_patch'):
+            requests.patch = requests._original_patch
+            delattr(requests, '_original_patch')
+        if hasattr(requests, '_original_head'):
+            requests.head = requests._original_head
+            delattr(requests, '_original_head')
+        if hasattr(requests, '_original_options'):
+            requests.options = requests._original_options
+            delattr(requests, '_original_options')
+        if hasattr(requests, '_original_request'):
+            requests.request = requests._original_request
+            delattr(requests, '_original_request')
+    except ImportError:
+        pass
+
+    # Restore urllib if it was blocked
+    try:
+        import urllib.request
+        if hasattr(urllib.request, '_original_urlopen'):
+            urllib.request.urlopen = urllib.request._original_urlopen
+            delattr(urllib.request, '_original_urlopen')
+        if hasattr(urllib.request, '_original_urlretrieve'):
+            urllib.request.urlretrieve = urllib.request._original_urlretrieve
+            delattr(urllib.request, '_original_urlretrieve')
+    except ImportError:
+        pass
+
+    # Restore httpx if it was blocked
+    try:
+        import httpx
+        if hasattr(httpx, '_original_get'):
+            httpx.get = httpx._original_get
+            delattr(httpx, '_original_get')
+        if hasattr(httpx, '_original_post'):
+            httpx.post = httpx._original_post
+            delattr(httpx, '_original_post')
+        if hasattr(httpx, '_original_put'):
+            httpx.put = httpx._original_put
+            delattr(httpx, '_original_put')
+        if hasattr(httpx, '_original_delete'):
+            httpx.delete = httpx._original_delete
+            delattr(httpx, '_original_delete')
+        if hasattr(httpx, '_original_patch'):
+            httpx.patch = httpx._original_patch
+            delattr(httpx, '_original_patch')
+        if hasattr(httpx, '_original_head'):
+            httpx.head = httpx._original_head
+            delattr(httpx, '_original_head')
+        if hasattr(httpx, '_original_options'):
+            httpx.options = httpx._original_options
+            delattr(httpx, '_original_options')
+        if hasattr(httpx, '_original_request'):
+            httpx.request = httpx._original_request
+            delattr(httpx, '_original_request')
+    except ImportError:
+        pass
 
 
 @pytest.fixture(scope="session", autouse=True)
