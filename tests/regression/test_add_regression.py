@@ -343,7 +343,6 @@ class TestAddRegression:
         # and covers the same basic matching intent, consider them equivalent
         if generated.startswith("(?i)") and not original.startswith("(?i)"):
             # Extract the core pattern without case-insensitive flag
-            generated_core = generated[4:]  # Remove (?i)
             # This is an improvement, so we'll accept it
             return True
 

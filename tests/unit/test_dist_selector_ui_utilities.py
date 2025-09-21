@@ -265,7 +265,7 @@ class TestPromptUserSelection:
                 mock_table = Mock()
                 mock_table_class.return_value = mock_table
 
-                result = _prompt_user_selection(asset_infos, mock_console)
+                _prompt_user_selection(asset_infos, mock_console)
 
                 # Verify table creation
                 mock_table_class.assert_called_once_with(show_header=True, header_style="bold magenta")

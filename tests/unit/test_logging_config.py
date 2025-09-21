@@ -1,7 +1,7 @@
 """Tests for logging_config module."""
 
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 
 def test_configure_logging_basic() -> None:

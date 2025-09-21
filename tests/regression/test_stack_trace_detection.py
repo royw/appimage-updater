@@ -14,9 +14,6 @@ import pytest
 
 def run_cli_command(args: list[str], temp_home: Path | None = None) -> tuple[int, str, str]:
     """Run CLI command as subprocess and return exit code, stdout, stderr."""
-    # Get the path to the CLI entry point
-    cli_path = Path(__file__).parent.parent.parent / "src" / "appimage_updater" / "__main__.py"
-
     # Run with uv to match user environment
     cmd = ["uv", "run", "python", "-m", "appimage_updater"] + args
 

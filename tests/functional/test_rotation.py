@@ -261,7 +261,7 @@ class TestRotationEnabled:
         # Create the "downloaded" file
         candidate.download_path.touch()
 
-        result_path = await downloader._perform_rotation(candidate)
+        await downloader._perform_rotation(candidate)
 
         # Verify rotation sequence
         assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.current").exists()  # New current
@@ -312,7 +312,7 @@ class TestRotationEnabled:
         # Create the "downloaded" file
         candidate.download_path.touch()
 
-        result_path = await downloader._perform_rotation(candidate)
+        await downloader._perform_rotation(candidate)
 
         # Should only keep files within retain_count
         assert (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.current").exists()
