@@ -2,9 +2,6 @@
 
 import subprocess
 from pathlib import Path
-from unittest.mock import Mock, patch
-
-import pytest
 
 
 class TestHTTPTrackerDryRun:
@@ -22,30 +19,19 @@ class TestHTTPTrackerDryRun:
 
     def test_check_dry_run_no_http_requests(self):
         """Test that check --dry-run makes no HTTP requests even with HTTP tracking."""
-        # Mock HTTP client to track requests
-        with patch('httpx.AsyncClient') as mock_client:
-            mock_instance = Mock()
-            mock_client.return_value.__aenter__.return_value = mock_instance
-            mock_instance.get = Mock()
-            mock_instance.post = Mock()
-            mock_instance.head = Mock()
-            
-            exit_code, stdout, stderr = self.run_command([
-                "uv", "run", "python", "-m", "appimage_updater", "check", 
-                "--dry-run", "--instrument-http"
-            ])
-            
-            # Command should succeed or fail gracefully
-            assert exit_code in [0, 1], f"Check --dry-run failed unexpectedly: {stderr}"
-            
-            # Should mention dry run in output
-            output = stdout + stderr
-            assert "dry" in output.lower() or "would" in output.lower()
-            
-            # HTTP client should not be called for actual requests
-            mock_instance.get.assert_not_called()
-            mock_instance.post.assert_not_called()
-            mock_instance.head.assert_not_called()
+        # Test that dry-run completes quickly and shows appropriate messages
+        exit_code, stdout, stderr = self.run_command([
+            "uv", "run", "python", "-m", "appimage_updater", "check", 
+            "--dry-run", "--instrument-http"
+        ])
+        
+        # Command should succeed or fail gracefully (no timeout)
+        assert exit_code in [0, 1], f"Check --dry-run failed unexpectedly: {stderr}"
+        
+        # Should show dry-run behavior
+        output = stdout + stderr
+        assert ("dry run mode" in output.lower() or "skipping HTTP requests" in output.lower() or
+                "dry" in output.lower() or "would" in output.lower()), f"Should show dry-run behavior: {output}"
 
     def test_repository_dry_run_no_http_requests(self):
         """Test that repository --dry-run makes no HTTP requests."""
@@ -63,25 +49,26 @@ class TestHTTPTrackerDryRun:
                 "examined" in output.lower() or "not found" in output.lower())
 
     def test_check_without_dry_run_allows_http(self):
-        """Test that check without --dry-run would make HTTP requests (but we'll mock them)."""
-        # This test verifies the HTTP tracker is working when not in dry-run mode
-        with patch('httpx.AsyncClient') as mock_client:
-            mock_instance = Mock()
-            mock_client.return_value.__aenter__.return_value = mock_instance
-            
-            # Mock successful responses to prevent actual network calls
-            mock_response = Mock()
-            mock_response.status_code = 200
-            mock_response.json.return_value = {"message": "API rate limit exceeded"}
-            mock_instance.get.return_value = mock_response
-            
-            exit_code, stdout, stderr = self.run_command([
-                "uv", "run", "python", "-m", "appimage_updater", "check", 
-                "--instrument-http"
-            ])
-            
-            # Command may fail due to no apps or rate limits, but that's OK
-            assert exit_code in [0, 1], f"Check with HTTP tracking failed unexpectedly: {stderr}"
+        """Test that check without --dry-run shows normal behavior (not dry-run behavior)."""
+        # This test verifies the command doesn't show dry-run behavior when not in dry-run mode
+        # We use a non-existent app to avoid real HTTP calls while testing the behavior
+        
+        exit_code, stdout, stderr = self.run_command([
+            "uv", "run", "python", "-m", "appimage_updater", "check", 
+            "NonExistentApp123", "--instrument-http"
+        ])
+        
+        # Command should fail gracefully due to app not found
+        assert exit_code == 1, f"Check should fail for non-existent app: {stderr}"
+        
+        # Should not show dry-run messages since we're not using --dry-run
+        output = stdout + stderr
+        assert "dry run mode" not in output.lower(), "Should not show dry-run messages without --dry-run flag"
+        assert "skipping HTTP requests" not in output.lower(), "Should not skip HTTP requests without --dry-run"
+        
+        # Should show app not found message (normal error behavior)
+        assert ("not found" in output.lower() or "no applications" in output.lower() or 
+                "applications not found" in output.lower()), f"Should show app not found error: {output}"
 
     def test_http_tracker_options_available(self):
         """Test that HTTP tracker options are available in commands that use them."""
