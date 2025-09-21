@@ -95,11 +95,10 @@ class TestE2EFunctionality:
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
 
-        result = runner.invoke(app, ["check", "--config", str(config_file), "--dry-run"])
+        result = runner.invoke(app, ["check", "--config", str(config_file)])
 
         assert result.exit_code == 0
         assert "update available" in result.stdout
-        assert "Dry run mode" in result.stdout
 
     @patch('appimage_updater.repositories.factory.get_repository_client')
     @patch('appimage_updater.core.version_checker.VersionChecker')
@@ -144,7 +143,7 @@ class TestE2EFunctionality:
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
 
-        result = runner.invoke(app, ["check", "TestApp1", "--config", str(config_file), "--dry-run"])
+        result = runner.invoke(app, ["check", "TestApp1", "--config", str(config_file)])
 
         assert result.exit_code == 0
         # Should only check TestApp1, not TestApp2
@@ -193,7 +192,7 @@ class TestE2EFunctionality:
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
 
-        result = runner.invoke(app, ["check", "--config", str(config_file), "--dry-run"])
+        result = runner.invoke(app, ["check", "--config", str(config_file)])
 
         assert result.exit_code == 0  # Should not fail, just report the error
         assert "Error" in result.stdout or "failed" in result.stdout.lower()

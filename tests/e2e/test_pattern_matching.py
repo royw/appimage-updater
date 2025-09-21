@@ -78,7 +78,7 @@ class TestPatternMatching:
         mock_version_checker.check_for_updates = AsyncMock(side_effect=mock_check_for_updates)
         mock_version_checker_class.return_value = mock_version_checker
 
-        result = runner.invoke(app, ["check", "--config", str(config_file), "--dry-run"])
+        result = runner.invoke(app, ["check", "--config", str(config_file)])
 
         assert result.exit_code == 0
         # Should detect that we have a current version (not show "None")
