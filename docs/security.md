@@ -289,9 +289,11 @@ If downloads seem suspicious:
 If config files are compromised:
 
 1. **Backup current config**
+
 1. **Review all application entries**
+
 1. **Regenerate config** if needed:
-  
+
    ```bash
    mv ~/.config/appimage-updater ~/.config/appimage-updater.backup
    appimage-updater list  # This will recreate config automatically
