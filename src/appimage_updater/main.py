@@ -61,13 +61,13 @@ from .ui.cli_options import (
     VERBOSE_OPTION,
     YES_OPTION,
 )
-from .ui.output.interface import OutputFormat
 from .ui.display import (
     _replace_home_with_tilde,
     display_check_results,
     display_download_results,
     display_edit_summary,
 )
+from .ui.output.interface import OutputFormat
 from .utils.logging_config import configure_logging
 from .utils.version_utils import (
     extract_version_from_filename,
@@ -434,12 +434,12 @@ def check(
     output_formatter = create_output_formatter_from_params(command.params)
 
     result = asyncio.run(command.execute(http_tracker=http_tracker, output_formatter=output_formatter))
-    
+
     # Handle format-specific finalization
     if format in [OutputFormat.JSON, OutputFormat.HTML]:
         final_output = output_formatter.finalize()
         if final_output:
-            print(final_output)
+            output_formatter.print(final_output)
     if not result.success:
         raise typer.Exit(result.exit_code)
 

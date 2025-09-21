@@ -2,54 +2,47 @@
 
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.console import Console
-from rich.panel import Panel
 from rich.table import Table
 
 from ...core.models import CheckResult
 from ...utils.version_utils import format_version_display
-from .interface import OutputFormatter
 
 
 class RichOutputFormatter:
     """Rich console output formatter.
-    
+
     This formatter provides the existing Rich console behavior,
     maintaining backward compatibility while implementing the
     OutputFormatter protocol.
     """
-    
-    def __init__(self, console: Optional[Console] = None, verbose: bool = False, **kwargs):
+
+    def __init__(self, console: Console | None = None, verbose: bool = False, **kwargs: Any):
         """Initialize the Rich formatter.
-        
+
         Args:
             console: Optional Rich console instance. Creates default if not provided.
             verbose: Enable verbose output (currently unused but accepted for compatibility)
             **kwargs: Additional arguments (ignored for compatibility)
         """
         self.console = console or Console(no_color=bool(os.environ.get("NO_COLOR")))
-        self._current_section: Optional[str] = None
+        self._current_section: str | None = None
         self.verbose = verbose
-    
+
     def print(self, message: str, **kwargs: Any) -> None:
         """Print a message with Rich styling.
-        
+
         Args:
             message: The message to print
             **kwargs: Rich console print options (style, highlight, etc.)
         """
         self.console.print(message, **kwargs)
-    
-    def print_table(
-        self, 
-        data: List[Dict[str, Any]], 
-        title: str = "",
-        headers: Optional[List[str]] = None
-    ) -> None:
+
+    def print_table(self, data: list[dict[str, Any]], title: str = "", headers: list[str] | None = None) -> None:
         """Display tabular data using Rich Table.
-        
+
         Args:
             data: List of dictionaries representing table rows
             title: Optional table title
@@ -57,34 +50,26 @@ class RichOutputFormatter:
         """
         if not data:
             return
-        
+
         table = Table(title=title)
-        
+
         # Determine headers
-        if headers:
-            table_headers = headers
-        else:
-            table_headers = list(data[0].keys()) if data else []
-        
+        table_headers = headers or (list(data[0].keys()) if data else [])
+
         # Add columns
         for header in table_headers:
             table.add_column(header, style="cyan" if header.lower() in ["application", "name"] else None)
-        
+
         # Add rows
         for row_data in data:
             row = [str(row_data.get(header, "")) for header in table_headers]
             table.add_row(*row)
-        
+
         self.console.print(table)
-    
-    def print_progress(
-        self, 
-        current: int, 
-        total: int, 
-        description: str = ""
-    ) -> None:
+
+    def print_progress(self, current: int, total: int, description: str = "") -> None:
         """Display progress information.
-        
+
         Args:
             current: Current progress value
             total: Total progress value
@@ -94,61 +79,58 @@ class RichOutputFormatter:
         progress_text = f"[{current}/{total}] ({percentage:.1f}%)"
         if description:
             progress_text = f"{description}: {progress_text}"
-        
+
         self.console.print(progress_text)
-    
+
     def print_success(self, message: str) -> None:
         """Display success message with green styling.
-        
+
         Args:
             message: Success message to display
         """
         self.console.print(f"[green]{message}[/green]")
-    
+
     def print_error(self, message: str) -> None:
         """Display error message with red styling.
-        
+
         Args:
             message: Error message to display
         """
         self.console.print(f"[red]{message}[/red]")
-    
+
     def print_warning(self, message: str) -> None:
         """Display warning message with yellow styling.
-        
+
         Args:
             message: Warning message to display
         """
         self.console.print(f"[yellow]{message}[/yellow]")
-    
+
     def print_info(self, message: str) -> None:
         """Display info message with blue styling.
-        
+
         Args:
             message: Info message to display
         """
         self.console.print(f"[blue]{message}[/blue]")
-    
-    def print_check_results(self, results: List[Dict[str, Any]]) -> None:
+
+    def print_check_results(self, results: list[dict[str, Any]]) -> None:
         """Display check results using Rich table formatting.
-        
+
         Args:
             results: List of check result dictionaries
         """
-        # Convert to CheckResult objects if needed for compatibility
-        check_results = []
+        # Convert to CheckResult objects for display
+        check_results: list[CheckResult] = []
         for result_data in results:
-            if isinstance(result_data, CheckResult):
-                check_results.append(result_data)
-            else:
-                # Create CheckResult from dict for compatibility
-                check_results.append(self._dict_to_check_result(result_data))
-        
+            # Create CheckResult from dict
+            check_results.append(self._dict_to_check_result(result_data))
+
         self._display_check_results_table(check_results)
-    
-    def print_application_list(self, applications: List[Dict[str, Any]]) -> None:
+
+    def print_application_list(self, applications: list[dict[str, Any]]) -> None:
         """Display application list using Rich table.
-        
+
         Args:
             applications: List of application dictionaries
         """
@@ -157,89 +139,82 @@ class RichOutputFormatter:
         table.add_column("URL", style="blue", no_wrap=False)
         table.add_column("Download Directory", style="green", no_wrap=False)
         table.add_column("Enabled", style="magenta")
-        
+
         for app in applications:
-            # Handle both dict and object formats
-            if isinstance(app, dict):
-                name = app.get("name", "")
-                url = app.get("url", "")
-                download_dir = app.get("download_dir", "")
-                enabled = "Yes" if app.get("enabled", True) else "No"
-            else:
-                name = getattr(app, "name", "")
-                url = getattr(app, "url", "")
-                download_dir = self._wrap_path(getattr(app, "download_dir", ""))
-                enabled = "Yes" if getattr(app, "enabled", True) else "No"
-            
+            # Handle dict format as specified by interface
+            name = app.get("name", "")
+            url = app.get("url", "")
+            download_dir = self._wrap_path(app.get("download_dir", ""))
+            enabled = "Yes" if app.get("enabled", True) else "No"
             table.add_row(name, url, download_dir, enabled)
-        
+
         self.console.print(table)
-    
-    def print_config_settings(self, settings: Dict[str, Any]) -> None:
+
+    def print_config_settings(self, settings: dict[str, Any]) -> None:
         """Display configuration settings.
-        
+
         Args:
             settings: Dictionary of configuration settings
         """
         table = Table(title="Configuration Settings")
         table.add_column("Setting", style="cyan")
         table.add_column("Value", style="green")
-        
+
         for key, value in settings.items():
             table.add_row(key, str(value))
-        
+
         self.console.print(table)
-    
+
     def start_section(self, title: str) -> None:
         """Start a new output section with Rich panel.
-        
+
         Args:
             title: Section title
         """
         self._current_section = title
         self.console.print(f"\n[bold cyan]{title}[/bold cyan]")
         self.console.print("=" * len(title))
-    
+
     def end_section(self) -> None:
         """End the current output section."""
         if self._current_section:
             self.console.print("")  # Add spacing
             self._current_section = None
-    
-    def finalize(self) -> Optional[str]:
+
+    def finalize(self) -> str | None:
         """Finalize Rich output.
-        
+
         Rich output goes directly to console, so this returns None.
-        
+
         Returns:
             None for console output
         """
         return None
-    
+
     # Helper methods for compatibility with existing display.py code
-    
+
     def _wrap_path(self, path: str, max_width: int = 40) -> str:
         """Wrap a path by breaking on path separators."""
         if not path:
             return path
-        
+
         # Replace home directory with ~ for display
         display_path = self._replace_home_with_tilde(path)
-        
+
         if len(display_path) <= max_width:
             return display_path
-        
+
         # If still too long, truncate with ellipsis
-        return "..." + display_path[-(max_width - 3):]
-    
+        return "..." + display_path[-(max_width - 3) :]
+
     def _replace_home_with_tilde(self, path_str: str) -> str:
         """Replace home directory path with ~ for display purposes."""
         if not path_str:
             return path_str
-        
+
         home_path = str(Path.home())
         if path_str.startswith(home_path):
-            relative_path = path_str[len(home_path):]
+            relative_path = path_str[len(home_path) :]
             if relative_path.startswith(os.sep):
                 return "~" + relative_path
             elif relative_path == "":
@@ -247,8 +222,8 @@ class RichOutputFormatter:
             else:
                 return "~" + os.sep + relative_path
         return path_str
-    
-    def _dict_to_check_result(self, result_data: Dict[str, Any]) -> CheckResult:
+
+    def _dict_to_check_result(self, result_data: dict[str, Any]) -> CheckResult:
         """Convert dictionary to CheckResult for compatibility."""
         # This is a simplified conversion - in practice, you'd want proper
         # CheckResult construction from the dict data
@@ -256,10 +231,10 @@ class RichOutputFormatter:
             app_name=result_data.get("app_name", ""),
             success=result_data.get("success", False),
             candidate=result_data.get("candidate"),
-            error_message=result_data.get("error_message")
+            error_message=result_data.get("error_message"),
         )
-    
-    def _display_check_results_table(self, results: List[CheckResult]) -> None:
+
+    def _display_check_results_table(self, results: list[CheckResult]) -> None:
         """Display check results in a Rich table (existing logic)."""
         table = Table(title="Update Check Results")
         table.add_column("Application", style="cyan")
@@ -267,7 +242,7 @@ class RichOutputFormatter:
         table.add_column("Current Version", style="yellow")
         table.add_column("Latest Version", style="green")
         table.add_column("Update Available", style="red")
-        
+
         for result in results:
             if not result.success:
                 # Error row
@@ -276,7 +251,7 @@ class RichOutputFormatter:
                     "[red]Error[/red]",
                     "[dim]N/A[/dim]",
                     "[dim]N/A[/dim]",
-                    result.error_message or "Unknown error"
+                    result.error_message or "Unknown error",
                 )
             elif result.candidate is None:
                 # No candidate row
@@ -285,27 +260,21 @@ class RichOutputFormatter:
                     "[yellow]No updates found[/yellow]",
                     "[dim]N/A[/dim]",
                     "[dim]N/A[/dim]",
-                    "[dim]N/A[/dim]"
+                    "[dim]N/A[/dim]",
                 )
             else:
                 # Success row
                 candidate = result.candidate
                 current = format_version_display(candidate.current_version) or "[dim]None"
                 latest = format_version_display(candidate.latest_version)
-                
+
                 if candidate.needs_update:
                     status = "[green]Up to date[/green]"
                     update_indicator = "Update available"
                 else:
                     status = "[yellow]Update available[/yellow]"
                     update_indicator = "Up to date"
-                
-                table.add_row(
-                    result.app_name,
-                    status,
-                    current,
-                    latest,
-                    update_indicator
-                )
-        
+
+                table.add_row(result.app_name, status, current, latest, update_indicator)
+
         self.console.print(table)
