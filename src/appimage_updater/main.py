@@ -441,7 +441,7 @@ def check(
     if format in [OutputFormat.JSON, OutputFormat.HTML]:
         final_output = output_formatter.finalize()
         if final_output:
-            output_formatter.print(final_output)
+            print(final_output)
     if not result.success:
         raise typer.Exit(result.exit_code)
 
@@ -476,7 +476,7 @@ def list_apps(
         result = asyncio.run(command.execute(output_formatter=output_formatter))
         final_output = output_formatter.finalize()
         if final_output:
-            output_formatter.print(final_output)
+            print(final_output)
     else:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
 
@@ -564,7 +564,7 @@ def add(
         result = asyncio.run(command.execute(output_formatter=output_formatter))
         final_output = output_formatter.finalize()
         if final_output:
-            output_formatter.print(final_output)
+            print(final_output)
     else:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
 
@@ -1072,7 +1072,7 @@ def edit(
         result = asyncio.run(command.execute(output_formatter=output_formatter))
         final_output = output_formatter.finalize()
         if final_output:
-            output_formatter.print(final_output)
+            print(final_output)
     else:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
 
@@ -1138,7 +1138,7 @@ def show(
         result = asyncio.run(command.execute(output_formatter=output_formatter))
         final_output = output_formatter.finalize()
         if final_output:
-            output_formatter.print(final_output)
+            print(final_output)
     else:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
 
@@ -1214,7 +1214,7 @@ def remove(
         result = asyncio.run(command.execute(output_formatter=output_formatter))
         final_output = output_formatter.finalize()
         if final_output:
-            output_formatter.print(final_output)
+            print(final_output)
     else:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
 
@@ -1275,7 +1275,7 @@ def repository(
         result = asyncio.run(command.execute(output_formatter=output_formatter))
         final_output = output_formatter.finalize()
         if final_output:
-            output_formatter.print(final_output)
+            print(final_output)
     else:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
 
@@ -2214,7 +2214,7 @@ def config(
         result = asyncio.run(command.execute(output_formatter=output_formatter))
         final_output = output_formatter.finalize()
         if final_output:
-            output_formatter.print(final_output)
+            print(final_output)
     else:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
 

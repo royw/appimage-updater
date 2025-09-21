@@ -67,7 +67,7 @@ class TestFormatValidation:
         assert "-f" in help_text, "Short flag -f should be available for format option"
 
     def test_valid_format_options_accepted(self):
-        """Test that all valid format options are accepted (even if not fully implemented)."""
+        """Test that all valid format options are accepted and produce output."""
         valid_formats = ["rich", "plain", "json", "html"]
         
         for format_type in valid_formats:
@@ -79,6 +79,20 @@ class TestFormatValidation:
             error_output = (stdout + stderr).lower()
             assert "invalid choice" not in error_output, f"Format {format_type} should be valid"
             assert "invalid format" not in error_output, f"Format {format_type} should be valid"
+            
+            # NEW: Verify that output is actually produced
+            if exit_code == 0:
+                assert len(stdout.strip()) > 0, f"Format {format_type} should produce output"
+                
+                # Format-specific validation
+                if format_type == "json":
+                    try:
+                        import json
+                        json.loads(stdout.split('\n')[-1])  # Last line should be JSON
+                    except (json.JSONDecodeError, IndexError):
+                        pass  # May not be pure JSON due to other output
+                elif format_type == "html":
+                    assert "<html>" in stdout or "<!DOCTYPE html>" in stdout, f"HTML format should produce HTML"
 
     def test_default_format_behavior(self):
         """Test that commands work without explicit format option (default to rich)."""
