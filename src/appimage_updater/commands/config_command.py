@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import Any
 
 from loguru import logger
 from rich.console import Console
@@ -53,7 +54,7 @@ class ConfigCommand(Command):
         errors.extend(self._validate_show_effective_parameters())
         return errors
 
-    async def execute(self) -> CommandResult:
+    async def execute(self, output_formatter: Any = None) -> CommandResult:
         """Execute the config command."""
         configure_logging(debug=self.params.debug)
 
@@ -63,8 +64,15 @@ class ConfigCommand(Command):
             if validation_result:
                 return validation_result
 
-            # Execute the config operation
-            success = await self._execute_config_operation()
+            # Use context manager to make output formatter available throughout the execution
+            if output_formatter:
+                from ..ui.output.context import OutputFormatterContext
+
+                with OutputFormatterContext(output_formatter):
+                    success = await self._execute_config_operation()
+            else:
+                success = await self._execute_config_operation()
+
             return self._create_result(success)
 
         except Exception as e:

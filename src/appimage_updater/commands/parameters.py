@@ -132,3 +132,4 @@ class ConfigParams(BaseParams):
     setting: str = ""
     value: str = ""
     app_name: str = ""
+    format: Any = None  # OutputFormat, avoiding circular import

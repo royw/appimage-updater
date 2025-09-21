@@ -263,6 +263,7 @@ class CommandFactory:
         config_file: Path | None = None,
         config_dir: Path | None = None,
         debug: bool = False,
+        format: Any = None,
     ) -> ConfigCommand:
         """Create a ConfigCommand instance."""
         params = ConfigParams(
@@ -273,5 +274,6 @@ class CommandFactory:
             config_file=config_file,
             config_dir=config_dir,
             debug=debug,
+            format=format,
         )
         return ConfigCommand(params)

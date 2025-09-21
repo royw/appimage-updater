@@ -41,7 +41,7 @@ FORMAT_OPTION = typer.Option(
     OutputFormat.RICH,
     "--format",
     "-f",
-    help="Output format: rich (default), plain, json, or html",
+    help="Output format: rich, plain, json, or html",
     case_sensitive=False,
 )
 

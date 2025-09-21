@@ -2030,6 +2030,7 @@ def config(
     config_file: Path = _CONFIG_FILE_OPTION,
     config_dir: Path = _CONFIG_DIR_OPTION,
     debug: bool = get_debug_option(),
+    format: OutputFormat = FORMAT_OPTION,
     version: bool = get_version_option(),
 ) -> None:
     """Manage global configuration settings."""
@@ -2060,9 +2061,21 @@ def config(
         config_file=config_file,
         config_dir=config_dir,
         debug=debug,
+        format=format,
     )
 
-    result = asyncio.run(command.execute())
+    # Create output formatter and execute with context
+    output_formatter = create_output_formatter_from_params(command.params)
+
+    # Handle format-specific finalization
+    if format in [OutputFormat.JSON, OutputFormat.HTML]:
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+        final_output = output_formatter.finalize()
+        if final_output:
+            output_formatter.print(final_output)
+    else:
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+
     if not result.success:
         raise typer.Exit(result.exit_code)
 
