@@ -8,7 +8,6 @@ from appimage_updater.ui.display import (
     _create_no_candidate_row,
     _create_result_row,
     _create_results_table,
-    _create_success_row,
     _extract_url_results,
     _format_success_versions,
     _get_success_status_and_indicator,
@@ -23,7 +22,7 @@ class TestGetSuccessStatusAndIndicator:
         """Test status when update is needed."""
         candidate = Mock()
         candidate.needs_update = True
-        
+
         status, indicator = _get_success_status_and_indicator(candidate)
         assert status == "Update available"
         assert indicator == "Update available"
@@ -32,7 +31,7 @@ class TestGetSuccessStatusAndIndicator:
         """Test status when up to date."""
         candidate = Mock()
         candidate.needs_update = False
-        
+
         status, indicator = _get_success_status_and_indicator(candidate)
         assert status == "Up to date"
         assert indicator == "Up to date"
@@ -45,11 +44,11 @@ class TestFormatSuccessVersions:
     def test_both_versions(self, mock_format: Mock) -> None:
         """Test formatting when both versions are available."""
         mock_format.side_effect = ["1.0.0", "1.1.0"]
-        
+
         candidate = Mock()
         candidate.current_version = "1.0.0"
         candidate.latest_version = "1.1.0"
-        
+
         current, latest = _format_success_versions(candidate)
         assert current == "1.0.0"
         assert latest == "1.1.0"
@@ -58,9 +57,9 @@ class TestFormatSuccessVersions:
     def test_no_current_version(self, mock_format: Mock) -> None:
         """Test formatting when no current version."""
         mock_format.side_effect = [None, "1.1.0"]
-        
+
         candidate = Mock()
-        
+
         current, latest = _format_success_versions(candidate)
         assert current == "[dim]None"
         assert latest == "1.1.0"
@@ -74,7 +73,7 @@ class TestAddUrlIfRequested:
         row = ["app", "status"]
         candidate = Mock()
         candidate.asset.url = "https://example.com/download"
-        
+
         result = _add_url_if_requested(row, True, candidate)
         assert result == ["app", "status", "https://example.com/download"]
 
@@ -82,7 +81,7 @@ class TestAddUrlIfRequested:
         """Test not adding URL when not requested."""
         row = ["app", "status"]
         candidate = Mock()
-        
+
         result = _add_url_if_requested(row, False, candidate)
         assert result == ["app", "status"]
 
@@ -95,7 +94,7 @@ class TestCreateErrorRow:
         result = Mock()
         result.app_name = "TestApp"
         result.error_message = "Test error"
-        
+
         row = _create_error_row(result, False)
         assert row == ["TestApp", "Error", "-", "-", "Test error"]
 
@@ -104,7 +103,7 @@ class TestCreateErrorRow:
         result = Mock()
         result.app_name = "TestApp"
         result.error_message = "Test error"
-        
+
         row = _create_error_row(result, True)
         assert row == ["TestApp", "Error", "-", "-", "Test error", "-"]
 
@@ -117,7 +116,7 @@ class TestCreateNoCandidateRow:
         result = Mock()
         result.app_name = "TestApp"
         result.error_message = "No matching assets"
-        
+
         row = _create_no_candidate_row(result, False)
         assert row == ["TestApp", "No candidate", "-", "-", "No matching assets"]
 
@@ -129,10 +128,10 @@ class TestCreateResultRow:
     def test_error_result(self, mock_error: Mock) -> None:
         """Test creating row for error result."""
         mock_error.return_value = ["TestApp", "Error", "-", "-", "-"]
-        
+
         result = Mock()
         result.success = False
-        
+
         _create_result_row(result, False)
         mock_error.assert_called_once_with(result, False)
 
@@ -142,7 +141,7 @@ class TestCreateResultRow:
         result = Mock()
         result.success = True
         result.candidate = Mock()
-        
+
         _create_result_row(result, False)
         mock_success.assert_called_once_with(result, False)
 
@@ -162,7 +161,7 @@ class TestExtractUrlResults:
         result.candidate = Mock()
         result.app_name = "App1"
         result.candidate.asset.url = "https://example.com/app1"
-        
+
         results = _extract_url_results([result])
         assert results == [("App1", "https://example.com/app1")]
 
@@ -173,10 +172,10 @@ class TestExtractUrlResults:
         success_result.candidate = Mock()
         success_result.app_name = "SuccessApp"
         success_result.candidate.asset.url = "https://example.com/success"
-        
+
         error_result = Mock()
         error_result.success = False
-        
+
         results = _extract_url_results([success_result, error_result])
         assert results == [("SuccessApp", "https://example.com/success")]
 
@@ -205,10 +204,10 @@ class TestDisplayCheckResults:
         """Test basic display functionality."""
         mock_table.return_value = Mock()
         mock_row.return_value = ["TestApp", "Up to date", "1.0.0", "1.0.0", "Up to date"]
-        
+
         results = [Mock()]
         display_check_results(results, False)
-        
+
         mock_table.assert_called_once_with(False)
         mock_row.assert_called_once()
         mock_console.print.assert_called_once()

@@ -26,9 +26,9 @@ class TestParseAssetInfo:
             size=1024,
             created_at=datetime.now()
         )
-        
+
         result = _parse_asset_info(asset)
-        
+
         assert result.asset == asset
         assert result.distribution == "ubuntu"
         assert result.version == "24.04"
@@ -45,9 +45,9 @@ class TestParseAssetInfo:
             size=1024,
             created_at=datetime.now()
         )
-        
+
         result = _parse_asset_info(asset)
-        
+
         assert result.distribution is None
         assert result.version is None
         assert result.arch is None
@@ -61,9 +61,9 @@ class TestExtractDistributionInfo:
         """Test extracting Ubuntu distribution and version."""
         asset = Asset(name="test", url="test", size=1, created_at=datetime.now())
         info = AssetInfo(asset=asset)
-        
+
         _extract_distribution_info("myapp-ubuntu-24.04-x86_64.appimage", info)
-        
+
         assert info.distribution == "ubuntu"
         assert info.version == "24.04"
         assert info.version_numeric == 24.04
@@ -72,9 +72,9 @@ class TestExtractDistributionInfo:
         """Test extracting Fedora distribution."""
         asset = Asset(name="test", url="test", size=1, created_at=datetime.now())
         info = AssetInfo(asset=asset)
-        
+
         _extract_distribution_info("app-fedora-38-x86_64.appimage", info)
-        
+
         assert info.distribution == "fedora"
         assert info.version == "38"
         assert info.version_numeric == 38.0
@@ -83,9 +83,9 @@ class TestExtractDistributionInfo:
         """Test extracting Arch Linux (rolling release)."""
         asset = Asset(name="test", url="test", size=1, created_at=datetime.now())
         info = AssetInfo(asset=asset)
-        
+
         _extract_distribution_info("myapp-arch-rolling-x86_64.appimage", info)
-        
+
         assert info.distribution == "arch"
         assert info.version is None
 
@@ -97,27 +97,27 @@ class TestExtractArchitectureInfo:
         """Test extracting x86_64 architecture."""
         asset = Asset(name="test", url="test", size=1, created_at=datetime.now())
         info = AssetInfo(asset=asset)
-        
+
         _extract_architecture_info("myapp-x86_64.appimage", info)
-        
+
         assert info.arch == "x86_64"
 
     def test_amd64(self) -> None:
         """Test extracting amd64 architecture."""
         asset = Asset(name="test", url="test", size=1, created_at=datetime.now())
         info = AssetInfo(asset=asset)
-        
+
         _extract_architecture_info("myapp-amd64.appimage", info)
-        
+
         assert info.arch == "amd64"
 
     def test_no_match(self) -> None:
         """Test filename with no architecture match."""
         asset = Asset(name="test", url="test", size=1, created_at=datetime.now())
         info = AssetInfo(asset=asset)
-        
+
         _extract_architecture_info("generic-app.appimage", info)
-        
+
         assert info.arch is None
 
 
@@ -128,27 +128,27 @@ class TestExtractFormatInfo:
         """Test extracting AppImage format."""
         asset = Asset(name="test", url="test", size=1, created_at=datetime.now())
         info = AssetInfo(asset=asset)
-        
+
         _extract_format_info("myapp.appimage", info)
-        
+
         assert info.format == "appimage"
 
     def test_zip_format(self) -> None:
         """Test extracting ZIP format."""
         asset = Asset(name="test", url="test", size=1, created_at=datetime.now())
         info = AssetInfo(asset=asset)
-        
+
         _extract_format_info("myapp.zip", info)
-        
+
         assert info.format == "zip"
 
     def test_no_match(self) -> None:
         """Test filename with no format match."""
         asset = Asset(name="test", url="test", size=1, created_at=datetime.now())
         info = AssetInfo(asset=asset)
-        
+
         _extract_format_info("myapp.exe", info)
-        
+
         assert info.format is None
 
 

@@ -22,6 +22,7 @@ from typer.testing import CliRunner
 
 from appimage_updater.main import app
 
+
 class TestAddRegression:
     """Regression tests for the add command using real user configurations."""
 

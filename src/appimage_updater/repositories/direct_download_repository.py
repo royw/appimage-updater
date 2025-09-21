@@ -73,118 +73,6 @@ class DirectDownloadRepository(RepositoryClient):
             logger.error(f"Failed to get releases for {url}: {e}")
             raise RepositoryError(f"Failed to fetch release information: {e}") from e
 
-    async def _handle_direct_download(self, client: httpx.AsyncClient, url: str) -> list[Release]:
-        """Handle direct download URLs."""
-        # Extract original filename before making requests
-        original_filename = self._extract_filename_from_url(url)
-
-        # For URLs ending with -latest or similar, use GET to handle redirects properly
-        if "-latest" in url or "latest" in url:
-            # Use GET request to follow redirects and get final URL
-            response = await client.get(url)
-            response.raise_for_status()
-            final_url = str(response.url)
-            file_size = len(response.content)
-        else:
-            # Use HEAD request for direct URLs
-            response = await client.head(url)
-            response.raise_for_status()
-            final_url = str(response.url)
-            file_size = int(response.headers.get("content-length", 0))
-
-        # Get file modification date from Last-Modified header
-        file_date = self._extract_file_date(response)
-
-        # For nightly builds and direct URLs, use date-based versioning
-        version = self._extract_version_from_url_with_date(url, file_date)
-
-        # Create asset from the download URL, but use original filename
-        asset = Asset(
-            name=original_filename,
-            url=final_url,
-            size=file_size,
-            created_at=file_date,
-        )
-
-        # Create release object with normalized version
-        normalized_version = normalize_version_string(version)
-        release = Release(
-            version=normalized_version,
-            tag_name=normalized_version,
-            published_at=file_date,
-            assets=[asset],
-            is_prerelease=False,
-            is_draft=False,
-        )
-
-        return [release]
-
-    async def _handle_releases_page(self, client: httpx.AsyncClient, url: str) -> list[Release]:
-        """Handle releases pages that contain links to AppImage files."""
-        # Get the releases page content
-        response = await client.get(url)
-        response.raise_for_status()
-        content = response.text
-
-        # Look for AppImage download links in both HTML and markdown formats
-        html_quoted_pattern = r'href="([^"]*\.AppImage[^"]*)"'
-        html_unquoted_pattern = r"href=([^\s>]*\.AppImage[^\s>]*)"
-        markdown_pattern = r"\]\(([^)]*\.AppImage[^)]*)\)"
-
-        html_quoted_matches = re.findall(html_quoted_pattern, content, re.IGNORECASE)
-        html_unquoted_matches = re.findall(html_unquoted_pattern, content, re.IGNORECASE)
-        markdown_matches = re.findall(markdown_pattern, content, re.IGNORECASE)
-
-        matches = html_quoted_matches + html_unquoted_matches + markdown_matches
-
-        if not matches:
-            raise RepositoryError(f"No AppImage downloads found on {url}")
-
-        # Use the first match (most recent/latest)
-        download_url = matches[0]
-        if not download_url.startswith("http"):
-            from urllib.parse import urljoin
-
-            download_url = urljoin(url, download_url)
-
-        # Extract version from the download URL
-        version = self._extract_version_from_url(download_url)
-
-        # Try to get file size
-        try:
-            head_response = await client.head(download_url, follow_redirects=True)
-            file_size = int(head_response.headers.get("content-length", 0))
-        except Exception:
-            file_size = 0  # Size unknown
-
-        # Try to get file date from Last-Modified header
-        file_date = datetime.now()  # fallback
-        try:
-            head_response = await client.head(download_url, follow_redirects=True)
-            file_date = self._extract_file_date(head_response)
-        except Exception as e:
-            logger.debug(f"Failed to get file date for {download_url}: {e}")  # Use fallback date
-
-        asset = Asset(
-            name=self._extract_filename_from_url(download_url),
-            url=download_url,
-            size=file_size,
-            created_at=file_date,
-        )
-
-        # Create release with normalized version
-        normalized_version = normalize_version_string(version)
-        release = Release(
-            version=normalized_version,
-            tag_name=normalized_version,
-            published_at=file_date,
-            assets=[asset],
-            is_prerelease=False,
-            is_draft=False,
-        )
-
-        return [release]
-
     def parse_repo_url(self, url: str) -> tuple[str, str]:
         """Parse direct download URL to extract meaningful components."""
         # For direct downloads, we'll use domain and path as identifiers
@@ -226,21 +114,6 @@ class DirectDownloadRepository(RepositoryClient):
         # For direct download URLs, use a timestamp-based version for nightly builds
         return datetime.now().strftime("%Y%m%d")
 
-    def _extract_version_from_url_with_date(self, url: str, file_date: datetime) -> str:
-        """Extract version from URL, using date for nightly builds."""
-        # First try standard version extraction
-        version = self._extract_version_from_url(url)
-
-        # If it's a nightly build or date-based version, use the file date
-        if version in ["nightly", "latest"] or "nightly" in url.lower():
-            return file_date.strftime("%Y-%m-%d")
-
-        # If no semantic version found, use date
-        if not re.match(r"\d+\.\d+", version):
-            return file_date.strftime("%Y-%m-%d")
-
-        return version
-
     def _try_parse_last_modified_header(self, response: httpx.Response) -> datetime | None:
         """Try to parse Last-Modified header."""
         last_modified = response.headers.get("last-modified")
@@ -264,21 +137,6 @@ class DirectDownloadRepository(RepositoryClient):
             except (ValueError, TypeError):
                 pass
         return None
-
-    def _extract_file_date(self, response: httpx.Response) -> datetime:
-        """Extract file modification date from HTTP response headers."""
-        # Try Last-Modified header first
-        date = self._try_parse_last_modified_header(response)
-        if date:
-            return date
-
-        # Try Date header as fallback
-        date = self._try_parse_date_header(response)
-        if date:
-            return date
-
-        # Fallback to current time
-        return datetime.now()
 
     def _extract_filename_from_url(self, url: str) -> str:
         """Extract filename from URL."""
@@ -387,7 +245,6 @@ class DirectDownloadRepository(RepositoryClient):
         )
 
         # Create release object
-        from ..utils.version_utils import normalize_version_string
 
         normalized_version = normalize_version_string(version)
         release = Release(
@@ -448,7 +305,6 @@ class DirectDownloadRepository(RepositoryClient):
         )
 
         # Create release object
-        from ..utils.version_utils import normalize_version_string
 
         normalized_version = normalize_version_string(version)
         release = Release(

@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from appimage_updater.core.models import Release, Asset
+from appimage_updater.core.models import Asset, Release
 
 
 @pytest.fixture

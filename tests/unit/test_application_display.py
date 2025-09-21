@@ -1,33 +1,21 @@
 """Unit tests for ui.display_utils.application_display module."""
 
-import os
 import re
-from pathlib import Path
 from unittest.mock import Mock, patch
 
 from appimage_updater.ui.display import (
     _add_checksum_details,
     _add_checksum_status_line,
-    _add_managed_symlink_line,
     _add_retain_count_line,
     _add_rotation_status_line,
-    _collect_matching_files,
     _get_app_config_path,
     _has_checksum_config,
     _is_matching_appimage_file,
-    add_checksum_config_lines,
-    add_optional_config_lines,
-    add_rotation_config_lines,
     display_edit_summary,
-    find_matching_appimage_files,
-    format_single_file_info,
     get_base_appimage_name,
     get_basic_config_lines,
-    get_configuration_info,
-    get_files_info,
     get_rotation_indicator,
     get_symlinks_info,
-    group_files_by_rotation,
     has_rotation_suffix,
 )
 
@@ -107,10 +95,10 @@ class TestGetAppConfigPath:
     def test_file_config(self, mock_tilde: Mock) -> None:
         """Test getting config path for file-based config."""
         mock_tilde.return_value = "~/config.json"
-        
+
         app = Mock()
         config_info = {"type": "file", "path": "/home/user/config.json"}
-        
+
         result = _get_app_config_path(app, config_info)
         assert result == "~/config.json"
 
@@ -118,11 +106,11 @@ class TestGetAppConfigPath:
     def test_directory_config(self, mock_tilde: Mock) -> None:
         """Test getting config path for directory-based config."""
         mock_tilde.return_value = "~/config/myapp.json"
-        
+
         app = Mock()
         app.name = "myapp"
         config_info = {"type": "directory", "path": "/home/user/config"}
-        
+
         result = _get_app_config_path(app, config_info)
         assert result == "~/config/myapp.json"
 
@@ -130,7 +118,7 @@ class TestGetAppConfigPath:
         """Test getting config path for unknown config type."""
         app = Mock()
         config_info = {"type": "unknown", "path": "/some/path"}
-        
+
         result = _get_app_config_path(app, config_info)
         assert result is None
 
@@ -142,20 +130,20 @@ class TestHasChecksumConfig:
         """Test app with checksum config."""
         app = Mock()
         app.checksum = Mock()
-        
+
         assert _has_checksum_config(app)
 
     def test_no_checksum_attribute(self) -> None:
         """Test app without checksum attribute."""
         app = Mock(spec=[])  # No checksum attribute
-        
+
         assert not _has_checksum_config(app)
 
     def test_falsy_checksum(self) -> None:
         """Test app with falsy checksum."""
         app = Mock()
         app.checksum = None
-        
+
         assert not _has_checksum_config(app)
 
 
@@ -167,7 +155,7 @@ class TestAddChecksumStatusLine:
         app = Mock()
         app.checksum.enabled = True
         config_lines = []
-        
+
         _add_checksum_status_line(app, config_lines)
         assert config_lines == ["[bold]Checksum Verification:[/bold] Enabled"]
 
@@ -176,7 +164,7 @@ class TestAddChecksumStatusLine:
         app = Mock()
         app.checksum.enabled = False
         config_lines = []
-        
+
         _add_checksum_status_line(app, config_lines)
         assert config_lines == ["[bold]Checksum Verification:[/bold] Disabled"]
 
@@ -191,7 +179,7 @@ class TestAddChecksumDetails:
         app.checksum.pattern = "*.sha256"
         app.checksum.required = True
         config_lines = []
-        
+
         _add_checksum_details(app, config_lines)
         expected = [
             "  [dim]Algorithm:[/dim] SHA256",
@@ -209,7 +197,7 @@ class TestAddRotationStatusLine:
         app = Mock()
         app.rotation_enabled = True
         config_lines = []
-        
+
         _add_rotation_status_line(app, config_lines)
         assert config_lines == ["[bold]File Rotation:[/bold] Enabled"]
 
@@ -218,7 +206,7 @@ class TestAddRotationStatusLine:
         app = Mock()
         app.rotation_enabled = False
         config_lines = []
-        
+
         _add_rotation_status_line(app, config_lines)
         assert config_lines == ["[bold]File Rotation:[/bold] Disabled"]
 
@@ -231,7 +219,7 @@ class TestAddRetainCountLine:
         app = Mock()
         app.retain_count = 5
         config_lines = []
-        
+
         _add_retain_count_line(app, config_lines)
         assert config_lines == ["  [dim]Retain Count:[/dim] 5 files"]
 
@@ -239,7 +227,7 @@ class TestAddRetainCountLine:
         """Test not adding retain count line when attribute missing."""
         app = Mock(spec=[])  # No retain_count attribute
         config_lines = []
-        
+
         _add_retain_count_line(app, config_lines)
         assert config_lines == []
 
@@ -253,18 +241,18 @@ class TestIsMatchingAppImageFile:
         file_path.is_file.return_value = True
         file_path.is_symlink.return_value = False
         file_path.name = "app.AppImage"
-        
+
         pattern = re.compile(r".*\.AppImage$")
-        
+
         assert _is_matching_appimage_file(file_path, pattern)
 
     def test_non_file(self) -> None:
         """Test directory (not a file)."""
         file_path = Mock()
         file_path.is_file.return_value = False
-        
+
         pattern = re.compile(r".*\.AppImage$")
-        
+
         assert not _is_matching_appimage_file(file_path, pattern)
 
     def test_symlink(self) -> None:
@@ -272,9 +260,9 @@ class TestIsMatchingAppImageFile:
         file_path = Mock()
         file_path.is_file.return_value = True
         file_path.is_symlink.return_value = True
-        
+
         pattern = re.compile(r".*\.AppImage$")
-        
+
         assert not _is_matching_appimage_file(file_path, pattern)
 
     def test_non_matching_pattern(self) -> None:
@@ -283,9 +271,9 @@ class TestIsMatchingAppImageFile:
         file_path.is_file.return_value = True
         file_path.is_symlink.return_value = False
         file_path.name = "app.txt"
-        
+
         pattern = re.compile(r".*\.AppImage$")
-        
+
         assert not _is_matching_appimage_file(file_path, pattern)
 
 
@@ -296,7 +284,7 @@ class TestGetBasicConfigLines:
     def test_enabled_app(self, mock_tilde: Mock) -> None:
         """Test basic config lines for enabled app."""
         mock_tilde.return_value = "~/downloads"
-        
+
         app = Mock()
         app.name = "TestApp"
         app.enabled = True
@@ -304,7 +292,7 @@ class TestGetBasicConfigLines:
         app.url = "https://github.com/user/repo"
         app.download_dir = "/home/user/downloads"
         app.pattern = "*.AppImage"
-        
+
         result = get_basic_config_lines(app)
         expected = [
             "[bold]Name:[/bold] TestApp",
@@ -320,7 +308,7 @@ class TestGetBasicConfigLines:
     def test_disabled_app(self, mock_tilde: Mock) -> None:
         """Test basic config lines for disabled app."""
         mock_tilde.return_value = "~/downloads"
-        
+
         app = Mock()
         app.name = "TestApp"
         app.enabled = False
@@ -328,7 +316,7 @@ class TestGetBasicConfigLines:
         app.url = "https://example.com/app.AppImage"
         app.download_dir = "/home/user/downloads"
         app.pattern = "app*.AppImage"
-        
+
         result = get_basic_config_lines(app)
         expected = [
             "[bold]Name:[/bold] TestApp",
@@ -348,9 +336,9 @@ class TestDisplayEditSummary:
     def test_display_edit_summary(self, mock_console: Mock) -> None:
         """Test displaying edit summary."""
         changes = ["Updated URL", "Changed pattern", "Enabled prerelease"]
-        
+
         display_edit_summary("TestApp", changes)
-        
+
         # Verify console.print was called with expected messages
         assert mock_console.print.call_count == 5  # Header + "Changes made:" + 3 changes
         mock_console.print.assert_any_call("\n[green]Successfully updated configuration for 'TestApp'[/green]")
@@ -369,14 +357,14 @@ class TestGetSymlinksInfo:
         """Test app with no symlink configured."""
         app = Mock()
         app.download_dir = "/tmp/test"
-        
+
         # Mock Path to return an object that exists
         mock_path_instance = Mock()
         mock_path_instance.exists.return_value = True
         mock_path.return_value = mock_path_instance
-        
+
         mock_find_symlinks.return_value = []
-        
+
         result = get_symlinks_info(app)
         assert result == "[yellow]No symlinks found pointing to AppImage files[/yellow]"
 
@@ -387,14 +375,14 @@ class TestGetSymlinksInfo:
         app = Mock()
         app.download_dir = "/tmp/test"
         app.symlink_path = None
-        
+
         # Mock Path to return an object that exists
         mock_path_instance = Mock()
         mock_path_instance.exists.return_value = True
         mock_path.return_value = mock_path_instance
-        
+
         mock_find_symlinks.return_value = []
-        
+
         result = get_symlinks_info(app)
         assert result == "[yellow]No symlinks found pointing to AppImage files[/yellow]"
 
@@ -404,12 +392,12 @@ class TestGetSymlinksInfo:
         """Test when download directory doesn't exist."""
         app = Mock()
         app.download_dir = "/nonexistent/path"
-        
+
         with patch('appimage_updater.ui.display.Path') as mock_path:
             mock_path_instance = Mock()
             mock_path_instance.exists.return_value = False
             mock_path.return_value = mock_path_instance
-            
+
             result = get_symlinks_info(app)
             assert result == "[yellow]Download directory does not exist[/yellow]"
 
@@ -421,14 +409,14 @@ class TestGetSymlinksInfo:
         app = Mock()
         app.download_dir = "/tmp/test"
         app.symlink_path = "/home/user/bin/app"
-        
+
         # Mock Path to return an object that exists
         mock_path_instance = Mock()
         mock_path_instance.exists.return_value = True
         mock_path.return_value = mock_path_instance
-        
+
         mock_find_symlinks.return_value = ["/path/to/symlink"]
         mock_format.return_value = "Formatted symlink info"
-        
+
         result = get_symlinks_info(app)
         assert result == "Formatted symlink info"

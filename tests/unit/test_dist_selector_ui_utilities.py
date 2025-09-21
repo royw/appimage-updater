@@ -26,17 +26,17 @@ class TestPromptUserSelection:
             size=2048,
             created_at=datetime.now()
         )
-        
+
         asset_infos = [
             AssetInfo(asset=asset1, distribution="ubuntu", version="24.04", score=90.0),
             AssetInfo(asset=asset2, distribution="fedora", version="38", score=85.0)
         ]
-        
+
         mock_console = Mock()
-        
+
         with patch('appimage_updater.dist_selector.ui_utilities.Prompt.ask', return_value="1"):
             result = _prompt_user_selection(asset_infos, mock_console)
-            
+
         assert result == asset_infos[0]
         assert result.distribution == "ubuntu"
 
@@ -54,17 +54,17 @@ class TestPromptUserSelection:
             size=2048,
             created_at=datetime.now()
         )
-        
+
         asset_infos = [
             AssetInfo(asset=asset1, distribution="ubuntu", version="24.04", score=90.0),
             AssetInfo(asset=asset2, distribution="fedora", version="38", score=85.0)
         ]
-        
+
         mock_console = Mock()
-        
+
         with patch('appimage_updater.dist_selector.ui_utilities.Prompt.ask', return_value="2"):
             result = _prompt_user_selection(asset_infos, mock_console)
-            
+
         assert result == asset_infos[1]
         assert result.distribution == "fedora"
 
@@ -76,16 +76,16 @@ class TestPromptUserSelection:
             size=1024,
             created_at=datetime.now()
         )
-        
+
         asset_infos = [
             AssetInfo(asset=asset, distribution="ubuntu", score=90.0)
         ]
-        
+
         mock_console = Mock()
-        
+
         with patch('appimage_updater.dist_selector.ui_utilities.Prompt.ask', return_value="1"):
             result = _prompt_user_selection(asset_infos, mock_console)
-            
+
         assert result == asset_infos[0]
 
     def test_prompt_user_selection_invalid_then_valid(self) -> None:
@@ -96,16 +96,16 @@ class TestPromptUserSelection:
             size=1024,
             created_at=datetime.now()
         )
-        
+
         asset_infos = [
             AssetInfo(asset=asset, distribution="ubuntu", score=90.0)
         ]
-        
+
         mock_console = Mock()
-        
+
         with patch('appimage_updater.dist_selector.ui_utilities.Prompt.ask', side_effect=["5", "1"]):
             result = _prompt_user_selection(asset_infos, mock_console)
-            
+
         assert result == asset_infos[0]
         # Should have printed error message for invalid choice
         mock_console.print.assert_any_call("[red]Please enter a number between 1 and 1[/red]")
@@ -118,16 +118,16 @@ class TestPromptUserSelection:
             size=1024,
             created_at=datetime.now()
         )
-        
+
         asset_infos = [
             AssetInfo(asset=asset, distribution="ubuntu", score=90.0)
         ]
-        
+
         mock_console = Mock()
-        
+
         with patch('appimage_updater.dist_selector.ui_utilities.Prompt.ask', side_effect=["0", "1"]):
             result = _prompt_user_selection(asset_infos, mock_console)
-            
+
         assert result == asset_infos[0]
         mock_console.print.assert_any_call("[red]Please enter a number between 1 and 1[/red]")
 
@@ -139,16 +139,16 @@ class TestPromptUserSelection:
             size=1024,
             created_at=datetime.now()
         )
-        
+
         asset_infos = [
             AssetInfo(asset=asset, distribution="ubuntu", score=90.0)
         ]
-        
+
         mock_console = Mock()
-        
+
         with patch('appimage_updater.dist_selector.ui_utilities.Prompt.ask', side_effect=["-1", "1"]):
             result = _prompt_user_selection(asset_infos, mock_console)
-            
+
         assert result == asset_infos[0]
         mock_console.print.assert_any_call("[red]Please enter a number between 1 and 1[/red]")
 
@@ -160,16 +160,16 @@ class TestPromptUserSelection:
             size=1024,
             created_at=datetime.now()
         )
-        
+
         asset_infos = [
             AssetInfo(asset=asset, distribution="ubuntu", score=90.0)
         ]
-        
+
         mock_console = Mock()
-        
+
         with patch('appimage_updater.dist_selector.ui_utilities.Prompt.ask', side_effect=["abc", "1"]):
             result = _prompt_user_selection(asset_infos, mock_console)
-            
+
         assert result == asset_infos[0]
         mock_console.print.assert_any_call("[red]Invalid selection. Please try again.[/red]")
 
@@ -181,16 +181,16 @@ class TestPromptUserSelection:
             size=1024,
             created_at=datetime.now()
         )
-        
+
         asset_infos = [
             AssetInfo(asset=asset, distribution="ubuntu", score=90.0)
         ]
-        
+
         mock_console = Mock()
-        
+
         with patch('appimage_updater.dist_selector.ui_utilities.Prompt.ask', side_effect=[KeyboardInterrupt(), "1"]):
             result = _prompt_user_selection(asset_infos, mock_console)
-            
+
         assert result == asset_infos[0]
         mock_console.print.assert_any_call("[red]Invalid selection. Please try again.[/red]")
 
@@ -208,17 +208,17 @@ class TestPromptUserSelection:
             size=2048,
             created_at=datetime.now()
         )
-        
+
         asset_infos = [
             AssetInfo(asset=asset1, distribution="ubuntu", score=95.0),
             AssetInfo(asset=asset2, distribution="fedora", score=85.0)
         ]
-        
+
         mock_console = Mock()
-        
+
         with patch('appimage_updater.dist_selector.ui_utilities.Prompt.ask', side_effect=EOFError()):
             result = _prompt_user_selection(asset_infos, mock_console)
-            
+
         # Should return the first (best) asset
         assert result == asset_infos[0]
         assert result.score == 95.0
@@ -238,7 +238,7 @@ class TestPromptUserSelection:
             size=2048,
             created_at=datetime.now()
         )
-        
+
         asset_infos = [
             AssetInfo(
                 asset=asset1,
@@ -255,19 +255,19 @@ class TestPromptUserSelection:
                 score=75.0
             )
         ]
-        
+
         mock_console = Mock()
-        
+
         with patch('appimage_updater.dist_selector.ui_utilities.Prompt.ask', return_value="1"):
             with patch('appimage_updater.dist_selector.ui_utilities.Table') as mock_table_class:
                 mock_table = Mock()
                 mock_table_class.return_value = mock_table
-                
+
                 result = _prompt_user_selection(asset_infos, mock_console)
-                
+
                 # Verify table creation
                 mock_table_class.assert_called_once_with(show_header=True, header_style="bold magenta")
-                
+
                 # Verify columns were added (6 columns total)
                 assert mock_table.add_column.call_count == 6
                 mock_table.add_column.assert_any_call("#", style="dim", width=3)
@@ -276,7 +276,7 @@ class TestPromptUserSelection:
                 mock_table.add_column.assert_any_call("Version", style="yellow")
                 mock_table.add_column.assert_any_call("Architecture", style="blue")
                 mock_table.add_column.assert_any_call("Score", style="magenta", justify="right")
-                
+
                 # Verify rows were added
                 assert mock_table.add_row.call_count == 2
                 mock_table.add_row.assert_any_call(
@@ -295,7 +295,7 @@ class TestPromptUserSelection:
                     "Any",
                     "75.0"
                 )
-                
+
                 # Verify table was printed
                 mock_console.print.assert_any_call(mock_table)
 
@@ -307,16 +307,16 @@ class TestPromptUserSelection:
             size=1024,
             created_at=datetime.now()
         )
-        
+
         asset_infos = [
             AssetInfo(asset=asset, distribution="arch", version="rolling", score=100.0)
         ]
-        
+
         mock_console = Mock()
-        
+
         with patch('appimage_updater.dist_selector.ui_utilities.Prompt.ask', return_value="1"):
             result = _prompt_user_selection(asset_infos, mock_console)
-            
+
         assert result == asset_infos[0]
         assert result.distribution == "arch"
 
@@ -328,19 +328,19 @@ class TestPromptUserSelection:
             size=1024,
             created_at=datetime.now()
         )
-        
+
         asset_infos = [
             AssetInfo(asset=asset, distribution="ubuntu", score=90.0)
         ]
-        
+
         mock_console = Mock()
-        
+
         with patch('appimage_updater.dist_selector.ui_utilities.Prompt.ask', side_effect=["abc", "0", "2", "1"]):
             result = _prompt_user_selection(asset_infos, mock_console)
-            
+
         assert result == asset_infos[0]
-        
+
         # Should have printed error messages for each invalid attempt
-        error_calls = [call for call in mock_console.print.call_args_list 
+        error_calls = [call for call in mock_console.print.call_args_list
                       if "[red]" in str(call)]
         assert len(error_calls) >= 3  # At least 3 error messages

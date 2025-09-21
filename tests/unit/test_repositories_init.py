@@ -10,10 +10,7 @@ from appimage_updater.repositories.github_repository import GitHubRepository
 def test_imports_available() -> None:
     """Test that all expected imports are available from their specific modules."""
     from appimage_updater.repositories.base import RepositoryClient, RepositoryError
-    from appimage_updater.repositories.direct_download_repository import DirectDownloadRepository
-    from appimage_updater.repositories.dynamic_download_repository import DynamicDownloadRepository
     from appimage_updater.repositories.factory import detect_repository_type, get_repository_client
-    from appimage_updater.repositories.github_repository import GitHubRepository
 
     # All imports should be available
     assert RepositoryClient is not None
@@ -29,10 +26,7 @@ def test_all_exports() -> None:
     """Test that all expected classes and functions are available from their specific modules."""
     # Since we don't use __all__ in __init__.py files, test direct module imports
     from appimage_updater.repositories.base import RepositoryClient, RepositoryError
-    from appimage_updater.repositories.direct_download_repository import DirectDownloadRepository
-    from appimage_updater.repositories.dynamic_download_repository import DynamicDownloadRepository
     from appimage_updater.repositories.factory import detect_repository_type, get_repository_client
-    from appimage_updater.repositories.github_repository import GitHubRepository
 
     # Verify all expected classes and functions are importable
     expected_classes = [
@@ -77,9 +71,6 @@ def test_repository_error_is_exception() -> None:
 
 def test_concrete_repository_classes() -> None:
     """Test that concrete repository classes are available."""
-    from appimage_updater.repositories.direct_download_repository import DirectDownloadRepository
-    from appimage_updater.repositories.dynamic_download_repository import DynamicDownloadRepository
-    from appimage_updater.repositories.github_repository import GitHubRepository
 
     # Should all be classes
     assert isinstance(GitHubRepository, type)

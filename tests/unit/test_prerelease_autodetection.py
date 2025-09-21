@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from typer.testing import CliRunner
 
-from appimage_updater.main import app
 from appimage_updater.core.models import Asset, Release
+from appimage_updater.main import app
 from appimage_updater.pattern_generator import should_enable_prerelease
 
 

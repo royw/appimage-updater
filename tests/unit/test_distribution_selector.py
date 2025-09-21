@@ -5,13 +5,13 @@ from __future__ import annotations
 from datetime import datetime
 from unittest.mock import patch
 
+from appimage_updater.core.models import Asset
+from appimage_updater.dist_selector.asset_parsing import _parse_asset_info
+from appimage_updater.dist_selector.models import AssetInfo, DistributionInfo
 from appimage_updater.distribution_selector import (
     DistributionSelector,
     select_best_distribution_asset,
 )
-from appimage_updater.dist_selector.asset_parsing import _parse_asset_info
-from appimage_updater.dist_selector.models import AssetInfo, DistributionInfo
-from appimage_updater.core.models import Asset
 
 
 class TestDistributionSelector:

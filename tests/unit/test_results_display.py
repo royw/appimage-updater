@@ -1,6 +1,5 @@
 """Unit tests for ui.display_utils.results_display module."""
 
-from io import StringIO
 from unittest.mock import Mock, patch
 
 from rich.console import Console
@@ -9,8 +8,8 @@ from appimage_updater.ui.display import (
     display_download_results,
     display_failed_downloads,
     display_successful_downloads,
+    get_checksum_status,
 )
-from appimage_updater.ui.display import get_checksum_status
 
 
 class TestGetChecksumStatus:
@@ -20,7 +19,7 @@ class TestGetChecksumStatus:
         """Test checksum status when no checksum result is available."""
         result = Mock()
         result.checksum_result = None
-        
+
         status = get_checksum_status(result)
         assert status == ""
 
@@ -29,7 +28,7 @@ class TestGetChecksumStatus:
         result = Mock()
         result.checksum_result = Mock()
         result.checksum_result.verified = True
-        
+
         status = get_checksum_status(result)
         assert status == " [green]verified[/green]"
 
@@ -38,7 +37,7 @@ class TestGetChecksumStatus:
         result = Mock()
         result.checksum_result = Mock()
         result.checksum_result.verified = False
-        
+
         status = get_checksum_status(result)
         assert status == " [yellow]unverified[/yellow]"
 
@@ -46,7 +45,7 @@ class TestGetChecksumStatus:
         """Test checksum status when checksum result is falsy."""
         result = Mock()
         result.checksum_result = False
-        
+
         status = get_checksum_status(result)
         assert status == ""
 
@@ -58,7 +57,7 @@ class TestDisplaySuccessfulDownloads:
     def test_display_successful_downloads_empty_list(self, mock_console: Mock) -> None:
         """Test displaying empty successful downloads list."""
         display_successful_downloads([])
-        
+
         # Should not print anything for empty list
         mock_console.print.assert_not_called()
 
@@ -69,9 +68,9 @@ class TestDisplaySuccessfulDownloads:
         result.app_name = "TestApp"
         result.download_size = 1024 * 1024  # 1 MB
         result.checksum_result = None
-        
+
         display_successful_downloads([result])
-        
+
         # Should print header and result
         assert mock_console.print.call_count == 2
         mock_console.print.assert_any_call("\n[green]Successfully downloaded 1 updates:")
@@ -84,15 +83,15 @@ class TestDisplaySuccessfulDownloads:
         result1.app_name = "App1"
         result1.download_size = 2 * 1024 * 1024  # 2 MB
         result1.checksum_result = None
-        
+
         result2 = Mock()
         result2.app_name = "App2"
         result2.download_size = 5 * 1024 * 1024  # 5 MB
         result2.checksum_result = Mock()
         result2.checksum_result.verified = True
-        
+
         display_successful_downloads([result1, result2])
-        
+
         # Should print header and both results
         assert mock_console.print.call_count == 3
         mock_console.print.assert_any_call("\n[green]Successfully downloaded 2 updates:")
@@ -107,9 +106,9 @@ class TestDisplaySuccessfulDownloads:
         result.download_size = 1536 * 1024  # 1.5 MB
         result.checksum_result = Mock()
         result.checksum_result.verified = False
-        
+
         display_successful_downloads([result])
-        
+
         mock_console.print.assert_any_call("  Downloaded: TestApp (1.5 MB) [yellow]unverified[/yellow]")
 
 
@@ -120,7 +119,7 @@ class TestDisplayFailedDownloads:
     def test_display_failed_downloads_empty_list(self, mock_console: Mock) -> None:
         """Test displaying empty failed downloads list."""
         display_failed_downloads([])
-        
+
         # Should not print anything for empty list
         mock_console.print.assert_not_called()
 
@@ -130,9 +129,9 @@ class TestDisplayFailedDownloads:
         result = Mock()
         result.app_name = "FailedApp"
         result.error_message = "Network timeout"
-        
+
         display_failed_downloads([result])
-        
+
         # Should print header and result
         assert mock_console.print.call_count == 2
         mock_console.print.assert_any_call("\n[red]Failed to download 1 updates:")
@@ -144,13 +143,13 @@ class TestDisplayFailedDownloads:
         result1 = Mock()
         result1.app_name = "App1"
         result1.error_message = "File not found"
-        
+
         result2 = Mock()
         result2.app_name = "App2"
         result2.error_message = "Permission denied"
-        
+
         display_failed_downloads([result1, result2])
-        
+
         # Should print header and both results
         assert mock_console.print.call_count == 3
         mock_console.print.assert_any_call("\n[red]Failed to download 2 updates:")
@@ -167,14 +166,14 @@ class TestDisplayDownloadResults:
         """Test displaying mixed successful and failed results."""
         successful_result = Mock()
         successful_result.success = True
-        
+
         failed_result = Mock()
         failed_result.success = False
-        
+
         results = [successful_result, failed_result]
-        
+
         display_download_results(results)
-        
+
         # Should call both display functions with appropriate results
         mock_successful.assert_called_once_with([successful_result])
         mock_failed.assert_called_once_with([failed_result])
@@ -187,11 +186,11 @@ class TestDisplayDownloadResults:
         result1.success = True
         result2 = Mock()
         result2.success = True
-        
+
         results = [result1, result2]
-        
+
         display_download_results(results)
-        
+
         mock_successful.assert_called_once_with([result1, result2])
         mock_failed.assert_called_once_with([])
 
@@ -203,11 +202,11 @@ class TestDisplayDownloadResults:
         result1.success = False
         result2 = Mock()
         result2.success = False
-        
+
         results = [result1, result2]
-        
+
         display_download_results(results)
-        
+
         mock_successful.assert_called_once_with([])
         mock_failed.assert_called_once_with([result1, result2])
 
@@ -216,7 +215,7 @@ class TestDisplayDownloadResults:
     def test_display_download_results_empty(self, mock_successful: Mock, mock_failed: Mock) -> None:
         """Test displaying empty results list."""
         display_download_results([])
-        
+
         mock_successful.assert_called_once_with([])
         mock_failed.assert_called_once_with([])
 
@@ -228,7 +227,7 @@ class TestResultsDisplayIntegration:
         """Test that console is properly initialized."""
         # Import the console to test it exists and is configured
         from appimage_updater.ui.display import console
-        
+
         assert isinstance(console, Console)
         # Console should respect NO_COLOR environment variable
         # We can't easily test this without modifying environment, so just verify it exists
@@ -238,9 +237,10 @@ class TestResultsDisplayIntegration:
         """Test console respects NO_COLOR environment variable."""
         # Re-import to get fresh console with NO_COLOR set
         import importlib
+
         import appimage_updater.ui.display
         importlib.reload(appimage_updater.ui.display)
-        
+
         from appimage_updater.ui.display import console
         # Test that console was created with no_color=True
         # The exact attribute name may vary, so just test that it was configured

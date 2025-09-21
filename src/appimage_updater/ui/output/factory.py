@@ -56,34 +56,3 @@ def create_output_formatter_from_params(params: Any) -> OutputFormatter:
         kwargs["verbose"] = verbose
 
     return create_output_formatter(format_type, **kwargs)
-
-
-def create_rich_output_formatter(**kwargs: Any) -> RichOutputFormatter:
-    """Create Rich output formatter (convenience function).
-
-    Args:
-        **kwargs: Arguments passed to RichOutputFormatter constructor
-
-    Returns:
-        RichOutputFormatter instance
-    """
-    return RichOutputFormatter(**kwargs)
-
-
-def create_silent_output_formatter() -> OutputFormatter:
-    """Create silent output formatter for testing.
-
-    Returns:
-        OutputFormatter that produces no output (useful for testing)
-    """
-    # For now, return a Rich formatter that could be made silent
-    # In the future, we could create a dedicated SilentOutputFormatter
-    from io import StringIO
-
-    from rich.console import Console
-
-    from .rich_formatter import RichOutputFormatter
-
-    # Create console that writes to StringIO (effectively silent)
-    silent_console = Console(file=StringIO(), no_color=True)
-    return RichOutputFormatter(console=silent_console)

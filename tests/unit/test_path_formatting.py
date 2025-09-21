@@ -1,6 +1,5 @@
 """Unit tests for ui.display_utils.path_formatting module."""
 
-import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -29,7 +28,7 @@ class TestReplaceHomeWithTilde:
     def test_replace_home_with_tilde_exact_home(self, mock_home: object) -> None:
         """Test replacing exact home directory."""
         mock_home.return_value = Path("/home/user")
-        
+
         result = _replace_home_with_tilde("/home/user")
         assert result == "~"
 
@@ -37,7 +36,7 @@ class TestReplaceHomeWithTilde:
     def test_replace_home_with_tilde_home_subdir(self, mock_home: object) -> None:
         """Test replacing home subdirectory."""
         mock_home.return_value = Path("/home/user")
-        
+
         result = _replace_home_with_tilde("/home/user/Documents")
         assert result == "~/Documents"
 
@@ -45,7 +44,7 @@ class TestReplaceHomeWithTilde:
     def test_replace_home_with_tilde_home_nested_subdir(self, mock_home: object) -> None:
         """Test replacing home nested subdirectory."""
         mock_home.return_value = Path("/home/user")
-        
+
         result = _replace_home_with_tilde("/home/user/Documents/Projects/app")
         assert result == "~/Documents/Projects/app"
 
@@ -53,7 +52,7 @@ class TestReplaceHomeWithTilde:
     def test_replace_home_with_tilde_no_separator(self, mock_home: object) -> None:
         """Test replacing home when path continues without separator."""
         mock_home.return_value = Path("/home/user")
-        
+
         # Edge case: path starts with home but no separator - actually does replace
         result = _replace_home_with_tilde("/home/userdata")
         assert result == "~/data"  # Does replace and adds separator
@@ -62,7 +61,7 @@ class TestReplaceHomeWithTilde:
     def test_replace_home_with_tilde_not_home_path(self, mock_home: object) -> None:
         """Test not replacing non-home paths."""
         mock_home.return_value = Path("/home/user")
-        
+
         result = _replace_home_with_tilde("/opt/applications/app")
         assert result == "/opt/applications/app"
 
@@ -70,7 +69,7 @@ class TestReplaceHomeWithTilde:
     def test_replace_home_with_tilde_similar_path(self, mock_home: object) -> None:
         """Test replacing similar paths - actually does replace."""
         mock_home.return_value = Path("/home/user")
-        
+
         result = _replace_home_with_tilde("/home/username/file")
         assert result == "~/name/file"  # Does replace and adds separator
 
@@ -139,7 +138,7 @@ class TestAddEllipsisIfTruncated:
         """Test adding ellipsis when no truncation occurred."""
         result_parts = ["home", "user", "file.txt"]
         original_parts = ["home", "user", "file.txt"]
-        
+
         result = _add_ellipsis_if_truncated(result_parts, original_parts)
         assert result == ["home", "user", "file.txt"]
 
@@ -147,7 +146,7 @@ class TestAddEllipsisIfTruncated:
         """Test adding ellipsis when truncation occurred."""
         result_parts = ["user", "file.txt"]
         original_parts = ["very", "long", "path", "user", "file.txt"]
-        
+
         result = _add_ellipsis_if_truncated(result_parts, original_parts)
         assert result == ["...", "user", "file.txt"]
 
@@ -155,7 +154,7 @@ class TestAddEllipsisIfTruncated:
         """Test adding ellipsis to empty result."""
         result_parts = []
         original_parts = ["some", "path"]
-        
+
         result = _add_ellipsis_if_truncated(result_parts, original_parts)
         assert result == ["..."]
 
@@ -163,11 +162,11 @@ class TestAddEllipsisIfTruncated:
         """Test that function modifies the list in place."""
         result_parts = ["file.txt"]
         original_parts = ["long", "path", "file.txt"]
-        
+
         # Keep reference to original list
         original_list = result_parts
         result = _add_ellipsis_if_truncated(result_parts, original_parts)
-        
+
         # Should be the same list object
         assert result is original_list
         assert result == ["...", "file.txt"]
@@ -185,7 +184,7 @@ class TestWrapPath:
     def test_wrap_path_short_path(self, mock_replace: object) -> None:
         """Test wrapping path that's already short enough."""
         mock_replace.return_value = "/short/path"
-        
+
         result = _wrap_path("/short/path", 20)
         assert result == "/short/path"
 
@@ -193,7 +192,7 @@ class TestWrapPath:
     def test_wrap_path_long_path_with_separators(self, mock_replace: object) -> None:
         """Test wrapping long path with separators."""
         mock_replace.return_value = "/very/long/path/to/file.txt"
-        
+
         result = _wrap_path("/very/long/path/to/file.txt", 15)
         # Should include ellipsis and preserve meaningful parts
         assert "..." in result
@@ -203,7 +202,7 @@ class TestWrapPath:
     def test_wrap_path_windows_separators(self, mock_replace: object) -> None:
         """Test wrapping path with Windows separators."""
         mock_replace.return_value = "C:\\Users\\Name\\Documents\\file.txt"
-        
+
         result = _wrap_path("C:\\Users\\Name\\Documents\\file.txt", 20)
         # Should convert backslashes to forward slashes
         assert "\\" not in result
@@ -213,7 +212,7 @@ class TestWrapPath:
     def test_wrap_path_no_separators_fallback(self, mock_replace: object) -> None:
         """Test wrapping path with no separators (fallback to truncation)."""
         mock_replace.return_value = "verylongfilenamewithoutseparators"
-        
+
         result = _wrap_path("verylongfilenamewithoutseparators", 15)
         assert result.startswith("...")
         assert len(result) == 15
@@ -223,7 +222,7 @@ class TestWrapPath:
         """Test wrapping path with default max width."""
         long_path = "/very/long/path/that/exceeds/default/width/limit/file.txt"
         result = _wrap_path(long_path)  # Uses default max_width=40
-        
+
         # Should be processed since it's longer than 40 chars
         assert len(long_path) > 40
         assert len(result) <= 40
@@ -233,7 +232,7 @@ class TestWrapPath:
         """Test wrapping path that's exactly at max width."""
         path = "/exact/width/path"  # 18 characters
         mock_replace.return_value = path
-        
+
         result = _wrap_path(path, 18)
         assert result == path
 
@@ -241,7 +240,7 @@ class TestWrapPath:
     def test_wrap_path_integration_with_home_replacement(self, mock_home: object) -> None:
         """Test integration between path wrapping and home replacement."""
         mock_home.return_value = Path("/home/user")
-        
+
         result = _wrap_path("/home/user/Documents/Projects/app/file.txt", 25)
         # Should replace home with ~ and then wrap
         assert result.startswith("~") or result.startswith("...")

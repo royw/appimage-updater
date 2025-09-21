@@ -61,7 +61,7 @@ class TestFormatVersionDisplay:
         # Valid date formats
         assert format_version_display("2024-12-31") == "2024-12-31"
         assert format_version_display("20241231") == "2024-12-31"
-        
+
         # Invalid date-like formats (should pass through unchanged)
         assert format_version_display("2024-1-1") == "2024-1-1"  # Single digit month/day
         assert format_version_display("24-01-01") == "24-01-01"  # Two digit year

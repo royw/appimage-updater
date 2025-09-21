@@ -16,21 +16,21 @@ def run_cli_command(args: list[str], temp_home: Path | None = None) -> tuple[int
     """Run CLI command as subprocess and return exit code, stdout, stderr."""
     # Get the path to the CLI entry point
     cli_path = Path(__file__).parent.parent.parent / "src" / "appimage_updater" / "__main__.py"
-    
+
     # Run with uv to match user environment
     cmd = ["uv", "run", "python", "-m", "appimage_updater"] + args
-    
+
     # Set environment to disable rich traceback and create clean environment
     env = dict(os.environ)
     env['_RICH_TRACEBACK'] = '0'
     env['RICH_TRACEBACK'] = '0'
     env['NO_COLOR'] = '1'  # Also disable colors to make output more predictable
-    
+
     # Use temporary home directory if provided to isolate from user config
     if temp_home:
         env['HOME'] = str(temp_home)
         env['XDG_CONFIG_HOME'] = str(temp_home / '.config')
-    
+
     try:
         result = subprocess.run(
             cmd,
@@ -48,7 +48,7 @@ def run_cli_command(args: list[str], temp_home: Path | None = None) -> tuple[int
 def assert_no_stack_trace_in_output(stdout: str, stderr: str, command: str) -> None:
     """Assert that neither stdout nor stderr contains stack trace indicators."""
     combined_output = stdout + stderr
-    
+
     stack_trace_indicators = [
         "Traceback (most recent call last):",
         "File \"/home/royw/src/appimage-updater/src/",
@@ -65,7 +65,7 @@ def assert_no_stack_trace_in_output(stdout: str, stderr: str, command: str) -> N
         "appimage_updater/commands/",  # Command file references
         "appimage_updater/config_command.py",  # Config command references
     ]
-    
+
     for indicator in stack_trace_indicators:
         if indicator in combined_output:
             print(f"\n=== STACK TRACE DETECTED IN COMMAND: {command} ===")
@@ -78,28 +78,28 @@ def assert_no_stack_trace_in_output(stdout: str, stderr: str, command: str) -> N
 
 class TestConfigCommandStackTraces:
     """Test config command for stack traces in error scenarios."""
-    
+
     def test_invalid_setting_name_e2e(self):
         """Test that invalid config setting shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["config", "set", "invalid-setting", "value"])
-        
+
         assert exit_code == 1
         assert_no_stack_trace_in_output(stdout, stderr, "config set invalid-setting value")
         assert "Unknown setting: invalid-setting" in stdout
-    
+
     def test_invalid_numeric_value_e2e(self):
         """Test that invalid numeric value shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["config", "set", "retain-count", "invalid-number"])
-        
+
         assert exit_code == 1
         assert_no_stack_trace_in_output(stdout, stderr, "config set retain-count invalid-number")
         # Should show some kind of validation error
         assert any(word in stdout.lower() for word in ["invalid", "error", "must", "range"])
-    
+
     def test_out_of_range_numeric_value_e2e(self):
         """Test that out-of-range numeric value shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["config", "set", "retain-count", "99"])
-        
+
         assert exit_code == 1
         assert_no_stack_trace_in_output(stdout, stderr, "config set retain-count 99")
         assert any(word in stdout.lower() for word in ["range", "between", "invalid"])
@@ -107,21 +107,21 @@ class TestConfigCommandStackTraces:
 
 class TestShowCommandStackTraces:
     """Test show command for stack traces in error scenarios."""
-    
+
     def test_nonexistent_application_e2e(self):
         """Test that showing nonexistent app shows clean error in real CLI."""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_home = Path(temp_dir)
             exit_code, stdout, stderr = run_cli_command(["show", "NonExistentApp"], temp_home)
-            
+
             assert exit_code == 1
             assert_no_stack_trace_in_output(stdout, stderr, "show NonExistentApp")
             assert any(phrase in stdout for phrase in ["not found", "No applications found"])
-    
+
     def test_multiple_nonexistent_applications_e2e(self):
         """Test that showing multiple nonexistent apps shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["show", "App1", "App2", "App3"])
-        
+
         assert exit_code == 1
         assert_no_stack_trace_in_output(stdout, stderr, "show App1 App2 App3")
         assert any(phrase in stdout for phrase in ["not found", "No applications found"])
@@ -129,11 +129,11 @@ class TestShowCommandStackTraces:
 
 class TestEditCommandStackTraces:
     """Test edit command for stack traces in error scenarios."""
-    
+
     def test_nonexistent_application_e2e(self):
         """Test that editing nonexistent app shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["edit", "NonExistentApp", "--rotation"])
-        
+
         assert exit_code == 1
         assert_no_stack_trace_in_output(stdout, stderr, "edit NonExistentApp --rotation")
         assert any(phrase in stdout for phrase in ["not found", "No applications found"])
@@ -141,14 +141,14 @@ class TestEditCommandStackTraces:
 
 class TestRemoveCommandStackTraces:
     """Test remove command for stack traces in error scenarios."""
-    
+
     def test_nonexistent_application_e2e(self):
         """Test that removing nonexistent app shows clean error in real CLI."""
         # Create a temporary directory to isolate from user config
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_home = Path(temp_dir)
             exit_code, stdout, stderr = run_cli_command(["remove", "NonExistentApp"], temp_home)
-            
+
             assert exit_code == 1
             assert_no_stack_trace_in_output(stdout, stderr, "remove NonExistentApp")
             assert any(phrase in stdout for phrase in ["not found", "No applications found"])
@@ -156,11 +156,11 @@ class TestRemoveCommandStackTraces:
 
 class TestAddCommandStackTraces:
     """Test add command for stack traces in error scenarios."""
-    
+
     def test_invalid_url_format_e2e(self):
         """Test that invalid URL format shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["add", "TestApp", "invalid-url"])
-        
+
         # May succeed with URL normalization or fail with clean error
         if exit_code != 0:
             assert_no_stack_trace_in_output(stdout, stderr, "add TestApp invalid-url")
@@ -168,13 +168,13 @@ class TestAddCommandStackTraces:
 
 class TestCheckCommandStackTraces:
     """Test check command for stack traces in error scenarios."""
-    
+
     def test_nonexistent_application_e2e(self):
         """Test that checking nonexistent app shows clean error in real CLI."""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_home = Path(temp_dir)
             exit_code, stdout, stderr = run_cli_command(["check", "NonExistentApp"], temp_home)
-            
+
             assert exit_code == 1
             assert_no_stack_trace_in_output(stdout, stderr, "check NonExistentApp")
             assert any(phrase in stdout for phrase in ["not found", "No applications found"])
@@ -182,11 +182,11 @@ class TestCheckCommandStackTraces:
 
 class TestRepositoryCommandStackTraces:
     """Test repository command for stack traces in error scenarios."""
-    
+
     def test_nonexistent_application_e2e(self):
         """Test that repository info for nonexistent app shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["repository", "NonExistentApp"])
-        
+
         assert exit_code == 1
         assert_no_stack_trace_in_output(stdout, stderr, "repository NonExistentApp")
         assert any(phrase in stdout for phrase in ["not found", "No applications found"])
@@ -194,7 +194,7 @@ class TestRepositoryCommandStackTraces:
 
 class TestGeneralStackTraces:
     """Test general scenarios for stack traces."""
-    
+
     def test_help_commands_no_stack_traces_e2e(self):
         """Test that help commands never show stack traces in real CLI."""
         help_commands = [
@@ -208,28 +208,28 @@ class TestGeneralStackTraces:
             ["repository", "--help"],
             ["list", "--help"],
         ]
-        
+
         for cmd in help_commands:
             exit_code, stdout, stderr = run_cli_command(cmd)
             assert exit_code == 0, f"Help command failed: {cmd}"
             assert_no_stack_trace_in_output(stdout, stderr, f"help command: {' '.join(cmd)}")
-    
+
     def test_version_commands_no_stack_traces_e2e(self):
         """Test that version commands never show stack traces in real CLI."""
         version_commands = [
             ["--version"],
             ["-V"],
         ]
-        
+
         for cmd in version_commands:
             exit_code, stdout, stderr = run_cli_command(cmd)
             assert exit_code == 0, f"Version command failed: {cmd}"
             assert_no_stack_trace_in_output(stdout, stderr, f"version command: {' '.join(cmd)}")
-    
+
     def test_invalid_config_file_path_e2e(self):
         """Test that invalid config file path shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["list", "--config", "/nonexistent/path/config.json"])
-        
+
         # Should either work (create config) or show clean error
         if exit_code != 0:
             assert_no_stack_trace_in_output(stdout, stderr, "list --config /nonexistent/path/config.json")
@@ -237,28 +237,28 @@ class TestGeneralStackTraces:
 
 class TestSpecificStackTraceScenarios:
     """Test specific scenarios that were observed to show stack traces."""
-    
+
     def test_config_set_invalid_setting_manual_case(self):
         """Test the specific case that showed stack traces in manual testing."""
         exit_code, stdout, stderr = run_cli_command(["config", "set", "invalid-setting", "value"])
-        
+
         assert exit_code == 1
         assert_no_stack_trace_in_output(stdout, stderr, "config set invalid-setting value")
-        
+
         # Should show clean error message
         assert "Unknown setting: invalid-setting" in stdout
         assert "Available settings:" in stdout
-    
+
     def test_show_nonexistent_app_manual_case(self):
         """Test the specific case that showed stack traces in manual testing."""
         exit_code, stdout, stderr = run_cli_command(["show", "NonExistentApp"])
-        
+
         assert exit_code == 1
         assert_no_stack_trace_in_output(stdout, stderr, "show NonExistentApp")
-        
+
         # Should show clean error message
         assert any(phrase in stdout for phrase in [
-            "not found", 
+            "not found",
             "No applications found",
             "No applications match"
         ])
@@ -267,7 +267,7 @@ class TestSpecificStackTraceScenarios:
 @pytest.mark.slow
 class TestExtensiveStackTraceScenarios:
     """Extensive testing of edge cases that might produce stack traces."""
-    
+
     def test_config_edge_cases(self):
         """Test various config command edge cases."""
         test_cases = [
@@ -278,12 +278,12 @@ class TestExtensiveStackTraceScenarios:
             (["config", "set", "retain-count", "0"], "Zero value"),
             (["config", "set", "timeout-seconds", "999"], "Too large value"),
         ]
-        
+
         for cmd, description in test_cases:
             exit_code, stdout, stderr = run_cli_command(cmd)
             # Don't assert specific exit codes as behavior may vary
             assert_no_stack_trace_in_output(stdout, stderr, f"{description}: {' '.join(cmd)}")
-    
+
     def test_command_edge_cases(self):
         """Test various command edge cases."""
         test_cases = [
@@ -293,7 +293,7 @@ class TestExtensiveStackTraceScenarios:
             (["add"], "Add without args"),
             (["check", "--invalid-flag"], "Invalid flag"),
         ]
-        
+
         for cmd, description in test_cases:
             exit_code, stdout, stderr = run_cli_command(cmd)
             # Don't assert specific exit codes as behavior may vary
@@ -308,7 +308,7 @@ def test_stack_trace_detection_works():
         assert_no_stack_trace_in_output(normal_output, "", "test")
     except AssertionError:
         pytest.fail("Stack trace detection incorrectly flagged normal output")
-    
+
     # This SHOULD trigger our detection (simulated stack trace)
     stack_trace_output = "Traceback (most recent call last):\n  File \"/home/royw/src/appimage-updater/src/main.py\""
     with pytest.raises(AssertionError, match="Found stack trace indicator"):

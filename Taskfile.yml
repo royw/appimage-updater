@@ -2,6 +2,7 @@ version: '3'
 
 vars:
   SRC: src/
+  TESTS: tests/
   PYTHON_VERSIONS:
     sh: cat .python-versions | grep -v '^$' | tr '\n' ' ' | sed 's/[[:space:]]*$//'
   PYTHON_VERSION:
@@ -88,6 +89,11 @@ tasks:
     cmds:
       - uv run ruff check --fix {{.CLI_ARGS | default .SRC}}
 
+  lint:fix:tests:
+    desc: Automatically fix linting issues with ruff
+    cmds:
+      - uv run ruff check --fix {{.CLI_ARGS | default .TESTS}}
+
   lint:emoji:
     desc: Search for emojis in source code, docs, and configuration files
     cmds:
@@ -169,6 +175,8 @@ tasks:
         "generate_pattern_from_releases" "get_supported_repository_types" "_print_troubleshooting_tips"
         "interactive_edit_command" "_validate_directory_path" "_handle_edit_preview_modes" "_apply_edit_updates_to_apps"
         "check" "list_apps" "edit" "show" "repository" "add" "remove" "config"
+        "print_progress" "print_success" "print_error" "print_warning" "print_info" "print_config_settings"
+        "timestamp" "_try_parse_last_modified_header" "_try_parse_date_header"
 
   # === Testing ===
   test:

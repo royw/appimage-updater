@@ -4,17 +4,9 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
-from typing import Any, Protocol
+from typing import Any
 
 from loguru import logger
-
-
-class AsyncWorkerFunction(Protocol):
-    """Protocol for async worker functions that can be used in concurrent processing."""
-
-    def __call__(self, item: Any) -> Awaitable[Any]:
-        """Process a single item asynchronously and return results."""
-        ...
 
 
 class ConcurrentProcessor:

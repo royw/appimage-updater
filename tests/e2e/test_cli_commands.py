@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
-from appimage_updater.core.models import CheckResult, UpdateCandidate, Asset
+from appimage_updater.core.models import Asset, CheckResult, UpdateCandidate
 from appimage_updater.main import app
 
 

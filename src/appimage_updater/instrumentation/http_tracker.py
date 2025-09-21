@@ -4,14 +4,10 @@ from __future__ import annotations
 
 import inspect
 import time
-from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
-from loguru import logger
-from rich.console import Console
-from rich.table import Table
 
 
 @dataclass
@@ -27,18 +23,6 @@ class HTTPRequestRecord:
     response_status: int | None = None
     response_time: float | None = None
     error: str | None = None
-
-    @property
-    def formatted_timestamp(self) -> str:
-        """Get formatted timestamp."""
-        return time.strftime("%H:%M:%S.%f", time.localtime(self.timestamp))[:-3]
-
-    @property
-    def call_stack_summary(self) -> str:
-        """Get a summary of the call stack."""
-        if not self.call_stack:
-            return "No stack info"
-        return " -> ".join(self.call_stack)
 
 
 class HTTPTracker:
@@ -98,11 +82,6 @@ class HTTPTracker:
             httpx.AsyncClient.request = self._original_request  # type: ignore[method-assign]
         self._patcher = None
         self._original_request = None
-
-    def clear_requests(self) -> None:
-        """Clear all tracked requests."""
-        self.requests.clear()
-        logger.debug("Cleared all tracked HTTP requests")
 
     async def _tracked_request(self, client_self: Any, method: str, url: str, **kwargs: Any) -> Any:
         """Tracked version of httpx AsyncClient.request method."""
@@ -185,138 +164,3 @@ class HTTPTracker:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Context manager exit."""
         self.stop_tracking()
-
-
-class HTTPAnalyzer:
-    """Analyzes HTTP request patterns to identify duplicates and inefficiencies."""
-
-    def __init__(self, requests: list[HTTPRequestRecord]):
-        """Initialize analyzer with request records."""
-        self.requests = requests
-
-    def find_duplicate_requests(self) -> dict[str, list[HTTPRequestRecord]]:
-        """Find requests to the same URL."""
-        url_groups = defaultdict(list)
-
-        for request in self.requests:
-            # Group by method + URL combination
-            key = f"{request.method} {request.url}"
-            url_groups[key].append(request)
-
-        # Return only groups with multiple requests
-        return {key: requests for key, requests in url_groups.items() if len(requests) > 1}
-
-    def get_request_summary(self) -> dict[str, Any]:
-        """Get summary statistics of all requests."""
-        if not self.requests:
-            return {
-                "total_requests": 0,
-                "unique_urls": 0,
-                "methods_used": [],
-                "average_response_time": 0.0,
-                "total_response_time": 0.0,
-                "error_count": 0,
-                "success_rate": 0.0,
-            }
-
-        total_requests = len(self.requests)
-        unique_urls = len({req.url for req in self.requests})
-        methods = {req.method for req in self.requests}
-
-        # Calculate timing statistics
-        response_times = [req.response_time for req in self.requests if req.response_time is not None]
-        avg_response_time = sum(response_times) / len(response_times) if response_times else 0
-        total_time = sum(response_times) if response_times else 0
-
-        # Count errors
-        errors = [req for req in self.requests if req.error is not None]
-
-        return {
-            "total_requests": total_requests,
-            "unique_urls": unique_urls,
-            "methods_used": sorted(methods),
-            "average_response_time": avg_response_time,
-            "total_response_time": total_time,
-            "error_count": len(errors),
-            "success_rate": (total_requests - len(errors)) / total_requests * 100 if total_requests > 0 else 0,
-        }
-
-    def print_summary(self, console: Console | None = None) -> None:
-        """Print a summary of HTTP requests."""
-        if console is None:
-            console = Console()
-
-        summary = self.get_request_summary()
-
-        console.print("\n[bold blue]HTTP Request Summary[/bold blue]")
-        console.print(f"Total requests: {summary['total_requests']}")
-        console.print(f"Unique URLs: {summary['unique_urls']}")
-        console.print(f"Methods used: {', '.join(summary['methods_used'])}")
-        console.print(f"Average response time: {summary['average_response_time']:.3f}s")
-        console.print(f"Total response time: {summary['total_response_time']:.3f}s")
-        console.print(f"Error count: {summary['error_count']}")
-        console.print(f"Success rate: {summary['success_rate']:.1f}%")
-
-    def print_duplicate_analysis(self, console: Console | None = None) -> None:
-        """Print analysis of duplicate requests."""
-        if console is None:
-            console = Console()
-
-        duplicates = self.find_duplicate_requests()
-
-        if not duplicates:
-            console.print("\n[green]No duplicate requests found![/green]")
-            return
-
-        console.print(f"\n[bold red]Found {len(duplicates)} URLs with duplicate requests:[/bold red]")
-
-        for url_method, requests in duplicates.items():
-            console.print(f"\n[yellow]{url_method}[/yellow] - {len(requests)} requests:")
-
-            # Create table for this URL's requests
-            table = Table(show_header=True, header_style="bold magenta")
-            table.add_column("Time", style="dim")
-            table.add_column("Status", justify="center")
-            table.add_column("Response Time", justify="right")
-            table.add_column("Call Stack", style="dim")
-
-            for req in requests:
-                status = str(req.response_status) if req.response_status else "ERROR"
-                response_time = f"{req.response_time:.3f}s" if req.response_time else "N/A"
-
-                table.add_row(req.formatted_timestamp, status, response_time, req.call_stack_summary)
-
-            console.print(table)
-
-    def print_detailed_requests(self, console: Console | None = None, limit: int | None = None) -> None:
-        """Print detailed information about all requests."""
-        if console is None:
-            console = Console()
-
-        requests_to_show = self.requests[:limit] if limit else self.requests
-
-        console.print(f"\n[bold blue]Detailed Request Log ({len(requests_to_show)} requests):[/bold blue]")
-
-        table = Table(show_header=True, header_style="bold magenta")
-        table.add_column("Time", style="dim")
-        table.add_column("Method", justify="center")
-        table.add_column("URL", style="cyan")
-        table.add_column("Status", justify="center")
-        table.add_column("Response Time", justify="right")
-        table.add_column("Call Stack", style="dim")
-
-        for req in requests_to_show:
-            status = str(req.response_status) if req.response_status else "ERROR"
-            response_time = f"{req.response_time:.3f}s" if req.response_time else "N/A"
-
-            # Truncate URL if too long
-            url = req.url
-            if len(url) > 60:
-                url = url[:57] + "..."
-
-            table.add_row(req.formatted_timestamp, req.method, url, status, response_time, req.call_stack_summary)
-
-        console.print(table)
-
-        if limit and len(self.requests) > limit:
-            console.print(f"\n[dim]... and {len(self.requests) - limit} more requests[/dim]")

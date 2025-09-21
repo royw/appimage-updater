@@ -17,7 +17,7 @@ class TestDistributionInfo:
             version="24.04",
             version_numeric=24.04
         )
-        
+
         assert dist_info.id == "ubuntu"
         assert dist_info.version == "24.04"
         assert dist_info.version_numeric == 24.04
@@ -31,7 +31,7 @@ class TestDistributionInfo:
             version_numeric=24.04,
             codename="noble"
         )
-        
+
         assert dist_info.id == "ubuntu"
         assert dist_info.version == "24.04"
         assert dist_info.version_numeric == 24.04
@@ -44,7 +44,7 @@ class TestDistributionInfo:
             version="38",
             version_numeric=38.0
         )
-        
+
         assert dist_info.id == "fedora"
         assert dist_info.version == "38"
         assert dist_info.version_numeric == 38.0
@@ -57,7 +57,7 @@ class TestDistributionInfo:
             version="rolling",
             version_numeric=0.0  # Rolling release
         )
-        
+
         assert dist_info.id == "arch"
         assert dist_info.version == "rolling"
         assert dist_info.version_numeric == 0.0
@@ -71,20 +71,20 @@ class TestDistributionInfo:
             version_numeric=24.04,
             codename="noble"
         )
-        
+
         dist2 = DistributionInfo(
             id="ubuntu",
             version="24.04",
             version_numeric=24.04,
             codename="noble"
         )
-        
+
         dist3 = DistributionInfo(
             id="fedora",
             version="38",
             version_numeric=38.0
         )
-        
+
         assert dist1 == dist2
         assert dist1 != dist3
 
@@ -96,7 +96,7 @@ class TestDistributionInfo:
             version_numeric=24.04,
             codename="noble"
         )
-        
+
         repr_str = repr(dist_info)
         assert "DistributionInfo" in repr_str
         assert "ubuntu" in repr_str
@@ -115,9 +115,9 @@ class TestAssetInfo:
             size=1024,
             created_at=datetime.now()
         )
-        
+
         asset_info = AssetInfo(asset=asset)
-        
+
         assert asset_info.asset == asset
         assert asset_info.distribution is None
         assert asset_info.version is None
@@ -134,7 +134,7 @@ class TestAssetInfo:
             size=2048,
             created_at=datetime.now()
         )
-        
+
         asset_info = AssetInfo(
             asset=asset,
             distribution="ubuntu",
@@ -144,7 +144,7 @@ class TestAssetInfo:
             format="AppImage",
             score=95.5
         )
-        
+
         assert asset_info.asset == asset
         assert asset_info.distribution == "ubuntu"
         assert asset_info.version == "24.04"
@@ -161,14 +161,14 @@ class TestAssetInfo:
             size=512,
             created_at=datetime.now()
         )
-        
+
         asset_info = AssetInfo(
             asset=asset,
             arch="x86_64",
             format="zip",
             score=50.0
         )
-        
+
         assert asset_info.asset == asset
         assert asset_info.distribution is None
         assert asset_info.version is None
@@ -185,7 +185,7 @@ class TestAssetInfo:
             size=4096,
             created_at=datetime.now()
         )
-        
+
         asset_info = AssetInfo(
             asset=asset,
             distribution="fedora",
@@ -195,7 +195,7 @@ class TestAssetInfo:
             format="AppImage",
             score=88.2
         )
-        
+
         assert asset_info.distribution == "fedora"
         assert asset_info.version == "38"
         assert asset_info.version_numeric == 38.0
@@ -209,13 +209,13 @@ class TestAssetInfo:
             size=8192,
             created_at=datetime.now()
         )
-        
+
         asset_info = AssetInfo(
             asset=asset,
             format="AppImage",
             score=75.0
         )
-        
+
         assert asset_info.asset == asset
         assert asset_info.distribution is None
         assert asset_info.version is None
@@ -232,35 +232,35 @@ class TestAssetInfo:
             size=1024,
             created_at=datetime.now()
         )
-        
+
         asset2 = Asset(
             name="app.AppImage",
             url="https://example.com/app2.AppImage",
             size=1024,
             created_at=datetime.now()
         )
-        
+
         info1 = AssetInfo(
             asset=asset1,
             distribution="ubuntu",
             version="24.04",
             score=90.0
         )
-        
+
         info2 = AssetInfo(
             asset=asset1,
             distribution="ubuntu",
             version="24.04",
             score=90.0
         )
-        
+
         info3 = AssetInfo(
             asset=asset2,
             distribution="fedora",
             version="38",
             score=85.0
         )
-        
+
         assert info1 == info2
         assert info1 != info3
 
@@ -272,7 +272,7 @@ class TestAssetInfo:
             size=1024,
             created_at=datetime.now()
         )
-        
+
         asset_info = AssetInfo(
             asset=asset,
             distribution="ubuntu",
@@ -280,7 +280,7 @@ class TestAssetInfo:
             arch="x86_64",
             score=92.5
         )
-        
+
         repr_str = repr(asset_info)
         assert "AssetInfo" in repr_str
         assert "ubuntu" in repr_str
@@ -295,15 +295,15 @@ class TestAssetInfo:
             size=1024,
             created_at=datetime.now()
         )
-        
+
         # Test minimum score
         info_min = AssetInfo(asset=asset, score=0.0)
         assert info_min.score == 0.0
-        
+
         # Test maximum score
         info_max = AssetInfo(asset=asset, score=100.0)
         assert info_max.score == 100.0
-        
+
         # Test decimal score
         info_decimal = AssetInfo(asset=asset, score=87.3)
         assert info_decimal.score == 87.3
@@ -314,7 +314,7 @@ class TestAssetInfo:
         mock_asset.name = "mock-app.AppImage"
         mock_asset.url = "https://mock.example.com/app.AppImage"
         mock_asset.size = 2048
-        
+
         asset_info = AssetInfo(
             asset=mock_asset,
             distribution="debian",
@@ -324,7 +324,7 @@ class TestAssetInfo:
             format="AppImage",
             score=78.9
         )
-        
+
         assert asset_info.asset == mock_asset
         assert asset_info.distribution == "debian"
         assert asset_info.version == "12"
