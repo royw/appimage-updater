@@ -39,7 +39,7 @@ export GITHUB_TOKEN="your_token_here"
 echo 'export GITHUB_TOKEN="your_token_here"' >> ~/.bashrc
 ```
 
-3. **Verify Authentication**:
+1. **Verify Authentication**:
 
 ```bash
 # Check rate limit status
@@ -291,9 +291,11 @@ If config files are compromised:
 1. **Backup current config**
 1. **Review all application entries**
 1. **Regenerate config** if needed:
+  
    ```bash
-   mv ~/.config/appimage-updater ~/.config/appimage-updater.backup
+mv ~/.config/appimage-updater ~/.config/appimage-updater.backup
    appimage-updater list  # This will recreate config automatically
+
    ```
 
 ## Security Checklist

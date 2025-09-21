@@ -84,10 +84,9 @@ tasks:
       - uv run ruff check {{.CLI_ARGS | default .SRC}}
 
   lint:fix:
-    desc: Automatically fix linting issues with ruff and pymarkdownlnt
+    desc: Automatically fix linting issues with ruff
     cmds:
       - uv run ruff check --fix {{.CLI_ARGS | default .SRC}}
-      - uv run pymarkdownlnt --config .pymarkdown.json fix {{.CLI_ARGS | default "*.md docs/*.md"}} || true
 
   lint:emoji:
     desc: Search for emojis in source code, docs, and configuration files

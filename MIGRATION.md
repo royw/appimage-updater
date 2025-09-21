@@ -26,7 +26,7 @@ The frequency field was originally designed to control when applications should 
 ```json
 // Before (still works, but frequency is ignored)
 {
-  "name": "MyApp", 
+  "name": "MyApp",
   "source_type": "github",
   "url": "https://github.com/user/repo",
   "download_dir": "/home/user/Apps",
@@ -37,7 +37,7 @@ The frequency field was originally designed to control when applications should 
 // After (cleaner)
 {
   "name": "MyApp",
-  "source_type": "github", 
+  "source_type": "github",
   "url": "https://github.com/user/repo",
   "download_dir": "/home/user/Apps",
   "enabled": true
@@ -73,7 +73,7 @@ Since built-in frequency scheduling has been removed, you can now use external s
 [Unit]
 Description=Check MyApp updates
 
-[Service] 
+[Service]
 ExecStart=/path/to/appimage-updater check MyApp
 
 # /etc/systemd/system/appimage-updater-myapp.timer
