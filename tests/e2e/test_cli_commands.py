@@ -232,7 +232,7 @@ class TestE2EFunctionality:
         assert "Configured Applications" in result.stdout
         assert "TestApp" in result.stdout
         assert "Enabled" in result.stdout
-        assert "Github:" in result.stdout
+        assert "Source" in result.stdout  # Column header instead of "Github:" prefix
         # URL might be wrapped or truncated, so check for the domain part
         assert "github.com" in result.stdout or "https://github" in result.stdout
         assert "Total: 1 applications (1 enabled, 0 disabled)" in result.stdout
