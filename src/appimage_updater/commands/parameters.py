@@ -40,6 +40,7 @@ class AddParams(BaseParams):
     dry_run: bool = False
     interactive: bool = False
     examples: bool = False
+    format: Any = None  # OutputFormat, avoiding circular import
 
 
 @dataclass
@@ -82,6 +83,7 @@ class EditParams(BaseParams):
     yes: bool = False
     auto_subdir: bool | None = None
     dry_run: bool = False
+    format: Any = None  # OutputFormat, avoiding circular import
 
 
 @dataclass
@@ -108,6 +110,7 @@ class RemoveParams(BaseParams):
 
     app_names: list[str] | None = None
     force: bool = False
+    format: Any = None  # OutputFormat, avoiding circular import
     yes: bool = False
 
 

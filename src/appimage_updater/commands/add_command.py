@@ -36,7 +36,7 @@ class AddCommand(Command):
 
         return errors
 
-    async def execute(self) -> CommandResult:
+    async def execute(self, output_formatter: Any = None) -> CommandResult:
         """Execute the add command."""
         configure_logging(debug=self.params.debug)
 
@@ -51,8 +51,15 @@ class AddCommand(Command):
             if validation_result:
                 return validation_result
 
-            # Execute the add operation
-            success = await self._execute_add_operation()
+            # Use context manager to make output formatter available throughout the execution
+            if output_formatter:
+                from ..ui.output.context import OutputFormatterContext
+
+                with OutputFormatterContext(output_formatter):
+                    success = await self._execute_add_operation()
+            else:
+                success = await self._execute_add_operation()
+
             return self._create_execution_result(success)
 
         except Exception as e:

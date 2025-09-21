@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 from ..config.loader import ConfigLoadError
 from ..config.models import Config
@@ -36,7 +37,7 @@ class RemoveCommand(Command):
 
         return errors
 
-    async def execute(self) -> CommandResult:
+    async def execute(self, output_formatter: Any = None) -> CommandResult:
         """Execute the remove command."""
         configure_logging(debug=self.params.debug)
 
@@ -48,8 +49,16 @@ class RemoveCommand(Command):
                 self.console.print(f"[red]Error: {error_msg}[/red]")
                 return CommandResult(success=False, message=error_msg, exit_code=1)
 
-            # Execute the remove operation
-            return await self._execute_remove_operation()
+            # Use context manager to make output formatter available throughout the execution
+            if output_formatter:
+                from ..ui.output.context import OutputFormatterContext
+
+                with OutputFormatterContext(output_formatter):
+                    success = await self._execute_remove_operation()
+            else:
+                success = await self._execute_remove_operation()
+
+            return success
 
         except Exception as e:
             # Handle typer.Exit from ApplicationService properly

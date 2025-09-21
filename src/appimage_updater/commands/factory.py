@@ -55,6 +55,7 @@ class CommandFactory:
         interactive: bool = False,
         examples: bool = False,
         debug: bool = False,
+        format: Any = None,
     ) -> AddCommand:
         """Create an AddCommand instance."""
         params = AddParams(
@@ -81,6 +82,7 @@ class CommandFactory:
             interactive=interactive,
             examples=examples,
             debug=debug,
+            format=format,
         )
         return AddCommand(params)
 
@@ -143,6 +145,7 @@ class CommandFactory:
         verbose: bool = False,
         dry_run: bool = False,
         debug: bool = False,
+        format: Any = None,
     ) -> EditCommand:
         """Create an EditCommand instance."""
         params = EditParams(
@@ -169,6 +172,7 @@ class CommandFactory:
             verbose=verbose,
             dry_run=dry_run,
             debug=debug,
+            format=format,
         )
         return EditCommand(params)
 
@@ -216,6 +220,7 @@ class CommandFactory:
         force: bool = False,
         verbose: bool = False,
         debug: bool = False,
+        format: Any = None,
     ) -> RemoveCommand:
         """Create a RemoveCommand instance."""
         params = RemoveParams(
@@ -225,6 +230,7 @@ class CommandFactory:
             force=force,
             verbose=verbose,
             debug=debug,
+            format=format,
         )
         return RemoveCommand(params)
 

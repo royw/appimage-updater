@@ -509,6 +509,7 @@ def add(
     interactive: bool = _INTERACTIVE_OPTION,
     examples: bool = typer.Option(False, "--examples", help="Show usage examples and exit"),
     debug: bool = get_debug_option(),
+    format: OutputFormat = FORMAT_OPTION,
     version: bool = get_version_option(),
 ) -> None:
     """Add a new application to the configuration.
@@ -552,9 +553,21 @@ def add(
         interactive=interactive,
         examples=examples,
         debug=debug,
+        format=format,
     )
 
-    result = asyncio.run(command.execute())
+    # Create output formatter and execute with context
+    output_formatter = create_output_formatter_from_params(command.params)
+
+    # Handle format-specific finalization
+    if format in [OutputFormat.JSON, OutputFormat.HTML]:
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+        final_output = output_formatter.finalize()
+        if final_output:
+            output_formatter.print(final_output)
+    else:
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+
     if not result.success:
         raise typer.Exit(result.exit_code)
 
@@ -947,6 +960,7 @@ def edit(
     verbose: bool = VERBOSE_OPTION,
     dry_run: bool = EDIT_DRY_RUN_OPTION,
     debug: bool = get_debug_option(),
+    format: OutputFormat = FORMAT_OPTION,
     version: bool = get_version_option(),
 ) -> None:
     """Edit configuration for existing applications.
@@ -1047,9 +1061,21 @@ def edit(
         verbose=verbose,
         dry_run=dry_run,
         debug=debug,
+        format=format,
     )
 
-    result = asyncio.run(command.execute())
+    # Create output formatter and execute with context
+    output_formatter = create_output_formatter_from_params(command.params)
+
+    # Handle format-specific finalization
+    if format in [OutputFormat.JSON, OutputFormat.HTML]:
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+        final_output = output_formatter.finalize()
+        if final_output:
+            output_formatter.print(final_output)
+    else:
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+
     if not result.success:
         raise typer.Exit(result.exit_code)
 
@@ -1127,6 +1153,7 @@ def remove(
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     force: bool = _FORCE_OPTION,
     debug: bool = get_debug_option(),
+    format: OutputFormat = FORMAT_OPTION,
     version: bool = get_version_option(),
 ) -> None:
     """Remove applications from the configuration.
@@ -1176,9 +1203,21 @@ def remove(
         config_dir=config_dir,
         force=force,
         debug=debug,
+        format=format,
     )
 
-    result = asyncio.run(command.execute())
+    # Create output formatter and execute with context
+    output_formatter = create_output_formatter_from_params(command.params)
+
+    # Handle format-specific finalization
+    if format in [OutputFormat.JSON, OutputFormat.HTML]:
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+        final_output = output_formatter.finalize()
+        if final_output:
+            output_formatter.print(final_output)
+    else:
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+
     if not result.success:
         raise typer.Exit(result.exit_code)
 
