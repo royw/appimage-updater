@@ -32,12 +32,20 @@ class TestPrereleaseAutoDetection:
     @pytest.mark.anyio
     async def test_should_enable_prerelease_only_prereleases(self):
         """Test that prerelease is enabled when repository only has prereleases."""
+        now = datetime.now()
         mock_releases = [
             Release(
                 version="Continuous Build",
                 tag_name="continuous",
-                published_at=datetime.now(),
-                assets=[Asset(name="app.AppImage", url="http://test.com/app.AppImage", size=1000, created_at=datetime.now())],
+                published_at=now,
+                assets=[
+                    Asset(
+                        name="app.AppImage",
+                        url="http://test.com/app.AppImage",
+                        size=1000,
+                        created_at=now,
+                    )
+                ],
                 is_prerelease=True,
                 is_draft=False,
             )
@@ -56,20 +64,35 @@ class TestPrereleaseAutoDetection:
     @pytest.mark.anyio
     async def test_should_enable_prerelease_mixed_releases(self):
         """Test that prerelease is not enabled when repository has both stable and prerelease versions."""
+        now = datetime.now()
         mock_releases = [
             Release(
                 version="v1.0.0",
                 tag_name="v1.0.0",
-                published_at=datetime.now(),
-                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000, created_at=datetime.now())],
+                published_at=now,
+                assets=[
+                    Asset(
+                        name="app-v1.0.0.AppImage",
+                        url="http://test.com/app-v1.0.0.AppImage",
+                        size=1000,
+                        created_at=now,
+                    )
+                ],
                 is_prerelease=False,
                 is_draft=False,
             ),
             Release(
                 version="Continuous Build",
                 tag_name="continuous",
-                published_at=datetime.now(),
-                assets=[Asset(name="app.AppImage", url="http://test.com/app.AppImage", size=1000, created_at=datetime.now())],
+                published_at=now,
+                assets=[
+                    Asset(
+                        name="app.AppImage",
+                        url="http://test.com/app.AppImage",
+                        size=1000,
+                        created_at=now,
+                    )
+                ],
                 is_prerelease=True,
                 is_draft=False,
             ),
@@ -100,7 +123,14 @@ class TestPrereleaseAutoDetection:
                 version="v0.9.0",
                 tag_name="v0.9.0",
                 published_at=datetime.now(),
-                assets=[Asset(name="app-v0.9.0.AppImage", url="http://test.com/app-v0.9.0.AppImage", size=1000, created_at=datetime.now())],
+                assets=[
+                    Asset(
+                        name="app-v0.9.0.AppImage",
+                        url="http://test.com/app-v0.9.0.AppImage",
+                        size=1000,
+                        created_at=datetime.now(),
+                    )
+                ],
                 is_prerelease=False,
                 is_draft=False,
             ),
