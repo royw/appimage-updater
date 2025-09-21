@@ -68,6 +68,7 @@ from .ui.display import (
     display_edit_summary,
 )
 from .ui.output.interface import OutputFormat
+from .ui.output.context import OutputFormatterContext
 from .utils.logging_config import configure_logging
 from .utils.version_utils import (
     extract_version_from_filename,
@@ -1411,6 +1412,7 @@ async def _check_updates(
     no_interactive: bool,
     verbose: bool,
     info: bool = False,
+    output_formatter: Any = None,
 ) -> bool:
     """Internal async function to check for updates.
 
@@ -1423,29 +1425,59 @@ async def _check_updates(
     _log_check_start(config_file, config_dir, dry_run, app_names)
 
     try:
-        config, enabled_apps = await _prepare_check_environment(
-            config_file, config_dir, app_names, verbose, dry_run, yes, no_interactive
-        )
-        if enabled_apps is None:
-            # Applications not found - return False to indicate error
-            return False
-        if not enabled_apps:
-            return True  # No apps to check, but not an error
-
-        if info:
-            await _execute_info_update_workflow(enabled_apps)
+        # Use context manager to make output formatter available throughout the execution
+        if output_formatter:
+            with OutputFormatterContext(output_formatter):
+                return await _execute_check_workflow(
+                    config_file, config_dir, app_names, verbose, dry_run, yes, no_interactive, info
+                )
         else:
-            await _execute_update_workflow(config, enabled_apps, dry_run, yes, no_interactive)
-        return True
+            return await _execute_check_workflow(
+                config_file, config_dir, app_names, verbose, dry_run, yes, no_interactive, info
+            )
     except Exception as e:
         _handle_check_errors(e)
         return False
 
 
+async def _execute_check_workflow(
+    config_file: Path | None,
+    config_dir: Path | None,
+    app_names: list[str] | str | None,
+    verbose: bool,
+    dry_run: bool,
+    yes: bool,
+    no_interactive: bool,
+    info: bool,
+) -> bool:
+    """Execute the check workflow logic."""
+    config, enabled_apps = await _prepare_check_environment(
+        config_file, config_dir, app_names, verbose, dry_run, yes, no_interactive
+    )
+    if enabled_apps is None:
+        # Applications not found - return False to indicate error
+        return False
+    if not enabled_apps:
+        return True  # No apps to check, but not an error
+
+    if info:
+        await _execute_info_update_workflow(enabled_apps)
+    else:
+        await _execute_update_workflow(config, enabled_apps, dry_run, yes, no_interactive)
+    return True
+
+
 async def _execute_info_update_workflow(enabled_apps: list[ApplicationConfig]) -> None:
     """Execute the info file update workflow for all enabled applications."""
-    console = Console()
-    console.print(f"\n[bold blue]Updating .info files for {len(enabled_apps)} applications...[/bold blue]")
+    from .ui.output.context import get_output_formatter
+
+    output_formatter = get_output_formatter()
+    if output_formatter:
+        output_formatter.start_section("Info File Update")
+        output_formatter.print(f"Updating .info files for {len(enabled_apps)} applications...")
+    else:
+        console = Console()
+        console.print(f"\n[bold blue]Updating .info files for {len(enabled_apps)} applications...[/bold blue]")
 
     for app_config in enabled_apps:
         try:
@@ -1805,8 +1837,41 @@ async def _perform_update_checks(
 
 def _display_check_results(check_results: list[Any], dry_run: bool) -> None:
     """Display check results."""
+    from .ui.output.context import get_output_formatter
+
     logger.debug("Displaying check results")
-    display_check_results(check_results, show_urls=dry_run)
+    output_formatter = get_output_formatter()
+
+    if output_formatter:
+        # Convert check results to dict format for output formatter
+        results_data = []
+        for result in check_results:
+            result_dict = {}
+            if hasattr(result, 'app_name'):
+                result_dict['Application'] = result.app_name
+            if hasattr(result, 'success'):
+                result_dict['Status'] = 'Success' if result.success else 'Error'
+            if hasattr(result, 'candidate') and result.candidate:
+                if hasattr(result.candidate, 'download_url'):
+                    result_dict['Download URL'] = result.candidate.download_url
+                if hasattr(result.candidate, 'current_version'):
+                    result_dict['Current Version'] = str(result.candidate.current_version) if result.candidate.current_version else 'N/A'
+                if hasattr(result.candidate, 'latest_version'):
+                    result_dict['Latest Version'] = str(result.candidate.latest_version) if result.candidate.latest_version else 'N/A'
+                if hasattr(result.candidate, 'needs_update'):
+                    result_dict['Update Available'] = 'Yes' if result.candidate.needs_update else 'No'
+            if hasattr(result, 'error_message') and result.error_message:
+                result_dict['Error'] = result.error_message
+            
+            results_data.append(result_dict)
+
+        if dry_run:
+            output_formatter.print_table(results_data, title="Download URLs")
+        else:
+            output_formatter.print_check_results(results_data)
+    else:
+        # Fallback to original display function
+        display_check_results(check_results, show_urls=dry_run)
 
 
 def _filter_update_candidates(check_results: list[Any]) -> list[Any]:

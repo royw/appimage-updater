@@ -38,24 +38,26 @@ class CheckCommand(Command):
 
             try:
                 # Execute the check operation
-                success = await self._execute_check_operation()
+                success = await self._execute_check_operation(output_formatter)
 
                 # Stop HTTP tracking if it was enabled
-                if http_tracker:
+                if http_tracker and output_formatter:
                     http_tracker.stop_tracking()
 
-                    # Print basic summary
-                    self.console.print("\n[bold blue]HTTP Tracking Summary[/bold blue]")
-                    self.console.print(f"Total requests: {len(http_tracker.requests)}")
+                    # Print basic summary using output formatter
+                    output_formatter.start_section("HTTP Tracking Summary")
+                    output_formatter.print(f"Total requests: {len(http_tracker.requests)}")
 
                     # Show some request details
                     for i, request in enumerate(http_tracker.requests[:5]):  # Show first 5
                         status = request.response_status or "ERROR"
                         time_str = f"{request.response_time:.3f}s" if request.response_time else "N/A"
-                        self.console.print(f"  {i + 1}. {request.method} {request.url} -> {status} ({time_str})")
+                        output_formatter.print(f"  {i + 1}. {request.method} {request.url} -> {status} ({time_str})")
 
                     if len(http_tracker.requests) > 5:
-                        self.console.print(f"  ... and {len(http_tracker.requests) - 5} more requests")
+                        output_formatter.print(f"  ... and {len(http_tracker.requests) - 5} more requests")
+
+                    output_formatter.end_section()
 
                 if success:
                     return CommandResult(success=True, message="Check completed successfully")
@@ -72,8 +74,11 @@ class CheckCommand(Command):
             logger.exception("Full exception details")
             return CommandResult(success=False, message=str(e), exit_code=1)
 
-    async def _execute_check_operation(self) -> bool:
+    async def _execute_check_operation(self, output_formatter: Any = None) -> bool:
         """Execute the core check operation logic.
+
+        Args:
+            output_formatter: Optional output formatter for display
 
         Returns:
             True if successful, False if applications not found
@@ -89,5 +94,6 @@ class CheckCommand(Command):
             no_interactive=self.params.no_interactive,
             verbose=self.params.verbose,
             info=self.params.info,
+            output_formatter=output_formatter,
         )
         return success
