@@ -236,7 +236,7 @@ appimage-updater edit OrcaSlicer --direct --url https://github.com/SoftFever/Orc
 
 Rotation maintains stable access to your AppImages while keeping previous versions for rollback. See the detailed [Rotation Guide](rotation.md) for complete information.
 
-### Quick Start
+### Rotation Quick Start
 
 ```bash
 # Add an application with rotation enabled

@@ -451,8 +451,8 @@ The `add` and `edit` commands now have **perfect feature parity**. Every option 
 | **Configuration Area** | **Shared Options** | **Usage** |
 |----------------------|-------------------|----------|
 | **Basic Config** | `--prerelease/--no-prerelease` | Same in both commands |
-| **File Rotation** | `--rotation/--no-rotation`<br>`--retain N`<br>`--symlink PATH` | Same in both commands |
-| **Checksum** | `--checksum/--no-checksum`<br>`--checksum-algorithm ALG`<br>`--checksum-pattern PATTERN`<br>`--checksum-required/--checksum-optional` | Same in both commands |
+| **File Rotation** | `--rotation/--no-rotation`, `--retain N`, `--symlink PATH` | Same in both commands |
+| **Checksum** | `--checksum/--no-checksum`, `--checksum-algorithm ALG`, `--checksum-pattern PATTERN`, `--checksum-required/--checksum-optional` | Same in both commands |
 | **Direct Downloads** | `--direct/--no-direct` | Same in both commands |
 | **Directories** | `--download-dir PATH` | `edit` only (can't change in add) |
 | **URLs** | `--url URL` | `edit` only (can't change in add) |
@@ -645,7 +645,7 @@ OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\.AppImage(\..*)?$
 1. **Case Insensitive**: Uses `(?i)` flag for robust matching
 1. **Extension Stripping**: Removes extensions before prefix analysis for cleaner patterns
 
-#### Benefits of Universal Patterns
+#### Universal Pattern Benefits
 
 1. **Future-Proof**: Works if projects switch between ZIP and AppImage formats
 1. **Zero Configuration**: No manual pattern editing when formats change
@@ -812,7 +812,7 @@ Comprehensive security through checksum verification:
 1. **Distribution Selection**: Enhanced with full compatibility awareness
 1. **CLI Interface**: Users only see compatible options
 
-#### Benefits
+#### Compatibility Benefits
 
 - **🚫 Eliminates Download Errors**: No more "cannot execute binary file" errors
 - **⚡ Faster Selection**: Reduced noise = quicker decisions

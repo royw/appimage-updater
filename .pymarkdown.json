@@ -5,23 +5,23 @@
     },
     "md024": {
       "enabled": true,
-      "siblings_only": true
+      "siblings_only": false
     },
     "md026": {
       "enabled": true,
       "punctuation": ".,;:!?"
     },
     "md033": {
-      "enabled": false
+      "enabled": true
+    },
+    "md034": {
+      "enabled": true
     },
     "md036": {
       "enabled": false
     },
     "md041": {
       "enabled": false
-    },
-    "md034": {
-      "enabled": true
     },
     "md042": {
       "enabled": true
