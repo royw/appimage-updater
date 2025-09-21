@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -118,9 +119,19 @@ def _parse_config_data(data: dict[str, Any]) -> Config:
 
 def get_default_config_path() -> Path:
     """Get default configuration file path."""
+    # Check for test environment override
+    test_config_dir = os.environ.get("APPIMAGE_UPDATER_TEST_CONFIG_DIR")
+    if test_config_dir:
+        return Path(test_config_dir) / "config.json"
+
     return Path.home() / ".config" / "appimage-updater" / "config.json"
 
 
 def get_default_config_dir() -> Path:
     """Get default configuration directory path."""
+    # Check for test environment override
+    test_config_dir = os.environ.get("APPIMAGE_UPDATER_TEST_CONFIG_DIR")
+    if test_config_dir:
+        return Path(test_config_dir) / "apps"
+
     return Path.home() / ".config" / "appimage-updater" / "apps"

@@ -1905,9 +1905,10 @@ async def _perform_update_checks(
     if dry_run:
         logger.debug("Dry run mode: Skipping HTTP requests, returning mock results")
         console.print("[yellow]Dry run mode - skipping HTTP requests")
-        
+
         # Return mock results for dry-run
         from .core.models import CheckResult
+
         mock_results = []
         for app_config in enabled_apps:
             # Create a mock result indicating no update available (safe for dry-run)

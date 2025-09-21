@@ -2,6 +2,8 @@
 
 import os
 import socket
+import tempfile
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -129,3 +131,34 @@ def network_blocker() -> Any:
     # The actual blocking logic is handled in pytest_configure
     yield
     # Cleanup is handled in pytest_unconfigure
+
+
+@pytest.fixture(scope="session", autouse=True)
+def isolated_config_dir() -> Any:
+    """Session-scoped fixture to isolate tests with temporary config directory."""
+    # Check if we're running regression tests - they need real config
+    test_paths = os.environ.get("PYTEST_CURRENT_TEST", "")
+    is_regression_test = "regression" in test_paths.lower()
+    
+    # Check environment variable override to disable isolation
+    disable_isolation = os.environ.get("APPIMAGE_UPDATER_DISABLE_TEST_ISOLATION", "").lower() in ("1", "true", "yes")
+    
+    if is_regression_test or disable_isolation:
+        # Don't isolate regression tests or when explicitly disabled
+        yield
+        return
+    
+    # Create temporary directory for test configuration
+    with tempfile.TemporaryDirectory(prefix="appimage_updater_test_") as temp_dir:
+        # Set environment variable to override config directory
+        original_config_dir = os.environ.get("APPIMAGE_UPDATER_TEST_CONFIG_DIR")
+        os.environ["APPIMAGE_UPDATER_TEST_CONFIG_DIR"] = temp_dir
+        
+        try:
+            yield Path(temp_dir)
+        finally:
+            # Restore original environment
+            if original_config_dir is not None:
+                os.environ["APPIMAGE_UPDATER_TEST_CONFIG_DIR"] = original_config_dir
+            else:
+                os.environ.pop("APPIMAGE_UPDATER_TEST_CONFIG_DIR", None)
