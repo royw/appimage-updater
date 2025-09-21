@@ -65,7 +65,7 @@ tasks:
             uv tool install mdformat
           fi
         silent: true
-      - mdformat {{.CLI_ARGS | default "*.md docs/ *.md"}}
+      - mdformat {{.CLI_ARGS | default "*.md docs/*.md"}}
 
   lint:
     desc: Run all linting tasks
@@ -73,6 +73,7 @@ tasks:
       - task: lint:fix
       - task: lint:ruff
       - task: lint:mypy
+      - task: lint:markdown
       - task: lint:emoji
       - task: lint:deadcode
 
@@ -138,6 +139,16 @@ tasks:
     desc: Run type checking with mypy
     cmds:
       - uv run mypy {{.CLI_ARGS | default .SRC}}
+
+  lint:markdown:
+    desc: Lint markdown files with pymarkdownlnt
+    cmds:
+      - cmd: |
+          if ! command -v pymarkdown &> /dev/null; then
+            uv tool install pymarkdownlnt
+          fi
+        silent: true
+      - pymarkdown --disable-rules md013 scan {{.CLI_ARGS | default "*.md docs/*.md"}}
 
   complexity:
     desc: Analyze code complexity with radon

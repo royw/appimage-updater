@@ -148,7 +148,7 @@ ______________________________________________________________________
   - **EXAMPLES**: Converts `https://github.com/user/repo/releases/download/...` → `https://github.com/user/repo`
   - **EXAMPLES**: Converts `https://github.com/user/repo/releases` → `https://github.com/user/repo`
 
-### Bug Fixes
+### Configuration Fixes
 
 - **FIXED**: GitHubDesktop configuration URL corrected from invalid release download URL to proper repository URL
 - **FIXED**: GitHubDesktop configuration removed invalid rotation settings that were causing configuration errors
@@ -179,7 +179,7 @@ ______________________________________________________________________
   - **SECURE**: Security-first design with proper priority ordering and no token exposure in logs
   - **USER-FRIENDLY**: Clear authentication status feedback and helpful setup guidance
 
-#### **Authentication Sources (Priority Order)**:
+#### **Authentication Sources (Priority Order)**
 
 1. **`GITHUB_TOKEN`** environment variable (standard GitHub CLI compatible)
 1. **`APPIMAGE_UPDATER_GITHUB_TOKEN`** environment variable (app-specific)
@@ -191,7 +191,7 @@ ______________________________________________________________________
    - `~/.config/appimage-updater/config.json`
    - `~/.config/appimage-updater/global.json`
 
-#### **Technical Implementation**:
+#### **Technical Implementation**
 
 - **NEW**: `GitHubAuth` class for secure token management and validation
 - **NEW**: `get_github_auth()` factory function for easy authentication setup
@@ -200,14 +200,14 @@ ______________________________________________________________________
 - **ENHANCED**: Rate limit aware error messages with helpful user guidance
 - **INTEGRATED**: CLI commands show authentication status in debug mode
 
-#### **Rate Limit Benefits**:
+#### **Rate Limit Benefits**
 
 - **Anonymous**: 60 requests/hour (frequently exceeded during normal usage)
 - **Authenticated**: 5,000 requests/hour (sufficient for intensive usage)
 - **Impact**: Eliminates rate limit failures during normal operation
 - **Feedback**: Clear status messages showing current rate limits and authentication method
 
-#### **Personal Access Token (PAT) Setup Guide**:
+#### **Personal Access Token (PAT) Setup Guide**
 
 **Required Permissions (Minimal Security)**:
 
@@ -288,7 +288,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
 - **Priority Security**: Environment variables take precedence over files
 - **File Permissions**: Supports secure file permissions (600) for token files
 
-#### 🧪 **Testing & Quality Assurance**:
+#### 🧪 **Testing & Quality Assurance**
 
 - **COMPREHENSIVE**: 25 new tests covering all authentication scenarios
 - **REAL-WORLD**: Tested with actual GitHub repositories and API responses
@@ -296,7 +296,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
 - **VALIDATED**: Works with both valid and invalid tokens, handles API failures gracefully
 - **REGRESSION**: Ensures anonymous access continues working when no token available
 
-#### 💡 **User Benefits**:
+#### 💡 **User Benefits**
 
 - **ELIMINATES**: "Rate limit exceeded" errors during normal usage
 - **IMPROVES**: Reliability of GitHub release fetching and pattern generation
@@ -570,7 +570,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **RESULT**: All mypy type checks now pass
   - **RESULT**: All radon complexity checks now pass
 
-### 🐛 Bug Fixes
+### 🐛 Code Quality Fixes
 
 - **FIXED**: Symlink detection for AppImage files with suffixes
 
@@ -586,7 +586,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **Improved compatibility**: Better integration with existing AppImage ecosystem tools
   - **Expanded coverage**: Finds symlinks in all standard AppImage locations used by the community
 
-### 🆕 New Features
+### 🆕 Command Enhancements
 
 - **MAJOR**: Comprehensive `add` Command Enhancement - Feature Parity with `edit`
 
@@ -660,7 +660,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - Fixed false positive updates for releases like "Development Build weekly-2025.09.03"
   - Version comparison now correctly extracts and compares just the version portion
 
-### 🆕 New Features
+### 🆕 Show Command Features
 
 - **NEW**: `show` command for detailed application information
 
@@ -682,7 +682,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **PREPARES**: Foundation for future download rotation improvements using explicit symlink paths
   - **EXAMPLE**: `"symlink_path": "~/Applications/FreeCAD.AppImage"` in configuration
 
-### 🧪 Testing & Quality Assurance
+### 🧪 Show Command Testing
 
 - **ENHANCED**: Comprehensive test coverage for `show` command and symlink_path
 
