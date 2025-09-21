@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "appimage-updater"
-version = "0.3.6"
+version = "0.3.7"
 description = "A service for automating finding and downloading AppImage applications"
 readme = "README.md"
 license = "MIT"
