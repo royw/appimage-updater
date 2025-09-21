@@ -107,7 +107,10 @@ class TestFormatOptions:
         for command in expected_commands:
             assert command in commands_with_params, f"Command {command} not found in source code"
             params = commands_with_params[command]
-            assert "format" in params, f"Command {command} missing 'format' parameter in function signature. Found params: {params}"
+            assert "format" in params, (
+                f"Command {command} missing 'format' parameter in function signature. "
+                f"Found params: {params}"
+            )
 
     def test_dry_run_parameters_in_source(self) -> None:
         """Test that appropriate commands have dry_run parameter in source code."""
@@ -119,7 +122,10 @@ class TestFormatOptions:
         for command in expected_dry_run_commands:
             if command in commands_with_params:
                 params = commands_with_params[command]
-                assert "dry_run" in params, f"Command {command} missing 'dry_run' parameter in function signature. Found params: {params}"
+                assert "dry_run" in params, (
+                    f"Command {command} missing 'dry_run' parameter in function signature. "
+                    f"Found params: {params}"
+                )
 
     def test_http_tracker_parameters_in_source(self) -> None:
         """Test that appropriate commands have instrument_http parameter in source code."""
@@ -131,7 +137,10 @@ class TestFormatOptions:
         for command in expected_http_tracker_commands:
             if command in commands_with_params:
                 params = commands_with_params[command]
-                assert "instrument_http" in params, f"Command {command} missing 'instrument_http' parameter in function signature. Found params: {params}"
+                assert "instrument_http" in params, (
+                    f"Command {command} missing 'instrument_http' parameter in function signature. "
+                    f"Found params: {params}"
+                )
 
     def test_source_code_analysis_accuracy(self) -> None:
         """Test that source code analysis correctly identifies all expected commands."""

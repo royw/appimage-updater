@@ -104,9 +104,11 @@ class TestHTTPTrackerDryRun:
 
         # Should show dry-run behavior OR no apps found (clean test environment)
         output = stdout + stderr
-        assert ("dry run mode" in output.lower() or "skipping HTTP requests" in output.lower() or
-                "dry" in output.lower() or "would" in output.lower() or
-                "no enabled applications" in output.lower() or "no applications" in output.lower()), f"Should show dry-run or no-apps behavior: {output}"
+        assert (
+            "dry run mode" in output.lower() or "skipping HTTP requests" in output.lower() or
+            "dry" in output.lower() or "would" in output.lower() or
+            "no enabled applications" in output.lower() or "no applications" in output.lower()
+        ), f"Should show dry-run or no-apps behavior: {output}"
 
     def test_repository_dry_run_no_http_requests(self):
         """Test that repository --dry-run makes no HTTP requests."""
@@ -155,7 +157,10 @@ class TestHTTPTrackerDryRun:
         for command in expected_http_commands:
             if command in commands_with_params:
                 params = commands_with_params[command]
-                assert "instrument_http" in params, f"Command {command} missing 'instrument_http' parameter in function signature. Found params: {params}"
+                assert "instrument_http" in params, (
+                    f"Command {command} missing 'instrument_http' parameter in function signature. "
+                    f"Found params: {params}"
+                )
 
     def test_dry_run_parameters_in_source(self):
         """Test that appropriate commands have dry_run parameter in source code."""
@@ -167,7 +172,10 @@ class TestHTTPTrackerDryRun:
         for command in expected_dry_run_commands:
             if command in commands_with_params:
                 params = commands_with_params[command]
-                assert "dry_run" in params, f"Command {command} missing 'dry_run' parameter in function signature. Found params: {params}"
+                assert "dry_run" in params, (
+                    f"Command {command} missing 'dry_run' parameter in function signature. "
+                    f"Found params: {params}"
+                )
 
     def test_format_and_dry_run_combination(self):
         """Test that --format and --dry-run work together."""

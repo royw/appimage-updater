@@ -150,10 +150,10 @@ class TestDistributionSelector:
         selector.current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
         # Test compatibility
-        assert selector._is_compatible_distribution("debian") == True  # Debian family
-        assert selector._is_compatible_distribution("mint") == True  # Debian family
-        assert selector._is_compatible_distribution("fedora") == False  # Different family
-        assert selector._is_compatible_distribution("arch") == False  # Different family
+        assert selector._is_compatible_distribution("debian")  # Debian family
+        assert selector._is_compatible_distribution("mint")  # Debian family
+        assert not selector._is_compatible_distribution("fedora")  # Different family
+        assert not selector._is_compatible_distribution("arch")  # Different family
 
     def test_is_uncommon_distribution(self):
         """Test uncommon distribution detection."""
@@ -162,11 +162,11 @@ class TestDistributionSelector:
         # Common distributions
         for dist in ["ubuntu", "debian", "fedora", "arch"]:
             selector.current_dist = DistributionInfo(id=dist, version="1.0", version_numeric=1.0)
-            assert selector._is_uncommon_distribution() == False
+            assert not selector._is_uncommon_distribution()
 
         # Uncommon distribution
         selector.current_dist = DistributionInfo(id="gentoo", version="1.0", version_numeric=1.0)
-        assert selector._is_uncommon_distribution() == True
+        assert selector._is_uncommon_distribution()
 
     def test_select_best_asset_automatic_selection(self):
         """Test automatic asset selection for good matches."""

@@ -10,7 +10,7 @@ from pathlib import Path
 
 def test_check_command_finds_candidates():
     """Test that check command actually finds update candidates for real apps.
-    
+
     This is a regression test for the issue where:
     - Assets are being selected successfully (debug shows score: 290.0)
     - Candidates are being created (debug shows "3 candidates found")
@@ -60,7 +60,7 @@ def test_check_command_finds_candidates():
 
 def test_check_command_with_debug_shows_asset_selection():
     """Test that debug output shows assets are being selected correctly.
-    
+
     This test verifies that the backend logic is working (assets selected, candidates created)
     even though the frontend display is broken.
     """
