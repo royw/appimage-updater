@@ -121,7 +121,8 @@ class ApplicationService:
 
         ApplicationService._print_troubleshooting_tips_plain(available_apps)
 
-        logger.error(f"Applications not found: {not_found}. Available: {available_apps}")
+        # This is normal user behavior, not an error that needs logging
+        logger.debug(f"User requested non-existent applications: {not_found}. Available: {available_apps}")
         return False
 
     @staticmethod

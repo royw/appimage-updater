@@ -157,11 +157,11 @@ _REMOVE_APP_NAME_ARGUMENT_OPTIONAL = typer.Argument(
     help="Names of applications to remove from configuration (case-insensitive, supports glob patterns like 'Orca*'). "
     "Multiple names can be specified.",
 )
-_FORCE_OPTION = typer.Option(
+_YES_OPTION_REMOVE = typer.Option(
     False,
-    "--force",
-    "-f",
-    help="Force operation without confirmation prompts (use with caution)",
+    "--yes",
+    "-y",
+    help="Automatically answer yes to confirmation prompts",
 )
 _ADD_NAME_ARGUMENT = typer.Argument(
     default=None, help="Name for the application (used for identification and pattern matching)"
@@ -1151,7 +1151,7 @@ def remove(
     app_names: list[str] | None = _REMOVE_APP_NAME_ARGUMENT_OPTIONAL,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
-    force: bool = _FORCE_OPTION,
+    yes: bool = _YES_OPTION_REMOVE,
     debug: bool = get_debug_option(),
     format: OutputFormat = FORMAT_OPTION,
     version: bool = get_version_option(),
@@ -1166,7 +1166,7 @@ def remove(
         appimage-updater remove FreeCAD OrcaSlicer  # Remove multiple applications
 
     ADVANCED OPTIONS:
-        appimage-updater remove --force MyApp     # Skip confirmation prompt
+        appimage-updater remove --yes MyApp       # Skip confirmation prompt
         appimage-updater remove --config-dir ~/.config/appimage-updater MyApp
     """
     # Show help if no app names are provided
@@ -1184,7 +1184,7 @@ def remove(
         typer.echo("                Multiple names can be specified.")
         typer.echo("")
         typer.echo("Options:")
-        typer.echo("  --force, -f                     Force operation without confirmation")
+        typer.echo("  --yes, -y                       Automatically answer yes to confirmation prompts")
         typer.echo("  --config, -c PATH               Configuration file path")
         typer.echo("  --config-dir, -d PATH           Configuration directory path")
         typer.echo("  --debug                         Enable debug logging")
@@ -1194,14 +1194,14 @@ def remove(
         typer.echo("Examples:")
         typer.echo("  appimage-updater remove FreeCAD")
         typer.echo("  appimage-updater remove FreeCAD OrcaSlicer")
-        typer.echo("  appimage-updater remove --force MyApp")
+        typer.echo("  appimage-updater remove --yes MyApp")
         raise typer.Exit(0)
 
     command = CommandFactory.create_remove_command(
         app_names=app_names,
         config_file=config_file,
         config_dir=config_dir,
-        force=force,
+        yes=yes,
         debug=debug,
         format=format,
     )

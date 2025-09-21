@@ -109,9 +109,8 @@ class RemoveParams(BaseParams):
     """Parameters for remove command."""
 
     app_names: list[str] | None = None
-    force: bool = False
-    format: Any = None  # OutputFormat, avoiding circular import
     yes: bool = False
+    format: Any = None  # OutputFormat, avoiding circular import
 
 
 @dataclass

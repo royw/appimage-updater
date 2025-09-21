@@ -107,8 +107,8 @@ class RemoveCommand(Command):
         return True
 
     def _should_proceed_with_removal(self, found_apps: list[ApplicationConfig]) -> bool:
-        """Determine if removal should proceed based on force flag and user confirmation."""
-        return self.params.force or self._get_user_confirmation(found_apps)
+        """Determine if removal should proceed based on yes flag and user confirmation."""
+        return self.params.yes or self._get_user_confirmation(found_apps)
 
     def _perform_removal(self, config: Config, found_apps: list[ApplicationConfig]) -> None:
         """Perform the actual removal of applications."""
@@ -161,7 +161,7 @@ class RemoveCommand(Command):
                 self.console.print("Removal cancelled.")
                 return False
         except (EOFError, KeyboardInterrupt, typer.Abort):
-            self.console.print("Running in non-interactive mode. Use --force to remove without confirmation.")
+            self.console.print("Running in non-interactive mode. Use --yes to remove without confirmation.")
             return False
         return True
 
