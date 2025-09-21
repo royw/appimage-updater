@@ -637,7 +637,7 @@ class TestRemoveCommand:
         ])
 
         assert result.exit_code == 0  # Should exit cleanly
-        assert "Running in non-interactive mode. Use --force to remove without confirmation." in result.stdout
+        assert "Running in non-interactive mode. Use --yes to remove without confirmation." in result.stdout
 
         # App should still exist
         config_file = temp_config_dir / "noninteractiveapp.json"

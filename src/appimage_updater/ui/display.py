@@ -56,6 +56,15 @@ def _build_path_from_parts(parts: list[str], max_width: int) -> tuple[list[str],
     Ensures at least one parent directory is included when possible.
     For example: /a/b/c/d/ -> .../c/d/ (not just .../d/)
     """
+    if not parts:
+        return [], 0
+
+    # First, try to fit all parts without reserving ellipsis space
+    total_length = sum(len(part) for part in parts) + len(parts) - 1  # +1 for each separator
+    if total_length <= max_width:
+        return parts, total_length
+
+    # If not all parts fit, use ellipsis-aware logic
     result_parts: list[str] = []
     current_length = 0
 
@@ -64,10 +73,9 @@ def _build_path_from_parts(parts: list[str], max_width: int) -> tuple[list[str],
     effective_width = max_width - ellipsis_length
 
     # First, always include the last part (final directory/file)
-    if parts:
-        last_part = parts[-1]
-        result_parts.append(last_part)
-        current_length = len(last_part)
+    last_part = parts[-1]
+    result_parts.append(last_part)
+    current_length = len(last_part)
 
     # Then try to include at least one parent directory
     min_parts_desired = 2  # final directory + at least one parent

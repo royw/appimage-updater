@@ -184,12 +184,12 @@ class TestMultiAppRemove:
         assert "Removal cancelled." in result.stdout
 
     def test_remove_force_multiple(self, runner, temp_config_dir, multi_app_config):
-        """Test remove command with --force flag for multiple apps."""
+        """Test remove command with --yes flag for multiple apps."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
             json.dump(multi_app_config, f)
 
-        result = runner.invoke(app, ["remove", "App1", "App2", "--force", "--config", str(config_file)])
+        result = runner.invoke(app, ["remove", "App1", "App2", "--yes", "--config", str(config_file)])
 
         assert result.exit_code == 0
         assert "Successfully removed application 'App1'" in result.stdout
@@ -322,7 +322,7 @@ class TestMultiAppGlobPatterns:
         with config_file.open("w") as f:
             json.dump(multi_app_config, f)
 
-        result = runner.invoke(app, ["remove", "App[12]", "--force", "--config", str(config_file)])
+        result = runner.invoke(app, ["remove", "App[12]", "--yes", "--config", str(config_file)])
 
         assert result.exit_code == 0
         assert "Successfully removed application 'App1'" in result.stdout
