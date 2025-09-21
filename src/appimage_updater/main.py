@@ -1192,6 +1192,7 @@ def repository(
     assets: bool = REPOSITORY_ASSETS_OPTION,
     dry_run: bool = REPOSITORY_DRY_RUN_OPTION,
     debug: bool = get_debug_option(),
+    format: OutputFormat = FORMAT_OPTION,
     version: bool = get_version_option(),
 ) -> None:
     """Examine repository information for configured applications.
@@ -1218,9 +1219,21 @@ def repository(
         assets=assets,
         dry_run=dry_run,
         debug=debug,
+        format=format,
     )
 
-    result = asyncio.run(command.execute())
+    # Create output formatter and execute with context
+    output_formatter = create_output_formatter_from_params(command.params)
+
+    # Handle format-specific finalization
+    if format in [OutputFormat.JSON, OutputFormat.HTML]:
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+        final_output = output_formatter.finalize()
+        if final_output:
+            output_formatter.print(final_output)
+    else:
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+
     if not result.success:
         raise typer.Exit(result.exit_code)
 

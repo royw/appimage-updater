@@ -238,6 +238,7 @@ class CommandFactory:
         dry_run: bool = False,
         verbose: bool = False,
         debug: bool = False,
+        format: Any = None,
     ) -> RepositoryCommand:
         """Create a RepositoryCommand instance."""
         params = RepositoryParams(
@@ -249,6 +250,7 @@ class CommandFactory:
             dry_run=dry_run,
             verbose=verbose,
             debug=debug,
+            format=format,
         )
         return RepositoryCommand(params)
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from loguru import logger
 from rich.console import Console
 
@@ -26,7 +28,7 @@ class RepositoryCommand(Command):
 
         return errors
 
-    async def execute(self) -> CommandResult:
+    async def execute(self, output_formatter: Any = None) -> CommandResult:
         """Execute the repository command."""
         configure_logging(debug=self.params.debug)
 
@@ -38,17 +40,14 @@ class RepositoryCommand(Command):
                 self.console.print(f"[red]Error: {error_msg}[/red]")
                 return CommandResult(success=False, message=error_msg, exit_code=1)
 
-            # Import and delegate to existing implementation
-            from ..main import _examine_repositories
+            # Use context manager to make output formatter available throughout the execution
+            if output_formatter:
+                from ..ui.output.context import OutputFormatterContext
 
-            success = await _examine_repositories(
-                config_file=self.params.config_file,
-                config_dir=self.params.config_dir,
-                app_names=self.params.app_names or [],
-                limit=self.params.limit,
-                show_assets=self.params.assets,
-                dry_run=self.params.dry_run,
-            )
+                with OutputFormatterContext(output_formatter):
+                    success = await self._execute_repository_operation()
+            else:
+                success = await self._execute_repository_operation()
 
             if success:
                 return CommandResult(success=True, message="Repository examination completed successfully")
@@ -59,3 +58,17 @@ class RepositoryCommand(Command):
             logger.error(f"Unexpected error in repository command: {e}")
             logger.exception("Full exception details")
             return CommandResult(success=False, message=str(e), exit_code=1)
+
+    async def _execute_repository_operation(self) -> bool:
+        """Execute the core repository operation logic."""
+        # Import and delegate to existing implementation
+        from ..main import _examine_repositories
+
+        return await _examine_repositories(
+            config_file=self.params.config_file,
+            config_dir=self.params.config_dir,
+            app_names=self.params.app_names or [],
+            limit=self.params.limit,
+            show_assets=self.params.assets,
+            dry_run=self.params.dry_run,
+        )

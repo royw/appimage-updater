@@ -119,6 +119,7 @@ class RepositoryParams(BaseParams):
     assets: bool = False
     limit: int = 10
     dry_run: bool = False
+    format: Any = None  # OutputFormat, avoiding circular import
 
 
 # InitParams removed with init command
