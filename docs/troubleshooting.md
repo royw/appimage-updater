@@ -573,7 +573,7 @@ Look for these key indicators in debug output:
    appimage-updater --debug check --dry-run | grep -i rate
    ```
 
-## Getting Help
+## Reporting Issues
 
 ### Enable Debug Mode
 
