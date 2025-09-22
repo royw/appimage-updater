@@ -7,8 +7,7 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
-from ..config.loader import ConfigLoadError
-from ..config.operations import load_config
+# Imports removed - using migration helpers instead
 from ..ui.display import display_applications_list
 from ..utils.logging_config import configure_logging
 
@@ -81,8 +80,11 @@ class ListCommand(Command):
         """
 
         try:
-            config = load_config(self.params.config_file, self.params.config_dir)
-        except ConfigLoadError:
+            from ..config.migration_helpers import migrate_legacy_load_config
+
+            global_config, app_configs = migrate_legacy_load_config(self.params.config_file, self.params.config_dir)
+            config = app_configs._config
+        except Exception:
             # Use output formatter if available, otherwise fallback to console
             from ..ui.output.context import get_output_formatter
 

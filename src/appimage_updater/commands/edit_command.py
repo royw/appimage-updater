@@ -8,13 +8,11 @@ import typer
 from loguru import logger
 from rich.console import Console
 
-from ..config.loader import ConfigLoadError
 from ..config.models import ApplicationConfig, Config
 from ..config.operations import (
     apply_configuration_updates,
     collect_edit_updates,
     handle_directory_creation,
-    load_config,
     validate_edit_updates,
 )
 from ..services.application_service import ApplicationService
@@ -126,8 +124,12 @@ class EditCommand(Command):
         """
 
         try:
-            return load_config(self.params.config_file, self.params.config_dir)
-        except ConfigLoadError as e:
+            from ..config.migration_helpers import migrate_legacy_load_config
+
+            global_config, app_configs = migrate_legacy_load_config(self.params.config_file, self.params.config_dir)
+            # Return the combined config object for backward compatibility
+            return app_configs._config
+        except Exception as e:
             if "No configuration found" in str(e):
                 self.console.print("[red]Configuration error: No configuration found[/red]")
             else:

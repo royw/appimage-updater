@@ -8,7 +8,8 @@ from typing import Any
 
 from ..config.loader import ConfigLoadError
 from ..config.models import Config
-from ..config.operations import load_config
+
+# Remove operation is handled internally
 from ..core.models import ApplicationConfig
 from ..services.application_service import ApplicationService
 from ..ui.display import _replace_home_with_tilde
@@ -127,8 +128,10 @@ class RemoveCommand(Command):
 
     def _load_config(self) -> Config:
         """Load configuration with error handling."""
-        config = load_config(self.params.config_file, self.params.config_dir)
-        return config  # type: ignore[no-any-return]
+        from ..config.migration_helpers import migrate_legacy_load_config
+
+        global_config, app_configs = migrate_legacy_load_config(self.params.config_file, self.params.config_dir)
+        return app_configs._config
 
     def _validate_and_filter_apps(
         self, config: Config, app_names_to_remove: list[str]

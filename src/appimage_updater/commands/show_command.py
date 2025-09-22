@@ -81,9 +81,10 @@ class ShowCommand(Command):
 
     def _load_configuration(self) -> Any:
         """Load configuration from file or directory."""
-        from ..config.operations import load_config
+        from ..config.migration_helpers import migrate_legacy_load_config
 
-        return load_config(self.params.config_file, self.params.config_dir)
+        global_config, app_configs = migrate_legacy_load_config(self.params.config_file, self.params.config_dir)
+        return app_configs._config
 
     def _filter_applications(self, config: Any) -> Any:
         """Filter applications by names."""

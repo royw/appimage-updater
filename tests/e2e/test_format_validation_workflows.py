@@ -101,6 +101,28 @@ class TestFormatValidationWorkflows:
 
     def test_rich_format_contains_styling(self, runner, temp_config_dir):
         """Test that --format rich contains rich styling elements."""
+        # Create a sample config with an application to ensure table formatting
+        sample_config = {
+            "applications": [{
+                "name": "TestApp",
+                "url": "https://github.com/test/test",
+                "download_dir": str(temp_config_dir / "downloads"),
+                "pattern": r"(?i)TestApp.*\.AppImage$",
+                "enabled": True,
+                "source_type": "github",
+                "checksum": {
+                    "enabled": False,
+                    "algorithm": "sha256",
+                    "pattern": "",
+                    "required": False
+                }
+            }]
+        }
+        
+        config_file = temp_config_dir / "config.json"
+        with config_file.open("w") as f:
+            json.dump(sample_config, f)
+        
         result = runner.invoke(app, ["list", "--format", "rich", "--config-dir", str(temp_config_dir)])
         
         if result.exit_code == 0:

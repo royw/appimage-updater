@@ -1,9 +1,6 @@
-"""Configuration operations for managing application configurations.
+"""Configuration operations for AppImage updater."""
 
-This module contains all the functions related to loading, saving, adding,
-removing, and editing application configurations in both file-based and
-directory-based configuration structures.
-"""
+from __future__ import annotations
 
 import json
 import os
@@ -19,6 +16,7 @@ from rich.console import Console
 from ..pattern_generator import detect_source_type, generate_appimage_pattern_async, should_enable_prerelease
 from ..repositories.factory import get_repository_client
 from ..ui.display import _replace_home_with_tilde
+from .deprecation import deprecated
 from .loader import (
     get_default_config_dir,
     get_default_config_path,
@@ -30,6 +28,9 @@ from .models import Config, GlobalConfig
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 
 
+@deprecated(
+    "This function uses the old procedural API", "appimage_updater.config.manager.GlobalConfig() and AppConfigs()"
+)
 def load_config(config_file: Path | None, config_dir: Path | None) -> Any:
     """Load configuration from file or directory."""
     if config_file:
@@ -362,6 +363,7 @@ def _apply_rotation_config(
         _apply_symlink_path(config, symlink, defaults, name)
 
 
+@deprecated("This function uses the old procedural API", "appimage_updater.config.manager.AppConfigs().add()")
 def add_application_to_config(app_config: dict[str, Any], config_file: Path | None, config_dir: Path | None) -> None:
     """Add an application configuration to the config file or directory."""
     # Determine target configuration location
@@ -573,6 +575,10 @@ def _add_source_type_update(updates: dict[str, Any], direct: bool, app: Any) -> 
         updates["source_type"] = new_source_type
 
 
+@deprecated(
+    "This function uses the old procedural API",
+    "appimage_updater.config.manager.AppConfigs()[app_name] property access",
+)
 def collect_basic_edit_updates(
     url: str | None,
     download_dir: str | None,
@@ -660,7 +666,7 @@ def collect_edit_updates(
     auto_subdir: bool | None = None,
     app: Any = None,
 ) -> dict[str, Any]:
-    """Collect all edit updates from all categories."""
+    """Collect all configuration updates for edit command."""
     updates = {}
 
     # Collect basic updates

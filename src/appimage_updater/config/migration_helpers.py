@@ -1,0 +1,419 @@
+"""Migration helpers for transitioning from old procedural API to new OOP API."""
+
+from __future__ import annotations
+
+import warnings
+from pathlib import Path
+from typing import Any
+
+from loguru import logger
+
+from .loader import get_default_config_dir, get_default_config_path
+from .manager import AppConfigs, GlobalConfig
+from .models import ApplicationConfig, ChecksumConfig
+
+
+def resolve_legacy_config_path(config_file: Path | None, config_dir: Path | None) -> Path | None:
+    """Resolve legacy config parameters to single path for new API.
+
+    Args:
+        config_file: Legacy config file parameter
+        config_dir: Legacy config directory parameter
+
+    Returns:
+        Resolved config path for new API, or None for default
+    """
+    if config_file:
+        return config_file
+    elif config_dir:
+        # For config_dir, return the directory path as-is for backward compatibility
+        # The new API will handle whether to use directory-based or file-based config
+        return config_dir
+    else:
+        # Use default path detection logic
+        default_path = get_default_config_path()
+        default_dir = get_default_config_dir()
+
+        # Prefer directory-based config if it exists
+        if default_dir.exists() and default_dir.is_dir():
+            return default_dir
+        elif default_path.exists():
+            return default_path
+        else:
+            return None
+
+
+def convert_app_dict_to_config(app_dict: dict[str, Any]) -> ApplicationConfig:
+    """Convert legacy app dictionary to ApplicationConfig object.
+
+    Args:
+        app_dict: Legacy application configuration dictionary
+
+    Returns:
+        ApplicationConfig object
+
+    Raises:
+        ValueError: If required fields are missing or invalid
+    """
+    try:
+        # Handle checksum configuration if present
+        checksum_config = ChecksumConfig()
+        if "checksum" in app_dict and isinstance(app_dict["checksum"], dict):
+            checksum_data = app_dict["checksum"]
+            checksum_config = ChecksumConfig(
+                enabled=checksum_data.get("enabled", True),
+                pattern=checksum_data.get("pattern", "{filename}-SHA256.txt"),
+                algorithm=checksum_data.get("algorithm", "sha256"),
+                required=checksum_data.get("required", False),
+            )
+
+        # Convert paths to Path objects
+        download_dir = app_dict["download_dir"]
+        if isinstance(download_dir, str):
+            download_dir = Path(download_dir)
+
+        symlink_path = app_dict.get("symlink_path")
+        if isinstance(symlink_path, str):
+            symlink_path = Path(symlink_path)
+
+        # Create ApplicationConfig object
+        return ApplicationConfig(
+            name=app_dict["name"],
+            source_type=app_dict["source_type"],
+            url=app_dict["url"],
+            download_dir=download_dir,
+            pattern=app_dict["pattern"],
+            basename=app_dict.get("basename"),
+            enabled=app_dict.get("enabled", True),
+            prerelease=app_dict.get("prerelease", False),
+            checksum=checksum_config,
+            rotation_enabled=app_dict.get("rotation_enabled", False),
+            symlink_path=symlink_path,
+            retain_count=app_dict.get("retain_count", 3),
+        )
+
+    except Exception as e:
+        raise ValueError(f"Failed to convert app dictionary to ApplicationConfig: {e}") from e
+
+
+def _apply_string_updates(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
+    """Apply string field updates to app configuration."""
+    changes = []
+    string_fields = {
+        "url": "URL",
+        "pattern": "Pattern",
+        "basename": "Base Name",
+        "source_type": "Source Type",
+    }
+
+    for field, label in string_fields.items():
+        if field in updates:
+            old_value = getattr(app, field, None)
+            new_value = updates[field]
+            if old_value != new_value:
+                setattr(app, field, new_value)
+                changes.append(f"{label}: {old_value} → {new_value}")
+    return changes
+
+
+def _apply_path_updates(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
+    """Apply path field updates to app configuration."""
+    changes = []
+
+    if "download_dir" in updates:
+        old_value = str(app.download_dir)
+        new_value = str(Path(updates["download_dir"]).expanduser())
+        if old_value != new_value:
+            app.download_dir = Path(new_value)
+            changes.append(f"Download Directory: {old_value} → {new_value}")
+
+    if "symlink_path" in updates:
+        old_symlink_value: str | None = str(app.symlink_path) if app.symlink_path else None
+        new_symlink_value: str | None = (
+            str(Path(updates["symlink_path"]).expanduser()) if updates["symlink_path"] else None
+        )
+        if old_symlink_value != new_symlink_value:
+            app.symlink_path = Path(new_symlink_value) if new_symlink_value else None
+            changes.append(f"Symlink Path: {old_symlink_value} → {new_symlink_value}")
+
+    return changes
+
+
+def _apply_boolean_updates(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
+    """Apply boolean field updates to app configuration."""
+    changes = []
+    boolean_fields = {
+        "enabled": "Enabled",
+        "prerelease": "Prerelease",
+        "rotation_enabled": "Rotation Enabled",
+    }
+
+    for field, label in boolean_fields.items():
+        if field in updates:
+            old_value = getattr(app, field)
+            new_value = updates[field]
+            if old_value != new_value:
+                setattr(app, field, new_value)
+                changes.append(f"{label}: {old_value} → {new_value}")
+    return changes
+
+
+def _apply_integer_updates(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
+    """Apply integer field updates to app configuration."""
+    changes = []
+    if "retain_count" in updates:
+        old_value = app.retain_count
+        new_value = updates["retain_count"]
+        if old_value != new_value:
+            app.retain_count = new_value
+            changes.append(f"Retain Count: {old_value} → {new_value}")
+    return changes
+
+
+def _apply_checksum_updates(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
+    """Apply checksum field updates to app configuration."""
+    changes = []
+    checksum_fields = {
+        "checksum_enabled": ("enabled", "Checksum Enabled"),
+        "checksum_algorithm": ("algorithm", "Checksum Algorithm"),
+        "checksum_pattern": ("pattern", "Checksum Pattern"),
+        "checksum_required": ("required", "Checksum Required"),
+    }
+
+    for update_field, (checksum_attr, label) in checksum_fields.items():
+        if update_field in updates:
+            old_value = getattr(app.checksum, checksum_attr)
+            new_value = updates[update_field]
+            if old_value != new_value:
+                setattr(app.checksum, checksum_attr, new_value)
+                changes.append(f"{label}: {old_value} → {new_value}")
+    return changes
+
+
+def apply_updates_to_app(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
+    """Apply legacy updates dictionary to ApplicationConfig properties.
+
+    Args:
+        app: ApplicationConfig object to update
+        updates: Dictionary of updates to apply
+
+    Returns:
+        List of change descriptions
+    """
+    changes = []
+    changes.extend(_apply_string_updates(app, updates))
+    changes.extend(_apply_path_updates(app, updates))
+    changes.extend(_apply_boolean_updates(app, updates))
+    changes.extend(_apply_integer_updates(app, updates))
+    changes.extend(_apply_checksum_updates(app, updates))
+    return changes
+
+
+def _add_missing_source_type(app_data: dict[str, Any]) -> None:
+    """Add missing source_type field for backward compatibility."""
+    if "source_type" not in app_data:
+        app_data["source_type"] = "github"  # Default to github for backward compatibility
+
+
+def _validate_and_fix_config_file(config_path: Path) -> None:
+    """Validate and fix a single config file for backward compatibility."""
+    import json
+
+    from .loader import ConfigLoadError
+
+    try:
+        with config_path.open(encoding="utf-8") as f:
+            data = json.load(f)
+
+        # Add missing required fields for backward compatibility
+        if isinstance(data, dict) and "applications" in data:
+            for app in data.get("applications", []):
+                if isinstance(app, dict):
+                    _add_missing_source_type(app)
+
+            # Write back the updated config
+            with config_path.open("w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+
+    except json.JSONDecodeError as e:
+        raise ConfigLoadError(f"Invalid JSON in {config_path}: {e}") from e
+
+
+def _validate_and_fix_config_directory(config_path: Path) -> None:
+    """Validate and fix all config files in a directory for backward compatibility."""
+    import json
+
+    from .loader import ConfigLoadError
+
+    for json_file in config_path.glob("*.json"):
+        try:
+            with json_file.open(encoding="utf-8") as f:
+                data = json.load(f)
+
+            # Add missing required fields for backward compatibility
+            modified = False
+            if isinstance(data, dict) and "applications" in data:
+                for app in data.get("applications", []):
+                    if isinstance(app, dict) and "source_type" not in app:
+                        _add_missing_source_type(app)
+                        modified = True
+
+                # Write back if modified
+                if modified:
+                    with json_file.open("w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=2)
+
+        except json.JSONDecodeError as e:
+            raise ConfigLoadError(f"Invalid JSON in {json_file}: {e}") from e
+
+
+def migrate_legacy_load_config(config_file: Path | None, config_dir: Path | None) -> tuple[GlobalConfig, AppConfigs]:
+    """Migrate from legacy load_config to new API.
+
+    Args:
+        config_file: Legacy config file parameter
+        config_dir: Legacy config directory parameter
+
+    Returns:
+        Tuple of (GlobalConfig, AppConfigs) objects
+
+    Raises:
+        ConfigLoadError: If configuration loading fails (maintains compatibility)
+    """
+    from .loader import ConfigLoadError
+
+    try:
+        config_path = resolve_legacy_config_path(config_file, config_dir)
+
+        # Validate configuration path and files to maintain old API error behavior
+        if config_path:
+            if not config_path.exists():
+                # Old API would fail if specified config doesn't exist
+                raise ConfigLoadError(f"Configuration file not found: {config_path}")
+
+            if config_path.is_file():
+                _validate_and_fix_config_file(config_path)
+            elif config_path.is_dir():
+                _validate_and_fix_config_directory(config_path)
+
+        global_config = GlobalConfig(config_path)
+        app_configs = AppConfigs(config_path=config_path)
+
+        return global_config, app_configs
+    except ConfigLoadError:
+        # Re-raise ConfigLoadError as-is
+        raise
+    except Exception as e:
+        # Convert any other exception to ConfigLoadError to maintain compatibility with old API
+        raise ConfigLoadError(f"Configuration error: {e}") from e
+
+
+def migrate_legacy_add_application(app_dict: dict[str, Any], config_file: Path | None, config_dir: Path | None) -> None:
+    """Migrate from legacy add_application_to_config to new API.
+
+    Args:
+        app_dict: Legacy application configuration dictionary
+        config_file: Legacy config file parameter
+        config_dir: Legacy config directory parameter
+    """
+    # For backward compatibility, we need to replicate the old behavior exactly
+    if config_file:
+        # Single file mode - use new API with file path
+        config_path = config_file
+        app_configs = AppConfigs(config_path=config_path)
+        app_config = convert_app_dict_to_config(app_dict)
+        app_configs.add(app_config)
+        app_configs.save()
+    elif config_dir:
+        # Directory mode - create individual file like old system
+        import json
+        import re
+
+        config_dir = Path(config_dir)
+        config_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create filename based on app name (sanitized) - matches old behavior
+        filename = re.sub(r"[^a-zA-Z0-9_-]", "_", app_dict["name"].lower()) + ".json"
+        config_file_path = config_dir / filename
+
+        if config_file_path.exists():
+            raise ValueError(
+                f"Configuration file '{config_file_path}' already exists for application '{app_dict['name']}'"
+            )
+
+        # Create configuration structure - matches old format
+        config_data = {"applications": [app_dict]}
+
+        # Write to individual file
+        with config_file_path.open("w") as f:
+            json.dump(config_data, f, indent=2)
+    else:
+        # Default behavior - use new API with default path
+        app_configs = AppConfigs()
+        app_config = convert_app_dict_to_config(app_dict)
+        app_configs.add(app_config)
+        app_configs.save()
+
+    logger.info(f"Added application '{app_dict['name']}' using new API")
+
+
+def validate_migration_equivalence(old_result: Any, new_global: GlobalConfig, new_apps: AppConfigs) -> bool:
+    """Validate that migration produces equivalent results.
+
+    Args:
+        old_result: Result from old API
+        new_global: GlobalConfig from new API
+        new_apps: AppConfigs from new API
+
+    Returns:
+        True if results are equivalent
+    """
+    try:
+        # Compare global configuration
+        if hasattr(old_result, "global_config"):
+            old_global = old_result.global_config
+
+            # Compare basic settings
+            if (
+                old_global.concurrent_downloads != new_global.concurrent_downloads
+                or old_global.timeout_seconds != new_global.timeout_seconds
+                or old_global.user_agent != new_global.user_agent
+            ):
+                return False
+
+        # Compare applications
+        if hasattr(old_result, "applications"):
+            old_apps = old_result.applications
+            new_app_list = list(new_apps)
+
+            if len(old_apps) != len(new_app_list):
+                return False
+
+            # Compare each application
+            for old_app, new_app in zip(old_apps, new_app_list, strict=False):
+                if (
+                    old_app.name != new_app.name
+                    or old_app.url != new_app.url
+                    or str(old_app.download_dir) != str(new_app.download_dir)
+                ):
+                    return False
+
+        return True
+
+    except Exception as e:
+        logger.warning(f"Migration validation failed: {e}")
+        return False
+
+
+def create_migration_warning(old_function: str, new_approach: str) -> None:
+    """Create a migration warning for deprecated function usage.
+
+    Args:
+        old_function: Name of the deprecated function
+        new_approach: Description of the new approach
+    """
+    warnings.warn(
+        f"Using deprecated function '{old_function}'. Consider migrating to: {new_approach}",
+        DeprecationWarning,
+        stacklevel=3,
+    )

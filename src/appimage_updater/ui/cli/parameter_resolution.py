@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 from ...config.models import GlobalConfig
-from ...config.operations import load_config
 
 
 def _get_parameter_status(original_value: Any, resolved_value: Any) -> str:
@@ -56,8 +55,11 @@ def _apply_auto_subdir(base_dir: Path, global_config: Any, name: str) -> str:
 def _load_global_config(config_file: Path | None, config_dir: Path | None) -> GlobalConfig:
     """Load global configuration or return default if none exists."""
     try:
-        config = load_config(config_file, config_dir)
-        return config.global_config if config.global_config else GlobalConfig()
+        from ...config.migration_helpers import migrate_legacy_load_config
+
+        global_config, app_configs = migrate_legacy_load_config(config_file, config_dir)
+        # Return the underlying GlobalConfig from the config object for compatibility
+        return app_configs._config.global_config
     except Exception:
         return GlobalConfig()
 

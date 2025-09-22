@@ -9,6 +9,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from .deprecation import deprecated
 from .models import Config
 
 
@@ -16,6 +17,7 @@ class ConfigLoadError(Exception):
     """Raised when configuration loading fails."""
 
 
+@deprecated("This function uses the old procedural API", "appimage_updater.config.manager.load_config()")
 def load_config_from_file(config_path: Path) -> Config:
     """Load configuration from JSON file."""
     if not config_path.exists():
@@ -36,6 +38,7 @@ def load_config_from_file(config_path: Path) -> Config:
     return _parse_config_data(data)
 
 
+@deprecated("This function uses the old procedural API", "appimage_updater.config.manager.load_config()")
 def load_configs_from_directory(config_dir: Path) -> Config:
     """Load and merge configuration from directory of JSON files."""
     _validate_config_directory(config_dir)

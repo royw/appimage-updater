@@ -111,9 +111,9 @@ def _execute_add_operation(
         return True
 
     try:
-        from ...config.operations import add_application_to_config
+        from ...config.migration_helpers import migrate_legacy_add_application
 
-        add_application_to_config(config_data["app_config"], config_file, config_dir)
+        migrate_legacy_add_application(config_data["app_config"], config_file, config_dir)
         return True
     except Exception as e:
         logger.error(f"Failed to save configuration: {e}")

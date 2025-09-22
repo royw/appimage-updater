@@ -18,7 +18,6 @@ from .config.loader import ConfigLoadError
 from .config.models import ApplicationConfig, Config, GlobalConfig
 from .config.operations import (
     apply_configuration_updates,
-    load_config,
     save_updated_configuration,
     validate_edit_updates,
 )
@@ -740,9 +739,12 @@ def _resolve_download_directory(
 def _load_global_config(config_file: Path | None, config_dir: Path | None) -> GlobalConfig:
     """Load global configuration or return default if none exists."""
     try:
-        config = load_config(config_file, config_dir)
-        return config.global_config  # type: ignore[no-any-return]
-    except ConfigLoadError:
+        from .config.migration_helpers import migrate_legacy_load_config
+
+        global_config, app_configs = migrate_legacy_load_config(config_file, config_dir)
+        # Return the underlying config object for compatibility
+        return app_configs._config.global_config
+    except Exception:
         # If no config exists yet, use default global config
         return GlobalConfig()
 
@@ -1309,7 +1311,10 @@ def repository(
 
 def _load_config_for_repository_examination(config_file: Path | None, config_dir: Path | None) -> Any:
     """Load configuration for repository examination."""
-    return load_config(config_file, config_dir)
+    from .config.migration_helpers import migrate_legacy_load_config
+
+    global_config, app_configs = migrate_legacy_load_config(config_file, config_dir)
+    return app_configs._config
 
 
 def _display_dry_run_repository_info(apps_to_examine: list[Any]) -> None:
@@ -1945,15 +1950,19 @@ async def _load_and_filter_config(
         typer.Exit: If specified applications are not found
     """
     logger.debug("Loading configuration")
-    config = load_config(config_file, config_dir)
+    from .config.migration_helpers import migrate_legacy_load_config
+
+    global_config, app_configs = migrate_legacy_load_config(config_file, config_dir)
+    config = app_configs._config
     enabled_apps = config.get_enabled_apps()
 
     # Filter by app names if specified
     if app_names:
-        enabled_apps = ApplicationService.filter_apps_by_names(enabled_apps, app_names)
-        if enabled_apps is None:
+        filtered_apps = ApplicationService.filter_apps_by_names(enabled_apps, app_names)
+        if filtered_apps is None:
             # Error already displayed by ApplicationService, return special marker
             return config, None  # Use None to indicate "apps not found" vs empty list for "no enabled apps"
+        enabled_apps = filtered_apps
 
     filter_msg = " (filtered)" if app_names else ""
     logger.debug(f"Found {len(config.applications)} total applications, {len(enabled_apps)} enabled{filter_msg}")
