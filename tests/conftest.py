@@ -419,8 +419,14 @@ def get_testable_commands() -> list[tuple[list[str], str]]:
             testable_commands.append((["list"], "list"))
         elif command_name == "config":
             testable_commands.append((["config", "list"], "config"))
-        elif command_name in ["add", "edit", "show", "remove", "repository"]:
-            # Use --help to avoid interactive prompts and missing arguments
-            testable_commands.append(([command_name, "--help"], command_name))
+        elif command_name == "add":
+            # ADD command shows validation errors in JSON format when called without args
+            testable_commands.append(([command_name], command_name))
+        elif command_name in ["edit", "show", "remove"]:
+            # These commands show help text - need to fix their output formatters
+            testable_commands.append(([command_name], command_name))
+        elif command_name == "repository":
+            # Repository command with a valid app name (using first available app)
+            testable_commands.append(([command_name, "nonexistent"], command_name))
     
     return testable_commands

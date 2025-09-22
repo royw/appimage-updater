@@ -115,15 +115,32 @@ class ApplicationService:
 
         available_apps = [app.name for app in enabled_apps]
 
-        # Use print to ensure output is captured by test framework
-        print(f"Applications not found: {', '.join(not_found)}", file=sys.stdout)  # noqa: T201
-        print("Troubleshooting:", file=sys.stdout)  # noqa: T201
-
-        ApplicationService._print_troubleshooting_tips_plain(available_apps)
+        # Use output formatter if available, otherwise fallback to print
+        from ..ui.output.context import get_output_formatter
+        formatter = get_output_formatter()
+        
+        if formatter:
+            formatter.print_error(f"Applications not found: {', '.join(not_found)}")
+            formatter.print_warning("Troubleshooting:")
+            ApplicationService._print_troubleshooting_tips_formatted(formatter, available_apps)
+        else:
+            # Use print to ensure output is captured by test framework
+            print(f"Applications not found: {', '.join(not_found)}", file=sys.stdout)  # noqa: T201
+            print("Troubleshooting:", file=sys.stdout)  # noqa: T201
+            ApplicationService._print_troubleshooting_tips_plain(available_apps)
 
         # This is normal user behavior, not an error that needs logging
         logger.debug(f"User requested non-existent applications: {not_found}. Available: {available_apps}")
         return False
+
+    @staticmethod
+    def _print_troubleshooting_tips_formatted(formatter: Any, available_apps: list[str]) -> None:
+        """Print troubleshooting tips using output formatter."""
+        available_text = ", ".join(available_apps) if available_apps else "None configured"
+        formatter.print_info(f"   • Available applications: {available_text}")
+        formatter.print_info("   • Application names are case-insensitive")
+        formatter.print_info("   • Use glob patterns like 'Orca*' to match multiple apps")
+        formatter.print_info("   • Run 'appimage-updater list' to see all configured applications")
 
     @staticmethod
     def _print_troubleshooting_tips(console: Console, available_apps: list[str]) -> None:
