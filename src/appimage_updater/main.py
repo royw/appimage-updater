@@ -1361,9 +1361,10 @@ async def _examine_repositories(
     except ConfigLoadError as e:
         # Use output formatter if available, otherwise fallback to console
         from .ui.output.context import get_output_formatter
+
         formatter = get_output_formatter()
         if formatter:
-            formatter.print_error(str(e))
+            formatter.print_error(f"Configuration error: {e}")
         else:
             console.print(f"[red]Configuration error: {e}")
         # Note: Don't log to stdout as it contaminates JSON output
@@ -1513,9 +1514,10 @@ def _handle_check_errors(e: Exception) -> None:
     if isinstance(e, ConfigLoadError):
         # Use output formatter if available, otherwise fallback to console
         from .ui.output.context import get_output_formatter
+
         formatter = get_output_formatter()
         if formatter:
-            formatter.print_error(str(e))
+            formatter.print_error(f"Configuration error: {e}")
         else:
             console.print(f"[red]Configuration error: {e}")
         # Note: Don't log to stdout as it contaminates JSON output
@@ -1523,6 +1525,7 @@ def _handle_check_errors(e: Exception) -> None:
     else:
         # Use output formatter if available, otherwise fallback to console
         from .ui.output.context import get_output_formatter
+
         formatter = get_output_formatter()
         if formatter:
             formatter.print_error(f"Unexpected error: {e}")

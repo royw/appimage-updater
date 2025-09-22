@@ -12,6 +12,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 # Import from the main tests/conftest.py (not e2e/conftest.py)
 tests_dir = Path(__file__).parent.parent
 conftest_path = tests_dir / "conftest.py"
@@ -286,7 +288,10 @@ class TestFormatOptions:
             assert False, "uv command not found - make sure uv is installed"
 
     def test_all_commands_format_output(self) -> None:
-        """Test that all commands produce appropriate output for each format."""
+        """Test that all commands produce appropriate output for each format.
+        
+        Note: This test runs 32 subprocess calls (8 commands × 4 formats) and may take 12+ seconds.
+        """
         # Get commands dynamically from source code analysis
         test_commands = get_testable_commands()
         

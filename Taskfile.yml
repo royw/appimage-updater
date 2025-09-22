@@ -7,7 +7,7 @@ vars:
     sh: cat .python-versions | grep -v '^$' | tr '\n' ' ' | sed 's/[[:space:]]*$//'
   PYTHON_VERSION:
     sh: cat .python-version | head -n1
-  TEST_TIMEOUT: 10
+  TEST_TIMEOUT: 30
 
 tasks:
   output:
