@@ -1,5 +1,6 @@
 """Test configuration and fixtures."""
 
+import ast
 import os
 import socket
 import tempfile
@@ -321,3 +322,105 @@ def isolated_config_dir() -> Any:
                 os.environ["APPIMAGE_UPDATER_TEST_CONFIG_DIR"] = original_config_dir
             else:
                 os.environ.pop("APPIMAGE_UPDATER_TEST_CONFIG_DIR", None)
+
+
+def discover_cli_commands() -> dict[str, list[str]]:
+    """Discover CLI commands from source code analysis.
+    
+    Returns:
+        Dictionary mapping command names to their parameter lists
+    """
+    src_path = Path(__file__).parent.parent / "src" / "appimage_updater"
+    commands = {}
+
+    # Find all Python files in the source directory
+    python_files = list(src_path.rglob("*.py"))
+
+    for py_file in python_files:
+        # Skip __pycache__ and other non-source files
+        if "__pycache__" in str(py_file) or py_file.name.startswith("."):
+            continue
+
+        try:
+            with open(py_file) as f:
+                source = f.read()
+
+            # Performance optimization: only parse files that import typer
+            if "typer" not in source:
+                continue
+
+            tree = ast.parse(source)
+
+            # Look for @app.command decorators
+            for node in ast.walk(tree):
+                if isinstance(node, ast.FunctionDef):
+                    command_info = _extract_command_info(node)
+                    if command_info:
+                        command_name, param_names = command_info
+                        commands[command_name] = param_names
+
+        except (OSError, SyntaxError):
+            # Skip files that can't be read or parsed
+            continue
+
+    return commands
+
+
+def _extract_command_info(node: ast.FunctionDef) -> tuple[str, list[str]] | None:
+    """Extract command name and parameters from a function node with @app.command decorator."""
+    has_command_decorator = False
+    command_name = None
+
+    for decorator in node.decorator_list:
+        if isinstance(decorator, ast.Attribute):
+            if (isinstance(decorator.value, ast.Name) and
+                    decorator.value.id == 'app' and
+                    decorator.attr == 'command'):
+                has_command_decorator = True
+                command_name = node.name.lstrip('_')
+        elif (isinstance(decorator, ast.Call) and
+              isinstance(decorator.func, ast.Attribute) and
+              isinstance(decorator.func.value, ast.Name) and
+              decorator.func.value.id == 'app' and
+              decorator.func.attr == 'command'):
+                has_command_decorator = True
+                # Check if command name is specified in decorator kwargs
+                command_name = node.name.lstrip('_')  # default to function name
+                for keyword in decorator.keywords:
+                    if keyword.arg == 'name' and isinstance(keyword.value, ast.Constant):
+                        command_name = keyword.value.value
+                # Also check positional args for command name
+                if decorator.args and isinstance(decorator.args[0], ast.Constant):
+                    command_name = decorator.args[0].value
+
+    if has_command_decorator and command_name:
+        param_names = [arg.arg for arg in node.args.args]
+        return command_name, param_names
+
+    return None
+
+
+def get_testable_commands() -> list[tuple[list[str], str]]:
+    """Get list of commands suitable for format testing.
+    
+    Returns:
+        List of tuples: (command_args, command_name)
+        where command_args includes necessary flags to avoid interactive prompts
+    """
+    discovered_commands = discover_cli_commands()
+    
+    # Map discovered commands to testable command configurations
+    testable_commands = []
+    
+    for command_name in discovered_commands:
+        if command_name == "check":
+            testable_commands.append((["check", "--dry-run"], "check"))
+        elif command_name == "list":
+            testable_commands.append((["list"], "list"))
+        elif command_name == "config":
+            testable_commands.append((["config", "list"], "config"))
+        elif command_name in ["add", "edit", "show", "remove", "repository"]:
+            # Use --help to avoid interactive prompts and missing arguments
+            testable_commands.append(([command_name, "--help"], command_name))
+    
+    return testable_commands

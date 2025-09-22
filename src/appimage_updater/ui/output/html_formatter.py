@@ -208,11 +208,11 @@ class HTMLOutputFormatter:
             self.content.append("    </div>")
             self._current_section = None
 
-    def finalize(self) -> str:
-        """Finalize HTML output and return the complete HTML document.
+    def finalize(self) -> str | None:
+        """Finalize HTML output and print the complete HTML document.
 
         Returns:
-            Complete HTML document as string
+            None (output goes directly to stdout)
         """
         # Close any open section
         if self._current_section:
@@ -220,5 +220,6 @@ class HTMLOutputFormatter:
 
         # Add HTML footer
         self.content.extend(["</body>", "</html>"])
-
-        return "\n".join(self.content)
+        output = "\n".join(self.content)
+        print(output)  # noqa: T201
+        return None

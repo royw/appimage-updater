@@ -138,10 +138,12 @@ class JSONOutputFormatter:
             self.data["sections"].append({"title": self._current_section, "end": True})
             self._current_section = None
 
-    def finalize(self) -> str:
-        """Finalize JSON output and return the complete JSON document.
+    def finalize(self) -> str | None:
+        """Finalize JSON output and print the complete JSON document.
 
         Returns:
-            Complete JSON document as string
+            None (output goes directly to stdout)
         """
-        return json.dumps(self.data, indent=2, ensure_ascii=False)
+        output = json.dumps(self.data, indent=2, ensure_ascii=False)
+        print(output)  # noqa: T201
+        return None

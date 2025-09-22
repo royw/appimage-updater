@@ -439,9 +439,7 @@ def check(
 
     # Handle format-specific finalization
     if format in [OutputFormat.JSON, OutputFormat.HTML]:
-        final_output = output_formatter.finalize()
-        if final_output:
-            print(final_output)
+        output_formatter.finalize()
     if not result.success:
         raise typer.Exit(result.exit_code)
 
@@ -474,9 +472,7 @@ def list_apps(
     # Handle format-specific finalization
     if format in [OutputFormat.JSON, OutputFormat.HTML]:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
-        final_output = output_formatter.finalize()
-        if final_output:
-            print(final_output)
+        output_formatter.finalize()
     else:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
 
@@ -562,9 +558,7 @@ def add(
     # Handle format-specific finalization
     if format in [OutputFormat.JSON, OutputFormat.HTML]:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
-        final_output = output_formatter.finalize()
-        if final_output:
-            print(final_output)
+        output_formatter.finalize()
     else:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
 
@@ -1070,9 +1064,7 @@ def edit(
     # Handle format-specific finalization
     if format in [OutputFormat.JSON, OutputFormat.HTML]:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
-        final_output = output_formatter.finalize()
-        if final_output:
-            print(final_output)
+        output_formatter.finalize()
     else:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
 
@@ -1136,9 +1128,7 @@ def show(
     # Handle format-specific finalization
     if format in [OutputFormat.JSON, OutputFormat.HTML]:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
-        final_output = output_formatter.finalize()
-        if final_output:
-            print(final_output)
+        output_formatter.finalize()
     else:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
 
@@ -1212,9 +1202,7 @@ def remove(
     # Handle format-specific finalization
     if format in [OutputFormat.JSON, OutputFormat.HTML]:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
-        final_output = output_formatter.finalize()
-        if final_output:
-            print(final_output)
+        output_formatter.finalize()
     else:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
 
@@ -1273,9 +1261,7 @@ def repository(
     # Handle format-specific finalization
     if format in [OutputFormat.JSON, OutputFormat.HTML]:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
-        final_output = output_formatter.finalize()
-        if final_output:
-            print(final_output)
+        output_formatter.finalize()
     else:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
 
@@ -1471,7 +1457,21 @@ def _display_check_verbose_info(
 async def _handle_no_updates_scenario(config: Any, enabled_apps: list[Any]) -> None:
     """Handle scenario when no updates are available."""
     await _setup_existing_files_rotation(config, enabled_apps)
-    console.print("[green]All applications are up to date!")
+
+    # Only show console output for rich/plain formats
+    from .ui.output.context import get_output_formatter
+
+    output_formatter = get_output_formatter()
+
+    # Check if we should suppress console output (for JSON/HTML formats)
+    suppress_console = (
+        output_formatter
+        and hasattr(output_formatter, "__class__")
+        and output_formatter.__class__.__name__ in ["JSONOutputFormatter", "HTMLOutputFormatter"]
+    )
+
+    if not suppress_console:
+        console.print("[green]All applications are up to date!")
     logger.debug("No updates available, exiting")
 
 
@@ -1898,13 +1898,27 @@ async def _perform_update_checks(
     dry_run: bool = False,
 ) -> list[Any]:
     """Initialize clients and perform update checks."""
-    console.print(f"[blue]Checking {len(enabled_apps)} applications for updates...")
+    # Only show console output for rich/plain formats
+    from .ui.output.context import get_output_formatter
+
+    output_formatter = get_output_formatter()
+
+    # Check if we should suppress console output (for JSON/HTML formats)
+    suppress_console = (
+        output_formatter
+        and hasattr(output_formatter, "__class__")
+        and output_formatter.__class__.__name__ in ["JSONOutputFormatter", "HTMLOutputFormatter"]
+    )
+
+    if not suppress_console:
+        console.print(f"[blue]Checking {len(enabled_apps)} applications for updates...")
     logger.debug(f"Starting update checks for {len(enabled_apps)} applications")
 
     # Handle dry-run mode - skip actual HTTP calls but show real current versions
     if dry_run:
         logger.debug("Dry run mode: Skipping HTTP requests, showing current versions only")
-        console.print("[yellow]Dry run mode - skipping HTTP requests")
+        if not suppress_console:
+            console.print("[yellow]Dry run mode - skipping HTTP requests")
 
         # Create dry-run results with real current version detection
         from .core.models import CheckResult
@@ -2212,9 +2226,7 @@ def config(
     # Handle format-specific finalization
     if format in [OutputFormat.JSON, OutputFormat.HTML]:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
-        final_output = output_formatter.finalize()
-        if final_output:
-            print(final_output)
+        output_formatter.finalize()
     else:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
 
