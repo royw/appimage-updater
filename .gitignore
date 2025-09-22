@@ -177,3 +177,7 @@ downloads/
 *credentials*
 .github-token
 github_token.txt
+
+# PostScript and image files (prevent accidental commits)
+*.ps
+*.eps
