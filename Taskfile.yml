@@ -182,12 +182,12 @@ tasks:
   test:
     desc: Run tests with pytest (sequential) - excludes regression tests
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/e2e {{.CLI_ARGS}}
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e {{.CLI_ARGS}}
 
   test:parallel:
     desc: Run tests with pytest using multiple CPU cores (faster) - excludes regression tests
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/e2e -n auto {{.CLI_ARGS}}
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e -n auto {{.CLI_ARGS}}
 
   test:unit:
     desc: Run unit tests only
@@ -198,6 +198,11 @@ tasks:
     desc: Run functional tests only
     cmds:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/functional/ {{.CLI_ARGS}}
+
+  test:integration:
+    desc: Run integration tests only
+    cmds:
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/integration/ {{.CLI_ARGS}}
 
   test:e2e:
     desc: Run end-to-end tests to validate core functionality
@@ -229,14 +234,14 @@ tasks:
           split: ' '
         cmd: |
           echo "📋 Testing with Python {{.ITEM}}"
-          uv run --python {{.ITEM}} pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/e2e --tb=short --color=yes
+          uv run --python {{.ITEM}} pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e --tb=short --color=yes
       - cmd: echo "✅ All Python versions tested successfully!"
         silent: true
 
   test:coverage:
     desc: Run all tests with coverage reporting (excludes regression tests)
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/e2e --cov={{.SRC}}appimage_updater --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e --cov={{.SRC}}appimage_updater --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
       - task: output
         vars:
           MESSAGE: "📊 Coverage report saved to htmlcov/index.html"
