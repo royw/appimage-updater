@@ -338,9 +338,9 @@ class RichOutputFormatter:
                 )
             elif result.candidate is None:
                 # No candidate but check if we have direct version data
-                current_version = getattr(result, 'current_version', None)
-                available_version = getattr(result, 'available_version', None)
-                update_available = getattr(result, 'update_available', False)
+                current_version = getattr(result, "current_version", None)
+                available_version = getattr(result, "available_version", None)
+                update_available = getattr(result, "update_available", False)
 
                 if current_version or available_version:
                     # We have version data from direct fields
