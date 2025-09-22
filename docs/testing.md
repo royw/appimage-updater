@@ -6,6 +6,16 @@ AppImage Updater has comprehensive test coverage to ensure reliability and corre
 
 AppImage Updater features a robust test infrastructure with advanced isolation and reliability features:
 
+### Test Reorganization (Completed)
+
+The test suite has been reorganized for better performance and pre-build testing:
+
+- **✅ Source Code Testing**: Tests now run against source code using `CliRunner` instead of subprocess execution
+- **✅ Pre-Build Capability**: All tests can run before the application is built, enabling faster development cycles
+- **✅ Integration Tests Included**: Integration tests are now included in all Taskfile test tasks
+- **✅ Enhanced E2E Tests**: New workflow tests for check commands and format validation
+- **✅ Maintained Coverage**: All original test scenarios preserved with improved execution method
+
 ### Test Isolation
 
 Tests run in complete isolation with temporary configuration to prevent interference with user data:
@@ -48,16 +58,20 @@ The test suite is organized into focused test files:
 ```text
 tests/
 ├── e2e/
-│   ├── conftest.py                # Shared E2E test fixtures
-│   ├── test_cli_commands.py       # Core CLI functionality tests
-│   ├── test_add_remove_commands.py # Add/remove command tests
-│   ├── test_pattern_matching.py   # Pattern matching tests
-│   └── test_integration_smoke.py  # Basic integration tests
+│   ├── conftest.py                      # Shared E2E test fixtures
+│   ├── test_cli_commands.py             # Core CLI functionality tests
+│   ├── test_add_remove_commands.py      # Add/remove command tests
+│   ├── test_check_command_workflows.py  # Check command workflows (NEW)
+│   ├── test_format_validation_workflows.py # Format validation (NEW)
+│   ├── test_pattern_matching.py         # Pattern matching tests
+│   └── test_integration_smoke.py        # Basic integration tests
+├── integration/
+│   └── test_direct_workflow_simple.py   # Component integration tests
 ├── functional/
-│   ├── test_edit_command.py       # CLI edit command tests
-│   ├── test_edit_validation_fixes.py # Validation and error handling tests
-│   └── test_rotation.py           # File rotation functionality tests
-└── unit/                          # Unit tests for individual components
+│   ├── test_edit_command.py             # CLI edit command tests
+│   ├── test_edit_validation_fixes.py    # Validation and error handling tests
+│   └── test_rotation.py                 # File rotation functionality tests
+└── unit/                                # Unit tests for individual components
 ```
 
 ## Running Tests
@@ -65,7 +79,7 @@ tests/
 ### Task Commands (Recommended)
 
 ```bash
-# Run all tests (sequential)
+# Run all tests (sequential) - includes unit, functional, integration, and e2e
 task test
 
 # Run tests with parallel execution (faster)
@@ -73,6 +87,9 @@ task test:parallel
 
 # Run tests with 8 cores (good balance of speed and reliability)
 task test:parallel-fast
+
+# Run integration tests only
+task test:integration
 
 # Run all tests across supported Python versions found in the .python_versions file  (3.11, 3.12, 3.13)
 task test:all
