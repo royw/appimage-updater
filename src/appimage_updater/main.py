@@ -997,40 +997,6 @@ def edit(
         # Update URL after repository move
         appimage-updater edit OldApp --url https://github.com/newowner/newrepo
     """
-    # Show help if no app names are provided
-    if app_names is None:
-        typer.echo("Usage: appimage-updater edit [OPTIONS] APP_NAMES...")
-        typer.echo("")
-        typer.echo("Edit configuration for existing applications.")
-        typer.echo("")
-        typer.echo("Arguments:")
-        typer.echo("  APP_NAMES...  Names of applications to edit")
-        typer.echo("                (case-insensitive, supports glob patterns like 'Orca*').")
-        typer.echo("                Multiple names can be specified.")
-        typer.echo("")
-        typer.echo("Options:")
-        typer.echo("  --url TEXT                      Update repository URL")
-        typer.echo("  --download-dir TEXT             Update download directory")
-        typer.echo("  --pattern TEXT                  Update file pattern (regex)")
-        typer.echo("  --enable/--disable              Enable/disable the application")
-        typer.echo("  --prerelease/--no-prerelease    Enable/disable prereleases")
-        typer.echo("  --rotation/--no-rotation        Enable/disable file rotation")
-        typer.echo("  --symlink-path TEXT             Update symlink path")
-        typer.echo("  --retain-count INTEGER          Number of old files to retain")
-        typer.echo("  --checksum/--no-checksum        Enable/disable checksum verification")
-        typer.echo("  --force                         Skip URL validation")
-        typer.echo("  --verbose                       Show detailed parameter information")
-        typer.echo("  --dry-run                       Preview changes without saving")
-        typer.echo("  --debug                         Enable debug logging")
-        typer.echo("  --version, -V                   Show version and exit")
-        typer.echo("  --help                          Show this message and exit.")
-        typer.echo("")
-        typer.echo("Examples:")
-        typer.echo("  appimage-updater edit FreeCAD --prerelease")
-        typer.echo("  appimage-updater edit OrcaSlicer --rotation --symlink-path ~/bin/orca.AppImage")
-        typer.echo("  appimage-updater edit 'Orca*' --enable")
-        raise typer.Exit(0)
-
     command = CommandFactory.create_edit_command(
         app_names=app_names,
         config_file=config_file,
@@ -1061,6 +1027,41 @@ def edit(
     # Create output formatter and execute with context
     output_formatter = create_output_formatter_from_params(command.params)
 
+    # Show help if no app names are provided
+    if app_names is None:
+        if format in [OutputFormat.JSON, OutputFormat.HTML]:
+            # For structured formats, use the output formatter
+            output_formatter.print_info("Usage: appimage-updater edit [OPTIONS] APP_NAMES...")
+            output_formatter.print_info("")
+            output_formatter.print_info("Edit configuration for existing applications.")
+            output_formatter.print_info("")
+            output_formatter.print_info("Arguments:")
+            output_formatter.print_info("  APP_NAMES...  Names of applications to edit")
+            output_formatter.print_info("                (case-insensitive, supports glob patterns like 'Orca*').")
+            output_formatter.print_info("                Multiple names can be specified.")
+            output_formatter.print_info("")
+            output_formatter.print_info("Examples:")
+            output_formatter.print_info("  appimage-updater edit FreeCAD --prerelease")
+            output_formatter.print_info("  appimage-updater edit OrcaSlicer --rotation --symlink-path ~/bin/orca.AppImage")
+            output_formatter.print_info("  appimage-updater edit 'Orca*' --enable")
+            output_formatter.finalize()
+        else:
+            # For console formats, use typer.echo
+            typer.echo("Usage: appimage-updater edit [OPTIONS] APP_NAMES...")
+            typer.echo("")
+            typer.echo("Edit configuration for existing applications.")
+            typer.echo("")
+            typer.echo("Arguments:")
+            typer.echo("  APP_NAMES...  Names of applications to edit")
+            typer.echo("                (case-insensitive, supports glob patterns like 'Orca*').")
+            typer.echo("                Multiple names can be specified.")
+            typer.echo("")
+            typer.echo("Examples:")
+            typer.echo("  appimage-updater edit FreeCAD --prerelease")
+            typer.echo("  appimage-updater edit OrcaSlicer --rotation --symlink-path ~/bin/orca.AppImage")
+            typer.echo("  appimage-updater edit 'Orca*' --enable")
+        raise typer.Exit(0)
+
     # Handle format-specific finalization
     if format in [OutputFormat.JSON, OutputFormat.HTML]:
         result = asyncio.run(command.execute(output_formatter=output_formatter))
@@ -1090,30 +1091,6 @@ def show(
     CUSTOM CONFIG:
         appimage-updater show --config-dir ~/.config/appimage-updater OrcaSlicer
     """
-    # Show help if no app names are provided
-    if app_names is None:
-        typer.echo("Usage: appimage-updater show [OPTIONS] APP_NAMES...")
-        typer.echo("")
-        typer.echo("Show detailed information about a specific application.")
-        typer.echo("")
-        typer.echo("Arguments:")
-        typer.echo("  APP_NAMES...  Names of applications to display information for")
-        typer.echo("                (case-insensitive, supports glob patterns like 'Orca*').")
-        typer.echo("                Multiple names can be specified.")
-        typer.echo("")
-        typer.echo("Options:")
-        typer.echo("  --config, -c PATH               Configuration file path")
-        typer.echo("  --config-dir, -d PATH           Configuration directory path")
-        typer.echo("  --debug                         Enable debug logging")
-        typer.echo("  --version, -V                   Show version and exit")
-        typer.echo("  --help                          Show this message and exit.")
-        typer.echo("")
-        typer.echo("Examples:")
-        typer.echo("  appimage-updater show FreeCAD")
-        typer.echo("  appimage-updater show FreeCAD OrcaSlicer")
-        typer.echo("  appimage-updater show 'Orca*'")
-        raise typer.Exit(0)
-
     command = CommandFactory.create_show_command(
         app_names=app_names,
         config_file=config_file,
@@ -1124,6 +1101,41 @@ def show(
 
     # Create output formatter and execute with context
     output_formatter = create_output_formatter_from_params(command.params)
+
+    # Show help if no app names are provided
+    if app_names is None:
+        if format in [OutputFormat.JSON, OutputFormat.HTML]:
+            # For structured formats, use the output formatter
+            output_formatter.print_info("Usage: appimage-updater show [OPTIONS] APP_NAMES...")
+            output_formatter.print_info("")
+            output_formatter.print_info("Show detailed information about a specific application.")
+            output_formatter.print_info("")
+            output_formatter.print_info("Arguments:")
+            output_formatter.print_info("  APP_NAMES...  Names of applications to display information for")
+            output_formatter.print_info("                (case-insensitive, supports glob patterns like 'Orca*').")
+            output_formatter.print_info("                Multiple names can be specified.")
+            output_formatter.print_info("")
+            output_formatter.print_info("Examples:")
+            output_formatter.print_info("  appimage-updater show FreeCAD")
+            output_formatter.print_info("  appimage-updater show FreeCAD OrcaSlicer")
+            output_formatter.print_info("  appimage-updater show 'Orca*'")
+            output_formatter.finalize()
+        else:
+            # For console formats, use typer.echo
+            typer.echo("Usage: appimage-updater show [OPTIONS] APP_NAMES...")
+            typer.echo("")
+            typer.echo("Show detailed information about a specific application.")
+            typer.echo("")
+            typer.echo("Arguments:")
+            typer.echo("  APP_NAMES...  Names of applications to display information for")
+            typer.echo("                (case-insensitive, supports glob patterns like 'Orca*').")
+            typer.echo("                Multiple names can be specified.")
+            typer.echo("")
+            typer.echo("Examples:")
+            typer.echo("  appimage-updater show FreeCAD")
+            typer.echo("  appimage-updater show FreeCAD OrcaSlicer")
+            typer.echo("  appimage-updater show 'Orca*'")
+        raise typer.Exit(0)
 
     # Handle format-specific finalization
     if format in [OutputFormat.JSON, OutputFormat.HTML]:
@@ -1159,34 +1171,6 @@ def remove(
         appimage-updater remove --yes MyApp       # Skip confirmation prompt
         appimage-updater remove --config-dir ~/.config/appimage-updater MyApp
     """
-    # Show help if no app names are provided
-    if app_names is None:
-        typer.echo("Usage: appimage-updater remove [OPTIONS] APP_NAMES...")
-        typer.echo("")
-        typer.echo("Remove applications from the configuration.")
-        typer.echo("")
-        typer.echo("This command will delete the applications' configuration. It does NOT delete")
-        typer.echo("downloaded AppImage files or symlinks - only the configuration entries.")
-        typer.echo("")
-        typer.echo("Arguments:")
-        typer.echo("  APP_NAMES...  Names of applications to remove from configuration")
-        typer.echo("                (case-insensitive, supports glob patterns like 'Orca*').")
-        typer.echo("                Multiple names can be specified.")
-        typer.echo("")
-        typer.echo("Options:")
-        typer.echo("  --yes, -y                       Automatically answer yes to confirmation prompts")
-        typer.echo("  --config, -c PATH               Configuration file path")
-        typer.echo("  --config-dir, -d PATH           Configuration directory path")
-        typer.echo("  --debug                         Enable debug logging")
-        typer.echo("  --version, -V                   Show version and exit")
-        typer.echo("  --help                          Show this message and exit.")
-        typer.echo("")
-        typer.echo("Examples:")
-        typer.echo("  appimage-updater remove FreeCAD")
-        typer.echo("  appimage-updater remove FreeCAD OrcaSlicer")
-        typer.echo("  appimage-updater remove --yes MyApp")
-        raise typer.Exit(0)
-
     command = CommandFactory.create_remove_command(
         app_names=app_names,
         config_file=config_file,
@@ -1198,6 +1182,47 @@ def remove(
 
     # Create output formatter and execute with context
     output_formatter = create_output_formatter_from_params(command.params)
+
+    # Show help if no app names are provided
+    if app_names is None:
+        if format in [OutputFormat.JSON, OutputFormat.HTML]:
+            # For structured formats, use the output formatter
+            output_formatter.print_info("Usage: appimage-updater remove [OPTIONS] APP_NAMES...")
+            output_formatter.print_info("")
+            output_formatter.print_info("Remove applications from the configuration.")
+            output_formatter.print_info("")
+            output_formatter.print_info("This command will delete the applications' configuration. It does NOT delete")
+            output_formatter.print_info("downloaded AppImage files or symlinks - only the configuration entries.")
+            output_formatter.print_info("")
+            output_formatter.print_info("Arguments:")
+            output_formatter.print_info("  APP_NAMES...  Names of applications to remove from configuration")
+            output_formatter.print_info("                (case-insensitive, supports glob patterns like 'Orca*').")
+            output_formatter.print_info("                Multiple names can be specified.")
+            output_formatter.print_info("")
+            output_formatter.print_info("Examples:")
+            output_formatter.print_info("  appimage-updater remove FreeCAD")
+            output_formatter.print_info("  appimage-updater remove FreeCAD OrcaSlicer")
+            output_formatter.print_info("  appimage-updater remove --yes MyApp")
+            output_formatter.finalize()
+        else:
+            # For console formats, use typer.echo
+            typer.echo("Usage: appimage-updater remove [OPTIONS] APP_NAMES...")
+            typer.echo("")
+            typer.echo("Remove applications from the configuration.")
+            typer.echo("")
+            typer.echo("This command will delete the applications' configuration. It does NOT delete")
+            typer.echo("downloaded AppImage files or symlinks - only the configuration entries.")
+            typer.echo("")
+            typer.echo("Arguments:")
+            typer.echo("  APP_NAMES...  Names of applications to remove from configuration")
+            typer.echo("                (case-insensitive, supports glob patterns like 'Orca*').")
+            typer.echo("                Multiple names can be specified.")
+            typer.echo("")
+            typer.echo("Examples:")
+            typer.echo("  appimage-updater remove FreeCAD")
+            typer.echo("  appimage-updater remove FreeCAD OrcaSlicer")
+            typer.echo("  appimage-updater remove --yes MyApp")
+        raise typer.Exit(0)
 
     # Handle format-specific finalization
     if format in [OutputFormat.JSON, OutputFormat.HTML]:

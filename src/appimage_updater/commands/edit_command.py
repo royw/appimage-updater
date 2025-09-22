@@ -46,20 +46,32 @@ class EditCommand(Command):
         configure_logging(debug=self.params.debug)
 
         try:
-            # Validate required parameters
-            validation_errors = self.validate()
-            if validation_errors:
-                error_msg = f"Validation errors: {', '.join(validation_errors)}"
-                self.console.print(f"[red]Error: {error_msg}[/red]")
-                return CommandResult(success=False, message=error_msg, exit_code=1)
-
             # Use context manager to make output formatter available throughout the execution
             if output_formatter:
                 from ..ui.output.context import OutputFormatterContext
 
                 with OutputFormatterContext(output_formatter):
+                    # Validate required parameters (inside context so formatter is available)
+                    validation_errors = self.validate()
+                    if validation_errors:
+                        error_msg = f"Validation errors: {', '.join(validation_errors)}"
+                        from ..ui.output.context import get_output_formatter
+                        formatter = get_output_formatter()
+                        if formatter:
+                            formatter.print_error(error_msg)
+                        else:
+                            self.console.print(f"[red]Error: {error_msg}[/red]")
+                        return CommandResult(success=False, message=error_msg, exit_code=1)
+                    
                     result = await self._execute_edit_operation()
             else:
+                # Validate required parameters
+                validation_errors = self.validate()
+                if validation_errors:
+                    error_msg = f"Validation errors: {', '.join(validation_errors)}"
+                    self.console.print(f"[red]Error: {error_msg}[/red]")
+                    return CommandResult(success=False, message=error_msg, exit_code=1)
+                
                 result = await self._execute_edit_operation()
 
             if result is not None:
