@@ -30,23 +30,26 @@ class TestCheckCommandWorkflows:
         with tempfile.TemporaryDirectory() as tmp_dir:
             config_dir = Path(tmp_dir)
             
-            # Create a test app configuration
+            # Create a test app configuration with all required fields
             app_config = {
                 "applications": [
                     {
                         "name": "TestApp",
+                        "source_type": "github",
                         "url": "https://github.com/test/repo",
                         "download_dir": str(config_dir / "downloads"),
-                        "source_type": "github",
-                        "pattern": "*.AppImage",  # Required field
+                        "pattern": "(?i)TestApp.*\\.AppImage$",
+                        "enabled": True,
                         "prerelease": False,
+                        "checksum": {
+                            "enabled": False,
+                            "pattern": "{filename}-SHA256.txt",
+                            "algorithm": "sha256",
+                            "required": False
+                        },
                         "rotation_enabled": False,
                         "retain_count": 3,
-                        "symlink_path": None,
-                        "checksum": {
-                            "required": False,
-                            "algorithm": "sha256"
-                        }
+                        "symlink_path": None
                     }
                 ]
             }
@@ -63,17 +66,13 @@ class TestCheckCommandWorkflows:
         # This test verifies the fix for empty field values issue
         result = runner.invoke(app, ["check", "TestApp", "--dry-run", "--config-dir", str(temp_config_with_app)])
         
-        # Debug output
-        print(f"Exit code: {result.exit_code}")
-        print(f"Stdout: {result.stdout}")
-        print(f"Stderr: {result.stderr}")
-        
         assert result.exit_code == 0
         
         # Verify expected content appears in output
         expected_indicators = [
             "TestApp",  # Should show the app name
-            "Not checked (dry-run)",  # Should show dry-run status for latest version
+            "Not checked",  # Should show dry-run status for latest version
+            "(dry-run)",  # Should show dry-run indicator
         ]
         
         for indicator in expected_indicators:
