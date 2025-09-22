@@ -10,11 +10,11 @@ AppImage Updater features a robust test infrastructure with advanced isolation a
 
 The test suite has been reorganized for better performance and pre-build testing:
 
-- **✅ Source Code Testing**: Tests now run against source code using `CliRunner` instead of subprocess execution
-- **✅ Pre-Build Capability**: All tests can run before the application is built, enabling faster development cycles
-- **✅ Integration Tests Included**: Integration tests are now included in all Taskfile test tasks
-- **✅ Enhanced E2E Tests**: New workflow tests for check commands and format validation
-- **✅ Maintained Coverage**: All original test scenarios preserved with improved execution method
+- **Source Code Testing**: Tests now run against source code using `CliRunner` instead of subprocess execution
+- **Pre-Build Capability**: All tests can run before the application is built, enabling faster development cycles
+- **Integration Tests Included**: Integration tests are now included in all Taskfile test tasks
+- **Enhanced E2E Tests**: New workflow tests for check commands and format validation
+- **Maintained Coverage**: All original test scenarios preserved with improved execution method
 
 ### Test Isolation
 

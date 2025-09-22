@@ -280,11 +280,22 @@ class VersionChecker:
 
     def _file_matches_app(self, filename_lower: str, app_name_lower: str) -> bool:
         """Check if a filename matches the application name."""
-        return (
-            filename_lower.startswith(app_name_lower)
-            or app_name_lower.replace("studio", "_studio") in filename_lower
-            or filename_lower.startswith(app_name_lower.replace("studio", "_studio"))
-        )
+        # Direct match
+        if filename_lower.startswith(app_name_lower):
+            return True
+
+        # Handle Studio -> _Studio pattern (e.g., BambuStudio -> Bambu_Studio)
+        studio_variant = app_name_lower.replace("studio", "_studio")
+        if studio_variant in filename_lower or filename_lower.startswith(studio_variant):
+            return True
+
+        # Handle Nightly suffix pattern (e.g., OrcaSlicerNightly -> OrcaSlicer)
+        if app_name_lower.endswith("nightly"):
+            base_name = app_name_lower.replace("nightly", "")
+            if filename_lower.startswith(base_name):
+                return True
+
+        return False
 
     def _get_info_from_current_files(self, app_files: list[Path], download_dir: Path) -> Path | None:
         """Get info file path from current files if available."""
