@@ -4,17 +4,23 @@ These tests analyze the source code directly to verify CLI options exist
 without running the built application, making them CI-compatible.
 """
 
+import importlib.util
 import json
 import os
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 from typing import Any
 
-# Add the tests directory to the path to import conftest
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from conftest import discover_cli_commands, get_testable_commands
+# Import from the main tests/conftest.py (not e2e/conftest.py)
+tests_dir = Path(__file__).parent.parent
+conftest_path = tests_dir / "conftest.py"
+spec = importlib.util.spec_from_file_location("conftest", conftest_path)
+conftest = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(conftest)
+
+discover_cli_commands = conftest.discover_cli_commands
+get_testable_commands = conftest.get_testable_commands
 
 
 class TestFormatOptions:
