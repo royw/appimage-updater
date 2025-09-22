@@ -1359,8 +1359,14 @@ async def _examine_repositories(
         return True
 
     except ConfigLoadError as e:
-        console.print(f"[red]Configuration error: {e}")
-        logger.error(f"Configuration error: {e}")
+        # Use output formatter if available, otherwise fallback to console
+        from .ui.output.context import get_output_formatter
+        formatter = get_output_formatter()
+        if formatter:
+            formatter.print_error(str(e))
+        else:
+            console.print(f"[red]Configuration error: {e}")
+        # Note: Don't log to stdout as it contaminates JSON output
         return False
     except Exception as e:
         _handle_repository_examination_error(e, app_names)
@@ -1505,13 +1511,24 @@ async def _handle_no_updates_scenario(config: Any, enabled_apps: list[Any]) -> N
 def _handle_check_errors(e: Exception) -> None:
     """Handle errors during check process."""
     if isinstance(e, ConfigLoadError):
-        console.print(f"[red]Configuration error: {e}")
-        logger.error(f"Configuration error: {e}")
+        # Use output formatter if available, otherwise fallback to console
+        from .ui.output.context import get_output_formatter
+        formatter = get_output_formatter()
+        if formatter:
+            formatter.print_error(str(e))
+        else:
+            console.print(f"[red]Configuration error: {e}")
+        # Note: Don't log to stdout as it contaminates JSON output
         raise typer.Exit(1) from e
     else:
-        console.print(f"[red]Unexpected error: {e}")
-        logger.error(f"Unexpected error: {e}")
-        logger.exception("Full exception details")
+        # Use output formatter if available, otherwise fallback to console
+        from .ui.output.context import get_output_formatter
+        formatter = get_output_formatter()
+        if formatter:
+            formatter.print_error(f"Unexpected error: {e}")
+        else:
+            console.print(f"[red]Unexpected error: {e}")
+        # Note: Don't log to stdout as it contaminates JSON output
         raise typer.Exit(1) from e
 
 
@@ -1536,20 +1553,24 @@ async def _check_updates(
     """
     _log_check_start(config_file, config_dir, dry_run, app_names)
 
-    try:
-        # Use context manager to make output formatter available throughout the execution
-        if output_formatter:
-            with OutputFormatterContext(output_formatter):
+    # Use context manager to make output formatter available throughout the execution
+    if output_formatter:
+        with OutputFormatterContext(output_formatter):
+            try:
                 return await _execute_check_workflow(
                     config_file, config_dir, app_names, verbose, dry_run, yes, no_interactive, info
                 )
-        else:
+            except Exception as e:
+                _handle_check_errors(e)
+                return False
+    else:
+        try:
             return await _execute_check_workflow(
                 config_file, config_dir, app_names, verbose, dry_run, yes, no_interactive, info
             )
-    except Exception as e:
-        _handle_check_errors(e)
-        return False
+        except Exception as e:
+            _handle_check_errors(e)
+            return False
 
 
 async def _execute_check_workflow(

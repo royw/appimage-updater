@@ -503,8 +503,9 @@ def list_available_settings() -> None:
     """List all available configuration settings with descriptions and examples."""
     # Check if we have an output formatter (for JSON/HTML output)
     from ..ui.output.context import get_output_formatter
+
     formatter = get_output_formatter()
-    
+
     if formatter:
         # For structured formats, provide the data in a structured way
         _list_settings_structured(formatter)
@@ -521,50 +522,126 @@ def _list_settings_structured(formatter: Any) -> None:
             "setting": "concurrent-downloads",
             "description": "Number of simultaneous downloads",
             "valid_values": "1-10",
-            "example": "config set concurrent-downloads 3"
+            "example": "config set concurrent-downloads 3",
         },
         {
-            "setting": "timeout-seconds", 
+            "setting": "timeout-seconds",
             "description": "HTTP request timeout",
             "valid_values": "5-300",
-            "example": "config set timeout-seconds 30"
-        }
+            "example": "config set timeout-seconds 30",
+        },
     ]
-    
+
     default_settings = [
-        {"setting": "download-dir", "description": "Default download directory", "valid_values": "path or 'none'", "example": "config set download-dir ~/Apps"},
-        {"setting": "symlink-dir", "description": "Default symlink directory", "valid_values": "path or 'none'", "example": "config set symlink-dir ~/bin"},
-        {"setting": "symlink-pattern", "description": "Default symlink filename pattern", "valid_values": "string with {name}", "example": "config set symlink-pattern '{name}'"},
-        {"setting": "auto-subdir", "description": "Create app subdirectories automatically", "valid_values": "true/false, yes/no, 1/0", "example": "config set auto-subdir true"},
-        {"setting": "rotation", "description": "Enable file rotation by default", "valid_values": "true/false, yes/no, 1/0", "example": "config set rotation true"},
-        {"setting": "retain-count", "description": "Number of old files to keep", "valid_values": "1-10", "example": "config set retain-count 3"},
-        {"setting": "symlink-enabled", "description": "Create symlinks by default", "valid_values": "true/false, yes/no, 1/0", "example": "config set symlink-enabled true"},
-        {"setting": "checksum", "description": "Enable checksum verification", "valid_values": "true/false, yes/no, 1/0", "example": "config set checksum true"},
-        {"setting": "checksum-algorithm", "description": "Default checksum algorithm", "valid_values": "sha256, sha1, md5", "example": "config set checksum-algorithm sha256"},
-        {"setting": "checksum-pattern", "description": "Checksum file pattern", "valid_values": "string with {filename}", "example": "config set checksum-pattern '{filename}.sha256'"},
-        {"setting": "checksum-required", "description": "Require checksum verification", "valid_values": "true/false, yes/no, 1/0", "example": "config set checksum-required false"},
-        {"setting": "prerelease", "description": "Include prerelease versions", "valid_values": "true/false, yes/no, 1/0", "example": "config set prerelease false"},
-        {"setting": "enable-multiple-processes", "description": "Enable parallel processing", "valid_values": "true/false, yes/no, 1/0", "example": "config set enable-multiple-processes true"},
-        {"setting": "process-pool-size", "description": "Number of parallel processes", "valid_values": "1-16", "example": "config set process-pool-size 4"}
+        {
+            "setting": "download-dir",
+            "description": "Default download directory",
+            "valid_values": "path or 'none'",
+            "example": "config set download-dir ~/Apps",
+        },
+        {
+            "setting": "symlink-dir",
+            "description": "Default symlink directory",
+            "valid_values": "path or 'none'",
+            "example": "config set symlink-dir ~/bin",
+        },
+        {
+            "setting": "symlink-pattern",
+            "description": "Default symlink filename pattern",
+            "valid_values": "string with {name}",
+            "example": "config set symlink-pattern '{name}'",
+        },
+        {
+            "setting": "auto-subdir",
+            "description": "Create app subdirectories automatically",
+            "valid_values": "true/false, yes/no, 1/0",
+            "example": "config set auto-subdir true",
+        },
+        {
+            "setting": "rotation",
+            "description": "Enable file rotation by default",
+            "valid_values": "true/false, yes/no, 1/0",
+            "example": "config set rotation true",
+        },
+        {
+            "setting": "retain-count",
+            "description": "Number of old files to keep",
+            "valid_values": "1-10",
+            "example": "config set retain-count 3",
+        },
+        {
+            "setting": "symlink-enabled",
+            "description": "Create symlinks by default",
+            "valid_values": "true/false, yes/no, 1/0",
+            "example": "config set symlink-enabled true",
+        },
+        {
+            "setting": "checksum",
+            "description": "Enable checksum verification",
+            "valid_values": "true/false, yes/no, 1/0",
+            "example": "config set checksum true",
+        },
+        {
+            "setting": "checksum-algorithm",
+            "description": "Default checksum algorithm",
+            "valid_values": "sha256, sha1, md5",
+            "example": "config set checksum-algorithm sha256",
+        },
+        {
+            "setting": "checksum-pattern",
+            "description": "Checksum file pattern",
+            "valid_values": "string with {filename}",
+            "example": "config set checksum-pattern '{filename}.sha256'",
+        },
+        {
+            "setting": "checksum-required",
+            "description": "Require checksum verification",
+            "valid_values": "true/false, yes/no, 1/0",
+            "example": "config set checksum-required false",
+        },
+        {
+            "setting": "prerelease",
+            "description": "Include prerelease versions",
+            "valid_values": "true/false, yes/no, 1/0",
+            "example": "config set prerelease false",
+        },
+        {
+            "setting": "enable-multiple-processes",
+            "description": "Enable parallel processing",
+            "valid_values": "true/false, yes/no, 1/0",
+            "example": "config set enable-multiple-processes true",
+        },
+        {
+            "setting": "process-pool-size",
+            "description": "Number of parallel processes",
+            "valid_values": "1-16",
+            "example": "config set process-pool-size 4",
+        },
     ]
-    
+
     # Output structured data
     formatter.start_section("Available Configuration Settings")
-    formatter.print_table(global_settings, title="Global Settings", headers=["setting", "description", "valid_values", "example"])
-    formatter.print_table(default_settings, title="Default Settings for New Applications", headers=["setting", "description", "valid_values", "example"])
-    
+    formatter.print_table(
+        global_settings, title="Global Settings", headers=["setting", "description", "valid_values", "example"]
+    )
+    formatter.print_table(
+        default_settings,
+        title="Default Settings for New Applications",
+        headers=["setting", "description", "valid_values", "example"],
+    )
+
     # Add usage examples as info messages
     examples = [
         "appimage-updater config list                    # Show this help",
-        "appimage-updater config show                    # Show current settings", 
+        "appimage-updater config show                    # Show current settings",
         "appimage-updater config set download-dir ~/Apps # Set download directory",
         "appimage-updater config set rotation true # Enable rotation",
-        "appimage-updater config reset                   # Reset to defaults"
+        "appimage-updater config reset                   # Reset to defaults",
     ]
-    
+
     for example in examples:
         formatter.print_info(example)
-    
+
     formatter.print_info("Tip: Use 'appimage-updater config show' to see current values")
     formatter.end_section()
 

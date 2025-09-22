@@ -117,8 +117,9 @@ class ApplicationService:
 
         # Use output formatter if available, otherwise fallback to print
         from ..ui.output.context import get_output_formatter
+
         formatter = get_output_formatter()
-        
+
         if formatter:
             formatter.print_error(f"Applications not found: {', '.join(not_found)}")
             formatter.print_warning("Troubleshooting:")

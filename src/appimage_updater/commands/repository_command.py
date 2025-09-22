@@ -43,13 +43,14 @@ class RepositoryCommand(Command):
                     if validation_errors:
                         error_msg = f"Validation errors: {', '.join(validation_errors)}"
                         from ..ui.output.context import get_output_formatter
+
                         formatter = get_output_formatter()
                         if formatter:
                             formatter.print_error(error_msg)
                         else:
                             self.console.print(f"[red]Error: {error_msg}[/red]")
                         return CommandResult(success=False, message=error_msg, exit_code=1)
-                    
+
                     success = await self._execute_repository_operation()
             else:
                 # Validate required parameters
@@ -58,7 +59,7 @@ class RepositoryCommand(Command):
                     error_msg = f"Validation errors: {', '.join(validation_errors)}"
                     self.console.print(f"[red]Error: {error_msg}[/red]")
                     return CommandResult(success=False, message=error_msg, exit_code=1)
-                
+
                 success = await self._execute_repository_operation()
 
             if success:

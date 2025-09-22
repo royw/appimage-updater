@@ -55,14 +55,14 @@ class AddCommand(Command):
                     validation_result = self._validate_parameters()
                     if validation_result:
                         return validation_result
-                    
+
                     success = await self._execute_add_operation()
             else:
                 # Validate parameters
                 validation_result = self._validate_parameters()
                 if validation_result:
                     return validation_result
-                
+
                 success = await self._execute_add_operation()
 
             return self._create_execution_result(success)
@@ -112,12 +112,15 @@ class AddCommand(Command):
         """Show helpful validation error messages."""
         # Use output formatter if available, otherwise fallback to console
         from ..ui.output.context import get_output_formatter
+
         formatter = get_output_formatter()
-        
+
         if formatter:
             formatter.print_error(error_msg)
             formatter.print_warning("Try one of these options:")
-            formatter.print_info("   • Provide both NAME and URL: appimage-updater add MyApp https://github.com/user/repo")
+            formatter.print_info(
+                "   • Provide both NAME and URL: appimage-updater add MyApp https://github.com/user/repo"
+            )
             formatter.print_info("   • Use interactive mode: appimage-updater add --interactive")
             formatter.print_info("   • See examples: appimage-updater add --examples")
         else:

@@ -85,6 +85,7 @@ class ListCommand(Command):
         except ConfigLoadError:
             # Use output formatter if available, otherwise fallback to console
             from ..ui.output.context import get_output_formatter
+
             formatter = get_output_formatter()
             if formatter:
                 formatter.print_error("Configuration error")
@@ -95,6 +96,7 @@ class ListCommand(Command):
         if not config.applications:
             # Use output formatter if available, otherwise fallback to console
             from ..ui.output.context import get_output_formatter
+
             formatter = get_output_formatter()
             if formatter:
                 formatter.print_info("No applications configured")
@@ -115,9 +117,10 @@ class ListCommand(Command):
 
         # Use output formatter if available, otherwise fallback to console
         from ..ui.output.context import get_output_formatter
+
         formatter = get_output_formatter()
         summary_message = f"Total: {total_count} applications ({enabled_count} enabled, {disabled_count} disabled)"
-        
+
         if formatter:
             formatter.print_info(summary_message)
         else:
