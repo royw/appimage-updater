@@ -377,6 +377,18 @@ class VersionChecker:
 
         return candidates
 
+    def _filter_assets_by_pattern(self, assets: list[Asset], pattern: str) -> list[Asset]:
+        """Filter assets by the configured URL pattern."""
+        if not pattern:
+            return assets
+
+        filtered_assets = []
+        for asset in assets:
+            if re.match(pattern, asset.name, re.IGNORECASE):
+                filtered_assets.append(asset)
+
+        return filtered_assets
+
     def _process_release_for_candidate(
         self, release: Release, app_config: ApplicationConfig, current_version: str | None
     ) -> UpdateCandidate | None:
@@ -384,11 +396,38 @@ class VersionChecker:
         if not release.assets:
             return None
 
-        # Skip prerelease versions if not enabled in config
-        if release.is_prerelease and not app_config.prerelease:
+        # Filter assets by URL pattern FIRST (before prerelease check)
+        pattern_filtered_assets = self._filter_assets_by_pattern(release.assets, app_config.pattern)
+        if not pattern_filtered_assets:
+            logger.debug(f"No assets match pattern for release {release.tag_name}")
             return None
 
-        best_asset = self._get_best_asset_for_release(release)
+        # Skip prerelease versions if not enabled in config
+        if release.is_prerelease and not app_config.prerelease:
+            logger.debug(f"Skipping prerelease {release.tag_name} (prerelease not enabled)")
+            return None
+
+        # For prerelease-only configs, skip stable releases
+        if app_config.prerelease and not release.is_prerelease:
+            logger.debug(f"Skipping stable release {release.tag_name} (prerelease-only mode)")
+            return None
+
+        logger.debug(
+            f"Processing release {release.tag_name} "
+            f"(prerelease={release.is_prerelease}, config_prerelease={app_config.prerelease})"
+        )
+
+        # Create a temporary release with filtered assets for distribution selection
+        filtered_release = Release(
+            version=release.version,
+            tag_name=release.tag_name,
+            name=release.name,
+            published_at=release.published_at,
+            is_prerelease=release.is_prerelease,
+            assets=pattern_filtered_assets,
+        )
+
+        best_asset = self._get_best_asset_for_release(filtered_release)
         if not best_asset:
             return None
 
