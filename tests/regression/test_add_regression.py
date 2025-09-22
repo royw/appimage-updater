@@ -511,9 +511,9 @@ class TestAddRegression:
             print(f"      FAILED: Check command failed: {result.stdout}")
             return False
 
-        # Check that the output contains update check results
-        if "Update Check Results" not in result.stdout:
-            print("      FAILED: Missing 'Update Check Results' in check output")
+        # Check that the output contains update check results (dry-run shows "Download URLs")
+        if "Download URLs" not in result.stdout and "Update Check Results" not in result.stdout:
+            print("      FAILED: Missing 'Download URLs' or 'Update Check Results' in check output")
             return False
 
         # Check that the application appears in results

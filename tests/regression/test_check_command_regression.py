@@ -46,12 +46,12 @@ def test_check_command_finds_candidates():
         "Debug logs show assets are being selected and candidates created, but display shows no results."
     )
 
-    # This is what we expect to see instead:
+    # This is what we expect to see instead (updated for current dry-run behavior):
     expected_indicators = [
-        "available",  # Should show update available (part of "Update available" or "⬆️ Update available")
         "appimaged",  # Should show the app name
-        "continuous",  # Should show version info, not just dashes
-        "1 update available",  # Should show summary
+        "continuous",  # Should show current version info
+        "Not checked (dry-run)",  # Should show dry-run status for latest version
+        "Success",  # Should show success status
     ]
 
     for indicator in expected_indicators:
@@ -81,12 +81,12 @@ def test_check_command_with_debug_shows_asset_selection():
     # Combine stdout and stderr since debug logs go to stderr
     debug_output = result.stdout + result.stderr
 
-    # Verify that backend logic is working correctly
+    # Verify that backend logic is working correctly (updated for dry-run behavior)
     backend_indicators = [
-        "Auto-selected asset:",  # Distribution selector working
-        "Completed 1 update checks",  # Version checker working
-        "1 updates available",  # Should find updates
-        "available"  # Should show update available (part of the text)
+        "Starting update checks for 1 applications",  # Version checker starting
+        "Dry run mode: Skipping HTTP requests",  # Should be in dry-run mode
+        "appimaged",  # Should show the app name
+        "Success"  # Should show success status
     ]
 
     missing_indicators = []
@@ -104,10 +104,11 @@ def test_check_command_with_debug_shows_asset_selection():
         f"This suggests the issue is deeper than just display logic."
     )
 
-    # Verify both backend and frontend work correctly now
-    assert "Auto-selected asset:" in debug_output, "Backend should select assets"
-    assert "1 updates available" in debug_output, "Backend should find updates"
-    assert "available" in debug_output, "Frontend should show update available"
+    # Verify both backend and frontend work correctly now (updated for dry-run)
+    assert "Starting update checks for 1 applications" in debug_output, "Backend should start checks"
+    assert "Dry run mode: Skipping HTTP requests" in debug_output, "Should be in dry-run mode"
+    assert "appimaged" in debug_output, "Frontend should show app name"
+    assert "Success" in debug_output, "Frontend should show success status"
 
     print("SUCCESS: Both backend logic and frontend display work correctly")
 

@@ -294,13 +294,27 @@ class RichOutputFormatter:
 
     def _dict_to_check_result(self, result_data: dict[str, Any]) -> CheckResult:
         """Convert dictionary to CheckResult for compatibility."""
-        # This is a simplified conversion - in practice, you'd want proper
-        # CheckResult construction from the dict data
+        # Extract app name from either "Application" or "app_name" key
+        app_name = result_data.get("Application", result_data.get("app_name", ""))
+
+        # Extract status - convert "Success"/"Error" back to boolean
+        status_str = result_data.get("Status", "")
+        success = status_str == "Success"
+
+        # Extract error message from "Update Available" if it contains error text
+        update_available = result_data.get("Update Available", "")
+        error_message = None
+        if "error" in update_available.lower() or "failed" in update_available.lower():
+            error_message = update_available
         return CheckResult(
-            app_name=result_data.get("app_name", ""),
-            success=result_data.get("success", False),
+            app_name=app_name,
+            success=success,
             candidate=result_data.get("candidate"),
-            error_message=result_data.get("error_message"),
+            error_message=error_message,
+            current_version=result_data.get("Current Version"),
+            available_version=result_data.get("Latest Version"),
+            update_available=result_data.get("Update Available") == "Yes",
+            download_url=result_data.get("Download URL"),
         )
 
     def _display_check_results_table(self, results: list[CheckResult]) -> None:
@@ -323,14 +337,38 @@ class RichOutputFormatter:
                     result.error_message or "Unknown error",
                 )
             elif result.candidate is None:
-                # No candidate row
-                table.add_row(
-                    result.app_name,
-                    "[yellow]No updates found[/yellow]",
-                    "[dim]N/A[/dim]",
-                    "[dim]N/A[/dim]",
-                    "[dim]N/A[/dim]",
-                )
+                # No candidate but check if we have direct version data
+                current_version = getattr(result, 'current_version', None)
+                available_version = getattr(result, 'available_version', None)
+                update_available = getattr(result, 'update_available', False)
+
+                if current_version or available_version:
+                    # We have version data from direct fields
+                    current_display = format_version_display(current_version) or "[dim]N/A[/dim]"
+                    latest_display = format_version_display(available_version) or "[dim]N/A[/dim]"
+
+                    if update_available:
+                        status = "[yellow]Update available[/yellow]"
+                        update_indicator = "Yes"
+                    else:
+                        status = "[green]Up to date[/green]"
+                        update_indicator = "No"
+                    table.add_row(
+                        result.app_name,
+                        status,
+                        current_display,
+                        latest_display,
+                        update_indicator,
+                    )
+                else:
+                    # Truly no data available
+                    table.add_row(
+                        result.app_name,
+                        "[yellow]No updates found[/yellow]",
+                        "[dim]N/A[/dim]",
+                        "[dim]N/A[/dim]",
+                        "[dim]N/A[/dim]",
+                    )
             else:
                 # Success row
                 candidate = result.candidate
