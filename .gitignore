@@ -181,3 +181,11 @@ github_token.txt
 # PostScript and image files (prevent accidental commits)
 *.ps
 *.eps
+
+# Temporary development files in root (prevent accidental commits)
+/debug_*.py
+/demo_*.py
+/example_*.py
+/verify_*.py
+/recreate_*.py
+/normalize_*.py
