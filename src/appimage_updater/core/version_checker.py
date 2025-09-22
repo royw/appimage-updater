@@ -262,38 +262,43 @@ class VersionChecker:
 
         for pattern in patterns:
             potential_files = list(download_dir.glob(pattern))
-            app_files = self._filter_app_files(potential_files, app_config.name)
+            # Use basename if specified, otherwise fall back to app name
+            match_name = app_config.basename or app_config.name
+            app_files = self._filter_app_files(potential_files, match_name)
             if app_files:
                 return app_files
         return []
 
-    def _filter_app_files(self, files: list[Path], app_name: str) -> list[Path]:
+    def _filter_app_files(self, files: list[Path], match_name: str) -> list[Path]:
         """Filter files to only include those that belong to the app."""
         app_files = []
-        app_name_lower = app_name.lower()
+        match_name_lower = match_name.lower()
 
         for f in files:
             name_lower = f.name.lower()
-            if self._file_matches_app(name_lower, app_name_lower):
+            if self._file_matches_app(name_lower, match_name_lower):
                 app_files.append(f)
         return app_files
 
-    def _file_matches_app(self, filename_lower: str, app_name_lower: str) -> bool:
-        """Check if a filename matches the application name."""
+    def _file_matches_app(self, filename_lower: str, match_name_lower: str) -> bool:
+        """Check if a filename matches the match name (app name or basename)."""
         # Direct match
-        if filename_lower.startswith(app_name_lower):
+        if filename_lower.startswith(match_name_lower):
             return True
 
         # Handle Studio -> _Studio pattern (e.g., BambuStudio -> Bambu_Studio)
-        studio_variant = app_name_lower.replace("studio", "_studio")
+        studio_variant = match_name_lower.replace("studio", "_studio")
         if studio_variant in filename_lower or filename_lower.startswith(studio_variant):
             return True
 
-        # Handle Nightly suffix pattern (e.g., OrcaSlicerNightly -> OrcaSlicer)
-        if app_name_lower.endswith("nightly"):
-            base_name = app_name_lower.replace("nightly", "")
-            if filename_lower.startswith(base_name):
-                return True
+        # Handle suffix patterns (e.g., OrcaSlicerNightly -> OrcaSlicer, OrcaSlicerRC -> OrcaSlicer)
+        suffixes_to_strip = ["nightly", "rc", "beta", "alpha", "dev", "weekly"]
+        for suffix in suffixes_to_strip:
+            if match_name_lower.endswith(suffix):
+                # Use rsplit to remove only the rightmost occurrence of the suffix
+                base_name = match_name_lower.rsplit(suffix, 1)[0]
+                if filename_lower.startswith(base_name):
+                    return True
 
         return False
 

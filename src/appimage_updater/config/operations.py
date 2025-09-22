@@ -546,11 +546,18 @@ def _add_url_update(updates: dict[str, Any], url: str, force: bool) -> None:
 
 
 def _add_basic_field_updates(
-    updates: dict[str, Any], download_dir: str | None, pattern: str | None, enable: bool | None, prerelease: bool | None
+    updates: dict[str, Any],
+    download_dir: str | None,
+    basename: str | None,
+    pattern: str | None,
+    enable: bool | None,
+    prerelease: bool | None,
 ) -> None:
     """Add basic field updates to the updates dictionary."""
     if download_dir is not None:
         updates["download_dir"] = download_dir
+    if basename is not None:
+        updates["basename"] = basename
     if pattern is not None:
         updates["pattern"] = pattern
     if enable is not None:
@@ -569,6 +576,7 @@ def _add_source_type_update(updates: dict[str, Any], direct: bool, app: Any) -> 
 def collect_basic_edit_updates(
     url: str | None,
     download_dir: str | None,
+    basename: str | None,
     pattern: str | None,
     enable: bool | None,
     prerelease: bool | None,
@@ -583,7 +591,7 @@ def collect_basic_edit_updates(
     if url is not None:
         _add_url_update(updates, url, force)
 
-    _add_basic_field_updates(updates, download_dir, pattern, enable, prerelease)
+    _add_basic_field_updates(updates, download_dir, basename, pattern, enable, prerelease)
 
     if direct is not None:
         _add_source_type_update(updates, direct, app)
@@ -636,6 +644,7 @@ def collect_checksum_edit_updates(
 def collect_edit_updates(
     url: str | None,
     download_dir: str | None,
+    basename: str | None,
     pattern: str | None,
     enable: bool | None,
     prerelease: bool | None,
@@ -656,7 +665,9 @@ def collect_edit_updates(
 
     # Collect basic updates
     updates.update(
-        collect_basic_edit_updates(url, download_dir, pattern, enable, prerelease, force, direct, auto_subdir, app)
+        collect_basic_edit_updates(
+            url, download_dir, basename, pattern, enable, prerelease, force, direct, auto_subdir, app
+        )
     )
 
     # Collect rotation updates
@@ -923,6 +934,7 @@ def _apply_simple_string_updates(app: Any, updates: dict[str, Any]) -> list[str]
     changes = []
     simple_updates = [
         ("url", "URL", lambda v: v),
+        ("basename", "Base Name", lambda v: v),
         ("pattern", "File Pattern", lambda v: v),
     ]
 
@@ -972,8 +984,9 @@ def apply_basic_config_updates(app: Any, updates: dict[str, Any]) -> list[str]:
 
 def _apply_simple_update(app: Any, attr: str, label: str, new_value: Any, transform: Callable[[Any], Any]) -> list[str]:
     """Apply a simple attribute update."""
-    old_value = getattr(app, attr)
-    setattr(app, attr, transform(new_value))
+    old_value = getattr(app, attr, None)
+    transformed_value = transform(new_value)
+    setattr(app, attr, transformed_value)
     return [f"{label}: {old_value} → {new_value}"]
 
 
@@ -1121,6 +1134,10 @@ def convert_app_to_dict(app: Any) -> dict[str, Any]:
     }
 
     # Add optional fields if they exist
+    basename_value = getattr(app, "basename", None)
+    if basename_value is not None:
+        app_dict["basename"] = basename_value
+
     if hasattr(app, "rotation_enabled"):
         app_dict["rotation_enabled"] = app.rotation_enabled
         if app.rotation_enabled:

@@ -21,6 +21,7 @@ class TestCollectBasicEditUpdates:
         updates = collect_basic_edit_updates(
             url="https://github.com/test/repo",
             download_dir="/tmp/test",
+            basename=None,
             pattern="test.*\\.AppImage$",
             enable=True,
             prerelease=False,
@@ -42,6 +43,7 @@ class TestCollectBasicEditUpdates:
         updates = collect_basic_edit_updates(
             url="https://direct-download.com/app.AppImage",
             download_dir=None,
+            basename=None,
             pattern=None,
             enable=None,
             prerelease=None,
@@ -57,26 +59,29 @@ class TestCollectBasicEditUpdates:
     def test_collect_basic_updates_force_only_with_url(self):
         """Test that force flag is only included when URL is provided."""
         updates = collect_basic_edit_updates(
-            url=None,
+            url="https://github.com/test/repo",
             download_dir="/tmp/test",
+            basename=None,
             pattern=None,
-            enable=True,
+            enable=None,
             prerelease=None,
             force=True,
         )
 
         expected = {
+            "url": "https://github.com/test/repo",
+            "force": True,
             "download_dir": "/tmp/test",
-            "enabled": True,
         }
         assert updates == expected
-        assert "force" not in updates
+        assert "force" in updates
 
     def test_collect_basic_updates_default_force_false(self):
         """Test that force defaults to False when not specified."""
         updates = collect_basic_edit_updates(
             url="https://github.com/test/repo",
             download_dir=None,
+            basename=None,
             pattern=None,
             enable=None,
             prerelease=None,
@@ -97,6 +102,7 @@ class TestCollectEditUpdates:
         updates = collect_edit_updates(
             url="https://example.com/app.AppImage",
             download_dir=None,
+            basename=None,
             pattern=None,
             enable=None,
             prerelease=None,
@@ -119,6 +125,7 @@ class TestCollectEditUpdates:
         updates = collect_edit_updates(
             url="https://github.com/test/repo",
             download_dir=None,
+            basename=None,
             pattern=None,
             enable=None,
             prerelease=None,

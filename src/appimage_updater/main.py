@@ -34,6 +34,7 @@ from .ui.cli_options import (
     CREATE_DIR_OPTION,
     DRY_RUN_OPTION,
     EDIT_AUTO_SUBDIR_OPTION,
+    EDIT_BASENAME_OPTION,
     EDIT_CHECKSUM_ALGORITHM_OPTION,
     EDIT_CHECKSUM_OPTION,
     EDIT_CHECKSUM_PATTERN_OPTION,
@@ -203,6 +204,11 @@ _ADD_PRERELEASE_OPTION = typer.Option(
     "--prerelease/--no-prerelease",
     help="Enable or disable prerelease versions (default: disabled)",
 )
+_ADD_BASENAME_OPTION = typer.Option(
+    None,
+    "--basename",
+    help="Base name for file matching (defaults to app name if not specified)",
+)
 _ADD_CHECKSUM_OPTION = typer.Option(
     None,
     "--checksum/--no-checksum",
@@ -257,6 +263,7 @@ _EDIT_APP_NAME_ARGUMENT_OPTIONAL = typer.Argument(
 )
 _EDIT_URL_OPTION = typer.Option(None, "--url", help="Update the repository URL")
 _EDIT_DOWNLOAD_DIR_OPTION = typer.Option(None, "--download-dir", help="Update the download directory")
+_EDIT_BASENAME_OPTION = typer.Option(None, "--basename", help="Update the base name for file matching")
 _EDIT_PATTERN_OPTION = typer.Option(None, "--pattern", help="Update the file pattern (regex)")
 _EDIT_ENABLE_OPTION = typer.Option(None, "--enable/--disable", help="Enable or disable the application")
 _EDIT_PRERELEASE_OPTION = typer.Option(None, "--prerelease/--no-prerelease", help="Enable or disable prereleases")
@@ -493,6 +500,7 @@ def add(
     retain: int = _RETAIN_OPTION,
     symlink: str | None = _SYMLINK_OPTION,
     prerelease: bool | None = _ADD_PRERELEASE_OPTION,
+    basename: str | None = _ADD_BASENAME_OPTION,
     checksum: bool | None = _ADD_CHECKSUM_OPTION,
     checksum_algorithm: str = _ADD_CHECKSUM_ALGORITHM_OPTION,
     checksum_pattern: str = _ADD_CHECKSUM_PATTERN_OPTION,
@@ -537,6 +545,7 @@ def add(
         retain=retain,
         symlink=symlink,
         prerelease=prerelease,
+        basename=basename,
         checksum=checksum,
         checksum_algorithm=checksum_algorithm,
         checksum_pattern=checksum_pattern,
@@ -933,6 +942,7 @@ def edit(
     # Basic configuration options
     url: str | None = EDIT_URL_OPTION,
     download_dir: str | None = EDIT_DOWNLOAD_DIR_OPTION,
+    basename: str | None = EDIT_BASENAME_OPTION,
     pattern: str | None = EDIT_PATTERN_OPTION,
     enable: bool | None = EDIT_ENABLE_OPTION,
     prerelease: bool | None = EDIT_PRERELEASE_OPTION,
@@ -1003,6 +1013,7 @@ def edit(
         config_dir=config_dir,
         url=url,
         download_dir=download_dir,
+        basename=basename,
         pattern=pattern,
         enable=enable,
         prerelease=prerelease,

@@ -167,6 +167,7 @@ class EditCommand(Command):
         return collect_edit_updates(
             url=self.params.url,
             download_dir=self.params.download_dir,
+            basename=self.params.basename,
             pattern=self.params.pattern,
             enable=self.params.enable,
             prerelease=self.params.prerelease,
@@ -221,8 +222,7 @@ class EditCommand(Command):
         if self.params.config_file:
             # Save to single file
             config_data = {
-                "global_config": config.global_config.model_dump(),
-                "applications": [app.model_dump() for app in config.applications],
+                "applications": [app.model_dump(exclude_none=False) for app in config.applications],
             }
             with self.params.config_file.open("w") as f:
                 json.dump(config_data, f, indent=2, default=str)
@@ -235,9 +235,13 @@ class EditCommand(Command):
             for app in config.applications:
                 app_file = config_dir / f"{app.name.lower()}.json"
                 # For directory-based configs, save as single app wrapped in applications array
-                app_data = {"applications": [app.model_dump()]}
+                app_data = {"applications": [app.model_dump(exclude_none=False)]}
                 with app_file.open("w") as f:
                     json.dump(app_data, f, indent=2, default=str)
+        else:
+            # TODO: Handle default configuration save mechanism
+            # Currently both config_file and config_dir are None, so configuration changes aren't being saved
+            pass
 
     def _show_validation_hints(self, error_message: str) -> None:
         """Show helpful hints based on validation error."""

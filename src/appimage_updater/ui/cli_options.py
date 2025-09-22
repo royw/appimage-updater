@@ -117,6 +117,7 @@ CREATE_DIR_OPTION = typer.Option(
 
 EDIT_URL_OPTION = typer.Option(None, "--url", help="Update the repository URL")
 EDIT_DOWNLOAD_DIR_OPTION = typer.Option(None, "--download-dir", help="Update the download directory")
+EDIT_BASENAME_OPTION = typer.Option(None, "--basename", help="Update the base name for file matching")
 EDIT_PATTERN_OPTION = typer.Option(None, "--pattern", help="Update the file pattern (regex)")
 EDIT_ENABLE_OPTION = typer.Option(None, "--enable/--disable", help="Enable or disable the application")
 EDIT_PRERELEASE_OPTION = typer.Option(None, "--prerelease/--no-prerelease", help="Enable or disable prereleases")

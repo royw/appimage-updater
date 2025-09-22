@@ -24,6 +24,7 @@ class AddParams(BaseParams):
     name: str | None = None
     url: str | None = None
     download_dir: str | None = None
+    basename: str | None = None
     create_dir: bool = False
     yes: bool = False
     rotation: bool | None = None
@@ -67,6 +68,7 @@ class EditParams(BaseParams):
     app_names: list[str] | None = None
     url: str | None = None
     download_dir: str | None = None
+    basename: str | None = None
     pattern: str | None = None
     rotation: bool | None = None
     retain_count: int | None = None

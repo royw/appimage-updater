@@ -42,6 +42,9 @@ class ApplicationConfig(BaseModel):
     url: str = Field(description="Source URL")
     download_dir: Path = Field(description="Download directory")
     pattern: str = Field(description="File pattern to match")
+    basename: str | None = Field(
+        default=None, description="Base name for file matching (defaults to app name if not specified)"
+    )
     enabled: bool = Field(default=True, description="Whether to check for updates")
     prerelease: bool = Field(default=False, description="Include prerelease versions")
     checksum: ChecksumConfig = Field(

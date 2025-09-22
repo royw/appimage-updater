@@ -464,7 +464,7 @@ def _get_app_config_path(app: Any, config_source_info: dict[str, str]) -> str | 
 
 def get_basic_config_lines(app: Any) -> list[str]:
     """Get basic configuration lines for an application."""
-    return [
+    config_lines = [
         f"[bold]Name:[/bold] {app.name}",
         f"[bold]Status:[/bold] {'[green]Enabled[/green]' if app.enabled else '[red]Disabled[/red]'}",
         f"[bold]Source:[/bold] {app.source_type.title()}",
@@ -472,6 +472,12 @@ def get_basic_config_lines(app: Any) -> list[str]:
         f"[bold]Download Directory:[/bold] {_replace_home_with_tilde(str(app.download_dir))}",
         f"[bold]File Pattern:[/bold] {app.pattern}",
     ]
+
+    # Add basename if it exists and is not None and is a string
+    if hasattr(app, "basename") and app.basename and isinstance(app.basename, str):
+        config_lines.append(f"[bold]Base Name:[/bold] {app.basename}")
+
+    return config_lines
 
 
 def add_optional_config_lines(app: Any, config_lines: list[str]) -> None:
