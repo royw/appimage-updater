@@ -1042,7 +1042,9 @@ def edit(
             output_formatter.print_info("")
             output_formatter.print_info("Examples:")
             output_formatter.print_info("  appimage-updater edit FreeCAD --prerelease")
-            output_formatter.print_info("  appimage-updater edit OrcaSlicer --rotation --symlink-path ~/bin/orca.AppImage")
+            output_formatter.print_info(
+                "  appimage-updater edit OrcaSlicer --rotation --symlink-path ~/bin/orca.AppImage"
+            )
             output_formatter.print_info("  appimage-updater edit 'Orca*' --enable")
             output_formatter.finalize()
         else:
@@ -1734,12 +1736,13 @@ async def _prepare_check_environment(
     if not enabled_apps:
         # Use output formatter if available, otherwise fallback to console
         from .ui.output.context import get_output_formatter
+
         formatter = get_output_formatter()
         if formatter:
             formatter.print_warning("No enabled applications found in configuration")
         else:
             console.print("[yellow]No enabled applications found in configuration")
-        logger.warning("No enabled applications found, exiting")
+        # Note: Don't log to stdout as it contaminates JSON output
         return config, []
 
     if verbose:
