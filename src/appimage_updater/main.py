@@ -1707,7 +1707,13 @@ async def _prepare_check_environment(
         return config, None
 
     if not enabled_apps:
-        console.print("[yellow]No enabled applications found in configuration")
+        # Use output formatter if available, otherwise fallback to console
+        from .ui.output.context import get_output_formatter
+        formatter = get_output_formatter()
+        if formatter:
+            formatter.print_warning("No enabled applications found in configuration")
+        else:
+            console.print("[yellow]No enabled applications found in configuration")
         logger.warning("No enabled applications found, exiting")
         return config, []
 

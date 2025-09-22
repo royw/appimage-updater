@@ -345,7 +345,7 @@ class TestFormatOptions:
             
             for format_type in formats_to_test:
                 result = results[command_name][format_type]
-                status = "✅ PASS" if result["correct_format"] else "❌ FAIL"
+                status = "PASS" if result["correct_format"] else "FAIL"
                 print(f"  {format_type:>6}: {status} (success: {result['success']}, length: {result['output_length']})")
                 
                 if not result["correct_format"] and "error" not in result["analysis"]:

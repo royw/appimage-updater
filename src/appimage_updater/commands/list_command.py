@@ -83,11 +83,23 @@ class ListCommand(Command):
         try:
             config = load_config(self.params.config_file, self.params.config_dir)
         except ConfigLoadError:
-            self.console.print("Configuration error")
+            # Use output formatter if available, otherwise fallback to console
+            from ..ui.output.context import get_output_formatter
+            formatter = get_output_formatter()
+            if formatter:
+                formatter.print_error("Configuration error")
+            else:
+                self.console.print("Configuration error")
             return None
 
         if not config.applications:
-            self.console.print("No applications configured")
+            # Use output formatter if available, otherwise fallback to console
+            from ..ui.output.context import get_output_formatter
+            formatter = get_output_formatter()
+            if formatter:
+                formatter.print_info("No applications configured")
+            else:
+                self.console.print("No applications configured")
             return False  # No applications configured (success case)
 
         return config
@@ -101,4 +113,12 @@ class ListCommand(Command):
         disabled_count = len(config.applications) - enabled_count
         total_count = len(config.applications)
 
-        self.console.print(f"Total: {total_count} applications ({enabled_count} enabled, {disabled_count} disabled)")
+        # Use output formatter if available, otherwise fallback to console
+        from ..ui.output.context import get_output_formatter
+        formatter = get_output_formatter()
+        summary_message = f"Total: {total_count} applications ({enabled_count} enabled, {disabled_count} disabled)"
+        
+        if formatter:
+            formatter.print_info(summary_message)
+        else:
+            self.console.print(summary_message)
