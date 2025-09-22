@@ -5,9 +5,12 @@ without running the built application, making them CI-compatible.
 """
 
 import json
+import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
+from typing import Any
 
 # Add the tests directory to the path to import conftest
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -283,56 +286,72 @@ class TestFormatOptions:
         
         formats_to_test = ["json", "html", "plain", "rich"]
         
-        results = {}
+        results: dict[str, dict[str, dict[str, Any]]] = {}
         
-        for command_args, command_name in test_commands:
-            results[command_name] = {}
+        # Create isolated temporary directory for this test run
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_config_dir = Path(temp_dir) / "config"
+            temp_config_dir.mkdir()
             
-            for format_type in formats_to_test:
-                try:
-                    # Build the full command
-                    full_command = ["uv", "run", "appimage-updater"] + command_args + ["--format", format_type]
-                    
-                    # Run the command
-                    result = subprocess.run(
-                        full_command,
-                        capture_output=True,
-                        text=True,
-                        timeout=30,
-                        cwd=Path(__file__).parent.parent.parent,
-                    )
-                    
-                    # Command should succeed (exit code 0)
-                    success = result.returncode == 0
-                    output = result.stdout.strip()
-                    
-                    # Analyze output format
-                    format_analysis = self._analyze_output_format(output, format_type)
-                    
-                    results[command_name][format_type] = {
-                        "success": success,
-                        "correct_format": format_analysis["correct_format"],
-                        "analysis": format_analysis,
-                        "output_length": len(output),
-                        "stderr": result.stderr if result.stderr else None
-                    }
-                    
-                except subprocess.TimeoutExpired:
-                    results[command_name][format_type] = {
-                        "success": False,
-                        "correct_format": False,
-                        "analysis": {"error": "timeout"},
-                        "output_length": 0,
-                        "stderr": "Command timed out"
-                    }
-                except Exception as e:
-                    results[command_name][format_type] = {
-                        "success": False,
-                        "correct_format": False,
-                        "analysis": {"error": str(e)},
-                        "output_length": 0,
-                        "stderr": str(e)
-                    }
+            # Set up isolated environment
+            test_env = os.environ.copy()
+            test_env["XDG_CONFIG_HOME"] = str(temp_config_dir)
+            test_env["HOME"] = str(temp_dir)
+            
+            for command_args, command_name in test_commands:
+                results[command_name] = {}
+                
+                for format_type in formats_to_test:
+                    try:
+                        # Build the full command with isolated config
+                        full_command = [
+                            "uv", "run", "appimage-updater"
+                        ] + command_args + [
+                            "--format", format_type,
+                            "--config-dir", str(temp_config_dir)
+                        ]
+                        
+                        # Run the command with isolated environment
+                        result = subprocess.run(
+                            full_command,
+                            capture_output=True,
+                            text=True,
+                            timeout=30,
+                            cwd=Path(__file__).parent.parent.parent,
+                            env=test_env,
+                        )
+                        
+                        # Command should succeed (exit code 0)
+                        success = result.returncode == 0
+                        output = result.stdout.strip()
+                        
+                        # Analyze output format
+                        format_analysis = self._analyze_output_format(output, format_type)
+                        
+                        results[command_name][format_type] = {
+                            "success": success,
+                            "correct_format": format_analysis["correct_format"],
+                            "analysis": format_analysis,
+                            "output_length": len(output),
+                            "stderr": result.stderr if result.stderr else None
+                        }
+                        
+                    except subprocess.TimeoutExpired:
+                        results[command_name][format_type] = {
+                            "success": False,
+                            "correct_format": False,
+                            "analysis": {"error": "timeout"},
+                            "output_length": 0,
+                            "stderr": "Command timed out"
+                        }
+                    except Exception as e:
+                        results[command_name][format_type] = {
+                            "success": False,
+                            "correct_format": False,
+                            "analysis": {"error": str(e)},
+                            "output_length": 0,
+                            "stderr": str(e)
+                        }
         
         # Print comprehensive results for analysis
         print("\n" + "="*80)
