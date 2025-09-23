@@ -6,7 +6,6 @@ from typing import Any
 
 from rich.console import Console
 
-
 console = Console()
 
 

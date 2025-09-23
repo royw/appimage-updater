@@ -18,7 +18,6 @@ from .models import (
     GlobalConfig,
 )
 
-
 logger = logging.getLogger(__name__)
 
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))

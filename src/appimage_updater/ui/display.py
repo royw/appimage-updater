@@ -21,7 +21,6 @@ from rich.table import Table
 from ..core.models import CheckResult
 from ..utils.version_utils import format_version_display
 
-
 # Console instance for all display operations
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 

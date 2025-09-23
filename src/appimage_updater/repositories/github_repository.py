@@ -6,5 +6,4 @@ to maintain the repository abstraction pattern.
 
 from ..github.repository import GitHubRepository
 
-
 __all__ = ["GitHubRepository"]

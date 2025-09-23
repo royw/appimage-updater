@@ -24,7 +24,6 @@ from appimage_updater.repositories.base import (
 )
 from appimage_updater.utils.version_utils import normalize_version_string
 
-
 logger = logging.getLogger(__name__)
 
 

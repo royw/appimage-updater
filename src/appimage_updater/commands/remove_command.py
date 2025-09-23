@@ -20,7 +20,6 @@ from .base import (
 )
 from .parameters import RemoveParams
 
-
 logger = logging.getLogger(__name__)
 
 

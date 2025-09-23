@@ -8,7 +8,6 @@ import typer
 
 from .output.interface import OutputFormat
 
-
 # Common options used across multiple commands
 
 VERBOSE_OPTION = typer.Option(

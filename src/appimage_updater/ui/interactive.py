@@ -22,7 +22,6 @@ from rich.prompt import (
 from ..core.models import InteractiveResult
 from ..repositories.factory import get_repository_client
 
-
 console = Console()
 
 

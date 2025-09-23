@@ -6,7 +6,6 @@ from contextvars import (
 )
 from typing import Any
 
-
 # Context variable to hold the current output formatter
 _output_formatter: ContextVar[Any] = ContextVar("output_formatter", default=None)
 

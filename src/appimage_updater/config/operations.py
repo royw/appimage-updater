@@ -21,7 +21,6 @@ from ..repositories.factory import get_repository_client
 from ..ui.display import _replace_home_with_tilde
 from .manager import GlobalConfigManager
 
-
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 
 

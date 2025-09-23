@@ -11,7 +11,6 @@ from .logging_interface import (
     create_silent_http_logger,
 )
 
-
 __all__ = [
     "HTTPTracker",
     "create_http_tracker_from_params",

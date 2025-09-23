@@ -16,7 +16,6 @@ from rich.console import Console
 
 from appimage_updater.config.models import Config
 
-
 # Console instance for all display operations
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 

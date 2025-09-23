@@ -12,7 +12,6 @@ from pathlib import Path
 
 from loguru import logger
 
-
 try:
     from .._version import __version__
 except ImportError:

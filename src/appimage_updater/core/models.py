@@ -15,7 +15,6 @@ from pydantic import (
     Field,
 )
 
-
 if TYPE_CHECKING:
     from ..config.models import ApplicationConfig
 else:
