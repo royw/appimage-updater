@@ -2023,86 +2023,99 @@ async def _perform_update_checks(
     dry_run: bool = False,
 ) -> list[Any]:
     """Initialize clients and perform update checks."""
-    # Only show console output for rich/plain formats
+    _display_check_start_message(enabled_apps)
+
+    if dry_run:
+        return await _perform_dry_run_checks(enabled_apps, no_interactive)
+    else:
+        return await _perform_real_update_checks(enabled_apps, no_interactive)
+
+def _display_check_start_message(enabled_apps: list[Any]) -> None:
+    """Display the initial check message if console output is not suppressed."""
     from .ui.output.context import get_output_formatter
 
     output_formatter = get_output_formatter()
-
-    # Check if we should suppress console output (for JSON/HTML formats)
-    suppress_console = (
-        output_formatter
-        and hasattr(output_formatter, "__class__")
-        and output_formatter.__class__.__name__ in ["JSONOutputFormatter", "HTMLOutputFormatter"]
-    )
+    suppress_console = _should_suppress_console_output(output_formatter)
 
     if not suppress_console:
         console.print(f"[blue]Checking {len(enabled_apps)} applications for updates...")
     logger.debug(f"Starting update checks for {len(enabled_apps)} applications")
 
-    # Handle dry-run mode - skip actual HTTP calls but show real current versions
-    if dry_run:
-        logger.debug("Dry run mode: Skipping HTTP requests, showing current versions only")
-        if not suppress_console:
-            console.print("[yellow]Dry run mode - skipping HTTP requests")
+def _should_suppress_console_output(output_formatter: Any) -> bool:
+    """Check if console output should be suppressed for JSON/HTML formats."""
+    return (
+        output_formatter
+        and hasattr(output_formatter, "__class__")
+        and output_formatter.__class__.__name__ in ["JSONOutputFormatter", "HTMLOutputFormatter"]
+    )
 
-        # Create dry-run results with real current version detection
-        from .core.models import CheckResult
-        from .core.version_checker import VersionChecker
+async def _perform_dry_run_checks(enabled_apps: list[Any], no_interactive: bool) -> list[Any]:
+    """Perform dry-run checks showing current versions without HTTP requests."""
+    from .core.version_checker import VersionChecker
+    from .ui.output.context import get_output_formatter
 
-        dry_run_results = []
-        version_checker = VersionChecker(interactive=not no_interactive)
+    logger.debug("Dry run mode: Skipping HTTP requests, showing current versions only")
 
-        for app_config in enabled_apps:
-            try:
-                # Get real current version from .info files or existing files
-                current_version = version_checker._get_current_version(app_config)
+    output_formatter = get_output_formatter()
+    if not _should_suppress_console_output(output_formatter):
+        console.print("[yellow]Dry run mode - skipping HTTP requests")
 
-                # Create result showing current version but no update check
-                dry_run_result = CheckResult(
-                    app_name=app_config.name,
-                    success=True,
-                    current_version=current_version,
-                    available_version="Not checked (dry-run)",
-                    update_available=False,
-                    error_message=None,
-                    download_url=app_config.url,
-                )
-                dry_run_results.append(dry_run_result)
+    dry_run_results = []
+    version_checker = VersionChecker(interactive=not no_interactive)
 
-            except Exception as e:
-                logger.debug(f"Error getting current version for {app_config.name}: {e}")
-                # Create error result for apps that can't be processed
-                error_result = CheckResult(
-                    app_name=app_config.name,
-                    success=False,
-                    current_version=None,
-                    available_version=None,
-                    update_available=False,
-                    error_message=f"Error reading current version: {str(e)}",
-                    download_url=None,
-                )
-                dry_run_results.append(error_result)
+    for app_config in enabled_apps:
+        result = _create_dry_run_result(app_config, version_checker)
+        dry_run_results.append(result)
 
-        return dry_run_results
+    return dry_run_results
 
-    # Create version checker for async processing
+def _create_dry_run_result(app_config: Any, version_checker: Any) -> Any:
+    """Create a dry-run result for a single application."""
+    from .core.models import CheckResult
+
+    try:
+        current_version = version_checker._get_current_version(app_config)
+        return CheckResult(
+            app_name=app_config.name,
+            success=True,
+            current_version=current_version,
+            available_version="Not checked (dry-run)",
+            update_available=False,
+            error_message=None,
+            download_url=app_config.url,
+        )
+    except Exception as e:
+        logger.debug(f"Error getting current version for {app_config.name}: {e}")
+        return CheckResult(
+            app_name=app_config.name,
+            success=False,
+            current_version=None,
+            available_version=None,
+            update_available=False,
+            error_message=f"Error reading current version: {str(e)}",
+            download_url=None,
+        )
+
+async def _perform_real_update_checks(enabled_apps: list[Any], no_interactive: bool) -> list[Any]:
+    """Perform real update checks with HTTP requests."""
     from .core.parallel import ConcurrentProcessor
     from .core.version_checker import VersionChecker
 
     version_checker = VersionChecker(interactive=not no_interactive)
+    _log_processing_method(enabled_apps)
 
-    # Log the processing method being used
-    if len(enabled_apps) > 1:
-        logger.debug(f"Using concurrent async processing for {len(enabled_apps)} applications")
-    else:
-        logger.debug(f"Using sequential processing for {len(enabled_apps)} applications")
-
-    # Create concurrent processor and run checks using async concurrency
     processor = ConcurrentProcessor()
     check_results = await processor.process_items_async(enabled_apps, version_checker.check_for_updates)
 
     logger.debug(f"Completed {len(check_results)} update checks")
     return check_results
+
+def _log_processing_method(enabled_apps: list[Any]) -> None:
+    """Log the processing method being used."""
+    if len(enabled_apps) > 1:
+        logger.debug(f"Using concurrent async processing for {len(enabled_apps)} applications")
+    else:
+        logger.debug(f"Using sequential processing for {len(enabled_apps)} applications")
 
 
 def _display_check_results(check_results: list[Any], dry_run: bool) -> None:
