@@ -1154,32 +1154,32 @@ def _execute_edit_command_workflow(
 
 
 def _create_edit_command(
-    app_names,
-    config_file,
-    config_dir,
-    url,
-    download_dir,
-    basename,
-    pattern,
-    enable,
-    prerelease,
-    rotation,
-    symlink_path,
-    retain_count,
-    checksum,
-    checksum_algorithm,
-    checksum_pattern,
-    checksum_required,
-    create_dir,
-    yes,
-    force,
-    direct,
-    auto_subdir,
-    verbose,
-    dry_run,
-    debug,
-    format,
-):
+    app_names: list[str],
+    config_file: Path | None,
+    config_dir: Path | None,
+    url: str | None,
+    download_dir: str | None,
+    basename: str | None,
+    pattern: str | None,
+    enable: bool | None,
+    prerelease: bool | None,
+    rotation: bool | None,
+    symlink_path: str | None,
+    retain_count: int | None,
+    checksum: bool | None,
+    checksum_algorithm: str | None,
+    checksum_pattern: str | None,
+    checksum_required: bool | None,
+    create_dir: bool | None,
+    yes: bool,
+    force: bool,
+    direct: bool | None,
+    auto_subdir: bool | None,
+    verbose: bool,
+    dry_run: bool,
+    debug: bool,
+    format: OutputFormat,
+) -> Any:
     """Create edit command with all parameters."""
     return CommandFactory.create_edit_command(
         app_names=app_names,
@@ -1210,7 +1210,7 @@ def _create_edit_command(
     )
 
 
-def _execute_edit_with_format_handling(command, output_formatter, format: OutputFormat):
+def _execute_edit_with_format_handling(command: Any, output_formatter: Any, format: OutputFormat) -> Any:
     """Execute edit command with proper format handling."""
     result = asyncio.run(command.execute(output_formatter=output_formatter))
 
@@ -1389,7 +1389,14 @@ def _handle_remove_help_display(format: OutputFormat) -> None:
     raise typer.Exit(0)
 
 
-def _execute_remove_command_workflow(app_names, config_file, config_dir, yes, debug, format) -> None:
+def _execute_remove_command_workflow(
+    app_names: list[str],
+    config_file: Path | None,
+    config_dir: Path | None,
+    yes: bool,
+    debug: bool,
+    format: OutputFormat
+) -> None:
     """Execute the complete remove command workflow."""
     command = CommandFactory.create_remove_command(
         app_names=app_names, config_file=config_file, config_dir=config_dir, yes=yes, debug=debug, format=format
@@ -1402,7 +1409,7 @@ def _execute_remove_command_workflow(app_names, config_file, config_dir, yes, de
         raise typer.Exit(result.exit_code)
 
 
-def _execute_remove_with_format_handling(command, output_formatter, format: OutputFormat):
+def _execute_remove_with_format_handling(command: Any, output_formatter: Any, format: OutputFormat) -> Any:
     """Execute remove command with proper format handling."""
     result = asyncio.run(command.execute(output_formatter=output_formatter))
 
@@ -1584,7 +1591,7 @@ async def _examine_repositories(
         return False
 
 
-def _filter_apps_for_examination(applications: list, app_names: list[str]):
+def _filter_apps_for_examination(applications: list[Any], app_names: list[str]) -> list[Any] | None:
     """Filter applications for repository examination."""
     filtered_result = ApplicationService.filter_apps_by_names(applications, app_names)
     if filtered_result is None:
@@ -1593,7 +1600,9 @@ def _filter_apps_for_examination(applications: list, app_names: list[str]):
     return filtered_result
 
 
-async def _process_repository_examination(apps_to_examine: list, limit: int, show_assets: bool, dry_run: bool) -> bool:
+async def _process_repository_examination(
+    apps_to_examine: list[Any], limit: int, show_assets: bool, dry_run: bool
+) -> bool:
     """Process the repository examination for filtered applications."""
     if dry_run:
         _display_dry_run_repository_info(apps_to_examine)
