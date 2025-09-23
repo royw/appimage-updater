@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from collections.abc import Iterator
 from pathlib import Path
@@ -17,7 +18,6 @@ class Manager:
 
     def _load_config_from_directory(self, config_path: Path) -> Config:
         """Load configuration from directory of JSON files."""
-        import json
 
         from .loader import ConfigLoadError
 
@@ -55,8 +55,7 @@ class Manager:
         return applications
 
     def _load_config_from_file(self, config_path: Path) -> Config:
-        """Load configuration from single JSON file."""
-        import json
+        """Load configuration from a single JSON file."""
 
         from .loader import ConfigLoadError
 
@@ -136,8 +135,6 @@ class Manager:
         }
 
         with config_path.open("w") as f:
-            import json
-
             json.dump(config_dict, f, indent=2, default=str)
 
     # Single File Operations
@@ -156,7 +153,6 @@ class Manager:
         }
 
         with config_path.open("w") as f:
-            import json
             json.dump(config_dict, f, indent=2, default=str)
 
         logger.info(f"Saved configuration to: {config_path}")
@@ -172,7 +168,6 @@ class Manager:
         if target_file.exists():
             try:
                 with target_file.open() as f:
-                    import json
                     existing_config = json.load(f)
                     if "applications" in existing_config:
                         config_dict["applications"] = existing_config["applications"]
@@ -199,14 +194,12 @@ class Manager:
             app_config_dict = {"applications": [app.model_dump()]}
 
             with app_file_path.open("w") as f:
-                import json
                 json.dump(app_config_dict, f, indent=2, default=str)
 
         logger.info(f"Saved directory-based configuration to: {config_dir}")
 
     def update_global_config_in_directory(self, config: Config, config_dir: Path) -> None:
         """Update global config file in directory."""
-        import json
 
         global_config_file = config_dir / "config.json"
         with global_config_file.open("w") as f:
@@ -225,7 +218,6 @@ class Manager:
     # Application-Specific Operations
     def update_application_in_config_file(self, app_config: ApplicationConfig, config_file: Path) -> None:
         """Update single application in a JSON config file."""
-        import json
 
         # Load existing configuration
         with config_file.open() as f:
@@ -251,7 +243,6 @@ class Manager:
 
     def update_application_in_config_directory(self, app_config: ApplicationConfig, config_dir: Path) -> None:
         """Update single application in config directory."""
-        import json
 
         app_name_lower = app_config.name.lower()
 
@@ -352,7 +343,6 @@ class GlobalConfigManager(Manager):
         
         # Write to file
         with target_file.open("w") as f:
-            import json
             json.dump(config_dict, f, indent=2, default=str)
         
         logger.info(f"Saved global configuration to: {target_file}")
@@ -376,7 +366,6 @@ class GlobalConfigManager(Manager):
 
     def _load_global_config(self) -> Config:
         """Load global configuration from config.json file."""
-        import json
 
         config_path = self._config_path or self.get_default_config_path()
 
@@ -576,7 +565,6 @@ class AppConfigs(Manager):
 
     def _save_directory_based_config(self) -> None:
         """Save configuration as individual files in directory."""
-        import json
 
         if not self._config_path:
             return
