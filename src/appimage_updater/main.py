@@ -1037,56 +1037,80 @@ def edit(
         # Update URL after repository move
         appimage-updater edit OldApp --url https://github.com/newowner/newrepo
     """
-    # Validate mutually exclusive options
+    # Validate and prepare
+    _validate_edit_options(yes, no)
+
+    if app_names is None:
+        _handle_edit_help_display(format)
+        return
+
+    # Execute edit command
+    _execute_edit_command_workflow(
+        app_names, config_file, config_dir, url, download_dir, basename, pattern,
+        enable, prerelease, rotation, symlink_path, retain_count, checksum,
+        checksum_algorithm, checksum_pattern, checksum_required, create_dir,
+        yes, force, direct, auto_subdir, verbose, dry_run, debug, format
+    )
+
+def _validate_edit_options(yes: bool, no: bool) -> None:
+    """Validate mutually exclusive edit options."""
     if yes and no:
         console.print("[red]Error: --yes and --no options are mutually exclusive")
         raise typer.Exit(1)
 
-    command = CommandFactory.create_edit_command(
-        app_names=app_names,
-        config_file=config_file,
-        config_dir=config_dir,
-        url=url,
-        download_dir=download_dir,
-        basename=basename,
-        pattern=pattern,
-        enable=enable,
-        prerelease=prerelease,
-        rotation=rotation,
-        symlink_path=symlink_path,
-        retain_count=retain_count,
-        checksum=checksum,
-        checksum_algorithm=checksum_algorithm,
-        checksum_pattern=checksum_pattern,
-        checksum_required=checksum_required,
-        create_dir=create_dir,
-        yes=yes,
-        force=force,
-        direct=direct,
-        auto_subdir=auto_subdir,
-        verbose=verbose,
-        dry_run=dry_run,
-        debug=debug,
-        format=format,
+def _handle_edit_help_display(format: OutputFormat) -> None:
+    """Handle help display for edit command."""
+    from .ui.output.factory import create_output_formatter
+    output_formatter = create_output_formatter(format)
+    _display_edit_help(format, output_formatter)
+    raise typer.Exit(0)
+
+def _execute_edit_command_workflow(
+    app_names, config_file, config_dir, url, download_dir, basename, pattern,
+    enable, prerelease, rotation, symlink_path, retain_count, checksum,
+    checksum_algorithm, checksum_pattern, checksum_required, create_dir,
+    yes, force, direct, auto_subdir, verbose, dry_run, debug, format
+) -> None:
+    """Execute the complete edit command workflow."""
+    command = _create_edit_command(
+        app_names, config_file, config_dir, url, download_dir, basename, pattern,
+        enable, prerelease, rotation, symlink_path, retain_count, checksum,
+        checksum_algorithm, checksum_pattern, checksum_required, create_dir,
+        yes, force, direct, auto_subdir, verbose, dry_run, debug, format
     )
-
-    # Create output formatter and execute with context
+    
     output_formatter = create_output_formatter_from_params(command.params)
-
-    # Show help if no app names are provided
-    if app_names is None:
-        _display_edit_help(format, output_formatter)
-        raise typer.Exit(0)
-
-    # Handle format-specific finalization
-    if format in [OutputFormat.JSON, OutputFormat.HTML]:
-        result = asyncio.run(command.execute(output_formatter=output_formatter))
-        output_formatter.finalize()
-    else:
-        result = asyncio.run(command.execute(output_formatter=output_formatter))
-
+    result = _execute_edit_with_format_handling(command, output_formatter, format)
+    
     if not result.success:
         raise typer.Exit(result.exit_code)
+
+def _create_edit_command(
+    app_names, config_file, config_dir, url, download_dir, basename, pattern,
+    enable, prerelease, rotation, symlink_path, retain_count, checksum,
+    checksum_algorithm, checksum_pattern, checksum_required, create_dir,
+    yes, force, direct, auto_subdir, verbose, dry_run, debug, format
+):
+    """Create edit command with all parameters."""
+    return CommandFactory.create_edit_command(
+        app_names=app_names, config_file=config_file, config_dir=config_dir,
+        url=url, download_dir=download_dir, basename=basename, pattern=pattern,
+        enable=enable, prerelease=prerelease, rotation=rotation,
+        symlink_path=symlink_path, retain_count=retain_count, checksum=checksum,
+        checksum_algorithm=checksum_algorithm, checksum_pattern=checksum_pattern,
+        checksum_required=checksum_required, create_dir=create_dir, yes=yes,
+        force=force, direct=direct, auto_subdir=auto_subdir, verbose=verbose,
+        dry_run=dry_run, debug=debug, format=format
+    )
+
+def _execute_edit_with_format_handling(command, output_formatter, format: OutputFormat):
+    """Execute edit command with proper format handling."""
+    result = asyncio.run(command.execute(output_formatter=output_formatter))
+    
+    if format in [OutputFormat.JSON, OutputFormat.HTML]:
+        output_formatter.finalize()
+    
+    return result
 
 
 def _display_edit_help(format: OutputFormat, output_formatter: Any) -> None:
@@ -1231,37 +1255,50 @@ def remove(
         appimage-updater remove --yes MyApp       # Skip confirmation prompt
         appimage-updater remove --config-dir ~/.config/appimage-updater MyApp
     """
-    # Validate mutually exclusive options
+    # Validate and prepare
+    _validate_remove_options(yes, no)
+
+    if app_names is None:
+        _handle_remove_help_display(format)
+        return
+
+    # Execute remove command
+    _execute_remove_command_workflow(app_names, config_file, config_dir, yes, debug, format)
+
+def _validate_remove_options(yes: bool, no: bool) -> None:
+    """Validate mutually exclusive remove options."""
     if yes and no:
         console.print("[red]Error: --yes and --no options are mutually exclusive")
         raise typer.Exit(1)
 
+def _handle_remove_help_display(format: OutputFormat) -> None:
+    """Handle help display for remove command."""
+    from .ui.output.factory import create_output_formatter
+    output_formatter = create_output_formatter(format)
+    _display_remove_help(format, output_formatter)
+    raise typer.Exit(0)
+
+def _execute_remove_command_workflow(app_names, config_file, config_dir, yes, debug, format) -> None:
+    """Execute the complete remove command workflow."""
     command = CommandFactory.create_remove_command(
-        app_names=app_names,
-        config_file=config_file,
-        config_dir=config_dir,
-        yes=yes,
-        debug=debug,
-        format=format,
+        app_names=app_names, config_file=config_file, config_dir=config_dir,
+        yes=yes, debug=debug, format=format
     )
 
-    # Create output formatter and execute with context
     output_formatter = create_output_formatter_from_params(command.params)
-
-    # Show help if no app names are provided
-    if app_names is None:
-        _display_remove_help(format, output_formatter)
-        raise typer.Exit(0)
-
-    # Handle format-specific finalization
-    if format in [OutputFormat.JSON, OutputFormat.HTML]:
-        result = asyncio.run(command.execute(output_formatter=output_formatter))
-        output_formatter.finalize()
-    else:
-        result = asyncio.run(command.execute(output_formatter=output_formatter))
+    result = _execute_remove_with_format_handling(command, output_formatter, format)
 
     if not result.success:
         raise typer.Exit(result.exit_code)
+
+def _execute_remove_with_format_handling(command, output_formatter, format: OutputFormat):
+    """Execute remove command with proper format handling."""
+    result = asyncio.run(command.execute(output_formatter=output_formatter))
+
+    if format in [OutputFormat.JSON, OutputFormat.HTML]:
+        output_formatter.finalize()
+
+    return result
 
 
 def _display_remove_help(format: OutputFormat, output_formatter: Any) -> None:

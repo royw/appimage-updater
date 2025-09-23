@@ -41,36 +41,50 @@ class AddCommand(Command):
         configure_logging(debug=self.params.debug)
 
         try:
-            # Handle special modes
+            # Handle special modes first
             special_result = self._handle_special_modes()
             if special_result:
                 return special_result
 
-            # Use context manager to make output formatter available throughout the execution
-            if output_formatter:
-                from ..ui.output.context import OutputFormatterContext
-
-                with OutputFormatterContext(output_formatter):
-                    # Validate parameters (inside context so formatter is available)
-                    validation_result = self._validate_parameters()
-                    if validation_result:
-                        return validation_result
-
-                    success = await self._execute_add_operation()
-            else:
-                # Validate parameters
-                validation_result = self._validate_parameters()
-                if validation_result:
-                    return validation_result
-
-                success = await self._execute_add_operation()
-
-            return self._create_execution_result(success)
+            # Execute main add workflow
+            return await self._execute_main_add_workflow(output_formatter)
 
         except Exception as e:
-            logger.error(f"Unexpected error in add command: {e}")
-            logger.exception("Full exception details")
-            return CommandResult(success=False, message=str(e), exit_code=1)
+            return self._handle_execution_error(e)
+
+    async def _execute_main_add_workflow(self, output_formatter: Any) -> CommandResult:
+        """Execute the main add command workflow."""
+        if output_formatter:
+            return await self._execute_with_formatter_context(output_formatter)
+        else:
+            return await self._execute_without_formatter()
+
+    async def _execute_with_formatter_context(self, output_formatter: Any) -> CommandResult:
+        """Execute add command with output formatter context."""
+        from ..ui.output.context import OutputFormatterContext
+
+        with OutputFormatterContext(output_formatter):
+            validation_result = self._validate_parameters()
+            if validation_result:
+                return validation_result
+
+            success = await self._execute_add_operation()
+            return self._create_execution_result(success)
+
+    async def _execute_without_formatter(self) -> CommandResult:
+        """Execute add command without output formatter."""
+        validation_result = self._validate_parameters()
+        if validation_result:
+            return validation_result
+
+        success = await self._execute_add_operation()
+        return self._create_execution_result(success)
+
+    def _handle_execution_error(self, e: Exception) -> CommandResult:
+        """Handle execution errors."""
+        logger.error(f"Unexpected error in add command: {e}")
+        logger.exception("Full exception details")
+        return CommandResult(success=False, message=str(e), exit_code=1)
 
     def _handle_special_modes(self) -> CommandResult | None:
         """Handle examples and interactive modes."""

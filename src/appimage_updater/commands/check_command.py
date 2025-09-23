@@ -59,24 +59,43 @@ class CheckCommand(Command):
 
     def _display_http_tracking_summary(self, http_tracker: Any, output_formatter: Any) -> None:
         """Display HTTP tracking summary if both tracker and formatter are provided."""
-        if not (http_tracker and output_formatter):
+        if not self._should_display_tracking_summary(http_tracker, output_formatter):
             return
 
         http_tracker.stop_tracking()
+        self._display_tracking_section(http_tracker, output_formatter)
 
+    def _should_display_tracking_summary(self, http_tracker: Any, output_formatter: Any) -> bool:
+        """Check if HTTP tracking summary should be displayed."""
+        return bool(http_tracker and output_formatter)
+
+    def _display_tracking_section(self, http_tracker: Any, output_formatter: Any) -> None:
+        """Display the HTTP tracking section with request details."""
         output_formatter.start_section("HTTP Tracking Summary")
+        self._display_request_count(http_tracker, output_formatter)
+        self._display_request_details(http_tracker, output_formatter)
+        output_formatter.end_section()
+
+    def _display_request_count(self, http_tracker: Any, output_formatter: Any) -> None:
+        """Display total request count."""
         output_formatter.print(f"Total requests: {len(http_tracker.requests)}")
 
-        # Show some request details
-        for i, request in enumerate(http_tracker.requests[:5]):  # Show first 5
+    def _display_request_details(self, http_tracker: Any, output_formatter: Any) -> None:
+        """Display detailed request information."""
+        requests_to_show = http_tracker.requests[:5]  # Show first 5
+
+        for i, request in enumerate(requests_to_show):
             status = request.response_status or "ERROR"
             time_str = f"{request.response_time:.3f}s" if request.response_time else "N/A"
             output_formatter.print(f"  {i + 1}. {request.method} {request.url} -> {status} ({time_str})")
 
-        if len(http_tracker.requests) > 5:
-            output_formatter.print(f"  ... and {len(http_tracker.requests) - 5} more requests")
+        self._display_remaining_count(http_tracker, output_formatter)
 
-        output_formatter.end_section()
+    def _display_remaining_count(self, http_tracker: Any, output_formatter: Any) -> None:
+        """Display count of remaining requests if there are more than 5."""
+        if len(http_tracker.requests) > 5:
+            remaining = len(http_tracker.requests) - 5
+            output_formatter.print(f"  ... and {remaining} more requests")
 
     def _create_result(self, success: bool) -> CommandResult:
         """Create the appropriate CommandResult based on success status."""
