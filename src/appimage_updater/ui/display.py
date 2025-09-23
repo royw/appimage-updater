@@ -163,45 +163,53 @@ def display_applications_list(applications: list[Any]) -> None:
     output_formatter = get_output_formatter()
 
     if output_formatter:
-        # Convert applications to dict format for output formatter
-        apps_data = []
-        for app in applications:
-            app_dict = {
-                "name": app.name,
-                "url": app.url,
-                "download_dir": str(app.download_dir),
-                "enabled": app.enabled,
-                "status": "Enabled" if app.enabled else "Disabled",
-                "source_type": app.source_type,
-            }
-            apps_data.append(app_dict)
-
-        output_formatter.print_application_list(apps_data)
+        _display_applications_with_formatter(applications, output_formatter)
     else:
-        # Fallback to Rich table display
-        table = Table(title="Configured Applications")
-        table.add_column("Application", style="cyan", no_wrap=False)
-        table.add_column("Status", style="green")
-        table.add_column("Source", style="yellow", no_wrap=False, overflow="fold")
-        table.add_column("Download Directory", style="magenta", no_wrap=False)
+        _display_applications_with_rich_table(applications)
 
-        for app in applications:
-            status = "Enabled" if app.enabled else "Disabled"
+def _display_applications_with_formatter(applications: list[Any], output_formatter: Any) -> None:
+    """Display applications using the output formatter."""
+    apps_data = _convert_applications_to_dict_format(applications)
+    output_formatter.print_application_list(apps_data)
 
-            # Format source - let table handle wrapping with overflow='fold'
-            source_display = app.url
+def _convert_applications_to_dict_format(applications: list[Any]) -> list[dict[str, Any]]:
+    """Convert applications to dictionary format for output formatter."""
+    apps_data = []
+    for app in applications:
+        app_dict = {
+            "name": app.name,
+            "url": app.url,
+            "download_dir": str(app.download_dir),
+            "enabled": app.enabled,
+            "status": "Enabled" if app.enabled else "Disabled",
+            "source_type": app.source_type,
+        }
+        apps_data.append(app_dict)
+    return apps_data
 
-            # Wrap download directory path - increased width to show parent directory
-            wrapped_path = _wrap_path(str(app.download_dir), 30)
+def _display_applications_with_rich_table(applications: list[Any]) -> None:
+    """Display applications using Rich table as fallback."""
+    table = _create_applications_table()
+    _populate_applications_table(table, applications)
+    console.print(table)
 
-            table.add_row(
-                app.name,
-                status,
-                source_display,
-                wrapped_path,
-            )
+def _create_applications_table() -> Table:
+    """Create the Rich table for applications display."""
+    table = Table(title="Configured Applications")
+    table.add_column("Application", style="cyan", no_wrap=False)
+    table.add_column("Status", style="green")
+    table.add_column("Source", style="yellow", no_wrap=False, overflow="fold")
+    table.add_column("Download Directory", style="magenta", no_wrap=False)
+    return table
 
-        console.print(table)
+def _populate_applications_table(table: Table, applications: list[Any]) -> None:
+    """Populate the Rich table with application data."""
+    for app in applications:
+        status = "Enabled" if app.enabled else "Disabled"
+        source_display = app.url
+        wrapped_path = _wrap_path(str(app.download_dir), 30)
+
+        table.add_row(app.name, status, source_display, wrapped_path)
 
 
 def display_check_results(results: list[CheckResult], show_urls: bool = False) -> None:

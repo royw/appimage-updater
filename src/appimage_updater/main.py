@@ -1419,36 +1419,47 @@ async def _examine_repositories(
     """
     try:
         config = _load_config_for_repository_examination(config_file, config_dir)
+        apps_to_examine = _filter_apps_for_examination(config.applications, app_names)
 
-        # Check if apps were found using the original filter method to detect None
-        filtered_result = ApplicationService.filter_apps_by_names(config.applications, app_names)
-        if filtered_result is None:
-            # Applications not found - error already displayed
+        if apps_to_examine is None:
             return False
 
-        apps_to_examine = filtered_result
-
-        if dry_run:
-            _display_dry_run_repository_info(apps_to_examine)
-            return True
-
-        await _examine_apps_repositories(apps_to_examine, limit, show_assets)
-        return True
+        return await _process_repository_examination(apps_to_examine, limit, show_assets, dry_run)
 
     except ConfigLoadError as e:
-        # Use output formatter if available, otherwise fallback to console
-        from .ui.output.context import get_output_formatter
-
-        formatter = get_output_formatter()
-        if formatter:
-            formatter.print_error(f"Configuration error: {e}")
-        else:
-            console.print(f"[red]Configuration error: {e}")
-        # Note: Don't log to stdout as it contaminates JSON output
+        _handle_config_load_error(e)
         return False
     except Exception as e:
         _handle_repository_examination_error(e, app_names)
         return False
+
+def _filter_apps_for_examination(applications: list, app_names: list[str]):
+    """Filter applications for repository examination."""
+    filtered_result = ApplicationService.filter_apps_by_names(applications, app_names)
+    if filtered_result is None:
+        # Applications not found - error already displayed
+        return None
+    return filtered_result
+
+async def _process_repository_examination(apps_to_examine: list, limit: int, show_assets: bool, dry_run: bool) -> bool:
+    """Process the repository examination for filtered applications."""
+    if dry_run:
+        _display_dry_run_repository_info(apps_to_examine)
+        return True
+
+    await _examine_apps_repositories(apps_to_examine, limit, show_assets)
+    return True
+
+def _handle_config_load_error(e: Exception) -> None:
+    """Handle configuration loading errors."""
+    from .ui.output.context import get_output_formatter
+
+    formatter = get_output_formatter()
+    if formatter:
+        formatter.print_error(f"Configuration error: {e}")
+    else:
+        console.print(f"[red]Configuration error: {e}")
+    # Note: Don't log to stdout as it contaminates JSON output
 
 
 async def _display_repository_info(app: ApplicationConfig, limit: int, show_assets: bool) -> None:
@@ -1769,24 +1780,36 @@ async def _extract_version_from_current_file(app_config: ApplicationConfig, curr
 async def _get_version_from_repository(app_config: ApplicationConfig, current_file: Path) -> str | None:
     """Try to get version information from the repository."""
     try:
-        from .repositories.factory import get_repository_client
-
-        repo_client = get_repository_client(app_config.url)
+        repo_client = await _get_repository_client(app_config.url)
         releases = await repo_client.get_releases(app_config.url, limit=10)
 
         if not releases:
             return None
 
-        # Find the release that matches the current file
-        for release in releases:
-            if release.assets:
-                for asset in release.assets:
-                    if _files_match(current_file.name, asset.name, app_config.name):
-                        return release.tag_name.lstrip("v")
-
-        return None
+        return _find_matching_release_version(releases, current_file, app_config.name)
     except Exception:
         return None
+
+async def _get_repository_client(url: str):
+    """Get repository client for the given URL."""
+    from .repositories.factory import get_repository_client
+    return get_repository_client(url)
+
+def _find_matching_release_version(releases: list, current_file: Path, app_name: str) -> str | None:
+    """Find the release version that matches the current file."""
+    for release in releases:
+        if release.assets:
+            matching_version = _check_release_assets(release, current_file, app_name)
+            if matching_version:
+                return matching_version
+    return None
+
+def _check_release_assets(release, current_file: Path, app_name: str) -> str | None:
+    """Check if any asset in the release matches the current file."""
+    for asset in release.assets:
+        if _files_match(current_file.name, asset.name, app_name):
+            return release.tag_name.lstrip("v")
+    return None
 
 
 def _files_match(current_filename: str, asset_name: str, app_name: str) -> bool:
@@ -1834,27 +1857,43 @@ async def _prepare_check_environment(
     config, enabled_apps = await _load_and_filter_config(config_file, config_dir, normalized_names)
 
     if enabled_apps is None:
-        # Applications not found - this is an error condition
         return config, None
 
     if not enabled_apps:
-        # Use output formatter if available, otherwise fallback to console
-        from .ui.output.context import get_output_formatter
-
-        formatter = get_output_formatter()
-        if formatter:
-            formatter.print_warning("No enabled applications found in configuration")
-        else:
-            console.print("[yellow]No enabled applications found in configuration")
-        # Note: Don't log to stdout as it contaminates JSON output
+        _handle_no_enabled_apps()
         return config, []
 
-    if verbose:
-        _display_check_verbose_info(normalized_names, dry_run, yes, no_interactive, len(enabled_apps))
+    _handle_verbose_display(verbose, normalized_names, dry_run, yes, no_interactive, len(enabled_apps))
+    _log_app_summary(config, enabled_apps, app_names)
+    return config, enabled_apps
 
+def _handle_no_enabled_apps() -> None:
+    """Handle the case when no enabled applications are found."""
+    from .ui.output.context import get_output_formatter
+
+    formatter = get_output_formatter()
+    if formatter:
+        formatter.print_warning("No enabled applications found in configuration")
+    else:
+        console.print("[yellow]No enabled applications found in configuration")
+    # Note: Don't log to stdout as it contaminates JSON output
+
+def _handle_verbose_display(
+    verbose: bool, 
+    normalized_names: list[str] | None, 
+    dry_run: bool, 
+    yes: bool, 
+    no_interactive: bool, 
+    enabled_count: int
+) -> None:
+    """Handle verbose information display."""
+    if verbose:
+        _display_check_verbose_info(normalized_names, dry_run, yes, no_interactive, enabled_count)
+
+def _log_app_summary(config: Any, enabled_apps: list[Any], app_names: list[str] | str | None) -> None:
+    """Log summary of applications found."""
     filter_msg = " (filtered)" if app_names else ""
     logger.debug(f"Found {len(config.applications)} total applications, {len(enabled_apps)} enabled{filter_msg}")
-    return config, enabled_apps
 
 
 async def _execute_update_workflow(
