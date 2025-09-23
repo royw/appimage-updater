@@ -125,8 +125,16 @@ class EditCommand(Command):
         Returns:
             CommandResult if error occurred, None if successful
         """
-        config = self._load_config_with_error_handling()
-        if config is None:
+        try:
+            from ..config.manager import AppConfigs
+            
+            app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
+            config = app_configs._config
+        except Exception as e:
+            if "No configuration found" in str(e):
+                self.console.print("[red]Configuration error: No configuration found[/red]")
+            else:
+                self.console.print(f"[red]Configuration error: {e}[/red]")
             return CommandResult(success=False, message="Configuration error", exit_code=1)
 
         app_names_to_edit = self._validate_app_names_provided()
@@ -150,24 +158,6 @@ class EditCommand(Command):
         self._save_config(config)
         return None
 
-    def _load_config_with_error_handling(self) -> Any | None:
-        """Load configuration with proper error handling.
-
-        Returns:
-            Config object if successful, None if error occurred
-        """
-
-        try:
-            from ..config.manager import AppConfigs
-
-            app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
-            return app_configs._config
-        except Exception as e:
-            if "No configuration found" in str(e):
-                self.console.print("[red]Configuration error: No configuration found[/red]")
-            else:
-                self.console.print(f"[red]Configuration error: {e}[/red]")
-            return None
 
     def _validate_app_names_provided(self) -> list[str] | None:
         """Validate that application names are provided.

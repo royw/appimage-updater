@@ -1516,13 +1516,6 @@ def repository(
         raise typer.Exit(result.exit_code)
 
 
-def _load_config_for_repository_examination(config_file: Path | None, config_dir: Path | None) -> Any:
-    """Load configuration for repository examination."""
-    from .config.manager import AppConfigs
-
-    app_configs = AppConfigs(config_path=config_file or config_dir)
-    return app_configs._config
-
 
 def _display_dry_run_repository_info(apps_to_examine: list[Any]) -> None:
     """Display dry-run information for repository examination."""
@@ -1564,7 +1557,10 @@ async def _examine_repositories(
         True if successful, False if applications not found or other error
     """
     try:
-        config = _load_config_for_repository_examination(config_file, config_dir)
+        from .config.manager import AppConfigs
+        
+        app_configs = AppConfigs(config_path=config_file or config_dir)
+        config = app_configs._config
         apps_to_examine = _filter_apps_for_examination(config.applications, app_names)
 
         if apps_to_examine is None:

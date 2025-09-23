@@ -67,7 +67,10 @@ class ShowCommand(Command):
             True if operation succeeded, False if it failed.
         """
         try:
-            config = self._load_configuration()
+            from ..config.manager import AppConfigs
+            
+            app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
+            config = app_configs._config
             found_apps = self._filter_applications(config)
             if found_apps is None:
                 return False
@@ -79,12 +82,6 @@ class ShowCommand(Command):
             logger.exception("Full exception details")
             raise
 
-    def _load_configuration(self) -> Any:
-        """Load configuration from file or directory."""
-        from ..config.manager import AppConfigs
-
-        app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
-        return app_configs._config
 
     def _filter_applications(self, config: Any) -> Any:
         """Filter applications by names."""
