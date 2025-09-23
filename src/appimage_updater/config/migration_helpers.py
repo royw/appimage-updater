@@ -315,29 +315,53 @@ def _write_updated_config_file(config_path: Path, data: dict[str, Any], json_mod
 def _validate_and_fix_config_directory(config_path: Path) -> None:
     """Validate and fix all config files in a directory for backward compatibility."""
     import json
-
     from .loader import ConfigLoadError
 
-    for json_file in config_path.glob("*.json"):
-        try:
-            with json_file.open(encoding="utf-8") as f:
-                data = json.load(f)
+    json_files = list(config_path.glob("*.json"))
+    for json_file in json_files:
+        _validate_and_fix_single_json_file(json_file, json, ConfigLoadError)
 
-            # Add missing required fields for backward compatibility
-            modified = False
-            if isinstance(data, dict) and "applications" in data:
-                for app in data.get("applications", []):
-                    if isinstance(app, dict) and "source_type" not in app:
-                        _add_missing_source_type(app)
-                        modified = True
+def _validate_and_fix_single_json_file(json_file: Path, json_module: Any, config_load_error_class: Any) -> None:
+    """Validate and fix a single JSON file for backward compatibility."""
+    try:
+        data = _load_json_file_for_validation(json_file, json_module)
+        modified = _process_json_file_data_for_validation(data)
+        
+        if modified:
+            _write_modified_json_file(json_file, data, json_module)
+            
+    except json_module.JSONDecodeError as e:
+        raise config_load_error_class(f"Invalid JSON in {json_file}: {e}") from e
 
-                # Write back if modified
-                if modified:
-                    with json_file.open("w", encoding="utf-8") as f:
-                        json.dump(data, f, indent=2)
+def _load_json_file_for_validation(json_file: Path, json_module: Any) -> dict[str, Any]:
+    """Load JSON file data for validation."""
+    with json_file.open(encoding="utf-8") as f:
+        return json_module.load(f)
 
-        except json.JSONDecodeError as e:
-            raise ConfigLoadError(f"Invalid JSON in {json_file}: {e}") from e
+def _process_json_file_data_for_validation(data: dict[str, Any]) -> bool:
+    """Process JSON file data and add missing fields."""
+    if not _is_valid_json_data_for_validation(data):
+        return False
+        
+    return _add_missing_fields_to_applications(data)
+
+def _is_valid_json_data_for_validation(data: dict[str, Any]) -> bool:
+    """Check if JSON data is valid for validation processing."""
+    return isinstance(data, dict) and "applications" in data
+
+def _add_missing_fields_to_applications(data: dict[str, Any]) -> bool:
+    """Add missing fields to applications and return if any were modified."""
+    modified = False
+    for app in data.get("applications", []):
+        if isinstance(app, dict) and "source_type" not in app:
+            _add_missing_source_type(app)
+            modified = True
+    return modified
+
+def _write_modified_json_file(json_file: Path, data: dict[str, Any], json_module: Any) -> None:
+    """Write modified JSON data back to file."""
+    with json_file.open("w", encoding="utf-8") as f:
+        json_module.dump(data, f, indent=2)
 
 
 def migrate_legacy_load_config(config_file: Path | None, config_dir: Path | None) -> tuple[GlobalConfig, AppConfigs]:
@@ -356,29 +380,39 @@ def migrate_legacy_load_config(config_file: Path | None, config_dir: Path | None
     from .loader import ConfigLoadError
 
     try:
+        # Resolve and validate configuration path
         config_path = resolve_legacy_config_path(config_file, config_dir)
-
-        # Validate configuration path and files to maintain old API error behavior
-        if config_path:
-            if not config_path.exists():
-                # Old API would fail if specified config doesn't exist
-                raise ConfigLoadError(f"Configuration file not found: {config_path}")
-
-            if config_path.is_file():
-                _validate_and_fix_config_file(config_path)
-            elif config_path.is_dir():
-                _validate_and_fix_config_directory(config_path)
-
-        global_config = GlobalConfig(config_path)
-        app_configs = AppConfigs(config_path=config_path)
-
-        return global_config, app_configs
+        _validate_config_path_for_migration(config_path, ConfigLoadError)
+        
+        # Create and return configuration objects
+        return _create_migration_config_objects(config_path)
+        
     except ConfigLoadError:
         # Re-raise ConfigLoadError as-is
         raise
     except Exception as e:
         # Convert any other exception to ConfigLoadError to maintain compatibility with old API
         raise ConfigLoadError(f"Configuration error: {e}") from e
+
+def _validate_config_path_for_migration(config_path: Path | None, config_load_error_class: Any) -> None:
+    """Validate configuration path and files to maintain old API error behavior."""
+    if not config_path:
+        return
+        
+    if not config_path.exists():
+        # Old API would fail if specified config doesn't exist
+        raise config_load_error_class(f"Configuration file not found: {config_path}")
+
+    if config_path.is_file():
+        _validate_and_fix_config_file(config_path)
+    elif config_path.is_dir():
+        _validate_and_fix_config_directory(config_path)
+
+def _create_migration_config_objects(config_path: Path | None) -> tuple[GlobalConfig, AppConfigs]:
+    """Create GlobalConfig and AppConfigs objects for migration."""
+    global_config = GlobalConfig(config_path)
+    app_configs = AppConfigs(config_path=config_path)
+    return global_config, app_configs
 
 
 def migrate_legacy_add_application(app_dict: dict[str, Any], config_file: Path | None, config_dir: Path | None) -> None:
