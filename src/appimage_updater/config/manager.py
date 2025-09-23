@@ -467,9 +467,7 @@ class AppConfigs:
             app_file_path = self._config_path / app_filename
 
             # Create application config structure
-            app_config_dict = {
-                "applications": [app.model_dump()]
-            }
+            app_config_dict = {"applications": [app.model_dump()]}
 
             with app_file_path.open("w") as f:
                 json.dump(app_config_dict, f, indent=2, default=str)
