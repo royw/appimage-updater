@@ -410,7 +410,14 @@ class AppConfigs:
                 try:
                     with app_file.open() as f:
                         app_data = json.load(f)
-                        applications.append(ApplicationConfig(**app_data))
+                        # Handle both single app format and applications array format
+                        if "applications" in app_data:
+                            # File contains applications array
+                            for app_config in app_data["applications"]:
+                                applications.append(ApplicationConfig(**app_config))
+                        else:
+                            # File contains single application config
+                            applications.append(ApplicationConfig(**app_data))
                 except (json.JSONDecodeError, TypeError) as e:
                     logger.warning(f"Skipping invalid app config {app_file}: {e}")
 
@@ -444,8 +451,13 @@ class AppConfigs:
                 return Config(applications=[ApplicationConfig(**data)])
 
         except (json.JSONDecodeError, TypeError, KeyError) as e:
-            logger.warning(f"Invalid application config format: {e}")
-            return Config()
+            # If a specific config path was provided, invalid JSON is an error
+            if self._config_path is not None:
+                from .loader import ConfigLoadError
+                raise ConfigLoadError(f"Invalid JSON in configuration file {config_path}: {e}") from e
+            else:
+                logger.warning(f"Invalid application config format: {e}")
+                return Config()
 
     def _get_filtered_apps(self) -> list[ApplicationConfig]:
         """Get applications filtered by names if specified."""
