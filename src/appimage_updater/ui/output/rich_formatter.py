@@ -51,21 +51,40 @@ class RichOutputFormatter:
         if not data:
             return
 
-        table = Table(title=title)
+        # Create and configure table
+        table = self._create_rich_table(title)
+        table_headers = self._determine_table_headers(data, headers)
+        
+        # Build table structure
+        self._add_table_columns(table, table_headers)
+        self._add_table_rows(table, data, table_headers)
+        
+        # Display table
+        self.console.print(table)
 
-        # Determine headers
-        table_headers = headers or (list(data[0].keys()) if data else [])
+    def _create_rich_table(self, title: str) -> Table:
+        """Create a Rich Table with the given title."""
+        return Table(title=title)
 
-        # Add columns
+    def _determine_table_headers(self, data: list[dict[str, Any]], headers: list[str] | None) -> list[str]:
+        """Determine the headers to use for the table."""
+        return headers or (list(data[0].keys()) if data else [])
+
+    def _add_table_columns(self, table: Table, table_headers: list[str]) -> None:
+        """Add columns to the Rich table with appropriate styling."""
         for header in table_headers:
-            table.add_column(header, style="cyan" if header.lower() in ["application", "name"] else None)
+            style = self._get_column_style(header)
+            table.add_column(header, style=style)
 
-        # Add rows
+    def _get_column_style(self, header: str) -> str | None:
+        """Get the appropriate style for a column header."""
+        return "cyan" if header.lower() in ["application", "name"] else None
+
+    def _add_table_rows(self, table: Table, data: list[dict[str, Any]], table_headers: list[str]) -> None:
+        """Add data rows to the Rich table."""
         for row_data in data:
             row = [str(row_data.get(header, "")) for header in table_headers]
             table.add_row(*row)
-
-        self.console.print(table)
 
     def print_progress(self, current: int, total: int, description: str = "") -> None:
         """Display progress information.

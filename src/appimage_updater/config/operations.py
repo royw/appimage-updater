@@ -1053,7 +1053,17 @@ def apply_configuration_updates(app: Any, updates: dict[str, Any]) -> list[str]:
 
 def convert_app_to_dict(app: Any) -> dict[str, Any]:
     """Convert application object to dictionary for JSON serialization."""
-    app_dict = {
+    # Build core application dictionary
+    app_dict = _build_core_app_dict(app)
+    
+    # Add optional fields
+    _add_optional_fields(app_dict, app)
+    
+    return app_dict
+
+def _build_core_app_dict(app: Any) -> dict[str, Any]:
+    """Build the core application dictionary with required fields."""
+    return {
         "name": app.name,
         "source_type": app.source_type,
         "url": app.url,
@@ -1061,28 +1071,41 @@ def convert_app_to_dict(app: Any) -> dict[str, Any]:
         "pattern": app.pattern,
         "enabled": app.enabled,
         "prerelease": app.prerelease,
-        "checksum": {
-            "enabled": app.checksum.enabled,
-            "pattern": app.checksum.pattern,
-            "algorithm": app.checksum.algorithm,
-            "required": app.checksum.required,
-        },
+        "checksum": _build_checksum_dict(app),
     }
 
-    # Add optional fields if they exist
+def _build_checksum_dict(app: Any) -> dict[str, Any]:
+    """Build the checksum configuration dictionary."""
+    return {
+        "enabled": app.checksum.enabled,
+        "pattern": app.checksum.pattern,
+        "algorithm": app.checksum.algorithm,
+        "required": app.checksum.required,
+    }
+
+def _add_optional_fields(app_dict: dict[str, Any], app: Any) -> None:
+    """Add optional fields to the application dictionary."""
+    _add_basename_field(app_dict, app)
+    _add_rotation_fields(app_dict, app)
+    _add_symlink_field(app_dict, app)
+
+def _add_basename_field(app_dict: dict[str, Any], app: Any) -> None:
+    """Add basename field if it exists."""
     basename_value = getattr(app, "basename", None)
     if basename_value is not None:
         app_dict["basename"] = basename_value
 
+def _add_rotation_fields(app_dict: dict[str, Any], app: Any) -> None:
+    """Add rotation-related fields if they exist."""
     if hasattr(app, "rotation_enabled"):
         app_dict["rotation_enabled"] = app.rotation_enabled
         if app.rotation_enabled:
             app_dict["retain_count"] = getattr(app, "retain_count", 3)
 
+def _add_symlink_field(app_dict: dict[str, Any], app: Any) -> None:
+    """Add symlink path field if it exists."""
     if hasattr(app, "symlink_path") and app.symlink_path:
         app_dict["symlink_path"] = str(app.symlink_path)
-
-    return app_dict
 
 
 def determine_save_target(config_file: Path | None, config_dir: Path | None) -> tuple[Path | None, Path | None]:
