@@ -23,10 +23,9 @@ console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 def show_global_config(config_file: Path | None = None, config_dir: Path | None = None) -> None:
     """Show current global configuration."""
     try:
-        from .migration_helpers import migrate_legacy_load_config
+        from .migration_helpers import load_config_with_path_resolution
 
-        global_config, app_configs = migrate_legacy_load_config(config_file, config_dir)
-        config = app_configs._config
+        config = load_config_with_path_resolution(config_file, config_dir)
         defaults = config.global_config.defaults
 
         _print_config_header()
@@ -137,10 +136,9 @@ def _handle_config_load_error(e: ConfigLoadError) -> bool:
 def show_effective_config(app_name: str, config_file: Path | None = None, config_dir: Path | None = None) -> None:
     """Show effective configuration for a specific application."""
     try:
-        from .migration_helpers import migrate_legacy_load_config
+        from .migration_helpers import load_config_with_path_resolution
 
-        global_config, app_configs = migrate_legacy_load_config(config_file, config_dir)
-        config = app_configs._config
+        config = load_config_with_path_resolution(config_file, config_dir)
         effective_config = config.get_effective_config_for_app(app_name)
 
         if effective_config is None:

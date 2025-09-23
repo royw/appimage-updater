@@ -8,8 +8,8 @@ from typing import Any
 from loguru import logger
 
 from .loader import get_default_config_dir, get_default_config_path
-from .manager import AppConfigs, GlobalConfig
-from .models import ApplicationConfig, ChecksumConfig
+from .manager import AppConfigs, GlobalConfig, load_config
+from .models import ApplicationConfig, ChecksumConfig, Config
 
 
 def resolve_legacy_config_path(config_file: Path | None, config_dir: Path | None) -> Path | None:
@@ -144,41 +144,6 @@ def _create_application_config(
     )
 
 
-def _apply_string_updates(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
-    """Apply string field updates to app configuration."""
-    changes = []
-    string_fields = {
-        "url": "URL",
-        "pattern": "Pattern",
-        "basename": "Base Name",
-        "source_type": "Source Type",
-    }
-
-    for field, label in string_fields.items():
-        if field in updates:
-            old_value = getattr(app, field, None)
-            new_value = updates[field]
-            if old_value != new_value:
-                setattr(app, field, new_value)
-                changes.append(f"{label}: {old_value} → {new_value}")
-    return changes
-
-
-def _apply_path_updates(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
-    """Apply path field updates to app configuration."""
-    changes = []
-
-    # Apply download directory updates
-    download_changes = _apply_download_dir_update(app, updates)
-    changes.extend(download_changes)
-
-    # Apply symlink path updates
-    symlink_changes = _apply_symlink_path_update(app, updates)
-    changes.extend(symlink_changes)
-
-    return changes
-
-
 def _apply_download_dir_update(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
     """Apply download directory update to app configuration."""
     if "download_dir" not in updates:
@@ -216,58 +181,7 @@ def _get_current_symlink_value(app: ApplicationConfig) -> str | None:
 
 def _get_new_symlink_value(updates: dict[str, Any]) -> str | None:
     """Get new symlink value from updates."""
-    return str(Path(updates["symlink_path"]).expanduser()) if updates["symlink_path"] else None
-
-
-def _apply_boolean_updates(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
-    """Apply boolean field updates to app configuration."""
-    changes = []
-    boolean_fields = {
-        "enabled": "Enabled",
-        "prerelease": "Prerelease",
-        "rotation_enabled": "Rotation Enabled",
-    }
-
-    for field, label in boolean_fields.items():
-        if field in updates:
-            old_value = getattr(app, field)
-            new_value = updates[field]
-            if old_value != new_value:
-                setattr(app, field, new_value)
-                changes.append(f"{label}: {old_value} → {new_value}")
-    return changes
-
-
-def _apply_integer_updates(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
-    """Apply integer field updates to app configuration."""
-    changes = []
-    if "retain_count" in updates:
-        old_value = app.retain_count
-        new_value = updates["retain_count"]
-        if old_value != new_value:
-            app.retain_count = new_value
-            changes.append(f"Retain Count: {old_value} → {new_value}")
-    return changes
-
-
-def _apply_checksum_updates(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
-    """Apply checksum field updates to app configuration."""
-    changes = []
-    checksum_fields = {
-        "checksum_enabled": ("enabled", "Checksum Enabled"),
-        "checksum_algorithm": ("algorithm", "Checksum Algorithm"),
-        "checksum_pattern": ("pattern", "Checksum Pattern"),
-        "checksum_required": ("required", "Checksum Required"),
-    }
-
-    for update_field, (checksum_attr, label) in checksum_fields.items():
-        if update_field in updates:
-            old_value = getattr(app.checksum, checksum_attr)
-            new_value = updates[update_field]
-            if old_value != new_value:
-                setattr(app.checksum, checksum_attr, new_value)
-                changes.append(f"{label}: {old_value} → {new_value}")
-    return changes
+    return str(updates["symlink_path"]) if updates["symlink_path"] else None
 
 
 def _add_missing_source_type(app_data: dict[str, Any]) -> None:
@@ -395,35 +309,44 @@ def _write_modified_json_file(json_file: Path, data: dict[str, Any], json_module
         json_module.dump(data, f, indent=2)
 
 
-def migrate_legacy_load_config(config_file: Path | None, config_dir: Path | None) -> tuple[GlobalConfig, AppConfigs]:
-    """Migrate from legacy load_config to new API.
+def load_config_with_path_resolution(config_file: Path | None, config_dir: Path | None) -> Config:
+    """Load configuration using the unified API with legacy parameter resolution.
 
     Args:
-        config_file: Legacy config file parameter
-        config_dir: Legacy config directory parameter
+        config_file: Config file path (takes precedence)
+        config_dir: Config directory path (used if config_file is None)
 
     Returns:
-        Tuple of (GlobalConfig, AppConfigs) objects
+        Config object using the unified API
 
     Raises:
-        ConfigLoadError: If configuration loading fails (maintains compatibility)
+        ConfigLoadError: If configuration loading fails
     """
     from .loader import ConfigLoadError
 
     try:
-        # Resolve and validate configuration path
-        config_path = resolve_legacy_config_path(config_file, config_dir)
-        _validate_config_path_for_migration(config_path, ConfigLoadError)
+        # Simple path resolution: file takes precedence, then directory
+        config_path = config_file or config_dir
+        return load_config(config_path)
 
-        # Create and return configuration objects
-        return _create_migration_config_objects(config_path)
-
-    except ConfigLoadError:
-        # Re-raise ConfigLoadError as-is
-        raise
     except Exception as e:
-        # Convert any other exception to ConfigLoadError to maintain compatibility with old API
         raise ConfigLoadError(f"Configuration error: {e}") from e
+
+
+def migrate_legacy_load_config(config_file: Path | None, config_dir: Path | None) -> tuple[GlobalConfig, AppConfigs]:
+    """DEPRECATED: Temporary compatibility wrapper. Use load_config_with_path_resolution instead.
+
+    This function exists only for backward compatibility during migration.
+    All callers should be updated to use the unified Config API directly.
+    """
+    config = load_config_with_path_resolution(config_file, config_dir)
+
+    # Create wrapper objects for compatibility
+    global_config = config.global_config
+    app_configs = AppConfigs()
+    app_configs._config = config
+
+    return global_config, app_configs
 
 
 def _validate_config_path_for_migration(config_path: Path | None, config_load_error_class: Any) -> None:
