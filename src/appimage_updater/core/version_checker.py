@@ -410,42 +410,58 @@ class VersionChecker:
         if not release.assets:
             return None
 
-        # Filter assets by URL pattern FIRST (before prerelease check)
-        pattern_filtered_assets = self._filter_assets_by_pattern(release.assets, app_config.pattern)
+        # Filter and validate the release
+        pattern_filtered_assets = self._filter_and_validate_release_assets(release, app_config)
         if not pattern_filtered_assets:
-            logger.debug(f"No assets match pattern for release {release.tag_name}")
             return None
 
-        # Skip prerelease versions if not enabled in config
-        if release.is_prerelease and not app_config.prerelease:
-            logger.debug(f"Skipping prerelease {release.tag_name} (prerelease not enabled)")
+        if not self._is_release_compatible_with_config(release, app_config):
             return None
 
-        # For prerelease-only configs, skip stable releases
-        if app_config.prerelease and not release.is_prerelease:
-            logger.debug(f"Skipping stable release {release.tag_name} (prerelease-only mode)")
-            return None
-
-        logger.debug(
-            f"Processing release {release.tag_name} "
-            f"(prerelease={release.is_prerelease}, config_prerelease={app_config.prerelease})"
-        )
-
-        # Create a temporary release with filtered assets for distribution selection
-        filtered_release = Release(
-            version=release.version,
-            tag_name=release.tag_name,
-            name=release.name,
-            published_at=release.published_at,
-            is_prerelease=release.is_prerelease,
-            assets=pattern_filtered_assets,
-        )
-
+        # Process the validated release
+        filtered_release = self._create_filtered_release(release, pattern_filtered_assets)
         best_asset = self._get_best_asset_for_release(filtered_release)
         if not best_asset:
             return None
 
         return self._create_update_candidate(release, best_asset, app_config, current_version)
+
+    def _filter_and_validate_release_assets(self, release: Release, app_config: ApplicationConfig) -> list[Any] | None:
+        """Filter release assets by pattern and validate."""
+        pattern_filtered_assets = self._filter_assets_by_pattern(release.assets, app_config.pattern)
+        if not pattern_filtered_assets:
+            logger.debug(f"No assets match pattern for release {release.tag_name}")
+            return None
+        return pattern_filtered_assets
+
+    def _is_release_compatible_with_config(self, release: Release, app_config: ApplicationConfig) -> bool:
+        """Check if release is compatible with application configuration."""
+        # Skip prerelease versions if not enabled in config
+        if release.is_prerelease and not app_config.prerelease:
+            logger.debug(f"Skipping prerelease {release.tag_name} (prerelease not enabled)")
+            return False
+
+        # For prerelease-only configs, skip stable releases
+        if app_config.prerelease and not release.is_prerelease:
+            logger.debug(f"Skipping stable release {release.tag_name} (prerelease-only mode)")
+            return False
+
+        logger.debug(
+            f"Processing release {release.tag_name} "
+            f"(prerelease={release.is_prerelease}, config_prerelease={app_config.prerelease})"
+        )
+        return True
+
+    def _create_filtered_release(self, release: Release, filtered_assets: list[Any]) -> Release:
+        """Create a release object with filtered assets."""
+        return Release(
+            version=release.version,
+            tag_name=release.tag_name,
+            name=release.name,
+            published_at=release.published_at,
+            is_prerelease=release.is_prerelease,
+            assets=filtered_assets,
+        )
 
     def _get_best_asset_for_release(self, release: Release) -> Any | None:
         """Get the best asset for a release."""
