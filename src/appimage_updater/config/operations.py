@@ -126,7 +126,7 @@ def _handle_directory_creation_declined() -> None:
     logger.debug("User declined to create download directory")
 
 
-def handle_add_directory_creation(download_dir: str, create_dir: bool, yes: bool = False) -> str:
+def handle_add_directory_creation(download_dir: str, create_dir: bool | None, yes: bool = False) -> str:
     """Handle download directory path expansion and creation for add command."""
     expanded_download_dir = str(Path(download_dir).expanduser())
     download_path = Path(expanded_download_dir)
@@ -138,7 +138,7 @@ def handle_add_directory_creation(download_dir: str, create_dir: bool, yes: bool
     return expanded_download_dir
 
 
-def _handle_missing_directory(download_path: Path, create_dir: bool, yes: bool) -> None:
+def _handle_missing_directory(download_path: Path, create_dir: bool | None, yes: bool) -> None:
     """Handle missing download directory creation."""
 
     display_path = _replace_home_with_tilde(str(download_path))
@@ -152,7 +152,7 @@ def _handle_missing_directory(download_path: Path, create_dir: bool, yes: bool) 
         _handle_directory_creation_declined()
 
 
-def _determine_creation_choice(create_dir: bool, yes: bool) -> bool:
+def _determine_creation_choice(create_dir: bool | None, yes: bool) -> bool:
     """Determine whether to create directory based on flags and user input."""
     if create_dir or yes:
         return True
