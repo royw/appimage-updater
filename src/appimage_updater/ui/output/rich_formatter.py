@@ -329,73 +329,87 @@ class RichOutputFormatter:
         )
 
     def _display_check_results_table(self, results: list[CheckResult]) -> None:
-        """Display check results in a Rich table (existing logic)."""
+        """Display check results in a Rich table."""
+        table = self._create_check_results_table()
+
+        for result in results:
+            app_name = result.app_name
+
+            if not result.success:
+                self._add_error_row(table, app_name, result.error_message)
+            elif result.candidate is None:
+                self._add_no_candidate_row(table, app_name, result)
+            else:
+                self._add_success_row(table, app_name, result.candidate)
+
+        self.console.print(table)
+
+    def _create_check_results_table(self) -> Table:
+        """Create and configure the check results table."""
         table = Table(title="Update Check Results")
         table.add_column("Application", style="cyan")
         table.add_column("Status", style="magenta")
         table.add_column("Current Version", style="yellow")
         table.add_column("Latest Version", style="green")
         table.add_column("Update Available", style="red")
+        return table
 
-        for result in results:
-            # Extract app_name once at the beginning of each iteration
-            app_name = result.app_name
+    def _add_error_row(self, table: Table, app_name: str, error_message: str | None) -> None:
+        """Add an error row to the table."""
+        table.add_row(
+            app_name,
+            "[red]Error[/red]",
+            "[dim]N/A[/dim]",
+            "[dim]N/A[/dim]",
+            error_message or "Unknown error",
+        )
 
-            if not result.success:
-                # Error row
-                table.add_row(
-                    app_name,
-                    "[red]Error[/red]",
-                    "[dim]N/A[/dim]",
-                    "[dim]N/A[/dim]",
-                    result.error_message or "Unknown error",
-                )
-            elif result.candidate is None:
-                # No candidate but check if we have direct version data
-                current_version = getattr(result, "current_version", None)
-                available_version = getattr(result, "available_version", None)
-                update_available = getattr(result, "update_available", False)
+    def _add_no_candidate_row(self, table: Table, app_name: str, result: CheckResult) -> None:
+        """Add a row for results with no candidate."""
+        current_version = getattr(result, "current_version", None)
+        available_version = getattr(result, "available_version", None)
+        update_available = getattr(result, "update_available", False)
 
-                if current_version or available_version:
-                    # We have version data from direct fields
-                    current_display = format_version_display(current_version) or "[dim]N/A[/dim]"
-                    latest_display = format_version_display(available_version) or "[dim]N/A[/dim]"
+        if current_version or available_version:
+            self._add_direct_version_row(table, app_name, current_version, available_version, update_available)
+        else:
+            self._add_no_data_row(table, app_name)
 
-                    if update_available:
-                        status = "[yellow]Update available[/yellow]"
-                        update_indicator = "Yes"
-                    else:
-                        status = "[green]Up to date[/green]"
-                        update_indicator = "No"
-                    table.add_row(
-                        app_name,
-                        status,
-                        current_display,
-                        latest_display,
-                        update_indicator,
-                    )
-                else:
-                    # Truly no data available
-                    table.add_row(
-                        app_name,
-                        "[yellow]No updates found[/yellow]",
-                        "[dim]N/A[/dim]",
-                        "[dim]N/A[/dim]",
-                        "[dim]N/A[/dim]",
-                    )
-            else:
-                # Success row
-                candidate = result.candidate
-                current = format_version_display(candidate.current_version) or "[dim]None"
-                latest = format_version_display(candidate.latest_version)
+    def _add_direct_version_row(self, table: Table, app_name: str, current_version: str | None,
+                               available_version: str | None, update_available: bool) -> None:
+        """Add a row with direct version data."""
+        current_display = format_version_display(current_version) or "[dim]N/A[/dim]"
+        latest_display = format_version_display(available_version) or "[dim]N/A[/dim]"
 
-                if candidate.needs_update:
-                    status = "[yellow]Update available[/yellow]"
-                    update_indicator = "Yes"
-                else:
-                    status = "[green]Up to date[/green]"
-                    update_indicator = "No"
+        if update_available:
+            status = "[yellow]Update available[/yellow]"
+            update_indicator = "Yes"
+        else:
+            status = "[green]Up to date[/green]"
+            update_indicator = "No"
 
-                table.add_row(app_name, status, current, latest, update_indicator)
+        table.add_row(app_name, status, current_display, latest_display, update_indicator)
 
-        self.console.print(table)
+    def _add_no_data_row(self, table: Table, app_name: str) -> None:
+        """Add a row when no data is available."""
+        table.add_row(
+            app_name,
+            "[yellow]No updates found[/yellow]",
+            "[dim]N/A[/dim]",
+            "[dim]N/A[/dim]",
+            "[dim]N/A[/dim]",
+        )
+
+    def _add_success_row(self, table: Table, app_name: str, candidate: Any) -> None:
+        """Add a success row with candidate data."""
+        current = format_version_display(candidate.current_version) or "[dim]None"
+        latest = format_version_display(candidate.latest_version)
+
+        if candidate.needs_update:
+            status = "[yellow]Update available[/yellow]"
+            update_indicator = "Yes"
+        else:
+            status = "[green]Up to date[/green]"
+            update_indicator = "No"
+
+        table.add_row(app_name, status, current, latest, update_indicator)

@@ -32,47 +32,58 @@ class CheckCommand(Command):
         configure_logging(debug=self.params.debug)
 
         try:
-            # Start tracking if tracker is provided
-            if http_tracker:
-                http_tracker.start_tracking()
+            self._start_http_tracking(http_tracker)
 
             try:
-                # Execute the check operation
                 success = await self._execute_check_operation(output_formatter)
-
-                # Stop HTTP tracking if it was enabled
-                if http_tracker and output_formatter:
-                    http_tracker.stop_tracking()
-
-                    # Print basic summary using output formatter
-                    output_formatter.start_section("HTTP Tracking Summary")
-                    output_formatter.print(f"Total requests: {len(http_tracker.requests)}")
-
-                    # Show some request details
-                    for i, request in enumerate(http_tracker.requests[:5]):  # Show first 5
-                        status = request.response_status or "ERROR"
-                        time_str = f"{request.response_time:.3f}s" if request.response_time else "N/A"
-                        output_formatter.print(f"  {i + 1}. {request.method} {request.url} -> {status} ({time_str})")
-
-                    if len(http_tracker.requests) > 5:
-                        output_formatter.print(f"  ... and {len(http_tracker.requests) - 5} more requests")
-
-                    output_formatter.end_section()
-
-                if success:
-                    return CommandResult(success=True, message="Check completed successfully")
-                else:
-                    return CommandResult(success=False, message="Applications not found", exit_code=1)
+                self._display_http_tracking_summary(http_tracker, output_formatter)
+                return self._create_result(success)
 
             finally:
-                # Ensure HTTP tracking is stopped even if an error occurs
-                if http_tracker:
-                    http_tracker.stop_tracking()
+                self._stop_http_tracking(http_tracker)
 
         except Exception as e:
             logger.error(f"Unexpected error in check command: {e}")
             logger.exception("Full exception details")
             return CommandResult(success=False, message=str(e), exit_code=1)
+
+    def _start_http_tracking(self, http_tracker: Any) -> None:
+        """Start HTTP tracking if tracker is provided."""
+        if http_tracker:
+            http_tracker.start_tracking()
+
+    def _stop_http_tracking(self, http_tracker: Any) -> None:
+        """Stop HTTP tracking if tracker is provided."""
+        if http_tracker:
+            http_tracker.stop_tracking()
+
+    def _display_http_tracking_summary(self, http_tracker: Any, output_formatter: Any) -> None:
+        """Display HTTP tracking summary if both tracker and formatter are provided."""
+        if not (http_tracker and output_formatter):
+            return
+
+        http_tracker.stop_tracking()
+
+        output_formatter.start_section("HTTP Tracking Summary")
+        output_formatter.print(f"Total requests: {len(http_tracker.requests)}")
+
+        # Show some request details
+        for i, request in enumerate(http_tracker.requests[:5]):  # Show first 5
+            status = request.response_status or "ERROR"
+            time_str = f"{request.response_time:.3f}s" if request.response_time else "N/A"
+            output_formatter.print(f"  {i + 1}. {request.method} {request.url} -> {status} ({time_str})")
+
+        if len(http_tracker.requests) > 5:
+            output_formatter.print(f"  ... and {len(http_tracker.requests) - 5} more requests")
+
+        output_formatter.end_section()
+
+    def _create_result(self, success: bool) -> CommandResult:
+        """Create the appropriate CommandResult based on success status."""
+        if success:
+            return CommandResult(success=True, message="Check completed successfully")
+        else:
+            return CommandResult(success=False, message="Applications not found", exit_code=1)
 
     async def _execute_check_operation(self, output_formatter: Any = None) -> bool:
         """Execute the core check operation logic.

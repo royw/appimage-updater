@@ -33,55 +33,82 @@ def normalize_version_string(version: str) -> str:
         >>> normalize_version_string("OrcaSlicer 2.3.1 beta Release")
         "2.3.1-beta"
     """
-    # Remove 'v' prefix if present
-    if version.startswith("v") or version.startswith("V"):
-        version = version[1:]
+    version = _remove_version_prefix(version)
 
-    # Handle versions that already have dash-separated suffixes (e.g., "2.3.1-beta")
-    dash_match = re.match(r"^(\d+\.\d+(?:\.\d+)?)-(\w+)$", version)
-    if dash_match:
-        core_version = dash_match.group(1)
-        suffix = dash_match.group(2)
-        # Keep pre-release identifiers
-        if suffix.lower() in ["beta", "alpha", "rc"]:
-            return f"{core_version}-{suffix.lower()}"
-        # Strip architecture identifiers and other non-version suffixes
-        elif suffix.lower() in [
-            "x86",
-            "x64",
-            "amd64",
-            "arm64",
-            "i386",
-            "i686",
-            "linux",
-            "win32",
-            "win64",
-            "macos",
-            "darwin",
-        ]:
-            return core_version
-        # For unknown suffixes, return just the core version to be safe
-        return core_version
+    # Try different normalization strategies in order of specificity
+    result = _normalize_dash_separated_version(version)
+    if result:
+        return result
 
-    # Handle versions with space-separated suffixes (e.g., "OrcaSlicer 2.3.1 beta Release")
-    space_match = re.search(r"(\d+\.\d+\.\d+)(?:\s+(\w+))?", version)
-    if space_match:
-        core_version = space_match.group(1)
-        pre_release = space_match.group(2)
-        if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
-            return f"{core_version}-{pre_release.lower()}"
-        return core_version
+    result = _normalize_space_separated_version(version)
+    if result:
+        return result
 
-    # Fallback for simpler version patterns
-    simple_match = re.search(r"(\d+\.\d+)(?:\s+(\w+))?", version)
-    if simple_match:
-        core_version = simple_match.group(1)
-        pre_release = simple_match.group(2)
-        if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
-            return f"{core_version}-{pre_release.lower()}"
-        return core_version
+    result = _normalize_simple_version(version)
+    if result:
+        return result
 
     return version
+
+def _remove_version_prefix(version: str) -> str:
+    """Remove 'v' or 'V' prefix from version string."""
+    if version.startswith("v") or version.startswith("V"):
+        return version[1:]
+    return version
+
+def _normalize_dash_separated_version(version: str) -> str | None:
+    """Handle versions with dash-separated suffixes (e.g., '2.3.1-beta')."""
+    dash_match = re.match(r"^(\d+\.\d+(?:\.\d+)?)-(\w+)$", version)
+    if not dash_match:
+        return None
+
+    core_version = dash_match.group(1)
+    suffix = dash_match.group(2)
+
+    # Keep pre-release identifiers
+    if suffix.lower() in ["beta", "alpha", "rc"]:
+        return f"{core_version}-{suffix.lower()}"
+
+    # Strip architecture identifiers and other non-version suffixes
+    if _is_architecture_suffix(suffix):
+        return core_version
+
+    # For unknown suffixes, return just the core version to be safe
+    return core_version
+
+def _is_architecture_suffix(suffix: str) -> bool:
+    """Check if suffix is an architecture or platform identifier."""
+    arch_suffixes = [
+        "x86", "x64", "amd64", "arm64", "i386", "i686",
+        "linux", "win32", "win64", "macos", "darwin"
+    ]
+    return suffix.lower() in arch_suffixes
+
+def _normalize_space_separated_version(version: str) -> str | None:
+    """Handle versions with space-separated suffixes (e.g., 'OrcaSlicer 2.3.1 beta Release')."""
+    space_match = re.search(r"(\d+\.\d+\.\d+)(?:\s+(\w+))?", version)
+    if not space_match:
+        return None
+
+    core_version = space_match.group(1)
+    pre_release = space_match.group(2)
+
+    if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
+        return f"{core_version}-{pre_release.lower()}"
+    return core_version
+
+def _normalize_simple_version(version: str) -> str | None:
+    """Handle simpler version patterns (e.g., '2.3 beta')."""
+    simple_match = re.search(r"(\d+\.\d+)(?:\s+(\w+))?", version)
+    if not simple_match:
+        return None
+
+    core_version = simple_match.group(1)
+    pre_release = simple_match.group(2)
+
+    if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
+        return f"{core_version}-{pre_release.lower()}"
+    return core_version
 
 
 def format_version_display(version: str | None) -> str:

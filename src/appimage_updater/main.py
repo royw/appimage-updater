@@ -2141,33 +2141,41 @@ def _extract_result_data(result: Any) -> dict[str, Any]:
     """Extract data from a single check result."""
     result_dict = {}
 
-    # Extract application name - ensure it's never empty
+    _extract_application_name(result, result_dict)
+    _extract_status(result, result_dict)
+    _extract_version_data(result, result_dict)
+    _extract_error_message(result, result_dict)
+
+    return result_dict
+
+def _extract_application_name(result: Any, result_dict: dict[str, Any]) -> None:
+    """Extract application name from result."""
     if hasattr(result, "app_name") and result.app_name:
         app_name = result.app_name.strip()
         result_dict["Application"] = app_name if app_name else "Unknown App"
     else:
         result_dict["Application"] = "Unknown App"
 
-    # Extract status
+def _extract_status(result: Any, result_dict: dict[str, Any]) -> None:
+    """Extract status from result."""
     if hasattr(result, "success"):
         result_dict["Status"] = "Success" if result.success else "Error"
     else:
         result_dict["Status"] = "Unknown"
 
-    # Try to extract data from candidate first, then from direct fields
+def _extract_version_data(result: Any, result_dict: dict[str, Any]) -> None:
+    """Extract version data from result, trying candidate first then direct fields."""
     if hasattr(result, "candidate") and result.candidate:
         _extract_candidate_data(result.candidate, result_dict)
     else:
-        # Extract from direct fields on CheckResult
         _extract_direct_result_data(result, result_dict)
 
-    # Extract error message
+def _extract_error_message(result: Any, result_dict: dict[str, Any]) -> None:
+    """Extract error message from result."""
     if hasattr(result, "error_message") and result.error_message:
         result_dict["Update Available"] = result.error_message
     elif "Update Available" not in result_dict:
         result_dict["Update Available"] = "Unknown"
-
-    return result_dict
 
 
 def _extract_direct_result_data(result: Any, result_dict: dict[str, Any]) -> None:
