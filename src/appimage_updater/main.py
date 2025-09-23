@@ -93,7 +93,6 @@ class GlobalState:
 
 global_state = GlobalState()
 
-# Dependency injection container removed as unused
 
 # Module-level typer.Option definitions
 _DEBUG_OPTION = typer.Option(

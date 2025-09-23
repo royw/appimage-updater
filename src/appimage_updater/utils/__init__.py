@@ -1,9 +1,7 @@
-"""Utility and infrastructure modules.
+"""Utility modules for AppImage Updater.
 
-This package contains utility modules and infrastructure components:
-
+This package contains:
 - logging_config: Logging configuration and setup
-- dependency_injection: Dependency injection container
-- facade: Simplified API facade
+- version_utils: Version comparison and parsing utilities
 - helpers/: Various helper utilities
 """

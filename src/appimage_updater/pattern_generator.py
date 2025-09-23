@@ -112,9 +112,6 @@ async def generate_appimage_pattern_async(app_name: str, url: str) -> str:
     return generate_fallback_pattern(app_name, url)
 
 
-# ReleaseGroups TypedDict removed as unused
-
-
 async def fetch_appimage_pattern_from_github(url: str) -> str | None:
     """Async function to fetch AppImage pattern from repository releases.
 
