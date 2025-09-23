@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .manager import load_config
 from .models import Config
 
 
@@ -22,11 +21,14 @@ def load_config_with_path_resolution(config_file: Path | None, config_dir: Path 
         ConfigLoadError: If configuration loading fails
     """
     from .loader import ConfigLoadError
+    from .manager import AppConfigs
 
     try:
         # Simple path resolution: file takes precedence, then directory
         config_path = config_file or config_dir
-        return load_config(config_path)
+        # Use AppConfigs manager which handles both global and application configs
+        app_configs = AppConfigs(config_path=config_path)
+        return app_configs._config
 
     except Exception as e:
         raise ConfigLoadError(f"Configuration error: {e}") from e
