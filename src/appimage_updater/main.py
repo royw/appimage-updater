@@ -1518,9 +1518,10 @@ def repository(
 
 def _load_config_for_repository_examination(config_file: Path | None, config_dir: Path | None) -> Any:
     """Load configuration for repository examination."""
-    from .config.migration_helpers import load_config_with_path_resolution
+    from .config.manager import AppConfigs
 
-    return load_config_with_path_resolution(config_file, config_dir)
+    app_configs = AppConfigs(config_path=config_file or config_dir)
+    return app_configs._config
 
 
 def _display_dry_run_repository_info(apps_to_examine: list[Any]) -> None:
@@ -2215,9 +2216,10 @@ async def _load_and_filter_config(
         typer.Exit: If specified applications are not found
     """
     logger.debug("Loading configuration")
-    from .config.migration_helpers import load_config_with_path_resolution
+    from .config.manager import AppConfigs
 
-    config = load_config_with_path_resolution(config_file, config_dir)
+    app_configs = AppConfigs(config_path=config_file or config_dir)
+    config = app_configs._config
     enabled_apps = config.get_enabled_apps()
 
     # Filter by app names if specified

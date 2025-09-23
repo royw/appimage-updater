@@ -158,9 +158,10 @@ class EditCommand(Command):
         """
 
         try:
-            from ..config.migration_helpers import load_config_with_path_resolution
+            from ..config.manager import AppConfigs
 
-            return load_config_with_path_resolution(self.params.config_file, self.params.config_dir)
+            app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
+            return app_configs._config
         except Exception as e:
             if "No configuration found" in str(e):
                 self.console.print("[red]Configuration error: No configuration found[/red]")

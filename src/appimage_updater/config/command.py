@@ -23,9 +23,10 @@ console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 def show_global_config(config_file: Path | None = None, config_dir: Path | None = None) -> None:
     """Show current global configuration."""
     try:
-        from .migration_helpers import load_config_with_path_resolution
+        from .manager import AppConfigs
 
-        config = load_config_with_path_resolution(config_file, config_dir)
+        app_configs = AppConfigs(config_path=config_file or config_dir)
+        config = app_configs._config
         defaults = config.global_config.defaults
 
         _print_config_header()
@@ -136,9 +137,10 @@ def _handle_config_load_error(e: ConfigLoadError) -> bool:
 def show_effective_config(app_name: str, config_file: Path | None = None, config_dir: Path | None = None) -> None:
     """Show effective configuration for a specific application."""
     try:
-        from .migration_helpers import load_config_with_path_resolution
+        from .manager import AppConfigs
 
-        config = load_config_with_path_resolution(config_file, config_dir)
+        app_configs = AppConfigs(config_path=config_file or config_dir)
+        config = app_configs._config
         effective_config = config.get_effective_config_for_app(app_name)
 
         if effective_config is None:
@@ -239,9 +241,10 @@ def set_global_config_value(
         True if the setting was applied successfully, False otherwise.
     """
     try:
-        from .migration_helpers import load_config_with_path_resolution
+        from .manager import AppConfigs
 
-        config = load_config_with_path_resolution(config_file, config_dir)
+        app_configs = AppConfigs(config_path=config_file or config_dir)
+        config = app_configs._config
     except ConfigLoadError:
         # Create new configuration if none exists
         config = Config()
@@ -770,9 +773,10 @@ def reset_global_config(config_file: Path | None = None, config_dir: Path | None
         True if successful, False if error occurred
     """
     try:
-        from .migration_helpers import load_config_with_path_resolution
+        from .manager import AppConfigs
 
-        config = load_config_with_path_resolution(config_file, config_dir)
+        app_configs = AppConfigs(config_path=config_file or config_dir)
+        config = app_configs._config
     except ConfigLoadError:
         console.print("[yellow]No existing configuration found. Nothing to reset.")
         return False

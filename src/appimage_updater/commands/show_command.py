@@ -81,9 +81,10 @@ class ShowCommand(Command):
 
     def _load_configuration(self) -> Any:
         """Load configuration from file or directory."""
-        from ..config.migration_helpers import load_config_with_path_resolution
+        from ..config.manager import AppConfigs
 
-        return load_config_with_path_resolution(self.params.config_file, self.params.config_dir)
+        app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
+        return app_configs._config
 
     def _filter_applications(self, config: Any) -> Any:
         """Filter applications by names."""

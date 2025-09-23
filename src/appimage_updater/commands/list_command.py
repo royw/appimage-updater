@@ -80,9 +80,10 @@ class ListCommand(Command):
         """
 
         try:
-            from ..config.migration_helpers import load_config_with_path_resolution
+            from ..config.manager import AppConfigs
 
-            config = load_config_with_path_resolution(self.params.config_file, self.params.config_dir)
+            app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
+            config = app_configs._config
         except Exception:
             # Use output formatter if available, otherwise fallback to console
             from ..ui.output.context import get_output_formatter
