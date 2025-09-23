@@ -296,16 +296,24 @@ class VersionChecker:
 
     def _file_matches_app(self, filename_lower: str, match_name_lower: str) -> bool:
         """Check if a filename matches the match name (app name or basename)."""
-        # Direct match
-        if filename_lower.startswith(match_name_lower):
-            return True
+        # Try different matching strategies
+        return (
+            self._matches_direct_name(filename_lower, match_name_lower)
+            or self._matches_studio_variant(filename_lower, match_name_lower)
+            or self._matches_suffix_pattern(filename_lower, match_name_lower)
+        )
 
-        # Handle Studio -> _Studio pattern (e.g., BambuStudio -> Bambu_Studio)
+    def _matches_direct_name(self, filename_lower: str, match_name_lower: str) -> bool:
+        """Check for direct name match."""
+        return filename_lower.startswith(match_name_lower)
+
+    def _matches_studio_variant(self, filename_lower: str, match_name_lower: str) -> bool:
+        """Handle Studio -> _Studio pattern (e.g., BambuStudio -> Bambu_Studio)."""
         studio_variant = match_name_lower.replace("studio", "_studio")
-        if studio_variant in filename_lower or filename_lower.startswith(studio_variant):
-            return True
+        return studio_variant in filename_lower or filename_lower.startswith(studio_variant)
 
-        # Handle suffix patterns (e.g., OrcaSlicerNightly -> OrcaSlicer, OrcaSlicerRC -> OrcaSlicer)
+    def _matches_suffix_pattern(self, filename_lower: str, match_name_lower: str) -> bool:
+        """Handle suffix patterns (e.g., OrcaSlicerNightly -> OrcaSlicer)."""
         suffixes_to_strip = ["nightly", "rc", "beta", "alpha", "dev", "weekly"]
         for suffix in suffixes_to_strip:
             if match_name_lower.endswith(suffix):
@@ -313,7 +321,6 @@ class VersionChecker:
                 base_name = match_name_lower.rsplit(suffix, 1)[0]
                 if filename_lower.startswith(base_name):
                     return True
-
         return False
 
     def _get_info_from_current_files(self, app_files: list[Path], download_dir: Path) -> Path | None:
