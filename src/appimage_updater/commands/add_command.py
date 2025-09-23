@@ -9,7 +9,10 @@ from rich.console import Console
 
 from ..ui.interactive import interactive_add_command
 from ..utils.logging_config import configure_logging
-from .base import Command, CommandResult
+from .base import (
+    Command,
+    CommandResult,
+)
 from .parameters import AddParams
 
 

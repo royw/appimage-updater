@@ -14,9 +14,16 @@ from urllib.parse import urlparse
 
 import httpx
 
-from appimage_updater.core.models import Asset, Release
-from appimage_updater.repositories.base import RepositoryClient, RepositoryError
+from appimage_updater.core.models import (
+    Asset,
+    Release,
+)
+from appimage_updater.repositories.base import (
+    RepositoryClient,
+    RepositoryError,
+)
 from appimage_updater.utils.version_utils import normalize_version_string
+
 
 logger = logging.getLogger(__name__)
 

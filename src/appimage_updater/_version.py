@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+
 try:
     from importlib.metadata import version as _version
 except ImportError:

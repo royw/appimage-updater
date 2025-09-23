@@ -13,8 +13,14 @@ from ...config.operations import (
     validate_add_rotation_config,
     validate_and_normalize_add_url,
 )
-from .display_utilities import _display_add_success, _display_dry_run_config
-from .error_handling import _handle_add_error, _handle_verbose_logging
+from .display_utilities import (
+    _display_add_success,
+    _display_dry_run_config,
+)
+from .error_handling import (
+    _handle_add_error,
+    _handle_verbose_logging,
+)
 from .parameter_resolution import _resolve_add_parameters
 from .validation_utilities import _check_configuration_warnings
 

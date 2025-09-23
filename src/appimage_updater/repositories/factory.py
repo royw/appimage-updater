@@ -8,7 +8,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from .base import RepositoryClient, RepositoryError
+from .base import (
+    RepositoryClient,
+    RepositoryError,
+)
 from .direct_download_repository import DirectDownloadRepository
 from .dynamic_download_repository import DynamicDownloadRepository
 

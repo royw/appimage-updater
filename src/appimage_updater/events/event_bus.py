@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-from abc import ABC, abstractmethod
+from abc import (
+    ABC,
+    abstractmethod,
+)
 from collections import defaultdict
 from collections.abc import Callable
 from typing import Any

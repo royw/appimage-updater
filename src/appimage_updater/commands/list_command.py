@@ -12,7 +12,10 @@ from ..ui.display import display_applications_list
 from ..utils.logging_config import configure_logging
 
 # from ..logging_config import configure_logging, logger
-from .base import Command, CommandResult
+from .base import (
+    Command,
+    CommandResult,
+)
 from .parameters import ListParams
 
 

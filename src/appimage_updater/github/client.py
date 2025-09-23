@@ -10,9 +10,15 @@ import httpx
 from loguru import logger
 from pydantic import ValidationError
 
-from ..core.models import Asset, Release
+from ..core.models import (
+    Asset,
+    Release,
+)
 from ..utils.version_utils import normalize_version_string
-from .auth import GitHubAuth, get_github_auth
+from .auth import (
+    GitHubAuth,
+    get_github_auth,
+)
 
 
 class GitHubClientError(Exception):

@@ -16,14 +16,20 @@ from appimage_updater.commands.factory import CommandFactory
 from ._version import __version__
 from .config.loader import ConfigLoadError
 from .config.manager import GlobalConfigManager
-from .config.models import ApplicationConfig, Config
+from .config.models import (
+    ApplicationConfig,
+    Config,
+)
 from .config.operations import (
     apply_configuration_updates,
     save_updated_configuration,
     validate_edit_updates,
 )
 from .core.downloader import Downloader
-from .core.models import InteractiveResult, rebuild_models
+from .core.models import (
+    InteractiveResult,
+    rebuild_models,
+)
 from .repositories.factory import get_repository_client
 from .services.application_service import ApplicationService
 from .ui.cli.validation_utilities import _check_configuration_warnings
@@ -76,6 +82,7 @@ from .utils.version_utils import (
     extract_version_from_filename,
     normalize_version_string,
 )
+
 
 # Rebuild models to resolve forward references
 rebuild_models()
@@ -2107,7 +2114,10 @@ async def _setup_rotation_for_file(app_config: ApplicationConfig, latest_file: P
     from datetime import datetime
 
     from .core.downloader import Downloader
-    from .core.models import Asset, UpdateCandidate
+    from .core.models import (
+        Asset,
+        UpdateCandidate,
+    )
 
     downloader = Downloader(
         timeout=config.global_config.timeout_seconds * 10,

@@ -9,14 +9,23 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from email.utils import parsedate_to_datetime
-from typing import Any, cast
+from typing import (
+    Any,
+    cast,
+)
 
 import httpx
 from loguru import logger
 
-from ..core.models import Asset, Release
+from ..core.models import (
+    Asset,
+    Release,
+)
 from ..utils.version_utils import normalize_version_string
-from .base import RepositoryClient, RepositoryError
+from .base import (
+    RepositoryClient,
+    RepositoryError,
+)
 
 
 class DirectDownloadRepository(RepositoryClient):

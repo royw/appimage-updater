@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import os
 import re
 from collections.abc import Callable
@@ -13,10 +12,15 @@ import typer
 from loguru import logger
 from rich.console import Console
 
-from ..pattern_generator import detect_source_type, generate_appimage_pattern_async, should_enable_prerelease
+from ..pattern_generator import (
+    detect_source_type,
+    generate_appimage_pattern_async,
+    should_enable_prerelease,
+)
 from ..repositories.factory import get_repository_client
 from ..ui.display import _replace_home_with_tilde
 from .manager import GlobalConfigManager
+
 
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 
@@ -996,10 +1000,10 @@ def update_app_in_config_file(app_dict: dict[str, Any], config_file: Path) -> No
     """Update application in a single JSON config file."""
     from .manager import Manager
     from .models import ApplicationConfig
-    
+
     # Convert dict to ApplicationConfig object
     app_config = ApplicationConfig(**app_dict)
-    
+
     # Use manager method for config file operations
     manager = Manager()
     manager.update_application_in_config_file(app_config, config_file)
@@ -1009,10 +1013,10 @@ def update_app_in_config_directory(app_dict: dict[str, Any], config_dir: Path) -
     """Update application in a directory-based config structure."""
     from .manager import Manager
     from .models import ApplicationConfig
-    
+
     # Convert dict to ApplicationConfig object
     app_config = ApplicationConfig(**app_dict)
-    
+
     # Use manager method for config file operations
     manager = Manager()
     manager.update_application_in_config_directory(app_config, config_dir)

@@ -11,9 +11,15 @@ import urllib.parse
 from typing import Any
 
 from ..core.models import Release
-from ..repositories.base import RepositoryClient, RepositoryError
+from ..repositories.base import (
+    RepositoryClient,
+    RepositoryError,
+)
 from .auth import GitHubAuth
-from .client import GitHubClient, GitHubClientError
+from .client import (
+    GitHubClient,
+    GitHubClientError,
+)
 
 
 class GitHubRepository(RepositoryClient):

@@ -16,7 +16,10 @@ from ..config.command import (
     show_global_config,
 )
 from ..utils.logging_config import configure_logging
-from .base import Command, CommandResult
+from .base import (
+    Command,
+    CommandResult,
+)
 from .parameters import ConfigParams
 
 

@@ -23,7 +23,11 @@ from rich.progress import (
 
 from ..events.event_bus import get_event_bus
 from ..events.progress_events import DownloadProgressEvent
-from .models import ChecksumResult, DownloadResult, UpdateCandidate
+from .models import (
+    ChecksumResult,
+    DownloadResult,
+    UpdateCandidate,
+)
 
 
 class Downloader:

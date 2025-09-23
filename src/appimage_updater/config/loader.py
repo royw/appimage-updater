@@ -20,5 +20,3 @@ def _parse_config_data(data: dict[str, Any]) -> Config:
     except ValidationError as e:
         msg = f"Configuration validation failed: {e}"
         raise ConfigLoadError(msg) from e
-
-

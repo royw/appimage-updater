@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 from collections.abc import Callable
@@ -14,7 +13,11 @@ from rich.table import Table
 
 from .loader import ConfigLoadError
 from .manager import GlobalConfigManager
-from .models import Config, GlobalConfig
+from .models import (
+    Config,
+    GlobalConfig,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -794,87 +797,8 @@ def reset_global_config(config_file: Path | None = None, config_dir: Path | None
 
 def _save_config(config: Config, config_file: Path | None, config_dir: Path | None) -> None:
     """Save configuration to file or directory."""
-    from .manager import GlobalConfigManager
-    
+
     # Use GlobalConfigManager to save global config only, preserving applications
     global_manager = GlobalConfigManager()
     global_manager._config = config  # Set the config to save
     global_manager.save_global_config_only(config_file, config_dir)
-
-
-def _determine_target_file(config_file: Path | None, config_dir: Path | None) -> Path:
-    """Determine the target file path for saving configuration."""
-    if config_file:
-        return config_file
-    elif config_dir:
-        config_dir.mkdir(parents=True, exist_ok=True)
-        return config_dir / "global.json"
-    else:
-        return _get_default_target_file()
-
-
-def _get_default_target_file() -> Path:
-    """Get the default target file path."""
-    default_dir = GlobalConfigManager.get_default_config_dir()
-    default_file = GlobalConfigManager.get_default_config_path()
-
-    if default_dir.exists():
-        # Save global config to parent directory, not in apps/
-        config_parent = default_dir.parent
-        config_parent.mkdir(parents=True, exist_ok=True)
-        return config_parent / "config.json"
-    else:
-        # Use single file approach
-        target_file = default_file
-        target_file.parent.mkdir(parents=True, exist_ok=True)
-        return target_file
-
-
-def _build_config_dict(config: Config) -> dict[str, Any]:
-    """Build configuration dictionary for JSON serialization."""
-    return {
-        "global_config": {
-            "concurrent_downloads": config.global_config.concurrent_downloads,
-            "timeout_seconds": config.global_config.timeout_seconds,
-            "user_agent": config.global_config.user_agent,
-            "defaults": _build_defaults_dict(config.global_config.defaults),
-        }
-    }
-
-
-def _build_defaults_dict(defaults: Any) -> dict[str, Any]:
-    """Build defaults dictionary for JSON serialization."""
-    return {
-        "download_dir": str(defaults.download_dir) if defaults.download_dir else None,
-        "rotation_enabled": defaults.rotation_enabled,
-        "retain_count": defaults.retain_count,
-        "symlink_enabled": defaults.symlink_enabled,
-        "symlink_dir": str(defaults.symlink_dir) if defaults.symlink_dir else None,
-        "symlink_pattern": defaults.symlink_pattern,
-        "auto_subdir": defaults.auto_subdir,
-        "checksum_enabled": defaults.checksum_enabled,
-        "checksum_algorithm": defaults.checksum_algorithm,
-        "checksum_pattern": defaults.checksum_pattern,
-        "checksum_required": defaults.checksum_required,
-        "prerelease": defaults.prerelease,
-    }
-
-
-def _preserve_existing_applications(target_file: Path, config_dict: dict[str, Any]) -> None:
-    """Preserve existing applications when saving configuration."""
-    if target_file.exists():
-        try:
-            with target_file.open() as f:
-                existing_data = json.load(f)
-            if "applications" in existing_data:
-                config_dict["applications"] = existing_data["applications"]
-        except (json.JSONDecodeError, OSError):
-            # If we can't read the existing file, just overwrite it
-            pass
-
-
-def _write_config_file(target_file: Path, config_dict: dict[str, Any]) -> None:
-    """Write configuration dictionary to file."""
-    with target_file.open("w") as f:
-        json.dump(config_dict, f, indent=2)
-    logger.debug(f"Saved global configuration to: {target_file}")

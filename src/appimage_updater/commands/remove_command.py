@@ -14,8 +14,12 @@ from ..core.models import ApplicationConfig
 from ..services.application_service import ApplicationService
 from ..ui.display import _replace_home_with_tilde
 from ..utils.logging_config import configure_logging
-from .base import Command, CommandResult
+from .base import (
+    Command,
+    CommandResult,
+)
 from .parameters import RemoveParams
+
 
 logger = logging.getLogger(__name__)
 
@@ -180,6 +184,7 @@ class RemoveCommand(Command):
 
         # Use manager method for config file operations
         from ..config.manager import Manager
+
         manager = Manager()
         manager.save_single_file_config(config, self.params.config_file)
 
@@ -187,6 +192,7 @@ class RemoveCommand(Command):
         """Delete individual app config files for removed apps."""
         # Use manager method for config file operations
         from ..config.manager import Manager
+
         manager = Manager()
         app_names = [app.name for app in removed_apps]
         manager.delete_app_config_files(app_names, config_dir)
@@ -195,6 +201,7 @@ class RemoveCommand(Command):
         """Update global config file if it exists."""
         # Use manager method for config file operations
         from ..config.manager import Manager
+
         manager = Manager()
         manager.update_global_config_in_directory(config, config_dir)
 

@@ -6,11 +6,17 @@ import json
 import os
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, cast
+from typing import (
+    Any,
+    cast,
+)
 
 from loguru import logger
 
-from .models import ApplicationConfig, Config
+from .models import (
+    ApplicationConfig,
+    Config,
+)
 
 
 class Manager:
@@ -157,14 +163,12 @@ class Manager:
 
         logger.info(f"Saved configuration to: {config_path}")
 
-    def load_single_file_config(self, config_path: Path) -> Config:
-        """Load config from a single JSON file."""
-        return self._load_config_from_file(config_path)
-
-    def preserve_applications_in_config_file(self, target_file: Path, global_config_dict: dict[str, Any]) -> dict[str, Any]:
+    def preserve_applications_in_config_file(
+        self, target_file: Path, global_config_dict: dict[str, Any]
+    ) -> dict[str, Any]:
         """Preserve existing applications when saving global config only."""
         config_dict = global_config_dict.copy()
-        
+
         if target_file.exists():
             try:
                 with target_file.open() as f:
@@ -263,17 +267,13 @@ class Manager:
                     # Write back to file
                     with config_file.open("w") as f:
                         json.dump(config_data, f, indent=2, default=str)
-                    
+
                     logger.info(f"Updated application '{app_config.name}' in: {config_file}")
                     return
 
         raise ValueError(f"Application '{app_config.name}' not found in configuration directory")
 
     # Utility Operations
-    def ensure_config_directory_exists(self, config_path: Path) -> None:
-        """Ensure config directory exists."""
-        config_path.mkdir(parents=True, exist_ok=True)
-
     def get_target_config_path(self, config_file: Path | None, config_dir: Path | None) -> Path:
         """Determine target config path based on file/dir preferences."""
         if config_file:
@@ -329,22 +329,22 @@ class GlobalConfigManager(Manager):
     def save_global_config_only(self, config_file: Path | None = None, config_dir: Path | None = None) -> None:
         """Save only global config, preserving existing applications."""
         target_file = self.get_target_config_path(config_file, config_dir)
-        
+
         # Build global config dict
         global_config_dict = {
             "global_config": self._config.global_config.model_dump(),
         }
-        
+
         # Preserve existing applications
         config_dict = self.preserve_applications_in_config_file(target_file, global_config_dict)
-        
+
         # Ensure parent directory exists
         target_file.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Write to file
         with target_file.open("w") as f:
             json.dump(config_dict, f, indent=2, default=str)
-        
+
         logger.info(f"Saved global configuration to: {target_file}")
 
     def __init__(self, config_path: Path | None = None) -> None:

@@ -4,9 +4,16 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Literal
+from typing import (
+    Any,
+    Literal,
+)
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    field_validator,
+)
 
 
 def _get_default_user_agent() -> str:

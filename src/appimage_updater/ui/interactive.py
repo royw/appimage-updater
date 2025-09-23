@@ -13,10 +13,15 @@ from typing import Any
 import typer
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Confirm, IntPrompt, Prompt
+from rich.prompt import (
+    Confirm,
+    IntPrompt,
+    Prompt,
+)
 
 from ..core.models import InteractiveResult
 from ..repositories.factory import get_repository_client
+
 
 console = Console()
 

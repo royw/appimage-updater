@@ -6,6 +6,7 @@ from typing import Any
 
 from rich.console import Console
 
+
 console = Console()
 
 
@@ -105,7 +106,10 @@ def _log_resolved_parameters(
     original_params: dict[str, Any],
 ) -> None:
     """Log resolved parameters for debugging."""
-    from .parameter_resolution import _format_parameter_display_value, _get_parameter_status
+    from .parameter_resolution import (
+        _format_parameter_display_value,
+        _get_parameter_status,
+    )
 
     console.print(f"\n[dim]Resolved {command_name} parameters:")
     for key, resolved_value in resolved_params.items():

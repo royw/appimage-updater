@@ -13,10 +13,21 @@ from ..config.models import ApplicationConfig
 from ..distribution_selector import select_best_distribution_asset
 from ..events.event_bus import get_event_bus
 from ..events.progress_events import UpdateCheckEvent
-from ..repositories.base import RepositoryClient, RepositoryError
+from ..repositories.base import (
+    RepositoryClient,
+    RepositoryError,
+)
 from ..repositories.factory import get_repository_client
-from ..utils.version_utils import create_nightly_version, normalize_version_string
-from .models import Asset, CheckResult, Release, UpdateCandidate
+from ..utils.version_utils import (
+    create_nightly_version,
+    normalize_version_string,
+)
+from .models import (
+    Asset,
+    CheckResult,
+    Release,
+    UpdateCandidate,
+)
 
 
 class VersionChecker:

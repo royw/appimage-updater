@@ -6,7 +6,10 @@ from loguru import logger
 from rich.console import Console
 
 from ..utils.logging_config import configure_logging
-from .base import Command, CommandResult
+from .base import (
+    Command,
+    CommandResult,
+)
 from .parameters import CheckParams
 
 

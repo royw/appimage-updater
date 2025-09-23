@@ -25,7 +25,10 @@ from appimage_updater.core.system_info import (
     is_supported_format,
 )
 from appimage_updater.dist_selector.asset_parsing import _parse_asset_info
-from appimage_updater.dist_selector.models import AssetInfo, DistributionInfo
+from appimage_updater.dist_selector.models import (
+    AssetInfo,
+    DistributionInfo,
+)
 
 
 class DistributionSelector:

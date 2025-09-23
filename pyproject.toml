@@ -113,6 +113,20 @@ per-file-ignores = { "tests/*" = ["S101"] }
 [tool.ruff.lint.mccabe]
 max-complexity = 10
 
+[tool.isort]
+profile = "pycharm"
+line_length = 120
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 2
+lines_after_imports = 2
+use_parentheses = false
+ensure_newline_before_comments = true
+src_paths = ["src", "tests"]
+known_first_party = ["appimage_updater"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+default_section = "THIRDPARTY"
+
 [tool.pytest.ini_options]
 testpaths = ["tests/unit", "tests/functional", "tests/e2e"]
 python_files = ["test_*.py"]

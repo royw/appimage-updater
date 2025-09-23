@@ -4,8 +4,15 @@ This module contains functions for calculating compatibility scores
 between assets and the current system configuration.
 """
 
-from ..core.system_info import is_compatible_architecture, is_compatible_platform, is_supported_format
-from .models import AssetInfo, DistributionInfo
+from ..core.system_info import (
+    is_compatible_architecture,
+    is_compatible_platform,
+    is_supported_format,
+)
+from .models import (
+    AssetInfo,
+    DistributionInfo,
+)
 
 
 def _calculate_compatibility_score(info: AssetInfo, current_dist: DistributionInfo) -> float:

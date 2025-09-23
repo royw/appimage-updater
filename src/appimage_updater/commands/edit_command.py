@@ -8,7 +8,10 @@ import typer
 from loguru import logger
 from rich.console import Console
 
-from ..config.models import ApplicationConfig, Config
+from ..config.models import (
+    ApplicationConfig,
+    Config,
+)
 from ..config.operations import (
     apply_configuration_updates,
     collect_edit_updates,
@@ -18,7 +21,10 @@ from ..config.operations import (
 from ..services.application_service import ApplicationService
 from ..ui.display import display_edit_summary
 from ..utils.logging_config import configure_logging
-from .base import Command, CommandResult
+from .base import (
+    Command,
+    CommandResult,
+)
 from .parameters import EditParams
 
 
@@ -241,10 +247,11 @@ class EditCommand(Command):
     def _save_config(self, config: Config) -> None:
         """Save the updated configuration."""
         from pathlib import Path
+
         from ..config.manager import Manager
-        
+
         manager = Manager()
-        
+
         if self.params.config_file:
             # Save to single file using manager
             manager.save_single_file_config(config, self.params.config_file)

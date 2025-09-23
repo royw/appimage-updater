@@ -1,7 +1,10 @@
 """Output formatter interface and protocol definitions."""
 
 from enum import Enum
-from typing import Any, Protocol
+from typing import (
+    Any,
+    Protocol,
+)
 
 
 class OutputFormat(str, Enum):

@@ -2,7 +2,10 @@
 
 from typing import Any
 
-from .interface import OutputFormat, OutputFormatter
+from .interface import (
+    OutputFormat,
+    OutputFormatter,
+)
 from .rich_formatter import RichOutputFormatter
 
 

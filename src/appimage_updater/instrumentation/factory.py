@@ -4,11 +4,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from ..commands.parameters import CheckParams
 
 from .http_tracker import HTTPTracker
-from .logging_interface import create_default_http_logger, create_silent_http_logger
+from .logging_interface import (
+    create_default_http_logger,
+    create_silent_http_logger,
+)
 
 
 def create_http_tracker_from_params(params: CheckParams) -> HTTPTracker | None:

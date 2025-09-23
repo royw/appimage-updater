@@ -1,7 +1,11 @@
 """Output formatter context management."""
 
-from contextvars import ContextVar, Token
+from contextvars import (
+    ContextVar,
+    Token,
+)
 from typing import Any
+
 
 # Context variable to hold the current output formatter
 _output_formatter: ContextVar[Any] = ContextVar("output_formatter", default=None)

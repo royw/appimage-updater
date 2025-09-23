@@ -13,7 +13,10 @@ import urllib.parse
 from loguru import logger
 
 from .core.models import Release
-from .repositories.factory import detect_repository_type, get_repository_client
+from .repositories.factory import (
+    detect_repository_type,
+    get_repository_client,
+)
 
 
 def parse_github_url(url: str) -> tuple[str, str] | None:
