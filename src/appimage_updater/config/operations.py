@@ -994,53 +994,25 @@ def save_updated_configuration(app: Any, config: Any, config_file: Path | None, 
 
 def update_app_in_config_file(app_dict: dict[str, Any], config_file: Path) -> None:
     """Update application in a single JSON config file."""
-    # Load existing configuration
-    with config_file.open() as f:
-        config_data = json.load(f)
-
-    applications = config_data.get("applications", [])
-    app_name_lower = app_dict["name"].lower()
-
-    # Find and update the application
-    updated = False
-    for i, app in enumerate(applications):
-        if app.get("name", "").lower() == app_name_lower:
-            applications[i] = app_dict
-            updated = True
-            break
-
-    if not updated:
-        raise ValueError(f"Application '{app_dict['name']}' not found in configuration file")
-
-    # Write back to file
-    with config_file.open("w") as f:
-        json.dump(config_data, f, indent=2)
+    from .manager import Manager
+    from .models import ApplicationConfig
+    
+    # Convert dict to ApplicationConfig object
+    app_config = ApplicationConfig(**app_dict)
+    
+    # Use manager method for config file operations
+    manager = Manager()
+    manager.update_application_in_config_file(app_config, config_file)
 
 
 def update_app_in_config_directory(app_dict: dict[str, Any], config_dir: Path) -> None:
     """Update application in a directory-based config structure."""
-    app_name_lower = app_dict["name"].lower()
-
-    # Find the config file containing this app
-    for config_file in config_dir.glob("*.json"):
-        try:
-            with config_file.open() as f:
-                config_data = json.load(f)
-        except (json.JSONDecodeError, OSError):
-            continue
-
-        applications = config_data.get("applications", [])
-
-        # Check if this file contains our app
-        for i, app in enumerate(applications):
-            if app.get("name", "").lower() == app_name_lower:
-                # Update the app in this file
-                applications[i] = app_dict
-                config_data["applications"] = applications
-
-                # Write back to file
-                with config_file.open("w") as f:
-                    json.dump(config_data, f, indent=2)
-                return
-
-    raise ValueError(f"Application '{app_dict['name']}' not found in configuration directory")
+    from .manager import Manager
+    from .models import ApplicationConfig
+    
+    # Convert dict to ApplicationConfig object
+    app_config = ApplicationConfig(**app_dict)
+    
+    # Use manager method for config file operations
+    manager = Manager()
+    manager.update_application_in_config_directory(app_config, config_dir)

@@ -794,10 +794,12 @@ def reset_global_config(config_file: Path | None = None, config_dir: Path | None
 
 def _save_config(config: Config, config_file: Path | None, config_dir: Path | None) -> None:
     """Save configuration to file or directory."""
-    target_file = _determine_target_file(config_file, config_dir)
-    config_dict = _build_config_dict(config)
-    _preserve_existing_applications(target_file, config_dict)
-    _write_config_file(target_file, config_dict)
+    from .manager import GlobalConfigManager
+    
+    # Use GlobalConfigManager to save global config only, preserving applications
+    global_manager = GlobalConfigManager()
+    global_manager._config = config  # Set the config to save
+    global_manager.save_global_config_only(config_file, config_dir)
 
 
 def _determine_target_file(config_file: Path | None, config_dir: Path | None) -> Path:

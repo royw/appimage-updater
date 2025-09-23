@@ -240,28 +240,18 @@ class EditCommand(Command):
 
     def _save_config(self, config: Config) -> None:
         """Save the updated configuration."""
-        import json
         from pathlib import Path
-
+        from ..config.manager import Manager
+        
+        manager = Manager()
+        
         if self.params.config_file:
-            # Save to single file
-            config_data = {
-                "applications": [app.model_dump(exclude_none=False) for app in config.applications],
-            }
-            with self.params.config_file.open("w") as f:
-                json.dump(config_data, f, indent=2, default=str)
+            # Save to single file using manager
+            manager.save_single_file_config(config, self.params.config_file)
         elif self.params.config_dir:
-            # Directory-based config - save to individual files in config directory
+            # Directory-based config - save using manager
             config_dir = Path(self.params.config_dir)
-            config_dir.mkdir(parents=True, exist_ok=True)
-
-            # Save individual app configs directly in config directory
-            for app in config.applications:
-                app_file = config_dir / f"{app.name.lower()}.json"
-                # For directory-based configs, save as single app wrapped in applications array
-                app_data = {"applications": [app.model_dump(exclude_none=False)]}
-                with app_file.open("w") as f:
-                    json.dump(app_data, f, indent=2, default=str)
+            manager.save_directory_config(config, config_dir)
         else:
             # TODO: Handle default configuration save mechanism
             # Currently both config_file and config_dir are None, so configuration changes aren't being saved

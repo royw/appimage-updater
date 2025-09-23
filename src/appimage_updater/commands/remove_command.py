@@ -174,32 +174,29 @@ class RemoveCommand(Command):
         return config
 
     def _save_single_file_config(self, config: Config) -> None:
-        """Save configuration to a single file."""
-        import json
+        """Save configuration to a single JSON file."""
+        if not self.params.config_file:
+            raise ValueError("Config file path is required for single file save")
 
-        if self.params.config_file:
-            config_data = {
-                "global_config": config.global_config.model_dump(),
-                "applications": [app.model_dump() for app in config.applications],
-            }
-            with self.params.config_file.open("w") as f:
-                json.dump(config_data, f, indent=2, default=str)
+        # Use manager method for config file operations
+        from ..config.manager import Manager
+        manager = Manager()
+        manager.save_single_file_config(config, self.params.config_file)
 
     def _delete_removed_app_files(self, config_dir: Path, removed_apps: list[ApplicationConfig]) -> None:
         """Delete individual app config files for removed apps."""
-        for app in removed_apps:
-            app_file = config_dir / f"{app.name.lower()}.json"
-            if app_file.exists():
-                app_file.unlink()
+        # Use manager method for config file operations
+        from ..config.manager import Manager
+        manager = Manager()
+        app_names = [app.name for app in removed_apps]
+        manager.delete_app_config_files(app_names, config_dir)
 
     def _update_global_config_file(self, config_dir: Path, config: Config) -> None:
         """Update global config file if it exists."""
-        import json
-
-        global_config_file = config_dir / "config.json"
-        if global_config_file.exists():
-            with global_config_file.open("w") as f:
-                json.dump(config.global_config.model_dump(), f, indent=2, default=str)
+        # Use manager method for config file operations
+        from ..config.manager import Manager
+        manager = Manager()
+        manager.update_global_config_in_directory(config, config_dir)
 
     def _save_directory_based_config_with_path(
         self, config: Config, removed_apps: list[ApplicationConfig], config_dir: Path
