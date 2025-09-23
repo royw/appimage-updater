@@ -178,30 +178,44 @@ class VersionChecker:
 
     def _get_current_version_from_files(self, app_config: ApplicationConfig) -> str | None:
         """Determine current version by analyzing existing files in download directory."""
-        download_dir = getattr(app_config, "download_dir", None) or Path.home() / "Downloads"
-        if not download_dir.exists():
+        download_dir = self._get_download_directory(app_config)
+        if not download_dir or not download_dir.exists():
             return None
 
-        # Find all AppImage files in the directory
-        app_files: list[Path] = []
-        for pattern in ["*.AppImage", "*.appimage"]:
-            app_files.extend(download_dir.glob(pattern))
-
+        app_files = self._find_appimage_files(download_dir)
         if not app_files:
             return None
 
-        # Extract versions from filenames and find the newest
+        version_files = self._extract_versions_from_files(app_files)
+        if not version_files:
+            return None
+
+        return self._select_newest_version(version_files)
+
+    def _get_download_directory(self, app_config: ApplicationConfig) -> Path | None:
+        """Get the download directory for the application."""
+        return getattr(app_config, "download_dir", None) or Path.home() / "Downloads"
+
+    def _find_appimage_files(self, download_dir: Path) -> list[Path]:
+        """Find all AppImage files in the directory."""
+        app_files: list[Path] = []
+        for pattern in ["*.AppImage", "*.appimage"]:
+            app_files.extend(download_dir.glob(pattern))
+        return app_files
+
+    def _extract_versions_from_files(self, app_files: list[Path]) -> list[tuple[str, float, Path]]:
+        """Extract version information from AppImage files."""
         version_files = []
         for file_path in app_files:
             version_str = self._extract_version_from_filename(file_path.name)
             if version_str:
                 version_files.append((version_str, file_path.stat().st_mtime, file_path))
+        return version_files
 
-        if not version_files:
-            return None
-
-        # Sort by version (descending) then by modification time (newest first)
+    def _select_newest_version(self, version_files: list[tuple[str, float, Path]]) -> str:
+        """Select the newest version from the list of version files."""
         try:
+            # Sort by version (descending) then by modification time (newest first)
             version_files.sort(key=lambda x: (version.parse(x[0].lstrip("v")), x[1]), reverse=True)
             return normalize_version_string(version_files[0][0])
         except Exception:
