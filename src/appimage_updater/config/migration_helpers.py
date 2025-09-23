@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from pathlib import Path
 from typing import Any
 
@@ -190,25 +189,6 @@ def _apply_checksum_updates(app: ApplicationConfig, updates: dict[str, Any]) -> 
     return changes
 
 
-def apply_updates_to_app(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
-    """Apply legacy updates dictionary to ApplicationConfig properties.
-
-    Args:
-        app: ApplicationConfig object to update
-        updates: Dictionary of updates to apply
-
-    Returns:
-        List of change descriptions
-    """
-    changes = []
-    changes.extend(_apply_string_updates(app, updates))
-    changes.extend(_apply_path_updates(app, updates))
-    changes.extend(_apply_boolean_updates(app, updates))
-    changes.extend(_apply_integer_updates(app, updates))
-    changes.extend(_apply_checksum_updates(app, updates))
-    return changes
-
-
 def _add_missing_source_type(app_data: dict[str, Any]) -> None:
     """Add missing source_type field for backward compatibility."""
     if "source_type" not in app_data:
@@ -355,65 +335,3 @@ def migrate_legacy_add_application(app_dict: dict[str, Any], config_file: Path |
         app_configs.save()
 
     logger.info(f"Added application '{app_dict['name']}' using new API")
-
-
-def validate_migration_equivalence(old_result: Any, new_global: GlobalConfig, new_apps: AppConfigs) -> bool:
-    """Validate that migration produces equivalent results.
-
-    Args:
-        old_result: Result from old API
-        new_global: GlobalConfig from new API
-        new_apps: AppConfigs from new API
-
-    Returns:
-        True if results are equivalent
-    """
-    try:
-        # Compare global configuration
-        if hasattr(old_result, "global_config"):
-            old_global = old_result.global_config
-
-            # Compare basic settings
-            if (
-                old_global.concurrent_downloads != new_global.concurrent_downloads
-                or old_global.timeout_seconds != new_global.timeout_seconds
-                or old_global.user_agent != new_global.user_agent
-            ):
-                return False
-
-        # Compare applications
-        if hasattr(old_result, "applications"):
-            old_apps = old_result.applications
-            new_app_list = list(new_apps)
-
-            if len(old_apps) != len(new_app_list):
-                return False
-
-            # Compare each application
-            for old_app, new_app in zip(old_apps, new_app_list, strict=False):
-                if (
-                    old_app.name != new_app.name
-                    or old_app.url != new_app.url
-                    or str(old_app.download_dir) != str(new_app.download_dir)
-                ):
-                    return False
-
-        return True
-
-    except Exception as e:
-        logger.warning(f"Migration validation failed: {e}")
-        return False
-
-
-def create_migration_warning(old_function: str, new_approach: str) -> None:
-    """Create a migration warning for deprecated function usage.
-
-    Args:
-        old_function: Name of the deprecated function
-        new_approach: Description of the new approach
-    """
-    warnings.warn(
-        f"Using deprecated function '{old_function}'. Consider migrating to: {new_approach}",
-        DeprecationWarning,
-        stacklevel=3,
-    )

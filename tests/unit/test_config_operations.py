@@ -7,91 +7,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from appimage_updater.config.operations import (
-    collect_basic_edit_updates,
     collect_edit_updates,
     validate_url_update,
 )
 
 
-class TestCollectBasicEditUpdates:
-    """Test the collect_basic_edit_updates function."""
-
-    def test_collect_basic_updates_without_force(self):
-        """Test collecting basic updates without force flag."""
-        updates = collect_basic_edit_updates(
-            url="https://github.com/test/repo",
-            download_dir="/tmp/test",
-            basename=None,
-            pattern="test.*\\.AppImage$",
-            enable=True,
-            prerelease=False,
-            force=False,
-        )
-
-        expected = {
-            "url": "https://github.com/test/repo",
-            "force": False,
-            "download_dir": "/tmp/test",
-            "pattern": "test.*\\.AppImage$",
-            "enabled": True,
-            "prerelease": False,
-        }
-        assert updates == expected
-
-    def test_collect_basic_updates_with_force(self):
-        """Test collecting basic updates with force flag."""
-        updates = collect_basic_edit_updates(
-            url="https://direct-download.com/app.AppImage",
-            download_dir=None,
-            basename=None,
-            pattern=None,
-            enable=None,
-            prerelease=None,
-            force=True,
-        )
-
-        expected = {
-            "url": "https://direct-download.com/app.AppImage",
-            "force": True,
-        }
-        assert updates == expected
-
-    def test_collect_basic_updates_force_only_with_url(self):
-        """Test that force flag is only included when URL is provided."""
-        updates = collect_basic_edit_updates(
-            url="https://github.com/test/repo",
-            download_dir="/tmp/test",
-            basename=None,
-            pattern=None,
-            enable=None,
-            prerelease=None,
-            force=True,
-        )
-
-        expected = {
-            "url": "https://github.com/test/repo",
-            "force": True,
-            "download_dir": "/tmp/test",
-        }
-        assert updates == expected
-        assert "force" in updates
-
-    def test_collect_basic_updates_default_force_false(self):
-        """Test that force defaults to False when not specified."""
-        updates = collect_basic_edit_updates(
-            url="https://github.com/test/repo",
-            download_dir=None,
-            basename=None,
-            pattern=None,
-            enable=None,
-            prerelease=None,
-        )
-
-        expected = {
-            "url": "https://github.com/test/repo",
-            "force": False,
-        }
-        assert updates == expected
 
 
 class TestCollectEditUpdates:

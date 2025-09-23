@@ -2062,17 +2062,22 @@ def _display_check_results(check_results: list[Any], dry_run: bool) -> None:
     """Display check results."""
     from .ui.output.context import get_output_formatter
 
-    logger.debug("Displaying check results")
+    logger.debug("Displaying check results: {}", check_results)
     output_formatter = get_output_formatter()
+    logger.debug("Output formatter: {}", output_formatter)
 
     if output_formatter:
         results_data = _convert_check_results_to_dict(check_results)
+        logger.debug("Results data: {}", results_data)
         if dry_run:
+            logger.debug("Dry run mode, not printing check results")
             output_formatter.print_table(results_data, title="Download URLs")
         else:
+            logger.debug("Run mode, printing check results")
             output_formatter.print_check_results(results_data)
     else:
         # Fallback to original display function
+        logger.debug("Output formatter not found, using fallback display function")
         display_check_results(check_results, show_urls=dry_run)
 
 
@@ -2089,11 +2094,12 @@ def _extract_result_data(result: Any) -> dict[str, Any]:
     """Extract data from a single check result."""
     result_dict = {}
 
-    # Extract application name
+    # Extract application name - ensure it's never empty
     if hasattr(result, "app_name") and result.app_name:
-        result_dict["Application"] = result.app_name
+        app_name = result.app_name.strip()
+        result_dict["Application"] = app_name if app_name else "Unknown App"
     else:
-        result_dict["Application"] = "Unknown"
+        result_dict["Application"] = "Unknown App"
 
     # Extract status
     if hasattr(result, "success"):

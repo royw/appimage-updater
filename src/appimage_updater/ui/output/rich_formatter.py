@@ -295,17 +295,28 @@ class RichOutputFormatter:
     def _dict_to_check_result(self, result_data: dict[str, Any]) -> CheckResult:
         """Convert dictionary to CheckResult for compatibility."""
         # Extract app name from either "Application" or "app_name" key
-        app_name = result_data.get("Application", result_data.get("app_name", ""))
+        app_name = result_data.get("Application", result_data.get("app_name", "Unknown App"))
+        if not app_name or not app_name.strip():
+            app_name = "Unknown App"
 
         # Extract status - convert "Success"/"Error" back to boolean
         status_str = result_data.get("Status", "")
         success = status_str == "Success"
 
-        # Extract error message from "Update Available" if it contains error text
-        update_available = result_data.get("Update Available", "")
+        # For error cases, the error message is in "Update Available" field
+        update_available_field = result_data.get("Update Available", "")
         error_message = None
-        if "error" in update_available.lower() or "failed" in update_available.lower():
-            error_message = update_available
+        update_available = False
+
+        if not success:
+            # For errors, the "Update Available" field contains the error message
+            error_message = (
+                update_available_field if update_available_field not in ["Yes", "No", "Unknown"] else "Unknown error"
+            )
+        else:
+            # For success cases, check if update is available
+            update_available = update_available_field == "Yes"
+
         return CheckResult(
             app_name=app_name,
             success=success,
@@ -313,7 +324,7 @@ class RichOutputFormatter:
             error_message=error_message,
             current_version=result_data.get("Current Version"),
             available_version=result_data.get("Latest Version"),
-            update_available=result_data.get("Update Available") == "Yes",
+            update_available=update_available,
             download_url=result_data.get("Download URL"),
         )
 
@@ -327,10 +338,13 @@ class RichOutputFormatter:
         table.add_column("Update Available", style="red")
 
         for result in results:
+            # Extract app_name once at the beginning of each iteration
+            app_name = result.app_name
+
             if not result.success:
                 # Error row
                 table.add_row(
-                    result.app_name,
+                    app_name,
                     "[red]Error[/red]",
                     "[dim]N/A[/dim]",
                     "[dim]N/A[/dim]",
@@ -354,7 +368,7 @@ class RichOutputFormatter:
                         status = "[green]Up to date[/green]"
                         update_indicator = "No"
                     table.add_row(
-                        result.app_name,
+                        app_name,
                         status,
                         current_display,
                         latest_display,
@@ -363,7 +377,7 @@ class RichOutputFormatter:
                 else:
                     # Truly no data available
                     table.add_row(
-                        result.app_name,
+                        app_name,
                         "[yellow]No updates found[/yellow]",
                         "[dim]N/A[/dim]",
                         "[dim]N/A[/dim]",
@@ -376,12 +390,12 @@ class RichOutputFormatter:
                 latest = format_version_display(candidate.latest_version)
 
                 if candidate.needs_update:
-                    status = "[green]Up to date[/green]"
-                    update_indicator = "Update available"
-                else:
                     status = "[yellow]Update available[/yellow]"
-                    update_indicator = "Up to date"
+                    update_indicator = "Yes"
+                else:
+                    status = "[green]Up to date[/green]"
+                    update_indicator = "No"
 
-                table.add_row(result.app_name, status, current, latest, update_indicator)
+                table.add_row(app_name, status, current, latest, update_indicator)
 
         self.console.print(table)

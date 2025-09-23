@@ -16,52 +16,13 @@ from rich.console import Console
 from ..pattern_generator import detect_source_type, generate_appimage_pattern_async, should_enable_prerelease
 from ..repositories.factory import get_repository_client
 from ..ui.display import _replace_home_with_tilde
-from .deprecation import deprecated
 from .loader import (
     get_default_config_dir,
     get_default_config_path,
-    load_config_from_file,
-    load_configs_from_directory,
 )
-from .models import Config, GlobalConfig
+from .models import GlobalConfig
 
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
-
-
-@deprecated(
-    "This function uses the old procedural API", "appimage_updater.config.manager.GlobalConfig() and AppConfigs()"
-)
-def load_config(config_file: Path | None, config_dir: Path | None) -> Any:
-    """Load configuration from file or directory."""
-    if config_file:
-        logger.debug(f"Loading configuration from specified file: {config_file}")
-        return load_config_from_file(config_file)
-
-    target_dir = config_dir or get_default_config_dir()
-    logger.debug(f"Checking for configuration directory: {target_dir}")
-    if target_dir.exists():
-        logger.debug(f"Loading configurations from directory: {target_dir}")
-        return load_configs_from_directory(target_dir)
-
-    # Try default config file
-    default_file = get_default_config_path()
-    logger.debug(f"Checking for default configuration file: {default_file}")
-    if default_file.exists():
-        logger.debug(f"Loading configuration from default file: {default_file}")
-        return load_config_from_file(default_file)
-
-    logger.debug("No configuration found, creating default directory structure")
-    # Create default config directory structure automatically
-    default_dir = get_default_config_dir()
-    default_dir.mkdir(parents=True, exist_ok=True)
-    logger.debug(f"Created default config directory: {default_dir}")
-
-    # Create global config.json file with default settings
-    _create_default_global_config(default_dir.parent)
-
-    # Return empty config that will be populated when first app is added
-
-    return Config(global_config=GlobalConfig(), applications=[])
 
 
 def _create_default_global_config(config_parent_dir: Path) -> None:
@@ -363,29 +324,6 @@ def _apply_rotation_config(
         _apply_symlink_path(config, symlink, defaults, name)
 
 
-@deprecated("This function uses the old procedural API", "appimage_updater.config.manager.AppConfigs().add()")
-def add_application_to_config(app_config: dict[str, Any], config_file: Path | None, config_dir: Path | None) -> None:
-    """Add an application configuration to the config file or directory."""
-    # Determine target configuration location
-    if config_file:
-        add_to_config_file(app_config, config_file)
-    elif config_dir:
-        add_to_config_directory(app_config, config_dir)
-    else:
-        # Use default location - prefer directory if it exists, otherwise create file
-        default_dir = get_default_config_dir()
-        default_file = get_default_config_path()
-
-        if default_dir.exists():
-            add_to_config_directory(app_config, default_dir)
-        elif default_file.exists():
-            add_to_config_file(app_config, default_file)
-        else:
-            # Create new directory-based config (recommended)
-            default_dir.mkdir(parents=True, exist_ok=True)
-            add_to_config_directory(app_config, default_dir)
-
-
 def add_to_config_file(app_config: dict[str, Any], config_file: Path) -> None:
     """Add application to a single JSON config file."""
     if config_file.exists():
@@ -575,39 +513,6 @@ def _add_source_type_update(updates: dict[str, Any], direct: bool, app: Any) -> 
         updates["source_type"] = new_source_type
 
 
-@deprecated(
-    "This function uses the old procedural API",
-    "appimage_updater.config.manager.AppConfigs()[app_name] property access",
-)
-def collect_basic_edit_updates(
-    url: str | None,
-    download_dir: str | None,
-    basename: str | None,
-    pattern: str | None,
-    enable: bool | None,
-    prerelease: bool | None,
-    force: bool = False,
-    direct: bool | None = None,
-    auto_subdir: bool | None = None,
-    app: Any = None,
-) -> dict[str, Any]:
-    """Collect basic configuration updates."""
-    updates: dict[str, Any] = {}
-
-    if url is not None:
-        _add_url_update(updates, url, force)
-
-    _add_basic_field_updates(updates, download_dir, basename, pattern, enable, prerelease)
-
-    if direct is not None:
-        _add_source_type_update(updates, direct, app)
-
-    if auto_subdir is not None:
-        updates["auto_subdir"] = auto_subdir
-
-    return updates
-
-
 def collect_rotation_edit_updates(
     rotation: bool | None,
     symlink_path: str | None,
@@ -667,14 +572,19 @@ def collect_edit_updates(
     app: Any = None,
 ) -> dict[str, Any]:
     """Collect all configuration updates for edit command."""
-    updates = {}
+    updates: dict[str, Any] = {}
 
     # Collect basic updates
-    updates.update(
-        collect_basic_edit_updates(
-            url, download_dir, basename, pattern, enable, prerelease, force, direct, auto_subdir, app
-        )
-    )
+    if url is not None:
+        _add_url_update(updates, url, force)
+
+    _add_basic_field_updates(updates, download_dir, basename, pattern, enable, prerelease)
+
+    if direct is not None:
+        _add_source_type_update(updates, direct, app)
+
+    if auto_subdir is not None:
+        updates["auto_subdir"] = auto_subdir
 
     # Collect rotation updates
     updates.update(collect_rotation_edit_updates(rotation, symlink_path, retain_count))

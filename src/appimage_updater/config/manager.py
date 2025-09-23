@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
 
 from loguru import logger
 
@@ -245,10 +244,6 @@ class GlobalConfig:
     def default_prerelease(self, value: bool) -> None:
         self._config.global_config.defaults.prerelease = value
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        return self._config.global_config.model_dump()
-
 
 class AppConfigs:
     """Application configurations manager with iterator support.
@@ -329,29 +324,3 @@ class AppConfigs:
         """Remove an application configuration."""
         self._config.applications = [app for app in self._config.applications if app.name != app_name]
         self._filtered_apps = self._get_filtered_apps()
-
-    def get_enabled(self) -> list[ApplicationConfig]:
-        """Get only enabled application configurations."""
-        return [app for app in self._filtered_apps if app.enabled]
-
-    def get_by_pattern(self, pattern: str) -> list[ApplicationConfig]:
-        """Get applications matching a name pattern."""
-        import re
-
-        regex = re.compile(pattern, re.IGNORECASE)
-        return [app for app in self._filtered_apps if regex.search(app.name)]
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {"applications": [app.model_dump() for app in self._filtered_apps]}
-
-
-# Convenience functions for backward compatibility
-def get_global_config(config_path: Path | None = None) -> GlobalConfig:
-    """Get global configuration manager."""
-    return GlobalConfig(config_path)
-
-
-def get_app_configs(*app_names: str, config_path: Path | None = None) -> AppConfigs:
-    """Get application configurations manager."""
-    return AppConfigs(*app_names, config_path=config_path)

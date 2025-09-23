@@ -216,8 +216,13 @@ def _create_result_row(result: CheckResult, show_urls: bool) -> list[str]:
 
 def _create_error_row(result: CheckResult, show_urls: bool) -> list[str]:
     """Create row for error results."""
+    # Ensure app_name is never empty - use "Unknown App" as fallback
+    app_name = result.app_name.strip() if result.app_name else "Unknown App"
+    if not app_name:  # Handle case where app_name is just whitespace
+        app_name = "Unknown App"
+
     row = [
-        result.app_name,
+        app_name,
         "Error",
         "-",
         "-",
@@ -230,8 +235,13 @@ def _create_error_row(result: CheckResult, show_urls: bool) -> list[str]:
 
 def _create_no_candidate_row(result: CheckResult, show_urls: bool) -> list[str]:
     """Create row for results with no candidate."""
+    # Ensure app_name is never empty - use "Unknown App" as fallback
+    app_name = result.app_name.strip() if result.app_name else "Unknown App"
+    if not app_name:  # Handle case where app_name is just whitespace
+        app_name = "Unknown App"
+
     row = [
-        result.app_name,
+        app_name,
         "No candidate",
         "-",
         "-",
@@ -282,8 +292,13 @@ def _create_success_row(result: CheckResult, show_urls: bool) -> list[str]:
     # Show version in Update column when update is needed, just emoji when up to date
     update_display = latest if candidate.needs_update else update_indicator
 
+    # Ensure app_name is never empty - use "Unknown App" as fallback
+    app_name = result.app_name.strip() if result.app_name else "Unknown App"
+    if not app_name:  # Handle case where app_name is just whitespace
+        app_name = "Unknown App"
+
     row = [
-        result.app_name,
+        app_name,
         status,
         current,
         latest,

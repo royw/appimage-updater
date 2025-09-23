@@ -7,7 +7,6 @@ from unittest.mock import Mock, patch
 from appimage_updater.config.migration_helpers import (
     resolve_legacy_config_path,
     convert_app_dict_to_config,
-    apply_updates_to_app,
 )
 from appimage_updater.config.models import ApplicationConfig
 
@@ -54,28 +53,4 @@ class TestConvertAppDictToConfig:
         assert result.pattern == "test.*\\.AppImage$"
 
 
-class TestApplyUpdatesToApp:
-    """Test applying updates to ApplicationConfig."""
 
-    def test_basic_updates(self):
-        """Test basic field updates."""
-        app = ApplicationConfig(
-            name="TestApp",
-            source_type="github",
-            url="https://github.com/old/app",
-            download_dir=Path("/tmp/old"),
-            pattern="old.*\\.AppImage$",
-        )
-        
-        updates = {
-            "url": "https://github.com/new/app",
-            "pattern": "new.*\\.AppImage$",
-            "basename": "NewApp",
-        }
-        
-        changes = apply_updates_to_app(app, updates)
-        
-        assert app.url == "https://github.com/new/app"
-        assert app.pattern == "new.*\\.AppImage$"
-        assert app.basename == "NewApp"
-        assert len(changes) == 3
