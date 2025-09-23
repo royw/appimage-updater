@@ -84,50 +84,58 @@ class ProgressiveTimeoutClient:
         Raises:
             httpx.HTTPError: If all timeout attempts fail
         """
+        # Prepare operation types and attempt progressive timeouts
+        operation_types = self._prepare_operation_types(operation_types)
+        return await self._attempt_progressive_timeouts(url, operation_types, **kwargs)
+
+    def _prepare_operation_types(self, operation_types: list[str] | None) -> list[str]:
+        """Prepare the list of operation types to try."""
         if operation_types is None:
-            operation_types = ["quick_check", "fallback"]
+            return ["quick_check", "fallback"]
+        return operation_types
 
-        last_error = None
-
+    async def _attempt_progressive_timeouts(self, url: str, operation_types: list[str], **kwargs: Any) -> httpx.Response:
+        """Attempt requests with progressively longer timeouts."""
         for i, operation_type in enumerate(operation_types):
-            timeout = self.timeout_strategy.get_timeout(operation_type)
-
             try:
-                logger.debug(f"Attempting {url} with {operation_type} timeout ({timeout}s)")
-
-                client_config = self.timeout_strategy.create_client_config(
-                    operation_type, follow_redirects=True, max_redirects=10, **kwargs
-                )
-
-                async with httpx.AsyncClient(**client_config) as client:
-                    response = await client.get(url)
-                    response.raise_for_status()
-
-                    logger.debug(f"Success with {operation_type} timeout: {response.status_code}")
-                    return response
-
+                response = await self._attempt_single_timeout(url, operation_type, **kwargs)
+                return response
             except (httpx.TimeoutException, httpx.ConnectTimeout, httpx.ReadTimeout) as e:
-                last_error = e
-                logger.debug(f"Timeout with {operation_type} ({timeout}s): {e}")
-
-                # If this is the last attempt, re-raise the error
-                if i == len(operation_types) - 1:
-                    logger.warning(f"All timeout attempts failed for {url}")
-                    raise
-
-                # Otherwise, continue to next timeout strategy
-                continue
-
+                self._handle_timeout_error(e, operation_type, url, i, len(operation_types))
             except httpx.HTTPError as e:
-                # For non-timeout errors, don't retry with longer timeouts
-                logger.debug(f"HTTP error (not timeout-related): {e}")
-                raise
+                self._handle_http_error(e)
 
-        # This should never be reached, but just in case
-        if last_error:
-            raise last_error
-        else:
-            raise httpx.RequestError(f"Failed to request {url} with all timeout strategies")
+    async def _attempt_single_timeout(self, url: str, operation_type: str, **kwargs: Any) -> httpx.Response:
+        """Attempt a single request with the specified timeout."""
+        timeout = self.timeout_strategy.get_timeout(operation_type)
+        logger.debug(f"Attempting {url} with {operation_type} timeout ({timeout}s)")
+
+        client_config = self.timeout_strategy.create_client_config(
+            operation_type, follow_redirects=True, max_redirects=10, **kwargs
+        )
+
+        async with httpx.AsyncClient(**client_config) as client:
+            response = await client.get(url)
+            response.raise_for_status()
+
+            logger.debug(f"Success with {operation_type} timeout: {response.status_code}")
+            return response
+
+    def _handle_timeout_error(self, error: Exception, operation_type: str, url: str, attempt_index: int, total_attempts: int) -> None:
+        """Handle timeout errors during progressive timeout attempts."""
+        timeout = self.timeout_strategy.get_timeout(operation_type)
+        logger.debug(f"Timeout with {operation_type} ({timeout}s): {error}")
+
+        # If this is the last attempt, re-raise the error
+        if attempt_index == total_attempts - 1:
+            logger.warning(f"All timeout attempts failed for {url}")
+            raise
+
+    def _handle_http_error(self, error: httpx.HTTPError) -> None:
+        """Handle non-timeout HTTP errors."""
+        # For non-timeout errors, don't retry with longer timeouts
+        logger.debug(f"HTTP error (not timeout-related): {error}")
+        raise
 
 
 # Global timeout strategy instance
