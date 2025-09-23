@@ -113,18 +113,23 @@ class TestFormatOptions:
 
     def test_list_command_json_output(self) -> None:
         """Test that list command produces valid JSON output when --format json is used."""
-        try:
-            # Run the list command with JSON format
-            result = subprocess.run(
-                ["uv", "run", "appimage-updater", "list", "--format", "json"],
-                capture_output=True,
-                text=True,
-                timeout=30,
-                cwd=Path(__file__).parent.parent.parent,
-            )
+        from typer.testing import CliRunner
+        from appimage_updater.main import app
+        import tempfile
+        
+        runner = CliRunner()
+        
+        # Use temporary config directory to avoid interference
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_config_dir = Path(temp_dir) / "config"
+            temp_config_dir.mkdir()
+            
+            result = runner.invoke(app, [
+                "list", "--format", "json", "--config-dir", str(temp_config_dir)
+            ])
             
             # Command should succeed
-            assert result.returncode == 0, f"Command failed with exit code {result.returncode}. stderr: {result.stderr}"
+            assert result.exit_code == 0, f"Command failed with exit code {result.exit_code}. Output: {result.stdout}"
             
             # Output should be valid JSON
             try:
@@ -143,26 +148,26 @@ class TestFormatOptions:
             except json.JSONDecodeError as e:
                 # This is the failure we expect - output is not valid JSON
                 assert False, f"list command with --format json produced invalid JSON output. Error: {e}. Output: {result.stdout[:500]}"
-                
-        except subprocess.TimeoutExpired:
-            assert False, "list command timed out after 30 seconds"
-        except FileNotFoundError:
-            assert False, "uv command not found - make sure uv is installed"
 
     def test_list_command_html_output(self) -> None:
         """Test that list command produces valid HTML output when --format html is used."""
-        try:
-            # Run the list command with HTML format
-            result = subprocess.run(
-                ["uv", "run", "appimage-updater", "list", "--format", "html"],
-                capture_output=True,
-                text=True,
-                timeout=30,
-                cwd=Path(__file__).parent.parent.parent,
-            )
+        from typer.testing import CliRunner
+        from appimage_updater.main import app
+        import tempfile
+        
+        runner = CliRunner()
+        
+        # Use temporary config directory to avoid interference
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_config_dir = Path(temp_dir) / "config"
+            temp_config_dir.mkdir()
+            
+            result = runner.invoke(app, [
+                "list", "--format", "html", "--config-dir", str(temp_config_dir)
+            ])
             
             # Command should succeed
-            assert result.returncode == 0, f"Command failed with exit code {result.returncode}. stderr: {result.stderr}"
+            assert result.exit_code == 0, f"Command failed with exit code {result.exit_code}. Output: {result.stdout}"
             
             # Output should be valid HTML
             output = result.stdout.strip()
@@ -176,34 +181,34 @@ class TestFormatOptions:
             missing_elements = [elem for elem in html_elements if elem not in output]
             
             if not has_html_start:
-                assert False, f"list command with --format html should start with HTML doctype or tag. Output: {output[:200]}"
+                raise AssertionError(f"list command with --format html should start with HTML doctype or tag. Output: {output[:200]}")
             
             if missing_elements:
-                assert False, f"list command with --format html missing HTML elements: {missing_elements}. Output: {output[:200]}"
+                raise AssertionError(f"list command with --format html missing HTML elements: {missing_elements}. Output: {output[:200]}")
                 
             # Should contain title
             if "<title>" not in output:
-                assert False, f"list command with --format html missing <title> tag. Output: {output[:200]}"
-                
-        except subprocess.TimeoutExpired:
-            assert False, "list command timed out after 30 seconds"
-        except FileNotFoundError:
-            assert False, "uv command not found - make sure uv is installed"
+                raise AssertionError(f"list command with --format html missing <title> tag. Output: {output[:200]}")
 
     def test_list_command_plain_output(self) -> None:
         """Test that list command produces valid plain text output when --format plain is used."""
-        try:
-            # Run the list command with plain format
-            result = subprocess.run(
-                ["uv", "run", "appimage-updater", "list", "--format", "plain"],
-                capture_output=True,
-                text=True,
-                timeout=30,
-                cwd=Path(__file__).parent.parent.parent,
-            )
+        from typer.testing import CliRunner
+        from appimage_updater.main import app
+        import tempfile
+        
+        runner = CliRunner()
+        
+        # Use temporary config directory to avoid interference
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_config_dir = Path(temp_dir) / "config"
+            temp_config_dir.mkdir()
+            
+            result = runner.invoke(app, [
+                "list", "--format", "plain", "--config-dir", str(temp_config_dir)
+            ])
             
             # Command should succeed
-            assert result.returncode == 0, f"Command failed with exit code {result.returncode}. stderr: {result.stderr}"
+            assert result.exit_code == 0, f"Command failed with exit code {result.exit_code}. Output: {result.stdout}"
             
             # Output should be plain text (not JSON or HTML)
             output = result.stdout.strip()
@@ -226,31 +231,31 @@ class TestFormatOptions:
                 missing_elements = [elem for elem in expected_elements if elem not in output]
                 
                 if missing_elements:
-                    assert False, f"Plain format missing expected elements: {missing_elements}. Output: {output[:500]}"
+                    raise AssertionError(f"Plain format missing expected elements: {missing_elements}. Output: {output[:500]}")
                     
                 # Should contain table-like structure (pipes or similar)
                 if "|" not in output and "name" not in output:
-                    assert False, f"Plain format should contain table structure. Output: {output[:500]}"
-                
-        except subprocess.TimeoutExpired:
-            assert False, "list command timed out after 30 seconds"
-        except FileNotFoundError:
-            assert False, "uv command not found - make sure uv is installed"
+                    raise AssertionError(f"Plain format should contain table structure. Output: {output[:500]}")
 
     def test_list_command_rich_output(self) -> None:
         """Test that list command produces valid Rich output when --format rich is used."""
-        try:
-            # Run the list command with rich format
-            result = subprocess.run(
-                ["uv", "run", "appimage-updater", "list", "--format", "rich"],
-                capture_output=True,
-                text=True,
-                timeout=30,
-                cwd=Path(__file__).parent.parent.parent,
-            )
+        from typer.testing import CliRunner
+        from appimage_updater.main import app
+        import tempfile
+        
+        runner = CliRunner()
+        
+        # Use temporary config directory to avoid interference
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_config_dir = Path(temp_dir) / "config"
+            temp_config_dir.mkdir()
+            
+            result = runner.invoke(app, [
+                "list", "--format", "rich", "--config-dir", str(temp_config_dir)
+            ])
             
             # Command should succeed
-            assert result.returncode == 0, f"Command failed with exit code {result.returncode}. stderr: {result.stderr}"
+            assert result.exit_code == 0, f"Command failed with exit code {result.exit_code}. Output: {result.stdout}"
             
             # Output should be Rich formatted text (not JSON or HTML)
             output = result.stdout.strip()
@@ -273,19 +278,14 @@ class TestFormatOptions:
                 has_rich_formatting = any(indicator in output for indicator in rich_indicators)
                 
                 if not has_rich_formatting:
-                    assert False, f"Rich format should contain table formatting characters. Output: {output[:500]}"
+                    raise AssertionError(f"Rich format should contain table formatting characters. Output: {output[:500]}")
                     
                 # Should contain expected Rich table elements
                 expected_elements = ["Configured Applications", "Total:", "applications"]
                 missing_elements = [elem for elem in expected_elements if elem not in output]
                 
                 if missing_elements:
-                    assert False, f"Rich format missing expected elements: {missing_elements}. Output: {output[:500]}"
-                
-        except subprocess.TimeoutExpired:
-            assert False, "list command timed out after 30 seconds"
-        except FileNotFoundError:
-            assert False, "uv command not found - make sure uv is installed"
+                    raise AssertionError(f"Rich format missing expected elements: {missing_elements}. Output: {output[:500]}")
 
     def test_all_commands_format_output(self) -> None:
         """Test that all commands produce appropriate output for each format.

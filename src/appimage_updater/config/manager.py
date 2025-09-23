@@ -367,24 +367,8 @@ class AppConfigs:
 
     def _load_application_configs(self) -> Config:
         """Load application configurations from directory or file."""
-        from .loader import ConfigLoadError, get_default_config_path
-
-        config_path = self._config_path
-        if config_path is None:
-            config_path = get_default_config_path()
-            # Check if directory-based config exists
-            config_dir = config_path.parent / "apps"
-            if config_dir.exists() and config_dir.is_dir():
-                config_path = config_dir
-
-        # If a specific config path was provided but doesn't exist, that's an error
-        if self._config_path is not None and not config_path.exists():
-            raise ConfigLoadError(f"Configuration file not found: {config_path}")
-
-        if config_path.is_dir():
-            return self._load_from_directory(config_path)
-        else:
-            return self._load_from_file(config_path)
+        # Use the load_config function for consistency with tests and other code
+        return load_config(self._config_path)
 
     def _load_from_directory(self, config_path: Path) -> Config:
         """Load application configurations from directory of JSON files."""
@@ -470,23 +454,23 @@ class AppConfigs:
     def _save_directory_based_config(self) -> None:
         """Save configuration as individual files in directory."""
         import json
-        
+
         if not self._config_path:
             return
-            
+
         # Ensure directory exists
         self._config_path.mkdir(parents=True, exist_ok=True)
-        
+
         # Save each application as a separate file
         for app in self._config.applications:
             app_filename = f"{app.name.lower()}.json"
             app_file_path = self._config_path / app_filename
-            
+
             # Create application config structure
             app_config_dict = {
                 "applications": [app.model_dump()]
             }
-            
+
             with app_file_path.open("w") as f:
                 json.dump(app_config_dict, f, indent=2, default=str)
 
