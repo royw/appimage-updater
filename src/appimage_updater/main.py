@@ -1198,7 +1198,7 @@ def _create_edit_command(
         checksum_algorithm=checksum_algorithm,
         checksum_pattern=checksum_pattern,
         checksum_required=checksum_required,
-        create_dir=create_dir,
+        create_dir=create_dir or False,
         yes=yes,
         force=force,
         direct=direct,
@@ -1395,7 +1395,7 @@ def _execute_remove_command_workflow(
     config_dir: Path | None,
     yes: bool,
     debug: bool,
-    format: OutputFormat
+    format: OutputFormat,
 ) -> None:
     """Execute the complete remove command workflow."""
     command = CommandFactory.create_remove_command(
@@ -1953,14 +1953,14 @@ async def _get_version_from_repository(app_config: ApplicationConfig, current_fi
         return None
 
 
-async def _get_repository_client(url: str):
+async def _get_repository_client(url: str) -> Any:
     """Get repository client for the given URL."""
     from .repositories.factory import get_repository_client
 
     return get_repository_client(url)
 
 
-def _find_matching_release_version(releases: list, current_file: Path, app_name: str) -> str | None:
+def _find_matching_release_version(releases: list[Any], current_file: Path, app_name: str) -> str | None:
     """Find the release version that matches the current file."""
     for release in releases:
         if release.assets:
@@ -1970,11 +1970,11 @@ def _find_matching_release_version(releases: list, current_file: Path, app_name:
     return None
 
 
-def _check_release_assets(release, current_file: Path, app_name: str) -> str | None:
+def _check_release_assets(release: Any, current_file: Path, app_name: str) -> str | None:
     """Check if any asset in the release matches the current file."""
     for asset in release.assets:
         if _files_match(current_file.name, asset.name, app_name):
-            return release.tag_name.lstrip("v")
+            return str(release.tag_name).lstrip("v")
     return None
 
 
@@ -2055,7 +2055,7 @@ def _handle_verbose_display(
     enabled_count: int,
 ) -> None:
     """Handle verbose information display."""
-    if verbose:
+    if verbose and normalized_names is not None:
         _display_check_verbose_info(normalized_names, dry_run, yes, no_interactive, enabled_count)
 
 
