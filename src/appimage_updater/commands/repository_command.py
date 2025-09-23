@@ -33,44 +33,80 @@ class RepositoryCommand(Command):
         configure_logging(debug=self.params.debug)
 
         try:
-            # Use context manager to make output formatter available throughout the execution
-            if output_formatter:
-                from ..ui.output.context import OutputFormatterContext
-
-                with OutputFormatterContext(output_formatter):
-                    # Validate required parameters (inside context so formatter is available)
-                    validation_errors = self.validate()
-                    if validation_errors:
-                        error_msg = f"Validation errors: {', '.join(validation_errors)}"
-                        from ..ui.output.context import get_output_formatter
-
-                        formatter = get_output_formatter()
-                        if formatter:
-                            formatter.print_error(error_msg)
-                        else:
-                            self.console.print(f"[red]Error: {error_msg}[/red]")
-                        return CommandResult(success=False, message=error_msg, exit_code=1)
-
-                    success = await self._execute_repository_operation()
-            else:
-                # Validate required parameters
-                validation_errors = self.validate()
-                if validation_errors:
-                    error_msg = f"Validation errors: {', '.join(validation_errors)}"
-                    self.console.print(f"[red]Error: {error_msg}[/red]")
-                    return CommandResult(success=False, message=error_msg, exit_code=1)
-
-                success = await self._execute_repository_operation()
-
-            if success:
-                return CommandResult(success=True, message="Repository examination completed successfully")
-            else:
-                return CommandResult(success=False, message="Repository examination failed", exit_code=1)
+            # Execute main repository workflow
+            return await self._execute_main_repository_workflow(output_formatter)
 
         except Exception as e:
-            logger.error(f"Unexpected error in repository command: {e}")
-            logger.exception("Full exception details")
-            return CommandResult(success=False, message=str(e), exit_code=1)
+            return self._handle_repository_execution_error(e)
+
+    async def _execute_main_repository_workflow(self, output_formatter: Any) -> CommandResult:
+        """Execute the main repository command workflow."""
+        if output_formatter:
+            return await self._execute_with_formatter_context(output_formatter)
+        else:
+            return await self._execute_without_formatter()
+
+    async def _execute_with_formatter_context(self, output_formatter: Any) -> CommandResult:
+        """Execute repository command with output formatter context."""
+        from ..ui.output.context import OutputFormatterContext
+
+        with OutputFormatterContext(output_formatter):
+            validation_result = self._validate_with_formatter_error_display()
+            if validation_result:
+                return validation_result
+
+            success = await self._execute_repository_operation()
+            return self._create_repository_result(success)
+
+    async def _execute_without_formatter(self) -> CommandResult:
+        """Execute repository command without output formatter."""
+        validation_result = self._validate_with_console_error_display()
+        if validation_result:
+            return validation_result
+
+        success = await self._execute_repository_operation()
+        return self._create_repository_result(success)
+
+    def _validate_with_formatter_error_display(self) -> CommandResult | None:
+        """Validate parameters and display errors using formatter."""
+        validation_errors = self.validate()
+        if validation_errors:
+            error_msg = f"Validation errors: {', '.join(validation_errors)}"
+            self._display_validation_error_with_formatter(error_msg)
+            return CommandResult(success=False, message=error_msg, exit_code=1)
+        return None
+
+    def _validate_with_console_error_display(self) -> CommandResult | None:
+        """Validate parameters and display errors using console."""
+        validation_errors = self.validate()
+        if validation_errors:
+            error_msg = f"Validation errors: {', '.join(validation_errors)}"
+            self.console.print(f"[red]Error: {error_msg}[/red]")
+            return CommandResult(success=False, message=error_msg, exit_code=1)
+        return None
+
+    def _display_validation_error_with_formatter(self, error_msg: str) -> None:
+        """Display validation error using output formatter."""
+        from ..ui.output.context import get_output_formatter
+
+        formatter = get_output_formatter()
+        if formatter:
+            formatter.print_error(error_msg)
+        else:
+            self.console.print(f"[red]Error: {error_msg}[/red]")
+
+    def _create_repository_result(self, success: bool) -> CommandResult:
+        """Create the appropriate CommandResult based on success status."""
+        if success:
+            return CommandResult(success=True, message="Repository examination completed successfully")
+        else:
+            return CommandResult(success=False, message="Repository examination failed", exit_code=1)
+
+    def _handle_repository_execution_error(self, e: Exception) -> CommandResult:
+        """Handle execution errors."""
+        logger.error(f"Unexpected error in repository command: {e}")
+        logger.exception("Full exception details")
+        return CommandResult(success=False, message=str(e), exit_code=1)
 
     async def _execute_repository_operation(self) -> bool:
         """Execute the core repository operation logic."""

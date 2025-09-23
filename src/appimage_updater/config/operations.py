@@ -494,14 +494,34 @@ def _add_basic_field_updates(
     prerelease: bool | None,
 ) -> None:
     """Add basic field updates to the updates dictionary."""
+    _add_download_dir_update(updates, download_dir)
+    _add_basename_update(updates, basename)
+    _add_pattern_update(updates, pattern)
+    _add_enable_update(updates, enable)
+    _add_prerelease_update(updates, prerelease)
+
+def _add_download_dir_update(updates: dict[str, Any], download_dir: str | None) -> None:
+    """Add download directory update if provided."""
     if download_dir is not None:
         updates["download_dir"] = download_dir
+
+def _add_basename_update(updates: dict[str, Any], basename: str | None) -> None:
+    """Add basename update if provided."""
     if basename is not None:
         updates["basename"] = basename
+
+def _add_pattern_update(updates: dict[str, Any], pattern: str | None) -> None:
+    """Add pattern update if provided."""
     if pattern is not None:
         updates["pattern"] = pattern
+
+def _add_enable_update(updates: dict[str, Any], enable: bool | None) -> None:
+    """Add enable status update if provided."""
     if enable is not None:
         updates["enabled"] = enable
+
+def _add_prerelease_update(updates: dict[str, Any], prerelease: bool | None) -> None:
+    """Add prerelease update if provided."""
     if prerelease is not None:
         updates["prerelease"] = prerelease
 

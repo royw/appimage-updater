@@ -649,37 +649,83 @@ class Downloader:
 
     async def _perform_rotation(self, candidate: UpdateCandidate) -> Path:
         """Perform the actual image rotation and symlink update."""
-        if not candidate.app_config:
-            logger.debug(f"No app config for {candidate.app_name}, skipping rotation")
+        if not self._should_perform_rotation(candidate):
             return candidate.download_path
 
+        # Prepare rotation parameters
+        rotation_params = self._prepare_rotation_parameters(candidate)
+        
+        # Execute rotation steps
+        return await self._execute_rotation_steps(candidate, rotation_params)
+
+    def _should_perform_rotation(self, candidate: UpdateCandidate) -> bool:
+        """Check if rotation should be performed."""
+        if not candidate.app_config:
+            logger.debug(f"No app config for {candidate.app_name}, skipping rotation")
+            return False
+        return True
+
+    def _prepare_rotation_parameters(self, candidate: UpdateCandidate) -> dict:
+        """Prepare parameters needed for rotation."""
         download_dir = candidate.download_path.parent
         logger.debug(f"Starting rotation for {candidate.app_name} in directory: {download_dir}")
         logger.debug(f"Original download path: {candidate.download_path}")
-        # For AppImage files, treat the full filename as the base (including .AppImage)
-        # so rotation suffixes go AFTER .AppImage: filename.AppImage.current
-        if candidate.download_path.suffix.lower() == ".appimage":
-            base_name = candidate.download_path.name  # Full filename including .AppImage
-            extension = ""  # No additional extension
-        else:
-            base_name = candidate.download_path.stem  # filename without extension
-            extension = candidate.download_path.suffix  # original extension
 
+        base_name, extension = self._determine_rotation_naming(candidate.download_path)
         logger.debug(f"Rotation base_name: '{base_name}', extension: '{extension}'")
 
-        # Define the current file path
         current_path = download_dir / f"{base_name}.current{extension}"
         logger.debug(f"Target current path: {current_path}")
 
+        return {
+            'download_dir': download_dir,
+            'base_name': base_name,
+            'extension': extension,
+            'current_path': current_path
+        }
+
+    def _determine_rotation_naming(self, download_path: Path) -> tuple[str, str]:
+        """Determine base name and extension for rotation."""
+        # For AppImage files, treat the full filename as the base (including .AppImage)
+        # so rotation suffixes go AFTER .AppImage: filename.AppImage.current
+        if download_path.suffix.lower() == ".appimage":
+            base_name = download_path.name  # Full filename including .AppImage
+            extension = ""  # No additional extension
+        else:
+            base_name = download_path.stem  # filename without extension
+            extension = download_path.suffix  # original extension
+        
+        return base_name, extension
+
+    async def _execute_rotation_steps(self, candidate: UpdateCandidate, rotation_params: dict) -> Path:
+        """Execute the rotation steps in sequence."""
         # Step 1: Rotate existing files
+        await self._perform_file_rotation(candidate, rotation_params)
+        
+        # Step 2: Move downloaded file to current
+        await self._move_files_to_current(candidate, rotation_params)
+        
+        # Step 3: Update symlink
+        await self._update_rotation_symlink(candidate, rotation_params['current_path'])
+        
+        logger.debug(f"Rotation completed. Final path: {rotation_params['current_path']}")
+        return rotation_params['current_path']
+
+    async def _perform_file_rotation(self, candidate: UpdateCandidate, rotation_params: dict) -> None:
+        """Perform rotation of existing files."""
         logger.debug(f"Step 1: Rotating existing files with retain_count={candidate.app_config.retain_count}")
-        await self._rotate_existing_files(download_dir, base_name, extension, candidate.app_config.retain_count)
+        await self._rotate_existing_files(
+            rotation_params['download_dir'], 
+            rotation_params['base_name'], 
+            rotation_params['extension'], 
+            candidate.app_config.retain_count
+        )
 
-        # Step 2: Move downloaded file to .current
-        # Also move the associated metadata file if it exists
-        original_info_path = candidate.download_path.with_suffix(candidate.download_path.suffix + ".info")
-        current_info_path = current_path.with_suffix(current_path.suffix + ".info")
-
+    async def _move_files_to_current(self, candidate: UpdateCandidate, rotation_params: dict) -> None:
+        """Move downloaded file and metadata to current."""
+        current_path = rotation_params['current_path']
+        
+        # Move main file
         logger.debug(f"Step 2: Moving {candidate.download_path} to {current_path}")
         if candidate.download_path.exists():
             candidate.download_path.rename(current_path)
@@ -688,6 +734,13 @@ class Downloader:
             logger.error(f"Source file does not exist: {candidate.download_path}")
 
         # Move metadata file if it exists
+        self._move_metadata_file(candidate.download_path, current_path)
+
+    def _move_metadata_file(self, original_path: Path, current_path: Path) -> None:
+        """Move metadata file if it exists."""
+        original_info_path = original_path.with_suffix(original_path.suffix + ".info")
+        current_info_path = current_path.with_suffix(current_path.suffix + ".info")
+
         if original_info_path.exists():
             logger.debug(f"Moving metadata file: {original_info_path} to {current_info_path}")
             original_info_path.rename(current_info_path)
@@ -695,15 +748,13 @@ class Downloader:
         else:
             logger.debug(f"No metadata file to move: {original_info_path}")
 
-        # Step 3: Update symlink
+    async def _update_rotation_symlink(self, candidate: UpdateCandidate, current_path: Path) -> None:
+        """Update symlink after rotation."""
         if candidate.app_config.symlink_path:
             logger.debug(f"Step 3: Updating symlink to {candidate.app_config.symlink_path}")
             await self._update_symlink(current_path, candidate.app_config.symlink_path)
         else:
             logger.debug("No symlink configured, skipping symlink update")
-
-        logger.debug(f"Rotation completed. Final path: {current_path}")
-        return current_path
 
     async def _rotate_existing_files(
         self, download_dir: Path, base_name: str, extension: str, retain_count: int

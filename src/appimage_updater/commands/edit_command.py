@@ -40,50 +40,84 @@ class EditCommand(Command):
 
     async def execute(self, output_formatter: Any = None) -> CommandResult:
         """Execute the edit command."""
-
         configure_logging(debug=self.params.debug)
 
         try:
-            # Use context manager to make output formatter available throughout the execution
-            if output_formatter:
-                from ..ui.output.context import OutputFormatterContext
-
-                with OutputFormatterContext(output_formatter):
-                    # Validate required parameters (inside context so formatter is available)
-                    validation_errors = self.validate()
-                    if validation_errors:
-                        error_msg = f"Validation errors: {', '.join(validation_errors)}"
-                        from ..ui.output.context import get_output_formatter
-
-                        formatter = get_output_formatter()
-                        if formatter:
-                            formatter.print_error(error_msg)
-                        else:
-                            self.console.print(f"[red]Error: {error_msg}[/red]")
-                        return CommandResult(success=False, message=error_msg, exit_code=1)
-
-                    result = await self._execute_edit_operation()
-            else:
-                # Validate required parameters
-                validation_errors = self.validate()
-                if validation_errors:
-                    error_msg = f"Validation errors: {', '.join(validation_errors)}"
-                    self.console.print(f"[red]Error: {error_msg}[/red]")
-                    return CommandResult(success=False, message=error_msg, exit_code=1)
-
-                result = await self._execute_edit_operation()
-
-            if result is not None:
-                return result
-
-            return CommandResult(success=True, message="Edit completed successfully")
+            # Execute main edit workflow
+            return await self._execute_main_edit_workflow(output_formatter)
 
         except typer.Exit:
             raise
         except Exception as e:
-            logger.error(f"Unexpected error in edit command: {e}")
-            logger.exception("Full exception details")
-            return CommandResult(success=False, message=str(e), exit_code=1)
+            return self._handle_edit_execution_error(e)
+
+    async def _execute_main_edit_workflow(self, output_formatter: Any) -> CommandResult:
+        """Execute the main edit command workflow."""
+        if output_formatter:
+            return await self._execute_with_formatter_context(output_formatter)
+        else:
+            return await self._execute_without_formatter()
+
+    async def _execute_with_formatter_context(self, output_formatter: Any) -> CommandResult:
+        """Execute edit command with output formatter context."""
+        from ..ui.output.context import OutputFormatterContext
+
+        with OutputFormatterContext(output_formatter):
+            validation_result = self._validate_with_formatter_error_display()
+            if validation_result:
+                return validation_result
+
+            result = await self._execute_edit_operation()
+            return self._process_edit_result(result)
+
+    async def _execute_without_formatter(self) -> CommandResult:
+        """Execute edit command without output formatter."""
+        validation_result = self._validate_with_console_error_display()
+        if validation_result:
+            return validation_result
+
+        result = await self._execute_edit_operation()
+        return self._process_edit_result(result)
+
+    def _validate_with_formatter_error_display(self) -> CommandResult | None:
+        """Validate parameters and display errors using formatter."""
+        validation_errors = self.validate()
+        if validation_errors:
+            error_msg = f"Validation errors: {', '.join(validation_errors)}"
+            self._display_validation_error_with_formatter(error_msg)
+            return CommandResult(success=False, message=error_msg, exit_code=1)
+        return None
+
+    def _validate_with_console_error_display(self) -> CommandResult | None:
+        """Validate parameters and display errors using console."""
+        validation_errors = self.validate()
+        if validation_errors:
+            error_msg = f"Validation errors: {', '.join(validation_errors)}"
+            self.console.print(f"[red]Error: {error_msg}[/red]")
+            return CommandResult(success=False, message=error_msg, exit_code=1)
+        return None
+
+    def _display_validation_error_with_formatter(self, error_msg: str) -> None:
+        """Display validation error using output formatter."""
+        from ..ui.output.context import get_output_formatter
+
+        formatter = get_output_formatter()
+        if formatter:
+            formatter.print_error(error_msg)
+        else:
+            self.console.print(f"[red]Error: {error_msg}[/red]")
+
+    def _process_edit_result(self, result: CommandResult | None) -> CommandResult:
+        """Process the edit operation result."""
+        if result is not None:
+            return result
+        return CommandResult(success=True, message="Edit completed successfully")
+
+    def _handle_edit_execution_error(self, e: Exception) -> CommandResult:
+        """Handle execution errors."""
+        logger.error(f"Unexpected error in edit command: {e}")
+        logger.exception("Full exception details")
+        return CommandResult(success=False, message=str(e), exit_code=1)
 
     async def _execute_edit_operation(self) -> CommandResult | None:
         """Execute the core edit operation logic.
