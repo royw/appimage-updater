@@ -2225,7 +2225,12 @@ def _extract_error_message(result: Any, result_dict: dict[str, Any]) -> None:
 
 def _extract_direct_result_data(result: Any, result_dict: dict[str, Any]) -> None:
     """Extract data directly from CheckResult fields."""
-    # Extract version information from direct fields
+    _extract_direct_version_info(result, result_dict)
+    _extract_direct_update_status(result, result_dict)
+    _extract_direct_download_url(result, result_dict)
+
+def _extract_direct_version_info(result: Any, result_dict: dict[str, Any]) -> None:
+    """Extract version information from direct result fields."""
     if hasattr(result, "current_version"):
         result_dict["Current Version"] = str(result.current_version) if result.current_version else "N/A"
     else:
@@ -2236,25 +2241,39 @@ def _extract_direct_result_data(result: Any, result_dict: dict[str, Any]) -> Non
     else:
         result_dict["Latest Version"] = "N/A"
 
-    # Extract update availability
+def _extract_direct_update_status(result: Any, result_dict: dict[str, Any]) -> None:
+    """Extract update availability status from direct result fields."""
     if hasattr(result, "update_available"):
         result_dict["Update Available"] = "Yes" if result.update_available else "No"
     else:
         result_dict["Update Available"] = "Unknown"
 
-    # Extract download URL if available
+def _extract_direct_download_url(result: Any, result_dict: dict[str, Any]) -> None:
+    """Extract download URL from direct result fields."""
     if hasattr(result, "download_url") and result.download_url:
         result_dict["Download URL"] = result.download_url
 
 
 def _extract_candidate_data(candidate: Any, result_dict: dict[str, Any]) -> None:
     """Extract candidate data into result dictionary."""
+    _extract_candidate_download_url(candidate, result_dict)
+    _extract_candidate_version_info(candidate, result_dict)
+    _extract_candidate_update_status(candidate, result_dict)
+
+def _extract_candidate_download_url(candidate: Any, result_dict: dict[str, Any]) -> None:
+    """Extract download URL from candidate."""
     if hasattr(candidate, "download_url"):
         result_dict["Download URL"] = candidate.download_url
+
+def _extract_candidate_version_info(candidate: Any, result_dict: dict[str, Any]) -> None:
+    """Extract version information from candidate."""
     if hasattr(candidate, "current_version"):
         result_dict["Current Version"] = str(candidate.current_version) if candidate.current_version else "N/A"
     if hasattr(candidate, "latest_version"):
         result_dict["Latest Version"] = str(candidate.latest_version) if candidate.latest_version else "N/A"
+
+def _extract_candidate_update_status(candidate: Any, result_dict: dict[str, Any]) -> None:
+    """Extract update status from candidate."""
     if hasattr(candidate, "needs_update"):
         result_dict["Update Available"] = "Yes" if candidate.needs_update else "No"
 

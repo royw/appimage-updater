@@ -59,25 +59,38 @@ def _build_path_from_parts(parts: list[str], max_width: int) -> tuple[list[str],
     if not parts:
         return [], 0
 
-    # First, try to fit all parts without reserving ellipsis space
-    total_length = sum(len(part) for part in parts) + len(parts) - 1  # +1 for each separator
-    if total_length <= max_width:
-        return parts, total_length
+    # Check if all parts fit without truncation
+    if _can_fit_all_parts(parts, max_width):
+        return parts, _calculate_total_length(parts)
 
-    # If not all parts fit, use ellipsis-aware logic
-    result_parts: list[str] = []
-    current_length = 0
+    # Build truncated path with ellipsis logic
+    return _build_truncated_path(parts, max_width)
 
-    # Reserve space for ellipsis if we need to truncate
+def _can_fit_all_parts(parts: list[str], max_width: int) -> bool:
+    """Check if all parts can fit within the width limit."""
+    total_length = _calculate_total_length(parts)
+    return total_length <= max_width
+
+def _calculate_total_length(parts: list[str]) -> int:
+    """Calculate total length including separators."""
+    return sum(len(part) for part in parts) + len(parts) - 1
+
+def _build_truncated_path(parts: list[str], max_width: int) -> tuple[list[str], int]:
+    """Build truncated path with ellipsis-aware logic."""
     ellipsis_length = 3  # "..."
     effective_width = max_width - ellipsis_length
 
-    # First, always include the last part (final directory/file)
-    last_part = parts[-1]
-    result_parts.append(last_part)
-    current_length = len(last_part)
+    # Start with the last part (final directory/file)
+    result_parts = [parts[-1]]
+    current_length = len(parts[-1])
 
-    # Then try to include at least one parent directory
+    # Add parent directories within constraints
+    return _add_parent_directories(parts, result_parts, current_length, effective_width)
+
+def _add_parent_directories(
+    parts: list[str], result_parts: list[str], current_length: int, effective_width: int
+) -> tuple[list[str], int]:
+    """Add parent directories to the result within width constraints."""
     min_parts_desired = 2  # final directory + at least one parent
     parts_added = 1
 
@@ -105,26 +118,42 @@ def _add_ellipsis_if_truncated(result_parts: list[str], original_parts: list[str
 
 def _wrap_path(path: str, max_width: int = 40) -> str:
     """Wrap a path by breaking on path separators."""
-    # First replace home directory with ~ for display
     display_path = _replace_home_with_tilde(path)
 
     if len(display_path) <= max_width:
         return display_path
 
-    # Try to break on path separators
-    parts = display_path.replace("\\", "/").split("/")
-    if len(parts) > 1:
-        # For short paths with home substitution, be more lenient with the width
-        # Allow a few extra characters if it means showing a complete meaningful path
-        if display_path.startswith("~") and len(parts) <= 3 and len(display_path) <= max_width + 5:
-            return display_path
-        # Start from the end and work backwards to preserve meaningful parts
-        result_parts, _ = _build_path_from_parts(parts, max_width)
-        result_parts = _add_ellipsis_if_truncated(result_parts, parts)
-        return "/".join(result_parts)
+    return _wrap_long_path(display_path, max_width)
 
-    # Fallback to simple truncation if no separators
-    return "..." + display_path[-(max_width - 3) :]
+def _wrap_long_path(display_path: str, max_width: int) -> str:
+    """Wrap a long path using path separator logic."""
+    parts = display_path.replace("\\", "/").split("/")
+
+    if len(parts) > 1:
+        return _wrap_multi_part_path(display_path, parts, max_width)
+    else:
+        return _wrap_single_part_path(display_path, max_width)
+
+def _wrap_multi_part_path(display_path: str, parts: list[str], max_width: int) -> str:
+    """Wrap a path with multiple parts."""
+    # For short paths with home substitution, be more lenient with the width
+    if _is_short_home_path(display_path, parts, max_width):
+        return display_path
+
+    # Start from the end and work backwards to preserve meaningful parts
+    result_parts, _ = _build_path_from_parts(parts, max_width)
+    result_parts = _add_ellipsis_if_truncated(result_parts, parts)
+    return "/".join(result_parts)
+
+def _is_short_home_path(display_path: str, parts: list[str], max_width: int) -> bool:
+    """Check if this is a short home path that should be shown in full."""
+    return (display_path.startswith("~") and
+            len(parts) <= 3 and
+            len(display_path) <= max_width + 5)
+
+def _wrap_single_part_path(display_path: str, max_width: int) -> str:
+    """Wrap a path with no separators using simple truncation."""
+    return "..." + display_path[-(max_width - 3):]
 
 
 def display_applications_list(applications: list[Any]) -> None:

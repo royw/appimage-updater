@@ -21,14 +21,27 @@ def _handle_add_error(e: Exception, name: str) -> None:
 def _classify_error(error_msg: str) -> str:
     """Classify error message into specific error types."""
     error_lower = error_msg.lower()
-    if "rate limit" in error_lower:
+
+    if _is_rate_limit_error(error_lower):
         return "rate_limit"
-    elif "not found" in error_lower or "404" in error_msg:
+    elif _is_not_found_error(error_lower, error_msg):
         return "not_found"
-    elif "network" in error_lower or "connection" in error_lower:
+    elif _is_network_error(error_lower):
         return "network"
     else:
         return "generic"
+
+def _is_rate_limit_error(error_lower: str) -> bool:
+    """Check if error is a rate limit error."""
+    return "rate limit" in error_lower
+
+def _is_not_found_error(error_lower: str, error_msg: str) -> bool:
+    """Check if error is a not found error."""
+    return "not found" in error_lower or "404" in error_msg
+
+def _is_network_error(error_lower: str) -> bool:
+    """Check if error is a network-related error."""
+    return "network" in error_lower or "connection" in error_lower
 
 
 def _display_error_message(error_type: str, name: str, error_msg: str) -> None:
