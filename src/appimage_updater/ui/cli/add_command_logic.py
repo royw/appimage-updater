@@ -111,9 +111,18 @@ def _execute_add_operation(
         return True
 
     try:
-        from ...config.migration_helpers import migrate_legacy_add_application
+        from ...config.manager import AppConfigs
+        from ...config.models import ApplicationConfig
 
-        migrate_legacy_add_application(config_data["app_config"], config_file, config_dir)
+        # Create ApplicationConfig from the dict
+        app_config = ApplicationConfig(**config_data["app_config"])
+        
+        # Use unified API to add and save
+        config_path = config_file or config_dir
+        app_configs = AppConfigs(config_path=config_path)
+        app_configs.add(app_config)
+        app_configs.save()
+        
         return True
     except Exception as e:
         logger.error(f"Failed to save configuration: {e}")
