@@ -22,24 +22,44 @@ def resolve_legacy_config_path(config_file: Path | None, config_dir: Path | None
     Returns:
         Resolved config path for new API, or None for default
     """
+    # Handle explicit config parameters
+    explicit_path = _resolve_explicit_config_path(config_file, config_dir)
+    if explicit_path:
+        return explicit_path
+    
+    # Use default path detection logic
+    return _resolve_default_config_path()
+
+def _resolve_explicit_config_path(config_file: Path | None, config_dir: Path | None) -> Path | None:
+    """Resolve explicitly provided config parameters."""
     if config_file:
         return config_file
     elif config_dir:
         # For config_dir, return the directory path as-is for backward compatibility
         # The new API will handle whether to use directory-based or file-based config
         return config_dir
-    else:
-        # Use default path detection logic
-        default_path = get_default_config_path()
-        default_dir = get_default_config_dir()
+    return None
 
-        # Prefer directory-based config if it exists
-        if default_dir.exists() and default_dir.is_dir():
-            return default_dir
-        elif default_path.exists():
-            return default_path
-        else:
-            return None
+def _resolve_default_config_path() -> Path | None:
+    """Resolve default config path using detection logic."""
+    default_path = get_default_config_path()
+    default_dir = get_default_config_dir()
+
+    # Prefer directory-based config if it exists
+    if _directory_config_exists(default_dir):
+        return default_dir
+    elif _file_config_exists(default_path):
+        return default_path
+    else:
+        return None
+
+def _directory_config_exists(default_dir: Path) -> bool:
+    """Check if directory-based config exists."""
+    return default_dir.exists() and default_dir.is_dir()
+
+def _file_config_exists(default_path: Path) -> bool:
+    """Check if file-based config exists."""
+    return default_path.exists()
 
 
 def convert_app_dict_to_config(app_dict: dict[str, Any]) -> ApplicationConfig:
@@ -55,44 +75,59 @@ def convert_app_dict_to_config(app_dict: dict[str, Any]) -> ApplicationConfig:
         ValueError: If required fields are missing or invalid
     """
     try:
-        # Handle checksum configuration if present
-        checksum_config = ChecksumConfig()
-        if "checksum" in app_dict and isinstance(app_dict["checksum"], dict):
-            checksum_data = app_dict["checksum"]
-            checksum_config = ChecksumConfig(
-                enabled=checksum_data.get("enabled", True),
-                pattern=checksum_data.get("pattern", "{filename}-SHA256.txt"),
-                algorithm=checksum_data.get("algorithm", "sha256"),
-                required=checksum_data.get("required", False),
-            )
-
-        # Convert paths to Path objects
-        download_dir = app_dict["download_dir"]
-        if isinstance(download_dir, str):
-            download_dir = Path(download_dir)
-
-        symlink_path = app_dict.get("symlink_path")
-        if isinstance(symlink_path, str):
-            symlink_path = Path(symlink_path)
-
-        # Create ApplicationConfig object
-        return ApplicationConfig(
-            name=app_dict["name"],
-            source_type=app_dict["source_type"],
-            url=app_dict["url"],
-            download_dir=download_dir,
-            pattern=app_dict["pattern"],
-            basename=app_dict.get("basename"),
-            enabled=app_dict.get("enabled", True),
-            prerelease=app_dict.get("prerelease", False),
-            checksum=checksum_config,
-            rotation_enabled=app_dict.get("rotation_enabled", False),
-            symlink_path=symlink_path,
-            retain_count=app_dict.get("retain_count", 3),
-        )
+        # Process configuration components
+        checksum_config = _create_checksum_config(app_dict)
+        download_dir = _convert_download_dir_path(app_dict)
+        symlink_path = _convert_symlink_path(app_dict)
+        
+        # Create and return ApplicationConfig object
+        return _create_application_config(app_dict, checksum_config, download_dir, symlink_path)
 
     except Exception as e:
         raise ValueError(f"Failed to convert app dictionary to ApplicationConfig: {e}") from e
+
+def _create_checksum_config(app_dict: dict[str, Any]) -> ChecksumConfig:
+    """Create checksum configuration from app dictionary."""
+    if "checksum" in app_dict and isinstance(app_dict["checksum"], dict):
+        checksum_data = app_dict["checksum"]
+        return ChecksumConfig(
+            enabled=checksum_data.get("enabled", True),
+            pattern=checksum_data.get("pattern", "{filename}-SHA256.txt"),
+            algorithm=checksum_data.get("algorithm", "sha256"),
+            required=checksum_data.get("required", False),
+        )
+    return ChecksumConfig()
+
+def _convert_download_dir_path(app_dict: dict[str, Any]) -> Path:
+    """Convert download directory to Path object."""
+    download_dir = app_dict["download_dir"]
+    if isinstance(download_dir, str):
+        return Path(download_dir)
+    return download_dir
+
+def _convert_symlink_path(app_dict: dict[str, Any]) -> Path | None:
+    """Convert symlink path to Path object if present."""
+    symlink_path = app_dict.get("symlink_path")
+    if isinstance(symlink_path, str):
+        return Path(symlink_path)
+    return symlink_path
+
+def _create_application_config(app_dict: dict[str, Any], checksum_config: ChecksumConfig, download_dir: Path, symlink_path: Path | None) -> ApplicationConfig:
+    """Create ApplicationConfig object with processed components."""
+    return ApplicationConfig(
+        name=app_dict["name"],
+        source_type=app_dict["source_type"],
+        url=app_dict["url"],
+        download_dir=download_dir,
+        pattern=app_dict["pattern"],
+        basename=app_dict.get("basename"),
+        enabled=app_dict.get("enabled", True),
+        prerelease=app_dict.get("prerelease", False),
+        checksum=checksum_config,
+        rotation_enabled=app_dict.get("rotation_enabled", False),
+        symlink_path=symlink_path,
+        retain_count=app_dict.get("retain_count", 3),
+    )
 
 
 def _apply_string_updates(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
