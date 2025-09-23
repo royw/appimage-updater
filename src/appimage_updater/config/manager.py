@@ -355,7 +355,7 @@ class AppConfigs:
     def _load_config(self) -> Config:
         """Load application configurations from directory or file."""
         from .loader import ConfigLoadError
-        
+
         try:
             return self._load_application_configs()
         except ConfigLoadError:
@@ -367,7 +367,7 @@ class AppConfigs:
 
     def _load_application_configs(self) -> Config:
         """Load application configurations from directory or file."""
-        from .loader import get_default_config_path, ConfigLoadError
+        from .loader import ConfigLoadError, get_default_config_path
 
         config_path = self._config_path
         if config_path is None:
@@ -454,6 +454,7 @@ class AppConfigs:
             # If a specific config path was provided, invalid JSON is an error
             if self._config_path is not None:
                 from .loader import ConfigLoadError
+
                 raise ConfigLoadError(f"Invalid JSON in configuration file {config_path}: {e}") from e
             else:
                 logger.warning(f"Invalid application config format: {e}")

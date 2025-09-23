@@ -19,9 +19,9 @@ from .parameter_resolution import _resolve_add_parameters
 from .validation_utilities import _check_configuration_warnings
 
 
-def _validate_add_inputs(url: str, rotation: bool | None, symlink: str | None) -> bool:
+def _validate_add_inputs(url: str, rotation: bool | None, symlink: str | None, direct: bool | None = None) -> bool:
     """Validate add command inputs."""
-    validated_url = validate_and_normalize_add_url(url)
+    validated_url = validate_and_normalize_add_url(url, direct)
     if not validated_url:
         return False
 
@@ -50,7 +50,7 @@ async def _prepare_add_configuration(
     dry_run: bool,
 ) -> dict[str, Any] | None:
     """Prepare configuration data for add operation."""
-    validated_url = validate_and_normalize_add_url(url)
+    validated_url = validate_and_normalize_add_url(url, direct)
     if not validated_url:
         return None
 
@@ -154,7 +154,7 @@ async def _add(
     """Execute the add command logic."""
     try:
         # Validate and prepare
-        if not _validate_add_inputs(url, rotation, symlink):
+        if not _validate_add_inputs(url, rotation, symlink, direct):
             return False
 
         resolved_params = _prepare_add_parameters(

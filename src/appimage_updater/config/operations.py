@@ -45,12 +45,31 @@ def _create_default_global_config(config_parent_dir: Path) -> None:
     logger.debug(f"Created global configuration file: {display_path}")
 
 
-def validate_and_normalize_add_url(url: str) -> str | None:
+def validate_and_normalize_add_url(url: str, direct: bool | None = None) -> str | None:
     """Validate and normalize URL for add command.
+
+    Args:
+        url: The URL to validate
+        direct: If True, treat as direct download URL and skip repository validation
 
     Returns:
         Normalized URL if valid, None if invalid
     """
+    # For direct URLs, just validate basic URL format and return as-is
+    if direct:
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            if not parsed.scheme or not parsed.netloc:
+                console.print(f"[red]Error: Invalid URL format: {url}")
+                return None
+            return url
+        except Exception as e:
+            console.print(f"[red]Error: Invalid URL format: {url}")
+            console.print(f"[yellow]Error details: {e}")
+            return None
+
+    # For repository URLs, use the existing validation logic
     try:
         repo_client = get_repository_client(url)
         normalized_url, was_corrected = repo_client.normalize_repo_url(url)

@@ -187,8 +187,7 @@ class AddCommand(Command):
             name=self.params.name or "",
             url=self.params.url or "",
             download_dir=self.params.download_dir,
-            create_dir=self.params.create_dir,
-            yes=self.params.yes,
+            auto_subdir=self.params.auto_subdir,
             config_file=self.params.config_file,
             config_dir=self.params.config_dir,
             rotation=self.params.rotation,
@@ -201,9 +200,10 @@ class AddCommand(Command):
             checksum_required=self.params.checksum_required,
             pattern=self.params.pattern,
             direct=self.params.direct,
-            auto_subdir=self.params.auto_subdir,
-            verbose=self.params.verbose,
+            create_dir=self.params.create_dir,
+            yes=self.params.yes,
             dry_run=self.params.dry_run,
+            verbose=self.params.verbose,
         )
         return success
 
