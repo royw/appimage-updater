@@ -59,6 +59,7 @@ def validate_and_normalize_add_url(url: str, direct: bool | None = None) -> str 
     if direct:
         try:
             from urllib.parse import urlparse
+
             parsed = urlparse(url)
             if not parsed.scheme or not parsed.netloc:
                 console.print(f"[red]Error: Invalid URL format: {url}")

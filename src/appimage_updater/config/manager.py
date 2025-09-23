@@ -467,9 +467,37 @@ class AppConfigs:
 
         return [app for app in self._config.applications if app.name in self._app_names]
 
+    def _save_directory_based_config(self) -> None:
+        """Save configuration as individual files in directory."""
+        import json
+        
+        if not self._config_path:
+            return
+            
+        # Ensure directory exists
+        self._config_path.mkdir(parents=True, exist_ok=True)
+        
+        # Save each application as a separate file
+        for app in self._config.applications:
+            app_filename = f"{app.name.lower()}.json"
+            app_file_path = self._config_path / app_filename
+            
+            # Create application config structure
+            app_config_dict = {
+                "applications": [app.model_dump()]
+            }
+            
+            with app_file_path.open("w") as f:
+                json.dump(app_config_dict, f, indent=2, default=str)
+
     def save(self) -> None:
         """Save configuration to file."""
-        save_config(self._config, self._config_path)
+        if self._config_path and self._config_path.is_dir():
+            # For directory-based configs, save individual application files
+            self._save_directory_based_config()
+        else:
+            # For file-based configs, save to single file
+            save_config(self._config, self._config_path)
         logger.info("Application configurations saved")
 
     def __iter__(self) -> Iterator[ApplicationConfig]:
