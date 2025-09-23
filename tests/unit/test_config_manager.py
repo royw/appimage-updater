@@ -4,12 +4,12 @@ import pytest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from appimage_updater.config.manager import AppConfigs, GlobalConfig
-from appimage_updater.config.models import ApplicationConfig, Config, GlobalConfig as _GlobalConfig
+from appimage_updater.config.manager import AppConfigs, GlobalConfigManager
+from appimage_updater.config.models import ApplicationConfig, Config, GlobalConfig
 
 
-class TestGlobalConfig:
-    """Test GlobalConfig class."""
+class TestGlobalConfigManager:
+    """Test GlobalConfigManager class."""
 
     def test_property_access(self):
         """Test property-based access to global configuration."""
@@ -18,7 +18,7 @@ class TestGlobalConfig:
             mock_config = Config()
             mock_load.return_value = mock_config
             
-            globals = GlobalConfig()
+            globals = GlobalConfigManager()
             
             # Test reading properties
             assert globals.concurrent_downloads == 3  # default value
@@ -38,7 +38,7 @@ class TestGlobalConfig:
             mock_config = Config()
             mock_load.return_value = mock_config
             
-            globals = GlobalConfig()
+            globals = GlobalConfigManager()
             
             # Test default properties
             assert globals.default_prerelease == False
