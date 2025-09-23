@@ -153,24 +153,56 @@ def _apply_string_updates(app: ApplicationConfig, updates: dict[str, Any]) -> li
 def _apply_path_updates(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
     """Apply path field updates to app configuration."""
     changes = []
-
-    if "download_dir" in updates:
-        old_value = str(app.download_dir)
-        new_value = str(Path(updates["download_dir"]).expanduser())
-        if old_value != new_value:
-            app.download_dir = Path(new_value)
-            changes.append(f"Download Directory: {old_value} → {new_value}")
-
-    if "symlink_path" in updates:
-        old_symlink_value: str | None = str(app.symlink_path) if app.symlink_path else None
-        new_symlink_value: str | None = (
-            str(Path(updates["symlink_path"]).expanduser()) if updates["symlink_path"] else None
-        )
-        if old_symlink_value != new_symlink_value:
-            app.symlink_path = Path(new_symlink_value) if new_symlink_value else None
-            changes.append(f"Symlink Path: {old_symlink_value} → {new_symlink_value}")
-
+    
+    # Apply download directory updates
+    download_changes = _apply_download_dir_update(app, updates)
+    changes.extend(download_changes)
+    
+    # Apply symlink path updates
+    symlink_changes = _apply_symlink_path_update(app, updates)
+    changes.extend(symlink_changes)
+    
     return changes
+
+def _apply_download_dir_update(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
+    """Apply download directory update to app configuration."""
+    if "download_dir" not in updates:
+        return []
+        
+    old_value = str(app.download_dir)
+    new_value = str(Path(updates["download_dir"]).expanduser())
+    
+    if old_value != new_value:
+        app.download_dir = Path(new_value)
+        return [f"Download Directory: {old_value} → {new_value}"]
+    
+    return []
+
+def _apply_symlink_path_update(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
+    """Apply symlink path update to app configuration."""
+    if "symlink_path" not in updates:
+        return []
+        
+    old_symlink_value = _get_current_symlink_value(app)
+    new_symlink_value = _get_new_symlink_value(updates)
+    
+    if old_symlink_value != new_symlink_value:
+        app.symlink_path = Path(new_symlink_value) if new_symlink_value else None
+        return [f"Symlink Path: {old_symlink_value} → {new_symlink_value}"]
+    
+    return []
+
+def _get_current_symlink_value(app: ApplicationConfig) -> str | None:
+    """Get current symlink value as string."""
+    return str(app.symlink_path) if app.symlink_path else None
+
+def _get_new_symlink_value(updates: dict[str, Any]) -> str | None:
+    """Get new symlink value from updates."""
+    return (
+        str(Path(updates["symlink_path"]).expanduser()) 
+        if updates["symlink_path"] 
+        else None
+    )
 
 
 def _apply_boolean_updates(app: ApplicationConfig, updates: dict[str, Any]) -> list[str]:
@@ -233,25 +265,51 @@ def _add_missing_source_type(app_data: dict[str, Any]) -> None:
 def _validate_and_fix_config_file(config_path: Path) -> None:
     """Validate and fix a single config file for backward compatibility."""
     import json
-
     from .loader import ConfigLoadError
 
     try:
-        with config_path.open(encoding="utf-8") as f:
-            data = json.load(f)
-
-        # Add missing required fields for backward compatibility
-        if isinstance(data, dict) and "applications" in data:
-            for app in data.get("applications", []):
-                if isinstance(app, dict):
-                    _add_missing_source_type(app)
-
-            # Write back the updated config
-            with config_path.open("w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
+        # Load and process configuration data
+        data = _load_config_file_data(config_path, json)
+        updated_data = _process_config_file_data(data)
+        
+        # Write back updated configuration if changes were made
+        if updated_data:
+            _write_updated_config_file(config_path, updated_data, json)
 
     except json.JSONDecodeError as e:
         raise ConfigLoadError(f"Invalid JSON in {config_path}: {e}") from e
+
+def _load_config_file_data(config_path: Path, json_module: Any) -> dict[str, Any]:
+    """Load configuration data from file."""
+    with config_path.open(encoding="utf-8") as f:
+        return json_module.load(f)
+
+def _process_config_file_data(data: dict[str, Any]) -> dict[str, Any] | None:
+    """Process configuration data and add missing fields."""
+    if not _is_valid_config_data(data):
+        return None
+        
+    # Add missing required fields for backward compatibility
+    applications_updated = _update_applications_in_config(data)
+    return data if applications_updated else None
+
+def _is_valid_config_data(data: dict[str, Any]) -> bool:
+    """Check if configuration data is valid for processing."""
+    return isinstance(data, dict) and "applications" in data
+
+def _update_applications_in_config(data: dict[str, Any]) -> bool:
+    """Update applications in configuration data."""
+    applications_updated = False
+    for app in data.get("applications", []):
+        if isinstance(app, dict):
+            _add_missing_source_type(app)
+            applications_updated = True
+    return applications_updated
+
+def _write_updated_config_file(config_path: Path, data: dict[str, Any], json_module: Any) -> None:
+    """Write updated configuration data back to file."""
+    with config_path.open("w", encoding="utf-8") as f:
+        json_module.dump(data, f, indent=2)
 
 
 def _validate_and_fix_config_directory(config_path: Path) -> None:
