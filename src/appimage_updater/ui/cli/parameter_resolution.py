@@ -55,11 +55,10 @@ def _apply_auto_subdir(base_dir: Path, global_config: Any, name: str) -> str:
 def _load_global_config(config_file: Path | None, config_dir: Path | None) -> GlobalConfig:
     """Load global configuration or return default if none exists."""
     try:
-        from ...config.migration_helpers import migrate_legacy_load_config
+        from ...config.migration_helpers import load_config_with_path_resolution
 
-        global_config, app_configs = migrate_legacy_load_config(config_file, config_dir)
-        # Return the underlying GlobalConfig from the config object for compatibility
-        return app_configs._config.global_config
+        config = load_config_with_path_resolution(config_file, config_dir)
+        return config.global_config
     except Exception:
         return GlobalConfig()
 

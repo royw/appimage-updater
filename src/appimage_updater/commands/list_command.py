@@ -80,10 +80,9 @@ class ListCommand(Command):
         """
 
         try:
-            from ..config.migration_helpers import migrate_legacy_load_config
+            from ..config.migration_helpers import load_config_with_path_resolution
 
-            global_config, app_configs = migrate_legacy_load_config(self.params.config_file, self.params.config_dir)
-            config = app_configs._config
+            config = load_config_with_path_resolution(self.params.config_file, self.params.config_dir)
         except Exception:
             # Use output formatter if available, otherwise fallback to console
             from ..ui.output.context import get_output_formatter

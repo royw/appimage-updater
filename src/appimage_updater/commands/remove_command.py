@@ -128,10 +128,9 @@ class RemoveCommand(Command):
 
     def _load_config(self) -> Config:
         """Load configuration with error handling."""
-        from ..config.migration_helpers import migrate_legacy_load_config
+        from ..config.migration_helpers import load_config_with_path_resolution
 
-        global_config, app_configs = migrate_legacy_load_config(self.params.config_file, self.params.config_dir)
-        return app_configs._config
+        return load_config_with_path_resolution(self.params.config_file, self.params.config_dir)
 
     def _validate_and_filter_apps(
         self, config: Config, app_names_to_remove: list[str]

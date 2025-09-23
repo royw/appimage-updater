@@ -239,10 +239,9 @@ def set_global_config_value(
         True if the setting was applied successfully, False otherwise.
     """
     try:
-        from .migration_helpers import migrate_legacy_load_config
+        from .migration_helpers import load_config_with_path_resolution
 
-        global_config, app_configs = migrate_legacy_load_config(config_file, config_dir)
-        config = app_configs._config
+        config = load_config_with_path_resolution(config_file, config_dir)
     except ConfigLoadError:
         # Create new configuration if none exists
         config = Config()
@@ -771,10 +770,9 @@ def reset_global_config(config_file: Path | None = None, config_dir: Path | None
         True if successful, False if error occurred
     """
     try:
-        from .migration_helpers import migrate_legacy_load_config
+        from .migration_helpers import load_config_with_path_resolution
 
-        global_config, app_configs = migrate_legacy_load_config(config_file, config_dir)
-        config = app_configs._config
+        config = load_config_with_path_resolution(config_file, config_dir)
     except ConfigLoadError:
         console.print("[yellow]No existing configuration found. Nothing to reset.")
         return False

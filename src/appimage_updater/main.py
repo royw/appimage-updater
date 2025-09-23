@@ -766,11 +766,10 @@ def _resolve_download_directory(
 def _load_global_config(config_file: Path | None, config_dir: Path | None) -> GlobalConfig:
     """Load global configuration or return default if none exists."""
     try:
-        from .config.migration_helpers import migrate_legacy_load_config
+        from .config.migration_helpers import load_config_with_path_resolution
 
-        global_config, app_configs = migrate_legacy_load_config(config_file, config_dir)
-        # Return the underlying config object for compatibility
-        return app_configs._config.global_config
+        config = load_config_with_path_resolution(config_file, config_dir)
+        return config.global_config
     except Exception:
         # If no config exists yet, use default global config
         return GlobalConfig()
@@ -1529,10 +1528,9 @@ def repository(
 
 def _load_config_for_repository_examination(config_file: Path | None, config_dir: Path | None) -> Any:
     """Load configuration for repository examination."""
-    from .config.migration_helpers import migrate_legacy_load_config
+    from .config.migration_helpers import load_config_with_path_resolution
 
-    global_config, app_configs = migrate_legacy_load_config(config_file, config_dir)
-    return app_configs._config
+    return load_config_with_path_resolution(config_file, config_dir)
 
 
 def _display_dry_run_repository_info(apps_to_examine: list[Any]) -> None:
@@ -2227,10 +2225,9 @@ async def _load_and_filter_config(
         typer.Exit: If specified applications are not found
     """
     logger.debug("Loading configuration")
-    from .config.migration_helpers import migrate_legacy_load_config
+    from .config.migration_helpers import load_config_with_path_resolution
 
-    global_config, app_configs = migrate_legacy_load_config(config_file, config_dir)
-    config = app_configs._config
+    config = load_config_with_path_resolution(config_file, config_dir)
     enabled_apps = config.get_enabled_apps()
 
     # Filter by app names if specified
