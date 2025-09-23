@@ -52,7 +52,6 @@ def _apply_auto_subdir(base_dir: Path, global_config: Any, name: str) -> str:
     return str(base_dir)
 
 
-
 def _resolve_rotation_parameter(rotation: bool | None, global_config: GlobalConfigManager) -> bool:
     """Resolve rotation parameter using global defaults."""
     return rotation if rotation is not None else global_config.defaults.rotation_enabled

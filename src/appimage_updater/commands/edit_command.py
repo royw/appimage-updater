@@ -127,7 +127,7 @@ class EditCommand(Command):
         """
         try:
             from ..config.manager import AppConfigs
-            
+
             app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
             config = app_configs._config
         except Exception as e:
@@ -157,7 +157,6 @@ class EditCommand(Command):
         # Save updated configuration
         self._save_config(config)
         return None
-
 
     def _validate_app_names_provided(self) -> list[str] | None:
         """Validate that application names are provided.

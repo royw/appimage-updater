@@ -178,23 +178,25 @@ class GlobalConfigManager:
     def _load_global_config(self) -> Config:
         """Load global configuration from config.json file."""
         import json
+
         from .loader import get_default_config_path
-        
+
         config_path = self._config_path or get_default_config_path()
-        
+
         if not config_path.exists():
             return Config()
-            
+
         try:
             with config_path.open() as f:
                 data = json.load(f)
-            
+
             # Extract global config, ignore applications
             global_config_data = data.get("global_config", {})
             from .models import GlobalConfig
+
             global_config = GlobalConfig(**global_config_data) if global_config_data else GlobalConfig()
             return Config(global_config=global_config, applications=[])
-            
+
         except (json.JSONDecodeError, KeyError) as e:
             logger.warning(f"Invalid global config format: {e}")
             return Config()
@@ -352,16 +354,21 @@ class AppConfigs:
 
     def _load_config(self) -> Config:
         """Load application configurations from directory or file."""
+        from .loader import ConfigLoadError
+        
         try:
             return self._load_application_configs()
+        except ConfigLoadError:
+            # Re-raise ConfigLoadError so commands can handle it properly
+            raise
         except Exception as e:
             logger.warning(f"Failed to load application configs: {e}, using defaults")
             return Config()
 
     def _load_application_configs(self) -> Config:
         """Load application configurations from directory or file."""
-        from .loader import get_default_config_path
-        
+        from .loader import get_default_config_path, ConfigLoadError
+
         config_path = self._config_path
         if config_path is None:
             config_path = get_default_config_path()
@@ -369,6 +376,10 @@ class AppConfigs:
             config_dir = config_path.parent / "apps"
             if config_dir.exists() and config_dir.is_dir():
                 config_path = config_dir
+
+        # If a specific config path was provided but doesn't exist, that's an error
+        if self._config_path is not None and not config_path.exists():
+            raise ConfigLoadError(f"Configuration file not found: {config_path}")
 
         if config_path.is_dir():
             return self._load_from_directory(config_path)
@@ -378,8 +389,9 @@ class AppConfigs:
     def _load_from_directory(self, config_path: Path) -> Config:
         """Load application configurations from directory of JSON files."""
         import json
+
         from .loader import get_default_config_path
-        
+
         # Load global config from main config file
         global_config_path = get_default_config_path()
         global_config_data = {}
@@ -390,7 +402,7 @@ class AppConfigs:
                     global_config_data = data.get("global_config", {})
             except (json.JSONDecodeError, KeyError):
                 pass
-        
+
         # Load applications from directory
         applications = []
         if config_path.exists():
@@ -401,34 +413,36 @@ class AppConfigs:
                         applications.append(ApplicationConfig(**app_data))
                 except (json.JSONDecodeError, TypeError) as e:
                     logger.warning(f"Skipping invalid app config {app_file}: {e}")
-        
+
         from .models import GlobalConfig
+
         global_config = GlobalConfig(**global_config_data) if global_config_data else GlobalConfig()
         return Config(global_config=global_config, applications=applications)
 
     def _load_from_file(self, config_path: Path) -> Config:
         """Load application configurations from single JSON file."""
         import json
-        
+
         if not config_path.exists():
             return Config()
-            
+
         try:
             with config_path.open() as f:
                 data = json.load(f)
-            
+
             # Handle both single app and multi-app formats
             if "applications" in data:
                 # Multi-app format
                 applications = [ApplicationConfig(**app_data) for app_data in data.get("applications", [])]
                 from .models import GlobalConfig
+
                 global_config_data = data.get("global_config", {})
                 global_config = GlobalConfig(**global_config_data) if global_config_data else GlobalConfig()
                 return Config(applications=applications, global_config=global_config)
             else:
                 # Single app format
                 return Config(applications=[ApplicationConfig(**data)])
-                
+
         except (json.JSONDecodeError, TypeError, KeyError) as e:
             logger.warning(f"Invalid application config format: {e}")
             return Config()

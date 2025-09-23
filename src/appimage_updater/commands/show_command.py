@@ -68,7 +68,7 @@ class ShowCommand(Command):
         """
         try:
             from ..config.manager import AppConfigs
-            
+
             app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
             config = app_configs._config
             found_apps = self._filter_applications(config)
@@ -81,7 +81,6 @@ class ShowCommand(Command):
             logger.error(f"Unexpected error in show command: {e}")
             logger.exception("Full exception details")
             raise
-
 
     def _filter_applications(self, config: Any) -> Any:
         """Filter applications by names."""

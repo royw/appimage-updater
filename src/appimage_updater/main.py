@@ -15,8 +15,8 @@ from appimage_updater.commands.factory import CommandFactory
 
 from ._version import __version__
 from .config.loader import ConfigLoadError
-from .config.models import ApplicationConfig, Config
 from .config.manager import GlobalConfigManager
+from .config.models import ApplicationConfig, Config
 from .config.operations import (
     apply_configuration_updates,
     save_updated_configuration,
@@ -762,7 +762,6 @@ def _resolve_download_directory(
             return str(global_config.defaults.get_default_download_dir(name))
     else:
         return download_dir
-
 
 
 def _resolve_rotation_parameter(rotation: bool | None, global_config: GlobalConfigManager) -> bool:
@@ -1516,7 +1515,6 @@ def repository(
         raise typer.Exit(result.exit_code)
 
 
-
 def _display_dry_run_repository_info(apps_to_examine: list[Any]) -> None:
     """Display dry-run information for repository examination."""
     console.print("[yellow]DRY RUN: Repository URLs that would be examined (no data fetched)")
@@ -1558,7 +1556,7 @@ async def _examine_repositories(
     """
     try:
         from .config.manager import AppConfigs
-        
+
         app_configs = AppConfigs(config_path=config_file or config_dir)
         config = app_configs._config
         apps_to_examine = _filter_apps_for_examination(config.applications, app_names)

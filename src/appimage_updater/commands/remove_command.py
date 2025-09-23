@@ -85,7 +85,7 @@ class RemoveCommand(Command):
     async def _process_removal_workflow(self) -> CommandResult:
         """Process the main removal workflow."""
         from ..config.manager import AppConfigs
-        
+
         app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
         config = app_configs._config
 
@@ -128,7 +128,6 @@ class RemoveCommand(Command):
         """Handle unexpected errors during removal."""
         logger.error(f"Unexpected error in remove command: {error}")
         logger.exception("Full exception details")
-
 
     def _validate_and_filter_apps(
         self, config: Config, app_names_to_remove: list[str]
