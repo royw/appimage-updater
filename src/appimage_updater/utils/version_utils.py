@@ -50,11 +50,13 @@ def normalize_version_string(version: str) -> str:
 
     return version
 
+
 def _remove_version_prefix(version: str) -> str:
     """Remove 'v' or 'V' prefix from version string."""
     if version.startswith("v") or version.startswith("V"):
         return version[1:]
     return version
+
 
 def _normalize_dash_separated_version(version: str) -> str | None:
     """Handle versions with dash-separated suffixes (e.g., '2.3.1-beta')."""
@@ -76,13 +78,12 @@ def _normalize_dash_separated_version(version: str) -> str | None:
     # For unknown suffixes, return just the core version to be safe
     return core_version
 
+
 def _is_architecture_suffix(suffix: str) -> bool:
     """Check if suffix is an architecture or platform identifier."""
-    arch_suffixes = [
-        "x86", "x64", "amd64", "arm64", "i386", "i686",
-        "linux", "win32", "win64", "macos", "darwin"
-    ]
+    arch_suffixes = ["x86", "x64", "amd64", "arm64", "i386", "i686", "linux", "win32", "win64", "macos", "darwin"]
     return suffix.lower() in arch_suffixes
+
 
 def _normalize_space_separated_version(version: str) -> str | None:
     """Handle versions with space-separated suffixes (e.g., 'OrcaSlicer 2.3.1 beta Release')."""
@@ -96,6 +97,7 @@ def _normalize_space_separated_version(version: str) -> str | None:
     if pre_release and pre_release.lower() in ["beta", "alpha", "rc"]:
         return f"{core_version}-{pre_release.lower()}"
     return core_version
+
 
 def _normalize_simple_version(version: str) -> str | None:
     """Handle simpler version patterns (e.g., '2.3 beta')."""

@@ -23,23 +23,52 @@ def _apply_setting_change(config: Config, setting: str, value: str) -> bool:
     Returns:
         True if setting was applied successfully, False otherwise.
     """
-    if _is_path_setting(setting):
-        _apply_path_setting(config, setting, value)
-        return True
-    elif _is_string_setting(setting):
-        _apply_string_setting(config, setting, value)
-        return True
-    elif _is_boolean_setting(setting):
-        _apply_boolean_setting(config, setting, value)
-        return True
-    elif _is_numeric_setting(setting):
-        return _apply_numeric_setting(config, setting, value)
-    elif setting == "checksum-algorithm":
-        return _apply_checksum_algorithm_setting(config, value)
-    else:
-        from .display_utilities import _show_available_settings
+    # Use dispatch table for cleaner setting type handling
+    setting_handlers = _get_setting_handlers()
 
-        return _show_available_settings(setting)
+    for checker, handler in setting_handlers.values():
+        if checker(setting):
+            return handler(config, setting, value)
+
+    # Handle special case for checksum-algorithm
+    if setting == "checksum-algorithm":
+        return _apply_checksum_algorithm_setting(config, value)
+
+    # Unknown setting - show available options
+    return _handle_unknown_setting(setting)
+
+def _get_setting_handlers() -> dict[str, tuple[callable, callable]]:
+    """Get mapping of setting types to their checker and handler functions."""
+    return {
+        "path": (_is_path_setting, _handle_path_setting),
+        "string": (_is_string_setting, _handle_string_setting),
+        "boolean": (_is_boolean_setting, _handle_boolean_setting),
+        "numeric": (_is_numeric_setting, _handle_numeric_setting),
+    }
+
+def _handle_path_setting(config: Config, setting: str, value: str) -> bool:
+    """Handle path-based settings."""
+    _apply_path_setting(config, setting, value)
+    return True
+
+def _handle_string_setting(config: Config, setting: str, value: str) -> bool:
+    """Handle string-based settings."""
+    _apply_string_setting(config, setting, value)
+    return True
+
+def _handle_boolean_setting(config: Config, setting: str, value: str) -> bool:
+    """Handle boolean-based settings."""
+    _apply_boolean_setting(config, setting, value)
+    return True
+
+def _handle_numeric_setting(config: Config, setting: str, value: str) -> bool:
+    """Handle numeric-based settings."""
+    return _apply_numeric_setting(config, setting, value)
+
+def _handle_unknown_setting(setting: str) -> bool:
+    """Handle unknown settings by showing available options."""
+    from .display_utilities import _show_available_settings
+    return _show_available_settings(setting)
 
 
 def _is_path_setting(setting: str) -> bool:

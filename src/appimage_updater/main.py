@@ -2030,6 +2030,7 @@ async def _perform_update_checks(
     else:
         return await _perform_real_update_checks(enabled_apps, no_interactive)
 
+
 def _display_check_start_message(enabled_apps: list[Any]) -> None:
     """Display the initial check message if console output is not suppressed."""
     from .ui.output.context import get_output_formatter
@@ -2041,6 +2042,7 @@ def _display_check_start_message(enabled_apps: list[Any]) -> None:
         console.print(f"[blue]Checking {len(enabled_apps)} applications for updates...")
     logger.debug(f"Starting update checks for {len(enabled_apps)} applications")
 
+
 def _should_suppress_console_output(output_formatter: Any) -> bool:
     """Check if console output should be suppressed for JSON/HTML formats."""
     return (
@@ -2048,6 +2050,7 @@ def _should_suppress_console_output(output_formatter: Any) -> bool:
         and hasattr(output_formatter, "__class__")
         and output_formatter.__class__.__name__ in ["JSONOutputFormatter", "HTMLOutputFormatter"]
     )
+
 
 async def _perform_dry_run_checks(enabled_apps: list[Any], no_interactive: bool) -> list[Any]:
     """Perform dry-run checks showing current versions without HTTP requests."""
@@ -2068,6 +2071,7 @@ async def _perform_dry_run_checks(enabled_apps: list[Any], no_interactive: bool)
         dry_run_results.append(result)
 
     return dry_run_results
+
 
 def _create_dry_run_result(app_config: Any, version_checker: Any) -> Any:
     """Create a dry-run result for a single application."""
@@ -2096,6 +2100,7 @@ def _create_dry_run_result(app_config: Any, version_checker: Any) -> Any:
             download_url=None,
         )
 
+
 async def _perform_real_update_checks(enabled_apps: list[Any], no_interactive: bool) -> list[Any]:
     """Perform real update checks with HTTP requests."""
     from .core.parallel import ConcurrentProcessor
@@ -2109,6 +2114,7 @@ async def _perform_real_update_checks(enabled_apps: list[Any], no_interactive: b
 
     logger.debug(f"Completed {len(check_results)} update checks")
     return check_results
+
 
 def _log_processing_method(enabled_apps: list[Any]) -> None:
     """Log the processing method being used."""
@@ -2152,7 +2158,7 @@ def _convert_check_results_to_dict(check_results: list[Any]) -> list[dict[str, A
 
 def _extract_result_data(result: Any) -> dict[str, Any]:
     """Extract data from a single check result."""
-    result_dict = {}
+    result_dict: dict[str, Any] = {}
 
     _extract_application_name(result, result_dict)
     _extract_status(result, result_dict)
@@ -2160,6 +2166,7 @@ def _extract_result_data(result: Any) -> dict[str, Any]:
     _extract_error_message(result, result_dict)
 
     return result_dict
+
 
 def _extract_application_name(result: Any, result_dict: dict[str, Any]) -> None:
     """Extract application name from result."""
@@ -2169,6 +2176,7 @@ def _extract_application_name(result: Any, result_dict: dict[str, Any]) -> None:
     else:
         result_dict["Application"] = "Unknown App"
 
+
 def _extract_status(result: Any, result_dict: dict[str, Any]) -> None:
     """Extract status from result."""
     if hasattr(result, "success"):
@@ -2176,12 +2184,14 @@ def _extract_status(result: Any, result_dict: dict[str, Any]) -> None:
     else:
         result_dict["Status"] = "Unknown"
 
+
 def _extract_version_data(result: Any, result_dict: dict[str, Any]) -> None:
     """Extract version data from result, trying candidate first then direct fields."""
     if hasattr(result, "candidate") and result.candidate:
         _extract_candidate_data(result.candidate, result_dict)
     else:
         _extract_direct_result_data(result, result_dict)
+
 
 def _extract_error_message(result: Any, result_dict: dict[str, Any]) -> None:
     """Extract error message from result."""

@@ -375,8 +375,14 @@ class RichOutputFormatter:
         else:
             self._add_no_data_row(table, app_name)
 
-    def _add_direct_version_row(self, table: Table, app_name: str, current_version: str | None,
-                               available_version: str | None, update_available: bool) -> None:
+    def _add_direct_version_row(
+        self,
+        table: Table,
+        app_name: str,
+        current_version: str | None,
+        available_version: str | None,
+        update_available: bool,
+    ) -> None:
         """Add a row with direct version data."""
         current_display = format_version_display(current_version) or "[dim]N/A[/dim]"
         latest_display = format_version_display(available_version) or "[dim]N/A[/dim]"
