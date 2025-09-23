@@ -12,143 +12,149 @@ from .loader import get_default_config_path
 from .models import ApplicationConfig, Config
 
 
-def _load_config_from_directory(config_path: Path) -> Config:
-    """Load configuration from directory of JSON files."""
-    import json
+class Manager:
+    """Base configuration manager class with common functionality."""
 
-    from .loader import ConfigLoadError
+    def _load_config_from_directory(self, config_path: Path) -> Config:
+        """Load configuration from directory of JSON files."""
+        import json
 
-    applications = []
-    json_files = list(config_path.glob("*.json"))
+        from .loader import ConfigLoadError
 
-    for json_file in json_files:
-        file_applications = _load_applications_from_json_file(json_file, json, ConfigLoadError)
-        applications.extend(file_applications)
+        applications = []
+        json_files = list(config_path.glob("*.json"))
 
-    return Config(applications=applications)
+        for json_file in json_files:
+            file_applications = self._load_applications_from_json_file(json_file, json, ConfigLoadError)
+            applications.extend(file_applications)
 
+        return Config(applications=applications)
 
-def _load_applications_from_json_file(
-    json_file: Path, json_module: Any, config_load_error_class: Any
-) -> list[ApplicationConfig]:
-    """Load applications from a single JSON file."""
-    try:
-        data = _read_json_file(json_file, json_module)
-        return _extract_applications_from_data(data)
-    except (json_module.JSONDecodeError, OSError, TypeError) as e:
-        raise config_load_error_class(f"Invalid JSON in {json_file}: {e}") from e
+    def _load_applications_from_json_file(
+        self, json_file: Path, json_module: Any, config_load_error_class: Any
+    ) -> list[ApplicationConfig]:
+        """Load applications from a single JSON file."""
+        try:
+            data = self._read_json_file(json_file, json_module)
+            return self._extract_applications_from_data(data)
+        except (json_module.JSONDecodeError, OSError, TypeError) as e:
+            raise config_load_error_class(f"Invalid JSON in {json_file}: {e}") from e
 
-
-def _read_json_file(json_file: Path, json_module: Any) -> dict[str, Any]:
-    """Read and parse JSON file."""
-    with json_file.open(encoding="utf-8") as f:
-        return cast(dict[str, Any], json_module.load(f))
-
-
-def _extract_applications_from_data(data: dict[str, Any]) -> list[ApplicationConfig]:
-    """Extract applications from JSON data."""
-    applications = []
-    if isinstance(data, dict) and "applications" in data:
-        # Convert dict applications to ApplicationConfig objects
-        for app_data in data["applications"]:
-            applications.append(ApplicationConfig(**app_data))
-    return applications
-
-
-def _load_config_from_file(config_path: Path) -> Config:
-    """Load configuration from single JSON file."""
-    import json
-
-    from .loader import ConfigLoadError
-
-    # Validate file existence and load JSON data
-    _validate_config_file_exists(config_path, ConfigLoadError)
-    data = _load_json_data_from_file(config_path, json, ConfigLoadError)
-    _validate_json_data_format(data, config_path, ConfigLoadError)
-
-    # Parse and return configuration
-    return _parse_config_data(data, config_path, ConfigLoadError)
-
-
-def _validate_config_file_exists(config_path: Path, config_load_error_class: Any) -> None:
-    """Validate that the configuration file exists."""
-    if not config_path.exists():
-        raise config_load_error_class(f"Configuration file not found: {config_path}")
-
-
-def _load_json_data_from_file(config_path: Path, json_module: Any, config_load_error_class: Any) -> dict[str, Any]:
-    """Load and parse JSON data from file."""
-    try:
-        with config_path.open(encoding="utf-8") as f:
+    def _read_json_file(self, json_file: Path, json_module: Any) -> dict[str, Any]:
+        """Read and parse JSON file."""
+        with json_file.open(encoding="utf-8") as f:
             return cast(dict[str, Any], json_module.load(f))
-    except json_module.JSONDecodeError as e:
-        raise config_load_error_class(f"Invalid JSON in {config_path}: {e}") from e
 
+    def _extract_applications_from_data(self, data: dict[str, Any]) -> list[ApplicationConfig]:
+        """Extract applications from JSON data."""
+        applications = []
+        if isinstance(data, dict) and "applications" in data:
+            # Convert dict applications to ApplicationConfig objects
+            for app_data in data["applications"]:
+                applications.append(ApplicationConfig(**app_data))
+        return applications
 
-def _validate_json_data_format(data: Any, config_path: Path, config_load_error_class: Any) -> None:
-    """Validate that JSON data is in the correct format."""
-    if not isinstance(data, dict):
-        raise config_load_error_class(f"Configuration must be a JSON object, got {type(data).__name__}")
+    def _load_config_from_file(self, config_path: Path) -> Config:
+        """Load configuration from single JSON file."""
+        import json
 
+        from .loader import ConfigLoadError
 
-def _parse_config_data(data: dict[str, Any], config_path: Path, config_load_error_class: Any) -> Config:
-    """Parse configuration data into Config object."""
-    try:
-        if "applications" in data:
-            return _create_config_with_applications(data)
+        # Validate file existence and load JSON data
+        self._validate_config_file_exists(config_path, ConfigLoadError)
+        data = self._load_json_data_from_file(config_path, json, ConfigLoadError)
+        self._validate_json_data_format(data, config_path, ConfigLoadError)
+
+        # Parse and return configuration
+        return self._parse_config_data(data, config_path, ConfigLoadError)
+
+    def _validate_config_file_exists(self, config_path: Path, config_load_error_class: Any) -> None:
+        """Validate that the configuration file exists."""
+        if not config_path.exists():
+            raise config_load_error_class(f"Configuration file not found: {config_path}")
+
+    def _load_json_data_from_file(
+        self, config_path: Path, json_module: Any, config_load_error_class: Any
+    ) -> dict[str, Any]:
+        """Load and parse JSON data from file."""
+        try:
+            with config_path.open(encoding="utf-8") as f:
+                return cast(dict[str, Any], json_module.load(f))
+        except json_module.JSONDecodeError as e:
+            raise config_load_error_class(f"Invalid JSON in {config_path}: {e}") from e
+
+    def _validate_json_data_format(self, data: Any, config_path: Path, config_load_error_class: Any) -> None:
+        """Validate that JSON data is in the correct format."""
+        if not isinstance(data, dict):
+            raise config_load_error_class(f"Configuration must be a JSON object, got {type(data).__name__}")
+
+    def _parse_config_data(self, data: dict[str, Any], config_path: Path, config_load_error_class: Any) -> Config:
+        """Parse configuration data into Config object."""
+        try:
+            if "applications" in data:
+                return self._create_config_with_applications(data)
+            else:
+                return self._create_config_single_application(data)
+        except (TypeError, ValueError) as e:
+            raise config_load_error_class(f"Invalid application configuration in {config_path}: {e}") from e
+
+    def _create_config_with_applications(self, data: dict[str, Any]) -> Config:
+        """Create config object from data with applications array."""
+        applications = [ApplicationConfig(**app_data) for app_data in data.get("applications", [])]
+        return Config(applications=applications, global_config=data.get("global_config", {}))
+
+    def _create_config_single_application(self, data: dict[str, Any]) -> Config:
+        """Create config object from single application data."""
+        return Config(applications=[ApplicationConfig(**data)])
+
+    def load_config(self, config_path: Path | None = None) -> Config:
+        """Load configuration from file or directory."""
+        if config_path is None:
+            config_path = get_default_config_path()
+            # Check if directory-based config exists
+            config_dir = config_path.parent / "apps"
+            if config_dir.exists() and config_dir.is_dir():
+                config_path = config_dir
+
+        if config_path.is_dir():
+            return self._load_config_from_directory(config_path)
         else:
-            return _create_config_single_application(data)
-    except (TypeError, ValueError) as e:
-        raise config_load_error_class(f"Invalid application configuration in {config_path}: {e}") from e
+            return self._load_config_from_file(config_path)
+
+    def save_config(self, config: Config, config_path: Path | None = None) -> None:
+        """Save configuration to file."""
+        if config_path is None:
+            config_path = get_default_config_path()
+
+        # Ensure parent directory exists
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Convert to dict and save as JSON
+        config_dict = {
+            "global_config": config.global_config.model_dump(),
+            "applications": [app.model_dump() for app in config.applications],
+        }
+
+        with config_path.open("w") as f:
+            import json
+
+            json.dump(config_dict, f, indent=2, default=str)
 
 
-def _create_config_with_applications(data: dict[str, Any]) -> Config:
-    """Create config object from data with applications array."""
-    applications = [ApplicationConfig(**app_data) for app_data in data.get("applications", [])]
-    return Config(applications=applications, global_config=data.get("global_config", {}))
-
-
-def _create_config_single_application(data: dict[str, Any]) -> Config:
-    """Create config object from single application data."""
-    return Config(applications=[ApplicationConfig(**data)])
-
-
+# Module-level functions for backward compatibility
 def load_config(config_path: Path | None = None) -> Config:
     """Load configuration from file or directory."""
-    if config_path is None:
-        config_path = get_default_config_path()
-        # Check if directory-based config exists
-        config_dir = config_path.parent / "apps"
-        if config_dir.exists() and config_dir.is_dir():
-            config_path = config_dir
-
-    if config_path.is_dir():
-        return _load_config_from_directory(config_path)
-    else:
-        return _load_config_from_file(config_path)
+    manager = Manager()
+    return manager.load_config(config_path)
 
 
 def save_config(config: Config, config_path: Path | None = None) -> None:
     """Save configuration to file."""
-    if config_path is None:
-        config_path = get_default_config_path()
-
-    # Ensure parent directory exists
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # Convert to dict and save as JSON
-    config_dict = {
-        "global_config": config.global_config.model_dump(),
-        "applications": [app.model_dump() for app in config.applications],
-    }
-
-    with config_path.open("w") as f:
-        import json
-
-        json.dump(config_dict, f, indent=2, default=str)
+    manager = Manager()
+    return manager.save_config(config, config_path)
 
 
-class GlobalConfigManager:
+class GlobalConfigManager(Manager):
     """Global configuration manager with property-based access.
 
     Usage:
@@ -203,7 +209,7 @@ class GlobalConfigManager:
 
     def save(self) -> None:
         """Save configuration to file."""
-        save_config(self._config, self._config_path)
+        self.save_config(self._config, self._config_path)
         logger.info("Global configuration saved")
 
     # Global settings properties
@@ -326,7 +332,7 @@ class GlobalConfigManager:
         self._config.global_config.defaults.prerelease = value
 
 
-class AppConfigs:
+class AppConfigs(Manager):
     """Application configurations manager with iterator support.
 
     Usage:
@@ -367,9 +373,8 @@ class AppConfigs:
 
     def _load_application_configs(self) -> Config:
         """Load application configurations from directory or file."""
-        # Use the load_config function for consistency with tests and other code
-        return load_config(self._config_path)
-
+        # Use the load_config method for consistency with tests and other code
+        return self.load_config(self._config_path)
 
     def _get_filtered_apps(self) -> list[ApplicationConfig]:
         """Get applications filtered by names if specified."""
@@ -406,7 +411,7 @@ class AppConfigs:
             self._save_directory_based_config()
         else:
             # For file-based configs, save to single file
-            save_config(self._config, self._config_path)
+            self.save_config(self._config, self._config_path)
         logger.info("Application configurations saved")
 
     def __iter__(self) -> Iterator[ApplicationConfig]:

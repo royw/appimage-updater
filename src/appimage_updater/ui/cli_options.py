@@ -98,13 +98,6 @@ HTTP_TRACK_HEADERS_OPTION = typer.Option(
     help="Include request headers in HTTP tracking (may contain sensitive data)",
 )
 
-# Arguments for application names
-CHECK_APP_NAME_ARGUMENT = typer.Argument(
-    default=None,
-    help="Names of applications to check (case-insensitive, supports glob patterns like 'Orca*'). "
-    "If not provided, checks all applications. Multiple names can be specified.",
-)
-
 # Add command specific options
 
 

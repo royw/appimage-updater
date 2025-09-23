@@ -20,29 +20,8 @@ from .loader import (
     get_default_config_dir,
     get_default_config_path,
 )
-from .models import GlobalConfig
 
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
-
-
-def _create_default_global_config(config_parent_dir: Path) -> None:
-    """Create default global config.json file."""
-
-    config_file = config_parent_dir / "config.json"
-    if config_file.exists():
-        logger.debug(f"Global config file already exists: {config_file}")
-        return
-
-    # Create default global config
-    global_config = GlobalConfig()
-    config_data = global_config.model_dump()
-
-    # Write the global config file
-    with config_file.open("w") as f:
-        json.dump(config_data, f, indent=2)
-
-    display_path = _replace_home_with_tilde(str(config_file))
-    logger.debug(f"Created global configuration file: {display_path}")
 
 
 def validate_and_normalize_add_url(url: str, direct: bool | None = None) -> str | None:

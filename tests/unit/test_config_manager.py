@@ -2,10 +2,42 @@
 
 import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch, mock_open
 
-from appimage_updater.config.manager import AppConfigs, GlobalConfigManager
-from appimage_updater.config.models import ApplicationConfig, Config, GlobalConfig
+from appimage_updater.config.manager import AppConfigs, GlobalConfigManager, Manager
+from appimage_updater.config.models import ApplicationConfig, Config
+
+
+class TestManager:
+    """Test Manager base class."""
+
+    def test_load_config_method(self):
+        """Test that Manager.load_config method works."""
+        manager = Manager()
+        
+        with patch.object(manager, '_load_config_from_file') as mock_load_file:
+            mock_config = Config()
+            mock_load_file.return_value = mock_config
+            
+            config_path = Path("/test/config.json")
+            result = manager.load_config(config_path)
+            
+            assert result == mock_config
+            mock_load_file.assert_called_once_with(config_path)
+
+    def test_save_config_method(self):
+        """Test that Manager.save_config method works."""
+        manager = Manager()
+        config = Config()
+        config_path = Path("/test/config.json")
+        
+        m = mock_open()
+        with patch('pathlib.Path.open', m), \
+             patch('json.dump'), \
+             patch('pathlib.Path.mkdir'):
+            
+            manager.save_config(config, config_path)
+            # Test passes if no exception is raised
 
 
 class TestGlobalConfigManager:
@@ -13,7 +45,7 @@ class TestGlobalConfigManager:
 
     def test_property_access(self):
         """Test property-based access to global configuration."""
-        with patch('appimage_updater.config.manager.load_config') as mock_load:
+        with patch.object(GlobalConfigManager, 'load_config') as mock_load:
             # Mock a basic config
             mock_config = Config()
             mock_load.return_value = mock_config
@@ -34,7 +66,7 @@ class TestGlobalConfigManager:
 
     def test_default_properties(self):
         """Test default configuration properties."""
-        with patch('appimage_updater.config.manager.load_config') as mock_load:
+        with patch.object(GlobalConfigManager, 'load_config') as mock_load:
             mock_config = Config()
             mock_load.return_value = mock_config
             
@@ -58,7 +90,7 @@ class TestAppConfigs:
 
     def test_iterator_support(self):
         """Test iterator support for app configurations."""
-        with patch('appimage_updater.config.manager.load_config') as mock_load:
+        with patch.object(AppConfigs, 'load_config') as mock_load:
             # Create mock applications
             app1 = ApplicationConfig(
                 name="TestApp1",
@@ -91,7 +123,7 @@ class TestAppConfigs:
 
     def test_dictionary_access(self):
         """Test dictionary-style access by app name."""
-        with patch('appimage_updater.config.manager.load_config') as mock_load:
+        with patch.object(AppConfigs, 'load_config') as mock_load:
             app1 = ApplicationConfig(
                 name="TestApp1",
                 source_type="github", 
@@ -119,7 +151,7 @@ class TestAppConfigs:
 
     def test_filtering(self):
         """Test application filtering functionality."""
-        with patch('appimage_updater.config.manager.load_config') as mock_load:
+        with patch.object(AppConfigs, 'load_config') as mock_load:
             app1 = ApplicationConfig(
                 name="TestApp1",
                 source_type="github",
@@ -161,7 +193,7 @@ class TestAppConfigs:
 
     def test_app_name_filtering(self):
         """Test filtering by specific app names."""
-        with patch('appimage_updater.config.manager.load_config') as mock_load:
+        with patch.object(AppConfigs, 'load_config') as mock_load:
             app1 = ApplicationConfig(
                 name="TestApp1",
                 source_type="github",
@@ -196,7 +228,7 @@ class TestAppConfigs:
 
     def test_add_remove_operations(self):
         """Test adding and removing application configurations."""
-        with patch('appimage_updater.config.manager.load_config') as mock_load:
+        with patch.object(AppConfigs, 'load_config') as mock_load:
             app1 = ApplicationConfig(
                 name="TestApp1",
                 source_type="github",
