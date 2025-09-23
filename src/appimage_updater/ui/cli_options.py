@@ -64,6 +64,13 @@ YES_OPTION = typer.Option(
     help="Automatically answer yes to prompts (non-interactive mode)",
 )
 
+NO_OPTION = typer.Option(
+    False,
+    "--no",
+    "-n",
+    help="Automatically answer no to prompts (non-interactive mode)",
+)
+
 NO_INTERACTIVE_OPTION = typer.Option(
     False,
     "--no-interactive",

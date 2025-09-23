@@ -51,6 +51,7 @@ class CheckParams(BaseParams):
     app_names: list[str] | None = None
     dry_run: bool = False
     yes: bool = False
+    no: bool = False
     no_interactive: bool = False
     info: bool = False
     # HTTP instrumentation options

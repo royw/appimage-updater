@@ -91,6 +91,7 @@ class CheckCommand(Command):
             dry_run=self.params.dry_run,
             app_names=self.params.app_names or [],
             yes=self.params.yes,
+            no=self.params.no,
             no_interactive=self.params.no_interactive,
             verbose=self.params.verbose,
             info=self.params.info,

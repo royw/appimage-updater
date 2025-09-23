@@ -27,7 +27,6 @@ from .repositories.factory import get_repository_client
 from .services.application_service import ApplicationService
 from .ui.cli.validation_utilities import _check_configuration_warnings
 from .ui.cli_options import (
-    CHECK_APP_NAME_ARGUMENT,
     CONFIG_DIR_OPTION,
     CONFIG_FILE_OPTION,
     CREATE_DIR_OPTION,
@@ -54,6 +53,7 @@ from .ui.cli_options import (
     HTTP_TRACK_HEADERS_OPTION,
     INSTRUMENT_HTTP_OPTION,
     NO_INTERACTIVE_OPTION,
+    NO_OPTION,
     REPOSITORY_APP_NAME_ARGUMENT,
     REPOSITORY_ASSETS_OPTION,
     REPOSITORY_DRY_RUN_OPTION,
@@ -129,6 +129,13 @@ _YES_OPTION = typer.Option(
     "-y",
     help="Automatically answer yes to prompts (non-interactive mode)",
 )
+
+_NO_OPTION = typer.Option(
+    False,
+    "--no",
+    "-n",
+    help="Automatically answer no to prompts (non-interactive mode)",
+)
 _NO_INTERACTIVE_OPTION = typer.Option(
     False,
     "--no-interactive",
@@ -162,6 +169,13 @@ _YES_OPTION_REMOVE = typer.Option(
     "--yes",
     "-y",
     help="Automatically answer yes to confirmation prompts",
+)
+
+_NO_OPTION_REMOVE = typer.Option(
+    False,
+    "--no",
+    "-n",
+    help="Automatically answer no to confirmation prompts",
 )
 _ADD_NAME_ARGUMENT = typer.Argument(
     default=None, help="Name for the application (used for identification and pattern matching)"
@@ -383,11 +397,12 @@ def main(
 
 @app.command()
 def check(
-    app_names: list[str] = CHECK_APP_NAME_ARGUMENT,
+    app_names: list[str] = _CHECK_APP_NAME_ARGUMENT,
     config_file: Path | None = CONFIG_FILE_OPTION,
     config_dir: Path | None = CONFIG_DIR_OPTION,
     dry_run: bool = DRY_RUN_OPTION,
     yes: bool = YES_OPTION,
+    no: bool = NO_OPTION,
     no_interactive: bool = NO_INTERACTIVE_OPTION,
     verbose: bool = VERBOSE_OPTION,
     debug: bool = _DEBUG_OPTION,
@@ -415,15 +430,21 @@ def check(
     By default, this command only checks for updates without downloading them.
 
     Use --yes to automatically download available updates.
+    Use --no to perform real checks but automatically decline downloads.
     Use --dry-run to preview what would be checked without making network requests.
     Use --verbose to see detailed parameter resolution and processing information.
     """
+    # Validate mutually exclusive options
+    if yes and no:
+        console.print("[red]Error: --yes and --no options are mutually exclusive")
+        raise typer.Exit(1)
     command = CommandFactory.create_check_command(
         app_names=app_names,
         config_file=config_file,
         config_dir=config_dir,
         dry_run=dry_run,
         yes=yes,
+        no=no,
         no_interactive=no_interactive,
         verbose=verbose,
         debug=debug,
@@ -493,6 +514,7 @@ def add(
     download_dir: str | None = _ADD_DOWNLOAD_DIR_ARGUMENT,
     create_dir: bool = _CREATE_DIR_OPTION,
     yes: bool = _YES_OPTION,
+    no: bool = _NO_OPTION,
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     rotation: bool | None = _ROTATION_OPTION,
@@ -532,6 +554,11 @@ def add(
     Use --interactive for a guided setup experience with step-by-step prompts.
     Use --examples to see detailed usage examples.
     """
+    # Validate mutually exclusive options
+    if yes and no:
+        console.print("[red]Error: --yes and --no options are mutually exclusive")
+        raise typer.Exit(1)
+
     command = CommandFactory.create_add_command(
         name=name,
         url=url,
@@ -960,6 +987,7 @@ def edit(
     # Directory creation option
     create_dir: bool = CREATE_DIR_OPTION,
     yes: bool = YES_OPTION,
+    no: bool = NO_OPTION,
     force: bool = EDIT_FORCE_OPTION,
     direct: bool | None = EDIT_DIRECT_OPTION,
     auto_subdir: bool | None = EDIT_AUTO_SUBDIR_OPTION,
@@ -1009,6 +1037,11 @@ def edit(
         # Update URL after repository move
         appimage-updater edit OldApp --url https://github.com/newowner/newrepo
     """
+    # Validate mutually exclusive options
+    if yes and no:
+        console.print("[red]Error: --yes and --no options are mutually exclusive")
+        raise typer.Exit(1)
+
     command = CommandFactory.create_edit_command(
         app_names=app_names,
         config_file=config_file,
@@ -1169,6 +1202,7 @@ def remove(
     config_file: Path | None = _CONFIG_FILE_OPTION,
     config_dir: Path | None = _CONFIG_DIR_OPTION,
     yes: bool = _YES_OPTION_REMOVE,
+    no: bool = _NO_OPTION_REMOVE,
     debug: bool = get_debug_option(),
     format: OutputFormat = FORMAT_OPTION,
     version: bool = get_version_option(),
@@ -1186,6 +1220,11 @@ def remove(
         appimage-updater remove --yes MyApp       # Skip confirmation prompt
         appimage-updater remove --config-dir ~/.config/appimage-updater MyApp
     """
+    # Validate mutually exclusive options
+    if yes and no:
+        console.print("[red]Error: --yes and --no options are mutually exclusive")
+        raise typer.Exit(1)
+
     command = CommandFactory.create_remove_command(
         app_names=app_names,
         config_file=config_file,
@@ -1557,8 +1596,9 @@ async def _check_updates(
     dry_run: bool,
     app_names: list[str] | str | None,
     yes: bool,
-    no_interactive: bool,
-    verbose: bool,
+    no: bool = False,
+    no_interactive: bool = False,
+    verbose: bool = False,
     info: bool = False,
     output_formatter: Any = None,
 ) -> bool:
@@ -1577,7 +1617,7 @@ async def _check_updates(
         with OutputFormatterContext(output_formatter):
             try:
                 return await _execute_check_workflow(
-                    config_file, config_dir, app_names, verbose, dry_run, yes, no_interactive, info
+                    config_file, config_dir, app_names, verbose, dry_run, yes, no, no_interactive, info
                 )
             except Exception as e:
                 _handle_check_errors(e)
@@ -1585,7 +1625,7 @@ async def _check_updates(
     else:
         try:
             return await _execute_check_workflow(
-                config_file, config_dir, app_names, verbose, dry_run, yes, no_interactive, info
+                config_file, config_dir, app_names, verbose, dry_run, yes, no, no_interactive, info
             )
         except Exception as e:
             _handle_check_errors(e)
@@ -1599,12 +1639,13 @@ async def _execute_check_workflow(
     verbose: bool,
     dry_run: bool,
     yes: bool,
+    no: bool,
     no_interactive: bool,
     info: bool,
 ) -> bool:
     """Execute the check workflow logic."""
     config, enabled_apps = await _prepare_check_environment(
-        config_file, config_dir, app_names, verbose, dry_run, yes, no_interactive
+        config_file, config_dir, app_names, verbose, dry_run, yes, no, no_interactive
     )
     if enabled_apps is None:
         # Applications not found - return False to indicate error
@@ -1615,7 +1656,7 @@ async def _execute_check_workflow(
     if info:
         await _execute_info_update_workflow(enabled_apps)
     else:
-        await _execute_update_workflow(config, enabled_apps, dry_run, yes, no_interactive)
+        await _execute_update_workflow(config, enabled_apps, dry_run, yes, no, no_interactive)
     return True
 
 
@@ -1763,6 +1804,7 @@ async def _prepare_check_environment(
     verbose: bool,
     dry_run: bool,
     yes: bool,
+    no: bool,
     no_interactive: bool,
 ) -> tuple[Any, list[Any] | None]:
     """Prepare the environment for update checks."""
@@ -1798,6 +1840,7 @@ async def _execute_update_workflow(
     enabled_apps: list[Any],
     dry_run: bool,
     yes: bool,
+    no: bool,
     no_interactive: bool,
 ) -> None:
     """Execute the main update workflow."""
@@ -1809,7 +1852,11 @@ async def _execute_update_workflow(
         return
 
     if not dry_run:
-        await _handle_downloads(config, candidates, yes)
+        if no:
+            console.print("[blue]Updates found but downloads declined due to --no option")
+            logger.debug("Downloads declined due to --no option")
+        else:
+            await _handle_downloads(config, candidates, yes)
     else:
         console.print("[blue]Dry run mode - no downloads performed")
         logger.debug("Dry run mode enabled, skipping downloads")
