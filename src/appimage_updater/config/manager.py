@@ -141,19 +141,6 @@ class Manager:
             json.dump(config_dict, f, indent=2, default=str)
 
 
-# Module-level functions for backward compatibility
-def load_config(config_path: Path | None = None) -> Config:
-    """Load configuration from file or directory."""
-    manager = Manager()
-    return manager.load_config(config_path)
-
-
-def save_config(config: Config, config_path: Path | None = None) -> None:
-    """Save configuration to file."""
-    manager = Manager()
-    return manager.save_config(config, config_path)
-
-
 class GlobalConfigManager(Manager):
     """Global configuration manager with property-based access.
 

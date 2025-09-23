@@ -45,7 +45,7 @@ class TestGlobalConfigManager:
 
     def test_property_access(self):
         """Test property-based access to global configuration."""
-        with patch.object(GlobalConfigManager, 'load_config') as mock_load:
+        with patch.object(GlobalConfigManager, '_load_global_config') as mock_load:
             # Mock a basic config
             mock_config = Config()
             mock_load.return_value = mock_config
@@ -66,22 +66,22 @@ class TestGlobalConfigManager:
 
     def test_default_properties(self):
         """Test default configuration properties."""
-        with patch.object(GlobalConfigManager, 'load_config') as mock_load:
+        with patch.object(GlobalConfigManager, '_load_global_config') as mock_load:
             mock_config = Config()
             mock_load.return_value = mock_config
             
             globals = GlobalConfigManager()
             
             # Test default properties
-            assert globals.default_prerelease == False
-            assert globals.default_rotation_enabled == False
+            assert not globals.default_prerelease
+            assert not globals.default_rotation_enabled
             assert globals.default_retain_count == 3
             
             # Test modifying defaults
             globals.default_prerelease = True
             globals.default_retain_count = 5
             
-            assert globals.default_prerelease == True
+            assert globals.default_prerelease
             assert globals.default_retain_count == 5
 
 
@@ -90,7 +90,7 @@ class TestAppConfigs:
 
     def test_iterator_support(self):
         """Test iterator support for app configurations."""
-        with patch.object(AppConfigs, 'load_config') as mock_load:
+        with patch.object(AppConfigs, '_load_application_configs') as mock_load:
             # Create mock applications
             app1 = ApplicationConfig(
                 name="TestApp1",
@@ -123,7 +123,7 @@ class TestAppConfigs:
 
     def test_dictionary_access(self):
         """Test dictionary-style access by app name."""
-        with patch.object(AppConfigs, 'load_config') as mock_load:
+        with patch.object(AppConfigs, '_load_application_configs') as mock_load:
             app1 = ApplicationConfig(
                 name="TestApp1",
                 source_type="github", 
@@ -151,7 +151,7 @@ class TestAppConfigs:
 
     def test_filtering(self):
         """Test application filtering functionality."""
-        with patch.object(AppConfigs, 'load_config') as mock_load:
+        with patch.object(AppConfigs, '_load_application_configs') as mock_load:
             app1 = ApplicationConfig(
                 name="TestApp1",
                 source_type="github",
@@ -193,7 +193,7 @@ class TestAppConfigs:
 
     def test_app_name_filtering(self):
         """Test filtering by specific app names."""
-        with patch.object(AppConfigs, 'load_config') as mock_load:
+        with patch.object(AppConfigs, '_load_application_configs') as mock_load:
             app1 = ApplicationConfig(
                 name="TestApp1",
                 source_type="github",
@@ -228,7 +228,7 @@ class TestAppConfigs:
 
     def test_add_remove_operations(self):
         """Test adding and removing application configurations."""
-        with patch.object(AppConfigs, 'load_config') as mock_load:
+        with patch.object(AppConfigs, '_load_application_configs') as mock_load:
             app1 = ApplicationConfig(
                 name="TestApp1",
                 source_type="github",
