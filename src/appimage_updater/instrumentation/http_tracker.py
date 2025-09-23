@@ -86,12 +86,26 @@ class HTTPTracker:
     async def _tracked_request(self, client_self: Any, method: str, url: str, **kwargs: Any) -> Any:
         """Tracked version of httpx AsyncClient.request method."""
         start_time = time.time()
+        
+        # Create and initialize request record
+        record = self._create_request_record(method, url, start_time, **kwargs)
+        
+        try:
+            # Execute request and handle response
+            response = await self._execute_tracked_request(client_self, method, url, record, start_time, **kwargs)
+            return response
+        except Exception as e:
+            self._handle_request_error(e, record, method, url, start_time)
+            raise
+        finally:
+            # Always record the request
+            self.requests.append(record)
 
-        # Capture call stack
+    def _create_request_record(self, method: str, url: str, start_time: float, **kwargs: Any) -> HTTPRequestRecord:
+        """Create an HTTP request record with initial data."""
         call_stack = self._capture_call_stack()
-
-        # Create request record
-        record = HTTPRequestRecord(
+        
+        return HTTPRequestRecord(
             method=method.upper(),
             url=str(url),
             timestamp=start_time,
@@ -100,61 +114,80 @@ class HTTPTracker:
             params=dict(kwargs.get("params") or {}),
         )
 
-        try:
-            # Call original request method
-            response = await self._original_request(client_self, method, url, **kwargs)
-
-            # Record response details
-            if hasattr(response, "status_code"):
-                record.response_status = response.status_code
-            record.response_time = time.time() - start_time
-
-            self._logger.log_request(f"HTTP {method.upper()} {url} -> {getattr(response, 'status_code', 'Unknown')}")
-
-        except Exception as e:
-            record.error = str(e)
-            record.response_time = time.time() - start_time
-            self._logger.log_error(f"HTTP {method.upper()} {url} -> ERROR: {e}")
-            raise
-        finally:
-            # Always record the request
-            self.requests.append(record)
-
+    async def _execute_tracked_request(self, client_self: Any, method: str, url: str, record: HTTPRequestRecord, start_time: float, **kwargs: Any) -> Any:
+        """Execute the tracked request and record response details."""
+        # Call original request method
+        response = await self._original_request(client_self, method, url, **kwargs)
+        
+        # Record response details
+        self._record_response_details(record, response, start_time)
+        self._log_successful_request(method, url, response)
+        
         return response
+
+    def _record_response_details(self, record: HTTPRequestRecord, response: Any, start_time: float) -> None:
+        """Record response details in the request record."""
+        if hasattr(response, "status_code"):
+            record.response_status = response.status_code
+        record.response_time = time.time() - start_time
+
+    def _log_successful_request(self, method: str, url: str, response: Any) -> None:
+        """Log successful request details."""
+        status_code = getattr(response, 'status_code', 'Unknown')
+        self._logger.log_request(f"HTTP {method.upper()} {url} -> {status_code}")
+
+    def _handle_request_error(self, error: Exception, record: HTTPRequestRecord, method: str, url: str, start_time: float) -> None:
+        """Handle request errors and update record."""
+        record.error = str(error)
+        record.response_time = time.time() - start_time
+        self._logger.log_error(f"HTTP {method.upper()} {url} -> ERROR: {error}")
 
     def _capture_call_stack(self) -> list[str]:
         """Capture the current call stack."""
-        stack_info = []
-
-        # Get current frame and walk up the stack
         frame = inspect.currentframe()
         try:
-            # Skip the current frame and the tracked_request frame
-            for _ in range(2):
-                if frame:
-                    frame = frame.f_back
-
-            # Capture the requested number of frames
-            for _ in range(self.stack_depth):
-                if not frame:
-                    break
-
-                filename = frame.f_code.co_filename
-                function_name = frame.f_code.co_name
-                line_number = frame.f_lineno
-
-                # Create a readable stack entry
-                # Extract just the filename without full path
-                short_filename = filename.split("/")[-1] if "/" in filename else filename
-                stack_entry = f"{short_filename}:{function_name}:{line_number}"
-                stack_info.append(stack_entry)
-
-                frame = frame.f_back
-
+            # Skip frames and capture stack information
+            frame = self._skip_internal_frames(frame)
+            return self._collect_stack_frames(frame)
         finally:
             del frame  # Prevent reference cycles
 
+    def _skip_internal_frames(self, frame: Any) -> Any:
+        """Skip internal frames to get to the actual caller."""
+        # Skip the current frame and the tracked_request frame
+        for _ in range(2):
+            if frame:
+                frame = frame.f_back
+        return frame
+
+    def _collect_stack_frames(self, frame: Any) -> list[str]:
+        """Collect stack frame information up to the specified depth."""
+        stack_info = []
+        
+        # Capture the requested number of frames
+        for _ in range(self.stack_depth):
+            if not frame:
+                break
+                
+            stack_entry = self._create_stack_entry(frame)
+            stack_info.append(stack_entry)
+            frame = frame.f_back
+            
         return stack_info
+
+    def _create_stack_entry(self, frame: Any) -> str:
+        """Create a readable stack entry from a frame."""
+        filename = frame.f_code.co_filename
+        function_name = frame.f_code.co_name
+        line_number = frame.f_lineno
+        
+        # Extract just the filename without full path
+        short_filename = self._extract_short_filename(filename)
+        return f"{short_filename}:{function_name}:{line_number}"
+
+    def _extract_short_filename(self, filename: str) -> str:
+        """Extract short filename from full path."""
+        return filename.split("/")[-1] if "/" in filename else filename
 
     def __enter__(self) -> HTTPTracker:
         """Context manager entry."""
