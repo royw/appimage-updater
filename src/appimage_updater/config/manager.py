@@ -148,7 +148,7 @@ def save_config(config: Config, config_path: Path | None = None) -> None:
         json.dump(config_dict, f, indent=2, default=str)
 
 
-class GlobalConfig:
+class GlobalConfigManager:
     """Global configuration manager with property-based access.
 
     Usage:
@@ -207,6 +207,11 @@ class GlobalConfig:
     @user_agent.setter
     def user_agent(self, value: str) -> None:
         self._config.global_config.user_agent = value
+
+    @property
+    def defaults(self) -> Any:
+        """Access to default settings."""
+        return self._config.global_config.defaults
 
     # Default settings properties
     @property

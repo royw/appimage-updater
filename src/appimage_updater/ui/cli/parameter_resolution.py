@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from ...config.models import GlobalConfig
+from ...config.manager import GlobalConfigManager
 
 
 def _get_parameter_status(original_value: Any, resolved_value: Any) -> str:
@@ -52,18 +52,8 @@ def _apply_auto_subdir(base_dir: Path, global_config: Any, name: str) -> str:
     return str(base_dir)
 
 
-def _load_global_config(config_file: Path | None, config_dir: Path | None) -> GlobalConfig:
-    """Load global configuration or return default if none exists."""
-    try:
-        from ...config.migration_helpers import load_config_with_path_resolution
 
-        config = load_config_with_path_resolution(config_file, config_dir)
-        return config.global_config
-    except Exception:
-        return GlobalConfig()
-
-
-def _resolve_rotation_parameter(rotation: bool | None, global_config: GlobalConfig) -> bool:
+def _resolve_rotation_parameter(rotation: bool | None, global_config: GlobalConfigManager) -> bool:
     """Resolve rotation parameter using global defaults."""
     return rotation if rotation is not None else global_config.defaults.rotation_enabled
 
@@ -74,7 +64,7 @@ def _resolve_prerelease_parameter(prerelease: bool | None) -> bool:
 
 
 def _resolve_checksum_parameters(
-    checksum: bool | None, checksum_required: bool | None, global_config: GlobalConfig
+    checksum: bool | None, checksum_required: bool | None, global_config: GlobalConfigManager
 ) -> tuple[bool, bool]:
     """Resolve checksum-related parameters using global defaults."""
     resolved_checksum = checksum if checksum is not None else global_config.defaults.checksum_enabled
@@ -102,7 +92,8 @@ def _resolve_add_parameters(
     name: str,
 ) -> dict[str, Any]:
     """Resolve all add command parameters using global defaults."""
-    global_config = _load_global_config(config_file, config_dir)
+    config_path = config_file or config_dir
+    global_config = GlobalConfigManager(config_path)
 
     resolved_download_dir = _resolve_download_directory(download_dir, auto_subdir, global_config, name)
     resolved_rotation = _resolve_rotation_parameter(rotation, global_config)

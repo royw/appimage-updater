@@ -15,7 +15,8 @@ from appimage_updater.commands.factory import CommandFactory
 
 from ._version import __version__
 from .config.loader import ConfigLoadError
-from .config.models import ApplicationConfig, Config, GlobalConfig
+from .config.models import ApplicationConfig, Config
+from .config.manager import GlobalConfigManager
 from .config.operations import (
     apply_configuration_updates,
     save_updated_configuration,
@@ -763,19 +764,8 @@ def _resolve_download_directory(
         return download_dir
 
 
-def _load_global_config(config_file: Path | None, config_dir: Path | None) -> GlobalConfig:
-    """Load global configuration or return default if none exists."""
-    try:
-        from .config.migration_helpers import load_config_with_path_resolution
 
-        config = load_config_with_path_resolution(config_file, config_dir)
-        return config.global_config
-    except Exception:
-        # If no config exists yet, use default global config
-        return GlobalConfig()
-
-
-def _resolve_rotation_parameter(rotation: bool | None, global_config: GlobalConfig) -> bool:
+def _resolve_rotation_parameter(rotation: bool | None, global_config: GlobalConfigManager) -> bool:
     """Resolve rotation parameter using global defaults."""
     return rotation if rotation is not None else global_config.defaults.rotation_enabled
 
@@ -786,7 +776,7 @@ def _resolve_prerelease_parameter(prerelease: bool | None) -> bool:
 
 
 def _resolve_checksum_parameters(
-    checksum: bool | None, checksum_required: bool | None, global_config: GlobalConfig
+    checksum: bool | None, checksum_required: bool | None, global_config: GlobalConfigManager
 ) -> tuple[bool, bool]:
     """Resolve checksum-related parameters using global defaults."""
     resolved_checksum = checksum if checksum is not None else global_config.defaults.checksum_enabled
@@ -809,7 +799,7 @@ def _resolve_add_parameters(
     checksum: bool | None,
     checksum_required: bool | None,
     direct: bool | None,
-    global_config: GlobalConfig,
+    global_config: GlobalConfigManager,
     name: str,
 ) -> tuple[str, bool, bool, bool, bool, bool]:
     """Resolve all add command parameters using global defaults."""
