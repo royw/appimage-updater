@@ -120,6 +120,11 @@ def _execute_add_operation(
         # Use unified API to add and save
         config_path = config_file or config_dir
         app_configs = AppConfigs(config_path=config_path)
+        
+        # Check for duplicate names
+        if app_config.name in app_configs:
+            raise ValueError(f"Configuration already exists for application '{app_config.name}'")
+        
         app_configs.add(app_config)
         app_configs.save()
 
