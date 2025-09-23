@@ -298,6 +298,7 @@ def _validate_and_fix_config_file(config_path: Path) -> None:
 def _load_config_file_data(config_path: Path, json_module: Any) -> dict[str, Any]:
     """Load configuration data from file."""
     from typing import cast
+
     with config_path.open(encoding="utf-8") as f:
         return cast(dict[str, Any], json_module.load(f))
 
@@ -360,6 +361,7 @@ def _validate_and_fix_single_json_file(json_file: Path, json_module: Any, config
 def _load_json_file_for_validation(json_file: Path, json_module: Any) -> dict[str, Any]:
     """Load JSON file data for validation."""
     from typing import cast
+
     with json_file.open(encoding="utf-8") as f:
         return cast(dict[str, Any], json_module.load(f))
 

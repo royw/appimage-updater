@@ -211,8 +211,9 @@ async def _add(
 
 
 def _prepare_add_parameters(
-    download_dir, auto_subdir, rotation, prerelease, checksum, checksum_required, direct, config_file, config_dir, name
-):
+    download_dir: str | None, auto_subdir: bool, rotation: bool, prerelease: bool, checksum: bool,
+    checksum_required: bool, direct: bool, config_file: Path | None, config_dir: Path | None, name: str
+) -> Any:
     """Prepare and resolve add command parameters."""
     return _resolve_add_parameters(
         download_dir,
@@ -229,20 +230,20 @@ def _prepare_add_parameters(
 
 
 def _handle_add_verbose_logging(
-    verbose,
-    name,
-    url,
-    download_dir,
-    auto_subdir,
-    rotation,
-    prerelease,
-    checksum,
-    checksum_required,
-    direct,
-    config_file,
-    config_dir,
-    resolved_params,
-):
+    verbose: bool,
+    name: str,
+    url: str,
+    download_dir: str | None,
+    auto_subdir: bool,
+    rotation: bool,
+    prerelease: bool,
+    checksum: bool,
+    checksum_required: bool,
+    direct: bool,
+    config_file: str | None,
+    config_dir: str | None,
+    resolved_params: Any,
+) -> None:
     """Handle verbose logging for add command."""
     _handle_verbose_logging(
         verbose,
@@ -262,26 +263,26 @@ def _handle_add_verbose_logging(
 
 
 async def _process_add_configuration(
-    name,
-    url,
-    download_dir,
-    auto_subdir,
-    config_file,
-    config_dir,
-    rotation,
-    retain,
-    symlink,
-    prerelease,
-    checksum,
-    checksum_algorithm,
-    checksum_pattern,
-    checksum_required,
-    pattern,
-    direct,
-    create_dir,
-    yes,
-    dry_run,
-):
+    name: str,
+    url: str,
+    download_dir: str | None,
+    auto_subdir: bool,
+    config_file: Path | None,
+    config_dir: Path | None,
+    rotation: bool,
+    retain: int,
+    symlink: str | None,
+    prerelease: bool,
+    checksum: bool,
+    checksum_algorithm: str,
+    checksum_pattern: str | None,
+    checksum_required: bool,
+    pattern: str | None,
+    direct: bool,
+    create_dir: bool,
+    yes: bool,
+    dry_run: bool,
+) -> dict[str, Any] | None:
     """Process and prepare add configuration data."""
     return await _prepare_add_configuration(
         name,
@@ -306,7 +307,9 @@ async def _process_add_configuration(
     )
 
 
-def _execute_add_workflow(config_data, dry_run, config_file, config_dir):
+def _execute_add_workflow(
+    config_data: dict[str, Any], dry_run: bool, config_file: Path | None, config_dir: Path | None
+) -> bool:
     """Execute the add workflow based on dry_run flag."""
     if dry_run:
         _display_dry_run_config(

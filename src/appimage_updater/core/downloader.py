@@ -665,7 +665,7 @@ class Downloader:
             return False
         return True
 
-    def _prepare_rotation_parameters(self, candidate: UpdateCandidate) -> dict:
+    def _prepare_rotation_parameters(self, candidate: UpdateCandidate) -> dict[str, Any]:
         """Prepare parameters needed for rotation."""
         download_dir = candidate.download_path.parent
         logger.debug(f"Starting rotation for {candidate.app_name} in directory: {download_dir}")
@@ -697,7 +697,7 @@ class Downloader:
 
         return base_name, extension
 
-    async def _execute_rotation_steps(self, candidate: UpdateCandidate, rotation_params: dict) -> Path:
+    async def _execute_rotation_steps(self, candidate: UpdateCandidate, rotation_params: dict[str, Any]) -> Path:
         """Execute the rotation steps in sequence."""
         # Step 1: Rotate existing files
         await self._perform_file_rotation(candidate, rotation_params)
@@ -709,10 +709,13 @@ class Downloader:
         await self._update_rotation_symlink(candidate, rotation_params["current_path"])
 
         logger.debug(f"Rotation completed. Final path: {rotation_params['current_path']}")
-        return rotation_params["current_path"]
+        return Path(rotation_params["current_path"])
 
-    async def _perform_file_rotation(self, candidate: UpdateCandidate, rotation_params: dict) -> None:
+    async def _perform_file_rotation(self, candidate: UpdateCandidate, rotation_params: dict[str, Any]) -> None:
         """Perform rotation of existing files."""
+        if candidate.app_config is None:
+            raise ValueError("Application configuration is required for file rotation")
+
         logger.debug(f"Step 1: Rotating existing files with retain_count={candidate.app_config.retain_count}")
         await self._rotate_existing_files(
             rotation_params["download_dir"],
@@ -721,7 +724,7 @@ class Downloader:
             candidate.app_config.retain_count,
         )
 
-    async def _move_files_to_current(self, candidate: UpdateCandidate, rotation_params: dict) -> None:
+    async def _move_files_to_current(self, candidate: UpdateCandidate, rotation_params: dict[str, Any]) -> None:
         """Move downloaded file and metadata to current."""
         current_path = rotation_params["current_path"]
 
@@ -750,6 +753,10 @@ class Downloader:
 
     async def _update_rotation_symlink(self, candidate: UpdateCandidate, current_path: Path) -> None:
         """Update symlink after rotation."""
+        if candidate.app_config is None:
+            logger.debug("No app config available, skipping symlink update")
+            return
+
         if candidate.app_config.symlink_path:
             logger.debug(f"Step 3: Updating symlink to {candidate.app_config.symlink_path}")
             await self._update_symlink(current_path, candidate.app_config.symlink_path)
