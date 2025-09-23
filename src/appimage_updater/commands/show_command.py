@@ -99,7 +99,7 @@ class ShowCommand(Command):
 
     def _get_config_source_info(self) -> dict[str, str]:
         """Get configuration source information for display."""
-        from ..config.loader import get_default_config_dir, get_default_config_path
+        from ..config.manager import GlobalConfigManager
 
         if self.params.config_file:
             return {
@@ -107,7 +107,7 @@ class ShowCommand(Command):
                 "path": str(self.params.config_file),
             }
 
-        config_dir = self.params.config_dir or get_default_config_dir()
+        config_dir = self.params.config_dir or GlobalConfigManager.get_default_config_dir()
         if config_dir.exists():
             return {
                 "type": "directory",
@@ -115,7 +115,7 @@ class ShowCommand(Command):
             }
 
         # Fallback to default file
-        default_file = get_default_config_path()
+        default_file = GlobalConfigManager.get_default_config_path()
         return {
             "type": "file",
             "path": str(default_file),

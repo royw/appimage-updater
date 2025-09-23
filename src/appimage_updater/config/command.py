@@ -12,7 +12,8 @@ from typing import Any
 from rich.console import Console
 from rich.table import Table
 
-from .loader import ConfigLoadError, get_default_config_dir, get_default_config_path
+from .loader import ConfigLoadError
+from .manager import GlobalConfigManager
 from .models import Config, GlobalConfig
 
 logger = logging.getLogger(__name__)
@@ -812,8 +813,8 @@ def _determine_target_file(config_file: Path | None, config_dir: Path | None) ->
 
 def _get_default_target_file() -> Path:
     """Get the default target file path."""
-    default_dir = get_default_config_dir()
-    default_file = get_default_config_path()
+    default_dir = GlobalConfigManager.get_default_config_dir()
+    default_file = GlobalConfigManager.get_default_config_path()
 
     if default_dir.exists():
         # Save global config to parent directory, not in apps/

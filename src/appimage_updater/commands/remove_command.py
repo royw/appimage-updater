@@ -214,7 +214,7 @@ class RemoveCommand(Command):
             self._save_single_file_config(config)
         else:
             # Use default config directory if none specified (same logic as load_config)
-            from ..config.loader import get_default_config_dir
+            from ..config.manager import GlobalConfigManager
 
-            config_dir = self.params.config_dir or get_default_config_dir()
+            config_dir = self.params.config_dir or GlobalConfigManager.get_default_config_dir()
             self._save_directory_based_config_with_path(config, removed_apps, config_dir)

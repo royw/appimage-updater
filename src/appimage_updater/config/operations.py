@@ -16,10 +16,7 @@ from rich.console import Console
 from ..pattern_generator import detect_source_type, generate_appimage_pattern_async, should_enable_prerelease
 from ..repositories.factory import get_repository_client
 from ..ui.display import _replace_home_with_tilde
-from .loader import (
-    get_default_config_dir,
-    get_default_config_path,
-)
+from .manager import GlobalConfigManager
 
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 
@@ -971,8 +968,8 @@ def determine_save_target(config_file: Path | None, config_dir: Path | None) -> 
         return None, config_dir
     else:
         # Use defaults
-        default_dir = get_default_config_dir()
-        default_file = get_default_config_path()
+        default_dir = GlobalConfigManager.get_default_config_dir()
+        default_file = GlobalConfigManager.get_default_config_path()
 
         if default_dir.exists():
             return None, default_dir

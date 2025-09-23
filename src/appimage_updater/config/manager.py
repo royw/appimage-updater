@@ -1,14 +1,14 @@
-"""Configuration management module."""
+"""Configuration management with object-oriented API."""
 
 from __future__ import annotations
 
+import os
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, cast
 
 from loguru import logger
 
-from .loader import get_default_config_path
 from .models import ApplicationConfig, Config
 
 
@@ -110,11 +110,11 @@ class Manager:
     def load_config(self, config_path: Path | None = None) -> Config:
         """Load configuration from file or directory."""
         if config_path is None:
-            config_path = get_default_config_path()
+            config_path = GlobalConfigManager.get_default_config_path()
             # Check if directory-based config exists
             config_dir = config_path.parent / "apps"
             if config_dir.exists() and config_dir.is_dir():
-                config_path = config_dir
+                return self._load_config_from_directory(config_dir)
 
         if config_path.is_dir():
             return self._load_config_from_directory(config_path)
@@ -124,7 +124,7 @@ class Manager:
     def save_config(self, config: Config, config_path: Path | None = None) -> None:
         """Save configuration to file."""
         if config_path is None:
-            config_path = get_default_config_path()
+            config_path = GlobalConfigManager.get_default_config_path()
 
         # Ensure parent directory exists
         config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -151,6 +151,26 @@ class GlobalConfigManager(Manager):
         globals.save()
     """
 
+    @staticmethod
+    def get_default_config_path() -> Path:
+        """Get default configuration file path."""
+        # Check for test environment override
+        test_config_dir = os.environ.get("APPIMAGE_UPDATER_TEST_CONFIG_DIR")
+        if test_config_dir:
+            return Path(test_config_dir) / "config.json"
+
+        return Path.home() / ".config" / "appimage-updater" / "config.json"
+
+    @staticmethod
+    def get_default_config_dir() -> Path:
+        """Get default configuration directory path."""
+        # Check for test environment override
+        test_config_dir = os.environ.get("APPIMAGE_UPDATER_TEST_CONFIG_DIR")
+        if test_config_dir:
+            return Path(test_config_dir) / "apps"
+
+        return Path.home() / ".config" / "appimage-updater" / "apps"
+
     def __init__(self, config_path: Path | None = None) -> None:
         """Initialize global configuration.
 
@@ -172,9 +192,7 @@ class GlobalConfigManager(Manager):
         """Load global configuration from config.json file."""
         import json
 
-        from .loader import get_default_config_path
-
-        config_path = self._config_path or get_default_config_path()
+        config_path = self._config_path or self.get_default_config_path()
 
         if not config_path.exists():
             return Config()
