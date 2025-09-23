@@ -86,10 +86,10 @@ class HTTPTracker:
     async def _tracked_request(self, client_self: Any, method: str, url: str, **kwargs: Any) -> Any:
         """Tracked version of httpx AsyncClient.request method."""
         start_time = time.time()
-        
+
         # Create and initialize request record
         record = self._create_request_record(method, url, start_time, **kwargs)
-        
+
         try:
             # Execute request and handle response
             response = await self._execute_tracked_request(client_self, method, url, record, start_time, **kwargs)
@@ -104,7 +104,7 @@ class HTTPTracker:
     def _create_request_record(self, method: str, url: str, start_time: float, **kwargs: Any) -> HTTPRequestRecord:
         """Create an HTTP request record with initial data."""
         call_stack = self._capture_call_stack()
-        
+
         return HTTPRequestRecord(
             method=method.upper(),
             url=str(url),
@@ -114,15 +114,17 @@ class HTTPTracker:
             params=dict(kwargs.get("params") or {}),
         )
 
-    async def _execute_tracked_request(self, client_self: Any, method: str, url: str, record: HTTPRequestRecord, start_time: float, **kwargs: Any) -> Any:
+    async def _execute_tracked_request(
+        self, client_self: Any, method: str, url: str, record: HTTPRequestRecord, start_time: float, **kwargs: Any
+    ) -> Any:
         """Execute the tracked request and record response details."""
         # Call original request method
         response = await self._original_request(client_self, method, url, **kwargs)
-        
+
         # Record response details
         self._record_response_details(record, response, start_time)
         self._log_successful_request(method, url, response)
-        
+
         return response
 
     def _record_response_details(self, record: HTTPRequestRecord, response: Any, start_time: float) -> None:
@@ -133,10 +135,12 @@ class HTTPTracker:
 
     def _log_successful_request(self, method: str, url: str, response: Any) -> None:
         """Log successful request details."""
-        status_code = getattr(response, 'status_code', 'Unknown')
+        status_code = getattr(response, "status_code", "Unknown")
         self._logger.log_request(f"HTTP {method.upper()} {url} -> {status_code}")
 
-    def _handle_request_error(self, error: Exception, record: HTTPRequestRecord, method: str, url: str, start_time: float) -> None:
+    def _handle_request_error(
+        self, error: Exception, record: HTTPRequestRecord, method: str, url: str, start_time: float
+    ) -> None:
         """Handle request errors and update record."""
         record.error = str(error)
         record.response_time = time.time() - start_time
@@ -163,16 +167,16 @@ class HTTPTracker:
     def _collect_stack_frames(self, frame: Any) -> list[str]:
         """Collect stack frame information up to the specified depth."""
         stack_info = []
-        
+
         # Capture the requested number of frames
         for _ in range(self.stack_depth):
             if not frame:
                 break
-                
+
             stack_entry = self._create_stack_entry(frame)
             stack_info.append(stack_entry)
             frame = frame.f_back
-            
+
         return stack_info
 
     def _create_stack_entry(self, frame: Any) -> str:
@@ -180,7 +184,7 @@ class HTTPTracker:
         filename = frame.f_code.co_filename
         function_name = frame.f_code.co_name
         line_number = frame.f_lineno
-        
+
         # Extract just the filename without full path
         short_filename = self._extract_short_filename(filename)
         return f"{short_filename}:{function_name}:{line_number}"

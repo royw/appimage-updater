@@ -1046,11 +1046,33 @@ def edit(
 
     # Execute edit command
     _execute_edit_command_workflow(
-        app_names, config_file, config_dir, url, download_dir, basename, pattern,
-        enable, prerelease, rotation, symlink_path, retain_count, checksum,
-        checksum_algorithm, checksum_pattern, checksum_required, create_dir,
-        yes, force, direct, auto_subdir, verbose, dry_run, debug, format
+        app_names,
+        config_file,
+        config_dir,
+        url,
+        download_dir,
+        basename,
+        pattern,
+        enable,
+        prerelease,
+        rotation,
+        symlink_path,
+        retain_count,
+        checksum,
+        checksum_algorithm,
+        checksum_pattern,
+        checksum_required,
+        create_dir,
+        yes,
+        force,
+        direct,
+        auto_subdir,
+        verbose,
+        dry_run,
+        debug,
+        format,
     )
+
 
 def _validate_edit_options(yes: bool, no: bool) -> None:
     """Validate mutually exclusive edit options."""
@@ -1058,58 +1080,143 @@ def _validate_edit_options(yes: bool, no: bool) -> None:
         console.print("[red]Error: --yes and --no options are mutually exclusive")
         raise typer.Exit(1)
 
+
 def _handle_edit_help_display(format: OutputFormat) -> None:
     """Handle help display for edit command."""
     from .ui.output.factory import create_output_formatter
+
     output_formatter = create_output_formatter(format)
     _display_edit_help(format, output_formatter)
     raise typer.Exit(0)
 
+
 def _execute_edit_command_workflow(
-    app_names, config_file, config_dir, url, download_dir, basename, pattern,
-    enable, prerelease, rotation, symlink_path, retain_count, checksum,
-    checksum_algorithm, checksum_pattern, checksum_required, create_dir,
-    yes, force, direct, auto_subdir, verbose, dry_run, debug, format
+    app_names,
+    config_file,
+    config_dir,
+    url,
+    download_dir,
+    basename,
+    pattern,
+    enable,
+    prerelease,
+    rotation,
+    symlink_path,
+    retain_count,
+    checksum,
+    checksum_algorithm,
+    checksum_pattern,
+    checksum_required,
+    create_dir,
+    yes,
+    force,
+    direct,
+    auto_subdir,
+    verbose,
+    dry_run,
+    debug,
+    format,
 ) -> None:
     """Execute the complete edit command workflow."""
     command = _create_edit_command(
-        app_names, config_file, config_dir, url, download_dir, basename, pattern,
-        enable, prerelease, rotation, symlink_path, retain_count, checksum,
-        checksum_algorithm, checksum_pattern, checksum_required, create_dir,
-        yes, force, direct, auto_subdir, verbose, dry_run, debug, format
+        app_names,
+        config_file,
+        config_dir,
+        url,
+        download_dir,
+        basename,
+        pattern,
+        enable,
+        prerelease,
+        rotation,
+        symlink_path,
+        retain_count,
+        checksum,
+        checksum_algorithm,
+        checksum_pattern,
+        checksum_required,
+        create_dir,
+        yes,
+        force,
+        direct,
+        auto_subdir,
+        verbose,
+        dry_run,
+        debug,
+        format,
     )
-    
+
     output_formatter = create_output_formatter_from_params(command.params)
     result = _execute_edit_with_format_handling(command, output_formatter, format)
-    
+
     if not result.success:
         raise typer.Exit(result.exit_code)
 
+
 def _create_edit_command(
-    app_names, config_file, config_dir, url, download_dir, basename, pattern,
-    enable, prerelease, rotation, symlink_path, retain_count, checksum,
-    checksum_algorithm, checksum_pattern, checksum_required, create_dir,
-    yes, force, direct, auto_subdir, verbose, dry_run, debug, format
+    app_names,
+    config_file,
+    config_dir,
+    url,
+    download_dir,
+    basename,
+    pattern,
+    enable,
+    prerelease,
+    rotation,
+    symlink_path,
+    retain_count,
+    checksum,
+    checksum_algorithm,
+    checksum_pattern,
+    checksum_required,
+    create_dir,
+    yes,
+    force,
+    direct,
+    auto_subdir,
+    verbose,
+    dry_run,
+    debug,
+    format,
 ):
     """Create edit command with all parameters."""
     return CommandFactory.create_edit_command(
-        app_names=app_names, config_file=config_file, config_dir=config_dir,
-        url=url, download_dir=download_dir, basename=basename, pattern=pattern,
-        enable=enable, prerelease=prerelease, rotation=rotation,
-        symlink_path=symlink_path, retain_count=retain_count, checksum=checksum,
-        checksum_algorithm=checksum_algorithm, checksum_pattern=checksum_pattern,
-        checksum_required=checksum_required, create_dir=create_dir, yes=yes,
-        force=force, direct=direct, auto_subdir=auto_subdir, verbose=verbose,
-        dry_run=dry_run, debug=debug, format=format
+        app_names=app_names,
+        config_file=config_file,
+        config_dir=config_dir,
+        url=url,
+        download_dir=download_dir,
+        basename=basename,
+        pattern=pattern,
+        enable=enable,
+        prerelease=prerelease,
+        rotation=rotation,
+        symlink_path=symlink_path,
+        retain_count=retain_count,
+        checksum=checksum,
+        checksum_algorithm=checksum_algorithm,
+        checksum_pattern=checksum_pattern,
+        checksum_required=checksum_required,
+        create_dir=create_dir,
+        yes=yes,
+        force=force,
+        direct=direct,
+        auto_subdir=auto_subdir,
+        verbose=verbose,
+        dry_run=dry_run,
+        debug=debug,
+        format=format,
     )
+
 
 def _execute_edit_with_format_handling(command, output_formatter, format: OutputFormat):
     """Execute edit command with proper format handling."""
     result = asyncio.run(command.execute(output_formatter=output_formatter))
-    
+
     if format in [OutputFormat.JSON, OutputFormat.HTML]:
         output_formatter.finalize()
-    
+
     return result
 
 
@@ -1119,6 +1226,7 @@ def _display_edit_help(format: OutputFormat, output_formatter: Any) -> None:
         _display_structured_edit_help(output_formatter)
     else:
         _display_console_edit_help()
+
 
 def _display_structured_edit_help(output_formatter: Any) -> None:
     """Display edit help for structured formats (JSON/HTML)."""
@@ -1133,11 +1241,10 @@ def _display_structured_edit_help(output_formatter: Any) -> None:
     output_formatter.print_info("")
     output_formatter.print_info("Examples:")
     output_formatter.print_info("  appimage-updater edit FreeCAD --prerelease")
-    output_formatter.print_info(
-        "  appimage-updater edit OrcaSlicer --rotation --symlink-path ~/bin/orca.AppImage"
-    )
+    output_formatter.print_info("  appimage-updater edit OrcaSlicer --rotation --symlink-path ~/bin/orca.AppImage")
     output_formatter.print_info("  appimage-updater edit 'Orca*' --enable")
     output_formatter.finalize()
+
 
 def _display_console_edit_help() -> None:
     """Display edit help for console formats."""
@@ -1265,24 +1372,27 @@ def remove(
     # Execute remove command
     _execute_remove_command_workflow(app_names, config_file, config_dir, yes, debug, format)
 
+
 def _validate_remove_options(yes: bool, no: bool) -> None:
     """Validate mutually exclusive remove options."""
     if yes and no:
         console.print("[red]Error: --yes and --no options are mutually exclusive")
         raise typer.Exit(1)
 
+
 def _handle_remove_help_display(format: OutputFormat) -> None:
     """Handle help display for remove command."""
     from .ui.output.factory import create_output_formatter
+
     output_formatter = create_output_formatter(format)
     _display_remove_help(format, output_formatter)
     raise typer.Exit(0)
 
+
 def _execute_remove_command_workflow(app_names, config_file, config_dir, yes, debug, format) -> None:
     """Execute the complete remove command workflow."""
     command = CommandFactory.create_remove_command(
-        app_names=app_names, config_file=config_file, config_dir=config_dir,
-        yes=yes, debug=debug, format=format
+        app_names=app_names, config_file=config_file, config_dir=config_dir, yes=yes, debug=debug, format=format
     )
 
     output_formatter = create_output_formatter_from_params(command.params)
@@ -1290,6 +1400,7 @@ def _execute_remove_command_workflow(app_names, config_file, config_dir, yes, de
 
     if not result.success:
         raise typer.Exit(result.exit_code)
+
 
 def _execute_remove_with_format_handling(command, output_formatter, format: OutputFormat):
     """Execute remove command with proper format handling."""
@@ -1307,6 +1418,7 @@ def _display_remove_help(format: OutputFormat, output_formatter: Any) -> None:
         _display_structured_remove_help(output_formatter)
     else:
         _display_console_remove_help()
+
 
 def _display_structured_remove_help(output_formatter: Any) -> None:
     """Display remove help for structured formats (JSON/HTML)."""
@@ -1327,6 +1439,7 @@ def _display_structured_remove_help(output_formatter: Any) -> None:
     output_formatter.print_info("  appimage-updater remove FreeCAD OrcaSlicer")
     output_formatter.print_info("  appimage-updater remove --yes MyApp")
     output_formatter.finalize()
+
 
 def _display_console_remove_help() -> None:
     """Display remove help for console formats."""
@@ -1470,6 +1583,7 @@ async def _examine_repositories(
         _handle_repository_examination_error(e, app_names)
         return False
 
+
 def _filter_apps_for_examination(applications: list, app_names: list[str]):
     """Filter applications for repository examination."""
     filtered_result = ApplicationService.filter_apps_by_names(applications, app_names)
@@ -1477,6 +1591,7 @@ def _filter_apps_for_examination(applications: list, app_names: list[str]):
         # Applications not found - error already displayed
         return None
     return filtered_result
+
 
 async def _process_repository_examination(apps_to_examine: list, limit: int, show_assets: bool, dry_run: bool) -> bool:
     """Process the repository examination for filtered applications."""
@@ -1486,6 +1601,7 @@ async def _process_repository_examination(apps_to_examine: list, limit: int, sho
 
     await _examine_apps_repositories(apps_to_examine, limit, show_assets)
     return True
+
 
 def _handle_config_load_error(e: Exception) -> None:
     """Handle configuration loading errors."""
@@ -1827,10 +1943,13 @@ async def _get_version_from_repository(app_config: ApplicationConfig, current_fi
     except Exception:
         return None
 
+
 async def _get_repository_client(url: str):
     """Get repository client for the given URL."""
     from .repositories.factory import get_repository_client
+
     return get_repository_client(url)
+
 
 def _find_matching_release_version(releases: list, current_file: Path, app_name: str) -> str | None:
     """Find the release version that matches the current file."""
@@ -1840,6 +1959,7 @@ def _find_matching_release_version(releases: list, current_file: Path, app_name:
             if matching_version:
                 return matching_version
     return None
+
 
 def _check_release_assets(release, current_file: Path, app_name: str) -> str | None:
     """Check if any asset in the release matches the current file."""
@@ -1904,6 +2024,7 @@ async def _prepare_check_environment(
     _log_app_summary(config, enabled_apps, app_names)
     return config, enabled_apps
 
+
 def _handle_no_enabled_apps() -> None:
     """Handle the case when no enabled applications are found."""
     from .ui.output.context import get_output_formatter
@@ -1915,17 +2036,19 @@ def _handle_no_enabled_apps() -> None:
         console.print("[yellow]No enabled applications found in configuration")
     # Note: Don't log to stdout as it contaminates JSON output
 
+
 def _handle_verbose_display(
-    verbose: bool, 
-    normalized_names: list[str] | None, 
-    dry_run: bool, 
-    yes: bool, 
-    no_interactive: bool, 
-    enabled_count: int
+    verbose: bool,
+    normalized_names: list[str] | None,
+    dry_run: bool,
+    yes: bool,
+    no_interactive: bool,
+    enabled_count: int,
 ) -> None:
     """Handle verbose information display."""
     if verbose:
         _display_check_verbose_info(normalized_names, dry_run, yes, no_interactive, enabled_count)
+
 
 def _log_app_summary(config: Any, enabled_apps: list[Any], app_names: list[str] | str | None) -> None:
     """Log summary of applications found."""
@@ -2305,6 +2428,7 @@ def _extract_direct_result_data(result: Any, result_dict: dict[str, Any]) -> Non
     _extract_direct_update_status(result, result_dict)
     _extract_direct_download_url(result, result_dict)
 
+
 def _extract_direct_version_info(result: Any, result_dict: dict[str, Any]) -> None:
     """Extract version information from direct result fields."""
     if hasattr(result, "current_version"):
@@ -2317,12 +2441,14 @@ def _extract_direct_version_info(result: Any, result_dict: dict[str, Any]) -> No
     else:
         result_dict["Latest Version"] = "N/A"
 
+
 def _extract_direct_update_status(result: Any, result_dict: dict[str, Any]) -> None:
     """Extract update availability status from direct result fields."""
     if hasattr(result, "update_available"):
         result_dict["Update Available"] = "Yes" if result.update_available else "No"
     else:
         result_dict["Update Available"] = "Unknown"
+
 
 def _extract_direct_download_url(result: Any, result_dict: dict[str, Any]) -> None:
     """Extract download URL from direct result fields."""
@@ -2336,10 +2462,12 @@ def _extract_candidate_data(candidate: Any, result_dict: dict[str, Any]) -> None
     _extract_candidate_version_info(candidate, result_dict)
     _extract_candidate_update_status(candidate, result_dict)
 
+
 def _extract_candidate_download_url(candidate: Any, result_dict: dict[str, Any]) -> None:
     """Extract download URL from candidate."""
     if hasattr(candidate, "download_url"):
         result_dict["Download URL"] = candidate.download_url
+
 
 def _extract_candidate_version_info(candidate: Any, result_dict: dict[str, Any]) -> None:
     """Extract version information from candidate."""
@@ -2347,6 +2475,7 @@ def _extract_candidate_version_info(candidate: Any, result_dict: dict[str, Any])
         result_dict["Current Version"] = str(candidate.current_version) if candidate.current_version else "N/A"
     if hasattr(candidate, "latest_version"):
         result_dict["Latest Version"] = str(candidate.latest_version) if candidate.latest_version else "N/A"
+
 
 def _extract_candidate_update_status(candidate: Any, result_dict: dict[str, Any]) -> None:
     """Extract update status from candidate."""

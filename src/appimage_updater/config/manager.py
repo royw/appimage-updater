@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from loguru import logger
 
@@ -14,18 +15,22 @@ from .models import ApplicationConfig, Config
 def _load_config_from_directory(config_path: Path) -> Config:
     """Load configuration from directory of JSON files."""
     import json
+
     from .loader import ConfigLoadError
 
     applications = []
     json_files = list(config_path.glob("*.json"))
-    
+
     for json_file in json_files:
         file_applications = _load_applications_from_json_file(json_file, json, ConfigLoadError)
         applications.extend(file_applications)
 
     return Config(applications=applications)
 
-def _load_applications_from_json_file(json_file: Path, json_module: Any, config_load_error_class: Any) -> list[ApplicationConfig]:
+
+def _load_applications_from_json_file(
+    json_file: Path, json_module: Any, config_load_error_class: Any
+) -> list[ApplicationConfig]:
     """Load applications from a single JSON file."""
     try:
         data = _read_json_file(json_file, json_module)
@@ -33,12 +38,14 @@ def _load_applications_from_json_file(json_file: Path, json_module: Any, config_
     except (json_module.JSONDecodeError, OSError, TypeError) as e:
         raise config_load_error_class(f"Invalid JSON in {json_file}: {e}") from e
 
-def _read_json_file(json_file: Path, json_module: Any) -> dict:
+
+def _read_json_file(json_file: Path, json_module: Any) -> dict[str, Any]:
     """Read and parse JSON file."""
     with json_file.open(encoding="utf-8") as f:
-        return json_module.load(f)
+        return cast(dict[str, Any], json_module.load(f))
 
-def _extract_applications_from_data(data: dict) -> list[ApplicationConfig]:
+
+def _extract_applications_from_data(data: dict[str, Any]) -> list[ApplicationConfig]:
     """Extract applications from JSON data."""
     applications = []
     if isinstance(data, dict) and "applications" in data:
@@ -51,33 +58,38 @@ def _extract_applications_from_data(data: dict) -> list[ApplicationConfig]:
 def _load_config_from_file(config_path: Path) -> Config:
     """Load configuration from single JSON file."""
     import json
+
     from .loader import ConfigLoadError
 
     # Validate file existence and load JSON data
     _validate_config_file_exists(config_path, ConfigLoadError)
     data = _load_json_data_from_file(config_path, json, ConfigLoadError)
     _validate_json_data_format(data, config_path, ConfigLoadError)
-    
+
     # Parse and return configuration
     return _parse_config_data(data, config_path, ConfigLoadError)
+
 
 def _validate_config_file_exists(config_path: Path, config_load_error_class: Any) -> None:
     """Validate that the configuration file exists."""
     if not config_path.exists():
         raise config_load_error_class(f"Configuration file not found: {config_path}")
 
+
 def _load_json_data_from_file(config_path: Path, json_module: Any, config_load_error_class: Any) -> dict[str, Any]:
     """Load and parse JSON data from file."""
     try:
         with config_path.open(encoding="utf-8") as f:
-            return json_module.load(f)
+            return cast(dict[str, Any], json_module.load(f))
     except json_module.JSONDecodeError as e:
         raise config_load_error_class(f"Invalid JSON in {config_path}: {e}") from e
+
 
 def _validate_json_data_format(data: Any, config_path: Path, config_load_error_class: Any) -> None:
     """Validate that JSON data is in the correct format."""
     if not isinstance(data, dict):
         raise config_load_error_class(f"Configuration must be a JSON object, got {type(data).__name__}")
+
 
 def _parse_config_data(data: dict[str, Any], config_path: Path, config_load_error_class: Any) -> Config:
     """Parse configuration data into Config object."""
@@ -89,10 +101,12 @@ def _parse_config_data(data: dict[str, Any], config_path: Path, config_load_erro
     except (TypeError, ValueError) as e:
         raise config_load_error_class(f"Invalid application configuration in {config_path}: {e}") from e
 
+
 def _create_config_with_applications(data: dict[str, Any]) -> Config:
     """Create config object from data with applications array."""
     applications = [ApplicationConfig(**app_data) for app_data in data.get("applications", [])]
     return Config(applications=applications, global_config=data.get("global_config", {}))
+
 
 def _create_config_single_application(data: dict[str, Any]) -> Config:
     """Create config object from single application data."""

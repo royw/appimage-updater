@@ -31,13 +31,16 @@ def _classify_error(error_msg: str) -> str:
     else:
         return "generic"
 
+
 def _is_rate_limit_error(error_lower: str) -> bool:
     """Check if error is a rate limit error."""
     return "rate limit" in error_lower
 
+
 def _is_not_found_error(error_lower: str, error_msg: str) -> bool:
     """Check if error is a not found error."""
     return "not found" in error_lower or "404" in error_msg
+
 
 def _is_network_error(error_lower: str) -> bool:
     """Check if error is a network-related error."""

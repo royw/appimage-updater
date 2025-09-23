@@ -54,11 +54,11 @@ class RichOutputFormatter:
         # Create and configure table
         table = self._create_rich_table(title)
         table_headers = self._determine_table_headers(data, headers)
-        
+
         # Build table structure
         self._add_table_columns(table, table_headers)
         self._add_table_rows(table, data, table_headers)
-        
+
         # Display table
         self.console.print(table)
 
@@ -225,7 +225,7 @@ class RichOutputFormatter:
 
         # Prepare display path
         display_path = self._replace_home_with_tilde(path)
-        
+
         if self._path_fits_within_width(display_path, max_width):
             return display_path
 
@@ -239,7 +239,7 @@ class RichOutputFormatter:
     def _process_path_wrapping(self, display_path: str, max_width: int) -> str:
         """Process path wrapping using separators or fallback truncation."""
         parts = display_path.replace("\\", "/").split("/")
-        
+
         if len(parts) > 1:
             return self._wrap_multi_part_path(display_path, parts, max_width)
         else:
@@ -250,7 +250,7 @@ class RichOutputFormatter:
         # For short paths with home substitution, be more lenient with the width
         if self._is_short_home_path(display_path, parts, max_width):
             return display_path
-            
+
         # Start from the end and work backwards to preserve meaningful parts
         result_parts = self._build_path_from_parts(parts, max_width)
         result_parts = self._add_ellipsis_if_truncated(result_parts, parts)
@@ -258,13 +258,11 @@ class RichOutputFormatter:
 
     def _is_short_home_path(self, display_path: str, parts: list[str], max_width: int) -> bool:
         """Check if this is a short home path that should be shown in full."""
-        return (display_path.startswith("~") and 
-                len(parts) <= 3 and 
-                len(display_path) <= max_width + 5)
+        return display_path.startswith("~") and len(parts) <= 3 and len(display_path) <= max_width + 5
 
     def _wrap_single_part_path(self, display_path: str, max_width: int) -> str:
         """Wrap a path with no separators using simple truncation."""
-        return "..." + display_path[-(max_width - 3):]
+        return "..." + display_path[-(max_width - 3) :]
 
     def _replace_home_with_tilde(self, path_str: str) -> str:
         """Replace home directory path with ~ for display purposes."""
@@ -316,7 +314,9 @@ class RichOutputFormatter:
         # Add parent directories within constraints
         return self._add_parent_directories_to_path(parts, result_parts, current_length, effective_width)
 
-    def _add_parent_directories_to_path(self, parts: list[str], result_parts: list[str], current_length: int, effective_width: int) -> list[str]:
+    def _add_parent_directories_to_path(
+        self, parts: list[str], result_parts: list[str], current_length: int, effective_width: int
+    ) -> list[str]:
         """Add parent directories to the result within width constraints."""
         min_parts_desired = 2  # final directory + at least one parent
         parts_added = 1

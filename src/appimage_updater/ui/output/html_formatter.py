@@ -73,7 +73,7 @@ class HTMLOutputFormatter:
         # Add title and prepare table structure
         self._add_table_title(title)
         table_headers = self._determine_table_headers(data, headers)
-        
+
         # Build HTML table
         self._build_html_table(data, table_headers)
 

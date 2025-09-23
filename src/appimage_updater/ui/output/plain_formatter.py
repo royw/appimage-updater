@@ -43,7 +43,7 @@ class PlainOutputFormatter:
         self._display_table_title(title)
         table_headers = self._determine_table_headers(data, headers)
         col_widths = self._calculate_column_widths(data, table_headers)
-        
+
         # Display table content
         self._display_table_headers(table_headers, col_widths)
         self._display_table_rows(data, table_headers, col_widths)
@@ -74,7 +74,9 @@ class PlainOutputFormatter:
         print(header_row)
         print("-" * len(header_row))
 
-    def _display_table_rows(self, data: list[dict[str, Any]], table_headers: list[str], col_widths: dict[str, int]) -> None:
+    def _display_table_rows(
+        self, data: list[dict[str, Any]], table_headers: list[str], col_widths: dict[str, int]
+    ) -> None:
         """Display table data rows."""
         for row in data:
             row_values = [str(row.get(header, "")).ljust(col_widths[header]) for header in table_headers]

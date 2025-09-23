@@ -500,25 +500,30 @@ def _add_basic_field_updates(
     _add_enable_update(updates, enable)
     _add_prerelease_update(updates, prerelease)
 
+
 def _add_download_dir_update(updates: dict[str, Any], download_dir: str | None) -> None:
     """Add download directory update if provided."""
     if download_dir is not None:
         updates["download_dir"] = download_dir
+
 
 def _add_basename_update(updates: dict[str, Any], basename: str | None) -> None:
     """Add basename update if provided."""
     if basename is not None:
         updates["basename"] = basename
 
+
 def _add_pattern_update(updates: dict[str, Any], pattern: str | None) -> None:
     """Add pattern update if provided."""
     if pattern is not None:
         updates["pattern"] = pattern
 
+
 def _add_enable_update(updates: dict[str, Any], enable: bool | None) -> None:
     """Add enable status update if provided."""
     if enable is not None:
         updates["enabled"] = enable
+
 
 def _add_prerelease_update(updates: dict[str, Any], prerelease: bool | None) -> None:
     """Add prerelease update if provided."""
@@ -1055,11 +1060,12 @@ def convert_app_to_dict(app: Any) -> dict[str, Any]:
     """Convert application object to dictionary for JSON serialization."""
     # Build core application dictionary
     app_dict = _build_core_app_dict(app)
-    
+
     # Add optional fields
     _add_optional_fields(app_dict, app)
-    
+
     return app_dict
+
 
 def _build_core_app_dict(app: Any) -> dict[str, Any]:
     """Build the core application dictionary with required fields."""
@@ -1074,6 +1080,7 @@ def _build_core_app_dict(app: Any) -> dict[str, Any]:
         "checksum": _build_checksum_dict(app),
     }
 
+
 def _build_checksum_dict(app: Any) -> dict[str, Any]:
     """Build the checksum configuration dictionary."""
     return {
@@ -1083,11 +1090,13 @@ def _build_checksum_dict(app: Any) -> dict[str, Any]:
         "required": app.checksum.required,
     }
 
+
 def _add_optional_fields(app_dict: dict[str, Any], app: Any) -> None:
     """Add optional fields to the application dictionary."""
     _add_basename_field(app_dict, app)
     _add_rotation_fields(app_dict, app)
     _add_symlink_field(app_dict, app)
+
 
 def _add_basename_field(app_dict: dict[str, Any], app: Any) -> None:
     """Add basename field if it exists."""
@@ -1095,12 +1104,14 @@ def _add_basename_field(app_dict: dict[str, Any], app: Any) -> None:
     if basename_value is not None:
         app_dict["basename"] = basename_value
 
+
 def _add_rotation_fields(app_dict: dict[str, Any], app: Any) -> None:
     """Add rotation-related fields if they exist."""
     if hasattr(app, "rotation_enabled"):
         app_dict["rotation_enabled"] = app.rotation_enabled
         if app.rotation_enabled:
             app_dict["retain_count"] = getattr(app, "retain_count", 3)
+
 
 def _add_symlink_field(app_dict: dict[str, Any], app: Any) -> None:
     """Add symlink path field if it exists."""

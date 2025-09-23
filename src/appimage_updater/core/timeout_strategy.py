@@ -94,7 +94,9 @@ class ProgressiveTimeoutClient:
             return ["quick_check", "fallback"]
         return operation_types
 
-    async def _attempt_progressive_timeouts(self, url: str, operation_types: list[str], **kwargs: Any) -> httpx.Response:
+    async def _attempt_progressive_timeouts(
+        self, url: str, operation_types: list[str], **kwargs: Any
+    ) -> httpx.Response:
         """Attempt requests with progressively longer timeouts."""
         for i, operation_type in enumerate(operation_types):
             try:
@@ -104,6 +106,9 @@ class ProgressiveTimeoutClient:
                 self._handle_timeout_error(e, operation_type, url, i, len(operation_types))
             except httpx.HTTPError as e:
                 self._handle_http_error(e)
+
+        # If all attempts failed, raise the last timeout exception
+        raise httpx.TimeoutException(f"All timeout strategies failed for {url}")
 
     async def _attempt_single_timeout(self, url: str, operation_type: str, **kwargs: Any) -> httpx.Response:
         """Attempt a single request with the specified timeout."""
@@ -121,7 +126,9 @@ class ProgressiveTimeoutClient:
             logger.debug(f"Success with {operation_type} timeout: {response.status_code}")
             return response
 
-    def _handle_timeout_error(self, error: Exception, operation_type: str, url: str, attempt_index: int, total_attempts: int) -> None:
+    def _handle_timeout_error(
+        self, error: Exception, operation_type: str, url: str, attempt_index: int, total_attempts: int
+    ) -> None:
         """Handle timeout errors during progressive timeout attempts."""
         timeout = self.timeout_strategy.get_timeout(operation_type)
         logger.debug(f"Timeout with {operation_type} ({timeout}s): {error}")

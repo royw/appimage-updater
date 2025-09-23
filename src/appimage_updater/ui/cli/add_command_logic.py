@@ -149,21 +149,57 @@ async def _add(
             return False
 
         resolved_params = _prepare_add_parameters(
-            download_dir, auto_subdir, rotation, prerelease, checksum, 
-            checksum_required, direct, config_file, config_dir, name
+            download_dir,
+            auto_subdir,
+            rotation,
+            prerelease,
+            checksum,
+            checksum_required,
+            direct,
+            config_file,
+            config_dir,
+            name,
         )
 
-        _handle_add_verbose_logging(verbose, name, url, download_dir, auto_subdir, rotation, 
-                                   prerelease, checksum, checksum_required, direct, 
-                                   config_file, config_dir, resolved_params)
+        _handle_add_verbose_logging(
+            verbose,
+            name,
+            url,
+            download_dir,
+            auto_subdir,
+            rotation,
+            prerelease,
+            checksum,
+            checksum_required,
+            direct,
+            config_file,
+            config_dir,
+            resolved_params,
+        )
 
         # Process configuration
         config_data = await _process_add_configuration(
-            name, url, download_dir, auto_subdir, config_file, config_dir, rotation,
-            retain, symlink, prerelease, checksum, checksum_algorithm, checksum_pattern,
-            checksum_required, pattern, direct, create_dir, yes, dry_run
+            name,
+            url,
+            download_dir,
+            auto_subdir,
+            config_file,
+            config_dir,
+            rotation,
+            retain,
+            symlink,
+            prerelease,
+            checksum,
+            checksum_algorithm,
+            checksum_pattern,
+            checksum_required,
+            pattern,
+            direct,
+            create_dir,
+            yes,
+            dry_run,
         )
-        
+
         if config_data is None:
             return False
 
@@ -173,50 +209,120 @@ async def _add(
         _handle_add_error(e, name)
         return False
 
-def _prepare_add_parameters(download_dir, auto_subdir, rotation, prerelease, checksum, 
-                           checksum_required, direct, config_file, config_dir, name):
+
+def _prepare_add_parameters(
+    download_dir, auto_subdir, rotation, prerelease, checksum, checksum_required, direct, config_file, config_dir, name
+):
     """Prepare and resolve add command parameters."""
     return _resolve_add_parameters(
-        download_dir, auto_subdir, rotation, prerelease, checksum,
-        checksum_required, direct, config_file, config_dir, name
+        download_dir,
+        auto_subdir,
+        rotation,
+        prerelease,
+        checksum,
+        checksum_required,
+        direct,
+        config_file,
+        config_dir,
+        name,
     )
 
-def _handle_add_verbose_logging(verbose, name, url, download_dir, auto_subdir, rotation,
-                               prerelease, checksum, checksum_required, direct,
-                               config_file, config_dir, resolved_params):
+
+def _handle_add_verbose_logging(
+    verbose,
+    name,
+    url,
+    download_dir,
+    auto_subdir,
+    rotation,
+    prerelease,
+    checksum,
+    checksum_required,
+    direct,
+    config_file,
+    config_dir,
+    resolved_params,
+):
     """Handle verbose logging for add command."""
     _handle_verbose_logging(
-        verbose, name, url, download_dir, auto_subdir, rotation, prerelease,
-        checksum, checksum_required, direct,
+        verbose,
+        name,
+        url,
+        download_dir,
+        auto_subdir,
+        rotation,
+        prerelease,
+        checksum,
+        checksum_required,
+        direct,
         str(config_file) if config_file else None,
         str(config_dir) if config_dir else None,
-        resolved_params
+        resolved_params,
     )
 
-async def _process_add_configuration(name, url, download_dir, auto_subdir, config_file, config_dir,
-                                   rotation, retain, symlink, prerelease, checksum, checksum_algorithm,
-                                   checksum_pattern, checksum_required, pattern, direct, create_dir,
-                                   yes, dry_run):
+
+async def _process_add_configuration(
+    name,
+    url,
+    download_dir,
+    auto_subdir,
+    config_file,
+    config_dir,
+    rotation,
+    retain,
+    symlink,
+    prerelease,
+    checksum,
+    checksum_algorithm,
+    checksum_pattern,
+    checksum_required,
+    pattern,
+    direct,
+    create_dir,
+    yes,
+    dry_run,
+):
     """Process and prepare add configuration data."""
     return await _prepare_add_configuration(
-        name, url, download_dir, auto_subdir, config_file, config_dir, rotation,
-        retain, symlink, prerelease, checksum, checksum_algorithm, checksum_pattern,
-        checksum_required, pattern, direct, create_dir, yes, dry_run
+        name,
+        url,
+        download_dir,
+        auto_subdir,
+        config_file,
+        config_dir,
+        rotation,
+        retain,
+        symlink,
+        prerelease,
+        checksum,
+        checksum_algorithm,
+        checksum_pattern,
+        checksum_required,
+        pattern,
+        direct,
+        create_dir,
+        yes,
+        dry_run,
     )
+
 
 def _execute_add_workflow(config_data, dry_run, config_file, config_dir):
     """Execute the add workflow based on dry_run flag."""
     if dry_run:
         _display_dry_run_config(
-            config_data["name"], config_data["validated_url"],
-            config_data["expanded_download_dir"], config_data["pattern"],
-            config_data["app_config"]
+            config_data["name"],
+            config_data["validated_url"],
+            config_data["expanded_download_dir"],
+            config_data["pattern"],
+            config_data["app_config"],
         )
         return True
     else:
         success = _execute_add_operation(config_data, dry_run, config_file, config_dir)
         if success:
-            _display_add_success(config_data["name"], config_data["validated_url"],
+            _display_add_success(
+                config_data["name"],
+                config_data["validated_url"],
                 config_data["expanded_download_dir"],
                 config_data["pattern"],
                 config_data["prerelease_auto_enabled"],

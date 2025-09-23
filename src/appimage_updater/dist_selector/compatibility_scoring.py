@@ -126,9 +126,11 @@ def _score_version(info: AssetInfo, current_dist: DistributionInfo) -> float:
     version_diff = _calculate_version_difference(info, current_dist)
     return _get_version_compatibility_score(version_diff)
 
+
 def _has_version_info(info: AssetInfo, current_dist: DistributionInfo) -> bool:
     """Check if both asset and current distribution have version information."""
     return bool(info.version_numeric and current_dist.version_numeric)
+
 
 def _calculate_version_difference(info: AssetInfo, current_dist: DistributionInfo) -> float:
     """Calculate the absolute difference between version numbers."""
@@ -136,6 +138,7 @@ def _calculate_version_difference(info: AssetInfo, current_dist: DistributionInf
     assert info.version_numeric is not None
     assert current_dist.version_numeric is not None
     return abs(info.version_numeric - current_dist.version_numeric)
+
 
 def _get_version_compatibility_score(version_diff: float) -> float:
     """Get compatibility score based on version difference."""

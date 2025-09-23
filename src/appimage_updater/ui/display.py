@@ -66,14 +66,17 @@ def _build_path_from_parts(parts: list[str], max_width: int) -> tuple[list[str],
     # Build truncated path with ellipsis logic
     return _build_truncated_path(parts, max_width)
 
+
 def _can_fit_all_parts(parts: list[str], max_width: int) -> bool:
     """Check if all parts can fit within the width limit."""
     total_length = _calculate_total_length(parts)
     return total_length <= max_width
 
+
 def _calculate_total_length(parts: list[str]) -> int:
     """Calculate total length including separators."""
     return sum(len(part) for part in parts) + len(parts) - 1
+
 
 def _build_truncated_path(parts: list[str], max_width: int) -> tuple[list[str], int]:
     """Build truncated path with ellipsis-aware logic."""
@@ -86,6 +89,7 @@ def _build_truncated_path(parts: list[str], max_width: int) -> tuple[list[str], 
 
     # Add parent directories within constraints
     return _add_parent_directories(parts, result_parts, current_length, effective_width)
+
 
 def _add_parent_directories(
     parts: list[str], result_parts: list[str], current_length: int, effective_width: int
@@ -125,6 +129,7 @@ def _wrap_path(path: str, max_width: int = 40) -> str:
 
     return _wrap_long_path(display_path, max_width)
 
+
 def _wrap_long_path(display_path: str, max_width: int) -> str:
     """Wrap a long path using path separator logic."""
     parts = display_path.replace("\\", "/").split("/")
@@ -133,6 +138,7 @@ def _wrap_long_path(display_path: str, max_width: int) -> str:
         return _wrap_multi_part_path(display_path, parts, max_width)
     else:
         return _wrap_single_part_path(display_path, max_width)
+
 
 def _wrap_multi_part_path(display_path: str, parts: list[str], max_width: int) -> str:
     """Wrap a path with multiple parts."""
@@ -145,15 +151,15 @@ def _wrap_multi_part_path(display_path: str, parts: list[str], max_width: int) -
     result_parts = _add_ellipsis_if_truncated(result_parts, parts)
     return "/".join(result_parts)
 
+
 def _is_short_home_path(display_path: str, parts: list[str], max_width: int) -> bool:
     """Check if this is a short home path that should be shown in full."""
-    return (display_path.startswith("~") and
-            len(parts) <= 3 and
-            len(display_path) <= max_width + 5)
+    return display_path.startswith("~") and len(parts) <= 3 and len(display_path) <= max_width + 5
+
 
 def _wrap_single_part_path(display_path: str, max_width: int) -> str:
     """Wrap a path with no separators using simple truncation."""
-    return "..." + display_path[-(max_width - 3):]
+    return "..." + display_path[-(max_width - 3) :]
 
 
 def display_applications_list(applications: list[Any]) -> None:
@@ -167,10 +173,12 @@ def display_applications_list(applications: list[Any]) -> None:
     else:
         _display_applications_with_rich_table(applications)
 
+
 def _display_applications_with_formatter(applications: list[Any], output_formatter: Any) -> None:
     """Display applications using the output formatter."""
     apps_data = _convert_applications_to_dict_format(applications)
     output_formatter.print_application_list(apps_data)
+
 
 def _convert_applications_to_dict_format(applications: list[Any]) -> list[dict[str, Any]]:
     """Convert applications to dictionary format for output formatter."""
@@ -187,11 +195,13 @@ def _convert_applications_to_dict_format(applications: list[Any]) -> list[dict[s
         apps_data.append(app_dict)
     return apps_data
 
+
 def _display_applications_with_rich_table(applications: list[Any]) -> None:
     """Display applications using Rich table as fallback."""
     table = _create_applications_table()
     _populate_applications_table(table, applications)
     console.print(table)
+
 
 def _create_applications_table() -> Table:
     """Create the Rich table for applications display."""
@@ -201,6 +211,7 @@ def _create_applications_table() -> Table:
     table.add_column("Source", style="yellow", no_wrap=False, overflow="fold")
     table.add_column("Download Directory", style="magenta", no_wrap=False)
     return table
+
 
 def _populate_applications_table(table: Table, applications: list[Any]) -> None:
     """Populate the Rich table with application data."""

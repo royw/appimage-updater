@@ -37,7 +37,8 @@ def _apply_setting_change(config: Config, setting: str, value: str) -> bool:
     # Unknown setting - show available options
     return _handle_unknown_setting(setting)
 
-def _get_setting_handlers() -> dict[str, tuple[callable, callable]]:
+
+def _get_setting_handlers() -> dict[str, tuple[Callable[[str], bool], Callable[[Config, str, str], bool]]]:
     """Get mapping of setting types to their checker and handler functions."""
     return {
         "path": (_is_path_setting, _handle_path_setting),
@@ -46,28 +47,34 @@ def _get_setting_handlers() -> dict[str, tuple[callable, callable]]:
         "numeric": (_is_numeric_setting, _handle_numeric_setting),
     }
 
+
 def _handle_path_setting(config: Config, setting: str, value: str) -> bool:
     """Handle path-based settings."""
     _apply_path_setting(config, setting, value)
     return True
+
 
 def _handle_string_setting(config: Config, setting: str, value: str) -> bool:
     """Handle string-based settings."""
     _apply_string_setting(config, setting, value)
     return True
 
+
 def _handle_boolean_setting(config: Config, setting: str, value: str) -> bool:
     """Handle boolean-based settings."""
     _apply_boolean_setting(config, setting, value)
     return True
 
+
 def _handle_numeric_setting(config: Config, setting: str, value: str) -> bool:
     """Handle numeric-based settings."""
     return _apply_numeric_setting(config, setting, value)
 
+
 def _handle_unknown_setting(setting: str) -> bool:
     """Handle unknown settings by showing available options."""
     from .display_utilities import _show_available_settings
+
     return _show_available_settings(setting)
 
 

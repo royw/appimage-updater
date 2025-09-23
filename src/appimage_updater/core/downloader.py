@@ -654,7 +654,7 @@ class Downloader:
 
         # Prepare rotation parameters
         rotation_params = self._prepare_rotation_parameters(candidate)
-        
+
         # Execute rotation steps
         return await self._execute_rotation_steps(candidate, rotation_params)
 
@@ -678,10 +678,10 @@ class Downloader:
         logger.debug(f"Target current path: {current_path}")
 
         return {
-            'download_dir': download_dir,
-            'base_name': base_name,
-            'extension': extension,
-            'current_path': current_path
+            "download_dir": download_dir,
+            "base_name": base_name,
+            "extension": extension,
+            "current_path": current_path,
         }
 
     def _determine_rotation_naming(self, download_path: Path) -> tuple[str, str]:
@@ -694,37 +694,37 @@ class Downloader:
         else:
             base_name = download_path.stem  # filename without extension
             extension = download_path.suffix  # original extension
-        
+
         return base_name, extension
 
     async def _execute_rotation_steps(self, candidate: UpdateCandidate, rotation_params: dict) -> Path:
         """Execute the rotation steps in sequence."""
         # Step 1: Rotate existing files
         await self._perform_file_rotation(candidate, rotation_params)
-        
+
         # Step 2: Move downloaded file to current
         await self._move_files_to_current(candidate, rotation_params)
-        
+
         # Step 3: Update symlink
-        await self._update_rotation_symlink(candidate, rotation_params['current_path'])
-        
+        await self._update_rotation_symlink(candidate, rotation_params["current_path"])
+
         logger.debug(f"Rotation completed. Final path: {rotation_params['current_path']}")
-        return rotation_params['current_path']
+        return rotation_params["current_path"]
 
     async def _perform_file_rotation(self, candidate: UpdateCandidate, rotation_params: dict) -> None:
         """Perform rotation of existing files."""
         logger.debug(f"Step 1: Rotating existing files with retain_count={candidate.app_config.retain_count}")
         await self._rotate_existing_files(
-            rotation_params['download_dir'], 
-            rotation_params['base_name'], 
-            rotation_params['extension'], 
-            candidate.app_config.retain_count
+            rotation_params["download_dir"],
+            rotation_params["base_name"],
+            rotation_params["extension"],
+            candidate.app_config.retain_count,
         )
 
     async def _move_files_to_current(self, candidate: UpdateCandidate, rotation_params: dict) -> None:
         """Move downloaded file and metadata to current."""
-        current_path = rotation_params['current_path']
-        
+        current_path = rotation_params["current_path"]
+
         # Move main file
         logger.debug(f"Step 2: Moving {candidate.download_path} to {current_path}")
         if candidate.download_path.exists():
