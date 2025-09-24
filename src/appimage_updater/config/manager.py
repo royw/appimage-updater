@@ -365,9 +365,13 @@ class GlobalConfigManager(Manager):
             return Config()
 
     def _load_global_config(self) -> Config:
-        """Load global configuration from config.json file."""
+        """Load global configuration from global.json file."""
 
         config_path = self._config_path or self.get_default_config_path()
+
+        # If config_path is a directory, look for global.json in that directory
+        if config_path.is_dir():
+            config_path = config_path / "global.json"
 
         if not config_path.exists():
             return Config()
@@ -544,9 +548,10 @@ class AppConfigs(Manager):
 
         try:
             return self._load_application_configs()
-        except ConfigLoadError:
-            # Re-raise ConfigLoadError so commands can handle it properly
-            raise
+        except ConfigLoadError as e:
+            # Handle missing config gracefully - return empty config instead of raising
+            logger.debug(f"No configuration found: {e}")
+            return Config()
         except Exception as e:
             logger.warning(f"Failed to load application configs: {e}, using defaults")
             return Config()

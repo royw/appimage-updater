@@ -244,10 +244,10 @@ def set_global_config_value(
         True if the setting was applied successfully, False otherwise.
     """
     try:
-        from .manager import AppConfigs
+        from .manager import GlobalConfigManager
 
-        app_configs = AppConfigs(config_path=config_file or config_dir)
-        config = app_configs._config
+        global_manager = GlobalConfigManager(config_file or config_dir)
+        config = global_manager._config
     except ConfigLoadError:
         # Create new configuration if none exists
         config = Config()

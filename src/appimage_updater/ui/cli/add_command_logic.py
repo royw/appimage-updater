@@ -86,16 +86,16 @@ async def _prepare_add_configuration(
         name,
         validated_url,
         expanded_download_dir,
-        rotation,
+        resolved_params["rotation"],
         retain,
         symlink,
-        prerelease,
-        checksum,
+        resolved_params["prerelease"],
+        resolved_params["checksum"],
         checksum_algorithm,
         checksum_pattern,
-        checksum_required,
+        resolved_params["checksum_required"],
         pattern,
-        direct,
+        resolved_params["direct"],
         resolved_params["global_config"],
     )
 
@@ -137,6 +137,7 @@ def _execute_add_operation(
         return True
     except Exception as e:
         logger.error(f"Failed to save configuration: {e}")
+        logger.exception("Full exception details")
         return False
 
 

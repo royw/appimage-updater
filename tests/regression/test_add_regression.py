@@ -14,6 +14,7 @@ The test:
 
 import json
 import tempfile
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -60,7 +61,7 @@ class TestAddRegression:
         except (json.JSONDecodeError, KeyError) as e:
             pytest.skip(f"Could not parse config file {config_file}: {e}")
 
-    def test_add_command_regression_all_existing_configs(self):
+    def test_add_command_regression_all_existing_configs(self) -> None:
         """Test that add command can recreate all existing application configurations."""
         runner = CliRunner()
         config_files = self.discover_existing_configs()
@@ -115,7 +116,7 @@ class TestAddRegression:
         assert success_rate >= 0.7, f"Regression test failed: only {success_rate:.1%} success rate"
         assert total_applications > 0, "No applications found to test"
 
-    def test_comprehensive_command_regression(self):
+    def test_comprehensive_command_regression(self) -> None:
         """Test all commands (add, list, show, check, remove) on existing configurations."""
         runner = CliRunner()
         config_files = self.discover_existing_configs()
@@ -369,7 +370,7 @@ class TestAddRegression:
         # Other fields are less critical - allow reasonable variations
         return orig_algo == gen_algo
 
-    def test_add_regression_single_app_detailed(self):
+    def test_add_regression_single_app_detailed(self) -> None:
         """Detailed test of a single application for debugging purposes."""
         runner = CliRunner()
         config_files = self.discover_existing_configs()
@@ -442,7 +443,7 @@ class TestAddRegression:
         download_dir = original_config.get("download_dir")
 
         # Build add command arguments
-        cmd_args = ["add", app_name, source_url, download_dir, "--config-dir", str(temp_config_dir)]
+        cmd_args: Sequence[str] = ["add", app_name, source_url, download_dir, "--config-dir", str(temp_config_dir)]
 
         # Add optional parameters (simplified version)
         if original_config.get("prerelease", False):
@@ -451,6 +452,8 @@ class TestAddRegression:
             cmd_args.append("--rotation")
         if "symlink_path" in original_config:
             cmd_args.extend(["--symlink-path", original_config["symlink_path"]])
+        if "basename" in original_config:
+            cmd_args.extend(["--basename", original_config["basename"]])
 
         # Execute add command
         result = runner.invoke(app, cmd_args)
