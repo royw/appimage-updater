@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from loguru import logger
 from rich.console import Console
 import typer
 
+from ..config.manager import (
+    AppConfigs,
+    Manager,
+)
 from ..config.models import (
     ApplicationConfig,
     Config,
@@ -20,6 +25,10 @@ from ..config.operations import (
 )
 from ..services.application_service import ApplicationService
 from ..ui.display import display_edit_summary
+from ..ui.output.context import (
+    get_output_formatter,
+    OutputFormatterContext,
+)
 from ..utils.logging_config import configure_logging
 from .base import (
     Command,
@@ -66,8 +75,6 @@ class EditCommand(Command):
 
     async def _execute_with_formatter_context(self, output_formatter: Any) -> CommandResult:
         """Execute edit command with output formatter context."""
-        from ..ui.output.context import OutputFormatterContext
-
         with OutputFormatterContext(output_formatter):
             validation_result = self._validate_with_formatter_error_display()
             if validation_result:
@@ -105,8 +112,6 @@ class EditCommand(Command):
 
     def _display_validation_error_with_formatter(self, error_msg: str) -> None:
         """Display validation error using output formatter."""
-        from ..ui.output.context import get_output_formatter
-
         formatter = get_output_formatter()
         if formatter:
             formatter.print_error(error_msg)
@@ -132,8 +137,6 @@ class EditCommand(Command):
             CommandResult if error occurred, None if successful
         """
         try:
-            from ..config.manager import AppConfigs
-
             app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
             config = app_configs._config
         except Exception as e:
@@ -246,10 +249,6 @@ class EditCommand(Command):
 
     def _save_config(self, config: Config) -> None:
         """Save the updated configuration."""
-        from pathlib import Path
-
-        from ..config.manager import Manager
-
         manager = Manager()
 
         if self.params.config_file:

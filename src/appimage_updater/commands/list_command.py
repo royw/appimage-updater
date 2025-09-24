@@ -7,8 +7,12 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
-# Imports removed - using migration helpers instead
+from ..config.manager import AppConfigs
 from ..ui.display import display_applications_list
+from ..ui.output.context import (
+    get_output_formatter,
+    OutputFormatterContext,
+)
 from ..utils.logging_config import configure_logging
 
 # from ..logging_config import configure_logging, logger
@@ -38,8 +42,6 @@ class ListCommand(Command):
         try:
             # Use context manager to make output formatter available throughout the execution
             if output_formatter:
-                from ..ui.output.context import OutputFormatterContext
-
                 with OutputFormatterContext(output_formatter):
                     success = await self._execute_list_operation()
             else:
@@ -83,14 +85,10 @@ class ListCommand(Command):
         """
 
         try:
-            from ..config.manager import AppConfigs
-
             app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
             config = app_configs._config
         except Exception:
             # Use output formatter if available, otherwise fallback to console
-            from ..ui.output.context import get_output_formatter
-
             formatter = get_output_formatter()
             if formatter:
                 formatter.print_error("Configuration error")
@@ -100,8 +98,6 @@ class ListCommand(Command):
 
         if not config.applications:
             # Use output formatter if available, otherwise fallback to console
-            from ..ui.output.context import get_output_formatter
-
             formatter = get_output_formatter()
             if formatter:
                 formatter.print_info("No applications configured")
@@ -121,8 +117,6 @@ class ListCommand(Command):
         total_count = len(config.applications)
 
         # Use output formatter if available, otherwise fallback to console
-        from ..ui.output.context import get_output_formatter
-
         formatter = get_output_formatter()
         summary_message = f"Total: {total_count} applications ({enabled_count} enabled, {disabled_count} disabled)"
 
