@@ -7,7 +7,15 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
+from ..config.loader import ConfigLoadError
+from ..config.manager import (
+    AppConfigs,
+    GlobalConfigManager,
+)
+from ..config.models import Config
 from ..services.application_service import ApplicationService
+from ..ui.display import display_application_details
+from ..ui.output.context import OutputFormatterContext
 from ..utils.logging_config import configure_logging
 from .base import (
     Command,
@@ -46,8 +54,6 @@ class ShowCommand(Command):
 
             # Use context manager to make output formatter available throughout the execution
             if output_formatter:
-                from ..ui.output.context import OutputFormatterContext
-
                 with OutputFormatterContext(output_formatter):
                     success = await self._execute_show_operation()
             else:
@@ -70,9 +76,6 @@ class ShowCommand(Command):
             True if operation succeeded, False if it failed.
         """
         try:
-            from ..config.loader import ConfigLoadError
-            from ..config.manager import AppConfigs
-
             app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
             config = app_configs._config
             found_apps = self._filter_applications(config)
@@ -84,8 +87,6 @@ class ShowCommand(Command):
         except ConfigLoadError as e:
             # Only handle gracefully if no explicit config file was specified
             if not self.params.config_file and "not found" in str(e):
-                from ..config.models import Config
-
                 config = Config()
                 found_apps = self._filter_applications(config)
                 if found_apps is None:
@@ -106,8 +107,6 @@ class ShowCommand(Command):
 
     def _display_applications(self, found_apps: Any) -> None:
         """Display information for found applications."""
-        from ..ui.display import display_application_details
-
         config_source_info = self._get_config_source_info()
 
         for i, app in enumerate(found_apps):
@@ -117,8 +116,6 @@ class ShowCommand(Command):
 
     def _get_config_source_info(self) -> dict[str, str]:
         """Get configuration source information for display."""
-        from ..config.manager import GlobalConfigManager
-
         if self.params.config_file:
             return {
                 "type": "file",

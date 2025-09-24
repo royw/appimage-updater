@@ -13,6 +13,10 @@ from typing import (
     Any,
     cast,
 )
+from urllib.parse import (
+    urljoin,
+    urlparse,
+)
 
 import httpx
 from loguru import logger
@@ -21,6 +25,7 @@ from ..core.models import (
     Asset,
     Release,
 )
+from ..core.timeout_strategy import create_progressive_client
 from ..utils.version_utils import normalize_version_string
 from .base import (
     RepositoryClient,
@@ -63,8 +68,6 @@ class DirectDownloadRepository(RepositoryClient):
     async def get_releases(self, url: str, limit: int = 10) -> list[Release]:
         """Get releases for direct download URL."""
         try:
-            from ..core.timeout_strategy import create_progressive_client
-
             # Use progressive timeout strategy for better performance
             progressive_client = create_progressive_client(self.timeout)
 
@@ -86,8 +89,6 @@ class DirectDownloadRepository(RepositoryClient):
         """Parse direct download URL to extract meaningful components."""
         # For direct downloads, we'll use domain and path as identifiers
         try:
-            from urllib.parse import urlparse
-
             parsed = urlparse(url)
             domain = parsed.netloc.replace("www.", "")
             path_parts = [p for p in parsed.path.split("/") if p]
@@ -149,8 +150,6 @@ class DirectDownloadRepository(RepositoryClient):
 
     def _extract_filename_from_url(self, url: str) -> str:
         """Extract filename from URL."""
-        from urllib.parse import urlparse
-
         parsed = urlparse(url)
         return parsed.path.split("/")[-1] or "download"
 
@@ -173,8 +172,6 @@ class DirectDownloadRepository(RepositoryClient):
 
     def _clean_base_name(self, filename: str) -> str:
         """Clean filename to extract base application name."""
-        import re
-
         # Remove version patterns, architecture, and hash info
         base_name = re.sub(r"_\d+\.\d+(?:\.\d+)?(?:rc\d+)?", "", filename)  # Remove version
         base_name = re.sub(r"_x86_64|_i386|_arm64|_armhf", "", base_name)  # Remove architecture
@@ -184,8 +181,6 @@ class DirectDownloadRepository(RepositoryClient):
 
     def _create_flexible_pattern(self, base_name: str) -> str:
         """Create a flexible pattern that matches the base name with variations."""
-        import re
-
         pattern = f"{re.escape(base_name)}.*\\.AppImage"
         return f"(?i){pattern}$"
 
@@ -235,8 +230,6 @@ class DirectDownloadRepository(RepositoryClient):
         # Use the first match (most recent/latest)
         download_url = matches[0]
         if not download_url.startswith("http"):
-            from urllib.parse import urljoin
-
             download_url = urljoin(url, download_url)
 
         # Extract version from the download URL
@@ -244,8 +237,6 @@ class DirectDownloadRepository(RepositoryClient):
         filename = self._extract_filename_from_url(download_url)
 
         # Create asset
-        from datetime import datetime
-
         asset = Asset(
             name=filename,
             url=download_url,
@@ -304,8 +295,6 @@ class DirectDownloadRepository(RepositoryClient):
         version = self._extract_version_from_url(final_url)
 
         # Create asset
-        from datetime import datetime
-
         asset = Asset(
             name=filename,
             url=final_url,
