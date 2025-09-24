@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import fnmatch
+import sys
 from typing import Any
 
 from loguru import logger
 from rich.console import Console
+
+from ..ui.output.context import get_output_formatter
 
 
 class ApplicationService:
@@ -111,13 +114,9 @@ class ApplicationService:
         Returns:
             False to indicate that applications were not found (error condition).
         """
-        import sys
-
         available_apps = [app.name for app in enabled_apps]
 
         # Use output formatter if available, otherwise fallback to print
-        from ..ui.output.context import get_output_formatter
-
         formatter = get_output_formatter()
 
         if formatter:
@@ -157,8 +156,6 @@ class ApplicationService:
     @staticmethod
     def _print_troubleshooting_tips_plain(available_apps: list[str]) -> None:
         """Print troubleshooting tips for not found apps using plain print."""
-        import sys
-
         available_text = ", ".join(available_apps) if available_apps else "None configured"
         print(f"   • Available applications: {available_text}", file=sys.stdout)  # noqa: T201
         print("   • Application names are case-insensitive", file=sys.stdout)  # noqa: T201

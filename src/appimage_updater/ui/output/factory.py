@@ -2,10 +2,13 @@
 
 from typing import Any
 
+from .html_formatter import HTMLOutputFormatter
 from .interface import (
     OutputFormat,
     OutputFormatter,
 )
+from .json_formatter import JSONOutputFormatter
+from .plain_formatter import PlainOutputFormatter
 from .rich_formatter import RichOutputFormatter
 
 
@@ -25,17 +28,10 @@ def create_output_formatter(format_type: OutputFormat, **kwargs: Any) -> OutputF
     if format_type == OutputFormat.RICH:
         return RichOutputFormatter(**kwargs)
     elif format_type == OutputFormat.PLAIN:
-        # Import here to avoid circular imports when other formatters are added
-        from .plain_formatter import PlainOutputFormatter
-
         return PlainOutputFormatter(**kwargs)
     elif format_type == OutputFormat.JSON:
-        from .json_formatter import JSONOutputFormatter
-
         return JSONOutputFormatter(**kwargs)
     elif format_type == OutputFormat.HTML:
-        from .html_formatter import HTMLOutputFormatter
-
         return HTMLOutputFormatter(**kwargs)
     else:
         raise ValueError(f"Unsupported output format: {format_type}")
