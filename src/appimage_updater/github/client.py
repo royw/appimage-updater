@@ -7,11 +7,10 @@ import re
 from typing import Any
 
 import httpx
-
-from .._version import __version__
 from loguru import logger
 from pydantic import ValidationError
 
+from .._version import __version__
 from ..core.models import (
     Asset,
     Release,

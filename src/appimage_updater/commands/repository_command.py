@@ -7,10 +7,9 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
-from ..main import _examine_repositories
 from ..ui.output.context import (
-    get_output_formatter,
     OutputFormatterContext,
+    get_output_formatter,
 )
 from ..utils.logging_config import configure_logging
 from .base import (
@@ -114,6 +113,8 @@ class RepositoryCommand(Command):
 
     async def _execute_repository_operation(self) -> bool:
         """Execute the core repository operation logic."""
+        from ..main import _examine_repositories
+        
         # Delegate to existing implementation
         return await _examine_repositories(
             config_file=self.params.config_file,

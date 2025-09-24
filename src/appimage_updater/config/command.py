@@ -11,6 +11,7 @@ from typing import Any
 from rich.console import Console
 from rich.table import Table
 
+from ..ui.output.context import get_output_formatter
 from .loader import ConfigLoadError
 from .manager import (
     AppConfigs,
@@ -20,7 +21,6 @@ from .models import (
     Config,
     GlobalConfig,
 )
-from ..ui.output.context import get_output_formatter
 
 
 logger = logging.getLogger(__name__)

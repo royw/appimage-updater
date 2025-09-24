@@ -14,8 +14,8 @@ from typing import (
 
 from rich.console import Console
 
-from .display_utilities import _show_available_settings
 from ..models import Config
+from .display_utilities import _show_available_settings
 
 
 # Console instance for all display operations

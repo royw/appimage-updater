@@ -37,21 +37,16 @@ from .core.models import (
     Asset,
     CheckResult,
     InteractiveResult,
-    rebuild_models,
     UpdateCandidate,
+    rebuild_models,
 )
 from .core.parallel import ConcurrentProcessor
 from .core.version_checker import VersionChecker
-from .repositories.factory import get_repository_client
 from .github.auth import get_github_auth
 from .instrumentation.factory import create_http_tracker_from_params
+from .repositories.factory import get_repository_client
 from .services.application_service import ApplicationService
 from .ui.cli.validation_utilities import _check_configuration_warnings
-from .ui.output.context import get_output_formatter
-from .ui.output.factory import (
-    create_output_formatter,
-    create_output_formatter_from_params,
-)
 from .ui.cli_options import (
     CONFIG_DIR_OPTION,
     CONFIG_FILE_OPTION,
@@ -93,8 +88,11 @@ from .ui.display import (
     display_download_results,
     display_edit_summary,
 )
-from .ui.output.context import OutputFormatterContext
-from .ui.output.factory import create_output_formatter_from_params
+from .ui.output.context import OutputFormatterContext, get_output_formatter
+from .ui.output.factory import (
+    create_output_formatter,
+    create_output_formatter_from_params,
+)
 from .ui.output.interface import OutputFormat
 from .utils.logging_config import configure_logging
 from .utils.version_utils import (
@@ -2618,6 +2616,7 @@ def config(
 
 def cli_main() -> None:
     """Main CLI entry point with proper exception handling."""
+
     # Override sys.excepthook to prevent stack traces from being displayed
     def clean_excepthook(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: Any) -> None:
         """Clean exception handler that doesn't show stack traces for user errors."""

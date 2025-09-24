@@ -8,8 +8,6 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
-from ..ui.output.context import OutputFormatterContext
-from ..utils.logging_config import configure_logging
 from ..config.command import (
     list_available_settings,
     reset_global_config,
@@ -17,6 +15,8 @@ from ..config.command import (
     show_effective_config,
     show_global_config,
 )
+from ..ui.output.context import OutputFormatterContext
+from ..utils.logging_config import configure_logging
 from .base import (
     Command,
     CommandResult,

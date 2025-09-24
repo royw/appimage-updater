@@ -10,8 +10,6 @@ from typing import Any
 import zipfile
 
 import httpx
-
-from .._version import __version__
 from loguru import logger
 from rich.progress import (
     BarColumn,
@@ -23,6 +21,7 @@ from rich.progress import (
     TransferSpeedColumn,
 )
 
+from .._version import __version__
 from ..events.event_bus import get_event_bus
 from ..events.progress_events import DownloadProgressEvent
 from .models import (

@@ -18,10 +18,9 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from .output.context import get_output_formatter
-
 from ..core.models import CheckResult
 from ..utils.version_utils import format_version_display
+from .output.context import get_output_formatter
 
 
 # Console instance for all display operations

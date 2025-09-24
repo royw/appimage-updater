@@ -11,8 +11,8 @@ from ..ui.cli.add_command_logic import _add
 from ..ui.cli.validation_utilities import _show_add_examples
 from ..ui.interactive import interactive_add_command
 from ..ui.output.context import (
-    get_output_formatter,
     OutputFormatterContext,
+    get_output_formatter,
 )
 from ..utils.logging_config import configure_logging
 from .base import (

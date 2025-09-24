@@ -14,7 +14,6 @@ import httpx
 
 from .logging_interface import (
     create_default_http_logger,
-    HTTPLogger,
 )
 
 

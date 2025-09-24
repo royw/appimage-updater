@@ -10,8 +10,8 @@ from rich.console import Console
 from ..config.manager import AppConfigs
 from ..ui.display import display_applications_list
 from ..ui.output.context import (
-    get_output_formatter,
     OutputFormatterContext,
+    get_output_formatter,
 )
 from ..utils.logging_config import configure_logging
 

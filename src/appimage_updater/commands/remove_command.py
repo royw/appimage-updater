@@ -6,8 +6,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import typer
 from rich.console import Console
+import typer
 
 from ..config.loader import ConfigLoadError
 from ..config.manager import (

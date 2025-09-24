@@ -16,7 +16,6 @@ import typer
 from ..pattern_generator import (
     detect_source_type,
     generate_appimage_pattern_async,
-    should_enable_prerelease,
 )
 from ..repositories.factory import get_repository_client
 from ..ui.display import _replace_home_with_tilde
@@ -275,7 +274,12 @@ async def _get_effective_prerelease_config(prerelease: bool | None, defaults: An
         return prerelease, False
 
     # Auto-detect if we should enable prereleases for repositories with only continuous builds
-    should_enable = await should_enable_prerelease(url)
+    try:
+        repo_client = get_repository_client(url)
+        should_enable = await repo_client.should_enable_prerelease(url)
+    except Exception:
+        # If we can't detect, use defaults
+        should_enable = False
     if defaults:
         # If global default is False but auto-detection says we should enable, use auto-detection
         if not defaults.prerelease and should_enable:

@@ -26,8 +26,8 @@ from ..config.operations import (
 from ..services.application_service import ApplicationService
 from ..ui.display import display_edit_summary
 from ..ui.output.context import (
-    get_output_formatter,
     OutputFormatterContext,
+    get_output_formatter,
 )
 from ..utils.logging_config import configure_logging
 from .base import (
