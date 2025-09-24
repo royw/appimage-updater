@@ -178,7 +178,9 @@ class GitHubRepository(RepositoryClient):
         parsed = urllib.parse.urlparse(url)
         return parsed.netloc.lower() in ("github.com", "www.github.com")
 
-    def _normalize_github_path(self, path_parts: list[str], owner: str, repo: str, original_url: str) -> tuple[str, bool]:
+    def _normalize_github_path(
+        self, path_parts: list[str], owner: str, repo: str, original_url: str
+    ) -> tuple[str, bool]:
         """Normalize GitHub path and determine if correction was needed."""
         # Check if this is a download URL
         if self._is_download_url(path_parts):
@@ -258,7 +260,9 @@ class GitHubRepository(RepositoryClient):
         for asset in release.assets:
             self._categorize_asset_by_type_and_stability(asset.name, release.is_prerelease, groups)
 
-    def _categorize_asset_by_type_and_stability(self, asset_name: str, is_prerelease: bool, groups: dict[str, list[str]]) -> None:
+    def _categorize_asset_by_type_and_stability(
+        self, asset_name: str, is_prerelease: bool, groups: dict[str, list[str]]
+    ) -> None:
         """Categorize a single asset by type and stability."""
         name_lower = asset_name.lower()
         if name_lower.endswith(".appimage"):
@@ -305,7 +309,9 @@ class GitHubRepository(RepositoryClient):
         stable_releases = [r for r in valid_releases if not r.is_prerelease]
         prerelease_only = len(stable_releases) == 0
 
-        logger.debug(f"Repository {url}: {len(stable_releases)} stable, {len(valid_releases) - len(stable_releases)} prerelease")
+        logger.debug(
+            f"Repository {url}: {len(stable_releases)} stable, {len(valid_releases) - len(stable_releases)} prerelease"
+        )
         logger.debug(f"Prerelease-only repository: {prerelease_only}")
 
         return prerelease_only
@@ -357,27 +363,27 @@ class GitHubRepository(RepositoryClient):
         """Generalize a pattern prefix by removing version numbers and overly specific details."""
         # Remove version numbers and date patterns
         prefix = self._remove_version_and_date_patterns(prefix)
-        
+
         # Remove platform-specific patterns
         prefix = self._remove_platform_patterns(prefix)
-        
+
         # Ensure we still have meaningful content
         prefix = self._ensure_meaningful_prefix(prefix)
-        
+
         return prefix
 
     def _remove_version_and_date_patterns(self, prefix: str) -> str:
         """Remove version numbers and date patterns from prefix."""
         # Handle standard versions: "_1.0.2" or "_v1.0.2" or "-1.0.2"
         prefix = re.sub(r"[_-]v?\d+(\.\d+)*", "", prefix)
-        
+
         # Handle date patterns: "_2023-01-15" or "-20230115"
         prefix = re.sub(r"[_-]\d{4}[_-]?\d{2}[_-]?\d{2}", "", prefix)
         prefix = re.sub(r"[_-]\d{8}", "", prefix)
-        
+
         # Handle git hashes: "_abc123def" (7+ hex chars)
         prefix = re.sub(r"[_-][a-f0-9]{7,}", "", prefix)
-        
+
         return prefix
 
     def _remove_platform_patterns(self, prefix: str) -> str:
@@ -385,11 +391,11 @@ class GitHubRepository(RepositoryClient):
         # Remove platform patterns that appear in the middle
         for pattern in self._get_platform_patterns():
             prefix = re.sub(pattern, "_", prefix)
-        
+
         # Remove suffix patterns
         for pattern in self._get_suffix_patterns():
             prefix = re.sub(pattern, "", prefix)
-        
+
         return prefix
 
     def _get_platform_patterns(self) -> list[str]:
@@ -420,39 +426,39 @@ class GitHubRepository(RepositoryClient):
             # If we've over-generalized, try to extract just the app name
             # This is a fallback to prevent empty patterns
             return prefix if prefix else ""
-        
+
         return prefix
 
     def _find_common_prefix(self, strings: list[str]) -> str:
         """Find the longest common prefix among a list of strings."""
         if not strings:
             return ""
-        
+
         if len(strings) == 1:
             return strings[0]
-        
+
         # Find common prefix length
         prefix_len = len(strings[0])
         for i in range(1, len(strings)):
             prefix_len = min(prefix_len, self._find_common_length(strings[0], strings[i]))
-        
+
         prefix = strings[0][:prefix_len]
-        
+
         # Clean up the prefix to end at a reasonable boundary
         if prefix and not prefix[-1].isalnum():
             prefix = prefix.rstrip("_-.")
-        
+
         return prefix
 
     def _find_common_length(self, str1: str, str2: str) -> int:
         """Find the length of common prefix between two strings."""
         common_len = 0
         min_len = min(len(str1), len(str2))
-        
+
         for i in range(min_len):
             if str1[i].lower() == str2[i].lower():
                 common_len += 1
             else:
                 break
-        
+
         return common_len
