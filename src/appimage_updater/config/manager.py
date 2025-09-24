@@ -13,9 +13,11 @@ from typing import (
 
 from loguru import logger
 
+from .loader import ConfigLoadError
 from .models import (
     ApplicationConfig,
     Config,
+    GlobalConfig,
 )
 
 
@@ -24,9 +26,6 @@ class Manager:
 
     def _load_config_from_directory(self, config_path: Path) -> Config:
         """Load configuration from directory of JSON files."""
-
-        from .loader import ConfigLoadError
-
         applications = []
         json_files = list(config_path.glob("*.json"))
 
@@ -62,9 +61,6 @@ class Manager:
 
     def _load_config_from_file(self, config_path: Path) -> Config:
         """Load configuration from a single JSON file."""
-
-        from .loader import ConfigLoadError
-
         # Validate file existence and load JSON data
         self._validate_config_file_exists(config_path, ConfigLoadError)
         data = self._load_json_data_from_file(config_path, json, ConfigLoadError)
@@ -382,8 +378,6 @@ class GlobalConfigManager(Manager):
 
             # Extract global config, ignore applications
             global_config_data = data.get("global_config", {})
-            from .models import GlobalConfig
-
             global_config = GlobalConfig(**global_config_data) if global_config_data else GlobalConfig()
             return Config(global_config=global_config, applications=[])
 
@@ -544,8 +538,6 @@ class AppConfigs(Manager):
 
     def _load_config(self) -> Config:
         """Load application configurations from directory or file."""
-        from .loader import ConfigLoadError
-
         try:
             return self._load_application_configs()
         except ConfigLoadError:

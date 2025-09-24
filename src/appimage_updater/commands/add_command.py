@@ -7,7 +7,13 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
+from ..ui.cli.add_command_logic import _add
+from ..ui.cli.validation_utilities import _show_add_examples
 from ..ui.interactive import interactive_add_command
+from ..ui.output.context import (
+    get_output_formatter,
+    OutputFormatterContext,
+)
 from ..utils.logging_config import configure_logging
 from .base import (
     Command,
@@ -64,8 +70,6 @@ class AddCommand(Command):
 
     async def _execute_with_formatter_context(self, output_formatter: Any) -> CommandResult:
         """Execute add command with output formatter context."""
-        from ..ui.output.context import OutputFormatterContext
-
         with OutputFormatterContext(output_formatter):
             validation_result = self._validate_parameters()
             if validation_result:
@@ -128,8 +132,6 @@ class AddCommand(Command):
     def _show_validation_help(self, error_msg: str) -> None:
         """Show helpful validation error messages."""
         # Use output formatter if available, otherwise fallback to console
-        from ..ui.output.context import get_output_formatter
-
         formatter = get_output_formatter()
 
         if formatter:
@@ -184,8 +186,6 @@ class AddCommand(Command):
             True if successful, False if validation failed
         """
         # This delegates to the CLI add command logic
-        from ..ui.cli.add_command_logic import _add
-
         success = await _add(
             name=self.params.name or "",
             url=self.params.url or "",
@@ -212,6 +212,4 @@ class AddCommand(Command):
 
     def _show_add_examples(self) -> None:
         """Show usage examples for the add command."""
-        from ..ui.cli.validation_utilities import _show_add_examples
-
         _show_add_examples()
