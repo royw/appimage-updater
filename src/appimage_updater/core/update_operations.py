@@ -1,20 +1,20 @@
 from __future__ import annotations
 
-import os
 from datetime import datetime
+import os
 from pathlib import Path
 from typing import Any
 
-import typer
 from loguru import logger
 from rich.console import Console
+import typer
 
 from appimage_updater.config.loader import ConfigLoadError
 from appimage_updater.config.manager import AppConfigs
-from appimage_updater.config.models import Config, ApplicationConfig
+from appimage_updater.config.models import ApplicationConfig, Config
 from appimage_updater.core.downloader import Downloader
 from appimage_updater.core.info_operations import _execute_info_update_workflow
-from appimage_updater.core.models import CheckResult, InteractiveResult, Asset, UpdateCandidate
+from appimage_updater.core.models import Asset, CheckResult, InteractiveResult, UpdateCandidate
 from appimage_updater.core.parallel import ConcurrentProcessor
 from appimage_updater.core.version_checker import VersionChecker
 from appimage_updater.services.application_service import ApplicationService

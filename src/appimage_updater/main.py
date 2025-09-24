@@ -13,7 +13,8 @@ import typer
 
 from appimage_updater.commands.factory import CommandFactory
 from appimage_updater.core.update_operations import (
-    console, )
+    console,
+)
 
 from ._version import __version__
 from .config.manager import (
@@ -80,6 +81,7 @@ from .ui.output.factory import (
 )
 from .ui.output.interface import OutputFormat
 from .utils.logging_config import configure_logging
+
 
 # Rebuild models to resolve forward references
 rebuild_models()
@@ -1504,8 +1506,6 @@ def repository(
 
     if not result.success:
         raise typer.Exit(result.exit_code)
-
-
 
 
 @app.command()
