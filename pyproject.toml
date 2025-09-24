@@ -104,28 +104,32 @@ select = [
     "T20",  # flake8-print
     "SIM",  # flake8-simplify
     "C901", # mccabe complexity
+    "E402", # Module level import not at top of file
+    "TID",  # flake8-tidy-imports (detects banned imports and import style issues)
+    "PLC",  # Pylint convention
 ]
 ignore = [
     "S101",  # Use of assert detected
+    "TID252", # Prefer absolute imports over relative imports (we'll fix this separately)
 ]
 per-file-ignores = { "tests/*" = ["S101"] }
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
 
-[tool.isort]
-profile = "pycharm"
-line_length = 120
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 2
-lines_after_imports = 2
-use_parentheses = false
-ensure_newline_before_comments = true
-src_paths = ["src", "tests"]
-known_first_party = ["appimage_updater"]
-sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
-default_section = "THIRDPARTY"
+[tool.ruff.lint.isort]
+# Configure ruff's built-in isort to match project preferences
+known-first-party = ["appimage_updater"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+lines-after-imports = 2
+force-single-line = false
+combine-as-imports = true
+force-sort-within-sections = true
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Ban function-level imports - all imports should be at module level
+ban-relative-imports = "all"
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit", "tests/functional", "tests/e2e"]

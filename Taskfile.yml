@@ -59,15 +59,10 @@ tasks:
 
   # === Code Quality and Linting ===
   format:
-    desc: Format code with ruff, sort imports with isort, and format markdown files with mdformat
+    desc: Format code with ruff (including import sorting) and format markdown files with mdformat
     cmds:
-      - cmd: |
-          if ! command -v isort &> /dev/null; then
-            uv tool install isort
-          fi
-        silent: true
-      - isort {{.CLI_ARGS | default .SRC}}
-      - uv run ruff format {{.CLI_ARGS | default .SRC}}
+      - uv run ruff check --fix --select I {{.CLI_ARGS | default .SRC}}  # Fix import sorting
+      - uv run ruff format {{.CLI_ARGS | default .SRC}}  # Format code
       - cmd: |
           if ! command -v mdformat &> /dev/null; then
             uv tool install mdformat
