@@ -71,6 +71,7 @@ class ShowCommand(Command):
         """
         try:
             from ..config.manager import AppConfigs
+            from ..config.loader import ConfigLoadError
 
             app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
             config = app_configs._config
@@ -80,6 +81,19 @@ class ShowCommand(Command):
 
             self._display_applications(found_apps)
             return True
+        except ConfigLoadError as e:
+            # Only handle gracefully if no explicit config file was specified
+            if not self.params.config_file and "not found" in str(e):
+                from ..config.models import Config
+                config = Config()
+                found_apps = self._filter_applications(config)
+                if found_apps is None:
+                    return False
+                self._display_applications(found_apps)
+                return True
+            else:
+                # Re-raise for explicit config files or other errors
+                raise
         except Exception as e:
             logger.error(f"Unexpected error in show command: {e}")
             logger.exception("Full exception details")

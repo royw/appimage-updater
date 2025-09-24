@@ -2219,9 +2219,20 @@ async def _load_and_filter_config(
     """
     logger.debug("Loading configuration")
     from .config.manager import AppConfigs
+    from .config.loader import ConfigLoadError
 
-    app_configs = AppConfigs(config_path=config_file or config_dir)
-    config = app_configs._config
+    try:
+        app_configs = AppConfigs(config_path=config_file or config_dir)
+        config = app_configs._config
+    except ConfigLoadError as e:
+        # Only handle gracefully if no explicit config file was specified
+        if not config_file and "not found" in str(e):
+            from .config.models import Config
+            config = Config()
+        else:
+            # Re-raise for explicit config files or other errors
+            raise
+
     enabled_apps = config.get_enabled_apps()
 
     # Filter by app names if specified
