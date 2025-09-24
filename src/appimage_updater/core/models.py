@@ -15,6 +15,13 @@ from pydantic import (
     Field,
 )
 
+from .system_info import (
+    get_system_info,
+    is_compatible_architecture,
+    is_compatible_platform,
+    is_supported_format,
+)
+
 
 if TYPE_CHECKING:
     from ..config.models import ApplicationConfig
@@ -164,8 +171,6 @@ class Release(BaseModel):
 
     def _check_architecture_compatibility(self, asset: Asset, system_info: Any) -> bool:
         """Check if asset architecture is compatible with system."""
-        from .system_info import is_compatible_architecture
-
         arch_value = asset.architecture
         if not arch_value:
             return True
@@ -175,8 +180,6 @@ class Release(BaseModel):
 
     def _check_platform_compatibility(self, asset: Asset, system_info: Any) -> bool:
         """Check if asset platform is compatible with system."""
-        from .system_info import is_compatible_platform
-
         platform_value = asset.platform
         if not platform_value:
             return True
@@ -186,8 +189,6 @@ class Release(BaseModel):
 
     def _check_format_compatibility(self, asset: Asset, system_info: Any) -> bool:
         """Check if asset format is supported on system."""
-        from .system_info import is_supported_format
-
         format_value = asset.file_extension
         if not format_value:
             return True
@@ -213,12 +214,10 @@ class Release(BaseModel):
             List of compatible assets (empty list if no compatibility module available)
         """
         try:
-            from .system_info import get_system_info
+            system_info = get_system_info()
         except ImportError:
             # System info module not available, return all assets
             return assets
-
-        system_info = get_system_info()
         return [asset for asset in assets if self._is_asset_compatible(asset, system_info)]
 
 

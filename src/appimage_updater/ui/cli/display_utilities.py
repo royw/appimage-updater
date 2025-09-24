@@ -6,6 +6,12 @@ from typing import Any
 
 from rich.console import Console
 
+from ..display import _replace_home_with_tilde
+from .parameter_resolution import (
+    _format_parameter_display_value,
+    _get_parameter_status,
+)
+
 
 console = Console()
 
@@ -20,8 +26,6 @@ def _display_dry_run_header(name: str) -> None:
 
 def _display_basic_config_info(name: str, validated_url: str, expanded_download_dir: str, pattern: str) -> None:
     """Display basic configuration information."""
-    from ..display import _replace_home_with_tilde
-
     display_download_dir = _replace_home_with_tilde(expanded_download_dir)
     console.print(f"[blue]Name: {name}")
     console.print(f"[blue]URL: {validated_url}")
@@ -38,8 +42,6 @@ def _display_rotation_config(app_config: dict[str, Any]) -> None:
         console.print(f"[blue]  Retain Count: {retain_count}")
         symlink_path = app_config.get("symlink_path")
         if symlink_path:
-            from ..display import _replace_home_with_tilde
-
             display_symlink = _replace_home_with_tilde(symlink_path)
             console.print(f"[blue]  Symlink: {display_symlink}")
 
@@ -85,8 +87,6 @@ def _display_add_success(
     prerelease_auto_enabled: bool,
 ) -> None:
     """Display success message after adding application."""
-    from ..display import _replace_home_with_tilde
-
     display_download_dir = _replace_home_with_tilde(expanded_download_dir)
     console.print(f"\n[green]Successfully added application '{name}'[/green]")
     console.print(f"[blue]URL: {validated_url}")
@@ -106,11 +106,6 @@ def _log_resolved_parameters(
     original_params: dict[str, Any],
 ) -> None:
     """Log resolved parameters for debugging."""
-    from .parameter_resolution import (
-        _format_parameter_display_value,
-        _get_parameter_status,
-    )
-
     console.print(f"\n[dim]Resolved {command_name} parameters:")
     for key, resolved_value in resolved_params.items():
         if key == "global_config":
