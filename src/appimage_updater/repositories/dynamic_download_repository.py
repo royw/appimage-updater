@@ -10,7 +10,10 @@ from datetime import datetime
 import logging
 import re
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import (
+    urljoin,
+    urlparse,
+)
 
 import httpx
 
@@ -82,8 +85,6 @@ class DynamicDownloadRepository(RepositoryClient):
             # Use the first match
             download_url = matches[0]
             if not download_url.startswith("http"):
-                from urllib.parse import urljoin
-
                 download_url = urljoin(url, download_url)
 
             # Extract version from URL or content
@@ -112,8 +113,6 @@ class DynamicDownloadRepository(RepositoryClient):
     def parse_repo_url(self, url: str) -> tuple[str, str]:
         """Parse dynamic download URL to extract meaningful components."""
         try:
-            from urllib.parse import urlparse
-
             parsed = urlparse(url)
             domain = parsed.netloc.replace("www.", "")
 
@@ -186,8 +185,6 @@ class DynamicDownloadRepository(RepositoryClient):
 
     def _generate_regex_pattern(self, asset_name: str) -> str:
         """Generate regex pattern from asset name."""
-        import re
-
         # Replace version-like patterns with regex
         pattern = re.sub(r"\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?", r"[\\d\\.\\-\\w]+", asset_name)
         pattern = pattern.replace(".", "\\.")

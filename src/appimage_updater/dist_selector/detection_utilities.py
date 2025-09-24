@@ -5,6 +5,7 @@ from various system sources like /etc/os-release, lsb_release, and /etc/issue.
 """
 
 from pathlib import Path
+import re
 import subprocess
 
 from loguru import logger
@@ -89,8 +90,6 @@ def _parse_lsb_release() -> DistributionInfo | None:
             # Parse description like "Description: Ubuntu 24.04 LTS"
             if "ubuntu" in description.lower():
                 # Extract version from description
-                import re
-
                 version_match = re.search(r"(\d+\.\d+)", description)
                 if version_match:
                     version = version_match.group(1)
@@ -128,8 +127,6 @@ def _parse_issue_content(content: str) -> DistributionInfo | None:
 
 def _parse_ubuntu_issue(content: str) -> DistributionInfo | None:
     """Parse Ubuntu distribution info from issue content."""
-    import re
-
     version_match = re.search(r"(\d+\.\d+)", content)
     if version_match:
         version = version_match.group(1)
@@ -139,8 +136,6 @@ def _parse_ubuntu_issue(content: str) -> DistributionInfo | None:
 
 def _parse_fedora_issue(content: str) -> DistributionInfo | None:
     """Parse Fedora distribution info from issue content."""
-    import re
-
     version_match = re.search(r"(\d+)", content)
     if version_match:
         version = version_match.group(1)

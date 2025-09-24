@@ -12,6 +12,7 @@ from abc import (
 )
 from typing import Any
 
+from .._version import __version__
 from ..core.models import Release
 
 
@@ -146,8 +147,6 @@ class RepositoryClient(ABC):
     def _get_default_user_agent(self) -> str:
         """Get default User-Agent string for API requests."""
         try:
-            from .._version import __version__
-
             return f"AppImage-Updater/{__version__}"
         except ImportError:
             return "AppImage-Updater/dev"

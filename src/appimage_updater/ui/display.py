@@ -18,6 +18,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from .output.context import get_output_formatter
+
 from ..core.models import CheckResult
 from ..utils.version_utils import format_version_display
 
@@ -165,8 +167,6 @@ def _wrap_single_part_path(display_path: str, max_width: int) -> str:
 
 def display_applications_list(applications: list[Any]) -> None:
     """Display applications list in a table."""
-    from .output.context import get_output_formatter
-
     output_formatter = get_output_formatter()
 
     if output_formatter:
@@ -439,8 +439,6 @@ def get_checksum_status(result: Any) -> str:
 
 def display_application_details(app: Any, config_source_info: dict[str, str] | None = None) -> None:
     """Display detailed information about a specific application."""
-    from .output.context import get_output_formatter
-
     output_formatter = get_output_formatter()
 
     if output_formatter and not hasattr(output_formatter, "console"):

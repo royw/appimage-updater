@@ -21,6 +21,7 @@ import typer
 
 from ..core.models import InteractiveResult
 from ..repositories.factory import get_repository_client
+from .display import _replace_home_with_tilde
 
 
 console = Console()
@@ -189,8 +190,6 @@ def _display_add_summary(settings: dict[str, Any]) -> None:
 
 def _display_basic_summary_info(settings: dict[str, Any]) -> None:
     """Display basic configuration information."""
-    from .display import _replace_home_with_tilde
-
     console.print(f"   Name: {settings['name']}")
     console.print(f"   URL: {settings['url']}")
     download_dir = settings["download_dir"] or "[global default]"
@@ -201,8 +200,6 @@ def _display_basic_summary_info(settings: dict[str, Any]) -> None:
 
 def _display_rotation_summary_info(settings: dict[str, Any]) -> None:
     """Display rotation-related configuration information."""
-    from .display import _replace_home_with_tilde
-
     console.print(f"   Rotation: {'Yes' if settings['rotation'] else 'No'}")
     if settings["rotation"]:
         console.print(f"   Retain: {settings['retain']} files")
