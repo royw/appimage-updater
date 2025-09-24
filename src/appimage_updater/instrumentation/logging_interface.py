@@ -7,6 +7,8 @@ from typing import (
     Protocol,
 )
 
+from loguru import logger
+
 
 class HTTPLogger(Protocol):
     """Protocol for HTTP logging interface."""
@@ -33,8 +35,6 @@ class LoguruHTTPLogger:
 
     def __init__(self, logger_name: str = "appimage_updater.instrumentation.http_tracker"):
         """Initialize with specific logger name."""
-        from loguru import logger
-
         self._logger = logger.bind(name=logger_name)
 
     def debug(self, message: str, **kwargs: Any) -> None:

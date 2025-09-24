@@ -14,7 +14,8 @@ from typing import (
 
 from rich.console import Console
 
-from appimage_updater.config.models import Config
+from .display_utilities import _show_available_settings
+from ..models import Config
 
 
 # Console instance for all display operations
@@ -77,8 +78,6 @@ def _handle_numeric_setting(config: Config, setting: str, value: str) -> bool:
 
 def _handle_unknown_setting(setting: str) -> bool:
     """Handle unknown settings by showing available options."""
-    from .display_utilities import _show_available_settings
-
     return _show_available_settings(setting)
 
 

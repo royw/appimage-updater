@@ -5,6 +5,7 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
+from ..main import _check_updates
 from ..utils.logging_config import configure_logging
 from .base import (
     Command,
@@ -116,8 +117,6 @@ class CheckCommand(Command):
         Returns:
             True if successful, False if applications not found
         """
-        from ..main import _check_updates
-
         success = await _check_updates(
             config_file=self.params.config_file,
             config_dir=self.params.config_dir,

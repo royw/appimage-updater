@@ -7,6 +7,9 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
+from ...repositories.factory import get_repository_client
+from .display_utilities import _log_resolved_parameters
+
 
 console = Console()
 
@@ -68,8 +71,6 @@ def _display_error_message(error_type: str, name: str, error_msg: str) -> None:
 def _log_repository_auth_status(url: str) -> None:
     """Log repository authentication status for debugging."""
     try:
-        from ...repositories.factory import get_repository_client
-
         repo_client = get_repository_client(url)
         _log_client_auth_status(repo_client)
     except Exception as e:
@@ -113,8 +114,6 @@ def _handle_verbose_logging(
     """Handle verbose logging for add command."""
     if not verbose:
         return
-
-    from .display_utilities import _log_resolved_parameters
 
     console.print(f"\n[dim]Adding application: {name}")
     console.print(f"[dim]Repository URL: {url}")

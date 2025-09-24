@@ -7,6 +7,8 @@ from typing import Any
 
 from loguru import logger
 
+from ...config.manager import AppConfigs
+from ...config.models import ApplicationConfig
 from ...config.operations import (
     generate_default_config,
     handle_add_directory_creation,
@@ -118,9 +120,6 @@ def _execute_add_operation(
         return True
 
     try:
-        from ...config.manager import AppConfigs
-        from ...config.models import ApplicationConfig
-
         # Create ApplicationConfig from the dict
         app_config = ApplicationConfig(**config_data["app_config"])
 

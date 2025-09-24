@@ -7,6 +7,8 @@ import re
 from typing import Any
 
 import httpx
+
+from .._version import __version__
 from loguru import logger
 from pydantic import ValidationError
 
@@ -43,8 +45,6 @@ class GitHubClient:
             auth: GitHubAuth instance for authentication
             token: Explicit GitHub token (creates auth if provided)
         """
-        from .._version import __version__
-
         self.timeout = timeout
         self.user_agent = user_agent or f"AppImage-Updater/{__version__}"
 

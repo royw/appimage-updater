@@ -12,6 +12,11 @@ from typing import Any
 
 import httpx
 
+from .logging_interface import (
+    create_default_http_logger,
+    HTTPLogger,
+)
+
 
 @dataclass
 class HTTPRequestRecord:
@@ -47,8 +52,6 @@ class HTTPTracker:
 
         # Set up logger with dependency injection
         if logger is None:
-            from .logging_interface import create_default_http_logger
-
             self._logger = create_default_http_logger()
         else:
             self._logger = logger

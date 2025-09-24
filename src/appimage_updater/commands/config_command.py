@@ -8,6 +8,8 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
+from ..ui.output.context import OutputFormatterContext
+from ..utils.logging_config import configure_logging
 from ..config.command import (
     list_available_settings,
     reset_global_config,
@@ -15,7 +17,6 @@ from ..config.command import (
     show_effective_config,
     show_global_config,
 )
-from ..utils.logging_config import configure_logging
 from .base import (
     Command,
     CommandResult,
@@ -69,8 +70,6 @@ class ConfigCommand(Command):
 
             # Use context manager to make output formatter available throughout the execution
             if output_formatter:
-                from ..ui.output.context import OutputFormatterContext
-
                 with OutputFormatterContext(output_formatter):
                     success = await self._execute_config_operation()
             else:
