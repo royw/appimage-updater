@@ -82,6 +82,7 @@ async def _prepare_add_configuration(
         expanded_download_dir = str(Path(resolved_download_dir).expanduser())
 
     # Generate application configuration
+    # Note: Pass original prerelease parameter (not resolved) to allow auto-detection
     app_config, prerelease_auto_enabled = await generate_default_config(
         name,
         validated_url,
@@ -89,7 +90,7 @@ async def _prepare_add_configuration(
         resolved_params["rotation"],
         retain,
         symlink,
-        resolved_params["prerelease"],
+        prerelease,  # Use original parameter to allow auto-detection when None
         resolved_params["checksum"],
         checksum_algorithm,
         checksum_pattern,

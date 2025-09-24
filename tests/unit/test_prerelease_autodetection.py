@@ -222,12 +222,15 @@ class TestPrereleaseAutoDetection:
             mock_config_client.return_value = mock_client
             mock_should_enable.return_value = True
 
+            # Create downloads directory to avoid directory creation issues
+            downloads_dir = temp_config_dir / "downloads"
+            downloads_dir.mkdir(parents=True, exist_ok=True)
+
             result = runner.invoke(app, [
                 "add", "test_app",
                 "https://github.com/test/continuous",
-                str(temp_config_dir.parent / "downloads"),
-                "--config-dir", str(temp_config_dir),
-                "--create-dir"
+                str(downloads_dir),
+                "--config-dir", str(temp_config_dir)
             ])
 
         assert result.exit_code == 0
