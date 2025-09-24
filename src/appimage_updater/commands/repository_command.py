@@ -7,6 +7,11 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
+from ..main import _examine_repositories
+from ..ui.output.context import (
+    get_output_formatter,
+    OutputFormatterContext,
+)
 from ..utils.logging_config import configure_logging
 from .base import (
     Command,
@@ -51,8 +56,6 @@ class RepositoryCommand(Command):
 
     async def _execute_with_formatter_context(self, output_formatter: Any) -> CommandResult:
         """Execute repository command with output formatter context."""
-        from ..ui.output.context import OutputFormatterContext
-
         with OutputFormatterContext(output_formatter):
             validation_result = self._validate_with_formatter_error_display()
             if validation_result:
@@ -90,8 +93,6 @@ class RepositoryCommand(Command):
 
     def _display_validation_error_with_formatter(self, error_msg: str) -> None:
         """Display validation error using output formatter."""
-        from ..ui.output.context import get_output_formatter
-
         formatter = get_output_formatter()
         if formatter:
             formatter.print_error(error_msg)
@@ -113,9 +114,7 @@ class RepositoryCommand(Command):
 
     async def _execute_repository_operation(self) -> bool:
         """Execute the core repository operation logic."""
-        # Import and delegate to existing implementation
-        from ..main import _examine_repositories
-
+        # Delegate to existing implementation
         return await _examine_repositories(
             config_file=self.params.config_file,
             config_dir=self.params.config_dir,

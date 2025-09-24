@@ -11,6 +11,11 @@ from typing import Any
 import urllib.parse
 
 from ..core.models import Release
+from ..pattern_generator import (
+    fetch_appimage_pattern_from_github,
+    normalize_github_url,
+    should_enable_prerelease,
+)
 from ..repositories.base import (
     RepositoryClient,
     RepositoryError,
@@ -91,9 +96,6 @@ class GitHubRepository(RepositoryClient):
 
     def normalize_repo_url(self, url: str) -> tuple[str, bool]:
         """Normalize GitHub URL to repository format and detect if it was corrected."""
-        # Import the function from pattern_generator to avoid circular imports
-        from ..pattern_generator import normalize_github_url
-
         return normalize_github_url(url)
 
     def detect_repository_type(self, url: str) -> bool:
@@ -106,16 +108,10 @@ class GitHubRepository(RepositoryClient):
 
     async def should_enable_prerelease(self, url: str) -> bool:
         """Check if prerelease should be automatically enabled for a GitHub repository."""
-        # Import the function from pattern_generator to avoid circular imports
-        from ..pattern_generator import should_enable_prerelease
-
         return await should_enable_prerelease(url)
 
     async def generate_pattern_from_releases(self, url: str) -> str | None:
         """Generate file pattern from actual GitHub releases."""
-        # Import the function from pattern_generator to avoid circular imports
-        from ..pattern_generator import fetch_appimage_pattern_from_github
-
         return await fetch_appimage_pattern_from_github(url)
 
     def _convert_nightly_version(self, release: Release) -> Release:
