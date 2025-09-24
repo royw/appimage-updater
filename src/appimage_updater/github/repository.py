@@ -182,10 +182,10 @@ class GitHubRepository(RepositoryClient):
         self, path_parts: list[str], owner: str, repo: str, original_url: str
     ) -> tuple[str, bool]:
         """Normalize GitHub path and determine if correction was needed."""
-        # Check if this is a download URL
-        if self._is_download_url(path_parts):
+        # Check if this is a download URL or releases page URL
+        if self._is_download_url(path_parts) or self._is_releases_page_url(path_parts):
             normalized_url = f"https://github.com/{owner}/{repo}"
-            logger.debug(f"Corrected GitHub download URL {original_url} to {normalized_url}")
+            logger.debug(f"Corrected GitHub URL {original_url} to {normalized_url}")
             return normalized_url, True
 
         # Already a repository URL
@@ -194,6 +194,10 @@ class GitHubRepository(RepositoryClient):
     def _is_download_url(self, path_parts: list[str]) -> bool:
         """Check if path represents a GitHub download URL."""
         return len(path_parts) >= 4 and path_parts[2] == "releases" and path_parts[3] == "download"
+
+    def _is_releases_page_url(self, path_parts: list[str]) -> bool:
+        """Check if path represents a GitHub releases page URL."""
+        return len(path_parts) >= 3 and path_parts[2] == "releases"
 
     async def fetch_appimage_pattern_from_github(self, url: str) -> str | None:
         """Async function to fetch AppImage pattern from repository releases.
