@@ -549,9 +549,13 @@ class AppConfigs(Manager):
         try:
             return self._load_application_configs()
         except ConfigLoadError as e:
-            # Handle missing config gracefully - return empty config instead of raising
-            logger.debug(f"No configuration found: {e}")
-            return Config()
+            # Only handle missing config files gracefully, not invalid JSON or validation errors
+            if "not found" in str(e) or "does not exist" in str(e):
+                logger.debug(f"No configuration found: {e}")
+                return Config()
+            else:
+                # Re-raise for invalid JSON, validation errors, etc.
+                raise
         except Exception as e:
             logger.warning(f"Failed to load application configs: {e}, using defaults")
             return Config()
