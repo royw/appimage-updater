@@ -1569,8 +1569,6 @@ async def _examine_repositories(
         True if successful, False if applications not found or other error
     """
     try:
-        from .config.manager import AppConfigs
-
         app_configs = AppConfigs(config_path=config_file or config_dir)
         config = app_configs._config
         apps_to_examine = _filter_apps_for_examination(config.applications, app_names)
@@ -1611,8 +1609,6 @@ async def _process_repository_examination(
 
 def _handle_config_load_error(e: Exception) -> None:
     """Handle configuration loading errors."""
-    from .ui.output.context import get_output_formatter
-
     formatter = get_output_formatter()
     if formatter:
         formatter.print_error(f"Configuration error: {e}")
@@ -1649,8 +1645,6 @@ async def _fetch_repository_releases(app: ApplicationConfig, limit: int) -> list
 
 def _display_repository_header(app: ApplicationConfig, releases: list[Any]) -> None:
     """Display repository information header panel."""
-    from rich.panel import Panel
-
     header_info = [
         f"[bold]Application:[/bold] {app.name}",
         f"[bold]Repository URL:[/bold] {app.url}",
@@ -1664,8 +1658,6 @@ def _display_repository_header(app: ApplicationConfig, releases: list[Any]) -> N
 
 def _create_repository_table(show_assets: bool) -> Any:
     """Create the repository releases table with appropriate columns."""
-    from rich.table import Table
-
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Tag", style="cyan", no_wrap=True)
     table.add_column("Published", style="green")
@@ -1740,8 +1732,6 @@ async def _handle_no_updates_scenario(config: Any, enabled_apps: list[Any]) -> N
     await _setup_existing_files_rotation(config, enabled_apps)
 
     # Only show console output for rich/plain formats
-    from .ui.output.context import get_output_formatter
-
     output_formatter = get_output_formatter()
 
     # Check if we should suppress console output (for JSON/HTML formats)
@@ -1760,8 +1750,6 @@ def _handle_check_errors(e: Exception) -> None:
     """Handle errors during check process."""
     if isinstance(e, ConfigLoadError):
         # Use output formatter if available, otherwise fallback to console
-        from .ui.output.context import get_output_formatter
-
         formatter = get_output_formatter()
         if formatter:
             formatter.print_error(f"Configuration error: {e}")
@@ -1771,8 +1759,6 @@ def _handle_check_errors(e: Exception) -> None:
         raise typer.Exit(1) from e
     else:
         # Use output formatter if available, otherwise fallback to console
-        from .ui.output.context import get_output_formatter
-
         formatter = get_output_formatter()
         if formatter:
             formatter.print_error(f"Unexpected error: {e}")
@@ -1854,8 +1840,6 @@ async def _execute_check_workflow(
 
 async def _execute_info_update_workflow(enabled_apps: list[ApplicationConfig]) -> None:
     """Execute the info file update workflow for all enabled applications."""
-    from .ui.output.context import get_output_formatter
-
     output_formatter = get_output_formatter()
     if output_formatter:
         output_formatter.start_section("Info File Update")
@@ -1876,8 +1860,6 @@ async def _execute_info_update_workflow(enabled_apps: list[ApplicationConfig]) -
 
 async def _update_info_file_for_app(app_config: ApplicationConfig, console: Console) -> None:
     """Update or create the .info file for a single application."""
-    from pathlib import Path
-
     # Get the download directory
     download_dir = Path(app_config.download_dir).expanduser()
     if not download_dir.exists():
@@ -1952,8 +1934,6 @@ async def _get_version_from_repository(app_config: ApplicationConfig, current_fi
 
 async def _get_repository_client(url: str) -> Any:
     """Get repository client for the given URL."""
-    from .repositories.factory import get_repository_client
-
     return get_repository_client(url)
 
 
@@ -2033,8 +2013,6 @@ async def _prepare_check_environment(
 
 def _handle_no_enabled_apps() -> None:
     """Handle the case when no enabled applications are found."""
-    from .ui.output.context import get_output_formatter
-
     formatter = get_output_formatter()
     if formatter:
         formatter.print_warning("No enabled applications found in configuration")
@@ -2119,14 +2097,6 @@ def _is_unrotated_appimage(file_path: Path) -> bool:
 
 async def _setup_rotation_for_file(app_config: ApplicationConfig, latest_file: Path, config: Config) -> None:
     """Set up rotation for a single file."""
-    from datetime import datetime
-
-    from .core.downloader import Downloader
-    from .core.models import (
-        Asset,
-        UpdateCandidate,
-    )
-
     downloader = Downloader(
         timeout=config.global_config.timeout_seconds * 10,
         user_agent=config.global_config.user_agent,
@@ -2227,17 +2197,12 @@ async def _load_and_filter_config(
         typer.Exit: If specified applications are not found
     """
     logger.debug("Loading configuration")
-    from .config.loader import ConfigLoadError
-    from .config.manager import AppConfigs
-
     try:
         app_configs = AppConfigs(config_path=config_file or config_dir)
         config = app_configs._config
     except ConfigLoadError as e:
         # Only handle gracefully if no explicit config file was specified
         if not config_file and "not found" in str(e):
-            from .config.models import Config
-
             config = Config()
         else:
             # Re-raise for explicit config files or other errors
@@ -2275,8 +2240,6 @@ async def _perform_update_checks(
 
 def _display_check_start_message(enabled_apps: list[Any]) -> None:
     """Display the initial check message if console output is not suppressed."""
-    from .ui.output.context import get_output_formatter
-
     output_formatter = get_output_formatter()
     suppress_console = _should_suppress_console_output(output_formatter)
 
@@ -2296,9 +2259,6 @@ def _should_suppress_console_output(output_formatter: Any) -> bool:
 
 async def _perform_dry_run_checks(enabled_apps: list[Any], no_interactive: bool) -> list[Any]:
     """Perform dry-run checks showing current versions without HTTP requests."""
-    from .core.version_checker import VersionChecker
-    from .ui.output.context import get_output_formatter
-
     logger.debug("Dry run mode: Skipping HTTP requests, showing current versions only")
 
     output_formatter = get_output_formatter()
@@ -2317,8 +2277,6 @@ async def _perform_dry_run_checks(enabled_apps: list[Any], no_interactive: bool)
 
 def _create_dry_run_result(app_config: Any, version_checker: Any) -> Any:
     """Create a dry-run result for a single application."""
-    from .core.models import CheckResult
-
     try:
         current_version = version_checker._get_current_version(app_config)
         return CheckResult(
@@ -2345,9 +2303,6 @@ def _create_dry_run_result(app_config: Any, version_checker: Any) -> Any:
 
 async def _perform_real_update_checks(enabled_apps: list[Any], no_interactive: bool) -> list[Any]:
     """Perform real update checks with HTTP requests."""
-    from .core.parallel import ConcurrentProcessor
-    from .core.version_checker import VersionChecker
-
     version_checker = VersionChecker(interactive=not no_interactive)
     _log_processing_method(enabled_apps)
 
@@ -2368,8 +2323,6 @@ def _log_processing_method(enabled_apps: list[Any]) -> None:
 
 def _display_check_results(check_results: list[Any], dry_run: bool) -> None:
     """Display check results."""
-    from .ui.output.context import get_output_formatter
-
     logger.debug("Displaying check results: {}", check_results)
     output_formatter = get_output_formatter()
     logger.debug("Output formatter: {}", output_formatter)
@@ -2665,8 +2618,6 @@ def config(
 
 def cli_main() -> None:
     """Main CLI entry point with proper exception handling."""
-    import sys
-
     # Override sys.excepthook to prevent stack traces from being displayed
     def clean_excepthook(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: Any) -> None:
         """Clean exception handler that doesn't show stack traces for user errors."""
@@ -2678,8 +2629,6 @@ def cli_main() -> None:
                 sys.exit(getattr(exc_value, "code", 1))
 
         # For other exceptions, show a clean error message without stack trace
-        from rich.console import Console
-
         console = Console(stderr=True)
         console.print(f"[red]Error: {exc_value}[/red]")
         sys.exit(1)
@@ -2695,15 +2644,11 @@ def cli_main() -> None:
         sys.exit(getattr(e, "exit_code", getattr(e, "code", 1)))
     except KeyboardInterrupt:
         # Handle Ctrl+C gracefully
-        from rich.console import Console
-
         console = Console(stderr=True)
         console.print("\n[yellow]Operation cancelled by user.[/yellow]")
         sys.exit(130)  # Standard exit code for SIGINT
     except Exception as e:
         # Handle unexpected exceptions with clean error message
-        from rich.console import Console
-
         console = Console(stderr=True)
         console.print(f"[red]Error: {e}[/red]")
         sys.exit(1)
