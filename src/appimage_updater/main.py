@@ -3,19 +3,26 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 import os
 from pathlib import Path
+import sys
 from typing import Any
 
 from loguru import logger
 from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 import typer
 
 from appimage_updater.commands.factory import CommandFactory
 
 from ._version import __version__
 from .config.loader import ConfigLoadError
-from .config.manager import GlobalConfigManager
+from .config.manager import (
+    AppConfigs,
+    GlobalConfigManager,
+)
 from .config.models import (
     ApplicationConfig,
     Config,
@@ -27,12 +34,24 @@ from .config.operations import (
 )
 from .core.downloader import Downloader
 from .core.models import (
+    Asset,
+    CheckResult,
     InteractiveResult,
     rebuild_models,
+    UpdateCandidate,
 )
+from .core.parallel import ConcurrentProcessor
+from .core.version_checker import VersionChecker
 from .repositories.factory import get_repository_client
+from .github.auth import get_github_auth
+from .instrumentation.factory import create_http_tracker_from_params
 from .services.application_service import ApplicationService
 from .ui.cli.validation_utilities import _check_configuration_warnings
+from .ui.output.context import get_output_formatter
+from .ui.output.factory import (
+    create_output_formatter,
+    create_output_formatter_from_params,
+)
 from .ui.cli_options import (
     CONFIG_DIR_OPTION,
     CONFIG_FILE_OPTION,
@@ -363,8 +382,6 @@ def _check_rotation_warning(app_config: dict[str, Any], warnings: list[str]) -> 
 
 def _check_download_directory_warning(download_dir: str, warnings: list[str]) -> None:
     """Check if download directory doesn't exist."""
-    from pathlib import Path
-
     if not Path(download_dir).exists():
         warnings.append(
             "Warning: Download directory doesn't exist and will be created on first update. "
@@ -463,9 +480,6 @@ def check(
     )
 
     # Create HTTP tracker based on parameters
-    from .instrumentation.factory import create_http_tracker_from_params
-    from .ui.output.factory import create_output_formatter_from_params
-
     http_tracker = create_http_tracker_from_params(command.params)
     output_formatter = create_output_formatter_from_params(command.params)
 
@@ -614,8 +628,6 @@ def _log_repository_auth_status(url: str) -> None:
         repo_client = get_repository_client(url)
         if hasattr(repo_client, "github_client"):
             # This is a GitHub repository, show GitHub-specific auth info
-            from .github.auth import get_github_auth
-
             auth = get_github_auth()
             rate_info = auth.get_rate_limit_info()
             if auth.is_authenticated:
@@ -1077,8 +1089,6 @@ def _validate_edit_options(yes: bool, no: bool) -> None:
 
 def _handle_edit_help_display(format: OutputFormat) -> None:
     """Handle help display for edit command."""
-    from .ui.output.factory import create_output_formatter
-
     output_formatter = create_output_formatter(format)
     _display_edit_help(format, output_formatter)
     raise typer.Exit(0)
@@ -1376,8 +1386,6 @@ def _validate_remove_options(yes: bool, no: bool) -> None:
 
 def _handle_remove_help_display(format: OutputFormat) -> None:
     """Handle help display for remove command."""
-    from .ui.output.factory import create_output_formatter
-
     output_formatter = create_output_formatter(format)
     _display_remove_help(format, output_formatter)
     raise typer.Exit(0)
