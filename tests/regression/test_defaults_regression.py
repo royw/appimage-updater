@@ -37,7 +37,7 @@ class TestDefaultsRegression:
         set_global_config_value("auto-subdir", "true", None, temp_config_dir)
 
         # Add FreeCAD using minimal command line
-        await _add(
+        result = await _add(
             name="FreeCAD",
             url="https://github.com/FreeCAD/FreeCAD",
             download_dir=str(test_apps_dir / "FreeCAD"),  # Use explicit path that matches auto-subdir behavior
@@ -112,7 +112,7 @@ class TestDefaultsRegression:
         set_global_config_value("symlink-pattern", "{appname}.AppImage", None, temp_config_dir)
 
         # Add FreeCAD_weekly using minimal command line
-        await _add(
+        result = await _add(
             name="FreeCAD_weekly",
             url="https://github.com/FreeCAD/FreeCAD",
             download_dir=str(test_apps_dir / "FreeCAD_weekly"),  # Use explicit path that matches auto-subdir behavior

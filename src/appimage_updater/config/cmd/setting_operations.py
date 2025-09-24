@@ -4,8 +4,8 @@ This module contains functions for applying configuration changes,
 validating setting values, and managing different setting types.
 """
 
-import os
 from collections.abc import Callable
+import os
 from pathlib import Path
 from typing import (
     Literal,
@@ -15,6 +15,7 @@ from typing import (
 from rich.console import Console
 
 from appimage_updater.config.models import Config
+
 
 # Console instance for all display operations
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))

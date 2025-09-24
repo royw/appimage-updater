@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-import os
-import re
 from collections.abc import Callable
+import os
 from pathlib import Path
+import re
 from typing import Any
 
-import typer
 from loguru import logger
 from rich.console import Console
+import typer
 
 from ..pattern_generator import (
     detect_source_type,
@@ -20,6 +20,7 @@ from ..pattern_generator import (
 from ..repositories.factory import get_repository_client
 from ..ui.display import _replace_home_with_tilde
 from .manager import GlobalConfigManager
+
 
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 

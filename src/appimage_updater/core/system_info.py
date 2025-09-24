@@ -7,9 +7,9 @@ and compatibility scoring.
 
 from __future__ import annotations
 
-import platform
 from dataclasses import dataclass
 from pathlib import Path
+import platform
 
 from loguru import logger
 

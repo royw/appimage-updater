@@ -7,9 +7,9 @@ import os
 from pathlib import Path
 from typing import Any
 
-import typer
 from loguru import logger
 from rich.console import Console
+import typer
 
 from appimage_updater.commands.factory import CommandFactory
 
@@ -82,6 +82,7 @@ from .utils.version_utils import (
     extract_version_from_filename,
     normalize_version_string,
 )
+
 
 # Rebuild models to resolve forward references
 rebuild_models()
@@ -2218,8 +2219,8 @@ async def _load_and_filter_config(
         typer.Exit: If specified applications are not found
     """
     logger.debug("Loading configuration")
-    from .config.manager import AppConfigs
     from .config.loader import ConfigLoadError
+    from .config.manager import AppConfigs
 
     try:
         app_configs = AppConfigs(config_path=config_file or config_dir)
@@ -2228,6 +2229,7 @@ async def _load_and_filter_config(
         # Only handle gracefully if no explicit config file was specified
         if not config_file and "not found" in str(e):
             from .config.models import Config
+
             config = Config()
         else:
             # Re-raise for explicit config files or other errors

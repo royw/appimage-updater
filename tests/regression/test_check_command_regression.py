@@ -50,12 +50,16 @@ def test_check_command_finds_candidates():
     expected_indicators = [
         "appimaged",  # Should show the app name
         "continuous",  # Should show current version info
-        "Not checked (dry-run)",  # Should show dry-run status for latest version
         "Success",  # Should show success status
     ]
 
     for indicator in expected_indicators:
         assert indicator in output, f"Expected to see '{indicator}' in output, but got: {output}"
+
+    # Check for dry-run status (may be split across lines in table format)
+    assert "Not checked" in output and "(dry-run)" in output, (
+        f"Expected to see dry-run status in output, but got: {output}"
+    )
 
 
 def test_check_command_with_debug_shows_asset_selection():

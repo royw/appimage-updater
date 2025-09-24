@@ -6,9 +6,9 @@ release API, such as "latest" symlinks or version-embedded URLs.
 
 from __future__ import annotations
 
-import re
 from datetime import datetime
 from email.utils import parsedate_to_datetime
+import re
 from typing import (
     Any,
     cast,

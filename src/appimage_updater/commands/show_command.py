@@ -70,8 +70,8 @@ class ShowCommand(Command):
             True if operation succeeded, False if it failed.
         """
         try:
-            from ..config.manager import AppConfigs
             from ..config.loader import ConfigLoadError
+            from ..config.manager import AppConfigs
 
             app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
             config = app_configs._config
@@ -85,6 +85,7 @@ class ShowCommand(Command):
             # Only handle gracefully if no explicit config file was specified
             if not self.params.config_file and "not found" in str(e):
                 from ..config.models import Config
+
                 config = Config()
                 found_apps = self._filter_applications(config)
                 if found_apps is None:

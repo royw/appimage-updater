@@ -8,9 +8,9 @@ options to the user when automatic selection isn't possible.
 
 from __future__ import annotations
 
+from pathlib import Path
 import re
 import subprocess
-from pathlib import Path
 
 from loguru import logger
 from rich.console import Console

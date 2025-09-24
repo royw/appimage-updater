@@ -57,9 +57,9 @@ def _resolve_rotation_parameter(rotation: bool | None, global_config: GlobalConf
     return rotation if rotation is not None else global_config.defaults.rotation_enabled
 
 
-def _resolve_prerelease_parameter(prerelease: bool | None) -> bool:
-    """Resolve prerelease parameter (no global default)."""
-    return prerelease if prerelease is not None else False
+def _resolve_prerelease_parameter(prerelease: bool | None, global_config: GlobalConfigManager) -> bool:
+    """Resolve prerelease parameter using global defaults."""
+    return prerelease if prerelease is not None else global_config.defaults.prerelease
 
 
 def _resolve_checksum_parameters(
@@ -96,7 +96,7 @@ def _resolve_add_parameters(
 
     resolved_download_dir = _resolve_download_directory(download_dir, auto_subdir, global_config, name)
     resolved_rotation = _resolve_rotation_parameter(rotation, global_config)
-    resolved_prerelease = _resolve_prerelease_parameter(prerelease)
+    resolved_prerelease = _resolve_prerelease_parameter(prerelease, global_config)
     resolved_checksum, resolved_checksum_required = _resolve_checksum_parameters(
         checksum, checksum_required, global_config
     )

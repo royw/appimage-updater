@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import logging
 import os
-from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +17,7 @@ from .models import (
     Config,
     GlobalConfig,
 )
+
 
 logger = logging.getLogger(__name__)
 

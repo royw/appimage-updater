@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import asyncio
-import contextlib
 from abc import (
     ABC,
     abstractmethod,
 )
+import asyncio
 from collections import defaultdict
 from collections.abc import Callable
+import contextlib
 from typing import Any
 
 

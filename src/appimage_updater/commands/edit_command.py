@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-import typer
 from loguru import logger
 from rich.console import Console
+import typer
 
 from ..config.models import (
     ApplicationConfig,

@@ -10,6 +10,7 @@ from rich.console import Console
 
 from ..loader import ConfigLoadError
 
+
 # Console instance for all display operations
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 

@@ -7,8 +7,8 @@ wrapping the existing GitHub client functionality.
 from __future__ import annotations
 
 import re
-import urllib.parse
 from typing import Any
+import urllib.parse
 
 from ..core.models import Release
 from ..repositories.base import (

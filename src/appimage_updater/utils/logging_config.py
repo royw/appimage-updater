@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
+import sys
 
 from loguru import logger
+
 
 # Explicitly export logger for type checking
 __all__ = ["configure_logging", "logger"]

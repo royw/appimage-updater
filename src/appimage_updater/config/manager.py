@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 import json
 import os
-from collections.abc import Iterator
 from pathlib import Path
 from typing import (
     Any,
@@ -548,14 +548,9 @@ class AppConfigs(Manager):
 
         try:
             return self._load_application_configs()
-        except ConfigLoadError as e:
-            # Only handle missing config files gracefully, not invalid JSON or validation errors
-            if "not found" in str(e) or "does not exist" in str(e):
-                logger.debug(f"No configuration found: {e}")
-                return Config()
-            else:
-                # Re-raise for invalid JSON, validation errors, etc.
-                raise
+        except ConfigLoadError:
+            # Re-raise ConfigLoadError so commands can handle it properly
+            raise
         except Exception as e:
             logger.warning(f"Failed to load application configs: {e}, using defaults")
             return Config()

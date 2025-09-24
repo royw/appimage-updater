@@ -10,6 +10,7 @@ from typing import Any
 from rich.console import Console
 from rich.table import Table
 
+
 # Console instance for all display operations
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 

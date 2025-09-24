@@ -6,9 +6,9 @@ through JavaScript or API calls.
 
 from __future__ import annotations
 
+from datetime import datetime
 import logging
 import re
-from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -23,6 +23,7 @@ from appimage_updater.repositories.base import (
     RepositoryError,
 )
 from appimage_updater.utils.version_utils import normalize_version_string
+
 
 logger = logging.getLogger(__name__)
 

@@ -111,7 +111,6 @@ select = [
 ignore = [
     "S101",  # Use of assert detected
     "TID252", # Prefer absolute imports over relative imports (we'll fix this separately)
-    "PLC0415", # Import should be at top-level (massive architectural change - will fix separately)
 ]
 per-file-ignores = { "tests/*" = ["S101"] }
 

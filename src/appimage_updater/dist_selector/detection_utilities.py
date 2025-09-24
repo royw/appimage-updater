@@ -4,8 +4,8 @@ This module contains functions for detecting the current Linux distribution
 from various system sources like /etc/os-release, lsb_release, and /etc/issue.
 """
 
-import subprocess
 from pathlib import Path
+import subprocess
 
 from loguru import logger
 

@@ -18,6 +18,7 @@ from .interface import (
     OutputFormatter,
 )
 
+
 __all__ = [
     "OutputFormatter",
     "OutputFormat",

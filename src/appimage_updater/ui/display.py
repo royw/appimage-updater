@@ -8,9 +8,9 @@ and symlink details.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 import re
 import time
-from pathlib import Path
 from typing import Any
 
 from loguru import logger
@@ -20,6 +20,7 @@ from rich.table import Table
 
 from ..core.models import CheckResult
 from ..utils.version_utils import format_version_display
+
 
 # Console instance for all display operations
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))

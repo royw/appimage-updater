@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import inspect
-import time
 from dataclasses import (
     dataclass,
     field,
 )
+import inspect
+import time
 from typing import Any
 
 import httpx
