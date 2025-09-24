@@ -6,13 +6,22 @@ import logging
 from pathlib import Path
 from typing import Any
 
+import typer
+from rich.console import Console
+
 from ..config.loader import ConfigLoadError
+from ..config.manager import (
+    AppConfigs,
+    GlobalConfigManager,
+    Manager,
+)
 from ..config.models import Config
 
 # Remove operation is handled internally
 from ..core.models import ApplicationConfig
 from ..services.application_service import ApplicationService
 from ..ui.display import _replace_home_with_tilde
+from ..ui.output.context import OutputFormatterContext
 from ..utils.logging_config import configure_logging
 from .base import (
     Command,
@@ -29,8 +38,6 @@ class RemoveCommand(Command):
 
     def __init__(self, params: RemoveParams):
         self.params = params
-        from rich.console import Console
-
         self.console = Console(force_terminal=False, no_color=True)
 
     def validate(self) -> list[str]:
@@ -56,8 +63,6 @@ class RemoveCommand(Command):
 
             # Use context manager to make output formatter available throughout the execution
             if output_formatter:
-                from ..ui.output.context import OutputFormatterContext
-
                 with OutputFormatterContext(output_formatter):
                     success = await self._execute_remove_operation()
             else:
@@ -67,8 +72,6 @@ class RemoveCommand(Command):
 
         except Exception as e:
             # Handle typer.Exit from ApplicationService properly
-            import typer
-
             if isinstance(e, typer.Exit):
                 return CommandResult(success=False, message="Command failed", exit_code=e.exit_code)
 
@@ -88,8 +91,6 @@ class RemoveCommand(Command):
 
     async def _process_removal_workflow(self) -> CommandResult:
         """Process the main removal workflow."""
-        from ..config.manager import AppConfigs
-
         app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
         config = app_configs._config
 
@@ -147,8 +148,6 @@ class RemoveCommand(Command):
 
     def _get_user_confirmation(self, found_apps: list[ApplicationConfig]) -> bool:
         """Get user confirmation for removal."""
-        import typer
-
         self.console.print(f"Found {len(found_apps)} application(s) to remove:")
         for app in found_apps:
             display_dir = _replace_home_with_tilde(str(app.download_dir))
@@ -183,16 +182,12 @@ class RemoveCommand(Command):
             raise ValueError("Config file path is required for single file save")
 
         # Use manager method for config file operations
-        from ..config.manager import Manager
-
         manager = Manager()
         manager.save_single_file_config(config, self.params.config_file)
 
     def _delete_removed_app_files(self, config_dir: Path, removed_apps: list[ApplicationConfig]) -> None:
         """Delete individual app config files for removed apps."""
         # Use manager method for config file operations
-        from ..config.manager import Manager
-
         manager = Manager()
         app_names = [app.name for app in removed_apps]
         manager.delete_app_config_files(app_names, config_dir)
@@ -200,8 +195,6 @@ class RemoveCommand(Command):
     def _update_global_config_file(self, config_dir: Path, config: Config) -> None:
         """Update global config file if it exists."""
         # Use manager method for config file operations
-        from ..config.manager import Manager
-
         manager = Manager()
         manager.update_global_config_in_directory(config, config_dir)
 
@@ -218,7 +211,5 @@ class RemoveCommand(Command):
             self._save_single_file_config(config)
         else:
             # Use default config directory if none specified (same logic as load_config)
-            from ..config.manager import GlobalConfigManager
-
             config_dir = self.params.config_dir or GlobalConfigManager.get_default_config_dir()
             self._save_directory_based_config_with_path(config, removed_apps, config_dir)
