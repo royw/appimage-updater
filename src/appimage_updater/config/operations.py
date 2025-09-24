@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 from typing import Any
+from urllib.parse import urlparse
 
 from loguru import logger
 from rich.console import Console
@@ -19,7 +20,11 @@ from ..pattern_generator import (
 )
 from ..repositories.factory import get_repository_client
 from ..ui.display import _replace_home_with_tilde
-from .manager import GlobalConfigManager
+from .manager import (
+    GlobalConfigManager,
+    Manager,
+)
+from .models import ApplicationConfig
 
 
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
@@ -38,8 +43,6 @@ def validate_and_normalize_add_url(url: str, direct: bool | None = None) -> str 
     # For direct URLs, just validate basic URL format and return as-is
     if direct:
         try:
-            from urllib.parse import urlparse
-
             parsed = urlparse(url)
             if not parsed.scheme or not parsed.netloc:
                 console.print(f"[red]Error: Invalid URL format: {url}")
@@ -998,9 +1001,6 @@ def save_updated_configuration(app: Any, config: Any, config_file: Path | None, 
 
 def update_app_in_config_file(app_dict: dict[str, Any], config_file: Path) -> None:
     """Update application in a single JSON config file."""
-    from .manager import Manager
-    from .models import ApplicationConfig
-
     # Convert dict to ApplicationConfig object
     app_config = ApplicationConfig(**app_dict)
 
@@ -1011,9 +1011,6 @@ def update_app_in_config_file(app_dict: dict[str, Any], config_file: Path) -> No
 
 def update_app_in_config_directory(app_dict: dict[str, Any], config_dir: Path) -> None:
     """Update application in a directory-based config structure."""
-    from .manager import Manager
-    from .models import ApplicationConfig
-
     # Convert dict to ApplicationConfig object
     app_config = ApplicationConfig(**app_dict)
 

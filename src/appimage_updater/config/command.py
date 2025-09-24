@@ -12,11 +12,15 @@ from rich.console import Console
 from rich.table import Table
 
 from .loader import ConfigLoadError
-from .manager import GlobalConfigManager
+from .manager import (
+    AppConfigs,
+    GlobalConfigManager,
+)
 from .models import (
     Config,
     GlobalConfig,
 )
+from ..ui.output.context import get_output_formatter
 
 
 logger = logging.getLogger(__name__)
@@ -27,8 +31,6 @@ console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 def show_global_config(config_file: Path | None = None, config_dir: Path | None = None) -> None:
     """Show current global configuration."""
     try:
-        from .manager import AppConfigs
-
         app_configs = AppConfigs(config_path=config_file or config_dir)
         config = app_configs._config
         defaults = config.global_config.defaults
@@ -141,8 +143,6 @@ def _handle_config_load_error(e: ConfigLoadError) -> bool:
 def show_effective_config(app_name: str, config_file: Path | None = None, config_dir: Path | None = None) -> None:
     """Show effective configuration for a specific application."""
     try:
-        from .manager import AppConfigs
-
         app_configs = AppConfigs(config_path=config_file or config_dir)
         config = app_configs._config
         effective_config = config.get_effective_config_for_app(app_name)
@@ -245,8 +245,6 @@ def set_global_config_value(
         True if the setting was applied successfully, False otherwise.
     """
     try:
-        from .manager import GlobalConfigManager
-
         global_manager = GlobalConfigManager(config_file or config_dir)
         config = global_manager._config
     except ConfigLoadError:
@@ -513,8 +511,6 @@ def _show_available_settings(setting: str) -> bool:
 def list_available_settings() -> None:
     """List all available configuration settings with descriptions and examples."""
     # Check if we have an output formatter (for JSON/HTML output)
-    from ..ui.output.context import get_output_formatter
-
     formatter = get_output_formatter()
 
     if formatter:
@@ -777,8 +773,6 @@ def reset_global_config(config_file: Path | None = None, config_dir: Path | None
         True if successful, False if error occurred
     """
     try:
-        from .manager import AppConfigs
-
         app_configs = AppConfigs(config_path=config_file or config_dir)
         config = app_configs._config
     except ConfigLoadError:
