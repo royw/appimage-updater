@@ -1,0 +1,415 @@
+"""Repository integration tests."""
+
+from __future__ import annotations
+
+from unittest.mock import Mock, patch
+
+import pytest
+
+from appimage_updater.core.models import Asset, Release
+from appimage_updater.repositories.base import RepositoryClient, RepositoryError
+from appimage_updater.repositories.direct_download_repository import DirectDownloadRepository
+from appimage_updater.repositories.dynamic_download_repository import DynamicDownloadRepository
+from appimage_updater.repositories.factory import detect_repository_type, get_repository_client
+from appimage_updater.github.repository import GitHubRepository
+
+
+class TestRepositoryFactory:
+    """Test repository factory functionality."""
+
+    def test_get_repository_client_with_explicit_github_type(self):
+        """Test repository client creation with explicit GitHub type."""
+        url = "https://github.com/user/repo"
+        client = get_repository_client(url, source_type="github")
+        
+        assert isinstance(client, GitHubRepository)
+        assert client.timeout == 30
+        assert client.user_agent is not None
+
+    def test_get_repository_client_with_explicit_direct_download_type(self):
+        """Test repository client creation with explicit direct download type."""
+        url = "https://example.com/download"
+        client = get_repository_client(url, source_type="direct_download")
+        
+        assert isinstance(client, DirectDownloadRepository)
+        assert client.timeout == 30
+        assert client.user_agent is not None
+
+    def test_get_repository_client_with_explicit_dynamic_download_type(self):
+        """Test repository client creation with explicit dynamic download type."""
+        url = "https://example.com/releases"
+        client = get_repository_client(url, source_type="dynamic_download")
+        
+        assert isinstance(client, DynamicDownloadRepository)
+        assert client.timeout == 30
+        assert client.user_agent is not None
+
+    def test_get_repository_client_with_direct_alias(self):
+        """Test repository client creation with 'direct' alias."""
+        url = "https://example.com/download"
+        client = get_repository_client(url, source_type="direct")
+        
+        assert isinstance(client, DirectDownloadRepository)
+        assert client.timeout == 30
+        assert client.user_agent is not None
+
+    def test_get_repository_client_with_custom_timeout(self):
+        """Test repository client creation with custom timeout."""
+        url = "https://github.com/user/repo"
+        client = get_repository_client(url, source_type="github", timeout=60)
+        
+        assert isinstance(client, GitHubRepository)
+        assert client.timeout == 60
+
+    def test_get_repository_client_with_custom_user_agent(self):
+        """Test repository client creation with custom user agent."""
+        url = "https://github.com/user/repo"
+        custom_agent = "CustomAgent/1.0"
+        client = get_repository_client(url, source_type="github", user_agent=custom_agent)
+        
+        assert isinstance(client, GitHubRepository)
+        assert client.user_agent == custom_agent
+
+    def test_get_repository_client_with_unsupported_type(self):
+        """Test repository client creation with unsupported type."""
+        url = "https://example.com"
+        
+        with pytest.raises(RepositoryError, match="Unsupported source type: invalid"):
+            get_repository_client(url, source_type="invalid")
+
+    def test_get_repository_client_url_detection_github(self):
+        """Test repository client creation with GitHub URL detection."""
+        url = "https://github.com/user/repo"
+        
+        with patch.object(GitHubRepository, 'detect_repository_type', return_value=True):
+            client = get_repository_client(url)
+        
+        assert isinstance(client, GitHubRepository)
+
+    def test_get_repository_client_url_detection_dynamic(self):
+        """Test repository client creation with dynamic download URL detection."""
+        url = "https://example.com/releases"
+        
+        with patch.object(GitHubRepository, 'detect_repository_type', return_value=False):
+            with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=True):
+                client = get_repository_client(url)
+        
+        assert isinstance(client, DynamicDownloadRepository)
+
+    def test_get_repository_client_url_detection_direct(self):
+        """Test repository client creation with direct download URL detection."""
+        url = "https://example.com/download.appimage"
+        
+        with patch.object(GitHubRepository, 'detect_repository_type', return_value=False):
+            with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=False):
+                with patch.object(DirectDownloadRepository, 'detect_repository_type', return_value=True):
+                    client = get_repository_client(url)
+        
+        assert isinstance(client, DirectDownloadRepository)
+
+    def test_get_repository_client_no_suitable_client(self):
+        """Test repository client creation when no suitable client is found."""
+        url = "https://unsupported.example.com"
+        
+        with patch.object(GitHubRepository, 'detect_repository_type', return_value=False):
+            with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=False):
+                with patch.object(DirectDownloadRepository, 'detect_repository_type', return_value=False):
+                    with pytest.raises(RepositoryError, match="No repository client available for URL"):
+                        get_repository_client(url)
+
+    def test_detect_repository_type_github(self):
+        """Test repository type detection for GitHub."""
+        url = "https://github.com/user/repo"
+        
+        with patch.object(GitHubRepository, 'detect_repository_type', return_value=True):
+            with patch.object(GitHubRepository, 'repository_type', "github"):
+                repo_type = detect_repository_type(url)
+        
+        assert repo_type == "github"
+
+    def test_detect_repository_type_dynamic(self):
+        """Test repository type detection for dynamic download."""
+        url = "https://example.com/releases"
+        
+        with patch.object(GitHubRepository, 'detect_repository_type', return_value=False):
+            with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=True):
+                with patch.object(DynamicDownloadRepository, 'repository_type', "dynamic_download"):
+                    repo_type = detect_repository_type(url)
+        
+        assert repo_type == "dynamic_download"
+
+    def test_detect_repository_type_direct(self):
+        """Test repository type detection for direct download."""
+        url = "https://example.com/download.appimage"
+        
+        with patch.object(GitHubRepository, 'detect_repository_type', return_value=False):
+            with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=False):
+                with patch.object(DirectDownloadRepository, 'detect_repository_type', return_value=True):
+                    with patch.object(DirectDownloadRepository, 'repository_type', "direct_download"):
+                        repo_type = detect_repository_type(url)
+        
+        assert repo_type == "direct_download"
+
+    def test_detect_repository_type_fallback_to_github(self):
+        """Test repository type detection fallback to GitHub."""
+        url = "https://unknown.example.com"
+        
+        with patch.object(GitHubRepository, 'detect_repository_type', return_value=False):
+            with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=False):
+                with patch.object(DirectDownloadRepository, 'detect_repository_type', return_value=False):
+                    repo_type = detect_repository_type(url)
+        
+        # Should fallback to github for backward compatibility
+        assert repo_type == "github"
+
+    def test_repository_client_order_preference(self):
+        """Test that repository clients are tried in correct order."""
+        url = "https://example.com"
+        
+        # Mock all clients to return True for detection
+        with patch.object(GitHubRepository, 'detect_repository_type', return_value=True) as mock_github:
+            with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=True) as mock_dynamic:
+                with patch.object(DirectDownloadRepository, 'detect_repository_type', return_value=True) as mock_direct:
+                    client = get_repository_client(url)
+        
+        # Should get GitHub client first (highest priority)
+        assert isinstance(client, GitHubRepository)
+        
+        # Verify GitHub was checked first
+        mock_github.assert_called_once_with(url)
+        # Dynamic and Direct should not be called since GitHub matched
+        mock_dynamic.assert_not_called()
+        mock_direct.assert_not_called()
+
+    def test_repository_client_kwargs_passing(self):
+        """Test that kwargs are passed to repository clients."""
+        url = "https://github.com/user/repo"
+        custom_kwargs = {"custom_param": "test_value"}
+        
+        with patch('appimage_updater.repositories.factory.GitHubRepository') as mock_github_class:
+            mock_client = Mock()
+            mock_github_class.return_value = mock_client
+            
+            get_repository_client(url, source_type="github", **custom_kwargs)
+        
+        # Verify kwargs were passed to the constructor
+        mock_github_class.assert_called_once_with(
+            timeout=30, 
+            user_agent=None, 
+            custom_param="test_value"
+        )
+
+
+class TestRepositoryClientBase:
+    """Test repository client base functionality."""
+
+    def test_repository_error_creation(self):
+        """Test RepositoryError creation."""
+        error = RepositoryError("Test error message")
+        assert str(error) == "Test error message"
+        assert isinstance(error, Exception)
+
+    def test_repository_client_abstract_methods(self):
+        """Test that RepositoryClient cannot be instantiated directly."""
+        with pytest.raises(TypeError):
+            RepositoryClient()
+
+    def test_repository_client_initialization_defaults(self):
+        """Test repository client initialization with defaults."""
+        # Create a concrete implementation for testing
+        class TestRepositoryClient(RepositoryClient):
+            @property
+            def repository_type(self) -> str:
+                return "test"
+            
+            def detect_repository_type(self, url: str) -> bool:
+                return True
+            
+            async def get_latest_release(self, repo_url: str) -> Release:
+                return Mock()
+            
+            async def get_latest_release_including_prerelease(self, repo_url: str) -> Release:
+                return Mock()
+            
+            async def get_releases(self, repo_url: str, limit: int = 10) -> list[Release]:
+                return []
+            
+            def parse_repo_url(self, url: str) -> tuple[str, str]:
+                return ("owner", "repo")
+            
+            def normalize_repo_url(self, url: str) -> tuple[str, bool]:
+                return (url, False)
+            
+            async def should_enable_prerelease(self, url: str) -> bool:
+                return False
+            
+            async def generate_pattern_from_releases(self, url: str) -> str | None:
+                return None
+        
+        client = TestRepositoryClient()
+        
+        assert client.timeout == 30
+        assert client.user_agent is not None
+        assert "AppImage" in client.user_agent
+
+    def test_repository_client_initialization_custom(self):
+        """Test repository client initialization with custom values."""
+        class TestRepositoryClient(RepositoryClient):
+            @property
+            def repository_type(self) -> str:
+                return "test"
+            
+            def detect_repository_type(self, url: str) -> bool:
+                return True
+            
+            async def get_latest_release(self, repo_url: str) -> Release:
+                return Mock()
+            
+            async def get_latest_release_including_prerelease(self, repo_url: str) -> Release:
+                return Mock()
+            
+            async def get_releases(self, repo_url: str, limit: int = 10) -> list[Release]:
+                return []
+            
+            def parse_repo_url(self, url: str) -> tuple[str, str]:
+                return ("owner", "repo")
+            
+            def normalize_repo_url(self, url: str) -> tuple[str, bool]:
+                return (url, False)
+            
+            async def should_enable_prerelease(self, url: str) -> bool:
+                return False
+            
+            async def generate_pattern_from_releases(self, url: str) -> str | None:
+                return None
+        
+        custom_agent = "CustomAgent/1.0"
+        client = TestRepositoryClient(timeout=60, user_agent=custom_agent)
+        
+        assert client.timeout == 60
+        assert client.user_agent == custom_agent
+
+
+class TestRepositoryIntegration:
+    """Test repository integration scenarios."""
+
+    def test_repository_factory_integration_with_github(self):
+        """Test repository factory integration with GitHub repository."""
+        url = "https://github.com/user/repo"
+        
+        # Test that we can create a GitHub client and it has the expected interface
+        client = get_repository_client(url, source_type="github")
+        
+        assert isinstance(client, GitHubRepository)
+        assert hasattr(client, 'get_latest_release')
+        assert hasattr(client, 'get_latest_release_including_prerelease')
+        assert hasattr(client, 'get_releases')
+        assert hasattr(client, 'detect_repository_type')
+        assert hasattr(client, 'repository_type')
+
+    def test_repository_factory_integration_with_direct_download(self):
+        """Test repository factory integration with direct download repository."""
+        url = "https://example.com/download.appimage"
+        
+        # Test that we can create a direct download client and it has the expected interface
+        client = get_repository_client(url, source_type="direct_download")
+        
+        assert isinstance(client, DirectDownloadRepository)
+        assert hasattr(client, 'get_latest_release')
+        assert hasattr(client, 'get_latest_release_including_prerelease')
+        assert hasattr(client, 'get_releases')
+        assert hasattr(client, 'detect_repository_type')
+        assert hasattr(client, 'repository_type')
+
+    def test_repository_factory_integration_with_dynamic_download(self):
+        """Test repository factory integration with dynamic download repository."""
+        url = "https://example.com/releases"
+        
+        # Test that we can create a dynamic download client and it has the expected interface
+        client = get_repository_client(url, source_type="dynamic_download")
+        
+        assert isinstance(client, DynamicDownloadRepository)
+        assert hasattr(client, 'get_latest_release')
+        assert hasattr(client, 'get_latest_release_including_prerelease')
+        assert hasattr(client, 'get_releases')
+        assert hasattr(client, 'detect_repository_type')
+        assert hasattr(client, 'repository_type')
+
+    def test_repository_client_interface_consistency(self):
+        """Test that all repository clients have consistent interfaces."""
+        clients = [
+            get_repository_client("https://github.com/user/repo", source_type="github"),
+            get_repository_client("https://example.com/download", source_type="direct_download"),
+            get_repository_client("https://example.com/releases", source_type="dynamic_download"),
+        ]
+        
+        for client in clients:
+            # Verify all clients implement the required interface
+            assert isinstance(client, RepositoryClient)
+            assert hasattr(client, 'timeout')
+            assert hasattr(client, 'user_agent')
+            assert hasattr(client, 'repository_type')
+            assert callable(getattr(client, 'get_latest_release'))
+            assert callable(getattr(client, 'get_latest_release_including_prerelease'))
+            assert callable(getattr(client, 'get_releases'))
+            assert callable(getattr(client, 'detect_repository_type'))
+
+    def test_repository_error_handling_integration(self):
+        """Test repository error handling integration."""
+        # Test that RepositoryError is properly raised and handled
+        with pytest.raises(RepositoryError):
+            get_repository_client("https://example.com", source_type="invalid_type")
+        
+        # Test that RepositoryError can be caught as a general Exception
+        try:
+            get_repository_client("https://example.com", source_type="invalid_type")
+        except Exception as e:
+            assert isinstance(e, RepositoryError)
+            assert "Unsupported source type" in str(e)
+
+    def test_repository_configuration_propagation(self):
+        """Test that configuration is properly propagated to repository clients."""
+        timeout = 120
+        user_agent = "TestAgent/2.0"
+        
+        clients = [
+            get_repository_client("https://github.com/user/repo", source_type="github", 
+                                timeout=timeout, user_agent=user_agent),
+            get_repository_client("https://example.com/download", source_type="direct_download",
+                                timeout=timeout, user_agent=user_agent),
+            get_repository_client("https://example.com/releases", source_type="dynamic_download",
+                                timeout=timeout, user_agent=user_agent),
+        ]
+        
+        for client in clients:
+            assert client.timeout == timeout
+            assert client.user_agent == user_agent
+
+    def test_repository_type_detection_integration(self):
+        """Test repository type detection integration."""
+        test_cases = [
+            ("https://github.com/user/repo", "github"),
+            ("https://api.github.com/repos/user/repo", "github"),
+            ("https://example.com/releases.json", "dynamic_download"),
+            ("https://example.com/download.appimage", "direct_download"),
+        ]
+        
+        for url, expected_type in test_cases:
+            # Mock the detection methods to return expected results
+            with patch.object(GitHubRepository, 'detect_repository_type', 
+                            return_value=(expected_type == "github")):
+                with patch.object(DynamicDownloadRepository, 'detect_repository_type',
+                                return_value=(expected_type == "dynamic_download")):
+                    with patch.object(DirectDownloadRepository, 'detect_repository_type',
+                                    return_value=(expected_type == "direct_download")):
+                        with patch.object(GitHubRepository, 'repository_type', "github"):
+                            with patch.object(DynamicDownloadRepository, 'repository_type', "dynamic_download"):
+                                with patch.object(DirectDownloadRepository, 'repository_type', "direct_download"):
+                                    detected_type = detect_repository_type(url)
+                                    
+                                    if expected_type == "github":
+                                        assert detected_type == "github"
+                                    elif expected_type == "dynamic_download":
+                                        assert detected_type == "dynamic_download"
+                                    elif expected_type == "direct_download":
+                                        assert detected_type == "direct_download"
