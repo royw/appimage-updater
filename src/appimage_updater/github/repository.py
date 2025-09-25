@@ -441,17 +441,21 @@ class GitHubRepository(RepositoryClient):
         if len(strings) == 1:
             return strings[0]
 
-        # Find common prefix length
+        prefix_len = self._calculate_common_prefix_length(strings)
+        prefix = strings[0][:prefix_len]
+        return self._clean_prefix_boundary(prefix)
+
+    def _calculate_common_prefix_length(self, strings: list[str]) -> int:
+        """Calculate the length of the common prefix among all strings."""
         prefix_len = len(strings[0])
         for i in range(1, len(strings)):
             prefix_len = min(prefix_len, self._find_common_length(strings[0], strings[i]))
+        return prefix_len
 
-        prefix = strings[0][:prefix_len]
-
-        # Clean up the prefix to end at a reasonable boundary
+    def _clean_prefix_boundary(self, prefix: str) -> str:
+        """Clean up the prefix to end at a reasonable boundary."""
         if prefix and not prefix[-1].isalnum():
-            prefix = prefix.rstrip("_-.")
-
+            return prefix.rstrip("_-.")
         return prefix
 
     def _find_common_length(self, str1: str, str2: str) -> int:

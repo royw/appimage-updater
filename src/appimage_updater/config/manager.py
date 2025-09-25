@@ -310,28 +310,40 @@ class GlobalConfigManager(Manager):
 
     def _load_global_config(self) -> Config:
         """Load global configuration from global.json file."""
+        config_path = self._resolve_config_path()
 
+        if not config_path.exists():
+            return Config()
+
+        return self._parse_config_file(config_path)
+
+    def _resolve_config_path(self) -> Path:
+        """Resolve the configuration file path."""
         config_path = self._config_path or self.get_default_config_path()
 
         # If config_path is a directory, look for global.json in that directory
         if config_path.is_dir():
             config_path = config_path / "global.json"
 
-        if not config_path.exists():
-            return Config()
+        return config_path
 
+    def _parse_config_file(self, config_path: Path) -> Config:
+        """Parse the configuration file and extract global config."""
         try:
             with config_path.open() as f:
                 data = json.load(f)
 
-            # Extract global config, ignore applications
-            global_config_data = data.get("global_config", {})
-            global_config = GlobalConfig(**global_config_data) if global_config_data else GlobalConfig()
-            return Config(global_config=global_config, applications=[])
+            return self._extract_global_config(data)
 
         except (json.JSONDecodeError, KeyError) as e:
             logger.warning(f"Invalid global config format: {e}")
             return Config()
+
+    def _extract_global_config(self, data: dict[str, Any]) -> Config:
+        """Extract global configuration from parsed data."""
+        global_config_data = data.get("global_config", {})
+        global_config = GlobalConfig(**global_config_data) if global_config_data else GlobalConfig()
+        return Config(global_config=global_config, applications=[])
 
     def save(self) -> None:
         """Save configuration to file."""
