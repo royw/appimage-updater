@@ -423,8 +423,9 @@ def get_testable_commands() -> list[tuple[list[str], str]]:
             # ADD command shows validation errors in JSON format when called without args
             testable_commands.append(([command_name], command_name))
         elif command_name in ["edit", "show", "remove"]:
-            # These commands show help text - need to fix their output formatters
-            testable_commands.append(([command_name], command_name))
+            # These commands need arguments to execute properly and test format output
+            # Use nonexistent app names to trigger error handling with format output
+            testable_commands.append(([command_name, "NonExistentApp"], command_name))
         elif command_name == "repository":
             # Repository command with a valid app name (using first available app)
             testable_commands.append(([command_name, "nonexistent"], command_name))
