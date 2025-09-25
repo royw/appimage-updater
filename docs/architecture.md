@@ -4,135 +4,390 @@ This document describes the architecture and design principles of AppImage Updat
 
 ## High-Level Architecture
 
+AppImage Updater follows a layered architecture with clear separation of concerns:
+
 ```mermaid
 graph TB
-    A[CLI Interface] --> B[Command Layer]
-    B --> C[Configuration Manager]
-    B --> D[Repository Factory]
-    B --> E[Version Checker]
-    B --> F[Downloader]
-    B --> G[Distribution Selector]
-    B --> H[System Info]
-    B --> I[HTTP Instrumentation]
-    B --> Z[Output System]
+    A[CLI Application] --> B[Command Handlers]
+    B --> C[Command Layer]
+    C --> D[Core Services]
+    D --> E[Repository Layer]
+    D --> F[Configuration Layer]
+    D --> G[Output System]
     
-    C --> J[JSON Config Files]
-    D --> K[GitHub Repository]
-    D --> L[GitLab Repository]
-    D --> M[Other Repositories]
-    K --> N[GitHub Client]
-    K --> O[GitHub Auth]
-    N --> P[GitHub API]
-    E --> Q[Version Comparison]
-    F --> R[Concurrent Downloads]
-    F --> S[ZIP Extraction]
-    F --> T[Checksum Verification]
-    F --> U[File Rotation]
-    G --> V[Platform Detection]
-    Z --> AA[Rich Formatter]
-    Z --> BB[Plain Formatter]
-    Z --> CC[JSON Formatter]
-    Z --> DD[HTML Formatter]
-    H --> W[Architecture Detection]
-    I --> X[HTTP Tracker]
-    I --> Y[Logger Interface]
-    I --> Z[Progressive Timeouts]
+    subgraph "CLI Layer"
+        A --> A1[Typer Application]
+        B --> B1[Add Handler]
+        B --> B2[Check Handler]
+        B --> B3[Edit Handler]
+        B --> B4[List Handler]
+        B --> B5[Show Handler]
+        B --> B6[Remove Handler]
+        B --> B7[Config Handler]
+        B --> B8[Repository Handler]
+    end
+    
+    subgraph "Command Layer"
+        C --> C1[Add Command]
+        C --> C2[Check Command]
+        C --> C3[Edit Command]
+        C --> C4[List Command]
+        C --> C5[Show Command]
+        C --> C6[Remove Command]
+        C --> C7[Config Command]
+        C --> C8[Repository Command]
+        C --> C9[Command Factory]
+    end
+    
+    subgraph "Core Services"
+        D --> D1[Application Service]
+        D --> D2[Version Checker]
+        D --> D3[Downloader]
+        D --> D4[Distribution Selector]
+        D --> D5[System Info]
+        D --> D6[HTTP Instrumentation]
+    end
+    
+    subgraph "Repository Layer"
+        E --> E1[GitHub Repository]
+        E --> E2[Direct Download Repository]
+        E --> E3[Dynamic Download Repository]
+        E --> E4[Repository Factory]
+        E1 --> E5[GitHub Client]
+        E1 --> E6[GitHub Auth]
+    end
+    
+    subgraph "Configuration Layer"
+        F --> F1[Config Manager]
+        F --> F2[Global Config Manager]
+        F --> F3[JSON Config Files]
+        F --> F4[Config Operations]
+    end
+    
+    subgraph "Output System"
+        G --> G1[Rich Formatter]
+        G --> G2[Plain Formatter]
+        G --> G3[JSON Formatter]
+        G --> G4[HTML Formatter]
+        G --> G5[Output Context]
+    end
     
     style A fill:#e1f5fe
     style B fill:#f3e5f5
     style C fill:#e8f5e8
     style D fill:#ffeb3b
-    style E fill:#e8f5e8
-    style F fill:#e8f5e8
-    style G fill:#fff3e0
-    style H fill:#fff3e0
-    style I fill:#ff9800
-    style K fill:#4caf50
+    style E fill:#4caf50
+    style F fill:#ff9800
+    style G fill:#9c27b0
     style L fill:#4caf50
     style M fill:#4caf50
 ```
 
-## Core Components
+## Architecture Layers
 
-### CLI Interface (`main.py`)
+### 1. CLI Layer
 
-The entry point for all user interactions, built with [Typer](https://typer.tiangolo.com/).
+The CLI layer provides the user interface and handles command-line argument parsing.
 
-**Responsibilities:**
+#### CLI Application (`cli/application.py`)
 
-- Parse command-line arguments and options
-- Coordinate between different components
-- Handle global error handling and logging
-- Orchestrate CLI command execution
+- **Purpose**: Main Typer application setup and global state management
+- **Responsibilities**:
+  - Initialize Typer application with global options
+  - Register all command handlers
+  - Manage global state (debug mode, logging)
+  - Handle application-level configuration
 
-**Key Features:**
+#### Command Handlers (`cli/handlers/`)
 
-- Rich console output with colors and progress bars
-- Async command execution
-- Structured error handling with clean user messages
-- **Modular architecture** with extracted functionality:
-  - `ui/display.py` - Console output formatting and display functions
-  - `pattern_generator.py` - GitHub URL parsing and intelligent pattern generation
-  - `config/operations.py` - Configuration management and persistence operations
-  - `distribution_selector.py` - Intelligent asset selection for multi-platform releases
-  - `core/system_info.py` - System detection for compatibility filtering
-  - `github/auth.py` - GitHub authentication management
+- **Purpose**: Bridge between CLI interface and business logic
+- **Pattern**: Each command has its own handler class
+- **Responsibilities**:
+  - Register command with Typer application
+  - Parse and validate CLI arguments
+  - Create command parameters objects
+  - Execute commands via Command Layer
+  - Handle output formatting and error display
 
-#### Supporting Modules
+**Available Handlers**:
 
-**Display Module (`ui/display.py`)**
+- `AddCommandHandler` - Add new applications
+- `CheckCommandHandler` - Check for updates
+- `EditCommandHandler` - Edit application configurations
+- `ListCommandHandler` - List configured applications
+- `ShowCommandHandler` - Show application details
+- `RemoveCommandHandler` - Remove applications
+- `ConfigCommandHandler` - Manage global configuration
+- `RepositoryCommandHandler` - Repository information
 
-- Console output formatting and styling
-- Table generation and data presentation
-- Progress indicators and status messages
-- Rich console integration for enhanced UX
-- Application listing and details display
-- Check and download results formatting
+### 2. Command Layer
 
-**Pattern Generation (`pattern_generator.py`)**
+The command layer implements the core business logic for each operation.
 
-- GitHub repository URL parsing and validation
-- Intelligent AppImage pattern generation from actual releases
-- Async GitHub API integration for pattern discovery
-- Fallback pattern generation strategies
-- Source type detection and URL normalization
+#### Command Classes (`commands/`)
 
-**Configuration Operations (`config/operations.py`)**
+- **Purpose**: Encapsulate business logic for each command
+- **Pattern**: Command pattern with async execution
+- **Base Interface**: All commands implement `Command` abstract base class
 
-- Application configuration loading and saving
-- Configuration file and directory management
-- Application addition, removal, and editing operations
-- Configuration validation and error handling
-- Default configuration generation
-- Directory creation and validation
+**Command Structure**:
 
-**Distribution Selector (`distribution_selector.py`)**
+```python
+class Command(ABC):
+    @abstractmethod
+    async def execute(self) -> CommandResult
+```
 
-- Distribution-aware asset selection for multi-platform releases
-- Automatic compatibility detection based on system information
-- Interactive selection when automatic detection isn't possible
-- Support for Ubuntu, Fedora, Arch, openSUSE, and other distributions
-- Version compatibility scoring and selection
+#### Command Factory (`commands/factory.py`)
 
-**System Information (`core/system_info.py`)**
+- **Purpose**: Create command instances with proper dependencies
+- **Responsibilities**:
+  - Instantiate command classes with parameters
+  - Inject required services and dependencies
+  - Provide consistent command creation interface
 
-- Comprehensive system detection (architecture, platform, distribution)
-- Architecture compatibility checking (x86_64, arm64, i686, etc.)
-- Platform detection (Linux, macOS, Windows)
-- Supported format detection (.AppImage, .deb, .rpm, etc.)
-- Distribution family identification for compatibility
+#### Command Parameters (`commands/parameters.py`)
 
-**GitHub Authentication (`github/auth.py`)**
+- **Purpose**: Type-safe parameter objects for each command
+- **Benefits**:
+  - Strong typing for command inputs
+  - Validation and default value handling
+  - Clear interface contracts
 
-- GitHub token discovery from multiple sources
-- Environment variable and config file token support
-- GitHub CLI integration for token discovery
-- Security-first priority ordering for token sources
-- Authentication validation and error handling
+### 3. Core Services Layer
 
-### Configuration System
+Provides reusable business logic and utilities.
 
-#### Configuration Models (`config/models.py`)
+#### Application Service (`services/application_service.py`)
+
+- **Purpose**: High-level application management operations
+- **Responsibilities**:
+  - Filter applications by names/patterns
+  - Validate application configurations
+  - Provide consistent error handling
+
+#### Version Checker (`core/version_checker.py`)
+
+- **Purpose**: Version detection and comparison
+- **Features**:
+  - Parse version strings from filenames
+  - Compare semantic versions
+  - Handle various version formats
+
+#### Downloader (`core/downloader.py`)
+
+- **Purpose**: File download and management
+- **Features**:
+  - Concurrent downloads
+  - Progress tracking
+  - Checksum verification
+  - File rotation
+
+### 4. Repository Layer
+
+Handles different types of software repositories.
+
+#### Repository Implementations
+
+- **GitHub Repository**: GitHub releases and assets
+- **Direct Download Repository**: Direct file URLs
+- **Dynamic Download Repository**: Dynamic URL resolution
+
+#### Repository Factory (`repositories/factory.py`)
+
+- **Purpose**: Create appropriate repository clients
+- **Auto-detection**: Automatically detect repository type from URL
+
+### 5. Configuration Layer
+
+Manages application and global configuration.
+
+#### Config Manager (`config/manager.py`)
+
+- **Purpose**: Application configuration management
+- **Features**:
+  - JSON-based configuration files
+  - Directory-based or single-file storage
+  - Configuration validation
+
+#### Global Config Manager (`config/manager.py`)
+
+- **Purpose**: Global settings management
+- **Settings**: Default values, concurrent downloads, etc.
+
+### 6. Output System
+
+Provides flexible output formatting for different use cases.
+
+#### Output Formatters (`ui/output/`)
+
+- **Rich Formatter**: Colorful, interactive terminal output
+- **Plain Formatter**: Simple text output for scripts
+- **JSON Formatter**: Machine-readable JSON output
+- **HTML Formatter**: Web-friendly HTML output
+
+#### Output Context (`ui/output/context.py`)
+
+- **Purpose**: Manage formatter selection and context
+- **Features**:
+  - Automatic formatter detection
+  - Context-aware output switching
+
+## Design Patterns
+
+### Command Pattern
+
+The application uses the Command pattern to encapsulate each CLI operation:
+
+```python
+# Each command implements the same interface
+class AddCommand(Command):
+    async def execute(self) -> CommandResult:
+        # Command-specific logic
+        pass
+
+# Commands are created by the factory
+command = CommandFactory.create_add_command(params)
+result = await command.execute()
+```
+
+**Benefits**:
+
+- Consistent interface for all operations
+- Easy to test individual commands
+- Clear separation of concerns
+- Support for async operations
+
+### Handler Pattern
+
+CLI handlers bridge the gap between Typer and business logic:
+
+```python
+class AddCommandHandler(CommandHandler):
+    def register_command(self, app: typer.Typer) -> None:
+        # Register with Typer
+        app.command("add")(self._add_command)
+    
+    async def _add_command(self, name: str, url: str, ...) -> None:
+        # Create parameters and execute command
+        params = AddParams(name=name, url=url, ...)
+        command = CommandFactory.create_add_command(params)
+        result = await command.execute()
+```
+
+### Factory Pattern
+
+The CommandFactory creates commands with proper dependency injection:
+
+```python
+class CommandFactory:
+    @staticmethod
+    def create_add_command(params: AddParams) -> AddCommand:
+        return AddCommand(
+            params=params,
+            console=Console(),
+            # Other dependencies...
+        )
+```
+
+### Repository Pattern
+
+Different repository types implement a common interface:
+
+```python
+class RepositoryClient(ABC):
+    @abstractmethod
+    async def get_latest_release(self) -> Release:
+        pass
+
+# Implementations for different repository types
+class GitHubRepository(RepositoryClient): ...
+class DirectDownloadRepository(RepositoryClient): ...
+```
+
+## Data Flow
+
+### Typical Command Execution Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI as CLI Handler
+    participant Factory as Command Factory
+    participant Command
+    participant Service as Core Service
+    participant Repo as Repository
+    participant Config as Configuration
+    
+    User->>CLI: Execute command
+    CLI->>CLI: Parse arguments
+    CLI->>Factory: Create command
+    Factory->>Command: Instantiate with params
+    CLI->>Command: execute()
+    Command->>Service: Business logic
+    Service->>Repo: Repository operations
+    Service->>Config: Configuration access
+    Service-->>Command: Results
+    Command-->>CLI: CommandResult
+    CLI->>User: Formatted output
+```
+
+### Configuration Management Flow
+
+```mermaid
+sequenceDiagram
+    participant Command
+    participant ConfigManager as Config Manager
+    participant File as JSON Files
+    participant GlobalConfig as Global Config
+    
+    Command->>ConfigManager: Load configuration
+    ConfigManager->>File: Read JSON files
+    ConfigManager->>GlobalConfig: Load global settings
+    ConfigManager-->>Command: Configuration object
+    
+    Command->>ConfigManager: Save changes
+    ConfigManager->>File: Write JSON files
+    ConfigManager-->>Command: Success/Error
+```
+
+## Key Architectural Benefits
+
+### Separation of Concerns
+
+- **CLI Layer**: Handles user interface and argument parsing
+- **Command Layer**: Implements business logic
+- **Service Layer**: Provides reusable functionality
+- **Repository Layer**: Abstracts data sources
+- **Configuration Layer**: Manages settings and state
+
+### Testability
+
+- Each layer can be tested independently
+- Commands can be unit tested without CLI
+- Repository implementations can be mocked
+- Clear interfaces enable easy mocking
+
+### Extensibility
+
+- New commands: Add handler + command + parameters
+- New repositories: Implement RepositoryClient interface
+- New output formats: Implement OutputFormatter interface
+- New configuration sources: Extend configuration layer
+
+### Maintainability
+
+- **Single Responsibility**: Each class has one clear purpose
+- **Dependency Injection**: Easy to swap implementations
+- **Type Safety**: Strong typing throughout the codebase
+- **Error Handling**: Consistent error patterns across layers
+
+### Performance
+
+- **Async Operations**: Non-blocking I/O operations
+- **Concurrent Downloads**: Parallel file downloads
+- **Lazy Loading**: Configuration loaded on demand
+- **Efficient Caching**: Repository data caching
 
 Pydantic-based models providing type-safe configuration validation.
 
