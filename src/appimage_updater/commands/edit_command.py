@@ -11,6 +11,7 @@ import typer
 
 from ..config.manager import (
     AppConfigs,
+    GlobalConfigManager,
     Manager,
 )
 from ..config.models import (
@@ -259,9 +260,11 @@ class EditCommand(Command):
             config_dir = Path(self.params.config_dir)
             manager.save_directory_config(config, config_dir)
         else:
-            # TODO: Handle default configuration save mechanism
-            # Currently both config_file and config_dir are None, so configuration changes aren't being saved
-            pass
+            # Handle default configuration save mechanism
+            # When neither config_file nor config_dir is specified, use the default location
+            # This matches the behavior of AppConfigs when loading from default paths
+            config_dir = self.params.config_dir or GlobalConfigManager.get_default_config_dir()
+            manager.save_directory_config(config, config_dir)
 
     def _show_validation_hints(self, error_message: str) -> None:
         """Show helpful hints based on validation error."""

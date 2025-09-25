@@ -711,3 +711,94 @@ def test_edit_direct_flag_no_change_when_already_direct(runner, single_config_fi
 
     app_config = config_data["applications"][0]
     assert app_config["source_type"] == "direct"
+
+
+def test_edit_prerelease_change_persists_to_file(runner, single_config_file):
+    """Test that prerelease changes are actually persisted to the configuration file.
+
+    This test captures a bug where the edit command claims to change prerelease
+    settings but doesn't actually save the changes to the file.
+    """
+    # Verify initial state - prerelease should be False
+    with single_config_file.open() as f:
+        initial_config = json.load(f)
+    initial_app = initial_config["applications"][0]
+    assert initial_app["prerelease"] is False, "Test setup error: prerelease should start as False"
+
+    # Run edit command to enable prerelease
+    result = runner.invoke(
+        app,
+        ["edit", "TestApp", "--prerelease", "--config", str(single_config_file)]
+    )
+
+    # Command should succeed and claim to make the change
+    assert result.exit_code == 0
+    assert "Prerelease: No → Yes" in result.stdout
+
+    # CRITICAL: Verify the change was actually persisted to the file
+    with single_config_file.open() as f:
+        updated_config = json.load(f)
+    updated_app = updated_config["applications"][0]
+    assert updated_app["prerelease"] is True, "BUG: Prerelease change was not persisted to config file"
+
+    # Now test the reverse - disable prerelease
+    result = runner.invoke(
+        app,
+        ["edit", "TestApp", "--no-prerelease", "--config", str(single_config_file)]
+    )
+
+    # Command should succeed and claim to make the change
+    assert result.exit_code == 0
+    assert "Prerelease: Yes → No" in result.stdout
+
+    # CRITICAL: Verify the reverse change was also persisted
+    with single_config_file.open() as f:
+        final_config = json.load(f)
+    final_app = final_config["applications"][0]
+    assert final_app["prerelease"] is False, "BUG: Prerelease disable was not persisted to config file"
+
+
+def test_edit_prerelease_change_persists_directory_config(runner, config_directory):
+    """Test that prerelease changes persist in directory-based configuration.
+
+    This test specifically targets the BambuStudio scenario where the bug was observed.
+    Directory-based configs might have different persistence behavior than single files.
+    """
+    # Verify initial state - DirectoryApp starts with prerelease=True
+    config_file = config_directory / "directoryapp.json"
+    with config_file.open() as f:
+        initial_config = json.load(f)
+    initial_app = initial_config["applications"][0]
+    assert initial_app["prerelease"] is True, "Test setup error: DirectoryApp should start with prerelease=True"
+
+    # Run edit command to disable prerelease (like the BambuStudio scenario)
+    result = runner.invoke(
+        app,
+        ["edit", "DirectoryApp", "--no-prerelease", "--config-dir", str(config_directory)]
+    )
+
+    # Command should succeed and claim to make the change
+    assert result.exit_code == 0
+    assert "Prerelease: Yes → No" in result.stdout
+
+    # CRITICAL: Verify the change was actually persisted to the directory config file
+    with config_file.open() as f:
+        updated_config = json.load(f)
+    updated_app = updated_config["applications"][0]
+    assert updated_app["prerelease"] is False, "BUG: Prerelease disable was not persisted to directory config file"
+
+    # Test the reverse - enable prerelease again
+    result = runner.invoke(
+        app,
+        ["edit", "DirectoryApp", "--prerelease", "--config-dir", str(config_directory)]
+    )
+
+    # Command should succeed and claim to make the change
+    assert result.exit_code == 0
+    assert "Prerelease: No → Yes" in result.stdout
+
+    # CRITICAL: Verify the reverse change was also persisted
+    with config_file.open() as f:
+        final_config = json.load(f)
+    final_app = final_config["applications"][0]
+    assert final_app["prerelease"] is True, "BUG: Prerelease enable was not persisted to directory config file"
