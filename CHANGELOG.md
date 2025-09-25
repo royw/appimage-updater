@@ -288,7 +288,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
 - **Priority Security**: Environment variables take precedence over files
 - **File Permissions**: Supports secure file permissions (600) for token files
 
-#### 🧪 **Testing & Quality Assurance**
+#### TEST **Testing & Quality Assurance**
 
 - **COMPREHENSIVE**: 25 new tests covering all authentication scenarios
 - **REAL-WORLD**: Tested with actual GitHub repositories and API responses
@@ -304,9 +304,9 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
 - **FUTURE-PROOFS**: Supports any scale of AppImage management without API limits
 - **MAINTAINS**: Full backward compatibility - works with or without authentication
 
-### 🚀 New Features
+### DEPLOY New Features
 
-- **🔍 MAJOR**: Automatic Prerelease Detection in `add` Command
+- **SEARCH MAJOR**: Automatic Prerelease Detection in `add` Command
   - **PROBLEM SOLVED**: Repositories with only prerelease versions (like continuous builds) now work seamlessly
   - **INTELLIGENT**: Automatically analyzes GitHub repository releases to detect prerelease-only repositories
   - **ZERO-CONFIG**: For repos like appimaged, automatically enables `prerelease: true` without user intervention
@@ -316,7 +316,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
     - **Mixed repositories** (both types) → defaults to stable releases only
   - **USER CONTROL**: Explicit `--prerelease` or `--no-prerelease` flags always override auto-detection
   - **GRACEFUL FALLBACK**: API failures (rate limits, network errors) default to `prerelease: false`
-  - **VISUAL FEEDBACK**: Shows `🔍 Auto-detected continuous builds - enabled prerelease support` when triggered
+  - **VISUAL FEEDBACK**: Shows `SEARCH Auto-detected continuous builds - enabled prerelease support` when triggered
   - **EXAMPLES**:
     - `appimage-updater add appimaged https://github.com/probonopd/go-appimage ~/Apps/appimaged` → auto-enables prerelease
     - `appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD` → keeps prerelease disabled
@@ -332,17 +332,17 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **IMPROVED**: Better error handling and rate limit management in GitHub API interactions
   - **RESULT**: Clean async implementation with no runtime warnings
 
-### 🧪 Quality Assurance
+### TEST Quality Assurance
 
 - **COMPREHENSIVE TESTING**: 16 new tests for automatic prerelease detection
 
   - **UNIT TESTS**: `_should_enable_prerelease()` function with all scenarios:
-    - Repositories with only prereleases (✅ enables prerelease)
-    - Repositories with stable releases (❌ keeps disabled)
-    - Mixed repositories (❌ defaults to stable)
-    - Empty repositories (❌ safe default)
-    - Draft-only releases (❌ ignores drafts)
-    - API failures (❌ graceful fallback)
+    - Repositories with only prereleases (PASS enables prerelease)
+    - Repositories with stable releases (FAIL keeps disabled)
+    - Mixed repositories (FAIL defaults to stable)
+    - Empty repositories (FAIL safe default)
+    - Draft-only releases (FAIL ignores drafts)
+    - API failures (FAIL graceful fallback)
   - **INTEGRATION TESTS**: Full `add` command workflows:
     - Auto-detection with continuous build repos
     - No auto-detection with stable repos
@@ -366,11 +366,11 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **REAL-WORLD ACCURACY**: Patterns based on actual release data, not assumptions
   - **FALLBACK SAFE**: Falls back to old heuristic method if GitHub API is unavailable
   - **EXAMPLE**: For OpenShot (repo: `openshot-qt`, files: `OpenShot-v3.3.0-x86_64.AppImage`):
-    - **OLD**: `openshot\-qt.*[Ll]inux.*\.AppImage` (❌ doesn't match)
-    - **NEW**: `(?i)OpenShot\-v3\..*\.AppImage` (✅ matches perfectly)
+    - **OLD**: `openshot\-qt.*[Ll]inux.*\.AppImage` (FAIL doesn't match)
+    - **NEW**: `(?i)OpenShot\-v3\..*\.AppImage` (PASS matches perfectly)
   - **IMPACT**: Dramatically improves accuracy for applications where repo names differ from file prefixes
 
-### 🏗️ Build System
+### BUILD Build System
 
 - **NEW**: `build` task for creating distribution packages
   - **ADDED**: `task build` command to create wheel and sdist packages using `uv build`
@@ -380,7 +380,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **OUTPUT**: Creates both wheel (`.whl`) and source distribution (`.tar.gz`) in `dist/` directory
   - **USAGE**: `task build` - Build distribution packages ready for PyPI or local installation
 
-### 🚀 CI/CD & GitHub Actions - COMPLETE SUCCESS
+### DEPLOY CI/CD & GitHub Actions - COMPLETE SUCCESS
 
 - **NEW**: Full GitHub Actions CI/CD pipeline with automated deployment
 
@@ -430,7 +430,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **RESULT**: All functions now meet project complexity standards (≤10 cyclomatic complexity)
   - **VERIFIED**: All 95 tests continue to pass after refactoring
 
-### 📚 Documentation
+### DOCS Documentation
 
 - **ENHANCED**: Documentation navigation with multiple ways to return home
 
@@ -480,7 +480,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
     - Properly expands: `~/bin/test.AppImage` → `/home/user/bin/test.AppImage`
   - **IMPACT**: Prevents configuration errors and ensures valid symlink paths for file rotation
 
-### 🧪 Testing & Quality Assurance
+### TEST Testing & Quality Assurance
 
 - **NEW**: `test:regression` task in Taskfile.yml for automated regression validation
 
@@ -682,7 +682,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **PREPARES**: Foundation for future download rotation improvements using explicit symlink paths
   - **EXAMPLE**: `"symlink_path": "~/Applications/FreeCAD.AppImage"` in configuration
 
-### 🧪 Show Command Testing
+### TEST Show Command Testing
 
 - **ENHANCED**: Comprehensive test coverage for `show` command and symlink_path
 
@@ -764,7 +764,7 @@ ______________________________________________________________________
 
 ## [Previous] - 2025-01-04
 
-### 🏗️ Code Quality
+### BUILD Code Quality
 
 - **IMPROVED**: Significantly reduced code complexity across the codebase
 
@@ -814,7 +814,7 @@ ______________________________________________________________________
   - Visual indicators for verification status in download results
   - Optional or required verification modes per application
 
-### 🚀 Improvements
+### DEPLOY Improvements
 
 - **FIXED**: HTTP redirect handling for GitHub release downloads
 
@@ -828,7 +828,7 @@ ______________________________________________________________________
   - Better error handling for network interruptions
   - Progress tracking with transfer speed and ETA
 
-### 📝 Configuration
+### COMMIT Configuration
 
 - **NEW**: `list` command for viewing configured applications
 
@@ -860,7 +860,7 @@ ______________________________________________________________________
 - Better error messages and user feedback
 - Updated documentation with security recommendations
 
-### 📋 Technical Details
+### LIST Technical Details
 
 - Checksum files automatically downloaded and verified
 - Support for multiple checksum file formats:
@@ -872,12 +872,12 @@ ______________________________________________________________________
   - `{filename}_SHA256.txt` (underscore variant)
   - `{filename}.sha256` (extension-based)
 
-### 🧪 Tested With
+### TEST Tested With
 
-- ✅ FreeCAD weekly builds (SHA256 verification)
-- ✅ Large file downloads (>800MB) with retry logic
-- ✅ GitHub release redirect handling
-- ✅ Checksum pattern detection and parsing
+- PASS FreeCAD weekly builds (SHA256 verification)
+- PASS Large file downloads (>800MB) with retry logic
+- PASS GitHub release redirect handling
+- PASS Checksum pattern detection and parsing
 
 ______________________________________________________________________
 

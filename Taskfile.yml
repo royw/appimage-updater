@@ -249,6 +249,7 @@ tasks:
   check:
     desc: Run all code quality checks including end-to-end tests
     cmds:
+      - task: docs:fix:emoji
       - task: format
       - task: lint
       - task: complexity
@@ -279,6 +280,74 @@ tasks:
     deps:
       - docs:build
       - docs:serve
+
+  docs:fix:emoji:
+    desc: Remove emojis from markdown files (*.md and docs/*.md)
+    cmds:
+      - cmd: |
+          echo "Removing emojis from markdown files..."
+          
+          # Define emoji regex pattern (matches most common emoji ranges)
+          EMOJI_PATTERN='[\x{1F600}-\x{1F64F}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{1F1E0}-\x{1F1FF}]|[\x{2600}-\x{26FF}]|[\x{2700}-\x{27BF}]|[\x{1F900}-\x{1F9FF}]|[\x{1F018}-\x{1F270}]|[\x{238C}-\x{2454}]|[\x{20D0}-\x{20FF}]'
+          
+          # Common emoji replacements
+          declare -A REPLACEMENTS=(
+            ["✅"]="PASS"
+            ["❌"]="FAIL" 
+            ["⚠️"]="WARNING"
+            ["🔍"]="SEARCH"
+            ["📦"]="PACKAGE"
+            ["🐧"]="LINUX"
+            ["🚀"]="DEPLOY"
+            ["🎯"]="TARGET"
+            ["🏆"]="SUCCESS"
+            ["🎉"]="COMPLETE"
+            ["📊"]="REPORT"
+            ["🧪"]="TEST"
+            ["🔴"]="HIGH"
+            ["🟡"]="MEDIUM"
+            ["🟢"]="LOW"
+            ["📚"]="DOCS"
+            ["🌍"]="SERVER"
+            ["🏗️"]="BUILD"
+            ["📈"]="BUMP"
+            ["📝"]="COMMIT"
+            ["🐍"]="PYTHON"
+            ["📋"]="LIST"
+            [" ✓ "]="DONE"
+          )
+          
+          # Process all markdown files
+          find . -name "*.md" -o -path "./docs/*.md" | while read -r file; do
+            if [ -f "$file" ]; then
+              # echo "Processing: $file"
+              
+              # Create backup
+              cp "$file" "$file.bak"
+              
+              # Apply specific replacements first
+              for emoji in "${!REPLACEMENTS[@]}"; do
+                replacement="${REPLACEMENTS[$emoji]}"
+                sed -i "s/$emoji/$replacement/g" "$file"
+              done
+              
+              # Remove any remaining emojis using perl regex
+              perl -i -pe "s/$EMOJI_PATTERN//g" "$file"
+              
+              # Check if file was modified
+              if ! cmp -s "$file" "$file.bak"; then
+                echo "  - Emojis removed from $file"
+              # else
+                # echo "  - No emojis found in $file"
+              fi
+              
+              # Remove backup
+              rm "$file.bak"
+            fi
+          done
+          
+          echo "Emoji removal complete!"
+        silent: true
 
   # === Build and Release ===
   build:

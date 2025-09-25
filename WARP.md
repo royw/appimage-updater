@@ -2,7 +2,7 @@
 
 This file provides guidance to WARP (warp.dev) when working with code in this repository.
 
-## 📚 Live Documentation
+## DOCS Live Documentation
 
 **Complete documentation is available at: [https://royw.github.io/appimage-updater/](https://royw.github.io/appimage-updater/)**
 
@@ -12,7 +12,7 @@ The documentation includes enhanced navigation with 🏠 home icons, clickable h
 
 AppImage Updater is a service for automating the finding and downloading of AppImage applications from their respective websites. It monitors configured applications (like FreeCAD) for new releases and provides an automated way to download updated AppImage files from GitHub releases and other sources.
 
-### 📦 Enhanced Multi-Format Download Support
+### PACKAGE Enhanced Multi-Format Download Support
 
 The application now provides **comprehensive support** for downloading and automatically extracting AppImage files from multiple formats:
 
@@ -72,7 +72,7 @@ Check the project's releases page for alternative download options.
 - **Zero Configuration**: No manual pattern editing required
 - **Format Flexibility**: Handles projects that provide multiple formats
 
-### 🎯 Intelligent Architecture & Platform Filtering
+### TARGET Intelligent Architecture & Platform Filtering
 
 AppImage Updater now provides **comprehensive compatibility filtering** that automatically eliminates incompatible downloads based on your system's architecture, platform, and supported formats:
 
@@ -89,14 +89,14 @@ appimage-updater add BelenaEtcher https://github.com/balena-io/etcher ~/Apps/Bel
 # No user interaction needed - perfect compatibility match!
 ```
 
-**🔍 System Detection Features:**
+**SEARCH System Detection Features:**
 
 - **Architecture Detection**: x86_64, amd64, arm64, armv7l, i686 with intelligent aliasing
 - **Platform Detection**: Linux, macOS (darwin), Windows (win32)
 - **Format Compatibility**: .AppImage, .deb, .rpm, .dmg, .exe, .msi based on platform/distribution
 - **Distribution Family Mapping**: Debian, Red Hat, SUSE, Arch families for package format support
 
-**🎯 Smart Filtering Capabilities:**
+**TARGET Smart Filtering Capabilities:**
 
 - **Architecture Filtering**: Eliminates incompatible CPU architectures (ARM vs x86)
 - **Platform Filtering**: Removes cross-platform packages (macOS .dmg on Linux)
@@ -104,7 +104,7 @@ appimage-updater add BelenaEtcher https://github.com/balena-io/etcher ~/Apps/Bel
 - **Compatibility Scoring**: 300+ point system prioritizing perfect matches
 - **Automatic Selection**: Chooses best match without user intervention when score ≥ 150
 
-**📊 Enhanced Interactive Selection:**
+**REPORT Enhanced Interactive Selection:**
 When multiple compatible options exist, users see a rich compatibility table:
 
 ```text
@@ -126,7 +126,7 @@ Color coding: Green=Compatible, Red=Incompatible, Yellow=Partial match
 - No more ARM binaries on x86_64 systems
 - No more unsupported package formats
 
-### 🐧 Distribution-Aware Asset Selection
+### LINUX Distribution-Aware Asset Selection
 
 Building on the architecture/platform filtering, the system also provides intelligent distribution-specific selection:
 
@@ -347,7 +347,7 @@ When options are not specified, the `add` command automatically generates:
 - **Automatic prerelease detection**: Auto-enables prerelease support for continuous build repositories
 - **Standard configuration**: GitHub source type, enabled by default
 
-### 🔍 Automatic Prerelease Detection
+### SEARCH Automatic Prerelease Detection
 
 **NEW FEATURE**: The `add` command now intelligently detects when repositories only contain prerelease versions (like continuous builds) and automatically enables prerelease support:
 
@@ -356,8 +356,8 @@ When options are not specified, the `add` command automatically generates:
 appimage-updater add appimaged https://github.com/probonopd/go-appimage ~/Applications/appimaged
 
 # Output shows auto-detection:
-# ✓ Successfully added application 'appimaged'
-# 🔍 Auto-detected continuous builds - enabled prerelease support
+#DONESuccessfully added application 'appimaged'
+# SEARCH Auto-detected continuous builds - enabled prerelease support
 ```
 
 **How it works:**
@@ -816,9 +816,9 @@ Comprehensive security through checksum verification:
 
 - **🚫 Eliminates Download Errors**: No more "cannot execute binary file" errors
 - **⚡ Faster Selection**: Reduced noise = quicker decisions
-- **🎯 Better UX**: Clear visual compatibility indicators
+- **TARGET Better UX**: Clear visual compatibility indicators
 - **🔒 Future-Proof**: Handles new architectures automatically
-- **📊 Intelligent Scoring**: Prioritizes best compatibility matches
+- **REPORT Intelligent Scoring**: Prioritizes best compatibility matches
 
 ### GitHub Integration
 

@@ -461,7 +461,7 @@ class RepositoryClient(ABC):
         """Normalize repository URL and detect corrections."""
 ```
 
-#### Repository Factory (`repositories/factory.py`)
+#### Factory Pattern Implementation (`repositories/factory.py`)
 
 Factory pattern implementation for automatic client creation:
 
@@ -632,7 +632,7 @@ Flexible JSON configuration supporting multiple deployment patterns.
 }
 ```
 
-## Data Flow
+## Application Data Flow
 
 ### Application Addition Flow
 
@@ -872,11 +872,11 @@ tests/
 - Network request mocking
 - Time-based operation mocking
 
-## Repository Factory Pattern
+## Repository Factory Pattern Implementation
 
 The repository abstraction layer uses the factory pattern to automatically select and instantiate the appropriate repository client based on URL analysis.
 
-### Factory Implementation
+### Factory Implementation Details
 
 ```python
 def get_repository_client(url: str, **kwargs) -> RepositoryClient:
@@ -946,7 +946,7 @@ The factory uses a priority-based selection system:
 
 This ordering ensures more specific handlers are tried before generic ones.
 
-## Extensibility
+## System Extensibility
 
 ### Adding New Repository Types
 
