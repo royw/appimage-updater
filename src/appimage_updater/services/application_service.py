@@ -153,11 +153,6 @@ class ApplicationService:
         if not available_apps:
             console.print("   • Run 'appimage-updater add' to configure your first application")
 
-    @staticmethod
-    def _print_troubleshooting_tips_plain(available_apps: list[str]) -> None:
-        """Print troubleshooting tips for not found apps using plain print."""
-        available_text = ", ".join(available_apps) if available_apps else "None configured"
-        print(f"   • Available applications: {available_text}", file=sys.stdout)  # noqa: T201
 
     @staticmethod
     def _print_troubleshooting_tips_plain_stderr(available_apps: list[str]) -> None:

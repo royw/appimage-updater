@@ -19,11 +19,7 @@ from ..pattern_generator import (
 )
 from ..repositories.factory import get_repository_client
 from ..ui.display import _replace_home_with_tilde
-from .manager import (
-    GlobalConfigManager,
-    Manager,
-)
-from .models import ApplicationConfig
+from .manager import GlobalConfigManager
 
 
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
@@ -946,8 +942,8 @@ def _build_checksum_dict(app: Any) -> dict[str, Any]:
 def _add_optional_fields(app_dict: dict[str, Any], app: Any) -> None:
     """Add optional fields to the application dictionary."""
     _add_basename_field(app_dict, app)
-    _add_rotation_fields(app_dict, app)
     _add_symlink_field(app_dict, app)
+    _add_rotation_fields(app_dict, app)
 
 
 def _add_basename_field(app_dict: dict[str, Any], app: Any) -> None:
@@ -990,34 +986,3 @@ def determine_save_target(config_file: Path | None, config_dir: Path | None) -> 
             return None, default_dir  # Default to directory-based
 
 
-def save_updated_configuration(app: Any, config: Any, config_file: Path | None, config_dir: Path | None) -> None:
-    """Save the updated configuration back to file or directory."""
-    app_dict = convert_app_to_dict(app)
-    target_file, target_dir = determine_save_target(config_file, config_dir)
-
-    if target_file:
-        update_app_in_config_file(app_dict, target_file)
-    elif target_dir:
-        update_app_in_config_directory(app_dict, target_dir)
-    else:
-        raise ValueError("Could not determine where to save configuration")
-
-
-def update_app_in_config_file(app_dict: dict[str, Any], config_file: Path) -> None:
-    """Update application in a single JSON config file."""
-    # Convert dict to ApplicationConfig object
-    app_config = ApplicationConfig(**app_dict)
-
-    # Use manager method for config file operations
-    manager = Manager()
-    manager.update_application_in_config_file(app_config, config_file)
-
-
-def update_app_in_config_directory(app_dict: dict[str, Any], config_dir: Path) -> None:
-    """Update application in a directory-based config structure."""
-    # Convert dict to ApplicationConfig object
-    app_config = ApplicationConfig(**app_dict)
-
-    # Use manager method for config file operations
-    manager = Manager()
-    manager.update_application_in_config_directory(app_config, config_dir)

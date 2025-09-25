@@ -253,10 +253,6 @@ class CLIOptions:
     # EDIT COMMAND OPTIONS
     # ============================================================================
 
-    EDIT_APP_NAME_ARGUMENT = typer.Argument(
-        help="Names of applications to edit (case-insensitive, supports glob patterns like 'Orca*'). "
-        "Multiple names can be specified.",
-    )
 
     EDIT_APP_NAME_ARGUMENT_OPTIONAL = typer.Argument(
         default=None,
@@ -301,10 +297,6 @@ class CLIOptions:
     # SHOW COMMAND OPTIONS
     # ============================================================================
 
-    SHOW_APP_NAME_ARGUMENT = typer.Argument(
-        help="Names of applications to display information for (case-insensitive, "
-        "supports glob patterns like 'Orca*'). Multiple names can be specified."
-    )
 
     SHOW_APP_NAME_ARGUMENT_OPTIONAL = typer.Argument(
         default=None,
@@ -316,10 +308,6 @@ class CLIOptions:
     # REMOVE COMMAND OPTIONS
     # ============================================================================
 
-    REMOVE_APP_NAME_ARGUMENT = typer.Argument(
-        help="Names of applications to remove from configuration (case-insensitive, "
-        "supports glob patterns like 'Orca*'). Multiple names can be specified."
-    )
 
     REMOVE_APP_NAME_ARGUMENT_OPTIONAL = typer.Argument(
         default=None,
