@@ -214,123 +214,9 @@ def _display_feature_summary_info(settings: dict[str, Any]) -> None:
     console.print(f"   Checksum: {'Yes' if settings['checksum'] else 'No'}")
     console.print(f"   Prerelease: {'Yes' if settings['prerelease'] else 'No'}")
     console.print(f"   Auto-subdir: {'Yes' if settings['auto_subdir'] else 'No'}")
+    console.print(f"   Direct: {'Yes' if settings['direct'] else 'No'}")
 
 
-def interactive_edit_command(app_names: list[str]) -> InteractiveResult:
-    """Interactive mode for the edit command."""
-    console.print(
-        Panel.fit(
-            f"[bold cyan]Interactive Edit Mode[/bold cyan]\nLet's edit configuration for: {', '.join(app_names)}",
-            border_style="cyan",
-        )
-    )
-
-    try:
-        # Collect all updates from different sections
-        updates = {}
-        updates.update(_collect_basic_edit_settings())
-        updates.update(_collect_rotation_settings())
-        updates.update(_collect_checksum_settings())
-        updates.update(_collect_advanced_settings())
-
-        if not updates:
-            console.print("[yellow]No changes specified[/yellow]")
-            return InteractiveResult.cancelled_result("no_changes")
-
-        # Summary
-        console.print("\n[bold green]Changes Summary[/bold green]")
-        for key, value in updates.items():
-            console.print(f"   {key}: {value}")
-
-        if not Confirm.ask("\nApply these changes?", default=True):
-            console.print("[yellow]Operation cancelled[/yellow]")
-            return InteractiveResult.cancelled_result("user_cancelled")
-
-        return InteractiveResult.success_result(updates)
-
-    except KeyboardInterrupt:
-        console.print("\n[yellow]Operation cancelled[/yellow]")
-        return InteractiveResult.cancelled_result("keyboard_interrupt")
-
-
-def _collect_basic_edit_settings() -> dict[str, Any]:
-    """Collect basic settings updates."""
-    updates = {}
-    console.print("\n[bold]Basic Settings[/bold]")
-
-    if Confirm.ask("   Update repository URL?", default=False):
-        updates["url"] = Prompt.ask("   New URL")
-
-    if Confirm.ask("   Update download directory?", default=False):
-        updates["download_dir"] = Prompt.ask("   New download directory")
-
-    if Confirm.ask("   Update file pattern?", default=False):
-        updates["pattern"] = Prompt.ask("   New file pattern (regex)")
-
-    if Confirm.ask("   Change enabled status?", default=False):
-        updates["enabled"] = Confirm.ask("   Enable application?", default=True)  # type: ignore[assignment,arg-type]
-
-    return updates
-
-
-def _collect_rotation_settings() -> dict[str, Any]:
-    """Collect rotation settings updates."""
-    updates = {}
-    console.print("\n[bold]File Rotation[/bold]")
-
-    if Confirm.ask("   Update rotation settings?", default=False):
-        updates["rotation"] = Confirm.ask("   Enable rotation?", default=False)
-
-        if updates.get("rotation"):
-            updates["retain_count"] = IntPrompt.ask(
-                "   Files to retain",
-                default=3,  # type: ignore[arg-type]
-                choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
-            )  # type: ignore[assignment]
-
-            if Confirm.ask("   Update symlink path?", default=False):
-                updates["symlink_path"] = Prompt.ask("   Symlink path", default="")  # type: ignore[assignment,arg-type]
-
-    return updates
-
-
-def _collect_checksum_settings() -> dict[str, Any]:
-    """Collect checksum settings updates."""
-    updates = {}
-    console.print("\n[bold]Checksum Settings[/bold]")
-
-    if Confirm.ask("   Update checksum settings?", default=False):
-        updates["checksum"] = Confirm.ask("   Enable checksum verification?", default=True)
-
-        if updates.get("checksum"):
-            updates["checksum_algorithm"] = Prompt.ask(
-                "   Algorithm",
-                default="sha256",  # type: ignore[arg-type]
-                choices=["sha256", "sha1", "md5"],
-            )  # type: ignore[assignment]
-
-            updates["checksum_pattern"] = Prompt.ask(
-                "   Checksum file pattern",
-                default="{filename}-SHA256.txt",  # type: ignore[arg-type]
-            )  # type: ignore[assignment]
-
-            updates["checksum_required"] = Confirm.ask("   Make verification required?", default=False)
-
-    return updates
-
-
-def _collect_advanced_settings() -> dict[str, Any]:
-    """Collect advanced settings updates."""
-    updates = {}
-    console.print("\n[bold]Advanced Settings[/bold]")
-
-    if Confirm.ask("   Update prerelease setting?", default=False):
-        updates["prerelease"] = Confirm.ask("   Include prereleases?")
-
-    if Confirm.ask("   Update direct download setting?", default=False):
-        updates["direct"] = Confirm.ask("   Treat as direct download?")
-
-    return updates
 
 
 def _prompt_with_validation(prompt: str, validator: Callable[[str], bool], error_msg: str, **kwargs: Any) -> str:
@@ -398,13 +284,3 @@ def _validate_url(url: str) -> bool:
     return _normalize_and_validate_repository_url(url)
 
 
-def _validate_directory_path(path: str) -> bool:
-    """Validate directory path."""
-    if not path:
-        return True  # Empty is allowed (uses default)
-
-    try:
-        Path(path).expanduser().resolve()
-        return True
-    except Exception:
-        return False

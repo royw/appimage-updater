@@ -212,62 +212,11 @@ class Manager:
         for app_name in app_names:
             app_file = config_dir / f"{app_name.lower()}.json"
             if app_file.exists():
-                app_file.unlink()
+                app_file.unlink(missing_ok=True)
                 logger.debug(f"Deleted app config file: {app_file}")
 
     # Application-Specific Operations
-    def update_application_in_config_file(self, app_config: ApplicationConfig, config_file: Path) -> None:
-        """Update single application in a JSON config file."""
 
-        # Load existing configuration
-        with config_file.open() as f:
-            config_data = json.load(f)
-
-        applications = config_data.get("applications", [])
-        app_name_lower = app_config.name.lower()
-
-        # Find and update the application
-        for i, app in enumerate(applications):
-            if app.get("name", "").lower() == app_name_lower:
-                applications[i] = app_config.model_dump()
-                config_data["applications"] = applications
-                break
-        else:
-            raise ValueError(f"Application '{app_config.name}' not found in configuration file")
-
-        # Write back to file
-        with config_file.open("w") as f:
-            json.dump(config_data, f, indent=2, default=str)
-
-        logger.info(f"Updated application '{app_config.name}' in: {config_file}")
-
-    def update_application_in_config_directory(self, app_config: ApplicationConfig, config_dir: Path) -> None:
-        """Update single application in config directory."""
-
-        app_name_lower = app_config.name.lower()
-
-        # Find the config file containing this app
-        for config_file in config_dir.glob("*.json"):
-            try:
-                with config_file.open() as f:
-                    config_data = json.load(f)
-            except (json.JSONDecodeError, OSError):
-                continue
-
-            applications = config_data.get("applications", [])
-            for i, app in enumerate(applications):
-                if app.get("name", "").lower() == app_name_lower:
-                    applications[i] = app_config.model_dump()
-                    config_data["applications"] = applications
-
-                    # Write back to file
-                    with config_file.open("w") as f:
-                        json.dump(config_data, f, indent=2, default=str)
-
-                    logger.info(f"Updated application '{app_config.name}' in: {config_file}")
-                    return
-
-        raise ValueError(f"Application '{app_config.name}' not found in configuration directory")
 
     # Utility Operations
     def get_target_config_path(self, config_file: Path | None, config_dir: Path | None) -> Path:

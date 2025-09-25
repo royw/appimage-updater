@@ -19,7 +19,6 @@ from ..pattern_generator import (
 )
 from ..repositories.factory import get_repository_client
 from ..ui.display import _replace_home_with_tilde
-from .manager import GlobalConfigManager
 
 
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
@@ -902,87 +901,3 @@ def apply_configuration_updates(app: Any, updates: dict[str, Any]) -> list[str]:
     changes.extend(apply_checksum_updates(app, updates))
 
     return changes
-
-
-def convert_app_to_dict(app: Any) -> dict[str, Any]:
-    """Convert application object to dictionary for JSON serialization."""
-    # Build core application dictionary
-    app_dict = _build_core_app_dict(app)
-
-    # Add optional fields
-    _add_optional_fields(app_dict, app)
-
-    return app_dict
-
-
-def _build_core_app_dict(app: Any) -> dict[str, Any]:
-    """Build the core application dictionary with required fields."""
-    return {
-        "name": app.name,
-        "source_type": app.source_type,
-        "url": app.url,
-        "download_dir": str(app.download_dir),
-        "pattern": app.pattern,
-        "enabled": app.enabled,
-        "prerelease": app.prerelease,
-        "checksum": _build_checksum_dict(app),
-    }
-
-
-def _build_checksum_dict(app: Any) -> dict[str, Any]:
-    """Build the checksum configuration dictionary."""
-    return {
-        "enabled": app.checksum.enabled,
-        "pattern": app.checksum.pattern,
-        "algorithm": app.checksum.algorithm,
-        "required": app.checksum.required,
-    }
-
-
-def _add_optional_fields(app_dict: dict[str, Any], app: Any) -> None:
-    """Add optional fields to the application dictionary."""
-    _add_basename_field(app_dict, app)
-    _add_symlink_field(app_dict, app)
-    _add_rotation_fields(app_dict, app)
-
-
-def _add_basename_field(app_dict: dict[str, Any], app: Any) -> None:
-    """Add basename field if it exists."""
-    basename_value = getattr(app, "basename", None)
-    if basename_value is not None:
-        app_dict["basename"] = basename_value
-
-
-def _add_rotation_fields(app_dict: dict[str, Any], app: Any) -> None:
-    """Add rotation-related fields if they exist."""
-    if hasattr(app, "rotation_enabled"):
-        app_dict["rotation_enabled"] = app.rotation_enabled
-        if app.rotation_enabled:
-            app_dict["retain_count"] = getattr(app, "retain_count", 3)
-
-
-def _add_symlink_field(app_dict: dict[str, Any], app: Any) -> None:
-    """Add symlink path field if it exists."""
-    if hasattr(app, "symlink_path") and app.symlink_path:
-        app_dict["symlink_path"] = str(app.symlink_path)
-
-
-def determine_save_target(config_file: Path | None, config_dir: Path | None) -> tuple[Path | None, Path | None]:
-    """Determine where to save the configuration (file or directory)."""
-    if config_file:
-        return config_file, None
-    elif config_dir:
-        return None, config_dir
-    else:
-        # Use defaults
-        default_dir = GlobalConfigManager.get_default_config_dir()
-        default_file = GlobalConfigManager.get_default_config_path()
-
-        if default_dir.exists():
-            return None, default_dir
-        elif default_file.exists():
-            return default_file, None
-        else:
-            return None, default_dir  # Default to directory-based
-
-

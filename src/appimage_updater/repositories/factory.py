@@ -104,10 +104,3 @@ def detect_repository_type(url: str) -> str:
     return "github"
 
 
-def get_supported_repository_types() -> list[str]:
-    """Get list of supported repository types.
-
-    Returns:
-        List of supported repository type strings
-    """
-    return ["github", "dynamic_download", "direct_download"]

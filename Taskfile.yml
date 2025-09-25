@@ -169,15 +169,13 @@ tasks:
       - >
         uv run deadcode {{.CLI_ARGS | default .SRC}}
         --ignore-if-decorated-with "@app.command" "@app.callback" "@field_validator" 
-        --ignore-names "main" "model_post_init" "validate_pattern" "validate_download_dir" "validate_symlink_path"
-        "created_at" "tag_name" "checked_at" "expected" "actual" "duration_seconds" "message"
-        "validate_paths" "apply_global_defaults_to_config" "protocol" "codename" "distribution_family"
-        "_extract_version_from_filename" "excepthook" "remove_from_config_file" "remove_from_config_directory"
-        "generate_pattern_from_releases" "get_supported_repository_types" "_print_troubleshooting_tips"
-        "interactive_edit_command" "_validate_directory_path" "_handle_edit_preview_modes" "_apply_edit_updates_to_apps"
-        "check" "list_apps" "edit" "show" "repository" "add" "remove" "config"
+        --ignore-names "main" "main_callback" "check" "edit" "list_apps" "show" "repository" "add" "remove" "config"
+        "validate_pattern" "validate_download_dir" "validate_symlink_path" "model_post_init" "validate_paths" "apply_global_defaults_to_config"
+        "checked_at" "expected" "actual" "duration_seconds" "message" "timestamp" "codename" "distribution_family"
         "print_progress" "print_success" "print_error" "print_warning" "print_info" "print_config_settings"
-        "timestamp" "_try_parse_last_modified_header" "_try_parse_date_header"
+        "generate_pattern_from_releases" "_try_parse_last_modified_header" "_try_parse_date_header"
+        "_extract_version_from_filename" "excepthook" "_print_troubleshooting_tips"
+        "_handle_edit_preview_modes" "_apply_edit_updates_to_apps"
 
   # === Testing ===
   test:
