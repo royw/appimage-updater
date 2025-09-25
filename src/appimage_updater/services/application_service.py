@@ -116,7 +116,7 @@ class ApplicationService:
         """
         available_apps = [app.name for app in enabled_apps]
 
-        # Use output formatter if available, otherwise fallback to print
+        # Use output formatter - should always be available in CLI architecture
         formatter = get_output_formatter()
 
         if formatter:
@@ -124,10 +124,10 @@ class ApplicationService:
             formatter.print_warning("Troubleshooting:")
             ApplicationService._print_troubleshooting_tips_formatted(formatter, available_apps)
         else:
-            # Use print to ensure output is captured by test framework
-            print(f"Applications not found: {', '.join(not_found)}", file=sys.stdout)  # noqa: T201
-            print("Troubleshooting:", file=sys.stdout)  # noqa: T201
-            ApplicationService._print_troubleshooting_tips_plain(available_apps)
+            # Fallback for edge cases - use stderr to avoid interfering with structured output
+            print(f"Applications not found: {', '.join(not_found)}", file=sys.stderr)  # noqa: T201
+            print("Troubleshooting:", file=sys.stderr)  # noqa: T201
+            ApplicationService._print_troubleshooting_tips_plain_stderr(available_apps)
 
         # This is normal user behavior, not an error that needs logging
         logger.debug(f"User requested non-existent applications: {not_found}. Available: {available_apps}")
@@ -158,8 +158,14 @@ class ApplicationService:
         """Print troubleshooting tips for not found apps using plain print."""
         available_text = ", ".join(available_apps) if available_apps else "None configured"
         print(f"   • Available applications: {available_text}", file=sys.stdout)  # noqa: T201
-        print("   • Application names are case-insensitive", file=sys.stdout)  # noqa: T201
-        print("   • Use glob patterns like 'Orca*' to match multiple apps", file=sys.stdout)  # noqa: T201
-        print("   • Run 'appimage-updater list' to see all configured applications", file=sys.stdout)  # noqa: T201
+
+    @staticmethod
+    def _print_troubleshooting_tips_plain_stderr(available_apps: list[str]) -> None:
+        """Print troubleshooting tips for not found apps to stderr."""
+        available_text = ", ".join(available_apps) if available_apps else "None configured"
+        print(f"   • Available applications: {available_text}", file=sys.stderr)  # noqa: T201
+        print("   • Application names are case-insensitive", file=sys.stderr)  # noqa: T201
+        print("   • Use glob patterns like 'Orca*' to match multiple apps", file=sys.stderr)  # noqa: T201
+        print("   • Run 'appimage-updater list' to see all configured applications", file=sys.stderr)  # noqa: T201
         if not available_apps:
-            print("   • Run 'appimage-updater add' to configure your first application", file=sys.stdout)  # noqa: T201
+            print("   • Run 'appimage-updater add' to configure your first application", file=sys.stderr)  # noqa: T201

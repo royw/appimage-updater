@@ -5,8 +5,8 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-import typer
 from rich.console import Console
+import typer
 
 from ..._version import __version__
 from ...commands.factory import CommandFactory

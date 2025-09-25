@@ -188,10 +188,7 @@ class EditCommand(Command):
         """
         found_apps = ApplicationService.filter_apps_by_names(config.applications, app_names_to_edit)
         if not found_apps:
-            available_apps = [app.name for app in config.applications]
-            self.console.print(f"[red]Applications not found: {', '.join(app_names_to_edit)}[/red]")
-            if available_apps:
-                self.console.print(f"Available applications: {', '.join(available_apps)}")
+            # ApplicationService.filter_apps_by_names already handled error display
             return None
         return found_apps
 

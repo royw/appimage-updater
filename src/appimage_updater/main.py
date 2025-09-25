@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from .cli.application import AppImageUpdaterCLI
 
+
 # Create CLI application instance
 _cli_app = AppImageUpdaterCLI()
 

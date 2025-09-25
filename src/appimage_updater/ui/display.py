@@ -488,16 +488,16 @@ def display_application_details(app: Any, config_source_info: dict[str, str] | N
 def display_edit_summary(app_name: str, changes: list[str]) -> None:
     """Display a summary of changes made during edit operation."""
     output_formatter = get_output_formatter()
-    
+
     if output_formatter and not hasattr(output_formatter, "console"):
         # Use structured format for non-Rich formatters (JSON, Plain, HTML)
         edit_summary = {
             "app_name": app_name,
             "status": "success",
             "message": f"Successfully updated configuration for '{app_name}'",
-            "changes": changes
+            "changes": changes,
         }
-        
+
         # Use a generic method for edit summary (we can add this to the interface later)
         if hasattr(output_formatter, "print_edit_summary"):
             output_formatter.print_edit_summary(edit_summary)

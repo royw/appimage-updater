@@ -16,12 +16,10 @@ from ..config.manager import (
     Manager,
 )
 from ..config.models import Config
-
-# Remove operation is handled internally
 from ..core.models import ApplicationConfig
 from ..services.application_service import ApplicationService
 from ..ui.display import _replace_home_with_tilde
-from ..ui.output.context import OutputFormatterContext
+from ..ui.output.context import OutputFormatterContext, get_output_formatter
 from ..utils.logging_config import configure_logging
 from .base import (
     Command,
@@ -111,7 +109,12 @@ class RemoveCommand(Command):
     def _validate_applications_exist(self, config: Config) -> bool:
         """Check if there are any applications configured."""
         if not config.applications:
-            self.console.print("No applications found")
+            # Use output formatter if available, otherwise fallback to console
+            formatter = get_output_formatter()
+            if formatter:
+                formatter.print_error("No applications found")
+            else:
+                self.console.print("No applications found")
             return False
         return True
 
@@ -126,7 +129,12 @@ class RemoveCommand(Command):
 
     def _handle_config_load_error(self) -> CommandResult:
         """Handle configuration load errors."""
-        self.console.print("No applications found")
+        # Use output formatter if available, otherwise fallback to console
+        formatter = get_output_formatter()
+        if formatter:
+            formatter.print_error("No applications found")
+        else:
+            self.console.print("No applications found")
         return CommandResult(success=False, exit_code=1)
 
     def _handle_unexpected_error(self, error: Exception) -> None:
