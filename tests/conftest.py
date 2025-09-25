@@ -431,3 +431,105 @@ def get_testable_commands() -> list[tuple[list[str], str]]:
             testable_commands.append(([command_name, "nonexistent"], command_name))
     
     return testable_commands
+
+
+# Platform dependency fixtures for easier porting
+@pytest.fixture(scope="session")
+def supported_platforms():
+    """Fixture providing supported platform identifiers."""
+    return ["linux", "darwin", "win32"]
+
+
+@pytest.fixture(scope="session")
+def platform_formats():
+    """Fixture providing platform-specific supported formats."""
+    return {
+        "linux": {".AppImage", ".tar.gz", ".tar.xz", ".zip", ".deb", ".rpm"},
+        "darwin": {".dmg", ".pkg", ".zip", ".tar.gz"},
+        "win32": {".exe", ".msi", ".zip"}
+    }
+
+
+@pytest.fixture(scope="session")
+def architecture_mappings():
+    """Fixture providing architecture normalization mappings."""
+    return {
+        "x86_64": ("x86_64", {"x86_64", "amd64", "x64"}),
+        "amd64": ("x86_64", {"x86_64", "amd64", "x64"}),
+        "aarch64": ("arm64", {"arm64", "aarch64"}),
+        "armv7l": ("armv7", {"armv7", "armv7l", "armhf"}),
+        "i686": ("i686", {"i386", "i686", "x86"}),
+    }
+
+
+@pytest.fixture(scope="session")
+def platform_test_assets():
+    """Fixture providing platform-specific test assets."""
+    from datetime import datetime
+    from appimage_updater.core.models import Asset
+    
+    return [
+        Asset(
+            name="app-linux-x86_64.AppImage",
+            url="https://example.com/linux-x86_64",
+            size=1024,
+            created_at=datetime.now()
+        ),
+        Asset(
+            name="app-darwin-arm64.dmg",
+            url="https://example.com/darwin-arm64",
+            size=2048,
+            created_at=datetime.now()
+        ),
+        Asset(
+            name="app-win32-x86_64.exe",
+            url="https://example.com/win32-x86_64",
+            size=4096,
+            created_at=datetime.now()
+        ),
+        Asset(
+            name="generic-app.zip",
+            url="https://example.com/generic",
+            size=1024,
+            created_at=datetime.now()
+        )
+    ]
+
+
+@pytest.fixture(scope="session")
+def mock_system_info():
+    """Fixture providing mock system information for consistent testing."""
+    return {
+        "platform": "linux",
+        "architecture": "x86_64",
+        "architecture_aliases": {"x86_64", "amd64", "x64"},
+        "supported_formats": {".AppImage", ".tar.gz", ".tar.xz", ".zip", ".deb", ".rpm"}
+    }
+
+
+@pytest.fixture(scope="session")
+def distribution_test_data():
+    """Fixture providing distribution test data for consistent testing."""
+    return {
+        "ubuntu": {
+            "id": "ubuntu",
+            "version": "24.04",
+            "version_numeric": 24.04,
+            "name": "Ubuntu",
+            "codename": "noble"
+        },
+        "fedora": {
+            "id": "fedora",
+            "version": "39",
+            "version_numeric": 39.0,
+            "name": "Fedora Linux",
+            "codename": None
+        },
+        "arch": {
+            "id": "arch",
+            "version": "rolling",
+            "version_numeric": 0.0,
+            "name": "Arch Linux",
+            "codename": None
+        }
+    }

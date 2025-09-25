@@ -24,66 +24,54 @@ from appimage_updater.core.system_info import (
 class TestSystemDetector:
     """Test system information detection."""
 
-    def test_architecture_detection(self):
+    def test_architecture_detection(self, architecture_mappings):
         """Test architecture detection and aliasing."""
         detector = SystemDetector()
 
-        # Test normalization
-        test_cases = [
-            ("x86_64", "x86_64", {"x86_64", "amd64", "x64"}),
-            ("amd64", "x86_64", {"x86_64", "amd64", "x64"}),
-            ("aarch64", "arm64", {"arm64", "aarch64"}),
-            ("armv7l", "armv7", {"armv7", "armv7l", "armhf"}),
-            ("i686", "i686", {"i386", "i686", "x86"}),
-        ]
-
-        for input_arch, expected_primary, expected_aliases in test_cases:
+        # Test normalization using fixture data
+        for input_arch, (expected_primary, expected_aliases) in architecture_mappings.items():
             primary, aliases, raw = detector._detect_architecture()
             # We can't control actual system arch in tests, so test the mapping logic
-            arch_mapping = {
-                "x86_64": ("x86_64", {"x86_64", "amd64", "x64"}),
-                "amd64": ("x86_64", {"x86_64", "amd64", "x64"}),
-                "aarch64": ("arm64", {"arm64", "aarch64"}),
-                "armv7l": ("armv7", {"armv7", "armv7l", "armhf"}),
-                "i686": ("i686", {"i386", "i686", "x86"}),
-            }
-
-            if input_arch in arch_mapping:
-                expected_primary, expected_aliases = arch_mapping[input_arch]
+            if input_arch in architecture_mappings:
+                expected_primary, expected_aliases = architecture_mappings[input_arch]
                 assert expected_primary == expected_primary
                 assert expected_aliases == expected_aliases
 
-    def test_platform_detection(self):
+    def test_platform_detection(self, supported_platforms):
         """Test platform detection."""
         detector = SystemDetector()
         platform = detector._detect_platform()
 
-        # Should be one of the known platforms
-        assert platform in ["linux", "darwin", "win32"]
+        # Should be one of the known platforms from fixture
+        assert platform in supported_platforms
 
-    def test_format_detection_linux(self):
+    def test_format_detection_linux(self, platform_formats):
         """Test supported format detection for Linux."""
         detector = SystemDetector()
         formats = detector._detect_supported_formats("linux")
 
-        # Should always include these on Linux
+        # Should always include these on Linux from fixture
         expected_formats = {".AppImage", ".tar.gz", ".tar.xz", ".zip"}
         assert expected_formats.issubset(formats)
+        # Verify against fixture data
+        assert expected_formats.issubset(platform_formats["linux"])
 
-    def test_format_detection_darwin(self):
+    def test_format_detection_darwin(self, platform_formats):
         """Test supported format detection for macOS."""
         detector = SystemDetector()
         formats = detector._detect_supported_formats("darwin")
 
-        expected_formats = {".dmg", ".pkg", ".zip", ".tar.gz"}
+        # Use fixture data for expected formats
+        expected_formats = platform_formats["darwin"]
         assert formats == expected_formats
 
-    def test_format_detection_windows(self):
+    def test_format_detection_windows(self, platform_formats):
         """Test supported format detection for Windows."""
         detector = SystemDetector()
         formats = detector._detect_supported_formats("win32")
 
-        expected_formats = {".exe", ".msi", ".zip"}
+        # Use fixture data for expected formats
+        expected_formats = platform_formats["win32"]
         assert formats == expected_formats
 
 
@@ -239,44 +227,23 @@ class TestAssetParsing:
 class TestReleaseFiltering:
     """Test Release asset filtering functionality."""
 
-    def create_test_assets(self) -> list[Asset]:
+    def create_test_assets(self, platform_test_assets) -> list[Asset]:
         """Create test assets with different architectures and platforms."""
-        return [
+        # Use fixture assets and add one more for completeness
+        assets = list(platform_test_assets)  # Copy from fixture
+        assets.append(
             Asset(
-                name="app-linux-x86_64.AppImage",
-                url="https://example.com/x86_64",
-                size=1024,
+                name="app-linux-arm64.tar.gz",
+                url="https://example.com/linux-arm64",
+                size=8192,
                 created_at=datetime.now()
-            ),
-            Asset(
-                name="app-linux-arm64.AppImage",
-                url="https://example.com/arm64",
-                size=1024,
-                created_at=datetime.now()
-            ),
-            Asset(
-                name="app-darwin-x86_64.dmg",
-                url="https://example.com/darwin",
-                size=1024,
-                created_at=datetime.now()
-            ),
-            Asset(
-                name="app-windows-x86_64.exe",
-                url="https://example.com/windows",
-                size=1024,
-                created_at=datetime.now()
-            ),
-            Asset(
-                name="generic-app.zip",  # No arch/platform info
-                url="https://example.com/generic",
-                size=1024,
-                created_at=datetime.now()
-            ),
-        ]
+            )
+        )
+        return assets
 
-    def test_pattern_matching_no_filter(self):
+    def test_pattern_matching_no_filter(self, platform_test_assets):
         """Test basic pattern matching without filtering."""
-        assets = self.create_test_assets()
+        assets = self.create_test_assets(platform_test_assets)
         release = Release(
             version="1.0.0",
             tag_name="v1.0.0",
@@ -286,15 +253,15 @@ class TestReleaseFiltering:
 
         # Match all AppImage files
         matching = release.get_matching_assets(r".*\.AppImage$", filter_compatible=False)
-        assert len(matching) == 2  # x86_64 and arm64 AppImages
+        assert len(matching) == 1  # Only one AppImage in fixture
 
         # Match all files
         matching = release.get_matching_assets(r".*", filter_compatible=False)
         assert len(matching) == 5  # All assets
 
-    def test_compatibility_filtering(self):
+    def test_compatibility_filtering(self, platform_test_assets):
         """Test compatibility filtering (mock system info)."""
-        assets = self.create_test_assets()
+        assets = self.create_test_assets(platform_test_assets)
         release = Release(
             version="1.0.0",
             tag_name="v1.0.0",
@@ -302,13 +269,13 @@ class TestReleaseFiltering:
             assets=assets
         )
 
-        # This test would need to mock system_info, but demonstrates the interface
-        # In real usage, filter_compatible=True would filter based on actual system
+        # This test demonstrates the interface with actual filtering
+        # filter_compatible=True filters based on current system compatibility
         matching = release.get_matching_assets(r".*", filter_compatible=True)
 
-        # Should return some assets (exact count depends on system)
-        assert isinstance(matching, list)
-
+        # The actual number depends on system compatibility filtering
+        # Since we're running on a real system, some assets may be filtered out
+        assert len(matching) >= 1  # At least some assets should match
 
 class TestEdgeCases:
     """Test edge cases and error conditions."""
@@ -316,7 +283,8 @@ class TestEdgeCases:
     def test_unknown_architecture(self):
         """Test handling of unknown architectures."""
         # Should be treated as incompatible
-        assert is_compatible_architecture("unknown-arch", "x86_64") == (False, 0.0)
+        assert is_compatible_architecture("unknown", "x86_64") == (False, 0.0)
+        assert is_compatible_architecture("x86_64", "unknown") == (False, 0.0)
 
     def test_empty_strings(self):
         """Test handling of empty strings."""
