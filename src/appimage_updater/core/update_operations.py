@@ -335,30 +335,47 @@ async def _load_and_filter_config(
         typer.Exit: If specified applications are not found
     """
     logger.debug("Loading configuration")
+    config = _load_config_with_fallback(config_file, config_dir)
+    enabled_apps = _filter_enabled_apps(config, app_names)
+
+    if enabled_apps is None:
+        return config, None  # Apps not found
+
+    _log_app_summary(config, enabled_apps, app_names)
+    return config, enabled_apps
+
+
+def _load_config_with_fallback(config_file: Path | None, config_dir: Path | None) -> Any:
+    """Load configuration with fallback to empty config."""
     try:
         app_configs = AppConfigs(config_path=config_file or config_dir)
-        config = app_configs._config
+        return app_configs._config
     except ConfigLoadError as e:
         # Only handle gracefully if no explicit config file was specified
         if not config_file and "not found" in str(e):
-            config = Config()
+            return Config()
         else:
             # Re-raise for explicit config files or other errors
             raise
 
+
+def _filter_enabled_apps(config: Any, app_names: list[str] | None) -> list[Any] | None:
+    """Filter enabled applications by names if specified."""
     enabled_apps = config.get_enabled_apps()
 
-    # Filter by app names if specified
     if app_names:
         filtered_apps = ApplicationService.filter_apps_by_names(enabled_apps, app_names)
         if filtered_apps is None:
-            # Error already displayed by ApplicationService, return special marker
-            return config, None  # Use None to indicate "apps not found" vs empty list for "no enabled apps"
-        enabled_apps = filtered_apps
+            return None  # Apps not found
+        return filtered_apps
 
+    return enabled_apps
+
+
+def _log_app_summary(config: Any, enabled_apps: list[Any], app_names: list[str] | None) -> None:
+    """Log summary of applications found."""
     filter_msg = " (filtered)" if app_names else ""
     logger.debug(f"Found {len(config.applications)} total applications, {len(enabled_apps)} enabled{filter_msg}")
-    return config, enabled_apps
 
 
 async def _perform_update_checks(

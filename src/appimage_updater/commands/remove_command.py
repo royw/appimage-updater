@@ -89,21 +89,32 @@ class RemoveCommand(Command):
 
     async def _process_removal_workflow(self) -> CommandResult:
         """Process the main removal workflow."""
-        app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
-        config = app_configs._config
+        config = self._load_config()
 
         if not self._validate_applications_exist(config):
-            return CommandResult(success=False, exit_code=1)
+            return self._create_error_result()
 
         found_apps = self._validate_and_filter_apps(config, self.params.app_names or [])
         if found_apps is None:
-            # Error already displayed by ApplicationService
-            return CommandResult(success=False, exit_code=1)
+            return self._create_error_result()
 
         if not self._should_proceed_with_removal(found_apps):
-            return CommandResult(success=True, exit_code=0)
+            return self._create_success_result()
 
         self._perform_removal(config, found_apps)
+        return self._create_success_result()
+
+    def _load_config(self) -> Config:
+        """Load the configuration."""
+        app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
+        return app_configs._config
+
+    def _create_error_result(self) -> CommandResult:
+        """Create a standardized error result."""
+        return CommandResult(success=False, exit_code=1)
+
+    def _create_success_result(self) -> CommandResult:
+        """Create a standardized success result."""
         return CommandResult(success=True, exit_code=0)
 
     def _validate_applications_exist(self, config: Config) -> bool:

@@ -102,5 +102,3 @@ def detect_repository_type(url: str) -> str:
     # Default to github for backward compatibility
     # This matches the existing behavior in pattern_generator.py
     return "github"
-
-

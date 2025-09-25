@@ -83,29 +83,33 @@ class ListCommand(Command):
         Returns:
             Config object if successful, None if config error, False if no applications
         """
-
         try:
-            app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
-            config = app_configs._config
+            config = self._load_config()
         except Exception:
-            # Use output formatter if available, otherwise fallback to console
-            formatter = get_output_formatter()
-            if formatter:
-                formatter.print_error("Configuration error")
-            else:
-                self.console.print("Configuration error")
+            self._display_message("Configuration error", is_error=True)
             return None
 
         if not config.applications:
-            # Use output formatter if available, otherwise fallback to console
-            formatter = get_output_formatter()
-            if formatter:
-                formatter.print_info("No applications configured")
-            else:
-                self.console.print("No applications configured")
+            self._display_message("No applications configured", is_error=False)
             return False  # No applications configured (success case)
 
         return config
+
+    def _load_config(self) -> Any:
+        """Load the configuration."""
+        app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
+        return app_configs._config
+
+    def _display_message(self, message: str, is_error: bool) -> None:
+        """Display a message using formatter if available, otherwise console."""
+        formatter = get_output_formatter()
+        if formatter:
+            if is_error:
+                formatter.print_error(message)
+            else:
+                formatter.print_info(message)
+        else:
+            self.console.print(message)
 
     def _display_applications_and_summary(self, config: Any) -> None:
         """Display applications list and summary statistics."""

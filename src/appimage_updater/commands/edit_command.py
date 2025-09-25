@@ -137,9 +137,31 @@ class EditCommand(Command):
         Returns:
             CommandResult if error occurred, None if successful
         """
+        config = self._load_config_safely()
+        if isinstance(config, CommandResult):
+            return config
+
+        app_names_to_edit = self._validate_app_names_provided()
+        if app_names_to_edit is None:
+            return self._create_error_result("No application names provided")
+
+        found_apps = self._find_matching_applications(config, app_names_to_edit)
+        if found_apps is None:
+            return self._create_error_result("Applications not found")
+
+        updates = self._collect_updates_from_parameters()
+        if not updates:
+            self.console.print("[yellow]No changes specified. Use --help to see available options.[/yellow]")
+            return None
+
+        self._apply_and_save_updates(config, found_apps, updates)
+        return None
+
+    def _load_config_safely(self) -> Any | CommandResult:
+        """Load configuration with error handling."""
         try:
             app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
-            config = app_configs._config
+            return app_configs._config
         except Exception as e:
             if "No configuration found" in str(e):
                 self.console.print("[red]Configuration error: No configuration found[/red]")
@@ -147,26 +169,14 @@ class EditCommand(Command):
                 self.console.print(f"[red]Configuration error: {e}[/red]")
             return CommandResult(success=False, message="Configuration error", exit_code=1)
 
-        app_names_to_edit = self._validate_app_names_provided()
-        if app_names_to_edit is None:
-            return CommandResult(success=False, message="No application names provided", exit_code=1)
+    def _create_error_result(self, message: str) -> CommandResult:
+        """Create a standardized error result."""
+        return CommandResult(success=False, message=message, exit_code=1)
 
-        found_apps = self._find_matching_applications(config, app_names_to_edit)
-        if found_apps is None:
-            return CommandResult(success=False, message="Applications not found", exit_code=1)
-
-        updates = self._collect_updates_from_parameters()
-
-        if not updates:
-            self.console.print("[yellow]No changes specified. Use --help to see available options.[/yellow]")
-            return None
-
-        # Apply updates to each application
+    def _apply_and_save_updates(self, config: Any, found_apps: Any, updates: dict[str, Any]) -> None:
+        """Apply updates to applications and save configuration."""
         self._apply_updates_to_apps(found_apps, updates, config)
-
-        # Save updated configuration
         self._save_config(config)
-        return None
 
     def _validate_app_names_provided(self) -> list[str] | None:
         """Validate that application names are provided.

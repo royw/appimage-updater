@@ -490,28 +490,44 @@ def display_edit_summary(app_name: str, changes: list[str]) -> None:
     output_formatter = get_output_formatter()
 
     if output_formatter and not hasattr(output_formatter, "console"):
-        # Use structured format for non-Rich formatters (JSON, Plain, HTML)
-        edit_summary = {
-            "app_name": app_name,
-            "status": "success",
-            "message": f"Successfully updated configuration for '{app_name}'",
-            "changes": changes,
-        }
-
-        # Use a generic method for edit summary (we can add this to the interface later)
-        if hasattr(output_formatter, "print_edit_summary"):
-            output_formatter.print_edit_summary(edit_summary)
-        else:
-            # Fallback to success message
-            output_formatter.print_success(f"Successfully updated configuration for '{app_name}'")
-            for change in changes:
-                output_formatter.print_info(f"  • {change}")
+        _display_structured_edit_summary(output_formatter, app_name, changes)
     else:
-        # Fallback to Rich console display
-        console.print(f"\n[green]Successfully updated configuration for '{app_name}'[/green]")
-        console.print("[blue]Changes made:[/blue]")
-        for change in changes:
-            console.print(f"  • {change}")
+        _display_rich_edit_summary(app_name, changes)
+
+
+def _display_structured_edit_summary(output_formatter: Any, app_name: str, changes: list[str]) -> None:
+    """Display edit summary using structured formatter."""
+    edit_summary = _create_edit_summary_data(app_name, changes)
+
+    if hasattr(output_formatter, "print_edit_summary"):
+        output_formatter.print_edit_summary(edit_summary)
+    else:
+        _display_fallback_structured_summary(output_formatter, app_name, changes)
+
+
+def _display_rich_edit_summary(app_name: str, changes: list[str]) -> None:
+    """Display edit summary using Rich console."""
+    console.print(f"\n[green]Successfully updated configuration for '{app_name}'[/green]")
+    console.print("[blue]Changes made:[/blue]")
+    for change in changes:
+        console.print(f"  • {change}")
+
+
+def _create_edit_summary_data(app_name: str, changes: list[str]) -> dict[str, Any]:
+    """Create structured data for edit summary."""
+    return {
+        "app_name": app_name,
+        "status": "success",
+        "message": f"Successfully updated configuration for '{app_name}'",
+        "changes": changes,
+    }
+
+
+def _display_fallback_structured_summary(output_formatter: Any, app_name: str, changes: list[str]) -> None:
+    """Display fallback structured summary when print_edit_summary is not available."""
+    output_formatter.print_success(f"Successfully updated configuration for '{app_name}'")
+    for change in changes:
+        output_formatter.print_info(f"  • {change}")
 
 
 def get_configuration_info(app: Any, config_source_info: dict[str, str] | None = None) -> str:

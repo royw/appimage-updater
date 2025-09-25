@@ -34,20 +34,27 @@ def validate_and_normalize_add_url(url: str, direct: bool | None = None) -> str 
     Returns:
         Normalized URL if valid, None if invalid
     """
-    # For direct URLs, just validate basic URL format and return as-is
     if direct:
-        try:
-            parsed = urlparse(url)
-            if not parsed.scheme or not parsed.netloc:
-                console.print(f"[red]Error: Invalid URL format: {url}")
-                return None
-            return url
-        except Exception as e:
-            console.print(f"[red]Error: Invalid URL format: {url}")
-            console.print(f"[yellow]Error details: {e}")
-            return None
+        return _validate_direct_url(url)
 
-    # For repository URLs, use the existing validation logic
+    return _validate_and_normalize_repository_url(url)
+
+
+def _validate_direct_url(url: str) -> str | None:
+    """Validate direct download URL format."""
+    try:
+        parsed = urlparse(url)
+        if not parsed.scheme or not parsed.netloc:
+            _display_url_error(url, "Invalid URL format")
+            return None
+        return url
+    except Exception as e:
+        _display_url_error(url, "Invalid URL format", str(e))
+        return None
+
+
+def _validate_and_normalize_repository_url(url: str) -> str | None:
+    """Validate and normalize repository URL."""
     try:
         repo_client = get_repository_client(url)
         normalized_url, was_corrected = repo_client.normalize_repo_url(url)
@@ -55,19 +62,28 @@ def validate_and_normalize_add_url(url: str, direct: bool | None = None) -> str 
         # Validate that we can parse the normalized URL
         repo_client.parse_repo_url(normalized_url)
 
+        if was_corrected:
+            _display_url_correction(url, normalized_url)
+
+        return normalized_url
     except Exception as e:
-        console.print(f"[red]Error: Invalid repository URL: {url}")
-        console.print(f"[yellow]Error details: {e}")
+        _display_url_error(url, "Invalid repository URL", str(e))
         return None
 
-    # Inform user if we corrected the URL
-    if was_corrected:
-        console.print("[yellow]Detected download URL, using repository URL instead:")
-        console.print(f"[dim]   Original: {url}")
-        console.print(f"[dim]   Corrected: {normalized_url}")
-        logger.debug(f"Corrected download URL to repository URL: {url} → {normalized_url}")
 
-    return normalized_url
+def _display_url_error(url: str, error_type: str, details: str | None = None) -> None:
+    """Display URL validation error messages."""
+    console.print(f"[red]Error: {error_type}: {url}")
+    if details:
+        console.print(f"[yellow]Error details: {details}")
+
+
+def _display_url_correction(original_url: str, corrected_url: str) -> None:
+    """Display URL correction information."""
+    console.print("[yellow]Detected download URL, using repository URL instead:")
+    console.print(f"[dim]   Original: {original_url}")
+    console.print(f"[dim]   Corrected: {corrected_url}")
+    logger.debug(f"Corrected download URL to repository URL: {original_url} → {corrected_url}")
 
 
 def validate_add_rotation_config(rotation: bool | None, symlink: str | None) -> bool:
@@ -268,13 +284,22 @@ async def _get_effective_prerelease_config(prerelease: bool | None, defaults: An
     if prerelease is not None:
         return prerelease, False
 
-    # Auto-detect if we should enable prereleases for repositories with only continuous builds
+    should_enable = await _detect_prerelease_requirement(url)
+    return _resolve_prerelease_with_defaults(should_enable, defaults)
+
+
+async def _detect_prerelease_requirement(url: str) -> bool:
+    """Detect if prereleases should be enabled for the repository."""
     try:
         repo_client = get_repository_client(url)
-        should_enable = await repo_client.should_enable_prerelease(url)
+        return await repo_client.should_enable_prerelease(url)
     except Exception:
-        # If we can't detect, use defaults
-        should_enable = False
+        # If we can't detect, default to False
+        return False
+
+
+def _resolve_prerelease_with_defaults(should_enable: bool, defaults: Any) -> tuple[bool, bool]:
+    """Resolve prerelease setting using defaults and auto-detection."""
     if defaults:
         # If global default is False but auto-detection says we should enable, use auto-detection
         if not defaults.prerelease and should_enable:

@@ -217,7 +217,6 @@ class Manager:
 
     # Application-Specific Operations
 
-
     # Utility Operations
     def get_target_config_path(self, config_file: Path | None, config_dir: Path | None) -> Path:
         """Determine target config path based on file/dir preferences."""

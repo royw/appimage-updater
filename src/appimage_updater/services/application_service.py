@@ -153,7 +153,6 @@ class ApplicationService:
         if not available_apps:
             console.print("   • Run 'appimage-updater add' to configure your first application")
 
-
     @staticmethod
     def _print_troubleshooting_tips_plain_stderr(available_apps: list[str]) -> None:
         """Print troubleshooting tips for not found apps to stderr."""

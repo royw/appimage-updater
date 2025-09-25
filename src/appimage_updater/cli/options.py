@@ -253,7 +253,6 @@ class CLIOptions:
     # EDIT COMMAND OPTIONS
     # ============================================================================
 
-
     EDIT_APP_NAME_ARGUMENT_OPTIONAL = typer.Argument(
         default=None,
         help="Names of applications to edit (case-insensitive, supports glob patterns like 'Orca*'). "
@@ -297,7 +296,6 @@ class CLIOptions:
     # SHOW COMMAND OPTIONS
     # ============================================================================
 
-
     SHOW_APP_NAME_ARGUMENT_OPTIONAL = typer.Argument(
         default=None,
         help="Names of applications to display information for (case-insensitive, "
@@ -307,7 +305,6 @@ class CLIOptions:
     # ============================================================================
     # REMOVE COMMAND OPTIONS
     # ============================================================================
-
 
     REMOVE_APP_NAME_ARGUMENT_OPTIONAL = typer.Argument(
         default=None,

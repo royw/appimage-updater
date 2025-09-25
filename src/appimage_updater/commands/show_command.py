@@ -76,29 +76,37 @@ class ShowCommand(Command):
             True if operation succeeded, False if it failed.
         """
         try:
-            app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
-            config = app_configs._config
-            found_apps = self._filter_applications(config)
-            if found_apps is None:
-                return False
-
-            self._display_applications(found_apps)
-            return True
+            config = self._load_primary_config()
+            return self._process_and_display_apps(config)
         except ConfigLoadError as e:
-            # Only handle gracefully if no explicit config file was specified
-            if not self.params.config_file and "not found" in str(e):
-                config = Config()
-                found_apps = self._filter_applications(config)
-                if found_apps is None:
-                    return False
-                self._display_applications(found_apps)
-                return True
-            else:
-                # Re-raise for explicit config files or other errors
-                raise
+            return self._handle_config_load_error(e)
         except Exception as e:
             logger.error(f"Unexpected error in show command: {e}")
             logger.exception("Full exception details")
+            raise
+
+    def _load_primary_config(self) -> Any:
+        """Load the primary configuration."""
+        app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
+        return app_configs._config
+
+    def _process_and_display_apps(self, config: Any) -> bool:
+        """Process and display applications from config."""
+        found_apps = self._filter_applications(config)
+        if found_apps is None:
+            return False
+
+        self._display_applications(found_apps)
+        return True
+
+    def _handle_config_load_error(self, error: ConfigLoadError) -> bool:
+        """Handle configuration load errors gracefully when appropriate."""
+        # Only handle gracefully if no explicit config file was specified
+        if not self.params.config_file and "not found" in str(error):
+            config = Config()
+            return self._process_and_display_apps(config)
+        else:
+            # Re-raise for explicit config files or other errors
             raise
 
     def _filter_applications(self, config: Any) -> Any:

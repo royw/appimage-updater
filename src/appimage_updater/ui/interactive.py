@@ -217,8 +217,6 @@ def _display_feature_summary_info(settings: dict[str, Any]) -> None:
     console.print(f"   Direct: {'Yes' if settings['direct'] else 'No'}")
 
 
-
-
 def _prompt_with_validation(prompt: str, validator: Callable[[str], bool], error_msg: str, **kwargs: Any) -> str:
     """Prompt with validation and retry on invalid input."""
     while True:
@@ -282,5 +280,3 @@ def _validate_url(url: str) -> bool:
         return False
 
     return _normalize_and_validate_repository_url(url)
-
-
