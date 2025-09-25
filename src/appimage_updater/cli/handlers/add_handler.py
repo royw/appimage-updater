@@ -68,7 +68,6 @@ class AddCommandHandler(CommandHandler):
                 download_dir=download_dir,
                 create_dir=create_dir,
                 yes=yes,
-                no=no,
                 config_file=config_file,
                 config_dir=config_dir,
                 rotation=rotation,
