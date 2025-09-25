@@ -4,6 +4,7 @@ These tests focus on format option validation and help text verification
 without requiring existing application configurations.
 """
 
+import re
 import subprocess
 from pathlib import Path
 
@@ -12,6 +13,11 @@ import pytest
 
 class TestFormatValidation:
     """Test format option validation and help text."""
+
+    def strip_ansi_codes(self, text: str) -> str:
+        """Strip ANSI escape codes from text."""
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        return ansi_escape.sub('', text)
 
     def run_command(self, command_args: list[str]) -> tuple[int, str, str]:
         """Run appimage-updater command and return exit code, stdout, stderr."""
@@ -38,7 +44,8 @@ class TestFormatValidation:
             exit_code, stdout, stderr = self.run_command([cmd, "--help"])
             assert exit_code == 0, f"Help command failed for {cmd}"
             
-            help_text = stdout.lower()
+            # Strip ANSI codes and convert to lowercase for consistent matching
+            help_text = self.strip_ansi_codes(stdout).lower()
             assert "--format" in help_text, f"Command {cmd} missing --format in help text"
             assert "rich" in help_text, f"Command {cmd} help missing 'rich' format option"
             assert "plain" in help_text, f"Command {cmd} help missing 'plain' format option"
@@ -114,7 +121,8 @@ class TestFormatValidation:
             exit_code, stdout, stderr = self.run_command([cmd, "--help"])
             assert exit_code == 0, f"Help should work for {cmd}"
             
-            help_text = stdout.lower()
+            # Strip ANSI codes and convert to lowercase for consistent matching
+            help_text = self.strip_ansi_codes(stdout).lower()
             assert "--format" in help_text, f"Command {cmd} should have --format option"
 
 
