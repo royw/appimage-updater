@@ -114,7 +114,7 @@ async def _prepare_check_environment(
         return config, []
 
     _handle_verbose_display(verbose, normalized_names, dry_run, yes, no_interactive, len(enabled_apps))
-    _log_app_summary(config, enabled_apps, app_names)
+    _log_app_summary(config, enabled_apps, normalized_names)
     return config, enabled_apps
 
 
@@ -361,7 +361,7 @@ def _load_config_with_fallback(config_file: Path | None, config_dir: Path | None
 
 def _filter_enabled_apps(config: Any, app_names: list[str] | None) -> list[Any] | None:
     """Filter enabled applications by names if specified."""
-    enabled_apps = config.get_enabled_apps()
+    enabled_apps: list[Any] = config.get_enabled_apps()
 
     if app_names:
         filtered_apps = ApplicationService.filter_apps_by_names(enabled_apps, app_names)
@@ -443,12 +443,6 @@ def _log_check_start(
     logger.debug(
         f"Config file: {config_file}, Config dir: {config_dir}, Dry run: {dry_run}, App filters: {normalized_names}"
     )
-
-
-def _log_app_summary(config: Any, enabled_apps: list[Any], app_names: list[str] | str | None) -> None:
-    """Log summary of applications found."""
-    filter_msg = " (filtered)" if app_names else ""
-    logger.debug(f"Found {len(config.applications)} total applications, {len(enabled_apps)} enabled{filter_msg}")
 
 
 def _should_suppress_console_output(output_formatter: Any) -> bool:
