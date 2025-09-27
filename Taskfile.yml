@@ -161,11 +161,15 @@ tasks:
   complexity:
     desc: Analyze code complexity with radon
     cmds:
+      - cmd: echo "Checking complexity..."
+        silent: true
       - uv run radon cc {{.CLI_ARGS | default .SRC}} --min B
 
   lint:deadcode:
     desc: Find dead (unreachable/unused) code with deadcode
     cmds:
+      - cmd: echo "Checking deadcode..."
+        silent: true
       - >
         uv run deadcode {{.CLI_ARGS | default .SRC}}
         --ignore-if-decorated-with "@app.command" "@app.callback" "@field_validator" 
@@ -176,6 +180,7 @@ tasks:
         "generate_pattern_from_releases" "_try_parse_last_modified_header" "_try_parse_date_header"
         "_extract_version_from_filename" "excepthook" "_print_troubleshooting_tips"
         "_handle_edit_preview_modes" "_apply_edit_updates_to_apps"
+    silent: true
 
   # === Testing ===
   test:
