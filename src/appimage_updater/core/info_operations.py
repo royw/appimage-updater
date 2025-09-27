@@ -139,12 +139,12 @@ def _find_matching_release_version(releases: list[Any], current_file: Path, app_
 def _check_release_assets(release: Any, current_file: Path, app_name: str) -> str | None:
     """Check if any asset in the release matches the current file."""
     for asset in release.assets:
-        if _files_match(current_file.name, asset.name, app_name):
+        if _files_match(current_file.name, asset.name):
             return str(release.tag_name).lstrip("v")
     return None
 
 
-def _files_match(current_filename: str, asset_name: str, app_name: str) -> bool:
+def _files_match(current_filename: str, asset_name: str) -> bool:
     """Check if the current file matches the asset from repository."""
     # Remove .current suffix for comparison
     current_base = current_filename.replace(".current", "")
