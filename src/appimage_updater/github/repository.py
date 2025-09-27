@@ -100,7 +100,7 @@ class GitHubRepository(RepositoryClient):
         try:
             parsed = urllib.parse.urlparse(url)
             return parsed.netloc.lower() in ("github.com", "www.github.com")
-        except Exception:
+        except (ValueError, AttributeError):
             return False
 
     async def generate_pattern_from_releases(self, url: str) -> str | None:
@@ -168,7 +168,7 @@ class GitHubRepository(RepositoryClient):
                 owner, repo = path_parts[0], path_parts[1]
                 return self._normalize_github_path(path_parts, owner, repo, url)
 
-        except Exception as e:
+        except (ValueError, AttributeError, TypeError) as e:
             logger.debug(f"Error normalizing GitHub URL {url}: {e}")
 
         return url, False
@@ -213,7 +213,7 @@ class GitHubRepository(RepositoryClient):
                 logger.debug("No AppImage or ZIP files found in any releases")
                 return None
             return self._create_pattern_from_filenames(target_files, include_both_formats=True)
-        except Exception as e:
+        except (RepositoryError, ValueError, AttributeError) as e:
             logger.debug(f"Error fetching releases: {e}")
             return None
 
@@ -240,7 +240,7 @@ class GitHubRepository(RepositoryClient):
 
             return self._analyze_prerelease_status(valid_releases, url)
 
-        except Exception as e:
+        except (RepositoryError, ValueError, AttributeError) as e:
             # Don't fail the add command if prerelease detection fails
             logger.debug(f"Error checking prerelease status for {url}: {e}")
             return False

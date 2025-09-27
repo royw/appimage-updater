@@ -16,6 +16,7 @@ from rich.panel import Panel
 from rich.prompt import Confirm, IntPrompt, Prompt
 
 from ..core.models import InteractiveResult
+from ..repositories.base import RepositoryError
 from ..repositories.factory import get_repository_client
 from .display import _replace_home_with_tilde
 
@@ -292,7 +293,7 @@ class InteractiveAddHandler:
             repo_client.parse_repo_url(normalized_url)
             return True
 
-        except Exception as e:
+        except (RepositoryError, ValueError, AttributeError) as e:
             self.console.print(f"[yellow]{str(e)}[/yellow]")
             return False
 
