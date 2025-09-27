@@ -42,7 +42,7 @@ class AddParams(BaseParams):
     dry_run: bool = False
     interactive: bool = False
     examples: bool = False
-    format: Any = None  # OutputFormat, avoiding circular import
+    output_format: Any = None  # OutputFormat, avoiding circular import
 
 
 @dataclass
@@ -60,7 +60,7 @@ class CheckParams(BaseParams):
     http_stack_depth: int = 4
     http_track_headers: bool = False
     # Output formatting options
-    format: str = "rich"
+    output_format: str = "rich"
 
 
 @dataclass
@@ -88,7 +88,7 @@ class EditParams(BaseParams):
     no: bool = False
     auto_subdir: bool | None = None
     dry_run: bool = False
-    format: Any = None  # OutputFormat, avoiding circular import
+    output_format: Any = None  # OutputFormat, avoiding circular import
 
 
 @dataclass
@@ -96,7 +96,7 @@ class ShowParams(BaseParams):
     """Parameters for show command."""
 
     app_names: list[str] | None = None
-    format: Any = None  # OutputFormat, avoiding circular import
+    output_format: Any = None  # OutputFormat, avoiding circular import
 
 
 @dataclass
@@ -106,7 +106,7 @@ class ListParams:
     config_file: Path | None = None
     config_dir: Path | None = None
     debug: bool = False
-    format: Any = None  # OutputFormat, avoiding circular import
+    output_format: Any = None  # OutputFormat, avoiding circular import
 
 
 @dataclass
@@ -116,7 +116,7 @@ class RemoveParams(BaseParams):
     app_names: list[str] | None = None
     yes: bool = False
     no: bool = False
-    format: Any = None  # OutputFormat, avoiding circular import
+    output_format: Any = None  # OutputFormat, avoiding circular import
 
 
 @dataclass
@@ -130,7 +130,7 @@ class RepositoryParams(BaseParams):
     instrument_http: bool = False
     http_stack_depth: int = 3
     http_track_headers: bool = False
-    format: Any = None  # OutputFormat, avoiding circular import
+    output_format: Any = None  # OutputFormat, avoiding circular import
 
 
 # InitParams removed with init command
@@ -144,4 +144,4 @@ class ConfigParams(BaseParams):
     setting: str = ""
     value: str = ""
     app_name: str = ""
-    format: Any = None  # OutputFormat, avoiding circular import
+    output_format: Any = None  # OutputFormat, avoiding circular import

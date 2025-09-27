@@ -57,7 +57,7 @@ class CommandFactory:
         interactive: bool = False,
         examples: bool = False,
         debug: bool = False,
-        format: Any = None,
+        output_format: Any = None,
     ) -> AddCommand:
         """Create an AddCommand instance."""
         params = AddParams(
@@ -86,7 +86,7 @@ class CommandFactory:
             interactive=interactive,
             examples=examples,
             debug=debug,
-            format=format,
+            output_format=output_format,
         )
         return AddCommand(params)
 
@@ -105,7 +105,7 @@ class CommandFactory:
         instrument_http: bool = False,
         http_stack_depth: int = 4,
         http_track_headers: bool = False,
-        format: str = "rich",
+        output_format: str = "rich",
     ) -> CheckCommand:
         """Create a CheckCommand instance."""
         params = CheckParams(
@@ -122,7 +122,7 @@ class CommandFactory:
             instrument_http=instrument_http,
             http_stack_depth=http_stack_depth,
             http_track_headers=http_track_headers,
-            format=format,
+            output_format=output_format,
         )
         return CheckCommand(params)
 
@@ -153,7 +153,7 @@ class CommandFactory:
         verbose: bool = False,
         dry_run: bool = False,
         debug: bool = False,
-        format: Any = None,
+        output_format: Any = None,
     ) -> EditCommand:
         """Create an EditCommand instance."""
         params = EditParams(
@@ -182,7 +182,7 @@ class CommandFactory:
             verbose=verbose,
             dry_run=dry_run,
             debug=debug,
-            format=format,
+            output_format=output_format,
         )
         return EditCommand(params)
 
@@ -193,7 +193,7 @@ class CommandFactory:
         config_dir: Path | None = None,
         verbose: bool = False,
         debug: bool = False,
-        format: Any = None,
+        output_format: Any = None,
     ) -> ShowCommand:
         """Create a ShowCommand instance."""
         params = ShowParams(
@@ -202,7 +202,7 @@ class CommandFactory:
             config_dir=config_dir,
             verbose=verbose,
             debug=debug,
-            format=format,
+            output_format=output_format,
         )
         return ShowCommand(params)
 
@@ -211,14 +211,14 @@ class CommandFactory:
         config_file: Path | None = None,
         config_dir: Path | None = None,
         debug: bool = False,
-        format: Any = None,
+        output_format: Any = None,
     ) -> ListCommand:
         """Create a ListCommand instance."""
         params = ListParams(
             config_file=config_file,
             config_dir=config_dir,
             debug=debug,
-            format=format,
+            output_format=output_format,
         )
         return ListCommand(params)
 
@@ -231,7 +231,7 @@ class CommandFactory:
         no: bool = False,
         verbose: bool = False,
         debug: bool = False,
-        format: Any = None,
+        output_format: Any = None,
     ) -> RemoveCommand:
         """Create a RemoveCommand instance."""
         params = RemoveParams(
@@ -242,7 +242,7 @@ class CommandFactory:
             no=no,
             verbose=verbose,
             debug=debug,
-            format=format,
+            output_format=output_format,
         )
         return RemoveCommand(params)
 
@@ -259,7 +259,7 @@ class CommandFactory:
         http_track_headers: bool = False,
         verbose: bool = False,
         debug: bool = False,
-        format: Any = None,
+        output_format: Any = None,
     ) -> RepositoryCommand:
         """Create a RepositoryCommand instance."""
         params = RepositoryParams(
@@ -274,7 +274,7 @@ class CommandFactory:
             http_track_headers=http_track_headers,
             verbose=verbose,
             debug=debug,
-            format=format,
+            output_format=output_format,
         )
         return RepositoryCommand(params)
 
@@ -289,7 +289,7 @@ class CommandFactory:
         config_file: Path | None = None,
         config_dir: Path | None = None,
         debug: bool = False,
-        format: Any = None,
+        output_format: Any = None,
     ) -> ConfigCommand:
         """Create a ConfigCommand instance."""
         params = ConfigParams(
@@ -300,6 +300,6 @@ class CommandFactory:
             config_file=config_file,
             config_dir=config_dir,
             debug=debug,
-            format=format,
+            output_format=output_format,
         )
         return ConfigCommand(params)

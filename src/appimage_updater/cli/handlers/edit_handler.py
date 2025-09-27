@@ -58,7 +58,7 @@ class EditCommandHandler(CommandHandler):
             verbose: bool = CLIOptions.VERBOSE_OPTION,
             dry_run: bool = CLIOptions.EDIT_DRY_RUN_OPTION,
             debug: bool = CLIOptions.debug_option(),
-            format: OutputFormat = CLIOptions.FORMAT_OPTION,
+            output_format: OutputFormat = CLIOptions.FORMAT_OPTION,
             _version: bool = CLIOptions.version_option(self._version_callback),
         ) -> None:
             """Edit configuration for existing applications."""
@@ -92,7 +92,7 @@ class EditCommandHandler(CommandHandler):
                 verbose=verbose,
                 dry_run=dry_run,
                 debug=debug,
-                format=format,
+                output_format=output_format,
             )
 
     def validate_options(self, **kwargs: Any) -> None:

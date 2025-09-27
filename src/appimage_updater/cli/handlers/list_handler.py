@@ -31,7 +31,7 @@ class ListCommandHandler(CommandHandler):
             config_file: Path | None = CLIOptions.CONFIG_FILE_OPTION,
             config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
             debug: bool = CLIOptions.debug_option(),
-            format: OutputFormat = CLIOptions.FORMAT_OPTION,
+            output_format: OutputFormat = CLIOptions.FORMAT_OPTION,
             _version: bool = CLIOptions.version_option(self._version_callback),
         ) -> None:
             """List all configured applications.

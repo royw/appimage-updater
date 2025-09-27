@@ -58,7 +58,7 @@ class AddCommandHandler(CommandHandler):
             interactive: bool = CLIOptions.ADD_INTERACTIVE_OPTION,
             examples: bool = CLIOptions.ADD_EXAMPLES_OPTION,
             debug: bool = CLIOptions.debug_option(),
-            format: OutputFormat = CLIOptions.FORMAT_OPTION,
+            output_format: OutputFormat = CLIOptions.FORMAT_OPTION,
             _version: bool = CLIOptions.version_option(self._version_callback),
         ) -> None:
             """Add a new application to the configuration."""
@@ -88,7 +88,7 @@ class AddCommandHandler(CommandHandler):
                 interactive=interactive,
                 examples=examples,
                 debug=debug,
-                format=format,
+                output_format=output_format,
             )
 
     def validate_options(self, **kwargs: Any) -> None:

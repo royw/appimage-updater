@@ -37,13 +37,13 @@ class CheckCommandHandler(CommandHandler):
             app_names: list[str] = CLIOptions.CHECK_APP_NAME_ARGUMENT,
             config_file: Path | None = CLIOptions.CONFIG_FILE_OPTION,
             config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
-            dry_run: bool = CLIOptions.DRY_RUN_OPTION,
             yes: bool = CLIOptions.YES_OPTION,
             no: bool = CLIOptions.NO_OPTION,
             no_interactive: bool = CLIOptions.NO_INTERACTIVE_OPTION,
             verbose: bool = CLIOptions.VERBOSE_OPTION,
+            dry_run: bool = CLIOptions.DRY_RUN_OPTION,
             debug: bool = CLIOptions.debug_option(),
-            format: OutputFormat = CLIOptions.FORMAT_OPTION,
+            output_format: OutputFormat = CLIOptions.FORMAT_OPTION,
             info: bool = CLIOptions.CHECK_INFO_OPTION,
             instrument_http: bool = CLIOptions.INSTRUMENT_HTTP_OPTION,
             http_stack_depth: int = CLIOptions.HTTP_STACK_DEPTH_OPTION,
@@ -70,7 +70,7 @@ class CheckCommandHandler(CommandHandler):
                 no_interactive=no_interactive,
                 verbose=verbose,
                 debug=debug,
-                format=format,
+                output_format=output_format,
                 info=info,
                 instrument_http=instrument_http,
                 http_stack_depth=http_stack_depth,
@@ -103,7 +103,7 @@ class CheckCommandHandler(CommandHandler):
         no_interactive: bool,
         verbose: bool,
         debug: bool,
-        format: OutputFormat,
+        output_format: OutputFormat,
         info: bool,
         instrument_http: bool,
         http_stack_depth: int,
@@ -128,7 +128,7 @@ class CheckCommandHandler(CommandHandler):
             instrument_http=instrument_http,
             http_stack_depth=http_stack_depth,
             http_track_headers=http_track_headers,
-            format=format,
+            output_format=output_format,
         )
 
         # Create HTTP tracker and output formatter based on parameters
@@ -139,7 +139,7 @@ class CheckCommandHandler(CommandHandler):
         result = asyncio.run(command.execute(http_tracker=http_tracker, output_formatter=output_formatter))
 
         # Handle format-specific finalization
-        if format in [OutputFormat.JSON, OutputFormat.HTML]:
+        if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
             output_formatter.finalize()
 
         if not result.success:

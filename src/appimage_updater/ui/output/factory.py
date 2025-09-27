@@ -46,7 +46,7 @@ def create_output_formatter_from_params(params: Any) -> OutputFormatter:
     Returns:
         OutputFormatter instance based on params.format
     """
-    format_type = getattr(params, "format", OutputFormat.RICH)
+    format_type = getattr(params, "output_format", OutputFormat.RICH)
     verbose = getattr(params, "verbose", False)
 
     # Pass verbose flag to formatter if supported
