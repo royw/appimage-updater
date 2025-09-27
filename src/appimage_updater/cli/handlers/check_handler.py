@@ -48,7 +48,7 @@ class CheckCommandHandler(CommandHandler):
             instrument_http: bool = CLIOptions.INSTRUMENT_HTTP_OPTION,
             http_stack_depth: int = CLIOptions.HTTP_STACK_DEPTH_OPTION,
             http_track_headers: bool = CLIOptions.HTTP_TRACK_HEADERS_OPTION,
-            version: bool = CLIOptions.version_option(self._version_callback),
+            _version: bool = CLIOptions.version_option(self._version_callback),
         ) -> None:
             """Check for updates to configured applications.
 

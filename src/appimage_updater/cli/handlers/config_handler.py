@@ -40,7 +40,7 @@ class ConfigCommandHandler(CommandHandler):
             config_dir: Path = CLIOptions.CONFIG_DIR_OPTION,
             debug: bool = CLIOptions.debug_option(),
             format: OutputFormat = CLIOptions.FORMAT_OPTION,
-            version: bool = CLIOptions.version_option(self._version_callback),
+            _version: bool = CLIOptions.version_option(self._version_callback),
         ) -> None:
             """Manage global configuration settings."""
             if not action:

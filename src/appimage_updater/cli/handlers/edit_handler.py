@@ -59,7 +59,7 @@ class EditCommandHandler(CommandHandler):
             dry_run: bool = CLIOptions.EDIT_DRY_RUN_OPTION,
             debug: bool = CLIOptions.debug_option(),
             format: OutputFormat = CLIOptions.FORMAT_OPTION,
-            version: bool = CLIOptions.version_option(self._version_callback),
+            _version: bool = CLIOptions.version_option(self._version_callback),
         ) -> None:
             """Edit configuration for existing applications."""
             if app_names is None:
@@ -85,6 +85,7 @@ class EditCommandHandler(CommandHandler):
                 checksum_required=checksum_required,
                 create_dir=create_dir,
                 yes=yes,
+                no=no,
                 force=force,
                 direct=direct,
                 auto_subdir=auto_subdir,

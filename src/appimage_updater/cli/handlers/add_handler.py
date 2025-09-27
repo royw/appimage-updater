@@ -59,7 +59,7 @@ class AddCommandHandler(CommandHandler):
             examples: bool = CLIOptions.ADD_EXAMPLES_OPTION,
             debug: bool = CLIOptions.debug_option(),
             format: OutputFormat = CLIOptions.FORMAT_OPTION,
-            version: bool = CLIOptions.version_option(self._version_callback),
+            _version: bool = CLIOptions.version_option(self._version_callback),
         ) -> None:
             """Add a new application to the configuration."""
             self._execute_add_command(
@@ -68,6 +68,7 @@ class AddCommandHandler(CommandHandler):
                 download_dir=download_dir,
                 create_dir=create_dir,
                 yes=yes,
+                no=no,
                 config_file=config_file,
                 config_dir=config_dir,
                 rotation=rotation,

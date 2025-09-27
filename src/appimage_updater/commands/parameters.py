@@ -27,6 +27,7 @@ class AddParams(BaseParams):
     basename: str | None = None
     create_dir: bool = False
     yes: bool = False
+    no: bool = False
     rotation: bool | None = None
     retain: int = 5
     symlink: str | None = None
@@ -84,6 +85,7 @@ class EditParams(BaseParams):
     force: bool = False
     create_dir: bool = False
     yes: bool = False
+    no: bool = False
     auto_subdir: bool | None = None
     dry_run: bool = False
     format: Any = None  # OutputFormat, avoiding circular import
@@ -113,6 +115,7 @@ class RemoveParams(BaseParams):
 
     app_names: list[str] | None = None
     yes: bool = False
+    no: bool = False
     format: Any = None  # OutputFormat, avoiding circular import
 
 

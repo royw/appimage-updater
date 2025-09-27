@@ -149,6 +149,7 @@ class TestRemoveCommandHandler:
                 config_file=Path("/test/config.json"),
                 config_dir=Path("/test/config"),
                 yes=False,
+                no=False,
                 debug=True,
                 format=OutputFormat.RICH
             )
@@ -159,6 +160,7 @@ class TestRemoveCommandHandler:
                 config_file=Path("/test/config.json"),
                 config_dir=Path("/test/config"),
                 yes=False,
+                no=False,
                 debug=True,
                 format=OutputFormat.RICH
             )
@@ -199,6 +201,7 @@ class TestRemoveCommandHandler:
                 config_file=None,
                 config_dir=None,
                 yes=False,
+                no=False,
                 debug=False,
                 format=OutputFormat.JSON
             )
@@ -236,6 +239,7 @@ class TestRemoveCommandHandler:
                 config_file=None,
                 config_dir=None,
                 yes=False,
+                no=False,
                 debug=False,
                 format=OutputFormat.HTML
             )
@@ -273,6 +277,7 @@ class TestRemoveCommandHandler:
                 config_file=None,
                 config_dir=None,
                 yes=False,
+                no=False,
                 debug=False,
                 format=OutputFormat.RICH
             )
@@ -312,6 +317,7 @@ class TestRemoveCommandHandler:
                     config_file=None,
                     config_dir=None,
                     yes=False,
+                    no=False,
                     debug=False,
                     format=OutputFormat.RICH
                 )
@@ -357,6 +363,7 @@ class TestRemoveCommandHandler:
                             config_file=None,
                             config_dir=None,
                             yes=False,
+                            no=False,
                             debug=False,
                             format=OutputFormat.RICH
                         )
@@ -367,6 +374,7 @@ class TestRemoveCommandHandler:
                             config_file=None,
                             config_dir=None,
                             yes=False,
+                            no=False,
                             debug=False,
                             format=OutputFormat.RICH
                         )

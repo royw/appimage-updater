@@ -205,6 +205,7 @@ class AddCommand(Command):
             direct=self.params.direct,
             create_dir=self.params.create_dir,
             yes=self.params.yes,
+            no=self.params.no,
             dry_run=self.params.dry_run,
             verbose=self.params.verbose,
         )

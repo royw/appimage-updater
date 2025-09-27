@@ -40,7 +40,7 @@ class RemoveCommandHandler(CommandHandler):
             no: bool = CLIOptions.REMOVE_NO_OPTION,
             debug: bool = CLIOptions.debug_option(),
             format: OutputFormat = CLIOptions.FORMAT_OPTION,
-            version: bool = CLIOptions.version_option(self._version_callback),
+            _version: bool = CLIOptions.version_option(self._version_callback),
         ) -> None:
             """Remove applications from the configuration."""
             if app_names is None:
@@ -52,6 +52,7 @@ class RemoveCommandHandler(CommandHandler):
                 config_file=config_file,
                 config_dir=config_dir,
                 yes=yes,
+                no=no,
                 debug=debug,
                 format=format,
             )
@@ -83,17 +84,19 @@ class RemoveCommandHandler(CommandHandler):
         config_file: Path | None,
         config_dir: Path | None,
         yes: bool,
+        no: bool,
         debug: bool,
         format: OutputFormat,
     ) -> None:
         """Execute the remove command logic."""
-        self.validate_options(yes=yes, no=False)
+        self.validate_options(yes=yes, no=no)
 
         command = CommandFactory.create_remove_command(
             app_names=app_names,
             config_file=config_file,
             config_dir=config_dir,
             yes=yes,
+            no=no,
             debug=debug,
             format=format,
         )

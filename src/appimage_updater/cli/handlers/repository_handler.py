@@ -43,7 +43,7 @@ class RepositoryCommandHandler(CommandHandler):
             http_track_headers: bool = CLIOptions.HTTP_TRACK_HEADERS_OPTION,
             debug: bool = CLIOptions.debug_option(),
             format: OutputFormat = CLIOptions.FORMAT_OPTION,
-            version: bool = CLIOptions.version_option(self._version_callback),
+            _version: bool = CLIOptions.version_option(self._version_callback),
         ) -> None:
             """Examine repository information for configured applications."""
             self._execute_repository_command(

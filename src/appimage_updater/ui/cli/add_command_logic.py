@@ -55,6 +55,7 @@ async def _prepare_add_configuration(
     direct: bool | None,
     create_dir: bool | None,
     yes: bool,
+    no: bool,
     dry_run: bool,
 ) -> dict[str, Any] | None:
     """Prepare configuration data for add operation."""
@@ -79,7 +80,7 @@ async def _prepare_add_configuration(
     # Handle download directory creation
     resolved_download_dir = resolved_params["download_dir"]
     if not dry_run:
-        expanded_download_dir = handle_add_directory_creation(resolved_download_dir, create_dir, yes)
+        expanded_download_dir = handle_add_directory_creation(resolved_download_dir, create_dir, yes, no)
     else:
         expanded_download_dir = str(Path(resolved_download_dir).expanduser())
 
@@ -160,6 +161,7 @@ async def _add(
     direct: bool | None,
     create_dir: bool | None,
     yes: bool,
+    no: bool,
     dry_run: bool,
     verbose: bool,
 ) -> bool:
@@ -218,6 +220,7 @@ async def _add(
             direct,
             create_dir,
             yes,
+            no,
             dry_run,
         )
 
@@ -310,6 +313,7 @@ async def _process_add_configuration(
     direct: bool | None,
     create_dir: bool | None,
     yes: bool,
+    no: bool,
     dry_run: bool,
 ) -> dict[str, Any] | None:
     """Process and prepare add configuration data."""
@@ -332,6 +336,7 @@ async def _process_add_configuration(
         direct,
         create_dir,
         yes,
+        no,
         dry_run,
     )
 

@@ -469,6 +469,7 @@ class TestAddCommand:
             direct=False,
             create_dir=True,
             yes=False,
+            no=False,
             dry_run=True,
             verbose=True
         )
@@ -497,6 +498,7 @@ class TestAddCommand:
             direct=False,
             create_dir=True,
             yes=False,
+            no=False,
             dry_run=True,
             verbose=True
         )
@@ -534,6 +536,7 @@ class TestAddCommand:
             direct=None,
             create_dir=False,  # Default value
             yes=False,  # Default value
+            no=False,  # Default value
             dry_run=False,  # Default value
             verbose=False  # Default value
         )
