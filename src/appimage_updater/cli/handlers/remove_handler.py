@@ -54,7 +54,7 @@ class RemoveCommandHandler(CommandHandler):
                 yes=yes,
                 no=no,
                 debug=debug,
-                format=format,
+                output_format=output_format,
             )
 
     def validate_options(self, **kwargs: Any) -> None:
@@ -86,7 +86,7 @@ class RemoveCommandHandler(CommandHandler):
         yes: bool,
         no: bool,
         debug: bool,
-        format: OutputFormat,
+        output_format: OutputFormat,
     ) -> None:
         """Execute the remove command logic."""
         self.validate_options(yes=yes, no=no)
@@ -98,12 +98,12 @@ class RemoveCommandHandler(CommandHandler):
             yes=yes,
             no=no,
             debug=debug,
-            format=format,
+            output_format=output_format,
         )
 
         output_formatter = create_output_formatter_from_params(command.params)
 
-        if format in [OutputFormat.JSON, OutputFormat.HTML]:
+        if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
             result = asyncio.run(command.execute(output_formatter=output_formatter))
             output_formatter.finalize()
         else:
