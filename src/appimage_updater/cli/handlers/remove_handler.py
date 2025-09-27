@@ -39,7 +39,7 @@ class RemoveCommandHandler(CommandHandler):
             yes: bool = CLIOptions.REMOVE_YES_OPTION,
             no: bool = CLIOptions.REMOVE_NO_OPTION,
             debug: bool = CLIOptions.debug_option(),
-            format: OutputFormat = CLIOptions.FORMAT_OPTION,
+            output_format: OutputFormat = CLIOptions.FORMAT_OPTION,
             _version: bool = CLIOptions.version_option(self._version_callback),
         ) -> None:
             """Remove applications from the configuration."""

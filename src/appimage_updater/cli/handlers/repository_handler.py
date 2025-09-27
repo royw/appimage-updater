@@ -42,7 +42,7 @@ class RepositoryCommandHandler(CommandHandler):
             http_stack_depth: int = CLIOptions.HTTP_STACK_DEPTH_OPTION,
             http_track_headers: bool = CLIOptions.HTTP_TRACK_HEADERS_OPTION,
             debug: bool = CLIOptions.debug_option(),
-            format: OutputFormat = CLIOptions.FORMAT_OPTION,
+            output_format: OutputFormat = CLIOptions.FORMAT_OPTION,
             _version: bool = CLIOptions.version_option(self._version_callback),
         ) -> None:
             """Examine repository information for configured applications."""
@@ -57,7 +57,7 @@ class RepositoryCommandHandler(CommandHandler):
                 http_stack_depth=http_stack_depth,
                 http_track_headers=http_track_headers,
                 debug=debug,
-                format=format,
+                output_format=output_format,
             )
 
     def _version_callback(self, value: bool) -> None:

@@ -33,7 +33,7 @@ class ShowCommandHandler(CommandHandler):
             config_file: Path | None = CLIOptions.CONFIG_FILE_OPTION,
             config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
             debug: bool = CLIOptions.debug_option(),
-            format: OutputFormat = CLIOptions.FORMAT_OPTION,
+            output_format: OutputFormat = CLIOptions.FORMAT_OPTION,
             _version: bool = CLIOptions.version_option(self._version_callback),
         ) -> None:
             """Show detailed information about a specific application.
@@ -50,16 +50,16 @@ class ShowCommandHandler(CommandHandler):
                 config_file=config_file,
                 config_dir=config_dir,
                 debug=debug,
-                format=format,
+                output_format=output_format,
             )
 
     def handle_help_display(self, **kwargs: Any) -> bool:
         """Handle help display for show command when no app names provided."""
         app_names = kwargs.get("app_names")
-        format = kwargs.get("format", OutputFormat.RICH)
+        output_format = kwargs.get("format", OutputFormat.RICH)
 
         if app_names is None:
-            output_formatter = create_output_formatter_from_params({"format": format})
+            output_formatter = create_output_formatter_from_params({"format": output_format})
 
             if format in [OutputFormat.JSON, OutputFormat.HTML]:
                 # For structured formats, use the output formatter
