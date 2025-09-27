@@ -13,20 +13,20 @@ class PlainOutputFormatter(OutputFormatter):
     suitable for scripts and environments that don't support Rich formatting.
     """
 
-    def __init__(self, **kwargs: Any):
+    def __init__(self, **_kwargs: Any):
         """Initialize the plain formatter.
 
         Args:
-            **kwargs: Additional arguments (ignored for compatibility)
+            **_kwargs: Additional arguments (ignored for compatibility)
         """
         self._current_section: str | None = None
 
-    def print(self, message: str, **kwargs: Any) -> None:
+    def print(self, message: str, **_kwargs: Any) -> None:
         """Print a message as plain text.
 
         Args:
             message: The message to print
-            **kwargs: Additional options (ignored for plain text)
+            **_kwargs: Additional options (ignored for plain text)
         """
         print(message)
 

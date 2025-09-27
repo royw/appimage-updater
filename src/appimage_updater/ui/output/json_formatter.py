@@ -13,11 +13,11 @@ class JSONOutputFormatter(OutputFormatter):
     JSON document at the end, suitable for automation and scripting.
     """
 
-    def __init__(self, **kwargs: Any):
+    def __init__(self, **_kwargs: Any):
         """Initialize the JSON formatter.
 
         Args:
-            **kwargs: Additional arguments (ignored for compatibility)
+            **_kwargs: Additional arguments (ignored for compatibility)
         """
         self.data: dict[str, Any] = {
             "messages": [],

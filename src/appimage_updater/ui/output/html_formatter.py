@@ -13,11 +13,11 @@ class HTMLOutputFormatter(OutputFormatter):
     suitable for web display or reporting.
     """
 
-    def __init__(self, **kwargs: Any):
+    def __init__(self, **_kwargs: Any):
         """Initialize the HTML formatter.
 
         Args:
-            **kwargs: Additional arguments (ignored for compatibility)
+            **_kwargs: Additional arguments (ignored for compatibility)
         """
         self.content: list[str] = []
         self._current_section: str | None = None

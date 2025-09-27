@@ -20,26 +20,26 @@ class RichOutputFormatter(OutputFormatter):
     OutputFormatter protocol.
     """
 
-    def __init__(self, console: Console | None = None, verbose: bool = False, **kwargs: Any):
+    def __init__(self, console: Console | None = None, verbose: bool = False, **_kwargs: Any):
         """Initialize the Rich formatter.
 
         Args:
             console: Optional Rich console instance. Creates default if not provided.
             verbose: Enable verbose output (currently unused but accepted for compatibility)
-            **kwargs: Additional arguments (ignored for compatibility)
+            **_kwargs: Additional arguments (ignored for compatibility)
         """
         self.console = console or Console(no_color=bool(os.environ.get("NO_COLOR")))
         self._current_section: str | None = None
         self.verbose = verbose
 
-    def print(self, message: str, **kwargs: Any) -> None:
+    def print(self, message: str, **_kwargs: Any) -> None:
         """Print a message with Rich styling.
 
         Args:
             message: The message to print
-            **kwargs: Rich console print options (style, highlight, etc.)
+            **_kwargs: Rich console print options (style, highlight, etc.)
         """
-        self.console.print(message, **kwargs)
+        self.console.print(message, **_kwargs)
 
     def print_table(self, data: list[dict[str, Any]], title: str = "", headers: list[str] | None = None) -> None:
         """Display tabular data using Rich Table.
