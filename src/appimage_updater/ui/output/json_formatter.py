@@ -3,8 +3,10 @@
 import json
 from typing import Any
 
+from .interface import OutputFormatter
 
-class JSONOutputFormatter:
+
+class JSONOutputFormatter(OutputFormatter):
     """JSON output formatter for programmatic consumption.
 
     This formatter collects all output data and produces a structured

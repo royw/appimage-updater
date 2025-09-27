@@ -3,8 +3,10 @@
 
 from typing import Any
 
+from .interface import OutputFormatter
 
-class PlainOutputFormatter:
+
+class PlainOutputFormatter(OutputFormatter):
     """Plain text output formatter for simple console output.
 
     This formatter provides basic text output without styling,

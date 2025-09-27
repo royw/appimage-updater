@@ -34,7 +34,7 @@ class HTTPLogger(Protocol):
         ...
 
 
-class LoguruHTTPLogger:
+class LoguruHTTPLogger(HTTPLogger):
     """Loguru-based implementation of HTTPLogger."""
 
     def __init__(self, logger_name: str = "appimage_updater.instrumentation.http_tracker"):
@@ -106,7 +106,7 @@ class ConfigurableHTTPLogger:
         self._base_logger.warning(message, **kwargs)
 
 
-class SilentHTTPLogger:
+class SilentHTTPLogger(HTTPLogger):
     """Silent HTTP logger for testing or quiet operation."""
 
     def log(self, level: str, message: str, **kwargs: Any) -> None:

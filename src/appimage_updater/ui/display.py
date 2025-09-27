@@ -451,11 +451,11 @@ def display_application_details(app: Any, config_source_info: dict[str, str] | N
             "source_type": getattr(app, "source_type", ""),
             "pattern": getattr(app, "pattern", ""),
             "config_source": config_source_info or {},
+            "files": {"status": "File information available in Rich format"},
+            "symlinks": {"status": "Symlink information available in Rich format"},
         }
 
         # Add basic file and symlink information
-        app_details["files"] = {"status": "File information available in Rich format"}
-        app_details["symlinks"] = {"status": "Symlink information available in Rich format"}
 
         # Use a generic method for application details (we can add this to the interface later)
         if hasattr(output_formatter, "print_application_details"):

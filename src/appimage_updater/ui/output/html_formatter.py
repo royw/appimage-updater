@@ -3,8 +3,10 @@
 import html
 from typing import Any
 
+from .interface import OutputFormatter
 
-class HTMLOutputFormatter:
+
+class HTMLOutputFormatter(OutputFormatter):
     """HTML output formatter for web-based display.
 
     This formatter collects all output data and produces an HTML document

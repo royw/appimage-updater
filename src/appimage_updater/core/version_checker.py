@@ -31,6 +31,7 @@ from .models import (
 )
 
 
+# noinspection PyMethodMayBeStatic
 class VersionChecker:
     """Handles version checking for applications."""
 

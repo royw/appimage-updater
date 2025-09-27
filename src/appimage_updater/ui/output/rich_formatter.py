@@ -9,9 +9,10 @@ from rich.table import Table
 
 from ...core.models import CheckResult
 from ...utils.version_utils import format_version_display
+from .interface import OutputFormatter
 
 
-class RichOutputFormatter:
+class RichOutputFormatter(OutputFormatter):
     """Rich console output formatter.
 
     This formatter provides the existing Rich console behavior,
