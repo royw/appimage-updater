@@ -151,7 +151,7 @@ class TestRemoveCommandHandler:
                 yes=False,
                 no=False,
                 debug=True,
-                format=OutputFormat.RICH
+                output_format=OutputFormat.RICH
             )
             
             # Verify factory was called with correct parameters
@@ -162,7 +162,7 @@ class TestRemoveCommandHandler:
                 yes=False,
                 no=False,
                 debug=True,
-                format=OutputFormat.RICH
+                output_format=OutputFormat.RICH
             )
             
             # Verify formatter was created
@@ -203,7 +203,7 @@ class TestRemoveCommandHandler:
                 yes=False,
                 no=False,
                 debug=False,
-                format=OutputFormat.JSON
+                output_format=OutputFormat.JSON
             )
             
             # Verify finalize was called for JSON format
@@ -241,7 +241,7 @@ class TestRemoveCommandHandler:
                 yes=False,
                 no=False,
                 debug=False,
-                format=OutputFormat.HTML
+                output_format=OutputFormat.HTML
             )
             
             # Verify finalize was called for HTML format
@@ -279,7 +279,7 @@ class TestRemoveCommandHandler:
                 yes=False,
                 no=False,
                 debug=False,
-                format=OutputFormat.RICH
+                output_format=OutputFormat.RICH
             )
             
             # Verify finalize was NOT called for RICH format
@@ -319,7 +319,7 @@ class TestRemoveCommandHandler:
                     yes=False,
                     no=False,
                     debug=False,
-                    format=OutputFormat.RICH
+                    output_format=OutputFormat.RICH
                 )
             
             # Verify exit code matches command result
@@ -365,7 +365,7 @@ class TestRemoveCommandHandler:
                             yes=False,
                             no=False,
                             debug=False,
-                            format=OutputFormat.RICH
+                            output_format=OutputFormat.RICH
                         )
                         
                         # Verify factory called with None values
@@ -376,5 +376,5 @@ class TestRemoveCommandHandler:
                             yes=False,
                             no=False,
                             debug=False,
-                            format=OutputFormat.RICH
+                            output_format=OutputFormat.RICH
                         )

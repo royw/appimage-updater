@@ -112,7 +112,7 @@ class TestRepositoryCommandHandler:
                 http_stack_depth=5,
                 http_track_headers=False,
                 debug=True,
-                format=OutputFormat.RICH
+                output_format=OutputFormat.RICH
             )
             
             # Verify factory was called with correct parameters
@@ -127,7 +127,7 @@ class TestRepositoryCommandHandler:
                 http_stack_depth=5,
                 http_track_headers=False,
                 debug=True,
-                format=OutputFormat.RICH
+                output_format=OutputFormat.RICH
             )
             
             # Verify formatter was created
@@ -172,7 +172,7 @@ class TestRepositoryCommandHandler:
                 http_stack_depth=3,
                 http_track_headers=False,
                 debug=False,
-                format=OutputFormat.JSON
+                output_format=OutputFormat.JSON
             )
             
             # Verify finalize was called for JSON format
@@ -214,7 +214,7 @@ class TestRepositoryCommandHandler:
                 http_stack_depth=3,
                 http_track_headers=False,
                 debug=False,
-                format=OutputFormat.HTML
+                output_format=OutputFormat.HTML
             )
             
             # Verify finalize was called for HTML format
@@ -256,7 +256,7 @@ class TestRepositoryCommandHandler:
                 http_stack_depth=3,
                 http_track_headers=False,
                 debug=False,
-                format=OutputFormat.RICH
+                output_format=OutputFormat.RICH
             )
             
             # Verify finalize was NOT called for RICH format
@@ -300,7 +300,7 @@ class TestRepositoryCommandHandler:
                     http_stack_depth=3,
                     http_track_headers=False,
                     debug=False,
-                    format=OutputFormat.RICH
+                    output_format=OutputFormat.RICH
                 )
             
             # Verify exit code matches command result
@@ -333,7 +333,7 @@ class TestRepositoryCommandHandler:
                             http_stack_depth=5,
                             http_track_headers=False,
                             debug=False,
-                            format=OutputFormat.RICH
+                            output_format=OutputFormat.RICH
                         )
                         
                         # Verify factory called with values
@@ -348,5 +348,5 @@ class TestRepositoryCommandHandler:
                             http_stack_depth=5,
                             http_track_headers=False,
                             debug=False,
-                            format=OutputFormat.RICH
+                            output_format=OutputFormat.RICH
                         )

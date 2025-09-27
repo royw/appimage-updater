@@ -70,7 +70,7 @@ class TestShowCommandHandler:
         handler = ShowCommandHandler()
         
         with patch('appimage_updater.cli.handlers.show_handler.typer.echo') as mock_echo:
-            result = handler.handle_help_display(app_names=None, format=OutputFormat.RICH)
+            result = handler.handle_help_display(app_names=None, output_format=OutputFormat.RICH)
             
             assert result is True
             
@@ -91,7 +91,7 @@ class TestShowCommandHandler:
             mock_formatter = Mock()
             mock_formatter_factory.return_value = mock_formatter
             
-            result = handler.handle_help_display(app_names=None, format=OutputFormat.JSON)
+            result = handler.handle_help_display(app_names=None, output_format=OutputFormat.JSON)
             
             assert result is True
             
@@ -112,7 +112,7 @@ class TestShowCommandHandler:
             mock_formatter = Mock()
             mock_formatter_factory.return_value = mock_formatter
             
-            result = handler.handle_help_display(app_names=None, format=OutputFormat.HTML)
+            result = handler.handle_help_display(app_names=None, output_format=OutputFormat.HTML)
             
             assert result is True
             
@@ -129,7 +129,7 @@ class TestShowCommandHandler:
         """Test help display returns False when app_names are provided."""
         handler = ShowCommandHandler()
         
-        result = handler.handle_help_display(app_names=["TestApp"], format=OutputFormat.RICH)
+        result = handler.handle_help_display(app_names=["TestApp"], output_format=OutputFormat.RICH)
         
         assert result is False
 
@@ -162,7 +162,7 @@ class TestShowCommandHandler:
             config_file=Path("/test/config.json"),
             config_dir=Path("/test/config"),
             debug=True,
-            format=OutputFormat.RICH
+            output_format=OutputFormat.RICH
         )
         
         # Verify factory was called with correct parameters
@@ -171,7 +171,7 @@ class TestShowCommandHandler:
             config_file=Path("/test/config.json"),
             config_dir=Path("/test/config"),
             debug=True,
-            format=OutputFormat.RICH
+            output_format=OutputFormat.RICH
         )
         
         # Verify formatter was created
@@ -209,7 +209,7 @@ class TestShowCommandHandler:
             config_file=None,
             config_dir=None,
             debug=False,
-            format=OutputFormat.JSON
+            output_format=OutputFormat.JSON
         )
         
         # Verify finalize was called for JSON format
@@ -244,7 +244,7 @@ class TestShowCommandHandler:
             config_file=None,
             config_dir=None,
             debug=False,
-            format=OutputFormat.HTML
+            output_format=OutputFormat.HTML
         )
         
         # Verify finalize was called for HTML format
@@ -279,7 +279,7 @@ class TestShowCommandHandler:
             config_file=None,
             config_dir=None,
             debug=False,
-            format=OutputFormat.RICH
+            output_format=OutputFormat.RICH
         )
         
         # Verify finalize was NOT called for RICH format
@@ -316,7 +316,7 @@ class TestShowCommandHandler:
                 config_file=None,
                 config_dir=None,
                 debug=False,
-                format=OutputFormat.RICH
+                output_format=OutputFormat.RICH
             )
         
         # Verify exit code matches command result
@@ -333,11 +333,11 @@ class TestShowCommandHandler:
                     config_file=None,
                     config_dir=None,
                     debug=False,
-                    format=OutputFormat.RICH
+                    output_format=OutputFormat.RICH
                 )
             
             # Verify help was shown and exit code is 0
-            mock_help.assert_called_once_with(app_names=None, format=OutputFormat.RICH)
+            mock_help.assert_called_once_with(app_names=None, output_format=OutputFormat.RICH)
             assert exc_info.value.exit_code == 0
 
     def test_execute_show_command_with_default_parameters(self):
@@ -360,7 +360,7 @@ class TestShowCommandHandler:
                         config_file=None,
                         config_dir=None,
                         debug=False,
-                        format=OutputFormat.RICH
+                        output_format=OutputFormat.RICH
                     )
                     
                     # Verify factory called with None values
@@ -369,5 +369,5 @@ class TestShowCommandHandler:
                         config_file=None,
                         config_dir=None,
                         debug=False,
-                        format=OutputFormat.RICH
+                        output_format=OutputFormat.RICH
                     )

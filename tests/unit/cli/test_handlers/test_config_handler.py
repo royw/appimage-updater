@@ -126,7 +126,7 @@ class TestConfigCommandHandler:
                 config_file=Path("/test/config.json"),
                 config_dir=Path("/test/config"),
                 debug=True,
-                format=OutputFormat.RICH
+                output_format=OutputFormat.RICH
             )
             
             # Verify factory was called with correct parameters
@@ -138,7 +138,7 @@ class TestConfigCommandHandler:
                 config_file=Path("/test/config.json"),
                 config_dir=Path("/test/config"),
                 debug=True,
-                format=OutputFormat.RICH
+                output_format=OutputFormat.RICH
             )
             
             # Verify formatter was created
@@ -180,7 +180,7 @@ class TestConfigCommandHandler:
                 config_file=None,
                 config_dir=None,
                 debug=False,
-                format=OutputFormat.JSON
+                output_format=OutputFormat.JSON
             )
             
             # Verify finalize was called for JSON format
@@ -219,7 +219,7 @@ class TestConfigCommandHandler:
                 config_file=None,
                 config_dir=None,
                 debug=False,
-                format=OutputFormat.HTML
+                output_format=OutputFormat.HTML
             )
             
             # Verify finalize was called for HTML format
@@ -258,7 +258,7 @@ class TestConfigCommandHandler:
                 config_file=None,
                 config_dir=None,
                 debug=False,
-                format=OutputFormat.RICH
+                output_format=OutputFormat.RICH
             )
             
             # Verify finalize was NOT called for RICH format
@@ -299,7 +299,7 @@ class TestConfigCommandHandler:
                     config_file=None,
                     config_dir=None,
                     debug=False,
-                    format=OutputFormat.RICH
+                    output_format=OutputFormat.RICH
                 )
             
             # Verify exit code matches command result
@@ -346,7 +346,7 @@ class TestConfigCommandHandler:
                             config_file=None,
                             config_dir=None,
                             debug=False,
-                            format=OutputFormat.RICH
+                            output_format=OutputFormat.RICH
                         )
                         
                         # Verify factory called with values
@@ -358,7 +358,7 @@ class TestConfigCommandHandler:
                             config_file=None,
                             config_dir=None,
                             debug=False,
-                            format=OutputFormat.RICH
+                            output_format=OutputFormat.RICH
                         )
 
     def test_execute_config_command_with_all_actions(self):
@@ -388,7 +388,7 @@ class TestConfigCommandHandler:
                                 config_file=None,
                                 config_dir=None,
                                 debug=False,
-                                format=OutputFormat.RICH
+                                output_format=OutputFormat.RICH
                             )
                             
                             # Verify factory called with action
@@ -400,5 +400,5 @@ class TestConfigCommandHandler:
                                 config_file=None,
                                 config_dir=None,
                                 debug=False,
-                                format=OutputFormat.RICH
+                                output_format=OutputFormat.RICH
                             )
