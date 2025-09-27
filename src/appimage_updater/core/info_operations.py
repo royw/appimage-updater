@@ -116,7 +116,7 @@ async def _get_version_from_repository(app_config: ApplicationConfig, current_fi
         if not releases:
             return None
 
-        return _find_matching_release_version(releases, current_file, app_config.name)
+        return _find_matching_release_version(releases, current_file)
     except (RepositoryError, OSError, ValueError):
         return None
 
@@ -126,7 +126,7 @@ async def _get_repository_client(url: str) -> Any:
     return get_repository_client(url)
 
 
-def _find_matching_release_version(releases: list[Any], current_file: Path, app_name: str) -> str | None:
+def _find_matching_release_version(releases: list[Any], current_file: Path) -> str | None:
     """Find the release version that matches the current file."""
     for release in releases:
         if release.assets:
