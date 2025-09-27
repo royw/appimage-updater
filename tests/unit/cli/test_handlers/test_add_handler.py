@@ -254,7 +254,7 @@ class TestAddCommandHandler:
                 "url": "https://github.com/user/repo",
                 "yes": False,
                 "no": False,
-                "format": OutputFormat.RICH
+                "output_format": OutputFormat.RICH
             }
             
             handler._execute_add_command(**kwargs)
@@ -293,7 +293,7 @@ class TestAddCommandHandler:
                 "url": "https://github.com/user/repo",
                 "yes": False,
                 "no": False,
-                "format": OutputFormat.RICH
+                "output_format": OutputFormat.RICH
             }
             
             with pytest.raises(typer.Exit) as exc_info:
@@ -321,7 +321,7 @@ class TestAddCommandHandler:
                 "url": "https://github.com/user/repo",
                 "yes": True,
                 "no": True,  # This should cause validation failure
-                "format": OutputFormat.RICH
+                "output_format": OutputFormat.RICH
             }
             
             with pytest.raises(typer.Exit) as exc_info:
@@ -377,7 +377,7 @@ class TestAddCommandHandler:
                             "interactive": False,
                             "examples": False,
                             "debug": True,
-                            "format": OutputFormat.RICH
+                            "output_format": OutputFormat.RICH
                         }
                         
                         handler._execute_add_command(**kwargs)

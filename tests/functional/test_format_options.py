@@ -55,8 +55,8 @@ class TestFormatOptions:
         for command in expected_commands:
             assert command in commands_with_params, f"Command {command} not found in source code"
             params = commands_with_params[command]
-            assert "format" in params, (
-                f"Command {command} missing 'format' parameter in function signature. "
+            assert "output_format" in params, (
+                f"Command {command} missing 'output_format' parameter in function signature. "
                 f"Found params: {params}"
             )
 
