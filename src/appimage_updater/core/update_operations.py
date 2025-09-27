@@ -128,7 +128,7 @@ async def _execute_update_workflow(
     no_interactive: bool,
 ) -> None:
     """Execute the main update workflow."""
-    check_results = await _perform_update_checks(config, enabled_apps, no_interactive, dry_run)
+    check_results = await _perform_update_checks(enabled_apps, no_interactive, dry_run)
     candidates = _get_update_candidates(check_results, dry_run)
 
     if not candidates:
@@ -381,7 +381,6 @@ def _log_app_summary(config: Any, enabled_apps: list[Any], app_names: list[str] 
 
 
 async def _perform_update_checks(
-    config: Any,
     enabled_apps: list[Any],
     no_interactive: bool = False,
     dry_run: bool = False,
