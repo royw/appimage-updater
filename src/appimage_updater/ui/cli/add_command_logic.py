@@ -40,7 +40,6 @@ async def _prepare_add_configuration(
     name: str,
     url: str,
     download_dir: str | None,
-    auto_subdir: bool | None,
     config_file: Path | None,
     config_dir: Path | None,
     rotation: bool | None,
@@ -172,7 +171,6 @@ async def _add(
 
         resolved_params = _prepare_add_parameters(
             download_dir,
-            auto_subdir,
             rotation,
             prerelease,
             checksum,
@@ -235,7 +233,6 @@ async def _add(
 
 def _prepare_add_parameters(
     download_dir: str | None,
-    auto_subdir: bool | None,
     rotation: bool | None,
     prerelease: bool | None,
     checksum: bool | None,
@@ -319,7 +316,6 @@ async def _process_add_configuration(
         name,
         url,
         download_dir,
-        auto_subdir,
         config_file,
         config_dir,
         rotation,
