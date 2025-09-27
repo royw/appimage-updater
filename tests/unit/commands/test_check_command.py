@@ -273,7 +273,7 @@ class TestCheckCommand:
         
         command._display_request_count(mock_tracker, mock_formatter)
         
-        mock_formatter.write_message.assert_called_once_with("Total requests: 3")
+        mock_formatter.print_message.assert_called_once_with("Total requests: 3")
 
     def test_display_request_details_few_requests(self):
         """Test request details display with few requests."""
@@ -304,7 +304,7 @@ class TestCheckCommand:
             (("  1. GET https://api.github.com/repos/test/repo -> 200 (0.123s)",),),
             (("  2. GET https://api.github.com/repos/test/repo/releases -> ERROR (N/A)",),)
         ]
-        mock_formatter.write_message.assert_has_calls(expected_calls)
+        mock_formatter.print_message.assert_has_calls(expected_calls)
         mock_remaining.assert_called_once_with(mock_tracker, mock_formatter)
 
     def test_display_request_details_many_requests(self):
@@ -330,7 +330,7 @@ class TestCheckCommand:
             command._display_request_details(mock_tracker, mock_formatter)
         
         # Verify only first 5 requests were displayed
-        assert mock_formatter.write_message.call_count == 5
+        assert mock_formatter.print_message.call_count == 5
         mock_remaining.assert_called_once_with(mock_tracker, mock_formatter)
 
     def test_display_remaining_count_with_remaining(self):
@@ -344,7 +344,7 @@ class TestCheckCommand:
         
         command._display_remaining_count(mock_tracker, mock_formatter)
         
-        mock_formatter.write_message.assert_called_once_with("  ... and 3 more requests")
+        mock_formatter.print_message.assert_called_once_with("  ... and 3 more requests")
 
     def test_display_remaining_count_no_remaining(self):
         """Test remaining count display when there are 5 or fewer requests."""
@@ -357,7 +357,7 @@ class TestCheckCommand:
         
         command._display_remaining_count(mock_tracker, mock_formatter)
         
-        mock_formatter.write_message.assert_not_called()
+        mock_formatter.print_message.assert_not_called()
 
     def test_create_result_success(self):
         """Test result creation for success case."""

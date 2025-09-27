@@ -10,6 +10,7 @@ import pytest
 from appimage_updater.commands.base import CommandResult
 from appimage_updater.commands.list_command import ListCommand
 from appimage_updater.commands.parameters import ListParams
+from appimage_updater.config.loader import ConfigLoadError
 
 
 class TestListCommand:
@@ -208,7 +209,7 @@ class TestListCommand:
         params = ListParams()
         command = ListCommand(params)
         
-        with patch.object(command, '_load_config', side_effect=Exception("Config error")):
+        with patch.object(command, '_load_config', side_effect=ConfigLoadError("Config error")):
             with patch.object(command, '_display_message') as mock_display:
                 result = command._load_and_validate_config()
         
