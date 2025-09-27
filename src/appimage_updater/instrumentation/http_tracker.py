@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import (
     dataclass,
     field,
@@ -46,8 +47,8 @@ class HTTPTracker:
         self.stack_depth = stack_depth
         self.track_headers = track_headers
         self.requests: list[HTTPRequestRecord] = []
-        self._original_request: Any = None
-        self._patcher: Any = None
+        self._original_request: Callable[..., Any] | None = None
+        self._is_tracking: bool = False
 
         # Set up logger with dependency injection
         if logger is None:
@@ -57,7 +58,7 @@ class HTTPTracker:
 
     def start_tracking(self) -> None:
         """Start tracking HTTP requests."""
-        if self._patcher:
+        if self._is_tracking:
             self._logger.warning("HTTP tracking is already active")
             return
 
@@ -72,11 +73,11 @@ class HTTPTracker:
 
         # Patch the method (type: ignore for monkey patching)
         httpx.AsyncClient.request = request_wrapper  # type: ignore[method-assign,assignment]
-        self._patcher = True  # Just use as a flag
+        self._is_tracking = True
 
     def stop_tracking(self) -> None:
         """Stop tracking HTTP requests."""
-        if not self._patcher:
+        if not self._is_tracking:
             self._logger.warning("HTTP tracking is not active")
             return
 
@@ -85,7 +86,7 @@ class HTTPTracker:
         # Restore original method
         if self._original_request:
             httpx.AsyncClient.request = self._original_request  # type: ignore[method-assign]
-        self._patcher = None
+        self._is_tracking = False
         self._original_request = None
 
     async def _tracked_request(self, client_self: Any, method: str, url: str, **kwargs: Any) -> Any:
@@ -124,6 +125,9 @@ class HTTPTracker:
     ) -> Any:
         """Execute the tracked request and record response details."""
         # Call original request method
+        if self._original_request is None:
+            raise RuntimeError("Original request method not available - tracking not properly initialized")
+
         response = await self._original_request(client_self, method, url, **kwargs)
 
         # Record response details
