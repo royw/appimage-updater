@@ -102,7 +102,9 @@ class Manager:
     def _create_config_with_applications(self, data: dict[str, Any]) -> Config:
         """Create config object from data with applications array."""
         applications = [ApplicationConfig(**app_data) for app_data in data.get("applications", [])]
-        return Config(applications=applications, global_config=data.get("global_config", {}))
+        global_config_data = data.get("global_config", {})
+        global_config = GlobalConfig(**global_config_data) if global_config_data else GlobalConfig()
+        return Config(applications=applications, global_config=global_config)
 
     def _create_config_single_application(self, data: dict[str, Any]) -> Config:
         """Create config object from single application data."""
