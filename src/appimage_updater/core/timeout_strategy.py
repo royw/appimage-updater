@@ -88,6 +88,7 @@ class ProgressiveTimeoutClient:
         operation_types = self._prepare_operation_types(operation_types)
         return await self._attempt_progressive_timeouts(url, operation_types, **kwargs)
 
+    # noinspection PyMethodMayBeStatic
     def _prepare_operation_types(self, operation_types: list[str] | None) -> list[str]:
         """Prepare the list of operation types to try."""
         if operation_types is None:
@@ -138,6 +139,7 @@ class ProgressiveTimeoutClient:
             logger.warning(f"All timeout attempts failed for {url}")
             raise
 
+    # noinspection PyMethodMayBeStatic
     def _handle_http_error(self, error: httpx.HTTPError) -> None:
         """Handle non-timeout HTTP errors."""
         # For non-timeout errors, don't retry with longer timeouts

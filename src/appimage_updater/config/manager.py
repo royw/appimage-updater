@@ -45,11 +45,13 @@ class Manager:
         except (json_module.JSONDecodeError, OSError, TypeError) as e:
             raise config_load_error_class(f"Invalid JSON in {json_file}: {e}") from e
 
+    # noinspection PyMethodMayBeStatic
     def _read_json_file(self, json_file: Path, json_module: Any) -> dict[str, Any]:
         """Read and parse JSON file."""
         with json_file.open(encoding="utf-8") as f:
             return cast(dict[str, Any], json_module.load(f))
 
+    # noinspection PyMethodMayBeStatic
     def _extract_applications_from_data(self, data: dict[str, Any]) -> list[ApplicationConfig]:
         """Extract applications from JSON data."""
         applications = []
@@ -69,11 +71,13 @@ class Manager:
         # Parse and return configuration
         return self._parse_config_data(data, config_path, ConfigLoadError)
 
+    # noinspection PyMethodMayBeStatic
     def _validate_config_file_exists(self, config_path: Path, config_load_error_class: Any) -> None:
         """Validate that the configuration file exists."""
         if not config_path.exists():
             raise config_load_error_class(f"Configuration file not found: {config_path}")
 
+    # noinspection PyMethodMayBeStatic
     def _load_json_data_from_file(
         self, config_path: Path, json_module: Any, config_load_error_class: Any
     ) -> dict[str, Any]:
@@ -84,6 +88,7 @@ class Manager:
         except json_module.JSONDecodeError as e:
             raise config_load_error_class(f"Invalid JSON in {config_path}: {e}") from e
 
+    # noinspection PyMethodMayBeStatic
     def _validate_json_data_format(self, data: Any, config_load_error_class: Any) -> None:
         """Validate that JSON data is in the correct format."""
         if not isinstance(data, dict):
@@ -99,6 +104,7 @@ class Manager:
         except (TypeError, ValueError) as e:
             raise config_load_error_class(f"Invalid application configuration in {config_path}: {e}") from e
 
+    # noinspection PyMethodMayBeStatic
     def _create_config_with_applications(self, data: dict[str, Any]) -> Config:
         """Create config object from data with applications array."""
         applications = [ApplicationConfig(**app_data) for app_data in data.get("applications", [])]
@@ -106,6 +112,7 @@ class Manager:
         global_config = GlobalConfig(**global_config_data) if global_config_data else GlobalConfig()
         return Config(applications=applications, global_config=global_config)
 
+    # noinspection PyMethodMayBeStatic
     def _create_config_single_application(self, data: dict[str, Any]) -> Config:
         """Create config object from single application data."""
         return Config(applications=[ApplicationConfig(**data)])
@@ -124,6 +131,7 @@ class Manager:
         else:
             return self._load_config_from_file(config_path)
 
+    # noinspection PyMethodMayBeStatic
     def save_config(self, config: Config, config_path: Path | None = None) -> None:
         """Save configuration to file."""
         if config_path is None:
@@ -142,6 +150,7 @@ class Manager:
             json.dump(config_dict, f, indent=2, default=str)
 
     # Single File Operations
+    # noinspection PyMethodMayBeStatic
     def save_single_file_config(self, config: Config, config_path: Path | None = None) -> None:
         """Save entire config to a single JSON file."""
         if config_path is None:
@@ -161,6 +170,7 @@ class Manager:
 
         logger.info(f"Saved configuration to: {config_path}")
 
+    # noinspection PyMethodMayBeStatic
     def preserve_applications_in_config_file(
         self, target_file: Path, global_config_dict: dict[str, Any]
     ) -> dict[str, Any]:
@@ -200,6 +210,7 @@ class Manager:
 
         logger.info(f"Saved directory-based configuration to: {config_dir}")
 
+    # noinspection PyMethodMayBeStatic
     def update_global_config_in_directory(self, config: Config, config_dir: Path) -> None:
         """Update global config file in directory."""
 
@@ -209,6 +220,7 @@ class Manager:
 
         logger.debug(f"Updated global config in: {global_config_file}")
 
+    # noinspection PyMethodMayBeStatic
     def delete_app_config_files(self, app_names: list[str], config_dir: Path) -> None:
         """Delete specific app config files from directory."""
         for app_name in app_names:
@@ -220,6 +232,7 @@ class Manager:
     # Application-Specific Operations
 
     # Utility Operations
+    # noinspection PyMethodMayBeStatic
     def get_target_config_path(self, config_file: Path | None, config_dir: Path | None) -> Path:
         """Determine target config path based on file/dir preferences."""
         if config_file:
@@ -341,6 +354,7 @@ class GlobalConfigManager(Manager):
             logger.warning(f"Invalid global config format: {e}")
             return Config()
 
+    # noinspection PyMethodMayBeStatic
     def _extract_global_config(self, data: dict[str, Any]) -> Config:
         """Extract global configuration from parsed data."""
         global_config_data = data.get("global_config", {})

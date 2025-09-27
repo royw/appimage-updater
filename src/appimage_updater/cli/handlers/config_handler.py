@@ -64,6 +64,7 @@ class ConfigCommandHandler(CommandHandler):
             self.console.print(f"AppImage Updater {__version__}")
             raise typer.Exit()
 
+    # noinspection PyMethodMayBeStatic
     def _show_config_help(self) -> None:
         """Show help for config command."""
         typer.echo("Usage: appimage-updater config [OPTIONS] ACTION [SETTING] [VALUE]")
@@ -75,6 +76,7 @@ class ConfigCommandHandler(CommandHandler):
         typer.echo("  [SETTING]  Setting name (for 'set' action)")
         typer.echo("  [VALUE]    Setting value (for 'set' action)")
 
+    # noinspection PyMethodMayBeStatic
     def _execute_config_command(
         self,
         action: str,

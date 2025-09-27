@@ -119,12 +119,14 @@ class EditCommand(Command):
         else:
             self.console.print(f"[red]Error: {error_msg}[/red]")
 
+    # noinspection PyMethodMayBeStatic
     def _process_edit_result(self, result: CommandResult | None) -> CommandResult:
         """Process the edit operation result."""
         if result is not None:
             return result
         return CommandResult(success=True, message="Edit completed successfully")
 
+    # noinspection PyMethodMayBeStatic
     def _handle_edit_execution_error(self, e: Exception) -> CommandResult:
         """Handle execution errors."""
         logger.error(f"Unexpected error in edit command: {e}")
@@ -169,6 +171,7 @@ class EditCommand(Command):
                 self.console.print(f"[red]Configuration error: {e}[/red]")
             return CommandResult(success=False, message="Configuration error", exit_code=1)
 
+    # noinspection PyMethodMayBeStatic
     def _create_error_result(self, message: str) -> CommandResult:
         """Create a standardized error result."""
         return CommandResult(success=False, message=message, exit_code=1)
@@ -190,6 +193,7 @@ class EditCommand(Command):
             return None
         return app_names_to_edit
 
+    # noinspection PyMethodMayBeStatic
     def _find_matching_applications(self, config: Any, app_names_to_edit: list[str]) -> list[Any] | None:
         """Find applications matching the provided names.
 

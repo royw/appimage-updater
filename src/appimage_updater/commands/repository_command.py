@@ -99,6 +99,7 @@ class RepositoryCommand(Command):
         else:
             self.console.print(f"[red]Error: {error_msg}[/red]")
 
+    # noinspection PyMethodMayBeStatic
     def _create_repository_result(self, success: bool) -> CommandResult:
         """Create the appropriate CommandResult based on success status."""
         if success:
@@ -106,6 +107,7 @@ class RepositoryCommand(Command):
         else:
             return CommandResult(success=False, message="Repository examination failed", exit_code=1)
 
+    # noinspection PyMethodMayBeStatic
     def _handle_repository_execution_error(self, e: Exception) -> CommandResult:
         """Handle execution errors."""
         logger.error(f"Unexpected error in repository command: {e}")

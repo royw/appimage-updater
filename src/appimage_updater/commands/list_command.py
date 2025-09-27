@@ -7,6 +7,7 @@ from typing import Any
 from loguru import logger
 from rich.console import Console
 
+from ..config.loader import ConfigLoadError
 from ..config.manager import AppConfigs
 from ..ui.display import display_applications_list
 from ..ui.output.context import (
@@ -85,7 +86,7 @@ class ListCommand(Command):
         """
         try:
             config = self._load_config()
-        except Exception:
+        except ConfigLoadError:
             self._display_message("Configuration error", is_error=True)
             return None
 

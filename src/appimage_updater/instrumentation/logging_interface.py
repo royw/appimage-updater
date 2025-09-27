@@ -34,6 +34,7 @@ class HTTPLogger(Protocol):
         ...
 
 
+# noinspection PyProtocol
 class LoguruHTTPLogger(HTTPLogger):
     """Loguru-based implementation of HTTPLogger."""
 
@@ -106,6 +107,7 @@ class ConfigurableHTTPLogger:
         self._base_logger.warning(message, **kwargs)
 
 
+# noinspection PyProtocol
 class SilentHTTPLogger(HTTPLogger):
     """Silent HTTP logger for testing or quiet operation."""
 

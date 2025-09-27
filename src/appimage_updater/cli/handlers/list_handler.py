@@ -45,6 +45,7 @@ class ListCommandHandler(CommandHandler):
                 output_format=output_format,
             )
 
+    # noinspection PyMethodMayBeStatic
     def _version_callback(self, value: bool) -> None:
         """Callback for --version option."""
         if value:
@@ -52,6 +53,7 @@ class ListCommandHandler(CommandHandler):
             console.print(f"AppImage Updater {__version__}")
             raise typer.Exit()
 
+    # noinspection PyMethodMayBeStatic
     def _execute_list_command(
         self,
         config_file: Path | None,

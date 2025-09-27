@@ -699,6 +699,7 @@ async def _setup_rotation_for_file(app_config: ApplicationConfig, latest_file: P
     )
 
     # Create a temporary candidate that represents the existing file
+    # noinspection PyTypeChecker
     candidate = UpdateCandidate(
         app_name=app_config.name,
         current_version="existing",

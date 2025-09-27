@@ -159,6 +159,7 @@ class GitHubAuth:
 
         return False
 
+    # noinspection PyMethodMayBeStatic
     def _read_token_from_file(self, token_file: Path) -> str | None:
         """Read token from a single file.
 
@@ -205,6 +206,7 @@ class GitHubAuth:
 
         return False
 
+    # noinspection PyMethodMayBeStatic
     def _read_token_from_config(self, config_path: Path) -> str | None:
         """Read token from a single config file.
 
@@ -229,6 +231,7 @@ class GitHubAuth:
             logger.debug(f"Failed to read token from config {config_path}: {e}")
             return None
 
+    # noinspection PyMethodMayBeStatic
     def _get_user_agent(self) -> str:
         """Get User-Agent string for API requests.
 

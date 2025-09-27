@@ -50,7 +50,8 @@ class HTMLOutputFormatter(OutputFormatter):
             ]
         )
 
-    def write_message(self, message: str, **_kwargs: Any) -> None:
+    # noinspection PyProtocol
+    def print_message(self, message: str, **_kwargs: Any) -> None:
         """Add a message to the HTML content.
 
         Args:
@@ -83,6 +84,7 @@ class HTMLOutputFormatter(OutputFormatter):
         if title:
             self.content.append(f"    <h3>{html.escape(title)}</h3>")
 
+    # noinspection PyMethodMayBeStatic
     def _determine_table_headers(self, data: list[dict[str, Any]], headers: list[str] | None) -> list[str]:
         """Determine the headers to use for the table."""
         return headers or (list(data[0].keys()) if data else [])

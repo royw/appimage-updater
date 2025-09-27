@@ -110,6 +110,7 @@ class EditCommandHandler(CommandHandler):
             self.console.print(f"AppImage Updater {__version__}")
             raise typer.Exit()
 
+    # noinspection PyMethodMayBeStatic
     def _show_edit_help(self) -> None:
         """Show help for edit command."""
         typer.echo("Usage: appimage-updater edit [OPTIONS] APP_NAMES...")

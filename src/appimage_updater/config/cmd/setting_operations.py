@@ -222,7 +222,7 @@ def _validate_and_apply_numeric_value(config: Config, setting: str, numeric_valu
 
 
 def _apply_retain_count_setting(config: Config, value: int) -> bool:
-    """Apply retain count setting with validation.
+    """Apply the retain count setting with validation.
 
     Returns:
         True if setting was applied successfully, False otherwise.

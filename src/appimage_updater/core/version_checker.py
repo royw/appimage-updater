@@ -497,6 +497,7 @@ class VersionChecker:
         """Create an update candidate from release and asset."""
         release_version = self._get_version_for_release(release, best_asset)
 
+        # noinspection PyTypeChecker
         return UpdateCandidate(
             app_name=app_config.name,
             current_version=current_version,

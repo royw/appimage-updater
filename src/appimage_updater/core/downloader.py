@@ -135,6 +135,7 @@ class Downloader:
             checksum_result=checksum_result,
         )
 
+    # noinspection PyMethodMayBeStatic
     async def _handle_download_failure(
         self, candidate: UpdateCandidate, attempt: int, max_retries: int, error: Exception
     ) -> None:
@@ -151,6 +152,7 @@ class Downloader:
             logger.debug(f"Waiting {wait_time}s before retry...")
             await asyncio.sleep(wait_time)
 
+    # noinspection PyMethodMayBeStatic
     def _create_failure_result(
         self, candidate: UpdateCandidate, last_error: Exception | None, start_time: float
     ) -> DownloadResult:
@@ -187,6 +189,7 @@ class Downloader:
         # All retries failed
         return self._create_failure_result(candidate, last_error, start_time)
 
+    # noinspection PyMethodMayBeStatic
     def _setup_download(
         self,
         candidate: UpdateCandidate,
@@ -240,6 +243,7 @@ class Downloader:
             pool=self.timeout,  # Overall pool timeout
         )
 
+    # noinspection PyMethodMayBeStatic
     def _initialize_download_state(self) -> dict[str, Any]:
         """Initialize download state tracking variables."""
         return {
@@ -267,11 +271,13 @@ class Downloader:
                 self._update_progress(progress, task_id, len(chunk))
                 self._publish_progress_event(chunk, candidate, total_bytes, download_state)
 
+    # noinspection PyMethodMayBeStatic
     def _update_progress(self, progress: Progress | None, task_id: TaskID | None, chunk_size: int) -> None:
         """Update progress bar if available."""
         if progress and task_id is not None:
             progress.update(task_id, advance=chunk_size)
 
+    # noinspection PyMethodMayBeStatic
     def _publish_progress_event(
         self,
         chunk: bytes,
@@ -300,6 +306,7 @@ class Downloader:
             download_state["event_bus"].publish(event)
             download_state["last_event_time"] = current_time
 
+    # noinspection PyMethodMayBeStatic
     def _make_appimage_executable(self, candidate: UpdateCandidate) -> None:
         """Make AppImage file executable if it's an AppImage."""
         if candidate.download_path.suffix.lower() == ".appimage":
@@ -319,7 +326,7 @@ class Downloader:
         return checksum_result
 
     async def _post_process_download(self, candidate: UpdateCandidate) -> ChecksumResult | None:
-        """Post-process downloaded file (extract if zip, make executable, verify checksum)."""
+        """Post-process downloaded file (extract if a zip file, then make executable, and verify checksum)."""
         # Handle zip extraction first
         await self._extract_if_zip(candidate)
 
@@ -340,6 +347,7 @@ class Downloader:
 
         return appimage_files[0]
 
+    # noinspection PyMethodMayBeStatic
     def _cleanup_zip_and_update_path(self, candidate: UpdateCandidate, extract_path: Path) -> None:
         """Remove zip file and update candidate download path."""
         candidate.download_path.unlink()
@@ -370,10 +378,12 @@ class Downloader:
             logger.error(f"Failed to extract zip file {candidate.download_path.name}: {e}")
             raise Exception(f"Zip extraction failed: {e}") from e
 
+    # noinspection PyMethodMayBeStatic
     def _list_appimages_in_zip(self, zip_ref: zipfile.ZipFile) -> list[str]:
         """Return AppImage file entries (exclude directories)."""
         return [n for n in zip_ref.namelist() if n.lower().endswith(".appimage") and not n.endswith("/")]
 
+    # noinspection PyMethodMayBeStatic
     def _zip_contents_summary(self, zip_ref: zipfile.ZipFile, max_items: int = 5) -> str:
         files = [n for n in zip_ref.namelist() if not n.endswith("/")][:max_items]
         return f"Contains: {', '.join(files)}" + ("..." if len(zip_ref.namelist()) > max_items else "")
@@ -386,6 +396,7 @@ class Downloader:
             f"Check the project's releases page for alternative download options."
         )
 
+    # noinspection PyMethodMayBeStatic
     def _extract_appimage(self, zip_ref: zipfile.ZipFile, appimage_filename: str, candidate: UpdateCandidate) -> Path:
         appimage_basename = Path(appimage_filename).name
         extract_path = candidate.download_path.parent / appimage_basename
@@ -394,6 +405,7 @@ class Downloader:
         logger.debug(f"Extracted AppImage: {appimage_basename}")
         return extract_path
 
+    # noinspection PyMethodMayBeStatic
     def _should_use_asset_date(self, candidate: UpdateCandidate) -> bool:
         """Check if we should use asset creation date instead of version."""
         return bool(
@@ -412,6 +424,7 @@ class Downloader:
             # Use the standard version for regular releases
             return candidate.latest_version
 
+    # noinspection PyMethodMayBeStatic
     def _write_metadata_file(self, info_file_path: Path, version_info: str) -> None:
         """Write the metadata content to file."""
         metadata_content = f"Version: {version_info}\n"
@@ -524,6 +537,7 @@ class Downloader:
 
         return None
 
+    # noinspection PyMethodMayBeStatic
     def _should_skip_checksum_line(self, line: str) -> bool:
         """Check if a checksum file line should be skipped."""
         return not line or line.startswith("#")
@@ -540,6 +554,7 @@ class Downloader:
 
         return None
 
+    # noinspection PyMethodMayBeStatic
     def _parse_hash_filename_format(self, line: str, filename: str) -> str | None:
         """Parse checksum from 'hash filename' format line."""
         hash_part, file_part = line.split(" ", 1)
@@ -548,6 +563,7 @@ class Downloader:
             return hash_part.lower()
         return None
 
+    # noinspection PyMethodMayBeStatic
     def _calculate_file_hash(self, file_path: Path, algorithm: str) -> str:
         """Calculate hash of a file using the specified algorithm."""
         hasher = hashlib.new(algorithm)
@@ -590,10 +606,12 @@ class Downloader:
                 error_message=f"Checksum verification error: {e}",
             )
 
+    # noinspection PyMethodMayBeStatic
     def _get_checksum_file_path(self, candidate: UpdateCandidate) -> Path:
         """Get the path for the checksum file."""
         return candidate.download_path.parent / f"{candidate.download_path.name}.checksum"
 
+    # noinspection PyMethodMayBeStatic
     def _create_download_failure_result(self) -> ChecksumResult:
         """Create a ChecksumResult for download failure."""
         return ChecksumResult(
@@ -601,6 +619,7 @@ class Downloader:
             error_message="Failed to download checksum file",
         )
 
+    # noinspection PyMethodMayBeStatic
     def _determine_checksum_algorithm(self, checksum_name: str) -> str:
         """Determine the checksum algorithm from the filename."""
         checksum_name_lower = checksum_name.lower()
@@ -620,11 +639,13 @@ class Downloader:
             algorithm,
         )
 
+    # noinspection PyMethodMayBeStatic
     def _cleanup_checksum_file(self, checksum_path: Path) -> None:
         """Clean up the temporary checksum file."""
         if checksum_path.exists():
             checksum_path.unlink()
 
+    # noinspection PyMethodMayBeStatic
     def _log_verification_result(self, candidate: UpdateCandidate, result: ChecksumResult, algorithm: str) -> None:
         """Log the checksum verification result."""
         logger.debug(
@@ -661,6 +682,7 @@ class Downloader:
         # Execute rotation steps
         return await self._execute_rotation_steps(candidate, rotation_params)
 
+    # noinspection PyMethodMayBeStatic
     def _should_perform_rotation(self, candidate: UpdateCandidate) -> bool:
         """Check if rotation should be performed."""
         if not candidate.app_config:
@@ -687,6 +709,7 @@ class Downloader:
             "current_path": current_path,
         }
 
+    # noinspection PyMethodMayBeStatic
     def _determine_rotation_naming(self, download_path: Path) -> tuple[str, str]:
         """Determine base name and extension for rotation."""
         # For AppImage files, treat the full filename as the base (including .AppImage)
@@ -742,6 +765,7 @@ class Downloader:
         # Move metadata file if it exists
         self._move_metadata_file(candidate.download_path, current_path)
 
+    # noinspection PyMethodMayBeStatic
     def _move_metadata_file(self, original_path: Path, current_path: Path) -> None:
         """Move metadata file if it exists."""
         original_info_path = original_path.with_suffix(original_path.suffix + ".info")
@@ -800,6 +824,7 @@ class Downloader:
             logger.debug(f"Step 3: Cleaning up excess files for base '{current_base_name}'")
             self._cleanup_excess_files(download_dir, current_base_name, current_extension, retain_count)
 
+    # noinspection PyMethodMayBeStatic
     def _find_current_files_by_pattern(self, download_dir: Path) -> list[Path]:
         """Find all .current files in the download directory."""
         current_files = []
@@ -809,6 +834,7 @@ class Downloader:
                 current_files.append(file_path)
         return current_files
 
+    # noinspection PyMethodMayBeStatic
     def _extract_base_name_from_current(self, current_file: Path) -> str:
         """Extract base name from a .current file path."""
         # For files like "Bambu_Studio_ubuntu-24.04_PR-7829.AppImage.current"
@@ -850,6 +876,7 @@ class Downloader:
             else:
                 break  # No more files to clean up
 
+    # noinspection PyMethodMayBeStatic
     def _remove_file_and_metadata(self, file_path: Path) -> None:
         """Remove a file and its associated metadata file if they exist."""
         if file_path.exists():
@@ -859,6 +886,7 @@ class Downloader:
         if info_path.exists():
             info_path.unlink()
 
+    # noinspection PyMethodMayBeStatic
     def _move_file_with_metadata(self, old_path: Path, new_path: Path) -> None:
         """Move a file and its associated metadata file."""
         # Move the main file
@@ -871,6 +899,7 @@ class Downloader:
             old_info_path.rename(new_info_path)
             logger.debug(f"Rotated {old_info_path.name} to {new_info_path.name}")
 
+    # noinspection PyMethodMayBeStatic
     async def _update_symlink(self, current_path: Path, symlink_path: Path) -> None:
         """Update symlink to point to the new current file."""
         try:

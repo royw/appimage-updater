@@ -262,6 +262,7 @@ class InteractiveAddHandler:
                 # Re-raise KeyboardInterrupt to be caught by the main handler
                 raise
 
+    # noinspection PyMethodMayBeStatic
     def _validate_app_name(self, name: str) -> bool:
         """Validate application name."""
         if not name or not name.strip():
@@ -275,7 +276,9 @@ class InteractiveAddHandler:
         if not url or not url.strip():
             return False
 
+        # noinspection HttpUrlsUsage
         if not (url.startswith("http://") or url.startswith("https://")):
+            # noinspection HttpUrlsUsage
             self.console.print("[yellow]URL should start with http:// or https://[/yellow]")
             return False
 

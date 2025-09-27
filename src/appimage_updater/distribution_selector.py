@@ -50,6 +50,7 @@ class DistributionSelector:
             f"arch: {self.system_info.architecture}, platform: {self.system_info.platform}"
         )
 
+    # noinspection PyMethodMayBeStatic
     def _validate_assets_input(self, assets: list[Asset]) -> Asset | None:
         """Validate assets input and return single asset if only one available."""
         if not assets:
@@ -64,6 +65,7 @@ class DistributionSelector:
         asset_infos = self._score_and_sort(asset_infos)
         return self._filter_compatible(asset_infos) or asset_infos
 
+    # noinspection PyMethodMayBeStatic
     def _handle_high_score_selection(self, best_info: AssetInfo) -> Asset | None:
         """Handle selection when best asset has high confidence score."""
         if best_info.score >= 150.0:
@@ -101,6 +103,7 @@ class DistributionSelector:
         # Handle cases requiring user input or fallback
         return self._handle_user_input_selection(asset_infos, best_info)
 
+    # noinspection PyMethodMayBeStatic
     def _parse_assets(self, assets: list[Asset]) -> list[AssetInfo]:
         return [_parse_asset_info(a) for a in assets]
 
@@ -112,6 +115,7 @@ class DistributionSelector:
         asset_infos.sort(key=lambda x: (x.score, x.asset.created_at), reverse=True)
         return asset_infos
 
+    # noinspection PyMethodMayBeStatic
     def _filter_compatible(self, asset_infos: list[AssetInfo]) -> list[AssetInfo]:
         compatible = [i for i in asset_infos if i.score > 0.0]
         if not compatible:
@@ -145,6 +149,7 @@ class DistributionSelector:
         logger.warning("Could not detect distribution, assuming generic Linux")
         return DistributionInfo(id="linux", version="unknown", version_numeric=0.0)
 
+    # noinspection PyMethodMayBeStatic
     def _parse_os_release_content(self, content: str) -> dict[str, str]:
         """Parse os-release file content into key-value pairs."""
         info = {}
@@ -229,6 +234,7 @@ class DistributionSelector:
 
         return None
 
+    # noinspection PyMethodMayBeStatic
     def _parse_version_number(self, version_str: str) -> float:
         """Parse version string to numeric value for comparison."""
         try:
@@ -253,6 +259,7 @@ class DistributionSelector:
 
         return self._calculate_total_score(info, asset_properties)
 
+    # noinspection PyMethodMayBeStatic
     def _extract_asset_properties(self, info: AssetInfo) -> dict[str, str | None]:
         """Extract asset properties for compatibility checking."""
         asset = info.asset
@@ -350,6 +357,7 @@ class DistributionSelector:
         """Check if version information is valid for scoring."""
         return bool(info.version_numeric and self.current_dist.version_numeric > 0)
 
+    # noinspection PyMethodMayBeStatic
     def _score_backward_compatible_version(self, version_diff: float) -> float:
         """Score backward compatible (older or same) versions."""
         if version_diff == 0:
@@ -359,6 +367,7 @@ class DistributionSelector:
         else:
             return 15.0  # Older version
 
+    # noinspection PyMethodMayBeStatic
     def _score_newer_version(self, version_diff: float) -> float:
         """Score newer versions (less preferred but might work)."""
         return max(5.0, 20.0 - (version_diff * 5))
@@ -433,6 +442,7 @@ class DistributionSelector:
 
         return table
 
+    # noinspection PyMethodMayBeStatic
     def _format_basic_info(self, info: AssetInfo) -> tuple[str, str]:
         """Format basic distribution and version information."""
         dist_display = info.distribution.title() if info.distribution else "Generic"
@@ -449,6 +459,7 @@ class DistributionSelector:
         platform = asset.platform
         return self._format_platform_display(platform)
 
+    # noinspection PyMethodMayBeStatic
     def _format_file_format_info(self, asset: Asset, info: AssetInfo) -> str:
         """Format file format information for display."""
         asset_format = asset.file_extension or (f".{info.format}" if info.format else None)
@@ -502,6 +513,7 @@ class DistributionSelector:
         else:
             return f"[red]{platform_display}[/red]"
 
+    # noinspection PyMethodMayBeStatic
     def _format_score_display(self, score: float) -> str:
         """Format score display with color coding."""
         score_text = f"{score:.1f}"
@@ -549,6 +561,7 @@ class DistributionSelector:
         """Prompt user for their choice."""
         return Prompt.ask(f"Select an option [1-{num_options}] (or 'q' to quit)", default=str(1), console=self.console)
 
+    # noinspection PyMethodMayBeStatic
     def _is_quit_choice(self, choice: str) -> bool:
         """Check if user chose to quit."""
         return choice.lower() == "q"
@@ -564,6 +577,7 @@ class DistributionSelector:
             self.console.print(f"[red]Please enter a number between 1 and {len(asset_infos)}[/red]")
             raise ValueError("Invalid choice range")
 
+    # noinspection PyMethodMayBeStatic
     def _score_filename_indicators(self, info: AssetInfo) -> float:
         """Score based on filename indicators like PR numbers, build numbers, etc.
 

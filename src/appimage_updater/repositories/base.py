@@ -144,6 +144,7 @@ class RepositoryClient(ABC):
             Regex pattern string or None if generation fails
         """
 
+    # noinspection PyMethodMayBeStatic
     def _get_default_user_agent(self) -> str:
         """Get default User-Agent string for API requests."""
         try:

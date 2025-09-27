@@ -187,7 +187,7 @@ def _select_prerelease_files(groups: dict[str, list[str]]) -> list[str] | None:
 
 
 def _select_target_files(groups: dict[str, list[str]]) -> list[str] | None:
-    """Choose best filenames: prefer stable, prefer AppImage over ZIP."""
+    """Choose the best filenames: prefer stable, prefer AppImage over ZIP."""
     # Try stable files first
     stable_files = _select_stable_files(groups)
     if stable_files is not None:
@@ -213,11 +213,11 @@ def create_pattern_from_filenames(filenames: list[str], include_both_formats: bo
 
 
 def _strip_extensions_list(filenames: list[str]) -> list[str]:
-    exts = (".AppImage", ".appimage", ".zip", ".ZIP")
+    extensions = (".AppImage", ".appimage", ".zip", ".ZIP")
     result = []
     for name in filenames:
         base = name
-        for ext in exts:
+        for ext in extensions:
             if base.endswith(ext):
                 base = base[: -len(ext)]
                 break

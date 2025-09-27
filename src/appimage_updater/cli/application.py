@@ -119,8 +119,8 @@ class AppImageUpdaterCLI:
                     sys.exit(getattr(exc_value, "code", 1))
 
             # For other exceptions, show a clean error message without stack trace
-            console = Console(stderr=True)
-            console.print(f"[red]Error: {exc_value}[/red]")
+            console_ = Console(stderr=True)
+            console_.print(f"[red]Error: {exc_value}[/red]")
             sys.exit(1)
 
         # Install our clean exception handler

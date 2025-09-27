@@ -95,6 +95,7 @@ class ShowCommandHandler(CommandHandler):
             return True
         return False
 
+    # noinspection PyMethodMayBeStatic
     def _version_callback(self, value: bool) -> None:
         """Callback for --version option."""
         if value:

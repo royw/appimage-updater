@@ -136,6 +136,7 @@ class HTTPTracker:
 
         return response
 
+    # noinspection PyMethodMayBeStatic
     def _record_response_details(self, record: HTTPRequestRecord, response: Any, start_time: float) -> None:
         """Record response details in the request record."""
         if hasattr(response, "status_code"):
@@ -165,6 +166,7 @@ class HTTPTracker:
         finally:
             del frame  # Prevent reference cycles
 
+    # noinspection PyMethodMayBeStatic
     def _skip_internal_frames(self, frame: Any) -> Any:
         """Skip internal frames to get to the actual caller."""
         # Skip the current frame and the tracked_request frame
@@ -198,6 +200,7 @@ class HTTPTracker:
         short_filename = self._extract_short_filename(filename)
         return f"{short_filename}:{function_name}:{line_number}"
 
+    # noinspection PyMethodMayBeStatic
     def _extract_short_filename(self, filename: str) -> str:
         """Extract short filename from full path."""
         return filename.split("/")[-1] if "/" in filename else filename

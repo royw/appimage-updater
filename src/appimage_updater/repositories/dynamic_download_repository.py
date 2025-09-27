@@ -145,6 +145,7 @@ class DynamicDownloadRepository(RepositoryClient):
         # Fallback to URL-based extraction
         return self._extract_version_from_url(url)
 
+    # noinspection PyMethodMayBeStatic
     def _extract_version_from_url(self, url: str) -> str:
         """Extract version from URL using common patterns."""
         version_patterns = [
@@ -159,6 +160,7 @@ class DynamicDownloadRepository(RepositoryClient):
 
         return "latest"
 
+    # noinspection PyMethodMayBeStatic
     def _extract_filename_from_url(self, url: str) -> str:
         """Extract filename from URL."""
 
@@ -174,6 +176,7 @@ class DynamicDownloadRepository(RepositoryClient):
         """Check if prerelease should be enabled (always False for dynamic downloads)."""
         return False
 
+    # noinspection PyMethodMayBeStatic
     def _extract_appimage_asset_names(self, releases: list[Any]) -> list[str]:
         """Extract AppImage asset names from releases."""
         asset_names = []
@@ -183,6 +186,7 @@ class DynamicDownloadRepository(RepositoryClient):
                     asset_names.append(asset.name)
         return asset_names
 
+    # noinspection PyMethodMayBeStatic
     def _generate_regex_pattern(self, asset_name: str) -> str:
         """Generate regex pattern from asset name."""
         # Replace version-like patterns with regex

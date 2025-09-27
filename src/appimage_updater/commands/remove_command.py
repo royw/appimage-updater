@@ -109,10 +109,12 @@ class RemoveCommand(Command):
         app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
         return app_configs._config
 
+    # noinspection PyMethodMayBeStatic
     def _create_error_result(self) -> CommandResult:
         """Create a standardized error result."""
         return CommandResult(success=False, exit_code=1)
 
+    # noinspection PyMethodMayBeStatic
     def _create_success_result(self) -> CommandResult:
         """Create a standardized success result."""
         return CommandResult(success=True, exit_code=0)
@@ -148,11 +150,13 @@ class RemoveCommand(Command):
             self.console.print("No applications found")
         return CommandResult(success=False, exit_code=1)
 
+    # noinspection PyMethodMayBeStatic
     def _handle_unexpected_error(self, error: Exception) -> None:
         """Handle unexpected errors during removal."""
         logger.error(f"Unexpected error in remove command: {error}")
         logger.exception("Full exception details")
 
+    # noinspection PyMethodMayBeStatic
     def _validate_and_filter_apps(
         self, config: Config, app_names_to_remove: list[str]
     ) -> list[ApplicationConfig] | None:
@@ -204,6 +208,7 @@ class RemoveCommand(Command):
         manager = Manager()
         manager.save_single_file_config(config, self.params.config_file)
 
+    # noinspection PyMethodMayBeStatic
     def _delete_removed_app_files(self, config_dir: Path, removed_apps: list[ApplicationConfig]) -> None:
         """Delete individual app config files for removed apps."""
         # Use manager method for config file operations
@@ -211,6 +216,7 @@ class RemoveCommand(Command):
         app_names = [app.name for app in removed_apps]
         manager.delete_app_config_files(app_names, config_dir)
 
+    # noinspection PyMethodMayBeStatic
     def _update_global_config_file(self, config_dir: Path, config: Config) -> None:
         """Update global config file if it exists."""
         # Use manager method for config file operations

@@ -32,7 +32,8 @@ class RichOutputFormatter(OutputFormatter):
         self._current_section: str | None = None
         self.verbose = verbose
 
-    def write_message(self, message: str, **_kwargs: Any) -> None:
+    # noinspection PyProtocol
+    def print_message(self, message: str, **_kwargs: Any) -> None:
         """Write a message with Rich styling.
 
         Args:
@@ -63,10 +64,12 @@ class RichOutputFormatter(OutputFormatter):
         # Display table
         self.console.print(table)
 
+    # noinspection PyMethodMayBeStatic
     def _create_rich_table(self, title: str) -> Table:
         """Create a Rich Table with the given title."""
         return Table(title=title)
 
+    # noinspection PyMethodMayBeStatic
     def _determine_table_headers(self, data: list[dict[str, Any]], headers: list[str] | None) -> list[str]:
         """Determine the headers to use for the table."""
         return headers or (list(data[0].keys()) if data else [])
@@ -77,10 +80,12 @@ class RichOutputFormatter(OutputFormatter):
             style = self._get_column_style(header)
             table.add_column(header, style=style)
 
+    # noinspection PyMethodMayBeStatic
     def _get_column_style(self, header: str) -> str | None:
         """Get the appropriate style for a column header."""
         return "cyan" if header.lower() in ["application", "name"] else None
 
+    # noinspection PyMethodMayBeStatic
     def _add_table_rows(self, table: Table, data: list[dict[str, Any]], table_headers: list[str]) -> None:
         """Add data rows to the Rich table."""
         for row_data in data:
@@ -233,6 +238,7 @@ class RichOutputFormatter(OutputFormatter):
         # Process path wrapping
         return self._process_path_wrapping(display_path, max_width)
 
+    # noinspection PyMethodMayBeStatic
     def _path_fits_within_width(self, display_path: str, max_width: int) -> bool:
         """Check if path fits within the specified width."""
         return len(display_path) <= max_width
@@ -257,14 +263,17 @@ class RichOutputFormatter(OutputFormatter):
         result_parts = self._add_ellipsis_if_truncated(result_parts, parts)
         return "/".join(result_parts)
 
+    # noinspection PyMethodMayBeStatic
     def _is_short_home_path(self, display_path: str, parts: list[str], max_width: int) -> bool:
         """Check if this is a short home path that should be shown in full."""
         return display_path.startswith("~") and len(parts) <= 3 and len(display_path) <= max_width + 5
 
+    # noinspection PyMethodMayBeStatic
     def _wrap_single_part_path(self, display_path: str, max_width: int) -> str:
         """Wrap a path with no separators using simple truncation."""
         return "..." + display_path[-(max_width - 3) :]
 
+    # noinspection PyMethodMayBeStatic
     def _replace_home_with_tilde(self, path_str: str) -> str:
         """Replace home directory path with ~ for display purposes."""
         if not path_str:
@@ -297,6 +306,7 @@ class RichOutputFormatter(OutputFormatter):
         # Build truncated path with ellipsis logic
         return self._build_truncated_path_parts(parts, max_width)
 
+    # noinspection PyMethodMayBeStatic
     def _all_parts_fit(self, parts: list[str], max_width: int) -> bool:
         """Check if all parts fit within the width limit."""
         total_length = sum(len(part) for part in parts) + len(parts) - 1  # +1 for each separator
@@ -315,6 +325,7 @@ class RichOutputFormatter(OutputFormatter):
         # Add parent directories within constraints
         return self._add_parent_directories_to_path(parts, result_parts, current_length, effective_width)
 
+    # noinspection PyMethodMayBeStatic
     def _add_parent_directories_to_path(
         self, parts: list[str], result_parts: list[str], current_length: int, effective_width: int
     ) -> list[str]:
@@ -336,12 +347,14 @@ class RichOutputFormatter(OutputFormatter):
 
         return result_parts
 
+    # noinspection PyMethodMayBeStatic
     def _add_ellipsis_if_truncated(self, result_parts: list[str], original_parts: list[str]) -> list[str]:
         """Add ellipsis at beginning if path was truncated."""
         if len(result_parts) < len(original_parts):
             result_parts.insert(0, "...")
         return result_parts
 
+    # noinspection PyMethodMayBeStatic
     def _dict_to_check_result(self, result_data: dict[str, Any]) -> CheckResult:
         """Convert dictionary to CheckResult for compatibility."""
         # Extract app name from either "Application" or "app_name" key
@@ -394,6 +407,7 @@ class RichOutputFormatter(OutputFormatter):
 
         self.console.print(table)
 
+    # noinspection PyMethodMayBeStatic
     def _create_check_results_table(self) -> Table:
         """Create and configure the check results table."""
         table = Table(title="Update Check Results")
@@ -404,6 +418,7 @@ class RichOutputFormatter(OutputFormatter):
         table.add_column("Update Available", style="red")
         return table
 
+    # noinspection PyMethodMayBeStatic
     def _add_error_row(self, table: Table, app_name: str, error_message: str | None) -> None:
         """Add an error row to the table."""
         table.add_row(
@@ -425,6 +440,7 @@ class RichOutputFormatter(OutputFormatter):
         else:
             self._add_no_data_row(table, app_name)
 
+    # noinspection PyMethodMayBeStatic
     def _add_direct_version_row(
         self,
         table: Table,
@@ -446,6 +462,7 @@ class RichOutputFormatter(OutputFormatter):
 
         table.add_row(app_name, status, current_display, latest_display, update_indicator)
 
+    # noinspection PyMethodMayBeStatic
     def _add_no_data_row(self, table: Table, app_name: str) -> None:
         """Add a row when no data is available."""
         table.add_row(
@@ -456,6 +473,7 @@ class RichOutputFormatter(OutputFormatter):
             "[dim]N/A[/dim]",
         )
 
+    # noinspection PyMethodMayBeStatic
     def _add_success_row(self, table: Table, app_name: str, candidate: Any) -> None:
         """Add a success row with candidate data."""
         current = format_version_display(candidate.current_version) or "[dim]None"

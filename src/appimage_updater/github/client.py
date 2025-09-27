@@ -137,6 +137,7 @@ class GitHubClient:
 
         return self._validate_and_parse_releases_response(response)
 
+    # noinspection PyMethodMayBeStatic
     def _parse_repo_url(self, url: str) -> tuple[str, str]:
         """Parse repository URL to extract owner and repo name."""
         # Handle various GitHub URL formats
@@ -196,6 +197,7 @@ class GitHubClient:
         # Associate each asset with its checksum file
         self._associate_assets_with_checksums(assets, checksum_candidates)
 
+    # noinspection PyMethodMayBeStatic
     def _find_checksum_candidates(self, assets: list[Asset]) -> dict[str, Asset]:
         """Find potential checksum files and map them to their base names."""
         checksum_patterns = [
@@ -238,6 +240,7 @@ class GitHubClient:
                 else:
                     logger.debug(f"No checksum found for {base_name}")
 
+    # noinspection PyMethodMayBeStatic
     def _find_checksum_for_asset(self, asset_name: str, checksum_candidates: dict[str, Asset]) -> Asset | None:
         """Find checksum file for a specific asset."""
         # Try exact match first

@@ -102,6 +102,7 @@ class DirectDownloadRepository(RepositoryClient):
         # For direct downloads, we typically don't modify the URL
         return url, False
 
+    # noinspection PyMethodMayBeStatic
     def _extract_version_from_url(self, url: str) -> str:
         """Extract version from URL using common patterns."""
         # Common version patterns in URLs
@@ -124,6 +125,7 @@ class DirectDownloadRepository(RepositoryClient):
         # For direct download URLs, use a timestamp-based version for nightly builds
         return datetime.now().strftime("%Y%m%d")
 
+    # noinspection PyMethodMayBeStatic
     def _try_parse_last_modified_header(self, response: httpx.Response) -> datetime | None:
         """Try to parse Last-Modified header."""
         last_modified = response.headers.get("last-modified")
@@ -136,6 +138,7 @@ class DirectDownloadRepository(RepositoryClient):
                 pass
         return None
 
+    # noinspection PyMethodMayBeStatic
     def _try_parse_date_header(self, response: httpx.Response) -> datetime | None:
         """Try to parse Date header as fallback."""
         date_header = response.headers.get("date")
@@ -148,6 +151,7 @@ class DirectDownloadRepository(RepositoryClient):
                 pass
         return None
 
+    # noinspection PyMethodMayBeStatic
     def _extract_filename_from_url(self, url: str) -> str:
         """Extract filename from URL."""
         parsed = urlparse(url)
@@ -161,6 +165,7 @@ class DirectDownloadRepository(RepositoryClient):
         """Check if prerelease should be enabled (always False for direct downloads)."""
         return False
 
+    # noinspection PyMethodMayBeStatic
     def _extract_appimage_names_from_releases(self, releases: list[Any]) -> list[str]:
         """Extract AppImage asset names from releases."""
         asset_names = []
@@ -170,6 +175,7 @@ class DirectDownloadRepository(RepositoryClient):
                     asset_names.append(asset.name)
         return asset_names
 
+    # noinspection PyMethodMayBeStatic
     def _clean_base_name(self, filename: str) -> str:
         """Clean filename to extract base application name."""
         # Remove version patterns, architecture, and hash info
@@ -179,6 +185,7 @@ class DirectDownloadRepository(RepositoryClient):
         base_name = re.sub(r"\.AppImage$", "", base_name)  # Remove extension
         return base_name
 
+    # noinspection PyMethodMayBeStatic
     def _create_flexible_pattern(self, base_name: str) -> str:
         """Create a flexible pattern that matches the base name with variations."""
         pattern = f"{re.escape(base_name)}.*\\.AppImage"
@@ -213,7 +220,7 @@ class DirectDownloadRepository(RepositoryClient):
 
         content = response.text
 
-        # Look for AppImage download links in both HTML and markdown formats
+        # Look for AppImage download links in both HTML and Markdown formats
         html_quoted_pattern = r'href="([^"]*\.AppImage[^"]*)"'
         html_unquoted_pattern = r"href=([^\s>]*\.AppImage[^\s>]*)"
         markdown_pattern = r"\]\(([^)]*\.AppImage[^)]*)\)"

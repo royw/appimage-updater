@@ -33,7 +33,8 @@ class JSONOutputFormatter(OutputFormatter):
         }
         self._current_section: str | None = None
 
-    def write_message(self, message: str, **kwargs: Any) -> None:
+    # noinspection PyProtocol
+    def print_message(self, message: str, **kwargs: Any) -> None:
         """Write a message (store for JSON output).
 
         Args:

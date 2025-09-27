@@ -102,6 +102,7 @@ class ConfigCommand(Command):
         else:
             self.console.print("[yellow]Available actions: show, set, reset, show-effective, list")
 
+    # noinspection PyMethodMayBeStatic
     def _create_result(self, success: bool) -> CommandResult:
         """Create command result based on operation success."""
         if success:

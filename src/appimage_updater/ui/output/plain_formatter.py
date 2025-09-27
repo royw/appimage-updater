@@ -21,7 +21,8 @@ class PlainOutputFormatter(OutputFormatter):
         """
         self._current_section: str | None = None
 
-    def write_message(self, message: str, **_kwargs: Any) -> None:
+    # noinspection PyProtocol
+    def print_message(self, message: str, **_kwargs: Any) -> None:
         """Write a message as plain text.
 
         Args:
@@ -50,16 +51,19 @@ class PlainOutputFormatter(OutputFormatter):
         self._display_table_headers(table_headers, col_widths)
         self._display_table_rows(data, table_headers, col_widths)
 
+    # noinspection PyMethodMayBeStatic
     def _display_table_title(self, title: str) -> None:
         """Display table title if provided."""
         if title:
             print(f"\n{title}")
             print("=" * len(title))
 
+    # noinspection PyMethodMayBeStatic
     def _determine_table_headers(self, data: list[dict[str, Any]], headers: list[str] | None) -> list[str]:
         """Determine the headers to use for the table."""
         return headers or (list(data[0].keys()) if data else [])
 
+    # noinspection PyMethodMayBeStatic
     def _calculate_column_widths(self, data: list[dict[str, Any]], table_headers: list[str]) -> dict[str, int]:
         """Calculate the width needed for each column."""
         col_widths = {}
@@ -70,12 +74,14 @@ class PlainOutputFormatter(OutputFormatter):
                 col_widths[header] = max(col_widths[header], len(value))
         return col_widths
 
+    # noinspection PyMethodMayBeStatic
     def _display_table_headers(self, table_headers: list[str], col_widths: dict[str, int]) -> None:
         """Display table headers with separator."""
         header_row = " | ".join(header.ljust(col_widths[header]) for header in table_headers)
         print(header_row)
         print("-" * len(header_row))
 
+    # noinspection PyMethodMayBeStatic
     def _display_table_rows(
         self, data: list[dict[str, Any]], table_headers: list[str], col_widths: dict[str, int]
     ) -> None:

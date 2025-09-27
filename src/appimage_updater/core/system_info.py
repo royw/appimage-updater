@@ -67,6 +67,7 @@ class SystemDetector:
         logger.debug(f"Detected system: {system_info}")
         return system_info
 
+    # noinspection PyMethodMayBeStatic
     def _detect_platform(self) -> str:
         """Detect the current platform."""
         system = platform.system().lower()
@@ -80,6 +81,7 @@ class SystemDetector:
 
         return platform_mapping.get(system, system)
 
+    # noinspection PyMethodMayBeStatic
     def _detect_architecture(self) -> tuple[str, set[str], str]:
         """Detect architecture and aliases.
 
@@ -115,6 +117,7 @@ class SystemDetector:
         logger.warning(f"Unknown architecture '{machine}', using as-is")
         return machine, {machine}, machine
 
+    # noinspection PyMethodMayBeStatic
     def _add_linux_formats(self, formats: set[str]) -> None:
         """Add Linux-specific package formats."""
         formats.add(".AppImage")
@@ -138,6 +141,7 @@ class SystemDetector:
             formats.add(".pkg.tar.xz")
             formats.add(".pkg.tar.zst")
 
+    # noinspection PyMethodMayBeStatic
     def _add_darwin_formats(self, formats: set[str]) -> None:
         """Add macOS-specific package formats."""
         formats.add(".dmg")
@@ -145,6 +149,7 @@ class SystemDetector:
         formats.add(".zip")
         formats.add(".tar.gz")
 
+    # noinspection PyMethodMayBeStatic
     def _add_windows_formats(self, formats: set[str]) -> None:
         """Add Windows-specific package formats."""
         formats.add(".exe")
@@ -201,6 +206,7 @@ class SystemDetector:
         family = family_mapping.get(dist_id)
         return dist_id, family
 
+    # noinspection PyMethodMayBeStatic
     def _get_distribution_info(self) -> dict[str, str] | None:
         """Get distribution information from /etc/os-release."""
         os_release_path = Path("/etc/os-release")

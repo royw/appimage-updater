@@ -96,6 +96,7 @@ class Asset(BaseModel):
         filename = self.name.lower()
 
         # Platform patterns
+        # noinspection SpellCheckingInspection
         platform_patterns = [
             (r"\blinux\b", "linux"),
             (r"\bdarwin\b|\bmacos\b", "darwin"),
@@ -169,6 +170,7 @@ class Release(BaseModel):
 
         return matching_assets
 
+    # noinspection PyMethodMayBeStatic
     def _check_architecture_compatibility(self, asset: Asset, system_info: Any) -> bool:
         """Check if asset architecture is compatible with system."""
         arch_value = asset.architecture
@@ -178,6 +180,7 @@ class Release(BaseModel):
         arch_compatible, _ = is_compatible_architecture(arch_value, system_info.architecture)
         return arch_compatible
 
+    # noinspection PyMethodMayBeStatic
     def _check_platform_compatibility(self, asset: Asset, system_info: Any) -> bool:
         """Check if asset platform is compatible with system."""
         platform_value = asset.platform
@@ -187,6 +190,7 @@ class Release(BaseModel):
         platform_compatible, _ = is_compatible_platform(platform_value, system_info.platform)
         return platform_compatible
 
+    # noinspection PyMethodMayBeStatic
     def _check_format_compatibility(self, asset: Asset, system_info: Any) -> bool:
         """Check if asset format is supported on system."""
         format_value = asset.file_extension

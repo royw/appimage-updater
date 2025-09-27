@@ -66,6 +66,7 @@ class RepositoryCommandHandler(CommandHandler):
             self.console.print(f"AppImage Updater {__version__}")
             raise typer.Exit()
 
+    # noinspection PyMethodMayBeStatic
     def _execute_repository_command(
         self,
         app_names: list[str],

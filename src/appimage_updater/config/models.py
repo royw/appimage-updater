@@ -227,16 +227,19 @@ class Config(BaseModel):
 
         return app_config
 
+    # noinspection PyMethodMayBeStatic
     def _apply_rotation_enabled_default(self, app_config: dict[str, Any], defaults: DefaultsConfig) -> None:
         """Apply rotation_enabled default if not specified."""
         if "rotation_enabled" not in app_config:
             app_config["rotation_enabled"] = defaults.rotation_enabled
 
+    # noinspection PyMethodMayBeStatic
     def _apply_retain_count_default(self, app_config: dict[str, Any], defaults: DefaultsConfig) -> None:
         """Apply retain_count default if rotation is enabled and not specified."""
         if "retain_count" not in app_config and app_config.get("rotation_enabled", False):
             app_config["retain_count"] = defaults.retain_count
 
+    # noinspection PyMethodMayBeStatic
     def _apply_symlink_path_default(self, app_config: dict[str, Any], defaults: DefaultsConfig, app_name: str) -> None:
         """Apply symlink_path default if rotation is enabled and not specified."""
         if app_config.get("rotation_enabled", False) and "symlink_path" not in app_config:
@@ -250,6 +253,7 @@ class Config(BaseModel):
         self._apply_retain_count_default(app_config, defaults)
         self._apply_symlink_path_default(app_config, defaults, app_name)
 
+    # noinspection PyMethodMayBeStatic
     def _ensure_checksum_config_exists(self, app_config: dict[str, Any]) -> dict[str, Any]:
         """Ensure checksum config section exists and return it."""
         if "checksum" not in app_config:
@@ -257,21 +261,25 @@ class Config(BaseModel):
         checksum_config: dict[str, Any] = app_config["checksum"]
         return checksum_config
 
+    # noinspection PyMethodMayBeStatic
     def _apply_checksum_enabled_default(self, checksum_config: dict[str, Any], defaults: DefaultsConfig) -> None:
         """Apply checksum enabled default if not specified."""
         if "enabled" not in checksum_config:
             checksum_config["enabled"] = defaults.checksum_enabled
 
+    # noinspection PyMethodMayBeStatic
     def _apply_checksum_algorithm_default(self, checksum_config: dict[str, Any], defaults: DefaultsConfig) -> None:
         """Apply checksum algorithm default if not specified."""
         if "algorithm" not in checksum_config:
             checksum_config["algorithm"] = defaults.checksum_algorithm
 
+    # noinspection PyMethodMayBeStatic
     def _apply_checksum_pattern_default(self, checksum_config: dict[str, Any], defaults: DefaultsConfig) -> None:
         """Apply checksum pattern default if not specified."""
         if "pattern" not in checksum_config:
             checksum_config["pattern"] = defaults.checksum_pattern
 
+    # noinspection PyMethodMayBeStatic
     def _apply_checksum_required_default(self, checksum_config: dict[str, Any], defaults: DefaultsConfig) -> None:
         """Apply checksum required default if not specified."""
         if "required" not in checksum_config:
@@ -292,6 +300,7 @@ class Config(BaseModel):
                 return application
         return None
 
+    # noinspection PyMethodMayBeStatic
     def _create_base_app_dict(self, app: Any) -> dict[str, Any]:
         """Create base application dictionary with required fields."""
         return {
@@ -311,6 +320,7 @@ class Config(BaseModel):
             },
         }
 
+    # noinspection PyMethodMayBeStatic
     def _add_optional_app_fields(self, app_dict: dict[str, Any], app: Any) -> None:
         """Add optional fields to application dictionary."""
         if hasattr(app, "retain_count"):

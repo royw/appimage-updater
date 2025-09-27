@@ -72,6 +72,7 @@ class RemoveCommandHandler(CommandHandler):
             self.console.print(f"AppImage Updater {__version__}")
             raise typer.Exit()
 
+    # noinspection PyMethodMayBeStatic
     def _show_remove_help(self) -> None:
         """Show help for remove command."""
         typer.echo("Usage: appimage-updater remove [OPTIONS] APP_NAMES...")

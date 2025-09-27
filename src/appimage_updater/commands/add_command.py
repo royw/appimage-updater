@@ -87,6 +87,7 @@ class AddCommand(Command):
         success = await self._execute_add_operation()
         return self._create_execution_result(success)
 
+    # noinspection PyMethodMayBeStatic
     def _handle_execution_error(self, e: Exception) -> CommandResult:
         """Handle execution errors."""
         logger.error(f"Unexpected error in add command: {e}")
@@ -211,6 +212,7 @@ class AddCommand(Command):
         )
         return success
 
+    # noinspection PyMethodMayBeStatic
     def _show_add_examples(self) -> None:
         """Show usage examples for the add command."""
         _show_add_examples()

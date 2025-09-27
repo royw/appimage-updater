@@ -650,6 +650,7 @@ def _normalize_regular_path(expanded_path: Path) -> Path:
     return expanded_path.resolve()
 
 
+# noinspection GrazieInspection
 def _manually_resolve_path_segments(normalized_path: Path) -> Path:
     """Manually resolve .. segments without following symlinks."""
     parts: list[str] = []
@@ -666,6 +667,7 @@ def _process_path_segment(part: str, parts: list[str]) -> None:
         parts.append(part)
 
 
+# noinspection GrazieInspection
 def _handle_parent_directory(parts: list[str]) -> None:
     """Handle parent directory (..) segment."""
     if parts:
@@ -690,10 +692,11 @@ def _validate_symlink_extension(normalized_path: Path, original_path: str) -> No
         raise ValueError(f"Symlink path should end with '.AppImage': {original_path}")
 
 
+# noinspection GrazieInspection
 def normalize_and_validate_symlink_path(expanded_path: Path, original_path: str) -> Path:
     """Normalize path and validate parent directory and extension."""
     # Normalize path to remove redundant separators and resolve .. but don't follow symlinks
-    # We need to handle the case where the symlink itself might exist but we want to validate
+    # We need to handle the case where the symlink itself might exist, but we want to validate
     # the intended path, not the target it points to
     normalized_path = _normalize_symlink_path(expanded_path, original_path)
     _validate_symlink_parent_directory(normalized_path, original_path)
@@ -853,7 +856,7 @@ def _apply_symlink_path_update(app: Any, updates: dict[str, Any], changes: list[
 
 
 def _apply_retain_count_update(app: Any, updates: dict[str, Any], changes: list[str]) -> None:
-    """Apply retain count update and record change."""
+    """Apply the retain count update and record change."""
     if "retain_count" in updates:
         old_value = getattr(app, "retain_count", 3)
         app.retain_count = updates["retain_count"]

@@ -51,11 +51,13 @@ class CheckCommand(Command):
             logger.exception("Full exception details")
             return CommandResult(success=False, message=str(e), exit_code=1)
 
+    # noinspection PyMethodMayBeStatic
     def _start_http_tracking(self, http_tracker: Any) -> None:
         """Start HTTP tracking if tracker is provided."""
         if http_tracker:
             http_tracker.start_tracking()
 
+    # noinspection PyMethodMayBeStatic
     def _stop_http_tracking(self, http_tracker: Any) -> None:
         """Stop HTTP tracking if tracker is provided."""
         if http_tracker:
@@ -69,6 +71,7 @@ class CheckCommand(Command):
         http_tracker.stop_tracking()
         self._display_tracking_section(http_tracker, output_formatter)
 
+    # noinspection PyMethodMayBeStatic
     def _should_display_tracking_summary(self, http_tracker: Any, output_formatter: Any) -> bool:
         """Check if HTTP tracking summary should be displayed."""
         return bool(http_tracker and output_formatter)
@@ -80,9 +83,10 @@ class CheckCommand(Command):
         self._display_request_details(http_tracker, output_formatter)
         output_formatter.end_section()
 
+    # noinspection PyMethodMayBeStatic
     def _display_request_count(self, http_tracker: Any, output_formatter: Any) -> None:
         """Display total request count."""
-        output_formatter.write_message(f"Total requests: {len(http_tracker.requests)}")
+        output_formatter.print_message(f"Total requests: {len(http_tracker.requests)}")
 
     def _display_request_details(self, http_tracker: Any, output_formatter: Any) -> None:
         """Display detailed request information."""
@@ -91,16 +95,18 @@ class CheckCommand(Command):
         for i, request in enumerate(requests_to_show):
             status = request.response_status or "ERROR"
             time_str = f"{request.response_time:.3f}s" if request.response_time else "N/A"
-            output_formatter.write_message(f"  {i + 1}. {request.method} {request.url} -> {status} ({time_str})")
+            output_formatter.print_message(f"  {i + 1}. {request.method} {request.url} -> {status} ({time_str})")
 
         self._display_remaining_count(http_tracker, output_formatter)
 
+    # noinspection PyMethodMayBeStatic
     def _display_remaining_count(self, http_tracker: Any, output_formatter: Any) -> None:
         """Display count of remaining requests if there are more than 5."""
         if len(http_tracker.requests) > 5:
             remaining = len(http_tracker.requests) - 5
-            output_formatter.write_message(f"  ... and {remaining} more requests")
+            output_formatter.print_message(f"  ... and {remaining} more requests")
 
+    # noinspection PyMethodMayBeStatic
     def _create_result(self, success: bool) -> CommandResult:
         """Create the appropriate CommandResult based on success status."""
         if success:

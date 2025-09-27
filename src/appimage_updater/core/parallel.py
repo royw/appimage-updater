@@ -23,6 +23,7 @@ class ConcurrentProcessor:
         """Initialize the concurrent processor."""
         pass
 
+    # noinspection PyMethodMayBeStatic
     async def process_items_async(
         self, items: list[Any], async_worker_func: Callable[[Any], Awaitable[Any]]
     ) -> list[Any]:

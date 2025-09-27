@@ -132,6 +132,7 @@ class GitHubRepository(RepositoryClient):
             )
         return release
 
+    # noinspection PyMethodMayBeStatic
     def _is_nightly_release(self, release: Release) -> bool:
         """Check if a release is a nightly build."""
         nightly_patterns = [
@@ -173,6 +174,7 @@ class GitHubRepository(RepositoryClient):
 
         return url, False
 
+    # noinspection PyMethodMayBeStatic
     def _is_github_url(self, url: str) -> bool:
         """Check if URL is a GitHub URL."""
         parsed = urllib.parse.urlparse(url)
@@ -191,10 +193,12 @@ class GitHubRepository(RepositoryClient):
         # Already a repository URL
         return original_url, False
 
+    # noinspection PyMethodMayBeStatic
     def _is_download_url(self, path_parts: list[str]) -> bool:
         """Check if path represents a GitHub download URL."""
         return len(path_parts) >= 4 and path_parts[2] == "releases" and path_parts[3] == "download"
 
+    # noinspection PyMethodMayBeStatic
     def _is_releases_page_url(self, path_parts: list[str]) -> bool:
         """Check if path represents a GitHub releases page URL."""
         return len(path_parts) >= 3 and path_parts[2] == "releases"
@@ -264,6 +268,7 @@ class GitHubRepository(RepositoryClient):
         for asset in release.assets:
             self._categorize_asset_by_type_and_stability(asset.name, release.is_prerelease, groups)
 
+    # noinspection PyMethodMayBeStatic
     def _categorize_asset_by_type_and_stability(
         self, asset_name: str, is_prerelease: bool, groups: dict[str, list[str]]
     ) -> None:
@@ -277,7 +282,7 @@ class GitHubRepository(RepositoryClient):
             groups[target_list].append(asset_name)
 
     def _select_target_files(self, groups: dict[str, list[str]]) -> list[str] | None:
-        """Choose best filenames: prefer stable, prefer AppImage over ZIP."""
+        """Choose the best filenames: prefer stable, prefer AppImage over ZIP."""
         # Try stable files first
         stable_files = self._select_stable_files(groups)
         if stable_files:
@@ -286,6 +291,7 @@ class GitHubRepository(RepositoryClient):
         # Fall back to prerelease files
         return self._select_prerelease_files(groups)
 
+    # noinspection PyMethodMayBeStatic
     def _select_stable_files(self, groups: dict[str, list[str]]) -> list[str] | None:
         """Select stable files, preferring AppImage over ZIP."""
         if groups["stable_app"] or groups["stable_zip"]:
@@ -293,6 +299,7 @@ class GitHubRepository(RepositoryClient):
             return target[:3]  # Limit to 3 files for pattern generation
         return None
 
+    # noinspection PyMethodMayBeStatic
     def _select_prerelease_files(self, groups: dict[str, list[str]]) -> list[str] | None:
         """Select prerelease files, preferring AppImage over ZIP."""
         if groups["pre_app"] or groups["pre_zip"]:
@@ -300,6 +307,7 @@ class GitHubRepository(RepositoryClient):
             return target[:3]  # Limit to 3 files for pattern generation
         return None
 
+    # noinspection PyMethodMayBeStatic
     def _filter_valid_releases(self, releases: list[Release], url: str) -> list[Release]:
         """Filter out draft releases and return valid releases."""
         valid_releases = [r for r in releases if not r.is_draft]
@@ -308,6 +316,7 @@ class GitHubRepository(RepositoryClient):
 
         return valid_releases
 
+    # noinspection PyMethodMayBeStatic
     def _analyze_prerelease_status(self, valid_releases: list[Release], url: str) -> bool:
         """Analyze releases to determine if only prereleases exist."""
         stable_releases = [r for r in valid_releases if not r.is_prerelease]
@@ -335,11 +344,12 @@ class GitHubRepository(RepositoryClient):
 
         return pattern
 
+    # noinspection PyMethodMayBeStatic
     def _strip_extensions_list(self, filenames: list[str]) -> list[str]:
-        exts = (".AppImage", ".appimage", ".zip", ".ZIP")
+        extensions = (".AppImage", ".appimage", ".zip", ".ZIP")
         result = []
         for name in filenames:
-            for ext in exts:
+            for ext in extensions:
                 if name.endswith(ext):
                     result.append(name[: -len(ext)])
                     break
@@ -355,6 +365,7 @@ class GitHubRepository(RepositoryClient):
         match = re.match(r"^([^-_]+)", first_file)
         return match.group(1) if match else first_file.split("-")[0]
 
+    # noinspection PyMethodMayBeStatic
     def _build_pattern(self, prefix: str, include_both_formats: bool, empty_ok: bool = False) -> str:
         if not prefix and empty_ok:
             ext = "\\.(zip|AppImage)" if include_both_formats else "\\.AppImage"
@@ -376,6 +387,7 @@ class GitHubRepository(RepositoryClient):
 
         return prefix
 
+    # noinspection PyMethodMayBeStatic
     def _remove_version_and_date_patterns(self, prefix: str) -> str:
         """Remove version numbers and date patterns from prefix."""
         # Handle standard versions: "_1.0.2" or "_v1.0.2" or "-1.0.2"
@@ -402,6 +414,7 @@ class GitHubRepository(RepositoryClient):
 
         return prefix
 
+    # noinspection PyMethodMayBeStatic
     def _get_platform_patterns(self) -> list[str]:
         """Get list of platform patterns to remove from middle of prefix."""
         return [
@@ -410,6 +423,7 @@ class GitHubRepository(RepositoryClient):
             r"[_-]x86_64[_-]",  # -x86_64- or _x86_64_
         ]
 
+    # noinspection PyMethodMayBeStatic
     def _get_suffix_patterns(self) -> list[str]:
         """Get list of suffix patterns to remove from end of prefix."""
         return [
@@ -424,6 +438,7 @@ class GitHubRepository(RepositoryClient):
             r"[_-]static$",
         ]
 
+    # noinspection PyMethodMayBeStatic
     def _ensure_meaningful_prefix(self, prefix: str) -> str:
         """Ensure prefix has meaningful content, extract app name if over-generalized."""
         if len(prefix) < 2:
@@ -452,12 +467,14 @@ class GitHubRepository(RepositoryClient):
             prefix_len = min(prefix_len, self._find_common_length(strings[0], strings[i]))
         return prefix_len
 
+    # noinspection PyMethodMayBeStatic
     def _clean_prefix_boundary(self, prefix: str) -> str:
         """Clean up the prefix to end at a reasonable boundary."""
         if prefix and not prefix[-1].isalnum():
             return prefix.rstrip("_-.")
         return prefix
 
+    # noinspection PyMethodMayBeStatic
     def _find_common_length(self, str1: str, str2: str) -> int:
         """Find the length of common prefix between two strings."""
         common_len = 0

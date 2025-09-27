@@ -24,7 +24,7 @@ class OutputFormatter(Protocol):
     implementations while maintaining a consistent API.
     """
 
-    def write_message(self, message: str, **kwargs: Any) -> None:
+    def print_message(self, message: str, **kwargs: Any) -> None:
         """Write a message with optional styling.
 
         Args:
