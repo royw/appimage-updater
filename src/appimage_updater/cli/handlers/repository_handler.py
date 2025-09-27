@@ -78,7 +78,7 @@ class RepositoryCommandHandler(CommandHandler):
         http_stack_depth: int,
         http_track_headers: bool,
         debug: bool,
-        format: OutputFormat,
+        output_format: OutputFormat,
     ) -> None:
         """Execute the repository command logic."""
         command = CommandFactory.create_repository_command(
@@ -92,12 +92,12 @@ class RepositoryCommandHandler(CommandHandler):
             http_stack_depth=http_stack_depth,
             http_track_headers=http_track_headers,
             debug=debug,
-            format=format,
+            output_format=output_format,
         )
 
         output_formatter = create_output_formatter_from_params(command.params)
 
-        if format in [OutputFormat.JSON, OutputFormat.HTML]:
+        if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
             result = asyncio.run(command.execute(output_formatter=output_formatter))
             output_formatter.finalize()
         else:

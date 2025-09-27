@@ -108,11 +108,11 @@ class ShowCommandHandler(CommandHandler):
         config_file: Path | None,
         config_dir: Path | None,
         debug: bool,
-        format: OutputFormat,
+        output_format: OutputFormat,
     ) -> None:
         """Execute the show command logic."""
         # Show help if no app names are provided
-        if self.handle_help_display(app_names=app_names, format=format):
+        if self.handle_help_display(app_names=app_names, format=output_format):
             raise typer.Exit(0)
 
         # Create command via factory (existing pattern)
@@ -121,14 +121,14 @@ class ShowCommandHandler(CommandHandler):
             config_file=config_file,
             config_dir=config_dir,
             debug=debug,
-            format=format,
+            output_format=output_format,
         )
 
         # Create output formatter and execute with context
         output_formatter = create_output_formatter_from_params(command.params)
 
         # Handle format-specific finalization
-        if format in [OutputFormat.JSON, OutputFormat.HTML]:
+        if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
             result = asyncio.run(command.execute(output_formatter=output_formatter))
             output_formatter.finalize()
         else:
