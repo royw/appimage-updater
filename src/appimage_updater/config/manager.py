@@ -64,7 +64,7 @@ class Manager:
         # Validate file existence and load JSON data
         self._validate_config_file_exists(config_path, ConfigLoadError)
         data = self._load_json_data_from_file(config_path, json, ConfigLoadError)
-        self._validate_json_data_format(data, config_path, ConfigLoadError)
+        self._validate_json_data_format(data, ConfigLoadError)
 
         # Parse and return configuration
         return self._parse_config_data(data, config_path, ConfigLoadError)
@@ -84,7 +84,7 @@ class Manager:
         except json_module.JSONDecodeError as e:
             raise config_load_error_class(f"Invalid JSON in {config_path}: {e}") from e
 
-    def _validate_json_data_format(self, data: Any, config_path: Path, config_load_error_class: Any) -> None:
+    def _validate_json_data_format(self, data: Any, config_load_error_class: Any) -> None:
         """Validate that JSON data is in the correct format."""
         if not isinstance(data, dict):
             raise config_load_error_class(f"Configuration must be a JSON object, got {type(data).__name__}")
