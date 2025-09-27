@@ -13,6 +13,10 @@ from loguru import logger
 class HTTPLogger(Protocol):
     """Protocol for HTTP logging interface."""
 
+    def log(self, level: str, message: str, **kwargs: Any) -> None:
+        """Log message at specified level."""
+        ...
+
     def debug(self, message: str, **kwargs: Any) -> None:
         """Log debug message."""
         ...
@@ -36,6 +40,10 @@ class LoguruHTTPLogger:
     def __init__(self, logger_name: str = "appimage_updater.instrumentation.http_tracker"):
         """Initialize with specific logger name."""
         self._logger = logger.bind(name=logger_name)
+
+    def log(self, level: str, message: str, **kwargs: Any) -> None:
+        """Log message at specified level."""
+        self._logger.log(level.upper(), message, **kwargs)
 
     def debug(self, message: str, **kwargs: Any) -> None:
         """Log debug message."""
@@ -79,32 +87,31 @@ class ConfigurableHTTPLogger:
 
     def log_tracking_start(self, message: str, **kwargs: Any) -> None:
         """Log tracking start message."""
-        self._log_at_level(self._tracking_level, message, **kwargs)
+        self._base_logger.log(self._tracking_level, message, **kwargs)
 
     def log_tracking_stop(self, message: str, **kwargs: Any) -> None:
         """Log tracking stop message."""
-        self._log_at_level(self._tracking_level, message, **kwargs)
+        self._base_logger.log(self._tracking_level, message, **kwargs)
 
     def log_request(self, message: str, **kwargs: Any) -> None:
         """Log individual request message."""
-        self._log_at_level(self._request_level, message, **kwargs)
+        self._base_logger.log(self._request_level, message, **kwargs)
 
     def log_error(self, message: str, **kwargs: Any) -> None:
         """Log error message."""
-        self._log_at_level(self._error_level, message, **kwargs)
+        self._base_logger.log(self._error_level, message, **kwargs)
 
     def warning(self, message: str, **kwargs: Any) -> None:
         """Log warning message (always at warning level)."""
         self._base_logger.warning(message, **kwargs)
 
-    def _log_at_level(self, level: str, message: str, **kwargs: Any) -> None:
-        """Log message at specified level."""
-        level_method = getattr(self._base_logger, level.lower(), self._base_logger.debug)
-        level_method(message, **kwargs)
-
 
 class SilentHTTPLogger:
     """Silent HTTP logger for testing or quiet operation."""
+
+    def log(self, level: str, message: str, **kwargs: Any) -> None:
+        """Silent log."""
+        pass
 
     def debug(self, message: str, **kwargs: Any) -> None:
         """Silent debug."""
