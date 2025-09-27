@@ -63,7 +63,7 @@ class DynamicDownloadRepository(RepositoryClient):
         try:
             return await self._handle_generic_dynamic(url)
 
-        except Exception as e:
+        except (httpx.HTTPError, httpx.TimeoutException, OSError) as e:
             logger.error(f"Failed to get releases for {url}: {e}")
             raise RepositoryError(f"Failed to fetch release information: {e}") from e
 
@@ -120,7 +120,7 @@ class DynamicDownloadRepository(RepositoryClient):
             path_parts = [p for p in parsed.path.split("/") if p]
             repo_name = path_parts[0] if path_parts else "app"
             return domain, repo_name
-        except Exception as e:
+        except (ValueError, AttributeError) as e:
             raise RepositoryError(f"Invalid URL format: {url}") from e
 
     def normalize_repo_url(self, url: str) -> tuple[str, bool]:
@@ -205,6 +205,6 @@ class DynamicDownloadRepository(RepositoryClient):
             # Generate pattern based on first asset name
             return self._generate_regex_pattern(asset_names[0])
 
-        except Exception as e:
+        except (httpx.HTTPError, httpx.TimeoutException, OSError, ValueError) as e:
             logger.error(f"Failed to generate pattern for {url}: {e}")
             return None

@@ -304,7 +304,7 @@ class GlobalConfigManager(Manager):
         """Load global configuration from config.json file."""
         try:
             return self._load_global_config()
-        except Exception as e:
+        except (FileNotFoundError, PermissionError, OSError, ValueError) as e:
             logger.warning(f"Failed to load global config: {e}, using defaults")
             return Config()
 
@@ -503,7 +503,7 @@ class AppConfigs(Manager):
         except ConfigLoadError:
             # Re-raise ConfigLoadError so commands can handle it properly
             raise
-        except Exception as e:
+        except (FileNotFoundError, PermissionError, OSError, ValueError) as e:
             logger.warning(f"Failed to load application configs: {e}, using defaults")
             return Config()
 

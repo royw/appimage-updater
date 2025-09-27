@@ -81,7 +81,7 @@ class DirectDownloadRepository(RepositoryClient):
                 # Handle direct download URLs
                 return await self._handle_direct_download_progressive(progressive_client, url)
 
-        except Exception as e:
+        except (httpx.HTTPError, httpx.TimeoutException, OSError) as e:
             logger.error(f"Failed to get releases for {url}: {e}")
             raise RepositoryError(f"Failed to fetch release information: {e}") from e
 
@@ -94,7 +94,7 @@ class DirectDownloadRepository(RepositoryClient):
             path_parts = [p for p in parsed.path.split("/") if p]
             repo_name = path_parts[-1] if path_parts else "download"
             return domain, repo_name
-        except Exception as e:
+        except (ValueError, AttributeError) as e:
             raise RepositoryError(f"Invalid URL format: {url}") from e
 
     def normalize_repo_url(self, url: str) -> tuple[str, bool]:
@@ -200,7 +200,7 @@ class DirectDownloadRepository(RepositoryClient):
             base_name = self._clean_base_name(asset_names[0])
             return self._create_flexible_pattern(base_name)
 
-        except Exception as e:
+        except (httpx.HTTPError, httpx.TimeoutException, OSError, ValueError) as e:
             logger.error(f"Failed to generate pattern for {url}: {e}")
             return None
 
@@ -281,7 +281,7 @@ class DirectDownloadRepository(RepositoryClient):
                 else:
                     filename = original_filename
 
-            except Exception as e:
+            except (httpx.HTTPError, httpx.TimeoutException, OSError) as e:
                 logger.debug(f"Failed to resolve redirect for {url}: {e}")
                 # Fall back to original filename if redirect resolution fails
                 filename = original_filename

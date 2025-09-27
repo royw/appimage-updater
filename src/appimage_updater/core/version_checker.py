@@ -72,7 +72,7 @@ class VersionChecker:
             event_bus.publish(completion_event)
 
             return result
-        except Exception as e:
+        except (RepositoryError, OSError, ValueError) as e:
             # Publish error event
             error_event = UpdateCheckEvent(
                 app_name=app_config.name,
@@ -112,7 +112,7 @@ class VersionChecker:
 
         except RepositoryError as e:
             return self._create_repository_error_result(app_config, e)
-        except Exception as e:
+        except (OSError, ValueError, AttributeError) as e:
             return self._create_unexpected_error_result(app_config, e)
 
     def _create_no_releases_result(self, app_config: ApplicationConfig) -> CheckResult:
@@ -180,7 +180,7 @@ class VersionChecker:
                 nightly_converted = self._convert_nightly_version_string(processed_content)
                 # Apply the same normalization as we do for latest versions
                 return normalize_version_string(nightly_converted)
-            except Exception as e:
+            except (OSError, ValueError, AttributeError) as e:
                 logger.debug(f"Failed to parse version from info file: {e}")
 
         # For apps without rotation, analyze existing files to determine current version
@@ -231,7 +231,7 @@ class VersionChecker:
             # Sort by version (descending) then by modification time (newest first)
             version_files.sort(key=lambda x: (version.parse(x[0].lstrip("v")), x[1]), reverse=True)
             return normalize_version_string(version_files[0][0])
-        except Exception:
+        except (ValueError, TypeError, IndexError):
             # Fallback to sorting by modification time only
             version_files.sort(key=lambda x: x[1], reverse=True)
             return normalize_version_string(version_files[0][0])
@@ -546,7 +546,7 @@ class VersionChecker:
                 reverse=True,
             )
             return sorted_candidates[0]
-        except Exception:
+        except (ValueError, TypeError, IndexError):
             # Fallback to first candidate if version parsing fails
             return candidates[0]
 
@@ -559,7 +559,7 @@ class VersionChecker:
             current_ver = version.parse(current_version.lstrip("v"))
             latest_ver = version.parse(latest_version.lstrip("v"))
             return latest_ver > current_ver
-        except Exception:
+        except (ValueError, TypeError):
             # Fallback to string comparison
             return current_version != latest_version
 

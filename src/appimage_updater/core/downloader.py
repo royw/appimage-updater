@@ -180,7 +180,7 @@ class Downloader:
             try:
                 return await self._execute_download_attempt(candidate, progress, start_time)
 
-            except Exception as e:
+            except (httpx.HTTPError, httpx.TimeoutException, OSError) as e:
                 last_error = e
                 await self._handle_download_failure(candidate, attempt, max_retries, e)
 
@@ -366,7 +366,7 @@ class Downloader:
 
         except zipfile.BadZipFile:
             raise Exception(f"Invalid zip file: {candidate.download_path.name}") from None
-        except Exception as e:
+        except (OSError, PermissionError) as e:
             logger.error(f"Failed to extract zip file {candidate.download_path.name}: {e}")
             raise Exception(f"Zip extraction failed: {e}") from e
 
@@ -429,7 +429,7 @@ class Downloader:
             version_info = self._get_version_info(candidate)
             self._write_metadata_file(info_file_path, version_info)
 
-        except Exception as e:
+        except (OSError, PermissionError) as e:
             # Don't fail the download if metadata creation fails
             logger.debug(f"Failed to create version metadata file: {e}")
 
@@ -464,7 +464,7 @@ class Downloader:
                         f.write(chunk)
 
             return True
-        except Exception as e:
+        except (httpx.HTTPError, httpx.TimeoutException, OSError, IOError) as e:
             logger.debug(f"Failed to download checksum file: {e}")
             if checksum_path.exists():
                 checksum_path.unlink()
@@ -502,7 +502,7 @@ class Downloader:
                 error_message=None if verified else "Checksum mismatch",
             )
 
-        except Exception as e:
+        except (OSError, ValueError) as e:
             return ChecksumResult(
                 verified=False,
                 algorithm=algorithm,
@@ -583,7 +583,7 @@ class Downloader:
 
             return result
 
-        except Exception as e:
+        except (OSError, ValueError, AttributeError) as e:
             logger.debug(f"Checksum verification error for {candidate.app_name}: {e}")
             return ChecksumResult(
                 verified=False,
@@ -645,7 +645,7 @@ class Downloader:
 
         try:
             return await self._perform_rotation(candidate)
-        except Exception as e:
+        except (OSError, PermissionError) as e:
             logger.error(f"Rotation failed for {candidate.app_name}: {e}")
             # Return original path if rotation fails
             return candidate.download_path
@@ -882,6 +882,6 @@ class Downloader:
             symlink_path.symlink_to(current_path)
             logger.debug(f"Updated symlink {symlink_path} -> {current_path}")
 
-        except Exception as e:
+        except (OSError, PermissionError) as e:
             logger.error(f"Failed to update symlink {symlink_path}: {e}")
             raise

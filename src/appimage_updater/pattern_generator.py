@@ -13,6 +13,7 @@ import urllib.parse
 from loguru import logger
 
 from .core.models import Release
+from .repositories.base import RepositoryError
 from .repositories.factory import (
     detect_repository_type,
     get_repository_client,
@@ -34,7 +35,7 @@ def parse_github_url(url: str) -> tuple[str, str] | None:
         if len(path_parts) >= 2:
             return path_parts[0], path_parts[1]
         logger.debug(f"URL {url} does not have enough path components for owner/repo")
-    except Exception as e:
+    except (ValueError, AttributeError) as e:
         logger.debug(f"Failed to parse URL {url}: {e}")
     return None
 
@@ -56,7 +57,7 @@ def normalize_github_url(url: str) -> tuple[str, bool]:
         owner, repo = path_parts[0], path_parts[1]
         return _normalize_github_path(path_parts, owner, repo, url)
 
-    except Exception as e:
+    except (ValueError, AttributeError) as e:
         logger.debug(f"Failed to normalize GitHub URL {url}: {e}")
         return url, False
 
@@ -106,7 +107,7 @@ async def generate_appimage_pattern_async(app_name: str, url: str) -> str:
         if pattern:
             logger.debug(f"Generated pattern from releases: {pattern}")
             return pattern
-    except Exception as e:
+    except (ValueError, AttributeError, TypeError) as e:
         logger.debug(f"Failed to generate pattern from releases: {e}")
         # Fall through to fallback logic
 
@@ -130,7 +131,7 @@ async def fetch_appimage_pattern_from_github(url: str) -> str | None:
             logger.debug("No AppImage or ZIP files found in any releases")
             return None
         return create_pattern_from_filenames(target_files, include_both_formats=True)
-    except Exception as e:
+    except (RepositoryError, ValueError, AttributeError) as e:
         logger.debug(f"Error fetching releases: {e}")
         return None
 
@@ -424,7 +425,7 @@ async def should_enable_prerelease(url: str) -> bool:
 
         return _analyze_prerelease_status(valid_releases, url)
 
-    except Exception as e:
+    except (RepositoryError, ValueError, AttributeError) as e:
         # Don't fail the add command if prerelease detection fails
         logger.debug(f"Failed to check prerelease status for {url}: {e}")
         return False
