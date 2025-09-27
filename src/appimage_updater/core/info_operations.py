@@ -130,13 +130,13 @@ def _find_matching_release_version(releases: list[Any], current_file: Path, app_
     """Find the release version that matches the current file."""
     for release in releases:
         if release.assets:
-            matching_version = _check_release_assets(release, current_file, app_name)
+            matching_version = _check_release_assets(release, current_file)
             if matching_version:
                 return matching_version
     return None
 
 
-def _check_release_assets(release: Any, current_file: Path, app_name: str) -> str | None:
+def _check_release_assets(release: Any, current_file: Path) -> str | None:
     """Check if any asset in the release matches the current file."""
     for asset in release.assets:
         if _files_match(current_file.name, asset.name):
