@@ -17,6 +17,7 @@ from appimage_updater.core.info_operations import _execute_info_update_workflow
 from appimage_updater.core.models import Asset, CheckResult, InteractiveResult, UpdateCandidate
 from appimage_updater.core.parallel import ConcurrentProcessor
 from appimage_updater.core.version_checker import VersionChecker
+from appimage_updater.repositories.base import RepositoryError
 from appimage_updater.services.application_service import ApplicationService
 from appimage_updater.ui.display import display_check_results, display_download_results
 from appimage_updater.ui.output import OutputFormatterContext, get_output_formatter
@@ -51,7 +52,7 @@ async def _check_updates(
                 return await _execute_check_workflow(
                     config_file, config_dir, app_names, verbose, dry_run, yes, no, no_interactive, info
                 )
-            except Exception as e:
+            except (ConfigLoadError, RepositoryError, OSError, ValueError) as e:
                 _handle_check_errors(e)
                 return False
     else:
@@ -59,7 +60,7 @@ async def _check_updates(
             return await _execute_check_workflow(
                 config_file, config_dir, app_names, verbose, dry_run, yes, no, no_interactive, info
             )
-        except Exception as e:
+        except (ConfigLoadError, RepositoryError, OSError, ValueError) as e:
             _handle_check_errors(e)
             return False
 
@@ -209,7 +210,7 @@ def _create_dry_run_result(app_config: Any, version_checker: Any) -> Any:
             error_message=None,
             download_url=app_config.url,
         )
-    except Exception as e:
+    except (OSError, ValueError, AttributeError) as e:
         logger.debug(f"Error getting current version for {app_config.name}: {e}")
         return CheckResult(
             app_name=app_config.name,
@@ -643,7 +644,7 @@ async def _setup_rotation_safely(app_config: ApplicationConfig, latest_file: Pat
     """Set up rotation for file with error handling."""
     try:
         await _setup_rotation_for_file(app_config, latest_file, config)
-    except Exception as e:
+    except (OSError, PermissionError, ValueError) as e:
         logger.warning(f"Failed to set up rotation for {app_config.name}: {e}")
 
 
@@ -739,7 +740,7 @@ def _is_symlink_valid(symlink_path: Path, download_dir: Path) -> bool:
     try:
         target = symlink_path.resolve()
         return target.exists() and target.parent == download_dir
-    except Exception as e:
+    except (OSError, ValueError) as e:
         logger.debug(f"Symlink validation failed for {symlink_path}: {e}")
         return False
 

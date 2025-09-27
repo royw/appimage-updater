@@ -7,6 +7,7 @@ from loguru import logger
 from rich.console import Console
 
 from appimage_updater.config.models import ApplicationConfig
+from appimage_updater.repositories.base import RepositoryError
 from appimage_updater.repositories.factory import get_repository_client
 from appimage_updater.ui.output import get_output_formatter
 from appimage_updater.utils.version_utils import extract_version_from_filename, normalize_version_string
@@ -26,7 +27,7 @@ async def _execute_info_update_workflow(enabled_apps: list[ApplicationConfig]) -
     for app_config in enabled_apps:
         try:
             await _update_info_file_for_app(app_config, console)
-        except Exception as e:
+        except (OSError, PermissionError, ValueError, RepositoryError) as e:
             if output_formatter:
                 output_formatter.print_error(f"Error updating info file for {app_config.name}: {e}")
             else:
@@ -95,7 +96,7 @@ async def _extract_version_from_current_file(app_config: ApplicationConfig, curr
 
         # Fallback to extracting from filename
         return extract_version_from_filename(current_file.name, app_config.name)
-    except Exception as e:
+    except (OSError, ValueError, AttributeError) as e:
         logger.debug(f"Error extracting version for {app_config.name}: {e}")
         return None
 
@@ -116,7 +117,7 @@ async def _get_version_from_repository(app_config: ApplicationConfig, current_fi
             return None
 
         return _find_matching_release_version(releases, current_file, app_config.name)
-    except Exception:
+    except (RepositoryError, OSError, ValueError):
         return None
 
 
