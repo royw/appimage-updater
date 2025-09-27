@@ -114,7 +114,7 @@ async def _prepare_check_environment(
         _handle_no_enabled_apps()
         return config, []
 
-    _handle_verbose_display(verbose, normalized_names, dry_run, yes, no_interactive, len(enabled_apps))
+    _handle_verbose_display(verbose, normalized_names, dry_run, yes, no, no_interactive, len(enabled_apps))
     _log_app_summary(config, enabled_apps, normalized_names)
     return config, enabled_apps
 
@@ -286,12 +286,13 @@ def _handle_verbose_display(
     normalized_names: list[str] | None,
     dry_run: bool,
     yes: bool,
+    no: bool,
     no_interactive: bool,
     enabled_count: int,
 ) -> None:
     """Handle verbose information display."""
     if verbose and normalized_names is not None:
-        _display_check_verbose_info(normalized_names, dry_run, yes, no_interactive, enabled_count)
+        _display_check_verbose_info(normalized_names, dry_run, yes, no, no_interactive, enabled_count)
 
 
 def _normalize_app_names(app_names: list[str] | str | None) -> list[str]:
@@ -423,13 +424,14 @@ console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 
 
 def _display_check_verbose_info(
-    app_names: list[str], dry_run: bool, yes: bool, no_interactive: bool, enabled_apps_count: int
+    app_names: list[str], dry_run: bool, yes: bool, no: bool, no_interactive: bool, enabled_apps_count: int
 ) -> None:
     """Display verbose parameter information for check command."""
     console.print("[blue]Resolved check parameters:")
     console.print(f"  dry_run: {dry_run}")
     console.print(f"  app_names: {app_names if app_names else 'all enabled apps'}")
     console.print(f"  yes: {yes}")
+    console.print(f"  no: {no}")
     console.print(f"  no_interactive: {no_interactive}")
     console.print(f"  enabled_apps_count: {enabled_apps_count}")
     console.print()
