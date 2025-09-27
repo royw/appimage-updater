@@ -26,10 +26,10 @@ async def _execute_info_update_workflow(enabled_apps: list[ApplicationConfig]) -
     console = Console()  # Always create console for fallback usage
 
     _display_workflow_start(output_formatter, console, len(enabled_apps))
-    
+
     for app_config in enabled_apps:
         await _process_single_app_info_update(app_config, console, output_formatter)
-    
+
     _display_workflow_completion(output_formatter, console)
 
 
