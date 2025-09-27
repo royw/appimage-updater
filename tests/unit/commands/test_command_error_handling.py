@@ -232,13 +232,12 @@ class TestCommandErrorHandling:
         mock_app = Mock()
         mock_app.name = "TestApp"
         mock_apps = [mock_app]
-        mock_config = Mock()
         mock_updates = {"rotation": True}
         
         with patch.object(command.console, 'print') as mock_console_print:
             with patch.object(command, '_show_validation_hints') as mock_hints:
                 with pytest.raises(typer.Exit):
-                    command._apply_updates_to_apps(mock_apps, mock_updates, mock_config)
+                    command._apply_updates_to_apps(mock_apps, mock_updates)
         
         # Verify error was displayed and hints were shown
         mock_console_print.assert_called_once()
@@ -489,7 +488,7 @@ class TestCommandErrorHandling:
             with patch.object(command.console, 'print'):
                 with patch.object(command, '_show_validation_hints'):
                     with pytest.raises(typer.Exit) as exc_info:
-                        command._apply_updates_to_apps([mock_app], {"test": "value"}, Mock())
+                        command._apply_updates_to_apps([mock_app], {"test": "value"})
             
             # Verify exception chaining is preserved
             assert exc_info.value.__cause__ == original_error
