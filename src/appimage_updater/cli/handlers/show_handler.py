@@ -61,7 +61,7 @@ class ShowCommandHandler(CommandHandler):
         if app_names is None:
             output_formatter = create_output_formatter_from_params({"format": output_format})
 
-            if format in [OutputFormat.JSON, OutputFormat.HTML]:
+            if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
                 # For structured formats, use the output formatter
                 output_formatter.print_info("Usage: appimage-updater show [OPTIONS] APP_NAMES...")
                 output_formatter.print_info("")
