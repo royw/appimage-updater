@@ -66,7 +66,6 @@ async def _prepare_add_configuration(
     # Resolve parameters using global defaults
     resolved_params = _resolve_add_parameters(
         download_dir,
-        auto_subdir,
         rotation,
         prerelease,
         checksum,
@@ -249,7 +248,6 @@ def _prepare_add_parameters(
     """Prepare and resolve add command parameters."""
     return _resolve_add_parameters(
         download_dir,
-        auto_subdir,
         rotation,
         prerelease,
         checksum,

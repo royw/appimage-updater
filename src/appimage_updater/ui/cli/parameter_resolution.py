@@ -79,7 +79,6 @@ def _resolve_direct_parameter(direct: bool | None) -> bool:
 
 def _resolve_add_parameters(
     download_dir: str | None,
-    auto_subdir: bool | None,
     rotation: bool | None,
     prerelease: bool | None,
     checksum: bool | None,
