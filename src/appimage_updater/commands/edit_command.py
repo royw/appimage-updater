@@ -175,7 +175,7 @@ class EditCommand(Command):
 
     def _apply_and_save_updates(self, config: Any, found_apps: Any, updates: dict[str, Any]) -> None:
         """Apply updates to applications and save configuration."""
-        self._apply_updates_to_apps(found_apps, updates, config)
+        self._apply_updates_to_apps(found_apps, updates)
         self._save_config(config)
 
     def _validate_app_names_provided(self) -> list[str] | None:
@@ -224,7 +224,7 @@ class EditCommand(Command):
             auto_subdir=self.params.auto_subdir,
         )
 
-    def _apply_updates_to_apps(self, apps: list[ApplicationConfig], updates: dict[str, Any], config: Config) -> None:
+    def _apply_updates_to_apps(self, apps: list[ApplicationConfig], updates: dict[str, Any]) -> None:
         """Apply updates to applications with validation."""
 
         for app in apps:
