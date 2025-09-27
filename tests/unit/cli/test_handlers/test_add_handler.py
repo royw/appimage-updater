@@ -134,7 +134,7 @@ class TestAddCommandHandler:
                 "yes": False,
                 "no": False,
                 "debug": True,
-                "format": OutputFormat.RICH
+                "output_format": OutputFormat.RICH
             }
             
             handler._execute_add_command(**kwargs)
@@ -178,7 +178,7 @@ class TestAddCommandHandler:
                 "url": "https://github.com/user/repo",
                 "yes": False,
                 "no": False,
-                "format": OutputFormat.JSON
+                "output_format": OutputFormat.JSON
             }
             
             handler._execute_add_command(**kwargs)
@@ -216,7 +216,7 @@ class TestAddCommandHandler:
                 "url": "https://github.com/user/repo",
                 "yes": False,
                 "no": False,
-                "format": OutputFormat.HTML
+                "output_format": OutputFormat.HTML
             }
             
             handler._execute_add_command(**kwargs)

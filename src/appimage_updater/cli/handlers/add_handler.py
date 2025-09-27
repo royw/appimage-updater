@@ -113,7 +113,7 @@ class AddCommandHandler(CommandHandler):
         command = CommandFactory.create_add_command(**kwargs)
         output_formatter = create_output_formatter_from_params(command.params)
 
-        if kwargs["format"] in [OutputFormat.JSON, OutputFormat.HTML]:
+        if kwargs["output_format"] in [OutputFormat.JSON, OutputFormat.HTML]:
             result = asyncio.run(command.execute(output_formatter=output_formatter))
             output_formatter.finalize()
         else:

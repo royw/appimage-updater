@@ -96,7 +96,7 @@ class TestShowCommandHandler:
             assert result is True
             
             # Verify formatter was created and used
-            mock_formatter_factory.assert_called_once_with({"format": OutputFormat.JSON})
+            mock_formatter_factory.assert_called_once_with({"output_format": OutputFormat.JSON})
             
             # Verify print_info was called multiple times
             assert mock_formatter.print_info.call_count >= 5
@@ -117,7 +117,7 @@ class TestShowCommandHandler:
             assert result is True
             
             # Verify formatter was created and used
-            mock_formatter_factory.assert_called_once_with({"format": OutputFormat.HTML})
+            mock_formatter_factory.assert_called_once_with({"output_format": OutputFormat.HTML})
             
             # Verify print_info was called multiple times
             assert mock_formatter.print_info.call_count >= 5

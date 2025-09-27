@@ -59,7 +59,7 @@ class ShowCommandHandler(CommandHandler):
         output_format = kwargs.get("output_format", OutputFormat.RICH)
 
         if app_names is None:
-            output_formatter = create_output_formatter_from_params({"format": output_format})
+            output_formatter = create_output_formatter_from_params({"output_format": output_format})
 
             if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
                 # For structured formats, use the output formatter

@@ -169,7 +169,7 @@ class TestEditCommandHandler:
                 "verbose": True,
                 "dry_run": False,
                 "debug": True,
-                "format": OutputFormat.RICH
+                "output_format": OutputFormat.RICH
             }
             
             handler._execute_edit_command(**kwargs)
@@ -211,7 +211,7 @@ class TestEditCommandHandler:
             kwargs = {
                 "app_names": ["TestApp"],
                 "yes": False,
-                "format": OutputFormat.JSON
+                "output_format": OutputFormat.JSON
             }
             
             handler._execute_edit_command(**kwargs)
@@ -247,7 +247,7 @@ class TestEditCommandHandler:
             kwargs = {
                 "app_names": ["TestApp"],
                 "yes": False,
-                "format": OutputFormat.HTML
+                "output_format": OutputFormat.HTML
             }
             
             handler._execute_edit_command(**kwargs)
@@ -283,7 +283,7 @@ class TestEditCommandHandler:
             kwargs = {
                 "app_names": ["TestApp"],
                 "yes": False,
-                "format": OutputFormat.RICH
+                "output_format": OutputFormat.RICH
             }
             
             handler._execute_edit_command(**kwargs)
@@ -320,7 +320,7 @@ class TestEditCommandHandler:
             kwargs = {
                 "app_names": ["TestApp"],
                 "yes": False,
-                "format": OutputFormat.RICH
+                "output_format": OutputFormat.RICH
             }
             
             with pytest.raises(typer.Exit) as exc_info:
@@ -347,7 +347,7 @@ class TestEditCommandHandler:
                 "app_names": ["TestApp"],
                 "yes": True,
                 "no": True,  # This should cause validation failure
-                "format": OutputFormat.RICH
+                "output_format": OutputFormat.RICH
             }
             
             with pytest.raises(typer.Exit) as exc_info:
@@ -398,7 +398,7 @@ class TestEditCommandHandler:
                         kwargs = {
                             "app_names": ["TestApp"],
                             "yes": False,
-                            "format": OutputFormat.RICH
+                            "output_format": OutputFormat.RICH
                         }
                         
                         handler._execute_edit_command(**kwargs)
