@@ -25,7 +25,6 @@ def _format_parameter_display_value(value: Any) -> str:
 
 def _resolve_download_directory(
     download_dir: str | None,
-    auto_subdir: bool | None,
     global_config: Any,
     name: str,
 ) -> str:
@@ -94,7 +93,7 @@ def _resolve_add_parameters(
     config_path = config_file or config_dir
     global_config = GlobalConfigManager(config_path)
 
-    resolved_download_dir = _resolve_download_directory(download_dir, auto_subdir, global_config, name)
+    resolved_download_dir = _resolve_download_directory(download_dir, global_config, name)
     resolved_rotation = _resolve_rotation_parameter(rotation, global_config)
     resolved_prerelease = _resolve_prerelease_parameter(prerelease, global_config)
     resolved_checksum, resolved_checksum_required = _resolve_checksum_parameters(
