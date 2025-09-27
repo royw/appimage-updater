@@ -5,10 +5,49 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
+from typing import Any
+from unittest.mock import Mock, patch
 
 from typer.testing import CliRunner
 
 from appimage_updater.main import app
+
+
+def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock) -> None:
+    """Set up comprehensive GitHub API mocks to prevent network calls."""
+    # Mock httpx client to prevent network calls
+    mock_client_instance = Mock()
+    mock_response = Mock()
+    mock_response.json.return_value = []  # Empty releases list
+    mock_response.raise_for_status.return_value = None
+
+    # Create an async mock for the get method
+    async def mock_get(*args, **kwargs):
+        return mock_response
+
+    mock_client_instance.get = mock_get
+    mock_httpx_client.return_value.__aenter__.return_value = mock_client_instance
+    mock_httpx_client.return_value.__aexit__.return_value = None
+
+    # Mock repository client
+    mock_repo = Mock()
+    mock_repo_client.return_value = mock_repo
+
+    # Mock async pattern generation
+    async def mock_async_pattern_gen(*args: Any, **kwargs: Any) -> str:
+        # Extract app name from args if available, otherwise use generic pattern
+        app_name = "App"
+        if args and len(args) > 0:
+            app_name = str(args[0]).split('/')[-1] if '/' in str(args[0]) else str(args[0])
+        return f"(?i){app_name}.*\\.(?:zip|AppImage)(\\.(|current|old))?$"
+
+    mock_pattern_gen.side_effect = mock_async_pattern_gen
+
+    # Mock prerelease check
+    async def mock_async_prerelease_check(*args: Any, **kwargs: Any) -> bool:
+        return False
+
+    mock_prerelease.side_effect = mock_async_prerelease_check
 
 
 class TestDirectWorkflowIntegration:
@@ -46,8 +85,15 @@ class TestDirectWorkflowIntegration:
             assert app_config["source_type"] == "direct"
             assert app_config["url"] == direct_url
 
-    def test_add_no_direct_flag_defaults_to_github(self):
+    @patch('appimage_updater.github.client.httpx.AsyncClient')
+    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.repositories.factory.get_repository_client')
+    def test_add_no_direct_flag_defaults_to_github(
+        self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock
+    ):
         """Test that add without --direct flag defaults to GitHub detection."""
+        setup_github_mocks(mock_httpx_client, mock_repo_client, mock_pattern_gen, mock_prerelease)
         runner = CliRunner(env={"NO_COLOR": "1", "TERM": "dumb"})
 
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -76,8 +122,15 @@ class TestDirectWorkflowIntegration:
             assert app_config["source_type"] == "github"
             assert app_config["url"] == github_url
 
-    def test_direct_flag_with_complex_options(self):
+    @patch('appimage_updater.github.client.httpx.AsyncClient')
+    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.repositories.factory.get_repository_client')
+    def test_direct_flag_with_complex_options(
+        self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock
+    ):
         """Test --direct flag works with other configuration options."""
+        setup_github_mocks(mock_httpx_client, mock_repo_client, mock_pattern_gen, mock_prerelease)
         runner = CliRunner(env={"NO_COLOR": "1", "TERM": "dumb"})
 
         with tempfile.TemporaryDirectory() as tmp_dir:
