@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 from appimage_updater.core.models import Asset, Release
 from appimage_updater.main import app
 from appimage_updater.pattern_generator import should_enable_prerelease
+from appimage_updater.repositories.base import RepositoryError
 
 
 @pytest.fixture
@@ -187,7 +188,7 @@ class TestPrereleaseAutoDetection:
         """Test that prerelease is not enabled when GitHub API fails."""
         with patch("appimage_updater.pattern_generator.get_repository_client") as mock_client_factory:
             mock_client = AsyncMock()
-            mock_client.get_releases.side_effect = Exception("API Error")
+            mock_client.get_releases.side_effect = RepositoryError("API Error")
             mock_client_factory.return_value = mock_client
 
             result = await should_enable_prerelease("https://github.com/test/repo")

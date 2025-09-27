@@ -373,7 +373,7 @@ class TestRotationEnabled:
         candidate.download_path.touch()
 
         # Mock the rotation method to raise an exception
-        with patch.object(downloader, '_perform_rotation', side_effect=Exception("Rotation failed")):
+        with patch.object(downloader, '_perform_rotation', side_effect=OSError("Rotation failed")):
             result_path = await downloader._handle_rotation(candidate)
 
             # Should fallback to original path when rotation fails

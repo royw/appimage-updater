@@ -464,7 +464,7 @@ class Downloader:
                         f.write(chunk)
 
             return True
-        except (httpx.HTTPError, httpx.TimeoutException, OSError, IOError) as e:
+        except (httpx.HTTPError, httpx.TimeoutException, OSError) as e:
             logger.debug(f"Failed to download checksum file: {e}")
             if checksum_path.exists():
                 checksum_path.unlink()
