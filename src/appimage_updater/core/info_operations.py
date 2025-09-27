@@ -20,7 +20,7 @@ async def _execute_info_update_workflow(enabled_apps: list[ApplicationConfig]) -
 
     if output_formatter:
         output_formatter.start_section("Info File Update")
-        output_formatter.print(f"Updating .info files for {len(enabled_apps)} applications...")
+        output_formatter.write_message(f"Updating .info files for {len(enabled_apps)} applications...")
     else:
         console.print(f"\n[bold blue]Updating .info files for {len(enabled_apps)} applications...[/bold blue]")
 

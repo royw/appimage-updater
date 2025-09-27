@@ -21,11 +21,11 @@ class PlainOutputFormatter(OutputFormatter):
         """
         self._current_section: str | None = None
 
-    def print(self, message: str, **_kwargs: Any) -> None:
-        """Print a message as plain text.
+    def write_message(self, message: str, **_kwargs: Any) -> None:
+        """Write a message as plain text.
 
         Args:
-            message: The message to print
+            message: The message to write
             **_kwargs: Additional options (ignored for plain text)
         """
         print(message)

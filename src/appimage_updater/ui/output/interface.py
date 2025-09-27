@@ -24,11 +24,11 @@ class OutputFormatter(Protocol):
     implementations while maintaining a consistent API.
     """
 
-    def print(self, message: str, **kwargs: Any) -> None:
-        """Print a message with optional styling.
+    def write_message(self, message: str, **kwargs: Any) -> None:
+        """Write a message with optional styling.
 
         Args:
-            message: The message to print
+            message: The message to write
             **kwargs: Format-specific styling options
         """
         ...

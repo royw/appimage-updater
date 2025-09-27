@@ -32,11 +32,11 @@ class RichOutputFormatter(OutputFormatter):
         self._current_section: str | None = None
         self.verbose = verbose
 
-    def print(self, message: str, **_kwargs: Any) -> None:
-        """Print a message with Rich styling.
+    def write_message(self, message: str, **_kwargs: Any) -> None:
+        """Write a message with Rich styling.
 
         Args:
-            message: The message to print
+            message: The message to write
             **_kwargs: Rich console print options (style, highlight, etc.)
         """
         self.console.print(message, **_kwargs)

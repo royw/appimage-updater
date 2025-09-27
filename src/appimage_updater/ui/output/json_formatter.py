@@ -33,8 +33,8 @@ class JSONOutputFormatter(OutputFormatter):
         }
         self._current_section: str | None = None
 
-    def print(self, message: str, **kwargs: Any) -> None:
-        """Print a message (store for JSON output).
+    def write_message(self, message: str, **kwargs: Any) -> None:
+        """Write a message (store for JSON output).
 
         Args:
             message: The message to store

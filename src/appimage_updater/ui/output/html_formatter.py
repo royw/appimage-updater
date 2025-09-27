@@ -45,18 +45,17 @@ class HTMLOutputFormatter(OutputFormatter):
                 "        .section { margin: 20px 0; }",
                 "        .section h2 { border-bottom: 2px solid #333; }",
                 "    </style>",
-                "</head>",
                 "<body>",
                 "    <h1>AppImage Updater Report</h1>",
             ]
         )
 
-    def print(self, message: str, **kwargs: Any) -> None:
-        """Add a message to HTML output.
+    def write_message(self, message: str, **_kwargs: Any) -> None:
+        """Add a message to the HTML content.
 
         Args:
             message: The message to add
-            **kwargs: Additional options (ignored for HTML)
+            **_kwargs: Additional options (ignored for HTML)
         """
         escaped_message = html.escape(message)
         self.content.append(f"    <p>{escaped_message}</p>")
@@ -64,10 +63,10 @@ class HTMLOutputFormatter(OutputFormatter):
     def print_table(self, data: list[dict[str, Any]], title: str = "", headers: list[str] | None = None) -> None:
         """Add tabular data to HTML output.
 
-        Args:
-            data: List of dictionaries representing table rows
-            title: Optional table title
-            headers: Optional custom headers
+        {{ ... }}
+                    data: List of dictionaries representing table rows
+                    title: Optional table title
+                    headers: Optional custom headers
         """
         if not data:
             return
