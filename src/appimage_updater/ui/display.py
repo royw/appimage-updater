@@ -908,7 +908,7 @@ def check_configured_symlink(symlink_path: Path, download_dir: Path) -> tuple[Pa
         target = symlink_path.resolve()
         # Check if target is in download directory and is an AppImage
         if _is_valid_appimage_target(target, download_dir):
-            return (symlink_path, target)
+            return symlink_path, target
         # If we get here, symlink doesn't point to expected location
         logger.debug(f"Symlink {symlink_path} points to {target}, not an AppImage in download directory")
     except (OSError, RuntimeError) as e:

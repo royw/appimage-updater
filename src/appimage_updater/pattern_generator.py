@@ -32,7 +32,7 @@ def parse_github_url(url: str) -> tuple[str, str] | None:
 
         path_parts = parsed.path.strip("/").split("/")
         if len(path_parts) >= 2:
-            return (path_parts[0], path_parts[1])
+            return path_parts[0], path_parts[1]
         logger.debug(f"URL {url} does not have enough path components for owner/repo")
     except Exception as e:
         logger.debug(f"Failed to parse URL {url}: {e}")
