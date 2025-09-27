@@ -91,7 +91,7 @@ class AppImageUpdaterCLI:
                 "--debug",
                 help="Enable debug logging",
             ),
-            version: bool = typer.Option(
+            _version: bool = typer.Option(
                 False,
                 "--version",
                 "-V",
@@ -109,7 +109,7 @@ class AppImageUpdaterCLI:
         """Run the CLI application with proper exception handling."""
 
         # Override sys.excepthook to prevent stack traces from being displayed
-        def clean_excepthook(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: Any) -> None:
+        def clean_excepthook(exc_type: type[BaseException], exc_value: BaseException, _exc_traceback: Any) -> None:
             """Clean exception handler that doesn't show stack traces for user errors."""
             # For typer.Exit and click.exceptions.Exit, just exit cleanly
             if exc_type.__name__ in ("Exit", "ClickException") or issubclass(exc_type, SystemExit):
