@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 import re
 from typing import Any
@@ -564,7 +565,7 @@ class VersionChecker:
     def _extract_version_from_filename(self, filename: str) -> str | None:
         """Extract version from filename using common patterns."""
         # Test each pattern in order of specificity
-        patterns = [
+        patterns: list[Callable[[str], str | None]] = [
             self._extract_prerelease_version,
             self._extract_date_version,
             self._extract_semantic_version,
