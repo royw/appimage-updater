@@ -7,6 +7,7 @@ import pytest
 import typer
 
 from appimage_updater.core.models import InteractiveResult
+from appimage_updater.repositories.base import RepositoryError
 from appimage_updater.ui.interactive import InteractiveAddHandler
 
 
@@ -413,7 +414,7 @@ class TestInteractiveAddHandler:
     def test_validate_url_failure(self, mock_get_repo_client: Mock) -> None:
         """Test URL validation failure."""
         mock_console = Mock()
-        mock_get_repo_client.side_effect = Exception("Invalid repository")
+        mock_get_repo_client.side_effect = RepositoryError("Invalid repository")
         
         handler = InteractiveAddHandler(console=mock_console)
         
