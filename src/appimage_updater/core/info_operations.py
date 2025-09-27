@@ -15,21 +15,29 @@ from appimage_updater.utils.version_utils import extract_version_from_filename, 
 async def _execute_info_update_workflow(enabled_apps: list[ApplicationConfig]) -> None:
     """Execute the info file update workflow for all enabled applications."""
     output_formatter = get_output_formatter()
+    console = Console()  # Always create console for fallback usage
+
     if output_formatter:
         output_formatter.start_section("Info File Update")
         output_formatter.print(f"Updating .info files for {len(enabled_apps)} applications...")
     else:
-        console = Console()
         console.print(f"\n[bold blue]Updating .info files for {len(enabled_apps)} applications...[/bold blue]")
 
     for app_config in enabled_apps:
         try:
             await _update_info_file_for_app(app_config, console)
         except Exception as e:
-            console.print(f"[red]Error updating info file for {app_config.name}: {e}[/red]")
+            if output_formatter:
+                output_formatter.print_error(f"Error updating info file for {app_config.name}: {e}")
+            else:
+                console.print(f"[red]Error updating info file for {app_config.name}: {e}[/red]")
             logger.exception(f"Error updating info file for {app_config.name}")
 
-    console.print("\n[bold green]Info file update completed![/bold green]")
+    if output_formatter:
+        output_formatter.print_success("Info file update completed!")
+        output_formatter.end_section()
+    else:
+        console.print("\n[bold green]Info file update completed![/bold green]")
 
 
 async def _update_info_file_for_app(app_config: ApplicationConfig, console: Console) -> None:
