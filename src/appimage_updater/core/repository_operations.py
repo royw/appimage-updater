@@ -1,3 +1,10 @@
+"""Repository examination and information display operations.
+
+This module provides functionality for examining repository information,
+including release data, asset details, and repository metadata. Used by
+the repository command to display comprehensive repository information.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path

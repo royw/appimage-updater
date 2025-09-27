@@ -1,3 +1,10 @@
+"""Core update operations for checking and downloading AppImage updates.
+
+This module contains the main business logic for the AppImage updater,
+including update checking, candidate selection, download orchestration,
+and file rotation. Provides the primary workflows used by CLI commands.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime

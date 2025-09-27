@@ -1,3 +1,10 @@
+"""Info file operations for managing application version metadata.
+
+This module provides functionality for updating .info files that track current
+versions of installed AppImage applications. These files are used by the version
+checker to determine if updates are available.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
