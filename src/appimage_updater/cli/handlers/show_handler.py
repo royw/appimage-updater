@@ -56,7 +56,7 @@ class ShowCommandHandler(CommandHandler):
     def handle_help_display(self, **kwargs: Any) -> bool:
         """Handle help display for show command when no app names provided."""
         app_names = kwargs.get("app_names")
-        output_format = kwargs.get("format", OutputFormat.RICH)
+        output_format = kwargs.get("output_format", OutputFormat.RICH)
 
         if app_names is None:
             output_formatter = create_output_formatter_from_params({"format": output_format})
@@ -112,7 +112,7 @@ class ShowCommandHandler(CommandHandler):
     ) -> None:
         """Execute the show command logic."""
         # Show help if no app names are provided
-        if self.handle_help_display(app_names=app_names, format=output_format):
+        if self.handle_help_display(app_names=app_names, output_format=output_format):
             raise typer.Exit(0)
 
         # Create command via factory (existing pattern)

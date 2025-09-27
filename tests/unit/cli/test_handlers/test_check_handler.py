@@ -164,7 +164,7 @@ class TestCheckCommandHandler:
                 instrument_http=False,
                 http_stack_depth=5,
                 http_track_headers=False,
-                format=OutputFormat.RICH
+                output_format=OutputFormat.RICH
             )
             
             # Verify trackers and formatters were created
@@ -216,7 +216,7 @@ class TestCheckCommandHandler:
                 no_interactive=False,
                 verbose=False,
                 debug=False,
-                format=OutputFormat.JSON,
+                output_format=OutputFormat.JSON,
                 info=False,
                 instrument_http=False,
                 http_stack_depth=5,
@@ -266,7 +266,7 @@ class TestCheckCommandHandler:
                 no_interactive=False,
                 verbose=False,
                 debug=False,
-                format=OutputFormat.HTML,
+                output_format=OutputFormat.HTML,
                 info=False,
                 instrument_http=False,
                 http_stack_depth=5,
@@ -448,7 +448,7 @@ class TestCheckCommandHandler:
                                 no_interactive=True,
                                 verbose=True,
                                 debug=True,
-                                format=OutputFormat.JSON,
+                                output_format=OutputFormat.JSON,
                                 info=True,
                                 instrument_http=True,
                                 http_stack_depth=10,
@@ -470,5 +470,5 @@ class TestCheckCommandHandler:
                                 instrument_http=True,
                                 http_stack_depth=10,
                                 http_track_headers=True,
-                                format=OutputFormat.JSON
+                                output_format=OutputFormat.JSON
                             )
