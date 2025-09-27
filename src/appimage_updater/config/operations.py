@@ -17,6 +17,7 @@ from ..pattern_generator import (
     detect_source_type,
     generate_appimage_pattern_async,
 )
+from ..repositories.base import RepositoryError
 from ..repositories.factory import get_repository_client
 from ..ui.display import _replace_home_with_tilde
 
@@ -48,7 +49,7 @@ def _validate_direct_url(url: str) -> str | None:
             _display_url_error(url, "Invalid URL format")
             return None
         return url
-    except Exception as e:
+    except (ValueError, AttributeError, TypeError) as e:
         _display_url_error(url, "Invalid URL format", str(e))
         return None
 
@@ -66,7 +67,7 @@ def _validate_and_normalize_repository_url(url: str) -> str | None:
             _display_url_correction(url, normalized_url)
 
         return normalized_url
-    except Exception as e:
+    except (ValueError, AttributeError, TypeError, RepositoryError) as e:
         _display_url_error(url, "Invalid repository URL", str(e))
         return None
 
@@ -293,7 +294,7 @@ async def _detect_prerelease_requirement(url: str) -> bool:
     try:
         repo_client = get_repository_client(url)
         return await repo_client.should_enable_prerelease(url)
-    except Exception:
+    except (RepositoryError, ValueError, AttributeError):
         # If we can't detect, default to False
         return False
 
@@ -517,7 +518,7 @@ def validate_url_update(updates: dict[str, Any]) -> None:
 
         # Update with normalized URL
         updates["url"] = normalized_url
-    except Exception as e:
+    except (ValueError, AttributeError, TypeError, RepositoryError) as e:
         raise ValueError(f"Invalid repository URL: {url} - {e}") from e
 
     # Show correction to user if URL was corrected
