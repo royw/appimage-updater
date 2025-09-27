@@ -25,27 +25,12 @@ async def _execute_info_update_workflow(enabled_apps: list[ApplicationConfig]) -
     output_formatter = get_output_formatter()
     console = Console()  # Always create console for fallback usage
 
-    if output_formatter:
-        output_formatter.start_section("Info File Update")
-        output_formatter.print_message(f"Updating .info files for {len(enabled_apps)} applications...")
-    else:
-        console.print(f"\n[bold blue]Updating .info files for {len(enabled_apps)} applications...[/bold blue]")
-
+    _display_workflow_start(output_formatter, console, len(enabled_apps))
+    
     for app_config in enabled_apps:
-        try:
-            await _update_info_file_for_app(app_config, console)
-        except (OSError, PermissionError, ValueError, RepositoryError) as e:
-            if output_formatter:
-                output_formatter.print_error(f"Error updating info file for {app_config.name}: {e}")
-            else:
-                console.print(f"[red]Error updating info file for {app_config.name}: {e}[/red]")
-            logger.exception(f"Error updating info file for {app_config.name}")
-
-    if output_formatter:
-        output_formatter.print_success("Info file update completed!")
-        output_formatter.end_section()
-    else:
-        console.print("\n[bold green]Info file update completed![/bold green]")
+        await _process_single_app_info_update(app_config, console, output_formatter)
+    
+    _display_workflow_completion(output_formatter, console)
 
 
 async def _update_info_file_for_app(app_config: ApplicationConfig, console: Console) -> None:
@@ -149,6 +134,43 @@ def _check_release_assets(release: Any, current_file: Path) -> str | None:
         if _files_match(current_file.name, asset.name):
             return str(release.tag_name).lstrip("v")
     return None
+
+
+def _display_workflow_start(output_formatter: Any, console: Console, app_count: int) -> None:
+    """Display the start of the info file update workflow."""
+    if output_formatter:
+        output_formatter.start_section("Info File Update")
+        output_formatter.print_message(f"Updating .info files for {app_count} applications...")
+    else:
+        console.print(f"\n[bold blue]Updating .info files for {app_count} applications...[/bold blue]")
+
+
+async def _process_single_app_info_update(
+    app_config: ApplicationConfig, console: Console, output_formatter: Any
+) -> None:
+    """Process info file update for a single application with error handling."""
+    try:
+        await _update_info_file_for_app(app_config, console)
+    except (OSError, PermissionError, ValueError, RepositoryError) as e:
+        _display_app_error(app_config.name, str(e), output_formatter, console)
+        logger.exception(f"Error updating info file for {app_config.name}")
+
+
+def _display_app_error(app_name: str, error_msg: str, output_formatter: Any, console: Console) -> None:
+    """Display error message for a single application."""
+    if output_formatter:
+        output_formatter.print_error(f"Error updating info file for {app_name}: {error_msg}")
+    else:
+        console.print(f"[red]Error updating info file for {app_name}: {error_msg}[/red]")
+
+
+def _display_workflow_completion(output_formatter: Any, console: Console) -> None:
+    """Display the completion of the info file update workflow."""
+    if output_formatter:
+        output_formatter.print_success("Info file update completed!")
+        output_formatter.end_section()
+    else:
+        console.print("\n[bold green]Info file update completed![/bold green]")
 
 
 def _files_match(current_filename: str, asset_name: str) -> bool:
