@@ -48,7 +48,10 @@ class AppImageUpdaterCLI:
         self.global_state = GlobalState()
         self.console = Console()
 
-        # Register all command handlers
+        # Configure logging with INFO level by default to prevent debug messages during init
+        configure_logging(debug=False)
+
+        # Register all command handlers (but suppress debug logs during registration)
         self._register_handlers()
 
         # Setup global callbacks

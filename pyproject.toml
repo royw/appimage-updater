@@ -53,7 +53,7 @@ dev = [
 ]
 
 [project.scripts]
-appimage-updater = "appimage_updater.main:app"
+appimage-updater = "appimage_updater.main:cli_main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/appimage_updater"]
