@@ -142,17 +142,17 @@ class TestCommandValidation:
         command = CommandFactory.create_show_command(app_names=["TestApp", "AnotherApp"])
         assert command.validate() == []
 
-    def test_show_command_validation_failures(self):
-        """Test ShowCommand validation failure scenarios."""
-        # Missing app names
+    def test_show_command_validation_success_with_no_app_names(self):
+        """Test ShowCommand validation success scenarios with no app names (shows all)."""
+        # Missing app names - now valid (shows all apps)
         command = CommandFactory.create_show_command()
         errors = command.validate()
-        assert "At least one application name is required" in errors
+        assert errors == []
         
-        # Empty app names list
+        # Empty app names list - now valid (shows all apps)
         command = CommandFactory.create_show_command(app_names=[])
         errors = command.validate()
-        assert "At least one application name is required" in errors
+        assert errors == []
 
     def test_config_command_validation_success(self):
         """Test ConfigCommand validation success scenarios."""
@@ -308,11 +308,10 @@ class TestCommandValidation:
 
     def test_app_names_validation_consistency(self):
         """Test app names validation consistency across commands that require them."""
-        # Commands that require app names
+        # Commands that require app names (show command no longer requires them)
         commands_requiring_app_names = [
             (CommandFactory.create_edit_command, {}),
             (CommandFactory.create_remove_command, {}),
-            (CommandFactory.create_show_command, {}),
             (CommandFactory.create_repository_command, {}),
         ]
         
@@ -375,22 +374,19 @@ class TestCommandValidation:
 
     def test_validation_error_message_consistency(self):
         """Test that validation error messages are consistent across commands."""
-        # Test app name requirement messages
+        # Test app name requirement messages (show command no longer requires app names)
         edit_command = CommandFactory.create_edit_command()
         remove_command = CommandFactory.create_remove_command()
-        show_command = CommandFactory.create_show_command()
         repo_command = CommandFactory.create_repository_command()
         
         edit_errors = edit_command.validate()
         remove_errors = remove_command.validate()
-        show_errors = show_command.validate()
         repo_errors = repo_command.validate()
         
         # All should have similar app name requirement messages
         expected_message = "At least one application name is required"
         assert expected_message in edit_errors
         assert expected_message in remove_errors
-        assert expected_message in show_errors
         assert expected_message in repo_errors
 
     def test_complex_validation_scenarios(self):

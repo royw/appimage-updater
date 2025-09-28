@@ -23,7 +23,7 @@ def test_integration_smoke_test(runner):
 
     result = runner.invoke(app, ["show", "--help"])
     assert result.exit_code == 0
-    assert "Show detailed information about a specific application" in result.stdout
+    assert "Show detailed information about applications" in result.stdout
 
     result = runner.invoke(app, ["add", "--help"])
     assert result.exit_code == 0
