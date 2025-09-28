@@ -33,38 +33,12 @@ For installation instructions, see the [Installation Guide](installation.md).
 AppImage Updater provides helpful usage information when you run commands without required arguments, making it easy to explore available options:
 
 ```bash
-# Shows complete config command help with examples
-appimage-updater config
 
 # Shows show command help with usage patterns
-appimage-updater show
-
-# Shows edit command help with all options
-appimage-updater edit
+appimage-updater show --help
 
 # Shows remove command help
-appimage-updater remove
-```
-
-This eliminates the need to remember `--help` flags and provides immediate guidance on proper command usage.
-
-## Output Formats
-
-AppImage Updater supports multiple output formats for all commands, making it suitable for both interactive use and automation:
-
-### Available Formats
-
-- **`rich`** (default) - Beautiful, colorized output with tables and formatting
-- **`plain`** - Simple text output without colors or special formatting
-- **`json`** - Structured JSON output for programmatic processing
-- **`html`** - HTML formatted output for web integration
-
-### Using Format Options
-
-All commands that produce output support the `--format` option:
-
-```bash
-# Interactive use with rich formatting (default)
+appimage-updater remove --help
 appimage-updater list
 appimage-updater check --format rich
 
@@ -123,6 +97,16 @@ AppImage Updater uses consistent naming across all commands for the same functio
 | **Prerelease** | `--prerelease` | `--prerelease` | `prerelease` |
 
 This consistency means you can use the same flag names across commands and easily translate between CLI options and config settings.
+
+## Repository Types
+
+AppImage Updater supports multiple repository types with comprehensive documentation for each:
+
+- **[GitHub Repositories](github-support.md)** - Full support for GitHub releases API with authentication and enterprise support
+- **[GitLab Repositories](gitlab-support.md)** - Complete GitLab integration for both gitlab.com and self-hosted instances  
+- **[Direct Download URLs](direct-support.md)** - Static download links, "latest" symlinks, and dynamic download pages
+
+Each repository type has detailed documentation covering setup, authentication, troubleshooting, and advanced features.
 
 ### `check`
 

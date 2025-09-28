@@ -383,11 +383,13 @@ Each monitored application has its own configuration file specifying:
 
 ## Supported Repository Types
 
-AppImage Updater now supports multiple repository types:
+AppImage Updater supports multiple repository types with comprehensive documentation for each:
 
-- **GitHub Repositories** - Full support for GitHub releases API
-- **Direct Download URLs** - Static download links and "latest" symlinks (e.g., OpenRGB, YubiKey Manager)
-- **Dynamic Download Pages** - Generic download pages with parseable AppImage links
+- **[GitHub Repositories](docs/github-support.md)** - Full support for GitHub releases API with authentication and enterprise support
+- **[GitLab Repositories](docs/gitlab-support.md)** - Complete GitLab integration for both gitlab.com and self-hosted instances  
+- **[Direct Download URLs](docs/direct-support.md)** - Static download links, "latest" symlinks, and dynamic download pages
+
+Each repository type has detailed documentation covering setup, authentication, troubleshooting, and advanced features.
 
 ## Unsupported Applications
 
