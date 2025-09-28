@@ -1,8 +1,8 @@
-"""System information detection for architecture and platform compatibility.
+"""System information detection for Linux architecture and distribution compatibility.
 
-This module provides comprehensive system detection including architecture,
-platform, and supported package formats to enable intelligent asset filtering
-and compatibility scoring.
+This module provides comprehensive Linux system detection including architecture,
+distribution, and supported package formats to enable intelligent asset filtering
+and compatibility scoring. AppImage Updater is Linux-only.
 """
 
 from __future__ import annotations
@@ -69,17 +69,13 @@ class SystemDetector:
 
     # noinspection PyMethodMayBeStatic
     def _detect_platform(self) -> str:
-        """Detect the current platform."""
+        """Detect the current platform (Linux only)."""
         system = platform.system().lower()
 
-        # Normalize platform names
-        platform_mapping = {
-            "linux": "linux",
-            "darwin": "darwin",
-            "windows": "win32",
-        }
+        if system != "linux":
+            raise RuntimeError(f"AppImage Updater only supports Linux. Detected platform: {system}")
 
-        return platform_mapping.get(system, system)
+        return "linux"
 
     # noinspection PyMethodMayBeStatic
     def _detect_architecture(self) -> tuple[str, set[str], str]:
@@ -157,17 +153,12 @@ class SystemDetector:
         formats.add(".zip")
 
     def _detect_supported_formats(self, platform_name: str) -> set[str]:
-        """Detect supported package formats based on platform and distribution."""
+        """Detect supported package formats for Linux."""
+        if platform_name != "linux":
+            raise RuntimeError(f"AppImage Updater only supports Linux. Platform: {platform_name}")
         formats: set[str] = set()
-
-        if platform_name == "linux":
-            self._add_linux_formats(formats)
-            self._add_linux_distribution_formats(formats)
-        elif platform_name == "darwin":
-            self._add_darwin_formats(formats)
-        elif platform_name == "win32":
-            self._add_windows_formats(formats)
-
+        self._add_linux_formats(formats)
+        self._add_linux_distribution_formats(formats)
         return formats
 
     def _detect_distribution(self) -> tuple[str | None, str | None]:
@@ -275,11 +266,11 @@ def is_compatible_architecture(asset_arch: str, system_arch: str | None = None) 
 
 
 def is_compatible_platform(asset_platform: str, system_platform: str | None = None) -> tuple[bool, float]:
-    """Check if an asset platform is compatible with the system.
+    """Check if an asset platform is compatible with Linux.
 
     Args:
         asset_platform: Platform found in asset filename
-        system_platform: System platform (uses detected if None)
+        system_platform: System platform (should be 'linux')
 
     Returns:
         Tuple of (is_compatible, compatibility_score)
@@ -289,17 +280,21 @@ def is_compatible_platform(asset_platform: str, system_platform: str | None = No
         system_info = get_system_info()
         system_platform = system_info.platform
 
-    # Platform compatibility is strict - no cross-platform support
-    is_compatible = asset_platform.lower() == system_platform.lower()
+    # Only Linux platform is supported
+    if system_platform != "linux":
+        raise RuntimeError(f"AppImage Updater only supports Linux. System platform: {system_platform}")
+
+    # Platform compatibility - only Linux assets are compatible
+    is_compatible = asset_platform.lower() == "linux"
     return is_compatible, (100.0 if is_compatible else 0.0)
 
 
 def is_supported_format(file_extension: str, system_platform: str | None = None) -> tuple[bool, float]:
-    """Check if a file format is supported on the system.
+    """Check if a file format is supported on Linux.
 
     Args:
         file_extension: File extension (e.g., '.deb', '.AppImage')
-        system_platform: System platform (uses detected if None)
+        system_platform: System platform (should be 'linux')
 
     Returns:
         Tuple of (is_supported, preference_score)
@@ -308,12 +303,13 @@ def is_supported_format(file_extension: str, system_platform: str | None = None)
     if system_platform is None:
         system_info = get_system_info()
         supported_formats = system_info.supported_formats
-        platform_name = system_info.platform
     else:
-        # Create temporary supported formats for provided platform
+        # Only Linux is supported
+        if system_platform != "linux":
+            raise RuntimeError(f"AppImage Updater only supports Linux. Platform: {system_platform}")
+        # Create temporary supported formats for Linux
         detector: SystemDetector = SystemDetector()
         supported_formats = detector._detect_supported_formats(system_platform)
-        platform_name = system_platform
 
     # Case-insensitive format checking
     file_extension_lower = file_extension.lower()
@@ -322,30 +318,15 @@ def is_supported_format(file_extension: str, system_platform: str | None = None)
     if file_extension_lower not in supported_formats_lower:
         return False, 0.0
 
-    # Format preferences by platform (case-insensitive keys)
-    preferences = {
-        "linux": {
-            ".appimage": 70.0,  # Preferred for AppImage Updater (reduced to balance with distribution)
-            ".deb": 65.0,  # Native package format for Debian-based
-            ".rpm": 65.0,  # Native package format for RPM-based
-            ".tar.gz": 50.0,  # Generic archive
-            ".tar.xz": 50.0,  # Generic archive
-            ".zip": 45.0,  # Generic archive
-        },
-        "darwin": {
-            ".dmg": 70.0,  # Preferred macOS format
-            ".pkg": 65.0,  # Native installer
-            ".zip": 50.0,  # Archive format
-            ".tar.gz": 45.0,  # Archive format
-        },
-        "win32": {
-            ".exe": 70.0,  # Preferred Windows format
-            ".msi": 65.0,  # Windows installer
-            ".zip": 50.0,  # Archive format
-        },
+    # Format preferences for Linux (case-insensitive keys)
+    linux_preferences = {
+        ".appimage": 70.0,  # Preferred for AppImage Updater
+        ".deb": 65.0,  # Native package format for Debian-based
+        ".rpm": 65.0,  # Native package format for RPM-based
+        ".tar.gz": 50.0,  # Generic archive
+        ".tar.xz": 50.0,  # Generic archive
+        ".zip": 45.0,  # Generic archive
     }
 
-    platform_prefs = preferences.get(platform_name, {})
-    score = platform_prefs.get(file_extension_lower, 50.0)  # Default supported score
-
+    score = linux_preferences.get(file_extension_lower, 50.0)  # Default supported score
     return True, score

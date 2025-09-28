@@ -2,6 +2,8 @@
 
 This document describes the architecture and design principles of AppImage Updater.
 
+**Platform Support**: AppImage Updater is designed exclusively for Linux systems, as AppImage is a Linux-specific package format.
+
 ## High-Level Architecture
 
 AppImage Updater follows a layered architecture with clear separation of concerns:

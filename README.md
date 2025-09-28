@@ -6,11 +6,13 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A professional, enterprise-ready service for automating the finding and downloading of AppImage applications from their respective websites.
+A professional, enterprise-ready Linux service for automating the finding and downloading of AppImage applications from their respective websites.
 
 ## Overview
 
-AppImage Updater is a modern, type-safe CLI application built with a layered architecture that monitors configured applications for new releases and provides automated downloading of updated AppImage files.
+AppImage Updater is a modern, type-safe Linux CLI application built with a layered architecture that monitors configured applications for new releases and provides automated downloading of updated AppImage files.
+
+**Platform Support**: Linux only - AppImage is a Linux-specific package format.
 
 **Key Features:**
 
@@ -29,7 +31,7 @@ AppImage Updater is a modern, type-safe CLI application built with a layered arc
 - **Direct download URLs** with checksum verification and automatic detection
 - **Dynamic URLs** with automatic resolution and fallback support
 - **ZIP files** containing AppImage files with automatic extraction
-- **Multi-platform releases** with automatic compatibility detection
+- **Multi-architecture releases** with automatic compatibility detection (x86_64, arm64, etc.)
 
 ## Quick Start
 
@@ -233,7 +235,7 @@ Now you can manually run `appimage-updater check` or integrate it into crontab o
 
 ## Features
 
-- **Intelligent Architecture & Platform Filtering**: Automatically eliminates incompatible downloads based on CPU architecture (x86_64, arm64, etc.), platform (Linux, macOS, Windows), and supported formats
+- **Intelligent Architecture Filtering**: Automatically eliminates incompatible downloads based on CPU architecture (x86_64, arm64, etc.) and supported Linux formats
 - **Distribution-Aware Selection**: Automatically selects the best compatible distribution (Ubuntu, Fedora, Debian, Arch, etc.)
 - **Smart Auto-Detection**: Automatically detects continuous build repositories and enables prerelease support
 - **Version Metadata System**: Accurate version tracking with `.info` files for complex release formats
@@ -351,14 +353,14 @@ Automatically eliminates incompatible downloads:
 # Available: linux-x86_64.AppImage, linux-arm64.AppImage, darwin.dmg, win32.exe
 uv run python -m appimage_updater add BalenaEtcher https://github.com/balena-io/etcher ~/Apps/BalenaEtcher
 # Ubuntu x86_64 Result: Automatically selects Linux x86_64 AppImage
-#                       Filters out: ARM64, macOS, Windows versions
+#                       Filters out: ARM64, macOS, Windows versions (non-Linux platforms ignored)
 ```
 
 **System Detection:**
 
 - **Architecture**: x86_64, amd64, arm64, armv7l, i686 (with intelligent aliasing)
-- **Platform**: Linux, macOS (darwin), Windows (win32)
-- **Format Support**: .AppImage, .deb/.rpm (distro-specific), .dmg, .exe, etc.
+- **Platform**: Linux only (AppImage is Linux-specific)
+- **Format Support**: .AppImage, .deb/.rpm (distro-specific), .tar.gz, .zip
 
 **For Distribution-Specific Releases:**
 

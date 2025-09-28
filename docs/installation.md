@@ -4,8 +4,9 @@ AppImage Updater can be installed using several methods depending on your needs.
 
 ## Requirements
 
-- Python 3.11 or higher
-- Internet connection for downloading updates
+- **Linux Operating System** - AppImage is a Linux-specific package format
+- **Python 3.11 or higher** - Required for modern async/await and type features
+- **Internet connection** - For downloading updates from repositories
 
 ## End User Installation
 
@@ -120,7 +121,7 @@ For isolated installation without pipx:
 python -m venv appimage-updater-env
 
 # Activate environment
-source appimage-updater-env/bin/activate  # On Windows: appimage-updater-env\Scripts\activate
+source appimage-updater-env/bin/activate
 
 # Install AppImage Updater
 pip install appimage-updater

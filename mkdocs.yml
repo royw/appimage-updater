@@ -1,5 +1,5 @@
 site_name: AppImage Updater
-site_description: A service for automating finding and downloading AppImage applications
+site_description: A Linux service for automating finding and downloading AppImage applications
 site_url: https://royw.github.io/appimage-updater
 repo_url: https://github.com/royw/appimage-updater
 repo_name: royw/appimage-updater
@@ -137,6 +137,7 @@ nav:
   - User Guide:
     - Installation: installation.md
     - Getting Started: getting-started.md
+    - Linux-Only Support: linux-only.md
     - Usage Guide: usage.md
     - Configuration: configuration.md
     - Examples: examples.md

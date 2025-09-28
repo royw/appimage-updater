@@ -1,8 +1,10 @@
 # AppImage Updater
 
-A professional, enterprise-ready service for automating the finding and downloading of AppImage applications from their respective websites.
+A professional, enterprise-ready Linux service for automating the finding and downloading of AppImage applications from their respective websites.
 
-AppImage Updater is a modern, type-safe CLI application built with a layered architecture that monitors configured applications (like FreeCAD, OrcaSlicer, etc.) for new releases and provides automated downloading of updated AppImage files from GitHub releases and other sources.
+AppImage Updater is a modern, type-safe Linux CLI application built with a layered architecture that monitors configured applications (like FreeCAD, OrcaSlicer, etc.) for new releases and provides automated downloading of updated AppImage files from GitHub releases and other sources.
+
+**Platform Support**: Linux only - AppImage is a Linux-specific package format.
 
 ## Features
 
@@ -42,8 +44,8 @@ AppImage Updater is a modern, type-safe CLI application built with a layered arc
 
 ## Requirements
 
-- **Python 3.8+** - Required for async/await support
-- **Linux/macOS** - Primary supported platforms
+- **Python 3.11+** - Required for modern async/await and type features
+- **Linux** - Only supported platform (AppImage is Linux-specific)
 - **Internet Connection** - For GitHub API access and downloads
 
 ## Quick Start

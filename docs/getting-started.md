@@ -4,6 +4,8 @@
 
 This guide will walk you through setting up AppImage Updater and managing your first applications.
 
+**Platform Support**: AppImage Updater is designed exclusively for Linux systems, as AppImage is a Linux-specific package format.
+
 ## Quick Start
 
 AppImage Updater automatically creates the configuration directory when you first use any command - no manual initialization is required!

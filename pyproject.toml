@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "appimage-updater"
 version = "0.4.5"
-description = "A service for automating finding and downloading AppImage applications"
+description = "A Linux service for automating finding and downloading AppImage applications"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
@@ -16,10 +16,12 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Archiving :: Packaging",
 ]
 dependencies = [
     "httpx>=0.25.0",
