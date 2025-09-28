@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 import re
 from typing import (
@@ -184,6 +185,31 @@ class DefaultsConfig(BaseModel):
         return None
 
 
+class DomainKnowledge(BaseModel):
+    """Domain knowledge for repository type detection."""
+    
+    github_domains: list[str] = Field(
+        default_factory=lambda: ["github.com"],
+        description="Known GitHub-compatible domains"
+    )
+    gitlab_domains: list[str] = Field(
+        default_factory=lambda: ["gitlab.com"],
+        description="Known GitLab-compatible domains"
+    )
+    direct_domains: list[str] = Field(
+        default_factory=list,
+        description="Known direct download domains"
+    )
+    dynamic_domains: list[str] = Field(
+        default_factory=list,
+        description="Known dynamic download domains"
+    )
+    last_updated: str = Field(
+        default_factory=lambda: datetime.now().isoformat(),
+        description="Last update timestamp"
+    )
+
+
 class GlobalConfig(BaseModel):
     """Global configuration settings."""
 
@@ -196,6 +222,10 @@ class GlobalConfig(BaseModel):
     defaults: DefaultsConfig = Field(
         default_factory=DefaultsConfig,
         description="Default settings for new applications",
+    )
+    domain_knowledge: DomainKnowledge = Field(
+        default_factory=DomainKnowledge,
+        description="Learned domain knowledge for repository detection"
     )
 
 

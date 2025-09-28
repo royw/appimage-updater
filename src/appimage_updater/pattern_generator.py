@@ -14,6 +14,7 @@ from loguru import logger
 
 from .core.models import Release
 from .repositories.base import RepositoryError
+from .repositories.domain_service import DomainKnowledgeService
 from .repositories.factory import (
     detect_repository_type,
     get_repository_client,
@@ -96,19 +97,20 @@ def _is_download_url(path_parts: list[str]) -> bool:
 
 
 async def generate_appimage_pattern_async(app_name: str, url: str) -> str:
-    """Async version of pattern generation for use in async contexts.
+    """Repository-agnostic pattern generation for use in async contexts.
 
-    First attempts to fetch actual AppImage files from GitHub releases to create
-    an accurate pattern. Falls back to intelligent defaults if that fails.
+    First attempts to fetch actual AppImage files from repository releases to create
+    an accurate pattern. Works with GitHub, GitLab, and other repository types.
+    Falls back to intelligent defaults if that fails.
     """
     try:
-        # Try to get pattern from actual GitHub releases
-        pattern = await fetch_appimage_pattern_from_github(url)
+        # Try to get pattern from any repository type (not just GitHub)
+        pattern = await fetch_appimage_pattern_from_repository(url)
         if pattern:
-            logger.debug(f"Generated pattern from releases: {pattern}")
+            logger.debug(f"Generated pattern from repository releases: {pattern}")
             return pattern
     except (ValueError, AttributeError, TypeError) as e:
-        logger.debug(f"Failed to generate pattern from releases: {e}")
+        logger.debug(f"Failed to generate pattern from repository: {e}")
         # Fall through to fallback logic
 
     # Fallback: Use intelligent defaults based on the app name and URL
@@ -116,16 +118,23 @@ async def generate_appimage_pattern_async(app_name: str, url: str) -> str:
     return generate_fallback_pattern(app_name, url)
 
 
-async def fetch_appimage_pattern_from_github(url: str) -> str | None:
-    """Async function to fetch AppImage pattern from repository releases.
+async def fetch_appimage_pattern_from_repository(url: str) -> str | None:
+    """Repository-agnostic function to fetch AppImage pattern from releases.
 
     Looks for both direct AppImage files and ZIP files that might contain AppImages.
     Prioritizes stable releases over prereleases for better pattern generation.
+    Works with GitHub, GitLab, and other repository types through the registry system.
     """
     try:
-        # Use probing for unknown domains, but skip for known GitHub URLs for performance
-        enable_probing = not url.startswith("https://github.com/")
-        client = get_repository_client(url, enable_probing=enable_probing)
+        # Use domain knowledge for optimization - works for all repository types now
+        domain_service = DomainKnowledgeService()
+        
+        # Check if we have domain knowledge for fast-path optimization
+        known_handler = domain_service.get_handler_by_domain_knowledge(url)
+        enable_probing = known_handler is None
+        
+        # Get repository client using registry system
+        client = await get_repository_client(url, enable_probing=enable_probing)
         releases = await client.get_releases(url, limit=20)
         groups = _collect_release_files(releases)
         target_files = _select_target_files(groups)
@@ -136,6 +145,12 @@ async def fetch_appimage_pattern_from_github(url: str) -> str | None:
     except (RepositoryError, ValueError, AttributeError) as e:
         logger.debug(f"Error fetching releases: {e}")
         return None
+
+
+# Keep the old function name for backward compatibility
+async def fetch_appimage_pattern_from_github(url: str) -> str | None:
+    """Legacy function name - now redirects to repository-agnostic version."""
+    return await fetch_appimage_pattern_from_repository(url)
 
 
 def _categorize_asset_by_type_and_stability(asset_name: str, is_prerelease: bool, groups: dict[str, list[str]]) -> None:
@@ -435,9 +450,14 @@ async def should_enable_prerelease(url: str) -> bool:
 
 async def _fetch_releases_for_prerelease_check(url: str) -> list[Release]:
     """Fetch releases from repository for prerelease analysis."""
-    # Use probing for unknown domains, but skip for known GitHub URLs for performance
-    enable_probing = not url.startswith("https://github.com/")
-    client = get_repository_client(url, timeout=10, enable_probing=enable_probing)
+    # Use domain knowledge for optimization - works for all repository types now
+    domain_service = DomainKnowledgeService()
+    
+    # Check if we have domain knowledge for fast-path optimization
+    known_handler = domain_service.get_handler_by_domain_knowledge(url)
+    enable_probing = known_handler is None
+    
+    client = await get_repository_client(url, timeout=10, enable_probing=enable_probing)
     releases = await client.get_releases(url, limit=10)
 
     if not releases:

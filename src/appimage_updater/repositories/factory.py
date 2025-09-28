@@ -1,7 +1,7 @@
 """Repository factory for creating appropriate repository clients.
 
 This module provides factory functions to create the correct repository client
-based on URL patterns and repository types.
+based on URL patterns and repository types using a dynamic registry system.
 """
 
 from __future__ import annotations
@@ -13,78 +13,12 @@ import urllib.parse
 
 from loguru import logger
 
-from appimage_updater.repositories.github.repository import GitHubRepository
-from appimage_updater.repositories.gitlab.repository import GitLabRepository
-
 from .base import RepositoryClient, RepositoryError
-from .direct_download_repository import DirectDownloadRepository
-from .dynamic_download_repository import DynamicDownloadRepository
+from .domain_service import DomainKnowledgeService
+from .registry import get_repository_registry
 
 
-def get_repository_client_legacy(
-    url: str,
-    timeout: int = 30,
-    user_agent: str | None = None,
-    source_type: str | None = None,
-    **kwargs: Any,
-) -> RepositoryClient:
-    """Legacy repository client factory (domain-based detection only).
-
-    This function only performs URL pattern matching without API probing.
-    Use get_repository_client() for enhanced detection with API probing.
-
-    Args:
-        url: Repository URL
-        timeout: Request timeout in seconds
-        user_agent: Custom user agent string
-        source_type: Explicit source type (github, gitlab, direct_download, dynamic_download, direct)
-        **kwargs: Repository-specific configuration options
-
-    Returns:
-        Appropriate repository client instance
-
-    Raises:
-        RepositoryError: If no suitable repository client is found
-    """
-    # If explicit source type is provided, use it directly
-    if source_type:
-        # Map source types to repository classes
-        type_mapping = {
-            "github": GitHubRepository,
-            "gitlab": GitLabRepository,
-            "direct_download": DirectDownloadRepository,
-            "dynamic_download": DynamicDownloadRepository,
-            "direct": DirectDownloadRepository,  # "direct" maps to DirectDownloadRepository
-        }
-
-        if source_type in type_mapping:
-            repo_class = type_mapping[source_type]
-            client: RepositoryClient = repo_class(timeout=timeout, user_agent=user_agent, **kwargs)
-            return client
-        else:
-            raise RepositoryError(f"Unsupported source type: {source_type}")
-
-    # Fall back to URL-based detection if no explicit source type
-    # Try each repository type in order of preference
-    # Order matters: more specific types should come first
-    repository_types = [
-        GitHubRepository,
-        GitLabRepository,
-        DynamicDownloadRepository,  # Check dynamic before direct (more specific)
-        DirectDownloadRepository,
-    ]
-
-    for repo_class in repository_types:
-        # Create a temporary instance to test URL compatibility
-        temp_client: RepositoryClient = repo_class(timeout=timeout, user_agent=user_agent, **kwargs)
-        if temp_client.detect_repository_type(url):
-            return temp_client
-
-    # No suitable repository client found
-    raise RepositoryError(f"No repository client available for URL: {url}")
-
-
-def get_repository_client(
+async def get_repository_client_async_impl(
     url: str,
     timeout: int = 30,
     user_agent: str | None = None,
@@ -92,10 +26,7 @@ def get_repository_client(
     enable_probing: bool = True,
     **kwargs: Any,
 ) -> RepositoryClient:
-    """Create appropriate repository client with optional API probing.
-
-    This is the unified interface that provides both legacy (fast) and enhanced
-    (probing) repository detection based on the enable_probing parameter.
+    """Get repository client with intelligent domain knowledge and optional probing.
 
     Args:
         url: Repository URL
@@ -106,17 +37,85 @@ def get_repository_client(
         **kwargs: Repository-specific configuration options
 
     Returns:
-        Appropriate repository client instance
+        Repository client instance
 
     Raises:
         RepositoryError: If no suitable repository client is found
     """
+    registry = get_repository_registry()
+    domain_service = DomainKnowledgeService()
+    
+    # 1. Handle explicit source type (highest priority)
+    if source_type:
+        handler = registry.get_handler(source_type)
+        if not handler and source_type == "direct":
+            # Handle legacy "direct" mapping
+            handler = registry.get_handler("direct_download")
+            
+        if handler:
+            client = handler.create_client(timeout=timeout, user_agent=user_agent, **kwargs)
+            return client
+        else:
+            raise RepositoryError(f"Unsupported source type: {source_type}")
+
+    # 2. Fast-path: Try domain knowledge first
+    known_handler = domain_service.get_handler_by_domain_knowledge(url)
+    if known_handler:
+        try:
+            client = known_handler.create_client(timeout=timeout, user_agent=user_agent, **kwargs)
+            # Quick validation that the client works
+            await _validate_client(client, url)
+            return client
+        except Exception as e:
+            # Domain knowledge was wrong, forget it and continue
+            logger.warning(f"Known domain failed for {url}: {e}")
+            await domain_service.forget_domain(url, known_handler.metadata.name)
+
+    # 3. Registry-based detection
+    handlers = registry.get_handlers_for_url(url)
+    
+    for handler in handlers:
+        try:
+            if handler.can_handle_url(url):
+                client = handler.create_client(timeout=timeout, user_agent=user_agent, **kwargs)
+                
+                # If this worked, learn the domain for future fast-path
+                await domain_service.learn_domain(url, handler.metadata.name)
+                return client
+                
+        except Exception as e:
+            logger.debug(f"Handler {handler.metadata.name} failed for {url}: {e}")
+            continue
+
+    # 4. API Probing (if enabled and no handler worked)
     if enable_probing:
-        # Use enhanced detection with API probing
-        return get_repository_client_with_probing_sync(url, timeout, user_agent, source_type, **kwargs)
-    else:
-        # Use legacy detection (domain-based only)
-        return get_repository_client_legacy(url, timeout, user_agent, source_type, **kwargs)
+        detected_handler, client = await _probe_repository_type(url, timeout, user_agent, **kwargs)
+        if detected_handler and client:
+            # Learn the successful detection
+            await domain_service.learn_domain(url, detected_handler.metadata.name)
+            return client
+
+    # 5. Final fallback to dynamic download
+    fallback_handler = registry.get_handler("dynamic_download")
+    if fallback_handler:
+        logger.warning(f"No specific repository handler found for {url}, using dynamic download")
+        return fallback_handler.create_client(timeout=timeout, user_agent=user_agent, **kwargs)
+    
+    raise RepositoryError(f"No repository handler available for {url}")
+
+
+def get_repository_client_sync(
+    url: str,
+    timeout: int = 30,
+    user_agent: str | None = None,
+    source_type: str | None = None,
+    enable_probing: bool = True,
+    **kwargs: Any,
+) -> RepositoryClient:
+    """Synchronous wrapper for get_repository_client."""
+    return asyncio.run(get_repository_client_async_impl(
+        url, timeout, user_agent, source_type, enable_probing, **kwargs
+    ))
 
 
 async def get_repository_client_async(
@@ -127,138 +126,86 @@ async def get_repository_client_async(
     enable_probing: bool = True,
     **kwargs: Any,
 ) -> RepositoryClient:
-    """Async version of get_repository_client with optional API probing.
+    """Async version of repository client factory."""
+    return await get_repository_client_async_impl(
+        url, timeout, user_agent, source_type, enable_probing, **kwargs
+    )
 
-    This is the unified async interface that provides both legacy (fast) and enhanced
-    (probing) repository detection based on the enable_probing parameter.
 
-    Args:
-        url: Repository URL
-        timeout: Request timeout in seconds
-        user_agent: Custom user agent string
-        source_type: Explicit source type (github, gitlab, direct_download, dynamic_download, direct)
-        enable_probing: Enable API probing for unknown domains (default: True)
-        **kwargs: Repository-specific configuration options
+async def _validate_client(client: RepositoryClient, url: str) -> None:
+    """Quick health check for repository client."""
+    try:
+        # Try a lightweight operation to verify the API works
+        await client.get_latest_release(url)
+    except Exception as e:
+        raise RepositoryError(f"Client validation failed for {url}: {e}")
 
-    Returns:
-        Appropriate repository client instance
 
-    Raises:
-        RepositoryError: If no suitable repository client is found
-    """
-    if enable_probing:
-        # Use enhanced detection with API probing
-        return await get_repository_client_with_probing(url, timeout, user_agent, source_type, **kwargs)
-    else:
-        # Use legacy detection (domain-based only)
-        return get_repository_client_legacy(url, timeout, user_agent, source_type, **kwargs)
+async def _probe_repository_type(
+    url: str, 
+    timeout: int, 
+    user_agent: str | None, 
+    **kwargs: Any
+) -> tuple[Any, RepositoryClient | None]:
+    """Probe repository type and return both handler and working client."""
+    registry = get_repository_registry()
+    
+    # Get all handlers sorted by priority
+    handlers = registry.get_all_handlers()
+    
+    for handler in handlers:
+        # Skip dynamic download handler in probing (it's the fallback)
+        if handler.metadata.name == "dynamic_download":
+            continue
+            
+        try:
+            if handler.can_handle_url(url):
+                client = handler.create_client(timeout=timeout, user_agent=user_agent, **kwargs)
+                await _validate_client(client, url)
+                logger.info(f"Successfully probed {url} as {handler.metadata.name}")
+                return handler, client
+        except Exception as e:
+            logger.debug(f"Probing {url} as {handler.metadata.name} failed: {e}")
+            continue
+    
+    return None, None
 
 
 def detect_repository_type(url: str) -> str:
-    """Detect the repository type from a URL.
-
+    """Detect repository type from URL without creating client.
+    
     Args:
         url: Repository URL
-
+        
     Returns:
         Repository type string (e.g., 'github', 'gitlab')
-
+        
     Raises:
         RepositoryError: If repository type cannot be determined
     """
-    repository_types = [
-        GitHubRepository,
-        GitLabRepository,
-        DynamicDownloadRepository,  # Check dynamic before direct (more specific)
-        DirectDownloadRepository,
-    ]
-
-    for repo_class in repository_types:
-        # Create a temporary instance to test URL compatibility
-        temp_client: RepositoryClient = repo_class()
-        if temp_client.detect_repository_type(url):
-            return temp_client.repository_type
-
-    # Default to github for backward compatibility
-    # This matches the existing behavior in pattern_generator.py
-    return "github"
-
-
-async def get_repository_client_with_probing(
-    url: str,
-    timeout: int = 30,
-    user_agent: str | None = None,
-    source_type: str | None = None,
-    **kwargs: Any,
-) -> RepositoryClient:
-    """Create appropriate repository client with API probing for unknown domains.
-
-    Args:
-        url: Repository URL
-        timeout: Request timeout in seconds
-        user_agent: Custom user agent string
-        source_type: Explicit source type (github, gitlab, direct_download, dynamic_download, direct)
-        **kwargs: Repository-specific configuration options
-
-    Returns:
-        Appropriate repository client instance
-
-    Raises:
-        RepositoryError: If no suitable repository client is found
-    """
-    # If explicit source type is provided, use it directly
-    if source_type:
-        return get_repository_client_legacy(url, timeout, user_agent, source_type, **kwargs)
-
-    # Try standard detection first
-    try:
-        return get_repository_client_legacy(url, timeout, user_agent, source_type, **kwargs)
-    except RepositoryError:
-        # Standard detection failed, try API probing
-        logger.debug(f"Standard detection failed for {url}, trying API probing")
-
-    # Extract base URL for probing
-    try:
-        parsed = urllib.parse.urlparse(url)
-        base_url = f"{parsed.scheme}://{parsed.netloc}"
-    except (ValueError, AttributeError) as e:
-        raise RepositoryError(f"Invalid URL format: {url}") from e
-
-    # Try probing for GitHub-compatible API
-    github_client = GitHubRepository(timeout=timeout, user_agent=user_agent, **kwargs)
-    if await github_client._github_client.probe_api_compatibility(base_url):
-        logger.info(f"Detected GitHub-compatible API at {base_url}, using GitHub client")
-        return github_client
-
-    # Could add GitLab probing here in the future
-    # For now, GitLab detection is domain-based only
-
-    # If all probing fails, fall back to dynamic download
-    logger.debug(f"No API compatibility detected for {url}, falling back to dynamic download")
-    return DynamicDownloadRepository(timeout=timeout, user_agent=user_agent, **kwargs)
+    registry = get_repository_registry()
+    domain_service = DomainKnowledgeService()
+    
+    # Try domain knowledge first
+    known_handler = domain_service.get_handler_by_domain_knowledge(url)
+    if known_handler:
+        return known_handler.metadata.name
+    
+    # Fall back to registry detection
+    handlers = registry.get_handlers_for_url(url)
+    for handler in handlers:
+        if handler.can_handle_url(url):
+            return handler.metadata.name
+    
+    # Default fallback
+    return "dynamic_download"
 
 
-def get_repository_client_with_probing_sync(
-    url: str,
-    timeout: int = 30,
-    user_agent: str | None = None,
-    source_type: str | None = None,
-    **kwargs: Any,
-) -> RepositoryClient:
-    """Synchronous wrapper for get_repository_client_with_probing.
+# Legacy function names for backward compatibility
+get_repository_client_legacy = get_repository_client_sync  # For tests
+get_repository_client_with_probing_sync = get_repository_client_sync
+get_repository_client_with_probing_async = get_repository_client_async
 
-    This function runs the async probing in a new event loop to maintain
-    compatibility with synchronous code paths.
-    """
-    try:
-        # Try to get the current event loop
-        asyncio.get_running_loop()
-        # If we're already in an event loop, we need to run in a thread
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(
-                asyncio.run, get_repository_client_with_probing(url, timeout, user_agent, source_type, **kwargs)
-            )
-            return future.result()
-    except RuntimeError:
-        # No event loop running, we can create one
-        return asyncio.run(get_repository_client_with_probing(url, timeout, user_agent, source_type, **kwargs))
+# For backward compatibility, make the sync version the default get_repository_client
+# Tests expect this to be synchronous
+get_repository_client = get_repository_client_sync
