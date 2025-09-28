@@ -39,9 +39,10 @@ class ShowCommandHandler(CommandHandler):
             output_format: OutputFormat = CLIOptions.FORMAT_OPTION,
             _version: bool = CLIOptions.version_option(self._version_callback),
         ) -> None:
-            """Show detailed information about a specific application.
+            """Show detailed information about applications.
 
             BASIC USAGE:
+                appimage-updater show                         # Show all applications
                 appimage-updater show FreeCAD                 # Show single application
                 appimage-updater show FreeCAD OrcaSlicer      # Show multiple applications
 
@@ -117,9 +118,7 @@ class ShowCommandHandler(CommandHandler):
         output_format: OutputFormat,
     ) -> None:
         """Execute the show command logic."""
-        # Show help if no app names are provided
-        if self.handle_help_display(app_names=app_names, output_format=output_format):
-            raise typer.Exit(0)
+        # No longer show help when no app names provided - show all applications instead
 
         # Create command via factory (existing pattern)
         command = CommandFactory.create_show_command(

@@ -37,20 +37,20 @@ class TestShowCommand:
         assert validation_errors == []
 
     def test_validate_missing_app_names(self):
-        """Test validation error when app names are missing."""
+        """Test validation success when app names are missing (shows all apps)."""
         params = ShowParams(app_names=None)
         command = ShowCommand(params)
         
         validation_errors = command.validate()
-        assert "At least one application name is required" in validation_errors
+        assert validation_errors == []
 
     def test_validate_empty_app_names(self):
-        """Test validation error when app names list is empty."""
+        """Test validation success when app names list is empty (shows all apps)."""
         params = ShowParams(app_names=[])
         command = ShowCommand(params)
         
         validation_errors = command.validate()
-        assert "At least one application name is required" in validation_errors
+        assert validation_errors == []
 
     @patch('appimage_updater.commands.show_command.configure_logging')
     @pytest.mark.anyio
@@ -96,24 +96,20 @@ class TestShowCommand:
 
     @patch('appimage_updater.commands.show_command.configure_logging')
     @pytest.mark.anyio
-    async def test_execute_validation_error(self, mock_configure_logging):
-        """Test execution with validation error."""
-        params = ShowParams(app_names=None)  # Missing app names
+    async def test_execute_with_none_app_names_shows_all(self, mock_configure_logging):
+        """Test execution with None app_names shows all applications."""
+        params = ShowParams(app_names=None)  # None means show all apps
         command = ShowCommand(params)
         
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command, '_execute_show_operation', return_value=True) as mock_execute:
             result = await command.execute()
         
-        # Verify error was printed to console
-        mock_console_print.assert_called_once()
-        error_call = mock_console_print.call_args[0][0]
-        assert "Validation errors" in error_call
-        assert "At least one application name is required" in error_call
+        # Verify show operation was called (no validation error)
+        mock_execute.assert_called_once()
         
-        # Verify failure result
-        assert result.success is False
-        assert "At least one application name is required" in result.message
-        assert result.exit_code == 1
+        # Verify success result
+        assert result.success is True
+        assert "Show completed successfully" in result.message
 
     @patch('appimage_updater.commands.show_command.configure_logging')
     @pytest.mark.anyio

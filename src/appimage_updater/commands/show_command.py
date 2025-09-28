@@ -33,12 +33,9 @@ class ShowCommand(Command):
 
     def validate(self) -> list[str]:
         """Validate command parameters."""
-        errors = []
-
-        if not self.params.app_names:
-            errors.append("At least one application name is required")
-
-        return errors
+        # No validation errors - app_names is optional
+        # If no app_names provided, show all applications
+        return []
 
     async def execute(self, output_formatter: Any = None) -> CommandResult:
         """Execute the show command."""

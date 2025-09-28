@@ -299,24 +299,48 @@ class TestShowCommandHandler:
         # Verify exit code matches command result
         assert exc_info.value.exit_code == 1
 
-    def test_execute_show_command_with_none_app_names_shows_help_and_exits(self):
-        """Test that None app_names shows help and exits with code 0."""
+    @patch('appimage_updater.cli.handlers.show_handler.asyncio.run')
+    @patch('appimage_updater.cli.handlers.show_handler.create_output_formatter_from_params')
+    @patch('appimage_updater.cli.handlers.show_handler.CommandFactory.create_show_command')
+    def test_execute_show_command_with_none_app_names_shows_all_apps(
+        self, 
+        mock_factory, 
+        mock_formatter_factory,
+        mock_asyncio_run
+    ):
+        """Test that None app_names shows all applications instead of help."""
         handler = ShowCommandHandler()
         
-        with patch.object(handler, 'handle_help_display', return_value=True) as mock_help:
-            with pytest.raises(typer.Exit) as exc_info:
-                handler._execute_show_command(
-                    app_names=None,
-                    add_command=False,
-                    config_file=None,
-                    config_dir=None,
-                    debug=False,
-                    output_format=OutputFormat.RICH,
-                )
-            
-            # Verify help was shown and exit code is 0
-            mock_help.assert_called_once_with(app_names=None, output_format=OutputFormat.RICH)
-            assert exc_info.value.exit_code == 0
+        # Setup mocks
+        mock_command = Mock()
+        mock_factory.return_value = mock_command
+        mock_command.params = Mock()
+        
+        mock_formatter = Mock()
+        mock_formatter_factory.return_value = mock_formatter
+        
+        success_result = CommandResult(success=True, message="Success")
+        mock_asyncio_run.return_value = success_result
+        
+        # Execute command with None app_names - should not raise exit
+        handler._execute_show_command(
+            app_names=None,
+            add_command=False,
+            config_file=None,
+            config_dir=None,
+            debug=False,
+            output_format=OutputFormat.RICH,
+        )
+        
+        # Verify factory was called with None app_names (which means show all)
+        mock_factory.assert_called_once_with(
+            app_names=None,
+            add_command=False,
+            config_file=None,
+            config_dir=None,
+            debug=False,
+            output_format=OutputFormat.RICH,
+        )
 
     def test_execute_show_command_with_default_parameters(self):
         """Test execute command with default/None parameters."""
