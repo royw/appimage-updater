@@ -119,22 +119,23 @@ class TestAddCommand:
         assert app_config["checksum"]["enabled"] is True
 
     def test_add_command_with_invalid_url(self, runner: CliRunner, temp_config_dir: Path, tmp_path: Path) -> None:
-        """Test add command with invalid (non-GitHub) URL."""
+        """Test add command with unknown URL falls back to dynamic download."""
         test_download_dir = tmp_path / "test-download"
         result = runner.invoke(app, [
             "add", "InvalidTestApp",
             "https://example.com/invalid",
             str(test_download_dir),
-            "--config-dir", str(temp_config_dir)
+            "--config-dir", str(temp_config_dir),
+            "--create-dir"
         ])
 
-        assert result.exit_code == 1
-        assert "Error: Invalid repository URL: https://example.com/invalid" in result.stdout
-        assert "No repository client available for URL:" in result.stdout
+        # With enhanced repository detection, unknown URLs fall back to dynamic download
+        assert result.exit_code == 0
+        assert "Successfully added application 'InvalidTestApp'" in result.stdout
 
-        # Verify no config file was created
+        # Verify config file was created with dynamic download fallback
         config_files = list(temp_config_dir.glob("*.json"))
-        assert len(config_files) == 0
+        assert len(config_files) == 1
 
     @patch('appimage_updater.github.client.httpx.AsyncClient')
     @patch('appimage_updater.pattern_generator.should_enable_prerelease')
