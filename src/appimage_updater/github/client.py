@@ -256,3 +256,45 @@ class GitHubClient:
                     return checksum_candidates[name_without_ext]
 
         return None
+
+    async def probe_api_compatibility(self, base_url: str) -> bool:
+        """Probe if a URL supports GitHub-compatible API.
+
+        Args:
+            base_url: Base URL to probe (e.g., https://codeberg.org)
+
+        Returns:
+            True if the API appears to be GitHub-compatible
+        """
+        try:
+            # Try to access the API root endpoint
+            api_url = f"{base_url.rstrip('/')}/api/v1"
+
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                headers = {"User-Agent": self.user_agent}
+                response = await client.get(api_url, headers=headers)
+
+                # Check if we get a reasonable response
+                if response.status_code == 200:
+                    try:
+                        data = response.json()
+                        # Look for Gitea/Forgejo API indicators
+                        gitea_indicators = ("version" in data or "gitea" in str(data).lower()
+                                          or "forgejo" in str(data).lower())
+                        if isinstance(data, dict) and gitea_indicators:
+                            logger.debug(f"Detected GitHub-compatible API at {base_url}")
+                            return True
+                    except Exception as parse_error:
+                        logger.debug(f"Failed to parse API response from {base_url}: {parse_error}")
+
+                # Also try GitHub API v3 endpoint pattern
+                api_v3_url = f"{base_url.rstrip('/')}/api/v3"
+                response = await client.get(api_v3_url, headers=headers)
+                if response.status_code == 200:
+                    logger.debug(f"Detected GitHub API v3 compatible endpoint at {base_url}")
+                    return True
+
+        except Exception as e:
+            logger.debug(f"API probe failed for {base_url}: {e}")
+
+        return False

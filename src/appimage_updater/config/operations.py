@@ -18,7 +18,7 @@ from ..pattern_generator import (
     generate_appimage_pattern_async,
 )
 from ..repositories.base import RepositoryError
-from ..repositories.factory import get_repository_client
+from ..repositories.factory import get_repository_client_with_probing_sync
 from ..ui.display import _replace_home_with_tilde
 
 
@@ -57,7 +57,7 @@ def _validate_direct_url(url: str) -> str | None:
 def _validate_and_normalize_repository_url(url: str) -> str | None:
     """Validate and normalize repository URL."""
     try:
-        repo_client = get_repository_client(url)
+        repo_client = get_repository_client_with_probing_sync(url)
         normalized_url, was_corrected = repo_client.normalize_repo_url(url)
 
         # Validate that we can parse the normalized URL
@@ -296,7 +296,7 @@ async def _get_effective_prerelease_config(prerelease: bool | None, defaults: An
 async def _detect_prerelease_requirement(url: str) -> bool:
     """Detect if prereleases should be enabled for the repository."""
     try:
-        repo_client = get_repository_client(url)
+        repo_client = get_repository_client_with_probing_sync(url)
         return await repo_client.should_enable_prerelease(url)
     except (RepositoryError, ValueError, AttributeError):
         # If we can't detect, default to False
@@ -514,7 +514,7 @@ def validate_url_update(updates: dict[str, Any]) -> None:
         return
 
     try:
-        repo_client = get_repository_client(url)
+        repo_client = get_repository_client_with_probing_sync(url)
         normalized_url, was_corrected = repo_client.normalize_repo_url(url)
 
         # Validate that we can parse the normalized URL

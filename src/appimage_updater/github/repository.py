@@ -99,7 +99,12 @@ class GitHubRepository(RepositoryClient):
         """Check if this is a GitHub repository URL."""
         try:
             parsed = urllib.parse.urlparse(url)
-            return parsed.netloc.lower() in ("github.com", "www.github.com")
+            netloc = parsed.netloc.lower()
+
+            # First check for known GitHub domains
+            # For other domains, we need to probe for GitHub-compatible API
+            # This is done synchronously here, but we'll add async probing later
+            return netloc in ("github.com", "www.github.com")
         except (ValueError, AttributeError):
             return False
 
