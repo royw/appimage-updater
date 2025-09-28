@@ -40,14 +40,20 @@ For complete CLI command documentation including all options and examples, see t
 ### Quick Examples
 
 ```bash
-# Add FreeCAD
+# Add FreeCAD from GitHub
 appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
 
-# Add OrcaSlicer
+# Add OrcaSlicer from GitHub
 appimage-updater add OrcaSlicer https://github.com/SoftFever/OrcaSlicer ~/Applications/OrcaSlicer
 
 # Add BambuStudio (automatically handles ZIP files)
 appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Applications/BambuStudio
+
+# Add from GitLab repository
+appimage-updater add Inkscape https://gitlab.com/inkscape/inkscape ~/Applications/Inkscape
+
+# Add from Codeberg (GitHub-compatible forge)
+appimage-updater add OpenRGB https://codeberg.org/OpenRGB/OpenRGB ~/Applications/OpenRGB
 
 # Add direct download URL (nightly builds, CI artifacts)
 appimage-updater add --direct OrcaSlicer-Nightly https://github.com/SoftFever/OrcaSlicer/releases/download/nightly-builds/OrcaSlicer_Linux_V2.2.0_dev.AppImage ~/Applications/OrcaSlicer
@@ -57,6 +63,7 @@ appimage-updater add --direct OrcaSlicer-Nightly https://github.com/SoftFever/Or
 
 When you run `add`, it automatically:
 
+- **Detects repository type automatically** - supports GitHub, GitLab, Codeberg, and other Git forges
 - **Detects prerelease requirements** - analyzes repositories and auto-enables prerelease for continuous builds
 - **Handles ZIP files automatically** - detects and extracts AppImages from ZIP archives (perfect for BambuStudio, etc.)
 - **Selects compatible distributions** - automatically chooses the best match for your Linux distribution
@@ -64,6 +71,55 @@ When you run `add`, it automatically:
 - **Sets up checksum verification** with SHA256 validation
 - **Enables the application** immediately
 - **Creates the download directory** if needed
+
+### Repository Support
+
+AppImage Updater supports multiple repository types with intelligent auto-detection:
+
+#### Supported Repository Types
+
+- **GitHub** - `https://github.com/user/repo` (native support)
+- **GitLab** - `https://gitlab.com/user/project` (GitLab API v4)
+- **Codeberg** - `https://codeberg.org/user/project` (GitHub-compatible API)
+- **Gitea/Forgejo** - Self-hosted Git forges with GitHub-compatible APIs
+- **Direct Downloads** - Any HTTP/HTTPS URL pointing to AppImage files
+- **Dynamic URLs** - URLs that resolve to download links (fallback support)
+
+#### Automatic Repository Detection
+
+AppImage Updater automatically detects the repository type from the URL:
+
+```bash
+# GitHub (detected automatically)
+appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
+
+# GitLab (detected automatically) 
+appimage-updater add Inkscape https://gitlab.com/inkscape/inkscape ~/Apps/Inkscape
+
+# Codeberg (GitHub-compatible, detected automatically)
+appimage-updater add OpenRGB https://codeberg.org/OpenRGB/OpenRGB ~/Apps/OpenRGB
+
+# Self-hosted GitLab (detected via API probing)
+appimage-updater add MyApp https://git.company.com/team/project ~/Apps/MyApp
+
+# Direct download (detected automatically)
+appimage-updater add --direct MyApp https://example.com/releases/myapp.AppImage ~/Apps/MyApp
+```
+
+#### Version Pattern Filtering
+
+Use `--version-pattern` to filter releases with regex patterns:
+
+```bash
+# Only stable releases (exclude prereleases like "1.0-rc1")
+appimage-updater add --version-pattern "^[0-9]+\.[0-9]+(\.[0-9]+)?$" MyApp https://github.com/user/repo ~/Apps/MyApp
+
+# Only major.minor versions (exclude patch releases)
+appimage-updater add --version-pattern "^[0-9]+\.[0-9]+$" MyApp https://github.com/user/repo ~/Apps/MyApp
+
+# Custom pattern for specific versioning schemes
+appimage-updater add --version-pattern "^v[0-9]+\.[0-9]+\.[0-9]+$" MyApp https://github.com/user/repo ~/Apps/MyApp
+```
 
 ### Smart Prerelease Detection
 
@@ -125,6 +181,13 @@ appimage-updater add --rotation --symlink ~/bin/myapp.AppImage --retain 5 MyApp 
 
 # Include prerelease versions
 appimage-updater add --prerelease NightlyApp https://github.com/user/repo ~/Apps/NightlyApp
+
+# Filter versions with regex patterns (exclude prereleases)
+appimage-updater add --version-pattern "^[0-9]+\.[0-9]+$" MyApp https://github.com/user/repo ~/Apps/MyApp
+
+# Add from non-GitHub repositories (GitLab, Codeberg, etc.)
+appimage-updater add MyApp https://gitlab.com/user/project ~/Apps/MyApp
+appimage-updater add MyApp https://codeberg.org/user/project ~/Apps/MyApp
 ```
 
 ## Checking for Updates {#checking-updates}

@@ -95,6 +95,7 @@ AppImage Updater uses consistent naming across all commands for the same functio
 | **Checksum** | `--checksum` | `--checksum` | `checksum` |
 | **Download Dir** | `--download-dir` | `--download-dir` | `download-dir` |
 | **Prerelease** | `--prerelease` | `--prerelease` | `prerelease` |
+| **Version Pattern** | `--version-pattern` | `--version-pattern` | `version-pattern` |
 
 This consistency means you can use the same flag names across commands and easily translate between CLI options and config settings.
 

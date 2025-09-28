@@ -50,11 +50,15 @@ graph TB
     
     subgraph "Repository Layer"
         E --> E1[GitHub Repository]
-        E --> E2[Direct Download Repository]
-        E --> E3[Dynamic Download Repository]
-        E --> E4[Repository Factory]
-        E1 --> E5[GitHub Client]
-        E1 --> E6[GitHub Auth]
+        E --> E2[GitLab Repository]
+        E --> E3[Direct Download Repository]
+        E --> E4[Dynamic Download Repository]
+        E --> E5[Repository Factory]
+        E --> E6[Repository Registry]
+        E1 --> E7[GitHub Client]
+        E1 --> E8[GitHub Auth]
+        E2 --> E9[GitLab Client]
+        E2 --> E10[GitLab Auth]
     end
     
     subgraph "Configuration Layer"
@@ -185,18 +189,29 @@ Provides reusable business logic and utilities.
 
 ### 4. Repository Layer
 
-Handles different types of software repositories.
+Handles different types of software repositories with a plugin-based architecture.
 
 #### Repository Implementations
 
-- **GitHub Repository**: GitHub releases and assets
-- **Direct Download Repository**: Direct file URLs
-- **Dynamic Download Repository**: Dynamic URL resolution
+- **GitHub Repository**: GitHub releases API with authentication support
+- **GitLab Repository**: GitLab API v4 for both gitlab.com and self-hosted instances  
+- **Direct Download Repository**: Static file URLs with checksum verification
+- **Dynamic Download Repository**: Dynamic URL resolution with fallback support
+
+#### Repository Registry (`repositories/registry.py`)
+
+- **Purpose**: Plugin-based repository handler registration and discovery
+- **Features**:
+  - Dynamic handler registration with priority-based selection
+  - Metadata-driven handler capabilities and domain support
+  - Runtime discovery of repository handlers
 
 #### Repository Factory (`repositories/factory.py`)
 
-- **Purpose**: Create appropriate repository clients
-- **Auto-detection**: Automatically detect repository type from URL
+- **Purpose**: Create appropriate repository clients with intelligent detection
+- **Auto-detection**: Automatically detect repository type from URL patterns
+- **API Probing**: Probe unknown domains for GitHub/GitLab-compatible APIs
+- **Fallback Support**: Graceful degradation to dynamic download for unknown sources
 
 ### 5. Configuration Layer
 

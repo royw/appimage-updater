@@ -23,17 +23,24 @@ AppImage Updater is a modern, type-safe CLI application built with a layered arc
 
 **Supported Sources:**
 
-- GitHub releases with intelligent asset selection
-- Direct download URLs with checksum verification
-- Dynamic download URLs with automatic resolution
-- ZIP files containing AppImage files
-- Multi-platform releases with automatic compatibility detection
+- **GitHub** releases with intelligent asset selection and API integration
+- **GitLab** repositories (gitlab.com and self-hosted) with GitLab API v4 support
+- **Codeberg** and other GitHub-compatible Git forges (Gitea, Forgejo)
+- **Direct download URLs** with checksum verification and automatic detection
+- **Dynamic URLs** with automatic resolution and fallback support
+- **ZIP files** containing AppImage files with automatic extraction
+- **Multi-platform releases** with automatic compatibility detection
 
 ## Quick Start
 
 ```bash
-# Add an application to monitor
+# Add applications from different repository types
 appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
+appimage-updater add Inkscape https://gitlab.com/inkscape/inkscape ~/Applications/Inkscape  
+appimage-updater add OpenRGB https://codeberg.org/OpenRGB/OpenRGB ~/Applications/OpenRGB
+
+# Filter versions with patterns (exclude prereleases)
+appimage-updater add --version-pattern "^[0-9]+\.[0-9]+$" MyApp https://github.com/user/repo ~/Apps/MyApp
 
 # Check for updates
 appimage-updater check
