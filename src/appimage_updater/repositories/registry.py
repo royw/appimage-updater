@@ -15,10 +15,6 @@ from typing import Any
 from loguru import logger
 
 from .base import RepositoryClient
-from .handlers.direct_handler import DirectDownloadHandler
-from .handlers.dynamic_handler import DynamicDownloadHandler
-from .handlers.github_handler import GitHubHandler
-from .handlers.gitlab_handler import GitLabHandler
 
 
 @dataclass
@@ -128,7 +124,11 @@ class RepositoryHandlerRegistry:
 
     def _discover_and_register_handlers(self) -> None:
         """Discover and register all available repository handlers."""
-        # Register built-in handlers
+        # Import handlers here to avoid circular imports
+        from .handlers.direct_handler import DirectDownloadHandler
+        from .handlers.dynamic_handler import DynamicDownloadHandler
+        from .handlers.github_handler import GitHubHandler
+        from .handlers.gitlab_handler import GitLabHandler
 
         # Register handlers
         self.register(GitHubHandler())
