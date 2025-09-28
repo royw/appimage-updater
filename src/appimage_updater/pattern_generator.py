@@ -18,7 +18,6 @@ from .repositories.domain_service import DomainKnowledgeService
 from .repositories.factory import (
     detect_repository_type,
     get_repository_client_async,
-    get_repository_client,  # For test compatibility
 )
 
 

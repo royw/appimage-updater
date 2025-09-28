@@ -171,8 +171,8 @@ def detect_repository_type(url: str) -> str:
         if handler.can_handle_url(url):
             return handler.metadata.name
 
-    # Default fallback
-    return "dynamic_download"
+    # Default fallback to github for backward compatibility
+    return "github"
 
 
 # Legacy function names for backward compatibility
