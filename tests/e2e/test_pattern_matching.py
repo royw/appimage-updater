@@ -53,7 +53,7 @@ class TestPatternMatching:
         for filename in filenames:
             (directory / filename).touch()
 
-    @patch('appimage_updater.github.client.httpx.AsyncClient')
+    @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
     @patch('appimage_updater.pattern_generator.should_enable_prerelease')
     @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client_with_probing_sync')

@@ -2,7 +2,7 @@
 
 import pytest
 
-from appimage_updater.gitlab.repository import GitLabRepository
+from appimage_updater.repositories.gitlab.repository import GitLabRepository
 
 
 class TestGitLabRepository:

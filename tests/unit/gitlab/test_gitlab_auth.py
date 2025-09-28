@@ -3,9 +3,7 @@
 import os
 from unittest.mock import patch
 
-import pytest
-
-from appimage_updater.gitlab.auth import GitLabAuth
+from appimage_updater.repositories.gitlab.auth import GitLabAuth
 
 
 class TestGitLabAuth:

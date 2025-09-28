@@ -13,7 +13,8 @@ import urllib.parse
 import httpx
 from loguru import logger
 
-from .._version import __version__
+from appimage_updater._version import __version__
+
 from .auth import GitLabAuth
 
 

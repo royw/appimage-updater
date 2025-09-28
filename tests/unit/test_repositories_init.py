@@ -1,6 +1,6 @@
 """Tests for repositories package modules."""
 
-from appimage_updater.github.repository import GitHubRepository
+from appimage_updater.repositories.github.repository import GitHubRepository
 from appimage_updater.repositories.base import RepositoryClient, RepositoryError
 from appimage_updater.repositories.direct_download_repository import DirectDownloadRepository
 from appimage_updater.repositories.dynamic_download_repository import DynamicDownloadRepository

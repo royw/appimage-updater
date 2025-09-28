@@ -6,12 +6,12 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from appimage_updater.core.models import Asset, Release
+from appimage_updater.core.models import Release
 from appimage_updater.repositories.base import RepositoryClient, RepositoryError
 from appimage_updater.repositories.direct_download_repository import DirectDownloadRepository
 from appimage_updater.repositories.dynamic_download_repository import DynamicDownloadRepository
 from appimage_updater.repositories.factory import detect_repository_type, get_repository_client
-from appimage_updater.github.repository import GitHubRepository
+from appimage_updater.repositories.github.repository import GitHubRepository
 
 
 class TestRepositoryFactory:

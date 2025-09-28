@@ -14,7 +14,7 @@ from loguru import logger
 
 
 try:
-    from .._version import __version__
+    from appimage_updater._version import __version__
 except ImportError:
     __version__ = "unknown"
 

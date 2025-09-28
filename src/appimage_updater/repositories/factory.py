@@ -13,8 +13,9 @@ import urllib.parse
 
 from loguru import logger
 
-from ..github.repository import GitHubRepository
-from ..gitlab.repository import GitLabRepository
+from appimage_updater.repositories.github.repository import GitHubRepository
+from appimage_updater.repositories.gitlab.repository import GitLabRepository
+
 from .base import RepositoryClient, RepositoryError
 from .direct_download_repository import DirectDownloadRepository
 from .dynamic_download_repository import DynamicDownloadRepository

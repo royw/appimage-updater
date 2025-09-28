@@ -10,12 +10,13 @@ import httpx
 from loguru import logger
 from pydantic import ValidationError
 
-from .._version import __version__
-from ..core.models import (
+from appimage_updater._version import __version__
+from appimage_updater.core.models import (
     Asset,
     Release,
 )
-from ..utils.version_utils import normalize_version_string
+from appimage_updater.utils.version_utils import normalize_version_string
+
 from .auth import (
     GitHubAuth,
     get_github_auth,

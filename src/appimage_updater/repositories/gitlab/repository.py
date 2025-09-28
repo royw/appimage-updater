@@ -13,8 +13,9 @@ import urllib.parse
 
 from loguru import logger
 
-from ..core.models import Asset, Release
-from ..repositories.base import RepositoryClient, RepositoryError
+from appimage_updater.core.models import Asset, Release
+from appimage_updater.repositories.base import RepositoryClient, RepositoryError
+
 from .auth import GitLabAuth
 from .client import GitLabClient, GitLabClientError
 

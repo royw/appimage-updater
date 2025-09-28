@@ -12,11 +12,12 @@ import urllib.parse
 
 from loguru import logger
 
-from ..core.models import Release
-from ..repositories.base import (
+from appimage_updater.core.models import Release
+from appimage_updater.repositories.base import (
     RepositoryClient,
     RepositoryError,
 )
+
 from .auth import GitHubAuth
 from .client import (
     GitHubClient,
