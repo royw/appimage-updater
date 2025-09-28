@@ -44,7 +44,7 @@ class RepositoryHandler(ABC):
     def metadata(self) -> RepositoryHandlerMetadata:
         """Get handler metadata."""
         # This will be set by the @repository_handler decorator
-        if hasattr(self.__class__, '_handler_metadata'):
+        if hasattr(self.__class__, "_handler_metadata"):
             return self.__class__._handler_metadata  # type: ignore[no-any-return]
         raise NotImplementedError("Handler metadata not set. Use @repository_handler decorator.")
 
