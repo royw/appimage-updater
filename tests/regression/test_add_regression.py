@@ -168,101 +168,78 @@ class TestAddRegression:
 
     def _test_single_application_recreation(self, runner: CliRunner, original_config: dict[str, Any],
                                             app_name: str) -> bool:
-        """Test recreating a single application configuration."""
-        # Extract required fields from original config
-        source_url = original_config.get("url")
-        download_dir = original_config.get("download_dir")
-
-        if not source_url or not download_dir:
-            print("    WARNING: Missing required fields (url or download_dir)")
-            return False
-
+        """Test recreating a single application configuration using --add-command."""
         # Create temporary directory for testing
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_config_dir = Path(temp_dir) / "config"
             temp_config_dir.mkdir()
 
-            # Build add command arguments from original configuration
-            cmd_args = ["add", app_name, source_url, download_dir, "--config-dir", str(temp_config_dir)]
+            # First, create the original config in the temp directory
+            original_config_file = temp_config_dir / f"{app_name.lower()}.json"
+            with original_config_file.open("w") as f:
+                json.dump({"applications": [original_config]}, f, indent=2)
 
-            # Extract and add optional parameters
+            # Step 1: Use show --add-command to generate the add command
+            show_result = runner.invoke(app, [
+                "show", "--add-command", app_name,
+                "--config-dir", str(temp_config_dir)
+            ])
 
-            # Add prerelease flag if enabled
-            if original_config.get("prerelease", False):
-                cmd_args.append("--prerelease")
-            elif original_config.get("prerelease") is False:
-                cmd_args.append("--no-prerelease")
-
-            # Add rotation settings
-            if original_config.get("rotation_enabled", False):
-                cmd_args.append("--rotation")
-                if "retain_count" in original_config and original_config["retain_count"] != 3:
-                    cmd_args.extend(["--retain-count", str(original_config["retain_count"])])
-            else:
-                cmd_args.append("--no-rotation")
-
-            # Add symlink path if present
-            if "symlink_path" in original_config:
-                cmd_args.extend(["--symlink-path", original_config["symlink_path"]])
-
-            # Add checksum settings
-            checksum_config = original_config.get("checksum", {})
-            if isinstance(checksum_config, dict):
-                checksum_enabled = checksum_config.get("enabled", True)
-                if not checksum_enabled:
-                    cmd_args.append("--no-checksum")
-                else:
-                    cmd_args.append("--checksum")
-
-                    # Add checksum algorithm if not default
-                    algorithm = checksum_config.get("algorithm", "sha256")
-                    if algorithm != "sha256":
-                        cmd_args.extend(["--checksum-algorithm", algorithm])
-
-                    # Add checksum pattern if not default
-                    pattern = checksum_config.get("pattern", "{filename}-SHA256.txt")
-                    if pattern != "{filename}-SHA256.txt":
-                        cmd_args.extend(["--checksum-pattern", pattern])
-
-                    # Add checksum required setting
-                    if checksum_config.get("required", False):
-                        cmd_args.append("--checksum-required")
-                    else:
-                        cmd_args.append("--checksum-optional")
-
-            print(f"    Command: {' '.join(cmd_args)}")
-
-            # Use add command to recreate the application
-            add_result = runner.invoke(app, cmd_args)
-
-            if add_result.exit_code != 0:
-                print(f"    FAILED: Add command failed: {add_result.stdout}")
+            if show_result.exit_code != 0:
+                print(f"    FAILED: Show --add-command failed: {show_result.stdout}")  # noqa: T201
                 return False
 
-            # Find the generated config file
-            generated_files = list(temp_config_dir.glob("*.json"))
-            if not generated_files:
-                print("    FAILED: No config file generated")
+            # Extract the add command from the output
+            add_command_line = show_result.stdout.strip()
+            if not add_command_line.startswith("appimage-updater add"):
+                print(f"    FAILED: Invalid add command output: {add_command_line}")  # noqa: T201
                 return False
 
-            # Load the generated configuration
-            generated_file = generated_files[0]
+            print(f"    Generated command: {add_command_line}")  # noqa: T201
+
+            # Step 2: Parse the command and append --config-dir for recreation
+            # Split the command and remove 'appimage-updater'
+            cmd_parts = add_command_line.split()[1:]  # Remove 'appimage-updater'
+
+            # Create a new temp directory for recreation
+            recreate_config_dir = Path(temp_dir) / "recreated_config"
+            recreate_config_dir.mkdir()
+
+            # Append --config-dir to the command
+            cmd_parts.extend(["--config-dir", str(recreate_config_dir)])
+
+            print(f"    Recreation command: appimage-updater {' '.join(cmd_parts)}")  # noqa: T201
+
+            # Step 3: Execute the generated add command
+            recreate_result = runner.invoke(app, cmd_parts)
+
+            if recreate_result.exit_code != 0:
+                print(f"    FAILED: Recreation command failed: {recreate_result.stdout}")  # noqa: T201
+                return False
+
+            # Step 4: Load the recreated configuration
+            recreated_files = list(recreate_config_dir.glob("*.json"))
+            if not recreated_files:
+                print("    FAILED: No recreated config file generated")  # noqa: T201
+                return False
+
+            recreated_file = recreated_files[0]
             try:
-                with generated_file.open() as f:
-                    generated_data = json.load(f)
+                with recreated_file.open() as f:
+                    recreated_data = json.load(f)
 
-                if "applications" not in generated_data or not generated_data["applications"]:
-                    print("    FAILED: Generated config has no applications")
+                if "applications" not in recreated_data or not recreated_data["applications"]:
+                    print("    FAILED: Recreated config has no applications")  # noqa: T201
                     return False
 
-                generated_config = generated_data["applications"][0]
+                recreated_config = recreated_data["applications"][0]
 
             except (json.JSONDecodeError, KeyError, IndexError) as e:
-                print(f"    FAILED: Could not parse generated config: {e}")
+                print(f"    FAILED: Could not parse recreated config: {e}")  # noqa: T201
                 return False
 
-            # Compare configurations
-            return self._compare_configurations(original_config, generated_config)
+            # Step 5: Compare original and recreated configurations
+            return self._compare_configurations(original_config, recreated_config)
 
     def _compare_configurations(self, original: dict[str, Any], generated: dict[str, Any]) -> bool:
         """Compare original and generated configurations for essential equivalence."""
