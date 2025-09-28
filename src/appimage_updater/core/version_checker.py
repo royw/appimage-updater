@@ -94,9 +94,7 @@ class VersionChecker:
             repo_client = self.repository_client
         else:
             # Use probing factory for better repository detection
-            repo_client = await get_repository_client_with_probing(
-                app_config.url, source_type=app_config.source_type
-            )
+            repo_client = await get_repository_client_with_probing(app_config.url, source_type=app_config.source_type)
         return await repo_client.get_releases(app_config.url)
 
     async def _check_repository_updates(self, app_config: ApplicationConfig) -> CheckResult:

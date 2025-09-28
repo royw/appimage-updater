@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import asyncio
 import concurrent.futures
-import urllib.parse
 from typing import Any
+import urllib.parse
 
 from loguru import logger
 
@@ -182,12 +182,9 @@ def get_repository_client_with_probing_sync(
         # If we're already in an event loop, we need to run in a thread
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(
-                asyncio.run,
-                get_repository_client_with_probing(url, timeout, user_agent, source_type, **kwargs)
+                asyncio.run, get_repository_client_with_probing(url, timeout, user_agent, source_type, **kwargs)
             )
             return future.result()
     except RuntimeError:
         # No event loop running, we can create one
-        return asyncio.run(
-            get_repository_client_with_probing(url, timeout, user_agent, source_type, **kwargs)
-        )
+        return asyncio.run(get_repository_client_with_probing(url, timeout, user_agent, source_type, **kwargs))

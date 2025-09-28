@@ -27,9 +27,7 @@ from .parameter_resolution import _resolve_add_parameters
 from .validation_utilities import _check_configuration_warnings
 
 
-def _validate_add_inputs(
-    url: str, rotation: bool | None, symlink: str | None, direct: bool | None = None
-) -> bool:
+def _validate_add_inputs(url: str, rotation: bool | None, symlink: str | None, direct: bool | None = None) -> bool:
     """Validate add command inputs."""
     validated_url = validate_and_normalize_add_url(url, direct)
     if not validated_url:

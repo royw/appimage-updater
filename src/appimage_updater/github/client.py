@@ -279,8 +279,9 @@ class GitHubClient:
                     try:
                         data = response.json()
                         # Look for Gitea/Forgejo API indicators
-                        gitea_indicators = ("version" in data or "gitea" in str(data).lower()
-                                          or "forgejo" in str(data).lower())
+                        gitea_indicators = (
+                            "version" in data or "gitea" in str(data).lower() or "forgejo" in str(data).lower()
+                        )
                         if isinstance(data, dict) and gitea_indicators:
                             logger.debug(f"Detected GitHub-compatible API at {base_url}")
                             return True
