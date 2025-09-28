@@ -92,7 +92,7 @@ class TestValidateUrlUpdate:
         assert "force" not in updates
         assert updates["url"] == "https://direct-download.com/app.AppImage"
 
-    @patch('appimage_updater.config.operations.get_repository_client_with_probing_sync')
+    @patch('appimage_updater.config.operations.get_repository_client')
     def test_validate_url_update_without_force_performs_validation(self, mock_get_client):
         """Test that validate_url_update performs normal validation when force=False."""
         mock_client = MagicMock()
@@ -144,7 +144,7 @@ class TestValidateUrlUpdate:
         assert updates["url"] == "https://example.com/app.AppImage"
         assert updates["other_field"] == "value"
 
-    @patch('appimage_updater.config.operations.get_repository_client_with_probing_sync')
+    @patch('appimage_updater.config.operations.get_repository_client')
     def test_validate_url_update_without_force_flag_performs_validation(self, mock_get_client):
         """Test validation when force flag is not present (defaults to False)."""
         mock_client = MagicMock()
@@ -161,7 +161,7 @@ class TestValidateUrlUpdate:
         mock_get_client.assert_called_once_with("https://github.com/test/repo")
         mock_client.normalize_repo_url.assert_called_once()
 
-    @patch('appimage_updater.config.operations.get_repository_client_with_probing_sync')
+    @patch('appimage_updater.config.operations.get_repository_client')
     def test_validate_url_update_validation_error_propagates(self, mock_get_client):
         """Test that validation errors are properly propagated when not using force."""
         mock_client = MagicMock()

@@ -210,13 +210,12 @@ class TestPrereleaseAutoDetection:
         ]
 
         with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
-                patch("appimage_updater.config.operations.get_repository_client_with_probing_sync") as mock_config_client, \
+                patch("appimage_updater.config.operations.get_repository_client") as mock_config_client, \
                 patch("appimage_updater.pattern_generator.should_enable_prerelease") as mock_should_enable:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             # Synchronous methods need regular return values, not async
             mock_client.normalize_repo_url = Mock(return_value=("https://github.com/test/continuous", False))
-            mock_client.parse_repo_url = Mock(return_value=("test", "continuous"))
             mock_client.detect_repository_type = Mock(return_value=True)
             mock_client.repository_type = "github"
             mock_pattern_client.return_value = mock_client
