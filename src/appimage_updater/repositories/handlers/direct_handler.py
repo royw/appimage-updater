@@ -11,7 +11,7 @@ from ..registry import RepositoryHandler, RepositoryHandlerMetadata
 
 class DirectDownloadHandler(RepositoryHandler):
     """Handler for direct download URLs."""
-    
+
     @property
     def metadata(self) -> RepositoryHandlerMetadata:
         """Get direct download handler metadata."""
@@ -24,16 +24,14 @@ class DirectDownloadHandler(RepositoryHandler):
                 r"https?://.*\.(zip|tar\.gz|tar\.bz2|tar\.xz)$",  # Archive URLs
             ],
             description="Direct download handler for AppImage files and archives",
-            version="1.0.0"
+            version="1.0.0",
         )
-    
+
     def create_client(self, **kwargs: Any) -> RepositoryClient:
         """Create a direct download repository client."""
         return DirectDownloadRepository(**kwargs)
-    
+
     def can_handle_url(self, url: str) -> bool:
         """Check if this handler can handle the given URL."""
         # Check if URL matches direct download patterns
-        return (
-            url.startswith("https://") or url.startswith("http://")
-        ) and self.metadata.can_handle_url_pattern(url)
+        return (url.startswith("https://") or url.startswith("http://")) and self.metadata.can_handle_url_pattern(url)

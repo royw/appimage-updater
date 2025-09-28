@@ -11,7 +11,7 @@ from ..registry import RepositoryHandler, RepositoryHandlerMetadata
 
 class GitLabHandler(RepositoryHandler):
     """Handler for GitLab repositories."""
-    
+
     @property
     def metadata(self) -> RepositoryHandlerMetadata:
         """Get GitLab handler metadata."""
@@ -24,18 +24,18 @@ class GitLabHandler(RepositoryHandler):
                 r"https?://[^/]*gitlab[^/]*\.[^/]+/[^/]+/[^/]+/?.*",  # Self-hosted GitLab
             ],
             description="GitLab repository handler with releases API support",
-            version="1.0.0"
+            version="1.0.0",
         )
-    
+
     def create_client(self, **kwargs: Any) -> RepositoryClient:
         """Create a GitLab repository client."""
         return GitLabRepository(**kwargs)
-    
+
     def can_handle_url(self, url: str) -> bool:
         """Check if this handler can handle the given URL."""
         # Check if URL matches GitLab patterns
         return (
-            url.startswith("https://gitlab.com/") or
-            url.startswith("http://gitlab.com/") or
-            self.metadata.can_handle_url_pattern(url)
+            url.startswith("https://gitlab.com/")
+            or url.startswith("http://gitlab.com/")
+            or self.metadata.can_handle_url_pattern(url)
         )

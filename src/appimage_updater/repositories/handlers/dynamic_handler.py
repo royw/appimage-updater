@@ -11,7 +11,7 @@ from ..registry import RepositoryHandler, RepositoryHandlerMetadata
 
 class DynamicDownloadHandler(RepositoryHandler):
     """Handler for dynamic download URLs (fallback handler)."""
-    
+
     @property
     def metadata(self) -> RepositoryHandlerMetadata:
         """Get dynamic download handler metadata."""
@@ -23,13 +23,13 @@ class DynamicDownloadHandler(RepositoryHandler):
                 r"https?://.*",  # Can handle any HTTP/HTTPS URL as fallback
             ],
             description="Dynamic download handler (universal fallback)",
-            version="1.0.0"
+            version="1.0.0",
         )
-    
+
     def create_client(self, **kwargs: Any) -> RepositoryClient:
         """Create a dynamic download repository client."""
         return DynamicDownloadRepository(**kwargs)
-    
+
     def can_handle_url(self, url: str) -> bool:
         """Check if this handler can handle the given URL."""
         # Dynamic handler can handle any HTTP/HTTPS URL as fallback

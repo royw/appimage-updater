@@ -187,27 +187,16 @@ class DefaultsConfig(BaseModel):
 
 class DomainKnowledge(BaseModel):
     """Domain knowledge for repository type detection."""
-    
+
     github_domains: list[str] = Field(
-        default_factory=lambda: ["github.com"],
-        description="Known GitHub-compatible domains"
+        default_factory=lambda: ["github.com"], description="Known GitHub-compatible domains"
     )
     gitlab_domains: list[str] = Field(
-        default_factory=lambda: ["gitlab.com"],
-        description="Known GitLab-compatible domains"
+        default_factory=lambda: ["gitlab.com"], description="Known GitLab-compatible domains"
     )
-    direct_domains: list[str] = Field(
-        default_factory=list,
-        description="Known direct download domains"
-    )
-    dynamic_domains: list[str] = Field(
-        default_factory=list,
-        description="Known dynamic download domains"
-    )
-    last_updated: str = Field(
-        default_factory=lambda: datetime.now().isoformat(),
-        description="Last update timestamp"
-    )
+    direct_domains: list[str] = Field(default_factory=list, description="Known direct download domains")
+    dynamic_domains: list[str] = Field(default_factory=list, description="Known dynamic download domains")
+    last_updated: str = Field(default_factory=lambda: datetime.now().isoformat(), description="Last update timestamp")
 
 
 class GlobalConfig(BaseModel):
@@ -224,8 +213,7 @@ class GlobalConfig(BaseModel):
         description="Default settings for new applications",
     )
     domain_knowledge: DomainKnowledge = Field(
-        default_factory=DomainKnowledge,
-        description="Learned domain knowledge for repository detection"
+        default_factory=DomainKnowledge, description="Learned domain knowledge for repository detection"
     )
 
 

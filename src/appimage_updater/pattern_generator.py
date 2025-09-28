@@ -17,7 +17,7 @@ from .repositories.base import RepositoryError
 from .repositories.domain_service import DomainKnowledgeService
 from .repositories.factory import (
     detect_repository_type,
-    get_repository_client,
+    get_repository_client_async,
 )
 
 
@@ -128,13 +128,12 @@ async def fetch_appimage_pattern_from_repository(url: str) -> str | None:
     try:
         # Use domain knowledge for optimization - works for all repository types now
         domain_service = DomainKnowledgeService()
-        
         # Check if we have domain knowledge for fast-path optimization
         known_handler = domain_service.get_handler_by_domain_knowledge(url)
         enable_probing = known_handler is None
-        
+
         # Get repository client using registry system
-        client = await get_repository_client(url, enable_probing=enable_probing)
+        client = await get_repository_client_async(url, timeout=10, enable_probing=enable_probing)
         releases = await client.get_releases(url, limit=20)
         groups = _collect_release_files(releases)
         target_files = _select_target_files(groups)
@@ -452,12 +451,12 @@ async def _fetch_releases_for_prerelease_check(url: str) -> list[Release]:
     """Fetch releases from repository for prerelease analysis."""
     # Use domain knowledge for optimization - works for all repository types now
     domain_service = DomainKnowledgeService()
-    
+
     # Check if we have domain knowledge for fast-path optimization
     known_handler = domain_service.get_handler_by_domain_knowledge(url)
     enable_probing = known_handler is None
-    
-    client = await get_repository_client(url, timeout=10, enable_probing=enable_probing)
+
+    client = await get_repository_client_async(url, timeout=10, enable_probing=enable_probing)
     releases = await client.get_releases(url, limit=10)
 
     if not releases:

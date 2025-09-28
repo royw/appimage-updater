@@ -11,7 +11,7 @@ from ..registry import RepositoryHandler, RepositoryHandlerMetadata
 
 class GitHubHandler(RepositoryHandler):
     """Handler for GitHub repositories."""
-    
+
     @property
     def metadata(self) -> RepositoryHandlerMetadata:
         """Get GitHub handler metadata."""
@@ -24,18 +24,18 @@ class GitHubHandler(RepositoryHandler):
                 r"https?://[^/]*github[^/]*\.[^/]+/[^/]+/[^/]+/?.*",  # GitHub Enterprise
             ],
             description="GitHub repository handler with releases API support",
-            version="1.0.0"
+            version="1.0.0",
         )
-    
+
     def create_client(self, **kwargs: Any) -> RepositoryClient:
         """Create a GitHub repository client."""
         return GitHubRepository(**kwargs)
-    
+
     def can_handle_url(self, url: str) -> bool:
         """Check if this handler can handle the given URL."""
         # Check if URL matches GitHub patterns
         return (
-            url.startswith("https://github.com/") or
-            url.startswith("http://github.com/") or
-            self.metadata.can_handle_url_pattern(url)
+            url.startswith("https://github.com/")
+            or url.startswith("http://github.com/")
+            or self.metadata.can_handle_url_pattern(url)
         )
