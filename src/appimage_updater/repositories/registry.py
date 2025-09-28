@@ -125,10 +125,10 @@ class RepositoryHandlerRegistry:
     def _discover_and_register_handlers(self) -> None:
         """Discover and register all available repository handlers."""
         # Import handlers here to avoid circular imports
-        from .handlers.direct_handler import DirectDownloadHandler
-        from .handlers.dynamic_handler import DynamicDownloadHandler
-        from .handlers.github_handler import GitHubHandler
-        from .handlers.gitlab_handler import GitLabHandler
+        from .handlers.direct_handler import DirectDownloadHandler  # noqa: PLC0415
+        from .handlers.dynamic_handler import DynamicDownloadHandler  # noqa: PLC0415
+        from .handlers.github_handler import GitHubHandler  # noqa: PLC0415
+        from .handlers.gitlab_handler import GitLabHandler  # noqa: PLC0415
 
         # Register handlers
         self.register(GitHubHandler())
