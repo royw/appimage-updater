@@ -7,6 +7,7 @@ based on URL patterns and repository types using a dynamic registry system.
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 from typing import Any
 
 from loguru import logger
@@ -79,9 +80,21 @@ def get_repository_client_sync(
     **kwargs: Any,
 ) -> RepositoryClient:
     """Synchronous wrapper for get_repository_client."""
-    return asyncio.run(
-        get_repository_client_async_impl(url, timeout, user_agent, source_type, enable_probing, **kwargs)
-    )
+    try:
+        # Check if we're already in an event loop
+        asyncio.get_running_loop()
+        # If we are, we need to run the coroutine differently
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(
+                asyncio.run,
+                get_repository_client_async_impl(url, timeout, user_agent, source_type, enable_probing, **kwargs)
+            )
+            return future.result()
+    except RuntimeError:
+        # No running event loop, safe to use asyncio.run
+        return asyncio.run(
+            get_repository_client_async_impl(url, timeout, user_agent, source_type, enable_probing, **kwargs)
+        )
 
 
 async def get_repository_client_async(
