@@ -177,7 +177,20 @@ async def _perform_real_update_checks(enabled_apps: list[Any], no_interactive: b
     _log_processing_method(enabled_apps)
 
     processor = ConcurrentProcessor()
-    check_results = await processor.process_items_async(enabled_apps, version_checker.check_for_updates)
+
+    # Create progress callback if we have multiple apps and output formatter supports it
+    progress_callback = None
+    if len(enabled_apps) > 1:
+        output_formatter = get_output_formatter()
+        if output_formatter and not _should_suppress_console_output(output_formatter):
+            def progress_callback(current: int, total: int, description: str) -> None:
+                output_formatter.print_progress(current, total, description)
+
+    check_results = await processor.process_items_async(
+        enabled_apps,
+        version_checker.check_for_updates,
+        progress_callback
+    )
 
     logger.debug(f"Completed {len(check_results)} update checks")
     return check_results
