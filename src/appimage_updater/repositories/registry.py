@@ -139,7 +139,7 @@ class RepositoryHandlerRegistry:
         self.register(DirectDownloadHandler())
         self.register(DynamicDownloadHandler())
 
-        logger.info(f"Discovered and registered {len(self._handlers)} repository handlers")
+        logger.debug(f"Discovered and registered {len(self._handlers)} repository handlers")
 
 
 # Global registry instance
