@@ -108,14 +108,16 @@ class TestRepositoryFactory:
         assert isinstance(client, DirectDownloadRepository)
 
     def test_get_repository_client_no_suitable_client(self):
-        """Test repository client creation when no suitable client is found."""
+        """Test repository client creation when no suitable client is found falls back to dynamic download."""
         url = "https://unsupported.example.com"
         
         with patch.object(GitHubRepository, 'detect_repository_type', return_value=False):
             with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=False):
                 with patch.object(DirectDownloadRepository, 'detect_repository_type', return_value=False):
-                    with pytest.raises(RepositoryError, match="No repository client available for URL"):
-                        get_repository_client(url)
+                    # With unified interface, unknown URLs now fall back to dynamic download after probing
+                    client = get_repository_client(url)
+                    # Should fallback to DynamicDownloadRepository after probing fails
+                    assert isinstance(client, DynamicDownloadRepository)
 
     def test_detect_repository_type_github(self):
         """Test repository type detection for GitHub."""
