@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from ..base import RepositoryClient
@@ -34,8 +35,13 @@ class GitHubHandler(RepositoryHandler):
     def can_handle_url(self, url: str) -> bool:
         """Check if this handler can handle the given URL."""
         # Check if URL matches GitHub patterns
-        return (
+        if (
             url.startswith("https://github.com/")
             or url.startswith("http://github.com/")
             or self.metadata.can_handle_url_pattern(url)
-        )
+        ):
+            return True
+
+        # For probing mode, also try GitHub-compatible APIs (Gitea/Forgejo/Codeberg)
+        # This allows discovery of GitHub-compatible instances
+        return bool(re.match(r"https?://[^/]+/[^/]+/[^/]+/?.*", url))

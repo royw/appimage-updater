@@ -52,6 +52,9 @@ class ApplicationConfig(BaseModel):
     url: str = Field(description="Source URL")
     download_dir: Path = Field(description="Download directory")
     pattern: str = Field(description="File pattern to match")
+    version_pattern: str | None = Field(
+        default=None, description="Version pattern to filter releases (e.g., 'N.N_' for stable versions only)"
+    )
     basename: str | None = Field(
         default=None, description="Base name for file matching (defaults to app name if not specified)"
     )
@@ -84,6 +87,19 @@ class ApplicationConfig(BaseModel):
             re.compile(v)
         except re.error as e:
             msg = f"Invalid regex pattern: {e}"
+            raise ValueError(msg) from e
+        return v
+
+    @field_validator("version_pattern")
+    @classmethod
+    def validate_version_pattern(cls, v: str | None) -> str | None:
+        """Validate version pattern regex."""
+        if v is None:
+            return v
+        try:
+            re.compile(v)
+        except re.error as e:
+            msg = f"Invalid version pattern regex: {e}"
             raise ValueError(msg) from e
         return v
 

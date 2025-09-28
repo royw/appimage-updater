@@ -1,13 +1,13 @@
 """GitHub API client for fetching release information."""
-
 from __future__ import annotations
 
 from datetime import datetime
 import re
 from typing import Any
+import urllib.parse
 
-import httpx
 from loguru import logger
+import httpx
 from pydantic import ValidationError
 
 from appimage_updater._version import __version__
@@ -36,47 +36,57 @@ class GitHubClient:
         user_agent: str | None = None,
         auth: GitHubAuth | None = None,
         token: str | None = None,
+        **kwargs: Any,
     ) -> None:
-        """Initialize GitHub client.
+        """Initialize GitHub API client.
 
         Args:
             timeout: Request timeout in seconds
             user_agent: Custom user agent string
             auth: GitHubAuth instance for authentication
             token: Explicit GitHub token (creates auth if provided)
+            **kwargs: Additional configuration options
         """
         self.timeout = timeout
         self.user_agent = user_agent or f"AppImage-Updater/{__version__}"
 
-        # Set up authentication
+        # Initialize dynamic authentication system
+        from ..auth import DynamicForgeAuth
+        self.dynamic_auth = DynamicForgeAuth(self.user_agent)
+        
+        # Keep GitHub auth for backward compatibility and logging
         if auth:
-            self.auth = auth
+            self.github_auth = auth
         elif token:
-            self.auth = get_github_auth(token=token)
+            self.github_auth = get_github_auth(token=token)
         else:
-            self.auth = get_github_auth()
+            self.github_auth = get_github_auth()
 
-        # Log authentication status
-        self.auth.log_auth_status()
+        # Log GitHub authentication status
+        self.github_auth.log_auth_status()
 
     async def get_latest_release(self, repo_url: str) -> Release:
         """Get the latest release for a repository."""
         owner, repo = self._parse_repo_url(repo_url)
-        api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
+        api_base = self._get_api_base_url(repo_url)
+        api_url = f"{api_base}/repos/{owner}/{repo}/releases/latest"
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
+                # Use dynamic authentication based on URL
+                forge_auth = self.dynamic_auth.get_auth_for_url(repo_url)
+                headers = forge_auth.get_auth_headers()
                 response = await client.get(
                     api_url,
-                    headers=self.auth.get_auth_headers(),
+                    headers=headers,
                 )
                 response.raise_for_status()
             except httpx.HTTPError as e:
                 msg = f"Failed to fetch latest release for {owner}/{repo}: {e}"
                 if "rate limit" in str(e).lower():
-                    rate_info = self.auth.get_rate_limit_info()
+                    rate_info = self.github_auth.get_rate_limit_info()
                     msg += f" (Rate limit: {rate_info['limit']} requests/hour for {rate_info['type']} access)"
-                    if not self.auth.is_authenticated:
+                    if not self.github_auth.is_authenticated:
                         msg += ". Consider setting GITHUB_TOKEN environment variable for higher limits."
                 raise GitHubClientError(msg) from e
 
@@ -123,13 +133,17 @@ class GitHubClient:
     async def get_releases(self, repo_url: str, limit: int = 10) -> list[Release]:
         """Get recent releases for a repository."""
         owner, repo = self._parse_repo_url(repo_url)
-        api_url = f"https://api.github.com/repos/{owner}/{repo}/releases"
+        api_base = self._get_api_base_url(repo_url)
+        api_url = f"{api_base}/repos/{owner}/{repo}/releases"
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
+                # Use dynamic authentication based on URL
+                forge_auth = self.dynamic_auth.get_auth_for_url(repo_url)
+                headers = forge_auth.get_auth_headers()
                 response = await client.get(
                     api_url,
-                    headers=self.auth.get_auth_headers(),
+                    headers=headers,
                     params={"per_page": str(limit)},
                 )
                 response.raise_for_status()
@@ -141,10 +155,14 @@ class GitHubClient:
     # noinspection PyMethodMayBeStatic
     def _parse_repo_url(self, url: str) -> tuple[str, str]:
         """Parse repository URL to extract owner and repo name."""
-        # Handle various GitHub URL formats
+        # Handle various repository URL formats (GitHub, Gitea, Forgejo, Codeberg, etc.)
         patterns = [
+            # GitHub formats
             r"https?://github\.com/([^/]+)/([^/]+?)(?:\.git)?/?$",
             r"git@github\.com:([^/]+)/([^/]+?)(?:\.git)?$",
+            # Generic Git hosting formats (Gitea, Forgejo, Codeberg, etc.)
+            r"https?://[^/]+/([^/]+)/([^/]+?)(?:\.git)?/?$",
+            r"git@[^:]+:([^/]+)/([^/]+?)(?:\.git)?$",
         ]
 
         for pattern in patterns:
@@ -152,12 +170,24 @@ class GitHubClient:
             if match:
                 return match.group(1), match.group(2)
 
-        msg = f"Invalid GitHub repository URL: {url}"
+        msg = f"Invalid repository URL: {url}"
         raise GitHubClientError(msg)
+
+    # noinspection PyMethodMayBeStatic
+    def _get_api_base_url(self, repo_url: str) -> str:
+        """Get the appropriate API base URL for the repository."""
+        if "github.com" in repo_url:
+            return "https://api.github.com"
+        else:
+            # For Gitea/Forgejo instances (like Codeberg), extract base URL and add /api/v1
+            parsed = urllib.parse.urlparse(repo_url)
+            return f"{parsed.scheme}://{parsed.netloc}/api/v1"
 
     def _parse_release(self, data: dict[str, Any]) -> Release:
         """Parse GitHub release data into Release model."""
         try:
+            # Debug: Log prerelease field from API response
+            logger.debug(f"Parsing release {data.get('tag_name', 'unknown')}: prerelease={data.get('prerelease', 'missing')}")
             # Parse assets first
             assets = []
             for asset_data in data.get("assets", []):

@@ -468,6 +468,14 @@ class VersionChecker:
             logger.debug(f"Skipping stable release {release.tag_name} (prerelease-only mode)")
             return False
 
+        # Filter by version pattern if specified
+        if app_config.version_pattern and not re.search(app_config.version_pattern, release.version):
+            logger.debug(
+                f"Skipping release {release.tag_name} "
+                f"(doesn't match version pattern '{app_config.version_pattern}')"
+            )
+            return False
+
         logger.debug(
             f"Processing release {release.tag_name} "
             f"(prerelease={release.is_prerelease}, config_prerelease={app_config.prerelease})"

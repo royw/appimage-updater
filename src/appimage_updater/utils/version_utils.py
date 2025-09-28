@@ -60,24 +60,36 @@ def _remove_version_prefix(version: str) -> str:
 
 
 def _normalize_dash_separated_version(version: str) -> str | None:
-    """Handle versions with dash-separated suffixes (e.g., '2.3.1-beta')."""
+    """Handle versions with dash-separated suffixes (e.g., '2.3.1-beta') or direct suffixes (e.g., '1.0rc2')."""
+    # Try dash-separated first (e.g., "2.3.1-beta")
     dash_match = re.match(r"^(\d+\.\d+(?:\.\d+)?)-(\w+)$", version)
-    if not dash_match:
-        return None
+    if dash_match:
+        core_version = dash_match.group(1)
+        suffix = dash_match.group(2)
 
-    core_version = dash_match.group(1)
-    suffix = dash_match.group(2)
+        # Keep pre-release identifiers
+        if suffix.lower() in ["beta", "alpha", "rc"]:
+            return f"{core_version}-{suffix.lower()}"
 
-    # Keep pre-release identifiers
-    if suffix.lower() in ["beta", "alpha", "rc"]:
-        return f"{core_version}-{suffix.lower()}"
+        # Strip architecture identifiers and other non-version suffixes
+        if _is_architecture_suffix(suffix):
+            return core_version
 
-    # Strip architecture identifiers and other non-version suffixes
-    if _is_architecture_suffix(suffix):
+        # For unknown suffixes, return just the core version to be safe
         return core_version
-
-    # For unknown suffixes, return just the core version to be safe
-    return core_version
+    
+    # Try direct suffix (e.g., "1.0rc2", "2.3beta1")
+    direct_match = re.match(r"^(\d+\.\d+(?:\.\d+)?)(alpha|beta|rc)(\d*)$", version, re.IGNORECASE)
+    if direct_match:
+        core_version = direct_match.group(1)
+        suffix = direct_match.group(2).lower()
+        number = direct_match.group(3)
+        
+        # Combine suffix with number if present (e.g., "rc2")
+        full_suffix = f"{suffix}{number}" if number else suffix
+        return f"{core_version}-{full_suffix}"
+    
+    return None
 
 
 def _is_architecture_suffix(suffix: str) -> bool:
@@ -88,6 +100,18 @@ def _is_architecture_suffix(suffix: str) -> bool:
 
 def _normalize_space_separated_version(version: str) -> str | None:
     """Handle versions with space-separated suffixes (e.g., 'OrcaSlicer 2.3.1 beta Release')."""
+    # First try to extract version with direct suffix (e.g., "release_candidate_1.0rc2")
+    underscore_match = re.search(r"(\d+\.\d+(?:\.\d+)?)(alpha|beta|rc)(\d*)", version, re.IGNORECASE)
+    if underscore_match:
+        core_version = underscore_match.group(1)
+        suffix = underscore_match.group(2).lower()
+        number = underscore_match.group(3)
+        
+        # Combine suffix with number if present (e.g., "rc2")
+        full_suffix = f"{suffix}{number}" if number else suffix
+        return f"{core_version}-{full_suffix}"
+    
+    # Then try space-separated pattern
     space_match = re.search(r"(\d+\.\d+\.\d+)(?:\s+(\w+))?", version)
     if not space_match:
         return None

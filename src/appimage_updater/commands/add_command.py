@@ -203,6 +203,7 @@ class AddCommand(Command):
             checksum_pattern=self.params.checksum_pattern,
             checksum_required=self.params.checksum_required,
             pattern=self.params.pattern,
+            version_pattern=self.params.version_pattern,
             direct=self.params.direct,
             create_dir=self.params.create_dir,
             yes=self.params.yes,

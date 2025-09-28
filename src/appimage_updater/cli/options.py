@@ -228,6 +228,12 @@ class CLIOptions:
         help="Custom regex pattern to match AppImage files (overrides auto-detection)",
     )
 
+    ADD_VERSION_PATTERN_OPTION = typer.Option(
+        None,
+        "--version-pattern",
+        help="Version pattern to filter releases (e.g., 'N.N_' for stable versions only, excludes 'N.NrcN')",
+    )
+
     ADD_DIRECT_OPTION = typer.Option(
         None,
         "--direct/--no-direct",
@@ -263,6 +269,7 @@ class CLIOptions:
     EDIT_DOWNLOAD_DIR_OPTION = typer.Option(None, "--download-dir", help="Update the download directory")
     EDIT_BASENAME_OPTION = typer.Option(None, "--basename", help="Update the base name for file matching")
     EDIT_PATTERN_OPTION = typer.Option(None, "--pattern", help="Update the file pattern (regex)")
+    EDIT_VERSION_PATTERN_OPTION = typer.Option(None, "--version-pattern", help="Update the version pattern to filter releases")
     EDIT_ENABLE_OPTION = typer.Option(None, "--enable/--disable", help="Enable or disable the application")
     EDIT_PRERELEASE_OPTION = typer.Option(None, "--prerelease/--no-prerelease", help="Enable or disable prereleases")
     EDIT_ROTATION_OPTION = typer.Option(None, "--rotation/--no-rotation", help="Enable or disable file rotation")

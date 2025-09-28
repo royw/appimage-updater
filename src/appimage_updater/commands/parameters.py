@@ -37,6 +37,7 @@ class AddParams(BaseParams):
     checksum_pattern: str = ""
     checksum_required: bool | None = None
     pattern: str | None = None
+    version_pattern: str | None = None
     direct: bool | None = None
     auto_subdir: bool | None = None
     dry_run: bool = False
@@ -72,6 +73,7 @@ class EditParams(BaseParams):
     download_dir: str | None = None
     basename: str | None = None
     pattern: str | None = None
+    version_pattern: str | None = None
     rotation: bool | None = None
     retain_count: int | None = None
     symlink_path: str | None = None
