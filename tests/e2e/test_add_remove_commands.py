@@ -118,8 +118,17 @@ class TestAddCommand:
         assert app_config["prerelease"] is False
         assert app_config["checksum"]["enabled"] is True
 
-    def test_add_command_with_invalid_url(self, runner: CliRunner, temp_config_dir: Path, tmp_path: Path) -> None:
+    @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
+    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    def test_add_command_with_invalid_url(
+        self, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
+        runner: CliRunner, temp_config_dir: Path, tmp_path: Path
+    ) -> None:
         """Test add command with unknown URL falls back to dynamic download."""
+        # Set up basic mocks to prevent network calls
+        setup_github_mocks(mock_httpx_client, Mock(), mock_pattern_gen, mock_prerelease)
+        
         test_download_dir = tmp_path / "test-download"
         result = runner.invoke(app, [
             "add", "InvalidTestApp",

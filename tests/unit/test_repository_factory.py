@@ -260,27 +260,39 @@ class TestUnifiedRepositoryInterface:
         assert isinstance(client, DirectDownloadRepository)
         assert client.repository_type == "direct_download"
 
-    @pytest.mark.asyncio
-    async def test_unified_interface_async_version(self):
-        """Test async version of unified interface."""
+    def test_unified_interface_async_version(self):
+        """Test async version of unified interface (sync wrapper test)."""
         url = "https://github.com/user/repo"
         
-        # Test async version with probing disabled
-        client = await get_repository_client_async(url, enable_probing=False)
+        # Test that async function exists and can be called synchronously for basic validation
+        import asyncio
         
-        assert isinstance(client, GitHubRepository)
-        assert client.repository_type == "github"
+        async def test_async():
+            client = await get_repository_client_async(url, enable_probing=False)
+            assert isinstance(client, GitHubRepository)
+            assert client.repository_type == "github"
+            return True
+        
+        # Run the async test
+        result = asyncio.run(test_async())
+        assert result is True
 
-    @pytest.mark.asyncio
-    async def test_unified_interface_async_enhanced_path(self):
-        """Test async version uses enhanced path with probing enabled."""
+    def test_unified_interface_async_enhanced_path(self):
+        """Test async version uses enhanced path with probing enabled (sync wrapper test)."""
         url = "https://github.com/user/repo"
         
-        # Test async version with probing enabled
-        client = await get_repository_client_async(url, enable_probing=True)
+        # Test that async function exists and can be called synchronously for basic validation
+        import asyncio
         
-        assert isinstance(client, GitHubRepository)
-        assert client.repository_type == "github"
+        async def test_async():
+            client = await get_repository_client_async(url, enable_probing=True)
+            assert isinstance(client, GitHubRepository)
+            assert client.repository_type == "github"
+            return True
+        
+        # Run the async test
+        result = asyncio.run(test_async())
+        assert result is True
 
     def test_legacy_function_still_works(self):
         """Test that legacy function still works independently."""
