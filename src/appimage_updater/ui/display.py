@@ -176,7 +176,9 @@ def display_applications_list(applications: list[Any]) -> None:
 
 def _display_applications_with_formatter(applications: list[Any], output_formatter: Any) -> None:
     """Display applications using the output formatter."""
-    apps_data = _convert_applications_to_dict_format(applications)
+    # Sort applications by name for consistent display
+    sorted_applications = sorted(applications, key=lambda app: app.name.lower())
+    apps_data = _convert_applications_to_dict_format(sorted_applications)
     output_formatter.print_application_list(apps_data)
 
 
@@ -198,8 +200,10 @@ def _convert_applications_to_dict_format(applications: list[Any]) -> list[dict[s
 
 def _display_applications_with_rich_table(applications: list[Any]) -> None:
     """Display applications using Rich table as fallback."""
+    # Sort applications by name for consistent display
+    sorted_applications = sorted(applications, key=lambda app: app.name.lower())
     table = _create_applications_table()
-    _populate_applications_table(table, applications)
+    _populate_applications_table(table, sorted_applications)
     console.print(table)
 
 
