@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..github.repository import GitHubRepository
+from ..gitlab.repository import GitLabRepository
 from .base import (
     RepositoryClient,
     RepositoryError,
@@ -30,7 +31,7 @@ def get_repository_client(
         url: Repository URL
         timeout: Request timeout in seconds
         user_agent: Custom user agent string
-        source_type: Explicit source type (github, direct_download, dynamic_download, direct)
+        source_type: Explicit source type (github, gitlab, direct_download, dynamic_download, direct)
         **kwargs: Repository-specific configuration options
 
     Returns:
@@ -44,6 +45,7 @@ def get_repository_client(
         # Map source types to repository classes
         type_mapping = {
             "github": GitHubRepository,
+            "gitlab": GitLabRepository,
             "direct_download": DirectDownloadRepository,
             "dynamic_download": DynamicDownloadRepository,
             "direct": DirectDownloadRepository,  # "direct" maps to DirectDownloadRepository
@@ -61,6 +63,7 @@ def get_repository_client(
     # Order matters: more specific types should come first
     repository_types = [
         GitHubRepository,
+        GitLabRepository,
         DynamicDownloadRepository,  # Check dynamic before direct (more specific)
         DirectDownloadRepository,
     ]
@@ -89,6 +92,7 @@ def detect_repository_type(url: str) -> str:
     """
     repository_types = [
         GitHubRepository,
+        GitLabRepository,
         DynamicDownloadRepository,  # Check dynamic before direct (more specific)
         DirectDownloadRepository,
     ]
