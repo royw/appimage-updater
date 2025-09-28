@@ -8,6 +8,7 @@ and compatibility scoring. AppImage Updater is Linux-only.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 import platform
 
@@ -27,6 +28,7 @@ class SystemInfo:
     distribution_family: str | None = None  # debian, redhat, etc.
 
 
+@lru_cache(maxsize=1)
 class SystemDetector:
     """Detects system information for compatibility checking."""
 
@@ -216,14 +218,9 @@ class SystemDetector:
             logger.debug(f"Failed to parse /etc/os-release: {e}")
             return None
 
-
-# Global system detector instance
-_system_detector = SystemDetector()
-
-
 def get_system_info() -> SystemInfo:
     """Get system information (cached)."""
-    return _system_detector.get_system_info()
+    return SystemDetector().get_system_info()
 
 
 def is_compatible_architecture(asset_arch: str, system_arch: str | None = None) -> tuple[bool, float]:
