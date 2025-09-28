@@ -175,7 +175,7 @@ def repository_handler(
         )
 
         # Add metadata property to class
-        cls._handler_metadata = metadata
+        cls._handler_metadata = metadata  # type: ignore[attr-defined]
 
         # Auto-register when class is defined
         instance = cls()
