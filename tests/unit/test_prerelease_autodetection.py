@@ -52,7 +52,7 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_client_factory:
+        with patch("appimage_updater.pattern_generator.get_repository_client_async") as mock_client_factory:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             mock_client_factory.return_value = mock_client
@@ -99,7 +99,7 @@ class TestPrereleaseAutoDetection:
             ),
         ]
 
-        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_client_factory:
+        with patch("appimage_updater.pattern_generator.get_repository_client_async") as mock_client_factory:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             mock_client_factory.return_value = mock_client
@@ -138,7 +138,7 @@ class TestPrereleaseAutoDetection:
             ),
         ]
 
-        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_client_factory:
+        with patch("appimage_updater.pattern_generator.get_repository_client_async") as mock_client_factory:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             mock_client_factory.return_value = mock_client
@@ -150,7 +150,7 @@ class TestPrereleaseAutoDetection:
     @pytest.mark.anyio
     async def test_should_enable_prerelease_no_releases(self):
         """Test that prerelease is not enabled when repository has no releases."""
-        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_client_factory:
+        with patch("appimage_updater.pattern_generator.get_repository_client_async") as mock_client_factory:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = []
             mock_client_factory.return_value = mock_client
@@ -174,7 +174,7 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_client_factory:
+        with patch("appimage_updater.pattern_generator.get_repository_client_async") as mock_client_factory:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
             mock_client_factory.return_value = mock_client
@@ -186,7 +186,7 @@ class TestPrereleaseAutoDetection:
     @pytest.mark.anyio
     async def test_should_enable_prerelease_api_error(self):
         """Test that prerelease is not enabled when GitHub API fails."""
-        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_client_factory:
+        with patch("appimage_updater.pattern_generator.get_repository_client_async") as mock_client_factory:
             mock_client = AsyncMock()
             mock_client.get_releases.side_effect = RepositoryError("API Error")
             mock_client_factory.return_value = mock_client
@@ -209,7 +209,7 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
+        with patch("appimage_updater.pattern_generator.get_repository_client_async") as mock_pattern_client, \
                 patch("appimage_updater.config.operations.get_repository_client") as mock_config_client, \
                 patch("appimage_updater.pattern_generator.should_enable_prerelease") as mock_should_enable:
             mock_client = AsyncMock()
@@ -260,7 +260,7 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
+        with patch("appimage_updater.pattern_generator.get_repository_client_async") as mock_pattern_client, \
                 patch("appimage_updater.config.operations.get_repository_client") as mock_config_client:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
@@ -308,7 +308,7 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
+        with patch("appimage_updater.pattern_generator.get_repository_client_async") as mock_pattern_client, \
                 patch("appimage_updater.config.operations.get_repository_client") as mock_config_client:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases
@@ -355,7 +355,7 @@ class TestPrereleaseAutoDetection:
             )
         ]
 
-        with patch("appimage_updater.pattern_generator.get_repository_client") as mock_pattern_client, \
+        with patch("appimage_updater.pattern_generator.get_repository_client_async") as mock_pattern_client, \
                 patch("appimage_updater.config.operations.get_repository_client") as mock_config_client:
             mock_client = AsyncMock()
             mock_client.get_releases.return_value = mock_releases

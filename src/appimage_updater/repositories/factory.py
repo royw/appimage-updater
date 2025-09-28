@@ -87,7 +87,7 @@ def get_repository_client_sync(
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(
                 asyncio.run,
-                get_repository_client_async_impl(url, timeout, user_agent, source_type, enable_probing, **kwargs)
+                get_repository_client_async_impl(url, timeout, user_agent, source_type, enable_probing, **kwargs),
             )
             return future.result()
     except RuntimeError:
