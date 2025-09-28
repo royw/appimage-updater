@@ -369,7 +369,7 @@ class TestCLIAuthenticationIntegration:
 
     @patch('appimage_updater.github.client.httpx.AsyncClient')
     @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
-    @patch('appimage_updater.repositories.factory.get_repository_client')
+    @patch('appimage_updater.repositories.factory.get_repository_client_with_probing_sync')
     def test_add_command_rate_limit_error_feedback(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_httpx_client: Mock,
         runner, tmp_path, monkeypatch
