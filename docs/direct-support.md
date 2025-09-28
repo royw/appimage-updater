@@ -169,8 +169,8 @@ appimage-updater check MyApp
 For dynamic pages, version detection analyzes:
 
 1. **Filename patterns**: Version numbers in download links
-2. **Page content**: Version information in HTML
-3. **HTTP headers**: Last-Modified, ETag values
+1. **Page content**: Version information in HTML
+1. **HTTP headers**: Last-Modified, ETag values
 
 #### Manual Version Tracking
 
@@ -314,13 +314,13 @@ appimage-updater add CompanyApp https://internal.company.com/apps/latest/Company
    curl -I https://example.com/MyApp.AppImage
    ```
 
-2. Check if authentication is required:
+1. Check if authentication is required:
 
    ```bash
    curl -H "User-Agent: AppImageUpdater" https://example.com/download
    ```
 
-3. Test with custom headers:
+1. Test with custom headers:
 
    ```bash
    curl -H "Authorization: Bearer token" https://secure.example.com/download
@@ -333,19 +333,20 @@ appimage-updater add CompanyApp https://internal.company.com/apps/latest/Company
 **Solutions**:
 
 1. Test your pattern with online regex tools
-2. Check the actual download page source:
+
+1. Check the actual download page source:
 
    ```bash
    curl https://example.com/download | grep -i appimage
    ```
 
-3. Use a more permissive pattern initially:
+1. Use a more permissive pattern initially:
 
    ```bash
    --pattern ".*\.AppImage$"
    ```
 
-4. Enable verbose logging to see what's being matched:
+1. Enable verbose logging to see what's being matched:
 
    ```bash
    appimage-updater check MyApp --verbose
@@ -363,7 +364,7 @@ appimage-updater add CompanyApp https://internal.company.com/apps/latest/Company
    curl -I https://example.com/MyApp.AppImage
    ```
 
-2. Use manual version tracking:
+1. Use manual version tracking:
 
    ```json
    {
@@ -372,7 +373,7 @@ appimage-updater add CompanyApp https://internal.company.com/apps/latest/Company
    }
    ```
 
-3. Enable file-based version detection:
+1. Enable file-based version detection:
 
    ```bash
    appimage-updater add MyApp https://example.com/MyApp.AppImage --basename MyApp
@@ -390,16 +391,16 @@ appimage-updater add CompanyApp https://internal.company.com/apps/latest/Company
    curl https://example.com/download | grep -i "\.appimage"
    ```
 
-2. Verify the page doesn't require JavaScript:
+1. Verify the page doesn't require JavaScript:
 
    ```bash
    # If the page requires JavaScript, it cannot be parsed
    # Consider using the browser's network tab to find direct URLs
    ```
 
-3. Look for alternative download methods (RSS feeds, API endpoints)
+1. Look for alternative download methods (RSS feeds, API endpoints)
 
-4. Contact the application maintainer for stable download URLs
+1. Contact the application maintainer for stable download URLs
 
 ## Advanced Configuration
 
@@ -475,13 +476,13 @@ If you currently download AppImages manually:
    # Look for consistent URL patterns
    ```
 
-2. **Test the URL**:
+1. **Test the URL**:
 
    ```bash
    curl -I https://example.com/MyApp-latest.AppImage
    ```
 
-3. **Add to AppImage Updater**:
+1. **Add to AppImage Updater**:
 
    ```bash
    appimage-updater add MyApp https://example.com/MyApp-latest.AppImage
@@ -503,19 +504,19 @@ appimage-updater add MyApp https://example.com/direct/MyApp.AppImage --source-ty
 
 1. **Use HTTPS URLs**: Always prefer secure connections for downloads
 
-2. **Test URLs Regularly**: Direct URLs can change without notice
+1. **Test URLs Regularly**: Direct URLs can change without notice
 
-3. **Monitor for Changes**: Set up notifications for when downloads fail
+1. **Monitor for Changes**: Set up notifications for when downloads fail
 
-4. **Use Specific Patterns**: Avoid overly broad patterns that might match wrong files
+1. **Use Specific Patterns**: Avoid overly broad patterns that might match wrong files
 
-5. **Enable Checksums**: When available, always verify download integrity
+1. **Enable Checksums**: When available, always verify download integrity
 
-6. **Respect Rate Limits**: Don't check too frequently for updates
+1. **Respect Rate Limits**: Don't check too frequently for updates
 
-7. **Document Custom Headers**: Keep track of any authentication requirements
+1. **Document Custom Headers**: Keep track of any authentication requirements
 
-8. **Backup Configurations**: Direct download configurations can be complex
+1. **Backup Configurations**: Direct download configurations can be complex
 
 ## Limitations
 
@@ -528,6 +529,7 @@ Some download pages cannot be parsed because they require JavaScript:
 - **OAuth-Protected**: Pages requiring interactive authentication
 
 **Workarounds**:
+
 - Use browser developer tools to find direct URLs
 - Look for API endpoints or RSS feeds
 - Contact maintainers for stable download links
@@ -553,9 +555,9 @@ Some downloads require complex authentication:
 For direct download issues:
 
 1. Check this documentation first
-2. Verify the download URL is accessible and stable
-3. Test pattern matching with actual page content
-4. Check server response headers and requirements
-5. Report issues with specific URLs and error messages (sanitize sensitive information)
+1. Verify the download URL is accessible and stable
+1. Test pattern matching with actual page content
+1. Check server response headers and requirements
+1. Report issues with specific URLs and error messages (sanitize sensitive information)
 
 Direct download support provides flexibility for applications that don't use traditional repository systems, enabling AppImage Updater to work with a wide variety of distribution methods.

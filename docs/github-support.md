@@ -164,8 +164,8 @@ appimage-updater add MyApp https://github.com/owner/repository \
 GitHub releases can contain multiple assets. AppImage Updater intelligently filters and prioritizes:
 
 1. **AppImage files** (highest priority) - Files ending in `.AppImage` or `.appimage`
-2. **Executable files** (medium priority) - Files with executable permissions
-3. **Archive files** (fallback) - `.zip`, `.tar.gz`, `.tar.xz` files that may contain AppImages
+1. **Executable files** (medium priority) - Files with executable permissions
+1. **Archive files** (fallback) - `.zip`, `.tar.gz`, `.tar.xz` files that may contain AppImages
 
 ### Prerelease Support
 
@@ -195,6 +195,7 @@ appimage-updater add MyApp https://github.com/owner/repo --checksum true --check
 ```
 
 Supported checksum formats:
+
 - SHA256SUMS, SHA256, sha256.txt
 - SHA512SUMS, SHA512, sha512.txt
 - MD5SUMS, MD5, md5.txt
@@ -213,13 +214,13 @@ Supported checksum formats:
    export GITHUB_TOKEN="your_token_here"
    ```
 
-2. Check your current rate limit:
+1. Check your current rate limit:
 
    ```bash
    curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/rate_limit
    ```
 
-3. Verify token permissions include repository access
+1. Verify token permissions include repository access
 
 **Problem**: `GitHub authentication failed - check your token`
 
@@ -231,13 +232,13 @@ Supported checksum formats:
    echo $GITHUB_TOKEN
    ```
 
-2. Test token manually:
+1. Test token manually:
 
    ```bash
    curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user
    ```
 
-3. Check token hasn't expired in GitHub settings
+1. Check token hasn't expired in GitHub settings
 
 ### Repository Not Found
 
@@ -246,9 +247,9 @@ Supported checksum formats:
 **Solutions**:
 
 1. Verify the repository URL is correct
-2. Check if the repository is private and requires authentication
-3. Ensure the repository exists and is accessible
-4. For GitHub Enterprise, verify the base URL is correct
+1. Check if the repository is private and requires authentication
+1. Ensure the repository exists and is accessible
+1. For GitHub Enterprise, verify the base URL is correct
 
 ### No Releases Found
 
@@ -257,8 +258,10 @@ Supported checksum formats:
 **Solutions**:
 
 1. Verify the repository has published releases (not just tags)
-2. Check if releases are in draft state
-3. Consider enabling prerelease mode if only prereleases exist:
+
+1. Check if releases are in draft state
+
+1. Consider enabling prerelease mode if only prereleases exist:
 
    ```bash
    appimage-updater edit MyApp --prerelease true
@@ -271,14 +274,16 @@ Supported checksum formats:
 **Solutions**:
 
 1. Check the release assets manually on GitHub
-2. Verify the file naming convention matches AppImage standards
-3. Use a custom pattern if needed:
+
+1. Verify the file naming convention matches AppImage standards
+
+1. Use a custom pattern if needed:
 
    ```bash
    appimage-updater edit MyApp --pattern "(?i)MyApp.*\.(AppImage|appimage)$"
    ```
 
-4. Check if the AppImage is inside an archive file
+1. Check if the AppImage is inside an archive file
 
 ## API Rate Limits Based on testing with 14 applications:
 
@@ -290,6 +295,7 @@ Supported checksum formats:
 
 - Rate limits are configurable by administrators
 - Check with your GitHub Enterprise administrator for specific limits
+
 ## Advanced Configuration
 
 ### Custom API Endpoints
@@ -374,21 +380,21 @@ Or update the configuration file directly:
 
 1. **Use Personal Access Tokens**: Always authenticate for better rate limits and private repository access
 
-2. **Enable Checksum Verification**: For security, enable checksum verification when available:
+1. **Enable Checksum Verification**: For security, enable checksum verification when available:
 
    ```bash
    appimage-updater add MyApp https://github.com/owner/repo --checksum true
    ```
 
-3. **Monitor Rate Limits**: Be aware of API rate limits, especially for batch operations
+1. **Monitor Rate Limits**: Be aware of API rate limits, especially for batch operations
 
-4. **Test Configuration**: Use `appimage-updater check --dry-run` to test configurations
+1. **Test Configuration**: Use `appimage-updater check --dry-run` to test configurations
 
-5. **Keep Tokens Secure**: Store tokens in environment variables or secure files, never in configuration files
+1. **Keep Tokens Secure**: Store tokens in environment variables or secure files, never in configuration files
 
-6. **Regular Updates**: Keep your GitHub tokens fresh and monitor for expiration
+1. **Regular Updates**: Keep your GitHub tokens fresh and monitor for expiration
 
-7. **Use Specific Patterns**: Create specific patterns to avoid downloading wrong files:
+1. **Use Specific Patterns**: Create specific patterns to avoid downloading wrong files:
 
    ```bash
    appimage-updater add MyApp https://github.com/owner/repo --pattern "(?i)MyApp-.*-x86_64\.AppImage$"
@@ -421,6 +427,7 @@ echo "your_enterprise_token" > ~/.appimage-updater-github-token
 ### API Endpoints
 
 GitHub Enterprise instances typically use the same API structure as GitHub.com:
+
 - API Base: `https://github.company.com/api/v3/`
 - Rate limits and authentication work the same way
 
@@ -429,9 +436,9 @@ GitHub Enterprise instances typically use the same API structure as GitHub.com:
 For GitHub-specific issues:
 
 1. Check this documentation first
-2. Verify your GitHub repository has releases with AppImage assets
-3. Test authentication and API access
-4. Check GitHub's API status at <https://www.githubstatus.com/>
-5. Report issues with specific error messages and repository URLs (without sensitive tokens)
+1. Verify your GitHub repository has releases with AppImage assets
+1. Test authentication and API access
+1. Check GitHub's API status at <https://www.githubstatus.com/>
+1. Report issues with specific error messages and repository URLs (without sensitive tokens)
 
 GitHub support is the most mature and feature-complete repository type in AppImage Updater, providing excellent reliability and performance for managing AppImage updates from GitHub releases.

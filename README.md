@@ -386,7 +386,7 @@ Each monitored application has its own configuration file specifying:
 AppImage Updater supports multiple repository types with comprehensive documentation for each:
 
 - **[GitHub Repositories](docs/github-support.md)** - Full support for GitHub releases API with authentication and enterprise support
-- **[GitLab Repositories](docs/gitlab-support.md)** - Complete GitLab integration for both gitlab.com and self-hosted instances  
+- **[GitLab Repositories](docs/gitlab-support.md)** - Complete GitLab integration for both gitlab.com and self-hosted instances
 - **[Direct Download URLs](docs/direct-support.md)** - Static download links, "latest" symlinks, and dynamic download pages
 
 Each repository type has detailed documentation covering setup, authentication, troubleshooting, and advanced features.

@@ -140,6 +140,10 @@ nav:
     - Usage Guide: usage.md
     - Configuration: configuration.md
     - Examples: examples.md
+  - Repository Support:
+    - GitHub Repositories: github-support.md
+    - GitLab Repositories: gitlab-support.md
+    - Direct Downloads: direct-support.md
   - Feature Guides:
     - ZIP Support: zip-support.md
     - File Rotation: rotation.md
@@ -153,6 +157,7 @@ nav:
     - Developer Commands: commands.md
     - Development Setup: development.md
     - Testing: testing.md
+    - Test Analysis: test_analysis.md
     - Contributing: contributing.md
   - API Reference: reference/
 
