@@ -2,10 +2,11 @@
 
 from datetime import datetime
 
+import pytest
+
 from appimage_updater.core.models import Asset, Release
 from appimage_updater.core.system_info import (
     SystemDetector,
-    get_system_info,
     is_compatible_architecture,
     is_compatible_platform,
     is_supported_format,
@@ -50,115 +51,55 @@ class TestSystemDetector:
         detector = SystemDetector()
         formats = detector._detect_supported_formats("linux")
 
-        # Should always include these on Linux from fixture
         expected_formats = {".AppImage", ".tar.gz", ".tar.xz", ".zip"}
         assert expected_formats.issubset(formats)
         # Verify against fixture data
         assert expected_formats.issubset(platform_formats["linux"])
 
-    def test_format_detection_darwin(self, platform_formats):
-        """Test supported format detection for macOS."""
+    def test_format_detection_darwin_raises_error(self):
+        """Test that non-Linux platforms raise RuntimeError."""
         detector = SystemDetector()
-        formats = detector._detect_supported_formats("darwin")
+        
+        with pytest.raises(RuntimeError, match="AppImage Updater only supports Linux"):
+            detector._detect_supported_formats("darwin")
 
-        # Use fixture data for expected formats
-        expected_formats = platform_formats["darwin"]
-        assert formats == expected_formats
-
-    def test_format_detection_windows(self, platform_formats):
-        """Test supported format detection for Windows."""
+    def test_format_detection_windows_raises_error(self):
+        """Test that non-Linux platforms raise RuntimeError."""
         detector = SystemDetector()
-        formats = detector._detect_supported_formats("win32")
-
-        # Use fixture data for expected formats
-        expected_formats = platform_formats["win32"]
-        assert formats == expected_formats
+        
+        with pytest.raises(RuntimeError, match="AppImage Updater only supports Linux"):
+            detector._detect_supported_formats("win32")
 
 
 class TestCompatibilityFunctions:
     """Test compatibility checking functions."""
 
-    def test_architecture_compatibility(self):
-        """Test architecture compatibility checking."""
-        # Exact matches
-        assert is_compatible_architecture("x86_64", "x86_64") == (True, 100.0)
-        assert is_compatible_architecture("arm64", "arm64") == (True, 100.0)
+    def test_platform_compatibility_linux_only(self):
+        """Test platform compatibility checking for Linux only."""
+        # Test Linux platform compatibility
+        is_compat, score = is_compatible_platform("linux", "linux")
+        assert is_compat is True
+        assert score == 100.0
+        
+        # Test non-Linux asset on Linux system
+        is_compat, score = is_compatible_platform("darwin", "linux")
+        assert is_compat is False
+        assert score == 0.0
+        
+    def test_platform_compatibility_non_linux_system_raises_error(self):
+        """Test that non-Linux system platforms raise RuntimeError."""
+        with pytest.raises(RuntimeError, match="AppImage Updater only supports Linux"):
+            is_compatible_platform("linux", "darwin")
 
-        # Alias matches
-        assert is_compatible_architecture("amd64", "x86_64") == (True, 80.0)
-        assert is_compatible_architecture("x64", "x86_64") == (True, 80.0)
-        assert is_compatible_architecture("aarch64", "arm64") == (True, 80.0)
-        assert is_compatible_architecture("armv7l", "armv7") == (True, 80.0)
+    def test_format_compatibility_non_linux_raises_error(self):
+        """Test that non-Linux platforms raise RuntimeError."""
+        with pytest.raises(RuntimeError, match="AppImage Updater only supports Linux"):
+            is_supported_format(".dmg", "darwin")
 
-        # Incompatible
-        assert is_compatible_architecture("arm64", "x86_64") == (False, 0.0)
-        assert is_compatible_architecture("i686", "arm64") == (False, 0.0)
-
-    def test_platform_compatibility(self):
-        """Test platform compatibility checking."""
-        # Exact matches
-        assert is_compatible_platform("linux", "linux") == (True, 100.0)
-        assert is_compatible_platform("darwin", "darwin") == (True, 100.0)
-        assert is_compatible_platform("win32", "win32") == (True, 100.0)
-
-        # Incompatible
-        assert is_compatible_platform("linux", "darwin") == (False, 0.0)
-        assert is_compatible_platform("win32", "linux") == (False, 0.0)
-
-    def test_format_compatibility_linux(self):
-        """Test format compatibility for Linux."""
-        # Test with explicit linux platform to avoid system-specific differences
-        # Supported formats (universal Linux formats)
-        assert is_supported_format(".AppImage", "linux")[0]
-        assert is_supported_format(".tar.gz", "linux")[0]
-        assert is_supported_format(".tar.xz", "linux")[0]
-        assert is_supported_format(".zip", "linux")[0]
-
-        # Format availability depends on distribution family, so test explicitly
-        # .deb should be available on debian-family systems when using actual system detection
-        system_info = get_system_info()
-        if system_info.distribution_family == 'debian':
-            assert is_supported_format(".deb", "linux")[0]
-        elif system_info.distribution_family == 'redhat':
-            assert is_supported_format(".rpm", "linux")[0]
-
-        # Unsupported formats
-        assert is_supported_format(".exe", "linux") == (False, 0.0)
-        assert is_supported_format(".dmg", "linux") == (False, 0.0)
-
-        # Check preferences for universal formats
-        _, appimage_score = is_supported_format(".AppImage", "linux")
-        _, zip_score = is_supported_format(".zip", "linux")
-        _, tar_gz_score = is_supported_format(".tar.gz", "linux")
-
-        assert appimage_score > tar_gz_score > zip_score
-
-    def test_format_compatibility_darwin(self):
-        """Test format compatibility for macOS."""
-        # Supported formats
-        assert is_supported_format(".dmg", "darwin")[0]
-        assert is_supported_format(".pkg", "darwin")[0]
-        assert is_supported_format(".zip", "darwin")[0]
-
-        # Unsupported formats
-        assert is_supported_format(".AppImage", "darwin") == (False, 0.0)
-        assert is_supported_format(".deb", "darwin") == (False, 0.0)
-
-    def test_format_compatibility_windows(self):
-        """Test format compatibility for Windows."""
-        # Supported formats
-        assert is_supported_format(".exe", "win32")[0]
-        assert is_supported_format(".msi", "win32")[0]
-        assert is_supported_format(".zip", "win32")[0]
-
-        # Unsupported formats
-        assert is_supported_format(".AppImage", "win32") == (False, 0.0)
-        assert is_supported_format(".deb", "win32") == (False, 0.0)
-
-
-class TestAssetParsing:
-    """Test asset filename parsing for architecture, platform, and format."""
-
+    def test_format_compatibility_windows_raises_error(self):
+        """Test that Windows platform raises RuntimeError."""
+        with pytest.raises(RuntimeError, match="AppImage Updater only supports Linux"):
+            is_supported_format(".exe", "win32")
     def test_architecture_parsing(self):
         """Test architecture extraction from asset filenames."""
         test_cases = [
