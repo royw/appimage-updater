@@ -123,7 +123,9 @@ async def fetch_appimage_pattern_from_github(url: str) -> str | None:
     Prioritizes stable releases over prereleases for better pattern generation.
     """
     try:
-        client = get_repository_client(url)
+        # Use probing for unknown domains, but skip for known GitHub URLs for performance
+        enable_probing = not url.startswith("https://github.com/")
+        client = get_repository_client(url, enable_probing=enable_probing)
         releases = await client.get_releases(url, limit=20)
         groups = _collect_release_files(releases)
         target_files = _select_target_files(groups)
@@ -433,7 +435,9 @@ async def should_enable_prerelease(url: str) -> bool:
 
 async def _fetch_releases_for_prerelease_check(url: str) -> list[Release]:
     """Fetch releases from repository for prerelease analysis."""
-    client = get_repository_client(url, timeout=10)
+    # Use probing for unknown domains, but skip for known GitHub URLs for performance
+    enable_probing = not url.startswith("https://github.com/")
+    client = get_repository_client(url, timeout=10, enable_probing=enable_probing)
     releases = await client.get_releases(url, limit=10)
 
     if not releases:

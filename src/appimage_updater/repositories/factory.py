@@ -21,14 +21,17 @@ from .direct_download_repository import DirectDownloadRepository
 from .dynamic_download_repository import DynamicDownloadRepository
 
 
-def get_repository_client(
+def get_repository_client_legacy(
     url: str,
     timeout: int = 30,
     user_agent: str | None = None,
     source_type: str | None = None,
     **kwargs: Any,
 ) -> RepositoryClient:
-    """Create appropriate repository client based on URL and optional source type.
+    """Legacy repository client factory (domain-based detection only).
+
+    This function only performs URL pattern matching without API probing.
+    Use get_repository_client() for enhanced detection with API probing.
 
     Args:
         url: Repository URL
@@ -79,6 +82,76 @@ def get_repository_client(
 
     # No suitable repository client found
     raise RepositoryError(f"No repository client available for URL: {url}")
+
+
+def get_repository_client(
+    url: str,
+    timeout: int = 30,
+    user_agent: str | None = None,
+    source_type: str | None = None,
+    enable_probing: bool = True,
+    **kwargs: Any,
+) -> RepositoryClient:
+    """Create appropriate repository client with optional API probing.
+
+    This is the unified interface that provides both legacy (fast) and enhanced
+    (probing) repository detection based on the enable_probing parameter.
+
+    Args:
+        url: Repository URL
+        timeout: Request timeout in seconds
+        user_agent: Custom user agent string
+        source_type: Explicit source type (github, gitlab, direct_download, dynamic_download, direct)
+        enable_probing: Enable API probing for unknown domains (default: True)
+        **kwargs: Repository-specific configuration options
+
+    Returns:
+        Appropriate repository client instance
+
+    Raises:
+        RepositoryError: If no suitable repository client is found
+    """
+    if enable_probing:
+        # Use enhanced detection with API probing
+        return get_repository_client_with_probing_sync(url, timeout, user_agent, source_type, **kwargs)
+    else:
+        # Use legacy detection (domain-based only)
+        return get_repository_client_legacy(url, timeout, user_agent, source_type, **kwargs)
+
+
+async def get_repository_client_async(
+    url: str,
+    timeout: int = 30,
+    user_agent: str | None = None,
+    source_type: str | None = None,
+    enable_probing: bool = True,
+    **kwargs: Any,
+) -> RepositoryClient:
+    """Async version of get_repository_client with optional API probing.
+
+    This is the unified async interface that provides both legacy (fast) and enhanced
+    (probing) repository detection based on the enable_probing parameter.
+
+    Args:
+        url: Repository URL
+        timeout: Request timeout in seconds
+        user_agent: Custom user agent string
+        source_type: Explicit source type (github, gitlab, direct_download, dynamic_download, direct)
+        enable_probing: Enable API probing for unknown domains (default: True)
+        **kwargs: Repository-specific configuration options
+
+    Returns:
+        Appropriate repository client instance
+
+    Raises:
+        RepositoryError: If no suitable repository client is found
+    """
+    if enable_probing:
+        # Use enhanced detection with API probing
+        return await get_repository_client_with_probing(url, timeout, user_agent, source_type, **kwargs)
+    else:
+        # Use legacy detection (domain-based only)
+        return get_repository_client_legacy(url, timeout, user_agent, source_type, **kwargs)
 
 
 def detect_repository_type(url: str) -> str:
@@ -135,11 +208,11 @@ async def get_repository_client_with_probing(
     """
     # If explicit source type is provided, use it directly
     if source_type:
-        return get_repository_client(url, timeout, user_agent, source_type, **kwargs)
+        return get_repository_client_legacy(url, timeout, user_agent, source_type, **kwargs)
 
     # Try standard detection first
     try:
-        return get_repository_client(url, timeout, user_agent, source_type, **kwargs)
+        return get_repository_client_legacy(url, timeout, user_agent, source_type, **kwargs)
     except RepositoryError:
         # Standard detection failed, try API probing
         logger.debug(f"Standard detection failed for {url}, trying API probing")
