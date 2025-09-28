@@ -322,12 +322,12 @@ class TestUnifiedRepositoryInterface:
                 "expected_type": GitHubRepository,
                 "description": "GitHub URL with probing disabled"
             },
-            # Unknown domain - use probing for detection
+            # Known GitHub-compatible domain - should use GitHub handler
             {
                 "url": "https://codeberg.org/user/repo",
                 "enable_probing": True,
-                "expected_type": DynamicDownloadRepository,  # Fallback after probing
-                "description": "Unknown domain with probing enabled"
+                "expected_type": GitHubRepository,  # Codeberg is GitHub-compatible
+                "description": "Codeberg domain with probing enabled"
             },
             # Direct download - can skip probing
             {

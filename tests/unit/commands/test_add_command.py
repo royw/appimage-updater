@@ -495,6 +495,7 @@ class TestAddCommand:
             checksum_pattern="*.sha256",
             checksum_required=False,
             pattern="*.AppImage",
+            version_pattern=None,
             direct=False,
             create_dir=True,
             yes=False,
@@ -533,6 +534,7 @@ class TestAddCommand:
             checksum_pattern="",  # Default value
             checksum_required=None,
             pattern=None,
+            version_pattern=None,
             direct=None,
             create_dir=False,  # Default value
             yes=False,  # Default value

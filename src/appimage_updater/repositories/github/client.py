@@ -12,12 +12,15 @@ from loguru import logger
 from pydantic import ValidationError
 
 from appimage_updater._version import __version__
-from appimage_updater.models.release import Asset, Release
+from appimage_updater.core.models import Asset, Release
 from appimage_updater.utils.version_utils import normalize_version_string
 
 from ..protocol import AuthProtocol
 from .auth import GitHubAuth, get_github_auth
-from .exceptions import GitHubClientError
+
+
+class GitHubClientError(Exception):
+    """Raised when GitHub API operations fail."""
 
 
 class GitHubClient:

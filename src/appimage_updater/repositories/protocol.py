@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from ..models.release import Release
+from appimage_updater.core.models import Release
 
 
 @runtime_checkable
@@ -15,6 +15,7 @@ class AuthProtocol(Protocol):
         """Get authentication headers for API requests."""
         ...
 
+    @property
     def is_authenticated(self) -> bool:
         """Check if authentication is available."""
         ...

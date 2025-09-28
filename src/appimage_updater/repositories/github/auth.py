@@ -12,8 +12,6 @@ from pathlib import Path
 
 from loguru import logger
 
-from ..protocol import AuthProtocol
-
 
 try:
     from appimage_updater._version import __version__

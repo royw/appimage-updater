@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from ..base import RepositoryClient
@@ -42,6 +41,13 @@ class GitHubHandler(RepositoryHandler):
         ):
             return True
 
-        # For probing mode, also try GitHub-compatible APIs (Gitea/Forgejo/Codeberg)
-        # This allows discovery of GitHub-compatible instances
-        return bool(re.match(r"https?://[^/]+/[^/]+/[^/]+/?.*", url))
+        # For probing mode, also try known GitHub-compatible domains
+        # This allows discovery of GitHub-compatible instances like Codeberg, Gitea, etc.
+        known_compatible_domains = [
+            "codeberg.org",
+            "gitea.com",
+            "git.sr.ht",
+            "gitlab.com",  # GitLab has GitHub-compatible API endpoints
+        ]
+
+        return any(f"://{domain}/" in url for domain in known_compatible_domains)
