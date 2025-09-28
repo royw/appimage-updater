@@ -81,6 +81,7 @@ class RepositoryHandlerRegistry:
 
     def get_handler(self, name: str) -> RepositoryHandler | None:
         """Get a specific handler by name."""
+        self._ensure_initialized()
         return self._handlers.get(name)
 
     def get_handlers_for_url(self, url: str) -> list[RepositoryHandler]:
