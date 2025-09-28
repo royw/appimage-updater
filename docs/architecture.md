@@ -194,7 +194,7 @@ Handles different types of software repositories with a plugin-based architectur
 #### Repository Implementations
 
 - **GitHub Repository**: GitHub releases API with authentication support
-- **GitLab Repository**: GitLab API v4 for both gitlab.com and self-hosted instances  
+- **GitLab Repository**: GitLab API v4 for both gitlab.com and self-hosted instances
 - **Direct Download Repository**: Static file URLs with checksum verification
 - **Dynamic Download Repository**: Dynamic URL resolution with fallback support
 

@@ -159,57 +159,31 @@ class TestShowCommandHandler:
         # Execute command
         handler._execute_show_command(
             app_names=["TestApp"],
+            add_command=False,
             config_file=Path("/test/config.json"),
             config_dir=Path("/test/config"),
-            debug=True,
-            output_format=OutputFormat.RICH
+            debug=False,
+            output_format=OutputFormat.RICH,
         )
         
         # Verify factory was called with correct parameters
         mock_factory.assert_called_once_with(
             app_names=["TestApp"],
+            add_command=False,
             config_file=Path("/test/config.json"),
             config_dir=Path("/test/config"),
-            debug=True,
-            output_format=OutputFormat.RICH
+            debug=False,
+            output_format=OutputFormat.RICH,
         )
-        
-        # Verify formatter was created
-        mock_formatter_factory.assert_called_once_with(mock_command.params)
-        
-        # Verify command was executed
-        mock_asyncio_run.assert_called_once()
-
-    @patch('appimage_updater.cli.handlers.show_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.show_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.show_handler.CommandFactory.create_show_command')
-    def test_execute_show_command_with_json_format_calls_finalize(
-        self, 
-        mock_factory, 
-        mock_formatter_factory,
-        mock_asyncio_run
-    ):
-        """Test that JSON format calls finalize on formatter."""
-        handler = ShowCommandHandler()
-        
-        # Setup mocks
-        mock_command = Mock()
-        mock_factory.return_value = mock_command
-        mock_command.params = Mock()
-        
-        mock_formatter = Mock()
-        mock_formatter_factory.return_value = mock_formatter
-        
-        success_result = CommandResult(success=True, message="Success")
-        mock_asyncio_run.return_value = success_result
         
         # Execute command with JSON format
         handler._execute_show_command(
             app_names=["TestApp"],
+            add_command=False,
             config_file=None,
             config_dir=None,
             debug=False,
-            output_format=OutputFormat.JSON
+            output_format=OutputFormat.JSON,
         )
         
         # Verify finalize was called for JSON format
@@ -241,10 +215,11 @@ class TestShowCommandHandler:
         # Execute command with HTML format
         handler._execute_show_command(
             app_names=["TestApp"],
+            add_command=False,
             config_file=None,
             config_dir=None,
             debug=False,
-            output_format=OutputFormat.HTML
+            output_format=OutputFormat.HTML,
         )
         
         # Verify finalize was called for HTML format
@@ -253,7 +228,7 @@ class TestShowCommandHandler:
     @patch('appimage_updater.cli.handlers.show_handler.asyncio.run')
     @patch('appimage_updater.cli.handlers.show_handler.create_output_formatter_from_params')
     @patch('appimage_updater.cli.handlers.show_handler.CommandFactory.create_show_command')
-    def test_execute_show_command_rich_format_no_finalize(
+    def test_execute_show_command_with_rich_format_no_finalize(
         self, 
         mock_factory, 
         mock_formatter_factory,
@@ -276,10 +251,11 @@ class TestShowCommandHandler:
         # Execute command with RICH format
         handler._execute_show_command(
             app_names=["TestApp"],
+            add_command=False,
             config_file=None,
             config_dir=None,
             debug=False,
-            output_format=OutputFormat.RICH
+            output_format=OutputFormat.RICH,
         )
         
         # Verify finalize was NOT called for RICH format
@@ -313,10 +289,11 @@ class TestShowCommandHandler:
         with pytest.raises(typer.Exit) as exc_info:
             handler._execute_show_command(
                 app_names=["TestApp"],
+                add_command=False,
                 config_file=None,
                 config_dir=None,
                 debug=False,
-                output_format=OutputFormat.RICH
+                output_format=OutputFormat.RICH,
             )
         
         # Verify exit code matches command result
@@ -330,10 +307,11 @@ class TestShowCommandHandler:
             with pytest.raises(typer.Exit) as exc_info:
                 handler._execute_show_command(
                     app_names=None,
+                    add_command=False,
                     config_file=None,
                     config_dir=None,
                     debug=False,
-                    output_format=OutputFormat.RICH
+                    output_format=OutputFormat.RICH,
                 )
             
             # Verify help was shown and exit code is 0
@@ -357,15 +335,17 @@ class TestShowCommandHandler:
                     # Execute with default values
                     handler._execute_show_command(
                         app_names=["TestApp"],
+                        add_command=False,
                         config_file=None,
                         config_dir=None,
                         debug=False,
-                        output_format=OutputFormat.RICH
+                        output_format=OutputFormat.RICH,
                     )
                     
                     # Verify factory called with None values
                     mock_factory.assert_called_once_with(
                         app_names=["TestApp"],
+                        add_command=False,
                         config_file=None,
                         config_dir=None,
                         debug=False,

@@ -31,9 +31,7 @@ class ShowCommandHandler(CommandHandler):
         def show(
             app_names: list[str] | None = CLIOptions.SHOW_APP_NAME_ARGUMENT_OPTIONAL,
             add_command: bool = typer.Option(
-                False,
-                "--add-command",
-                help="Output the add command needed to recreate each application configuration"
+                False, "--add-command", help="Output the add command needed to recreate each application configuration"
             ),
             config_file: Path | None = CLIOptions.CONFIG_FILE_OPTION,
             config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
