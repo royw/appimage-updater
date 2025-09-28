@@ -557,12 +557,20 @@ class AppConfigs(Manager):
 
     def save(self) -> None:
         """Save configuration to file."""
-        if self._config_path and self._config_path.is_dir():
+        # Determine the correct save path using the same logic as load_config
+        save_path = self._config_path
+        if save_path is None:
+            default_config_path = GlobalConfigManager.get_default_config_path()
+            # Check if directory-based config exists, use it for consistency
+            config_dir = default_config_path.parent / "apps"
+            save_path = config_dir if config_dir.exists() and config_dir.is_dir() else default_config_path
+        if save_path.is_dir():
             # For directory-based configs, save individual application files
+            self._config_path = save_path  # Update for _save_directory_based_config
             self._save_directory_based_config()
         else:
             # For file-based configs, save to single file
-            self.save_config(self._config, self._config_path)
+            self.save_config(self._config, save_path)
         logger.info("Application configurations saved")
 
     def __iter__(self) -> Iterator[ApplicationConfig]:

@@ -45,7 +45,9 @@ class ApplicationConfig(BaseModel):
     """Configuration for a single application."""
 
     name: str = Field(description="Application name")
-    source_type: Literal["github", "direct", "direct_download", "dynamic_download"] = Field(description="Source type")
+    source_type: Literal["github", "gitlab", "direct", "direct_download", "dynamic_download"] = Field(
+        description="Source type"
+    )
     url: str = Field(description="Source URL")
     download_dir: Path = Field(description="Download directory")
     pattern: str = Field(description="File pattern to match")
