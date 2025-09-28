@@ -172,8 +172,8 @@ class VersionChecker:
         )
 
     def _get_current_version(self, app_config: ApplicationConfig) -> str | None:
-        """Get current version from .info file or by analyzing existing files."""
-        # First try to get version from .info file (for apps with rotation enabled)
+        """Get current version from .info file, .current file, or by analyzing existing files."""
+        # First try to get version from .info file
         info_file = self._get_info_file_path(app_config)
         if info_file.exists():
             try:
@@ -185,10 +185,36 @@ class VersionChecker:
             except (OSError, ValueError, AttributeError) as e:
                 logger.debug(f"Failed to parse version from info file: {e}")
 
-        # For apps without rotation, analyze existing files to determine current version
-        if not getattr(app_config, "rotation_enabled", True):
-            return self._get_current_version_from_files(app_config)
+        # Second, try to parse version from .current file (if exists)
+        current_version = self._get_version_from_current_file(app_config)
+        if current_version:
+            return current_version
 
+        # Third, analyze existing AppImage files to determine current version
+        return self._get_current_version_from_files(app_config)
+
+    def _get_version_from_current_file(self, app_config: ApplicationConfig) -> str | None:
+        """Extract version from .current file by parsing the filename."""
+        download_dir = self._get_download_directory(app_config)
+        if not download_dir or not download_dir.exists():
+            return None
+
+        # Look for .current files
+        current_files = list(download_dir.glob("*.current"))
+        if not current_files:
+            return None
+
+        # Use the first .current file found
+        current_file = current_files[0]
+        filename = current_file.name
+
+        # Extract version from filename (e.g., "OpenRGB_0.9_x86_64_b5f46e3.AppImage.current" -> "0.9")
+        version = self._extract_version_from_filename(filename)
+        if version:
+            logger.debug(f"Extracted version '{version}' from current file: {filename}")
+            return normalize_version_string(version)
+
+        logger.debug(f"Could not extract version from current file: {filename}")
         return None
 
     def _get_current_version_from_files(self, app_config: ApplicationConfig) -> str | None:
@@ -471,8 +497,7 @@ class VersionChecker:
         # Filter by version pattern if specified
         if app_config.version_pattern and not re.search(app_config.version_pattern, release.version):
             logger.debug(
-                f"Skipping release {release.tag_name} "
-                f"(doesn't match version pattern '{app_config.version_pattern}')"
+                f"Skipping release {release.tag_name} (doesn't match version pattern '{app_config.version_pattern}')"
             )
             return False
 

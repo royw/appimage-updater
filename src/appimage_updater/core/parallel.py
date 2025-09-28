@@ -28,7 +28,7 @@ class ConcurrentProcessor:
         self,
         items: list[Any],
         async_worker_func: Callable[[Any], Coroutine[Any, Any, Any]],
-        progress_callback: Callable[[int, int, str], None] | None = None
+        progress_callback: Callable[[int, int, str], None] | None = None,
     ) -> list[Any]:
         """Process items using concurrent async tasks for I/O-bound operations.
 
@@ -69,7 +69,7 @@ class ConcurrentProcessor:
                     nonlocal completed_count
                     result = await async_worker_func(item)
                     completed_count += 1
-                    item_name = getattr(item, 'name', f'app {index + 1}')
+                    item_name = getattr(item, "name", f"app {index + 1}")
                     progress_callback(completed_count, total_items, f"Completed {item_name}")
                     return result
 
@@ -82,5 +82,5 @@ class ConcurrentProcessor:
                 # 2. Simplicity: Perfect for straightforward I/O-bound network operations
                 # 3. Ordered results: Results match input order automatically
                 # 4. Clean error handling: Exceptions propagate naturally
-                tasks = [async_worker_func(item) for item in items]  # type: ignore
+                tasks = [async_worker_func(item) for item in items]
                 return await asyncio.gather(*tasks)

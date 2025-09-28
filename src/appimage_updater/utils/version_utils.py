@@ -77,18 +77,18 @@ def _normalize_dash_separated_version(version: str) -> str | None:
 
         # For unknown suffixes, return just the core version to be safe
         return core_version
-    
+
     # Try direct suffix (e.g., "1.0rc2", "2.3beta1")
     direct_match = re.match(r"^(\d+\.\d+(?:\.\d+)?)(alpha|beta|rc)(\d*)$", version, re.IGNORECASE)
     if direct_match:
         core_version = direct_match.group(1)
         suffix = direct_match.group(2).lower()
         number = direct_match.group(3)
-        
+
         # Combine suffix with number if present (e.g., "rc2")
         full_suffix = f"{suffix}{number}" if number else suffix
         return f"{core_version}-{full_suffix}"
-    
+
     return None
 
 
@@ -106,11 +106,11 @@ def _normalize_space_separated_version(version: str) -> str | None:
         core_version = underscore_match.group(1)
         suffix = underscore_match.group(2).lower()
         number = underscore_match.group(3)
-        
+
         # Combine suffix with number if present (e.g., "rc2")
         full_suffix = f"{suffix}{number}" if number else suffix
         return f"{core_version}-{full_suffix}"
-    
+
     # Then try space-separated pattern
     space_match = re.search(r"(\d+\.\d+\.\d+)(?:\s+(\w+))?", version)
     if not space_match:

@@ -1,4 +1,5 @@
 """GitHub API client for fetching release information."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -6,25 +7,17 @@ import re
 from typing import Any
 import urllib.parse
 
-from loguru import logger
 import httpx
+from loguru import logger
 from pydantic import ValidationError
 
 from appimage_updater._version import __version__
-from appimage_updater.core.models import (
-    Asset,
-    Release,
-)
+from appimage_updater.models.release import Asset, Release
 from appimage_updater.utils.version_utils import normalize_version_string
 
-from .auth import (
-    GitHubAuth,
-    get_github_auth,
-)
-
-
-class GitHubClientError(Exception):
-    """Raised when GitHub API operations fail."""
+from ..protocol import AuthProtocol
+from .auth import GitHubAuth, get_github_auth
+from .exceptions import GitHubClientError
 
 
 class GitHubClient:
@@ -51,9 +44,10 @@ class GitHubClient:
         self.user_agent = user_agent or f"AppImage-Updater/{__version__}"
 
         # Initialize dynamic authentication system
-        from ..auth import DynamicForgeAuth
+        from ..auth import DynamicForgeAuth  # noqa: PLC0415
+
         self.dynamic_auth = DynamicForgeAuth(self.user_agent)
-        
+
         # Keep GitHub auth for backward compatibility and logging
         if auth:
             self.github_auth = auth
@@ -62,8 +56,10 @@ class GitHubClient:
         else:
             self.github_auth = get_github_auth()
 
-        # Log GitHub authentication status
-        self.github_auth.log_auth_status()
+    @property
+    def auth(self) -> AuthProtocol:
+        """Get the authentication provider for this client."""
+        return self.github_auth
 
     async def get_latest_release(self, repo_url: str) -> Release:
         """Get the latest release for a repository."""
@@ -115,9 +111,9 @@ class GitHubClient:
         """Handle HTTP errors when fetching releases."""
         msg = f"Failed to fetch releases for {owner}/{repo}: {e}"
         if "rate limit" in str(e).lower():
-            rate_info = self.auth.get_rate_limit_info()
+            rate_info = self.github_auth.get_rate_limit_info()
             msg += f" (Rate limit: {rate_info['limit']} requests/hour for {rate_info['type']} access)"
-            if not self.auth.is_authenticated:
+            if not self.github_auth.is_authenticated:
                 msg += ". Consider setting GITHUB_TOKEN environment variable for higher limits."
         raise GitHubClientError(msg) from e
 
@@ -187,7 +183,9 @@ class GitHubClient:
         """Parse GitHub release data into Release model."""
         try:
             # Debug: Log prerelease field from API response
-            logger.debug(f"Parsing release {data.get('tag_name', 'unknown')}: prerelease={data.get('prerelease', 'missing')}")
+            logger.debug(
+                f"Parsing release {data.get('tag_name', 'unknown')}: prerelease={data.get('prerelease', 'missing')}"
+            )
             # Parse assets first
             assets = []
             for asset_data in data.get("assets", []):
