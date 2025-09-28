@@ -193,6 +193,7 @@ class CommandFactory:
     @staticmethod
     def create_show_command(
         app_names: list[str] | None = None,
+        add_command: bool = False,
         config_file: Path | None = None,
         config_dir: Path | None = None,
         verbose: bool = False,
@@ -202,6 +203,7 @@ class CommandFactory:
         """Create a ShowCommand instance."""
         params = ShowParams(
             app_names=app_names,
+            add_command=add_command,
             config_file=config_file,
             config_dir=config_dir,
             verbose=verbose,

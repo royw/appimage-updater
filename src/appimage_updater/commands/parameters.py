@@ -98,6 +98,7 @@ class ShowParams(BaseParams):
     """Parameters for show command."""
 
     app_names: list[str] | None = None
+    add_command: bool = False
     output_format: Any = None  # OutputFormat, avoiding circular import
 
 

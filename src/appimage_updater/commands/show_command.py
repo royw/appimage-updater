@@ -52,12 +52,16 @@ class ShowCommand(Command):
                 self.console.print(f"[red]Error: {error_msg}[/red]")
                 return CommandResult(success=False, message=error_msg, exit_code=1)
 
-            # Use context manager to make output formatter available throughout the execution
-            if output_formatter:
-                with OutputFormatterContext(output_formatter):
-                    success = await self._execute_show_operation()
+            # Two distinct paths: add command output vs normal show output
+            if self.params.add_command:
+                success = await self._execute_add_command_operation()
             else:
-                success = await self._execute_show_operation()
+                # Use context manager to make output formatter available throughout the execution
+                if output_formatter:
+                    with OutputFormatterContext(output_formatter):
+                        success = await self._execute_show_operation()
+                else:
+                    success = await self._execute_show_operation()
 
             if success:
                 return CommandResult(success=True, message="Show completed successfully")
@@ -68,6 +72,31 @@ class ShowCommand(Command):
             logger.error(f"Unexpected error in show command: {e}")
             logger.exception("Full exception details")
             return CommandResult(success=False, message=str(e), exit_code=1)
+
+    async def _execute_add_command_operation(self) -> bool:
+        """Execute the add command generation operation.
+
+        Returns:
+            True if operation succeeded, False if it failed.
+        """
+        try:
+            config = self._load_primary_config()
+            found_apps = self._filter_applications(config)
+            if found_apps is None:
+                return False
+
+            # Output add commands directly to stdout
+            for app in found_apps:
+                command = self._generate_add_command(app)
+                print(command)  # noqa: T201
+
+            return True
+        except ConfigLoadError as e:
+            return self._handle_config_load_error_for_add_command(e)
+        except Exception as e:
+            logger.error(f"Unexpected error in show command: {e}")
+            logger.exception("Full exception details")
+            raise
 
     async def _execute_show_operation(self) -> bool:
         """Execute the core show operation logic.
@@ -109,6 +138,16 @@ class ShowCommand(Command):
             # Re-raise for explicit config files or other errors
             raise
 
+    def _handle_config_load_error_for_add_command(self, error: ConfigLoadError) -> bool:
+        """Handle configuration load errors gracefully for add command operation."""
+        # Only handle gracefully if no explicit config file was specified
+        if not self.params.config_file and "not found" in str(error):
+            # No applications to show add commands for
+            return True
+        else:
+            # Re-raise for explicit config files or other errors
+            raise
+
     def _filter_applications(self, config: Any) -> Any:
         """Filter applications by names."""
         return ApplicationService.filter_apps_by_names(config.applications, self.params.app_names or [])
@@ -116,11 +155,67 @@ class ShowCommand(Command):
     def _display_applications(self, found_apps: Any) -> None:
         """Display information for found applications."""
         config_source_info = self._get_config_source_info()
-
         for i, app in enumerate(found_apps):
             if i > 0:
                 self.console.print()  # Add spacing between multiple apps
             display_application_details(app, config_source_info)
+
+    def _generate_add_command(self, app: Any) -> str:
+        """Generate an add command string from an application configuration."""
+        # Start with basic command
+        parts = ["appimage-updater", "add"]
+
+        # Add application name
+        parts.append(app.name)
+
+        # Add URL
+        parts.append(app.url)
+
+        # Add download directory
+        parts.append(str(app.download_dir))
+
+        # Add optional parameters if they differ from defaults
+        self._add_boolean_flags(parts, app)
+        self._add_value_parameters(parts, app)
+
+        return " ".join(parts)
+
+    def _add_boolean_flags(self, parts: list[str], app: Any) -> None:
+        """Add boolean flag parameters to the command parts."""
+        if app.rotation_enabled:
+            parts.append("--rotation")
+
+        if app.prerelease:
+            parts.append("--prerelease")
+
+        if not app.checksum.enabled:  # Default is True
+            parts.append("--no-checksum")
+
+        if app.checksum.required:
+            parts.append("--checksum-required")
+
+        if app.source_type == "direct":
+            parts.append("--direct")
+
+    def _add_value_parameters(self, parts: list[str], app: Any) -> None:
+        """Add value parameters to the command parts."""
+        if app.retain_count != 3:  # Default is 3
+            parts.extend(["--retain", str(app.retain_count)])
+
+        if app.symlink_path:
+            parts.extend(["--symlink", str(app.symlink_path)])
+
+        if app.checksum.enabled and app.checksum.algorithm != "sha256":  # Default is sha256
+            parts.extend(["--checksum-algorithm", app.checksum.algorithm])
+
+        if app.checksum.pattern != "{filename}-SHA256.txt":  # Default pattern
+            parts.extend(["--checksum-pattern", f'"{app.checksum.pattern}"'])
+
+        if app.pattern != "*.AppImage":  # Default pattern
+            parts.extend(["--pattern", f'"{app.pattern}"'])
+
+        if app.version_pattern:
+            parts.extend(["--version-pattern", f'"{app.version_pattern}"'])
 
     def _get_config_source_info(self) -> dict[str, str]:
         """Get configuration source information for display."""

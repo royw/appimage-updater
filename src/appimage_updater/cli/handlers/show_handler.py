@@ -30,6 +30,11 @@ class ShowCommandHandler(CommandHandler):
         @app.command()
         def show(
             app_names: list[str] | None = CLIOptions.SHOW_APP_NAME_ARGUMENT_OPTIONAL,
+            add_command: bool = typer.Option(
+                False,
+                "--add-command",
+                help="Output the add command needed to recreate each application configuration"
+            ),
             config_file: Path | None = CLIOptions.CONFIG_FILE_OPTION,
             config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
             debug: bool = CLIOptions.debug_option(),
@@ -47,6 +52,7 @@ class ShowCommandHandler(CommandHandler):
             """
             self._execute_show_command(
                 app_names=app_names,
+                add_command=add_command,
                 config_file=config_file,
                 config_dir=config_dir,
                 debug=debug,
@@ -106,6 +112,7 @@ class ShowCommandHandler(CommandHandler):
     def _execute_show_command(
         self,
         app_names: list[str] | None,
+        add_command: bool,
         config_file: Path | None,
         config_dir: Path | None,
         debug: bool,
@@ -119,6 +126,7 @@ class ShowCommandHandler(CommandHandler):
         # Create command via factory (existing pattern)
         command = CommandFactory.create_show_command(
             app_names=app_names,
+            add_command=add_command,
             config_file=config_file,
             config_dir=config_dir,
             debug=debug,
@@ -129,7 +137,7 @@ class ShowCommandHandler(CommandHandler):
         output_formatter = create_output_formatter_from_params(command.params)
 
         # Handle format-specific finalization
-        if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
+        if output_format in [OutputFormat.JSON, OutputFormat.HTML] and not add_command:
             result = asyncio.run(command.execute(output_formatter=output_formatter))
             output_formatter.finalize()
         else:
