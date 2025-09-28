@@ -41,10 +41,12 @@ class RepositoryHandler(ABC):
     """Abstract base class for repository handlers."""
 
     @property
-    @abstractmethod
     def metadata(self) -> RepositoryHandlerMetadata:
         """Get handler metadata."""
-        pass
+        # This will be set by the @repository_handler decorator
+        if hasattr(self.__class__, '_handler_metadata'):
+            return self.__class__._handler_metadata  # type: ignore[no-any-return]
+        raise NotImplementedError("Handler metadata not set. Use @repository_handler decorator.")
 
     @abstractmethod
     def create_client(self, **kwargs: Any) -> RepositoryClient:
@@ -175,7 +177,7 @@ def repository_handler(
             version=version,
         )
 
-        # Add metadata property to class
+        # Store metadata as class attribute
         cls._handler_metadata = metadata  # type: ignore[attr-defined]
 
         # Auto-register when class is defined
