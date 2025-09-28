@@ -248,6 +248,21 @@ AppImage Updater automatically detects prereleases based on common patterns:
 
 For self-hosted GitLab instances with custom API paths, the standard `/api/v4/` endpoint is assumed. If your instance uses a different path, contact the maintainers for support.
 
+### Version Pattern Filtering
+
+Filter GitLab releases using regex patterns to exclude prereleases or select specific version formats:
+
+```bash
+# Only stable releases (exclude prereleases like "1.0-rc1")
+appimage-updater add --version-pattern "^[0-9]+\.[0-9]+(\.[0-9]+)?$" MyApp https://gitlab.com/owner/project
+
+# Only major.minor versions
+appimage-updater add --version-pattern "^[0-9]+\.[0-9]+$" MyApp https://gitlab.com/owner/project
+
+# Custom versioning schemes
+appimage-updater add --version-pattern "^v[0-9]+\.[0-9]+\.[0-9]+$" MyApp https://gitlab.com/owner/project
+```
+
 ### Batch Operations
 
 You can manage multiple GitLab repositories simultaneously:

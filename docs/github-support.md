@@ -309,6 +309,21 @@ appimage-updater add MyApp https://github.company.com/owner/repo
 # If you encounter issues, contact your administrator
 ```
 
+### Version Pattern Filtering
+
+Filter GitHub releases using regex patterns to exclude prereleases or select specific version formats:
+
+```bash
+# Only stable releases (exclude prereleases like "1.0-rc1")
+appimage-updater add --version-pattern "^[0-9]+\.[0-9]+(\.[0-9]+)?$" MyApp https://github.com/owner/repo
+
+# Only major.minor versions
+appimage-updater add --version-pattern "^[0-9]+\.[0-9]+$" MyApp https://github.com/owner/repo
+
+# Custom versioning schemes (e.g., "v1.2.3" format)
+appimage-updater add --version-pattern "^v[0-9]+\.[0-9]+\.[0-9]+$" MyApp https://github.com/owner/repo
+```
+
 ### Batch Operations
 
 You can manage multiple GitHub repositories simultaneously:
