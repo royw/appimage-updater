@@ -107,7 +107,7 @@ appimage-updater add MyApp https://example.com/download \
 }
 ```
 
-#### Dynamic Download Page
+#### Dynamic Download Page Configuration
 
 ```json
 {

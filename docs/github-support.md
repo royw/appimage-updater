@@ -285,7 +285,7 @@ Supported checksum formats:
 
 1. Check if the AppImage is inside an archive file
 
-## API Rate Limits Based on testing with 14 applications:
+## API Rate Limits Based on testing with 14 applications
 
 - **Sequential**: ~48 seconds (requests processed one by one)
 - **Concurrent**: ~29 seconds (requests processed simultaneously)
@@ -414,7 +414,7 @@ appimage-updater add CompanyApp https://github.company.com/team/project
 appimage-updater add CompanyApp https://github.company.com/team/project --source-type github
 ```
 
-### Authentication
+### GitHub Authentication
 
 ```bash
 # Use the same token configuration methods
