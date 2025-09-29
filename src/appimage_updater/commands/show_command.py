@@ -177,42 +177,57 @@ class ShowCommand(Command):
 
         return " ".join(parts)
 
-    def _add_boolean_flags(self, parts: list[str], app: Any) -> None:
-        """Add boolean flag parameters to the command parts."""
+    def _add_feature_flags(self, parts: list[str], app: Any) -> None:
+        """Add feature-related boolean flags."""
         if app.rotation_enabled:
             parts.append("--rotation")
-
         if app.prerelease:
             parts.append("--prerelease")
 
+    def _add_checksum_flags(self, parts: list[str], app: Any) -> None:
+        """Add checksum-related boolean flags."""
         if not app.checksum.enabled:  # Default is True
             parts.append("--no-checksum")
-
         if app.checksum.required:
             parts.append("--checksum-required")
 
+    def _add_source_flags(self, parts: list[str], app: Any) -> None:
+        """Add source-related flags."""
         if app.source_type == "direct":
             parts.append("--direct")
 
-    def _add_value_parameters(self, parts: list[str], app: Any) -> None:
-        """Add value parameters to the command parts."""
+    def _add_boolean_flags(self, parts: list[str], app: Any) -> None:
+        """Add boolean flag parameters to the command parts."""
+        self._add_feature_flags(parts, app)
+        self._add_checksum_flags(parts, app)
+        self._add_source_flags(parts, app)
+
+    def _add_file_parameters(self, parts: list[str], app: Any) -> None:
+        """Add file and path-related parameters."""
         if app.retain_count != 3:  # Default is 3
             parts.extend(["--retain", str(app.retain_count)])
-
         if app.symlink_path:
             parts.extend(["--symlink", str(app.symlink_path)])
 
+    def _add_checksum_parameters(self, parts: list[str], app: Any) -> None:
+        """Add checksum-related value parameters."""
         if app.checksum.enabled and app.checksum.algorithm != "sha256":  # Default is sha256
             parts.extend(["--checksum-algorithm", app.checksum.algorithm])
-
         if app.checksum.pattern != "{filename}-SHA256.txt":  # Default pattern
             parts.extend(["--checksum-pattern", f'"{app.checksum.pattern}"'])
 
+    def _add_pattern_parameters(self, parts: list[str], app: Any) -> None:
+        """Add pattern-related parameters."""
         if app.pattern != "*.AppImage":  # Default pattern
             parts.extend(["--pattern", f'"{app.pattern}"'])
-
         if app.version_pattern:
             parts.extend(["--version-pattern", f'"{app.version_pattern}"'])
+
+    def _add_value_parameters(self, parts: list[str], app: Any) -> None:
+        """Add value parameters to the command parts."""
+        self._add_file_parameters(parts, app)
+        self._add_checksum_parameters(parts, app)
+        self._add_pattern_parameters(parts, app)
 
     def _get_config_source_info(self) -> dict[str, str]:
         """Get configuration source information for display."""
