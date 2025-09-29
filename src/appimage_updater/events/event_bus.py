@@ -10,6 +10,7 @@ import asyncio
 from collections import defaultdict
 from collections.abc import Callable
 import contextlib
+from functools import lru_cache
 from typing import Any
 
 
@@ -28,6 +29,7 @@ class Event(ABC):
         self.data = kwargs
 
 
+@lru_cache(maxsize=1)
 class EventBus:
     """Event bus for managing event subscriptions and publishing."""
 
@@ -71,14 +73,10 @@ class EventBus:
             await asyncio.gather(*tasks, return_exceptions=True)
 
 
-# Global event bus instance
-_global_event_bus = EventBus()
-
-
 def get_event_bus() -> EventBus:
-    """Get the global event bus instance.
+    """Get the global event bus instance (cached).
 
     Returns:
         Global event bus
     """
-    return _global_event_bus
+    return EventBus()

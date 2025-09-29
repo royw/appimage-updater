@@ -9,6 +9,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from functools import lru_cache
 import re
 from typing import Any
 
@@ -59,6 +60,7 @@ class RepositoryHandler(ABC):
         pass
 
 
+@lru_cache(maxsize=1)
 class RepositoryHandlerRegistry:
     """Registry for repository handlers with dynamic discovery."""
 
@@ -142,18 +144,14 @@ class RepositoryHandlerRegistry:
         logger.debug(f"Discovered and registered {len(self._handlers)} repository handlers")
 
 
-# Global registry instance
-_registry = RepositoryHandlerRegistry()
-
-
 def get_repository_registry() -> RepositoryHandlerRegistry:
-    """Get the global repository handler registry."""
-    return _registry
+    """Get the global repository handler registry (cached)."""
+    return RepositoryHandlerRegistry()
 
 
 def register_handler(handler: RepositoryHandler) -> None:
     """Register a repository handler with the global registry."""
-    _registry.register(handler)
+    get_repository_registry().register(handler)
 
 
 def repository_handler(
