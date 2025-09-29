@@ -96,7 +96,7 @@ class TestAddCommand:
         assert "TestApp" in clean_stdout
         assert "https://github.com/user/testapp" in clean_stdout
         # For non-existent repo, should fall back to heuristic universal pattern generation
-        assert "TestApp.*\\.(?:zip|AppImage)(\\.(|current|old))?$" in clean_stdout
+        assert "(?i)^TestApp.*\\.AppImage$" in clean_stdout
 
         # Check that config file was created
         config_file = temp_config_dir / "testapp.json"
@@ -112,8 +112,8 @@ class TestAddCommand:
         assert app_config["source_type"] == "github"
         assert app_config["url"] == "https://github.com/user/testapp"
         assert app_config["download_dir"] == str(test_download_dir)
-        # Non-existent repo should use universal pattern as fallback
-        assert app_config["pattern"] == "(?i)TestApp.*\\.(?:zip|AppImage)(\\.(|current|old))?$"
+        # Non-existent repo should use centralized version service fallback pattern
+        assert app_config["pattern"] == "(?i)^TestApp.*\\.AppImage$"
         assert app_config["enabled"] is True
         assert app_config["prerelease"] is False
         assert app_config["checksum"]["enabled"] is True
@@ -169,9 +169,9 @@ class TestAddCommand:
         assert "Successfully added application" in result.stdout
         assert "MyApp" in result.stdout
 
-        # Pattern should be generated (either mocked or fallback)
+        # Pattern should be generated using centralized version service fallback
         assert "Pattern:" in result.stdout
-        assert "MyApp.*" in result.stdout or "OrcaSlicer_Linux_AppImage" in result.stdout
+        assert "(?i)^MyApp.*\\.AppImage$" in result.stdout
 
         # Verify config content
         config_file = temp_config_dir / "myapp.json"
@@ -185,12 +185,8 @@ class TestAddCommand:
         assert app_config["source_type"] == "github"
         assert app_config["url"] == "https://github.com/SoftFever/OrcaSlicer"
 
-        # Should use either the mocked pattern or fallback pattern
-        expected_patterns = [
-            "(?i)OrcaSlicer_Linux_AppImage.*\\.AppImage(\\.(|current|old))?$",  # Mocked pattern
-            "(?i)MyApp.*\\.(?:zip|AppImage)(\\.(|current|old))?$"  # Fallback pattern
-        ]
-        assert app_config["pattern"] in expected_patterns
+        # Should use centralized version service fallback pattern for non-existent repo
+        assert app_config["pattern"] == "(?i)^MyApp.*\\.AppImage$"
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
     @patch('appimage_updater.pattern_generator.should_enable_prerelease')

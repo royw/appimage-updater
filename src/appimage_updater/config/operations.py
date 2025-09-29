@@ -214,12 +214,19 @@ async def generate_default_config(
     )
     prerelease_final, prerelease_auto_enabled = await _get_effective_prerelease_config(prerelease, defaults, url)
 
+    # Generate pattern with fallback
+    if pattern is not None:
+        final_pattern = pattern
+    else:
+        generated_pattern = await generate_appimage_pattern_async(name, url)
+        final_pattern = generated_pattern if generated_pattern is not None else f"(?i)^{name}.*\\.AppImage$"
+    
     config = {
         "name": name,
         "source_type": "direct" if direct is True else detect_source_type(url),
         "url": url,
         "download_dir": download_dir,
-        "pattern": pattern if pattern is not None else await generate_appimage_pattern_async(name, url),
+        "pattern": final_pattern,
         "enabled": True,
         "prerelease": prerelease_final,
         "checksum": checksum_config,
