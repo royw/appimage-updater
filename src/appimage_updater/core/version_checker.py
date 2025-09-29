@@ -601,6 +601,9 @@ class VersionChecker:
 
     def _extract_version_from_filename(self, filename: str) -> str | None:
         """Extract version from filename using common patterns."""
+        # First, eliminate git commit hashes and other variable identifiers to avoid false matches
+        cleaned_filename = self._clean_filename_for_version_extraction(filename)
+        
         # Test each pattern in order of specificity
         patterns: list[Callable[[str], str | None]] = [
             self._extract_prerelease_version,
@@ -611,13 +614,34 @@ class VersionChecker:
         ]
 
         for pattern_func in patterns:
-            result = pattern_func(filename)
+            result = pattern_func(cleaned_filename)
             if result:
                 # Normalize the extracted version
                 return normalize_version_string(result)
 
-        # Fallback: return the filename if no version pattern found
-        return filename
+        # Fallback: return None if no version pattern found (don't return filename)
+        return None
+
+    def _clean_filename_for_version_extraction(self, filename: str) -> str:
+        """Clean filename by removing git hashes and other variable identifiers that could interfere with version extraction."""
+        # Remove file extension
+        cleaned = re.sub(r"\.AppImage$", "", filename, flags=re.IGNORECASE)
+        
+        # Remove git commit hashes (6-8 hex characters, typically 7)
+        # This prevents extracting parts of git hashes as version numbers
+        cleaned = re.sub(r"-[a-fA-F0-9]{6,8}(?=-|$)", "", cleaned)
+        
+        # Remove architecture identifiers that might contain numbers
+        cleaned = re.sub(r"-(x86_64|amd64|i386|i686|arm64|armv7|armhf)(?=-|$)", "", cleaned)
+        
+        # Remove platform identifiers
+        cleaned = re.sub(r"-(linux|win32|win64|windows|macos|darwin)(?=-|$)", "", cleaned, flags=re.IGNORECASE)
+        
+        # Clean up any double hyphens or trailing hyphens
+        cleaned = re.sub(r"-+", "-", cleaned)
+        cleaned = cleaned.strip("-")
+        
+        return cleaned
 
     def _extract_prerelease_version(self, filename: str) -> str | None:
         """Extract pre-release versions like '2.3.1-alpha'."""
