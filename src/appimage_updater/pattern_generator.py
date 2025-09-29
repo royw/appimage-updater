@@ -11,17 +11,13 @@ import re
 import urllib.parse
 
 from warnings import deprecated
-
 from loguru import logger
 
 from .core.models import Release
 from .repositories.base import RepositoryError
 from .repositories.domain_service import DomainKnowledgeService
-from .repositories.factory import (
-    detect_repository_type,
-    get_repository_client_async,
-)
-
+from .repositories.factory import get_repository_client_async
+from .core.version_service import version_service
 
 def parse_github_url(url: str) -> tuple[str, str] | None:
     """Parse GitHub URL and extract owner/repo information.
@@ -101,40 +97,45 @@ def _is_download_url(path_parts: list[str]) -> bool:
 async def generate_appimage_pattern_async(app_name: str, url: str) -> str:
     """Repository-agnostic pattern generation for use in async contexts.
 
-    First attempts to fetch actual AppImage files from repository releases to create
     an accurate pattern. Works with GitHub, GitLab, and other repository types.
     Falls back to intelligent defaults if that fails.
     """
     try:
-        # Try to get pattern from any repository type (not just GitHub)
-        pattern = await fetch_appimage_pattern_from_repository(url)
+        # Create a minimal config for the repository service
+        from appimage_updater.config.models import ApplicationConfig
+        from pathlib import Path
+        
+        temp_config = ApplicationConfig(
+            name=app_name,
+            source_type="dynamic_download", 
+            url=url,
+            download_dir=Path("/tmp"),
+            pattern="",
+            prerelease=False
+        )
+        
+        # Try to get pattern from centralized repository service
+        pattern = await version_service.generate_pattern_from_repository(temp_config)
         if pattern:
             logger.debug(f"Generated pattern from repository releases: {pattern}")
             return pattern
-    except (ValueError, AttributeError, TypeError) as e:
-        logger.debug(f"Failed to generate pattern from repository: {e}")
-        # Fall through to fallback logic
+        
+        # Fallback to old method if centralized service fails
+        logger.debug("Centralized service failed, falling back to legacy method")
+        return await _legacy_fetch_pattern(url)
+        
+    except Exception as e:
+        logger.debug(f"Error generating pattern from repository: {e}")
+        return None
 
-    # Fallback: Use intelligent defaults based on the app name and URL
-    logger.debug("Using fallback pattern generation")
-    return generate_fallback_pattern(app_name, url)
 
-
-async def fetch_appimage_pattern_from_repository(url: str) -> str | None:
-    """Repository-agnostic function to fetch AppImage pattern from releases.
-
-    Looks for both direct AppImage files and ZIP files that might contain AppImages.
-    Prioritizes stable releases over prereleases for better pattern generation.
-    Works with GitHub, GitLab, and other repository types through the registry system.
-    """
+async def _legacy_fetch_pattern(url: str) -> str | None:
+    """Legacy pattern generation method as fallback."""
     try:
-        # Use domain knowledge for optimization - works for all repository types now
         domain_service = DomainKnowledgeService()
-        # Check if we have domain knowledge for fast-path optimization
         known_handler = domain_service.get_handler_by_domain_knowledge(url)
         enable_probing = known_handler is None
 
-        # Get repository client using registry system (use longer timeout for pattern generation)
         client = await get_repository_client_async(url, timeout=30, enable_probing=enable_probing)
         releases = await client.get_releases(url, limit=20)
         groups = _collect_release_files(releases)
@@ -142,44 +143,22 @@ async def fetch_appimage_pattern_from_repository(url: str) -> str | None:
         if not target_files:
             logger.debug("No AppImage or ZIP files found in any releases")
             return None
-        # Use improved pattern generation that eliminates variable identifiers
+        
         if target_files:
-            # Use the first file to generate a pattern, but eliminate variable parts
-            return _generate_improved_pattern(target_files[0])
+            return version_service.generate_pattern_from_filename(target_files[0])
         return create_pattern_from_filenames(target_files, include_both_formats=True)
     except (RepositoryError, ValueError, AttributeError) as e:
         logger.debug(f"Error fetching releases: {e}")
         return None
 
 
-# Keep the old function name for backward compatibility
+# Legacy function - now redirects to centralized version service
 def _generate_improved_pattern(asset_name: str) -> str:
-    """Generate regex pattern from asset name by eliminating variable identifiers."""
-    # Start with the asset name
-    pattern = asset_name
+    """Generate regex pattern from asset name - now uses centralized version service.
     
-    # Remove file extension to work with base name
-    base_name = re.sub(r"\.AppImage$", "", pattern, flags=re.IGNORECASE)
-    
-    # Eliminate git commit hashes (6-8 hex characters, typically 7)
-    base_name = re.sub(r"-[a-fA-F0-9]{6,8}(?=-|$)", "", base_name)
-    
-    # Eliminate architecture identifiers
-    base_name = re.sub(r"-(x86_64|amd64|i386|i686|arm64|armv7|armhf)(?=-|$)", "", base_name)
-    
-    # Eliminate platform identifiers
-    base_name = re.sub(r"-(linux|win32|win64|windows|macos|darwin)(?=-|$)", "", base_name, flags=re.IGNORECASE)
-    
-    # Eliminate version numbers (semantic versions)
-    base_name = re.sub(r"-\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?(?=-|$)", "", base_name)
-    
-    # Clean up any double hyphens or trailing hyphens
-    base_name = re.sub(r"-+", "-", base_name)
-    base_name = base_name.strip("-")
-    
-    # Create flexible pattern that matches the cleaned base name with any suffixes
-    escaped_base = re.escape(base_name)
-    return f"(?i)^{escaped_base}.*\\.AppImage$"
+    Note: This function is deprecated. Use version_service.generate_pattern_from_filename() instead.
+    """
+    return version_service.generate_pattern_from_filename(asset_name)
 
 
 # Keep the old function name for backward compatibility
