@@ -17,41 +17,45 @@ from .domain_service import DomainKnowledgeService
 from .registry import get_repository_registry
 
 
-async def get_repository_client_async_impl(  # noqa: C901
-    url: str,
-    timeout: int = 30,
-    user_agent: str | None = None,
-    source_type: str | None = None,
-    enable_probing: bool = True,
-    **kwargs: Any,
+async def _try_explicit_source_type(
+    source_type: str, timeout: int, user_agent: str | None, **kwargs: Any
 ) -> RepositoryClient:
-    """Get repository client with intelligent domain knowledge and optional probing."""
+    """Try to create client using explicit source type."""
     registry = get_repository_registry()
-    domain_service = DomainKnowledgeService()
+    handler = registry.get_handler(source_type)
+    if not handler and source_type == "direct":
+        handler = registry.get_handler("direct_download")
 
-    # 1. Handle explicit source type (highest priority)
-    if source_type:
-        handler = registry.get_handler(source_type)
-        if not handler and source_type == "direct":
-            handler = registry.get_handler("direct_download")
-        if handler:
-            return handler.create_client(timeout=timeout, user_agent=user_agent, **kwargs)
-        else:
-            raise RepositoryError(f"Unsupported source type: {source_type}")
+    if handler:
+        return handler.create_client(timeout=timeout, user_agent=user_agent, **kwargs)
+    else:
+        raise RepositoryError(f"Unsupported source type: {source_type}")
 
-    # 2. Fast-path: Try domain knowledge first
+
+async def _try_domain_knowledge(
+    url: str, domain_service: DomainKnowledgeService, timeout: int, user_agent: str | None, **kwargs: Any
+) -> RepositoryClient | None:
+    """Try to create client using domain knowledge."""
     known_handler = domain_service.get_handler_by_domain_knowledge(url)
-    if known_handler:
-        try:
-            client = known_handler.create_client(timeout=timeout, user_agent=user_agent, **kwargs)
-            await _validate_client(client, url)
-            return client
-        except Exception as e:
-            logger.warning(f"Known domain failed for {url}: {e}")
-            await domain_service.forget_domain(url, known_handler.metadata.name)
+    if not known_handler:
+        return None
+    try:
+        client = known_handler.create_client(timeout=timeout, user_agent=user_agent, **kwargs)
+        await _validate_client(client, url)
+        return client
+    except Exception as e:
+        logger.warning(f"Known domain failed for {url}: {e}")
+        await domain_service.forget_domain(url, known_handler.metadata.name)
+        return None
 
-    # 3. Registry-based detection
+
+async def _try_registry_handlers(
+    url: str, domain_service: DomainKnowledgeService, timeout: int, user_agent: str | None, **kwargs: Any
+) -> RepositoryClient | None:
+    """Try to create client using registry handlers."""
+    registry = get_repository_registry()
     handlers = registry.get_handlers_for_url(url)
+
     for handler in handlers:
         try:
             if handler.can_handle_url(url):
@@ -61,14 +65,48 @@ async def get_repository_client_async_impl(  # noqa: C901
         except Exception as e:
             logger.debug(f"Handler {handler.metadata.name} failed for {url}: {e}")
             continue
+    return None
 
-    # 4. Final fallback to dynamic download
+
+async def _try_fallback_handler(
+    url: str, timeout: int, user_agent: str | None, **kwargs: Any
+) -> RepositoryClient:
+    """Try fallback dynamic download handler."""
+    registry = get_repository_registry()
     fallback_handler = registry.get_handler("dynamic_download")
     if fallback_handler:
         logger.warning(f"No specific repository handler found for {url}, using dynamic download")
         return fallback_handler.create_client(timeout=timeout, user_agent=user_agent, **kwargs)
-
     raise RepositoryError(f"No repository handler available for {url}")
+
+
+async def get_repository_client_async_impl(
+    url: str,
+    timeout: int = 30,
+    user_agent: str | None = None,
+    source_type: str | None = None,
+    enable_probing: bool = True,
+    **kwargs: Any,
+) -> RepositoryClient:
+    """Get repository client with intelligent domain knowledge and optional probing."""
+    domain_service = DomainKnowledgeService()
+
+    # 1. Handle explicit source type (highest priority)
+    if source_type:
+        return await _try_explicit_source_type(source_type, timeout, user_agent, **kwargs)
+
+    # 2. Fast-path: Try domain knowledge first
+    client = await _try_domain_knowledge(url, domain_service, timeout, user_agent, **kwargs)
+    if client:
+        return client
+
+    # 3. Registry-based detection
+    client = await _try_registry_handlers(url, domain_service, timeout, user_agent, **kwargs)
+    if client:
+        return client
+
+    # 4. Final fallback to dynamic download
+    return await _try_fallback_handler(url, timeout, user_agent, **kwargs)
 
 
 def get_repository_client_sync(

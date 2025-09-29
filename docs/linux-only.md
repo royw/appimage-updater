@@ -19,9 +19,9 @@
 ### Technical Reasons
 
 1. **Package Format**: AppImage files are Linux ELF executables with embedded filesystems
-2. **Runtime Dependencies**: Requires Linux kernel features and libraries
-3. **File Permissions**: Uses Linux executable permissions and filesystem features
-4. **System Integration**: Designed for Linux desktop environments and application launchers
+1. **Runtime Dependencies**: Requires Linux kernel features and libraries
+1. **File Permissions**: Uses Linux executable permissions and filesystem features
+1. **System Integration**: Designed for Linux desktop environments and application launchers
 
 ## Supported Linux Distributions
 
@@ -33,7 +33,7 @@ AppImage Updater works on all major Linux distributions:
 - **Debian** (stable, testing, unstable)
 - **Linux Mint**
 - **Elementary OS**
-- **Pop!_OS**
+- **Pop!\_OS**
 
 ### Red Hat-Based
 
@@ -73,20 +73,23 @@ AppImage Updater supports multiple CPU architectures on Linux:
 ## What About Other Platforms?
 
 ### macOS
+
 - **Not Supported**: macOS has its own package formats (.dmg, .pkg, .app bundles)
 - **Alternative**: Use [Homebrew](https://brew.sh/) or [MacPorts](https://www.macports.org/) for macOS package management
 
 ### Windows
+
 - **Not Supported**: Windows has its own package formats (.exe, .msi, .appx)
 - **Alternative**: Use [Chocolatey](https://chocolatey.org/) or [Scoop](https://scoop.sh/) for Windows package management
 
 ### Why Not Cross-Platform?
+
 While the underlying Python code could theoretically run on other platforms, it would be misleading and confusing to support non-Linux platforms for a Linux-specific package format. This design decision ensures:
 
 1. **Clear Purpose**: Tool focuses on its intended use case
-2. **Better User Experience**: No confusion about platform compatibility
-3. **Simpler Codebase**: No need for platform-specific workarounds
-4. **Accurate Documentation**: All examples and guides are Linux-focused
+1. **Better User Experience**: No confusion about platform compatibility
+1. **Simpler Codebase**: No need for platform-specific workarounds
+1. **Accurate Documentation**: All examples and guides are Linux-focused
 
 ## Installation Requirements
 
@@ -111,9 +114,9 @@ This prevents confusion and clearly communicates the platform requirement.
 Ready to start using AppImage Updater on your Linux system?
 
 1. **[Installation Guide](installation.md)** - Install AppImage Updater
-2. **[Getting Started](getting-started.md)** - Add your first applications
-3. **[Usage Guide](usage.md)** - Complete command reference
-4. **[Examples](examples.md)** - Real-world usage patterns
+1. **[Getting Started](getting-started.md)** - Add your first applications
+1. **[Usage Guide](usage.md)** - Complete command reference
+1. **[Examples](examples.md)** - Real-world usage patterns
 
 ## Community and Support
 

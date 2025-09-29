@@ -218,6 +218,7 @@ class SystemDetector:
             logger.debug(f"Failed to parse /etc/os-release: {e}")
             return None
 
+
 def get_system_info() -> SystemInfo:
     """Get system information (cached)."""
     return SystemDetector().get_system_info()

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 from urllib.parse import urlparse
 
 from loguru import logger
@@ -66,6 +67,24 @@ class DomainKnowledgeService:
         # Fall back to registry-based detection
         return self.registry.get_handlers_for_url(url)
 
+    def _get_domain_list_for_handler(self, knowledge: Any, handler_name: str) -> list[str] | None:
+        """Get the appropriate domain list for a handler."""
+        domain_mapping = {
+            "github": knowledge.github_domains,
+            "gitlab": knowledge.gitlab_domains,
+            "direct_download": knowledge.direct_domains,
+            "dynamic_download": knowledge.dynamic_domains,
+        }
+        return domain_mapping.get(handler_name)
+
+    def _add_domain_to_knowledge(self, knowledge: Any, handler_name: str, domain: str) -> bool:
+        """Add domain to appropriate knowledge list if not already present."""
+        domain_list = self._get_domain_list_for_handler(knowledge, handler_name)
+        if domain_list is not None and domain not in domain_list:
+            domain_list.append(domain)
+            return True
+        return False
+
     async def learn_domain(self, url: str, handler_name: str) -> None:
         """Persist successful domain detection."""
         domain = self._extract_domain(url)
@@ -77,19 +96,7 @@ class DomainKnowledgeService:
             knowledge = config.global_config.domain_knowledge
 
             # Add to appropriate domain list
-            updated = False
-            if handler_name == "github" and domain not in knowledge.github_domains:
-                knowledge.github_domains.append(domain)
-                updated = True
-            elif handler_name == "gitlab" and domain not in knowledge.gitlab_domains:
-                knowledge.gitlab_domains.append(domain)
-                updated = True
-            elif handler_name == "direct_download" and domain not in knowledge.direct_domains:
-                knowledge.direct_domains.append(domain)
-                updated = True
-            elif handler_name == "dynamic_download" and domain not in knowledge.dynamic_domains:
-                knowledge.dynamic_domains.append(domain)
-                updated = True
+            updated = self._add_domain_to_knowledge(knowledge, handler_name, domain)
 
             if updated:
                 knowledge.last_updated = datetime.now().isoformat()
@@ -98,6 +105,14 @@ class DomainKnowledgeService:
 
         except Exception as e:
             logger.error(f"Failed to learn domain {domain}: {e}")
+
+    def _remove_domain_from_knowledge(self, knowledge: Any, handler_name: str, domain: str) -> bool:
+        """Remove domain from appropriate knowledge list if present."""
+        domain_list = self._get_domain_list_for_handler(knowledge, handler_name)
+        if domain_list is not None and domain in domain_list:
+            domain_list.remove(domain)
+            return True
+        return False
 
     async def forget_domain(self, url: str, failed_handler_name: str) -> None:
         """Remove domain from knowledge due to API failure."""
@@ -110,19 +125,7 @@ class DomainKnowledgeService:
             knowledge = config.global_config.domain_knowledge
 
             # Remove from failed handler's domain list
-            updated = False
-            if failed_handler_name == "github" and domain in knowledge.github_domains:
-                knowledge.github_domains.remove(domain)
-                updated = True
-            elif failed_handler_name == "gitlab" and domain in knowledge.gitlab_domains:
-                knowledge.gitlab_domains.remove(domain)
-                updated = True
-            elif failed_handler_name == "direct_download" and domain in knowledge.direct_domains:
-                knowledge.direct_domains.remove(domain)
-                updated = True
-            elif failed_handler_name == "dynamic_download" and domain in knowledge.dynamic_domains:
-                knowledge.dynamic_domains.remove(domain)
-                updated = True
+            updated = self._remove_domain_from_knowledge(knowledge, failed_handler_name, domain)
 
             if updated:
                 knowledge.last_updated = datetime.now().isoformat()
