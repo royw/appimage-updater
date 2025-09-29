@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for file rotation and symlink management functionality.
 
 These tests verify both rotation-disabled and rotation-enabled scenarios,

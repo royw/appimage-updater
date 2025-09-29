@@ -1,3 +1,4 @@
+# type: ignore
 """End-to-end tests to detect stack traces in real CLI usage.
 
 These tests run the actual CLI as a subprocess to catch stack traces

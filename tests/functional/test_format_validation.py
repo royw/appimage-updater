@@ -1,3 +1,4 @@
+# type: ignore
 """Practical functional tests for format options that work in CI environments.
 
 These tests focus on format option validation and help text verification

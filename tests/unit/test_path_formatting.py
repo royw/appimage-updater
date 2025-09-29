@@ -1,3 +1,4 @@
+# type: ignore
 """Unit tests for ui.display_utils.path_formatting module."""
 
 from pathlib import Path

@@ -1,3 +1,4 @@
+# type: ignore
 """Functional tests for HTTP tracker with --dry-run options."""
 
 import ast

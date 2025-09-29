@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for configuration manager classes."""
 
 from pathlib import Path

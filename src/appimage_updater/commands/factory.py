@@ -107,6 +107,7 @@ class CommandFactory:
         instrument_http: bool = False,
         http_stack_depth: int = 4,
         http_track_headers: bool = False,
+        trace: bool = False,
         output_format: str = "rich",
     ) -> CheckCommand:
         """Create a CheckCommand instance."""
@@ -124,6 +125,7 @@ class CommandFactory:
             instrument_http=instrument_http,
             http_stack_depth=http_stack_depth,
             http_track_headers=http_track_headers,
+            trace=trace,
             output_format=output_format,
         )
         return CheckCommand(params)
@@ -263,6 +265,7 @@ class CommandFactory:
         instrument_http: bool = False,
         http_stack_depth: int = 3,
         http_track_headers: bool = False,
+        trace: bool = False,
         verbose: bool = False,
         debug: bool = False,
         output_format: Any = None,
@@ -278,6 +281,7 @@ class CommandFactory:
             instrument_http=instrument_http,
             http_stack_depth=http_stack_depth,
             http_track_headers=http_track_headers,
+            trace=trace,
             verbose=verbose,
             debug=debug,
             output_format=output_format,

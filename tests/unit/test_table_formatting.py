@@ -1,3 +1,4 @@
+# type: ignore
 """Unit tests for ui.display_utils.table_formatting module."""
 
 from unittest.mock import Mock, patch

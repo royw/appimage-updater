@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for RemoveCommand execution."""
 
 from __future__ import annotations

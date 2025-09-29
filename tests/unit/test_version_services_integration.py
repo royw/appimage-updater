@@ -1,3 +1,4 @@
+# type: ignore
 """Integration tests for centralized version services architecture."""
 
 import pytest

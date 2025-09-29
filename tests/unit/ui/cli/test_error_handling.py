@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for CLI error handling utilities."""
 
 from unittest.mock import Mock, patch, MagicMock

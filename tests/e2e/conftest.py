@@ -1,3 +1,4 @@
+# type: ignore
 """Shared fixtures for e2e tests."""
 
 import tempfile

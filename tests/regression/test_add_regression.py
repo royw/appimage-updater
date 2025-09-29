@@ -1,3 +1,4 @@
+# type: ignore
 """Regression test for add command using existing user configurations.
 
 This test dynamically discovers existing AppImage Updater configurations

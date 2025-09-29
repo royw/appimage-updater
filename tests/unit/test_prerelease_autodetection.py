@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for automatic prerelease detection feature in add command."""
 
 import json

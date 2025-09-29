@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import sys
 from typing import (
     Any,
     Protocol,
 )
 
 from loguru import logger
+from rich.console import Console
 
 
 class HTTPLogger(Protocol):
@@ -168,3 +170,59 @@ def create_default_http_logger(verbose: bool = False) -> ConfigurableHTTPLogger:
 def create_silent_http_logger() -> SilentHTTPLogger:
     """Create silent HTTP logger for testing."""
     return SilentHTTPLogger()
+
+
+class TraceHTTPLogger:
+    """HTTP logger that outputs real-time trace information to console."""
+
+    def __init__(self, use_rich: bool = True):
+        """Initialize trace logger.
+
+        Args:
+            use_rich: Whether to use Rich console for colored output
+        """
+        self.use_rich = use_rich and Console is not None
+        self.console: Any = None
+        if self.use_rich:
+            self.console = Console(stderr=True)
+
+    def log_tracking_start(self, message: str, **kwargs: Any) -> None:
+        """Log tracking start message."""
+        self._print_trace("HTTP TRACE: Starting request tracking", "blue")
+
+    def log_tracking_stop(self, message: str, **kwargs: Any) -> None:
+        """Log tracking stop message."""
+        self._print_trace("HTTP TRACE: Stopping request tracking", "blue")
+
+    def log_request(self, message: str, **kwargs: Any) -> None:
+        """Log individual request message with timing."""
+        # Extract timing info from message if available
+        self._print_trace(f"{message}", "green")
+
+    def log_error(self, message: str, **kwargs: Any) -> None:
+        """Log error message."""
+        self._print_trace(f"{message}", "red")
+
+    def warning(self, message: str, **kwargs: Any) -> None:
+        """Log warning message."""
+        self._print_trace(f" {message}", "yellow")
+
+    def _print_trace(self, message: str, color: str = "white") -> None:
+        """Print trace message to stderr with optional color."""
+        if self.use_rich and self.console:
+            self.console.print(message, style=color)
+        else:
+            # Fallback to plain print to stderr
+            print(message, file=sys.stderr)  # noqa: T201
+
+
+def create_trace_http_logger(use_rich: bool = True) -> TraceHTTPLogger:
+    """Create trace HTTP logger for real-time request monitoring.
+
+    Args:
+        use_rich: Whether to use Rich console for colored output
+
+    Returns:
+        Trace HTTP logger
+    """
+    return TraceHTTPLogger(use_rich=use_rich)

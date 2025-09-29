@@ -1,3 +1,4 @@
+# type: ignore
 """Functional tests for --format option using source code introspection.
 
 These tests analyze the source code directly to verify CLI options exist

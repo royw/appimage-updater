@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for distribution-aware asset selection."""
 
 from __future__ import annotations

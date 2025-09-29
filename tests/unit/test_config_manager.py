@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for the new configuration manager API."""
 
 import pytest

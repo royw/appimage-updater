@@ -130,6 +130,12 @@ class CLIOptions:
         help="Include request headers in HTTP tracking (may contain sensitive data)",
     )
 
+    TRACE_OPTION = typer.Option(
+        False,
+        "--trace",
+        help="Enable real-time HTTP request tracing with timing information",
+    )
+
     # ============================================================================
     # CHECK COMMAND OPTIONS
     # ============================================================================

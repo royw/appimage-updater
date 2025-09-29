@@ -60,6 +60,7 @@ class CheckParams(BaseParams):
     instrument_http: bool = False
     http_stack_depth: int = 4
     http_track_headers: bool = False
+    trace: bool = False
     # Output formatting options
     output_format: str = "rich"
 
@@ -133,6 +134,7 @@ class RepositoryParams(BaseParams):
     instrument_http: bool = False
     http_stack_depth: int = 3
     http_track_headers: bool = False
+    trace: bool = False
     output_format: Any = None  # OutputFormat, avoiding circular import
 
 

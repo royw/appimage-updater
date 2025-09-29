@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for RepositoryCommandHandler."""
 
 from __future__ import annotations
@@ -78,10 +79,12 @@ class TestRepositoryCommandHandler:
 
     @patch('appimage_updater.cli.handlers.repository_handler.asyncio.run')
     @patch('appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params')
+    @patch('appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params')
     @patch('appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command')
     def test_execute_repository_command_success(
         self, 
         mock_factory, 
+        mock_http_tracker_factory,
         mock_formatter_factory,
         mock_asyncio_run
     ):
@@ -93,6 +96,11 @@ class TestRepositoryCommandHandler:
             mock_command = Mock()
             mock_factory.return_value = mock_command
             mock_command.params = Mock()
+            
+            mock_http_tracker = Mock()
+            mock_http_tracker.__enter__ = Mock(return_value=mock_http_tracker)
+            mock_http_tracker.__exit__ = Mock(return_value=None)
+            mock_http_tracker_factory.return_value = mock_http_tracker
             
             mock_formatter = Mock()
             mock_formatter_factory.return_value = mock_formatter
@@ -112,7 +120,8 @@ class TestRepositoryCommandHandler:
                 http_stack_depth=5,
                 http_track_headers=False,
                 debug=True,
-                output_format=OutputFormat.RICH
+                output_format=OutputFormat.RICH,
+                trace=False
             )
             
             # Verify factory was called with correct parameters
@@ -126,6 +135,7 @@ class TestRepositoryCommandHandler:
                 instrument_http=True,
                 http_stack_depth=5,
                 http_track_headers=False,
+                trace=False,
                 debug=True,
                 output_format=OutputFormat.RICH
             )
@@ -138,10 +148,12 @@ class TestRepositoryCommandHandler:
 
     @patch('appimage_updater.cli.handlers.repository_handler.asyncio.run')
     @patch('appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params')
+    @patch('appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params')
     @patch('appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command')
     def test_execute_repository_command_with_json_format_calls_finalize(
         self, 
         mock_factory, 
+        mock_http_tracker_factory,
         mock_formatter_factory,
         mock_asyncio_run
     ):
@@ -153,6 +165,11 @@ class TestRepositoryCommandHandler:
             mock_command = Mock()
             mock_factory.return_value = mock_command
             mock_command.params = Mock()
+            
+            mock_http_tracker = Mock()
+            mock_http_tracker.__enter__ = Mock(return_value=mock_http_tracker)
+            mock_http_tracker.__exit__ = Mock(return_value=None)
+            mock_http_tracker_factory.return_value = mock_http_tracker
             
             mock_formatter = Mock()
             mock_formatter_factory.return_value = mock_formatter
@@ -172,7 +189,8 @@ class TestRepositoryCommandHandler:
                 http_stack_depth=3,
                 http_track_headers=False,
                 debug=False,
-                output_format=OutputFormat.JSON
+                output_format=OutputFormat.JSON,
+                trace=False
             )
             
             # Verify finalize was called for JSON format
@@ -180,10 +198,12 @@ class TestRepositoryCommandHandler:
 
     @patch('appimage_updater.cli.handlers.repository_handler.asyncio.run')
     @patch('appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params')
+    @patch('appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params')
     @patch('appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command')
     def test_execute_repository_command_with_html_format_calls_finalize(
         self, 
         mock_factory, 
+        mock_http_tracker_factory,
         mock_formatter_factory,
         mock_asyncio_run
     ):
@@ -195,6 +215,11 @@ class TestRepositoryCommandHandler:
             mock_command = Mock()
             mock_factory.return_value = mock_command
             mock_command.params = Mock()
+            
+            mock_http_tracker = Mock()
+            mock_http_tracker.__enter__ = Mock(return_value=mock_http_tracker)
+            mock_http_tracker.__exit__ = Mock(return_value=None)
+            mock_http_tracker_factory.return_value = mock_http_tracker
             
             mock_formatter = Mock()
             mock_formatter_factory.return_value = mock_formatter
@@ -214,7 +239,8 @@ class TestRepositoryCommandHandler:
                 http_stack_depth=3,
                 http_track_headers=False,
                 debug=False,
-                output_format=OutputFormat.HTML
+                output_format=OutputFormat.HTML,
+                trace=False
             )
             
             # Verify finalize was called for HTML format
@@ -222,10 +248,12 @@ class TestRepositoryCommandHandler:
 
     @patch('appimage_updater.cli.handlers.repository_handler.asyncio.run')
     @patch('appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params')
+    @patch('appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params')
     @patch('appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command')
     def test_execute_repository_command_rich_format_no_finalize(
         self, 
         mock_factory, 
+        mock_http_tracker_factory,
         mock_formatter_factory,
         mock_asyncio_run
     ):
@@ -237,6 +265,11 @@ class TestRepositoryCommandHandler:
             mock_command = Mock()
             mock_factory.return_value = mock_command
             mock_command.params = Mock()
+            
+            mock_http_tracker = Mock()
+            mock_http_tracker.__enter__ = Mock(return_value=mock_http_tracker)
+            mock_http_tracker.__exit__ = Mock(return_value=None)
+            mock_http_tracker_factory.return_value = mock_http_tracker
             
             mock_formatter = Mock()
             mock_formatter_factory.return_value = mock_formatter
@@ -256,7 +289,8 @@ class TestRepositoryCommandHandler:
                 http_stack_depth=3,
                 http_track_headers=False,
                 debug=False,
-                output_format=OutputFormat.RICH
+                output_format=OutputFormat.RICH,
+                trace=False
             )
             
             # Verify finalize was NOT called for RICH format
@@ -264,10 +298,12 @@ class TestRepositoryCommandHandler:
 
     @patch('appimage_updater.cli.handlers.repository_handler.asyncio.run')
     @patch('appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params')
+    @patch('appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params')
     @patch('appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command')
     def test_execute_repository_command_failure_raises_typer_exit(
         self, 
         mock_factory, 
+        mock_http_tracker_factory,
         mock_formatter_factory,
         mock_asyncio_run
     ):
@@ -279,6 +315,11 @@ class TestRepositoryCommandHandler:
             mock_command = Mock()
             mock_factory.return_value = mock_command
             mock_command.params = Mock()
+            
+            mock_http_tracker = Mock()
+            mock_http_tracker.__enter__ = Mock(return_value=mock_http_tracker)
+            mock_http_tracker.__exit__ = Mock(return_value=None)
+            mock_http_tracker_factory.return_value = mock_http_tracker
             
             mock_formatter = Mock()
             mock_formatter_factory.return_value = mock_formatter
@@ -300,7 +341,8 @@ class TestRepositoryCommandHandler:
                     http_stack_depth=3,
                     http_track_headers=False,
                     debug=False,
-                    output_format=OutputFormat.RICH
+                    output_format=OutputFormat.RICH,
+                    trace=False
                 )
             
             # Verify exit code matches command result
@@ -313,16 +355,22 @@ class TestRepositoryCommandHandler:
             
             with patch('appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command') as mock_factory:
                 with patch('appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params'):
-                    with patch('appimage_updater.cli.handlers.repository_handler.asyncio.run') as mock_run:
-                        mock_command = Mock()
-                        mock_factory.return_value = mock_command
-                        mock_command.params = Mock()
-                        
-                        success_result = CommandResult(success=True)
-                        mock_run.return_value = success_result
-                        
-                        # Execute with default values
-                        handler._execute_repository_command(
+                    with patch('appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params') as mock_http_tracker_factory:
+                        with patch('appimage_updater.cli.handlers.repository_handler.asyncio.run') as mock_run:
+                            mock_command = Mock()
+                            mock_factory.return_value = mock_command
+                            mock_command.params = Mock()
+                            
+                            mock_http_tracker = Mock()
+                            mock_http_tracker.__enter__ = Mock(return_value=mock_http_tracker)
+                            mock_http_tracker.__exit__ = Mock(return_value=None)
+                            mock_http_tracker_factory.return_value = mock_http_tracker
+                            
+                            success_result = CommandResult(success=True)
+                            mock_run.return_value = success_result
+                            
+                            # Execute with default values
+                            handler._execute_repository_command(
                             app_names=["TestApp"],
                             config_file=None,
                             config_dir=None,
@@ -333,7 +381,8 @@ class TestRepositoryCommandHandler:
                             http_stack_depth=5,
                             http_track_headers=False,
                             debug=False,
-                            output_format=OutputFormat.RICH
+                            output_format=OutputFormat.RICH,
+                            trace=False
                         )
                         
                         # Verify factory called with values
@@ -347,6 +396,7 @@ class TestRepositoryCommandHandler:
                             instrument_http=False,
                             http_stack_depth=5,
                             http_track_headers=False,
+                            trace=False,
                             debug=False,
                             output_format=OutputFormat.RICH
                         )

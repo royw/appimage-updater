@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for repository factory functionality."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# type: ignore
 """End-to-end regression test for check command functionality.
 
 This test reproduces the issue where the check command shows "No candidate"

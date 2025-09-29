@@ -1,3 +1,4 @@
+# type: ignore
 """Regression test for edit command persistence bug.
 
 This test captures the critical bug where edit command claims to make changes

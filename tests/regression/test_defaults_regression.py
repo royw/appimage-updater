@@ -1,3 +1,4 @@
+# type: ignore
 """Regression tests for default configuration behavior."""
 
 import json

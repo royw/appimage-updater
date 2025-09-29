@@ -1,3 +1,4 @@
+# type: ignore
 """Comprehensive command error handling pathway tests."""
 
 from __future__ import annotations

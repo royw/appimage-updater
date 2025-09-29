@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for GitLab authentication module."""
 
 import os

@@ -146,7 +146,13 @@ class HTTPTracker:
     def _log_successful_request(self, method: str, url: str, response: Any) -> None:
         """Log successful request details."""
         status_code = getattr(response, "status_code", "Unknown")
-        self._logger.log_request(f"HTTP {method.upper()} {url} -> {status_code}")
+        # Find the corresponding record to get timing info
+        timing_info = ""
+        if self.requests:
+            last_record = self.requests[-1]
+            if last_record.response_time is not None:
+                timing_info = f" ({last_record.response_time:.3f}s)"
+        self._logger.log_request(f"HTTP {method.upper()} {url} -> {status_code}{timing_info}")
 
     def _handle_request_error(
         self, error: Exception, record: HTTPRequestRecord, method: str, url: str, start_time: float
@@ -154,7 +160,8 @@ class HTTPTracker:
         """Handle request errors and update record."""
         record.error = str(error)
         record.response_time = time.time() - start_time
-        self._logger.log_error(f"HTTP {method.upper()} {url} -> ERROR: {error}")
+        timing_info = f" ({record.response_time:.3f}s)" if record.response_time is not None else ""
+        self._logger.log_error(f"HTTP {method.upper()} {url} -> ERROR: {error}{timing_info}")
 
     def _capture_call_stack(self) -> list[str]:
         """Capture the current call stack."""

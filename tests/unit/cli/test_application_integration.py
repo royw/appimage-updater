@@ -1,3 +1,4 @@
+# type: ignore
 """CLI Application integration tests."""
 
 from __future__ import annotations

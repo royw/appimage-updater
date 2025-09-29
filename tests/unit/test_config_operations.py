@@ -1,3 +1,4 @@
+# type: ignore
 """Unit tests for config operations functions, including --force functionality."""
 
 from __future__ import annotations

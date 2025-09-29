@@ -1,3 +1,4 @@
+# type: ignore
 """Unit tests for ui.display_utils.version_formatting module."""
 
 from appimage_updater.ui.display import format_version_display

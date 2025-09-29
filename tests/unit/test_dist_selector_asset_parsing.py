@@ -1,3 +1,4 @@
+# type: ignore
 """Unit tests for dist_selector.asset_parsing module."""
 
 from datetime import datetime

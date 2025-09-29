@@ -10,6 +10,7 @@ import typer
 
 from ..._version import __version__
 from ...commands.factory import CommandFactory
+from ...instrumentation.factory import create_http_tracker_from_params
 from ...ui.output.factory import create_output_formatter_from_params
 from ...ui.output.interface import OutputFormat
 from ..options import CLIOptions
@@ -41,6 +42,7 @@ class RepositoryCommandHandler(CommandHandler):
             instrument_http: bool = CLIOptions.INSTRUMENT_HTTP_OPTION,
             http_stack_depth: int = CLIOptions.HTTP_STACK_DEPTH_OPTION,
             http_track_headers: bool = CLIOptions.HTTP_TRACK_HEADERS_OPTION,
+            trace: bool = CLIOptions.TRACE_OPTION,
             debug: bool = CLIOptions.debug_option(),
             output_format: OutputFormat = CLIOptions.FORMAT_OPTION,
             _version: bool = CLIOptions.version_option(self._version_callback),
@@ -56,6 +58,7 @@ class RepositoryCommandHandler(CommandHandler):
                 instrument_http=instrument_http,
                 http_stack_depth=http_stack_depth,
                 http_track_headers=http_track_headers,
+                trace=trace,
                 debug=debug,
                 output_format=output_format,
             )
@@ -78,6 +81,7 @@ class RepositoryCommandHandler(CommandHandler):
         instrument_http: bool,
         http_stack_depth: int,
         http_track_headers: bool,
+        trace: bool,
         debug: bool,
         output_format: OutputFormat,
     ) -> None:
@@ -92,17 +96,29 @@ class RepositoryCommandHandler(CommandHandler):
             instrument_http=instrument_http,
             http_stack_depth=http_stack_depth,
             http_track_headers=http_track_headers,
+            trace=trace,
             debug=debug,
             output_format=output_format,
         )
 
+        # Create HTTP tracker and output formatter based on parameters
+        http_tracker = create_http_tracker_from_params(command.params)
         output_formatter = create_output_formatter_from_params(command.params)
 
-        if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
-            result = asyncio.run(command.execute(output_formatter=output_formatter))
-            output_formatter.finalize()
+        # Use HTTP tracker as context manager if enabled
+        if http_tracker:
+            with http_tracker:
+                if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
+                    result = asyncio.run(command.execute(output_formatter=output_formatter))
+                    output_formatter.finalize()
+                else:
+                    result = asyncio.run(command.execute(output_formatter=output_formatter))
         else:
-            result = asyncio.run(command.execute(output_formatter=output_formatter))
+            if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
+                result = asyncio.run(command.execute(output_formatter=output_formatter))
+                output_formatter.finalize()
+            else:
+                result = asyncio.run(command.execute(output_formatter=output_formatter))
 
         if not result.success:
             raise typer.Exit(result.exit_code)

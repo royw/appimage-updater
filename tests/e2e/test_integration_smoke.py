@@ -1,3 +1,4 @@
+# type: ignore
 from pathlib import Path
 
 from appimage_updater.main import app

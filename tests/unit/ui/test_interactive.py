@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for refactored interactive UI module."""
 
 from unittest.mock import Mock, patch

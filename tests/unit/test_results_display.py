@@ -1,3 +1,4 @@
+# type: ignore
 """Unit tests for ui.display_utils.results_display module."""
 
 from unittest.mock import Mock, patch

@@ -24,6 +24,7 @@ from rich.progress import (
 from .._version import __version__
 from ..events.event_bus import get_event_bus
 from ..events.progress_events import DownloadProgressEvent
+from .http_service import get_http_client
 from .models import (
     ChecksumResult,
     DownloadResult,
@@ -219,7 +220,7 @@ class Downloader:
         download_state = self._initialize_download_state()
 
         async with (
-            httpx.AsyncClient(
+            get_http_client(
                 timeout=timeout_config,
                 follow_redirects=True,
             ) as client,
@@ -460,7 +461,7 @@ class Downloader:
                 pool=60.0,
             )
             async with (
-                httpx.AsyncClient(
+                get_http_client(
                     timeout=timeout_config,
                     follow_redirects=True,
                 ) as client,

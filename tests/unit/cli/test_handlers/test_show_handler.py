@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for ShowCommandHandler."""
 
 from __future__ import annotations

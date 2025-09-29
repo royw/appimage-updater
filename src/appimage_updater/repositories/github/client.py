@@ -15,6 +15,7 @@ from appimage_updater._version import __version__
 from appimage_updater.core.models import Asset, Release
 from appimage_updater.utils.version_utils import normalize_version_string
 
+from ...core.http_service import get_http_client
 from ..protocol import AuthProtocol
 from .auth import GitHubAuth, get_github_auth
 
@@ -70,7 +71,7 @@ class GitHubClient:
         api_base = self._get_api_base_url(repo_url)
         api_url = f"{api_base}/repos/{owner}/{repo}/releases/latest"
 
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        async with get_http_client(timeout=self.timeout) as client:
             try:
                 # Use dynamic authentication based on URL
                 forge_auth = self.dynamic_auth.get_auth_for_url(repo_url)
@@ -135,7 +136,7 @@ class GitHubClient:
         api_base = self._get_api_base_url(repo_url)
         api_url = f"{api_base}/repos/{owner}/{repo}/releases"
 
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        async with get_http_client(timeout=self.timeout) as client:
             try:
                 # Use dynamic authentication based on URL
                 forge_auth = self.dynamic_auth.get_auth_for_url(repo_url)

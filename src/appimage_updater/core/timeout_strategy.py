@@ -7,6 +7,8 @@ from typing import Any
 import httpx
 from loguru import logger
 
+from .http_service import get_http_client
+
 
 class TimeoutStrategy:
     """Manages different timeout strategies for different types of HTTP operations."""
@@ -120,8 +122,8 @@ class ProgressiveTimeoutClient:
             operation_type, follow_redirects=True, max_redirects=10, **kwargs
         )
 
-        async with httpx.AsyncClient(**client_config) as client:
-            response = await client.get(url)
+        async with get_http_client(**client_config) as client:
+            response: httpx.Response = await client.get(url)
             response.raise_for_status()
 
             logger.debug(f"Success with {operation_type} timeout: {response.status_code}")

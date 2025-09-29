@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for compatibility scoring utilities."""
 
 from unittest.mock import patch

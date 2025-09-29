@@ -6,16 +6,17 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from ..commands.parameters import CheckParams
+    from ..commands.parameters import CheckParams, RepositoryParams
 
 from .http_tracker import HTTPTracker
 from .logging_interface import (
     create_default_http_logger,
     create_silent_http_logger,
+    create_trace_http_logger,
 )
 
 
-def create_http_tracker_from_params(params: CheckParams) -> HTTPTracker | None:
+def create_http_tracker_from_params(params: CheckParams | RepositoryParams) -> HTTPTracker | None:
     """Create HTTP tracker based on command parameters.
 
     Args:
@@ -24,13 +25,21 @@ def create_http_tracker_from_params(params: CheckParams) -> HTTPTracker | None:
     Returns:
         HTTPTracker instance if instrumentation is enabled, None otherwise
     """
-    if not params.instrument_http:
+    # Check if any HTTP tracking is enabled
+    if not (params.instrument_http or params.trace):
         return None
 
-    # Create logger based on debug level
-    logger = create_default_http_logger(verbose=True) if params.debug else create_default_http_logger(verbose=False)
-
-    return HTTPTracker(stack_depth=params.http_stack_depth, track_headers=params.http_track_headers, logger=logger)
+    # If trace is enabled, use trace logger regardless of other settings
+    if params.trace:
+        trace_logger = create_trace_http_logger(use_rich=True)
+        return HTTPTracker(
+            stack_depth=params.http_stack_depth, track_headers=params.http_track_headers, logger=trace_logger
+        )
+    else:
+        # Use regular instrumentation logger
+        verbose = params.debug if hasattr(params, "debug") else False
+        logger = create_default_http_logger(verbose=verbose)
+        return HTTPTracker(stack_depth=params.http_stack_depth, track_headers=params.http_track_headers, logger=logger)
 
 
 def create_silent_http_tracker(stack_depth: int = 3, track_headers: bool = False) -> HTTPTracker:
@@ -59,3 +68,18 @@ def create_verbose_http_tracker(stack_depth: int = 3, track_headers: bool = Fals
     """
     verbose_logger = create_default_http_logger(verbose=True)
     return HTTPTracker(stack_depth=stack_depth, track_headers=track_headers, logger=verbose_logger)
+
+
+def create_trace_http_tracker(stack_depth: int = 3, track_headers: bool = False, use_rich: bool = True) -> HTTPTracker:
+    """Create HTTP tracker with real-time trace logging.
+
+    Args:
+        stack_depth: Number of stack frames to capture
+        track_headers: Whether to track request headers
+        use_rich: Whether to use Rich console for colored output
+
+    Returns:
+        HTTPTracker with trace logging for real-time monitoring
+    """
+    trace_logger = create_trace_http_logger(use_rich=use_rich)
+    return HTTPTracker(stack_depth=stack_depth, track_headers=track_headers, logger=trace_logger)

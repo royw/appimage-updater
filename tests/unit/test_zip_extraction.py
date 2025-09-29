@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for zip file extraction functionality."""
 
 from __future__ import annotations

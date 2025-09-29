@@ -1,3 +1,4 @@
+# type: ignore
 """E2E tests for format validation workflows.
 
 Moved from functional tests to run against source code instead of built app.

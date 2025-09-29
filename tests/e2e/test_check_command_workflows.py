@@ -1,3 +1,4 @@
+# type: ignore
 """E2E tests for check command workflows.
 
 Moved from regression tests to run against source code instead of built app.

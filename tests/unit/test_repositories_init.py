@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for repositories package modules."""
 
 from appimage_updater.repositories.github.repository import GitHubRepository

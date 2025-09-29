@@ -1,3 +1,4 @@
+# type: ignore
 """Test rotation system with varying filenames like BambuStudio."""
 
 from __future__ import annotations

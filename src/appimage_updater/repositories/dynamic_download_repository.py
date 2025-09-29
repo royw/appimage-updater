@@ -17,6 +17,7 @@ from urllib.parse import (
 
 import httpx
 
+from appimage_updater.core.http_service import get_http_client
 from appimage_updater.core.models import (
     Asset,
     Release,
@@ -32,8 +33,9 @@ logger = logging.getLogger(__name__)
 class DynamicDownloadRepository(RepositoryClient):
     """Repository client for dynamic download URLs that require parsing."""
 
-    def __init__(self, timeout: int = 30, user_agent: str | None = None, **kwargs: Any):
+    def __init__(self, timeout: int = 30, user_agent: str | None = None, trace: bool = False, **kwargs: Any):
         super().__init__(timeout, user_agent, **kwargs)
+        self.trace = trace
 
     def detect_repository_type(self, url: str) -> bool:
         """Detect if URL requires dynamic parsing."""
@@ -62,7 +64,7 @@ class DynamicDownloadRepository(RepositoryClient):
 
     async def _handle_generic_dynamic(self, url: str) -> list[Release]:
         """Handle generic dynamic download pages."""
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        async with get_http_client(timeout=self.timeout) as client:
             response = await client.get(url)
             response.raise_for_status()
 

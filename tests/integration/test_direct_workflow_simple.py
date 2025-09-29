@@ -1,3 +1,4 @@
+# type: ignore
 """Simple integration tests for --direct flag end-to-end workflow."""
 
 from __future__ import annotations
@@ -13,21 +14,16 @@ from typer.testing import CliRunner
 from appimage_updater.main import app
 
 
-def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock) -> None:
+def setup_github_mocks(mock_http_service: Any, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock) -> None:
     """Set up comprehensive GitHub API mocks to prevent network calls."""
-    # Mock httpx client to prevent network calls
-    mock_client_instance = Mock()
+    # Mock HTTP response
     mock_response = Mock()
     mock_response.json.return_value = []  # Empty releases list
     mock_response.raise_for_status.return_value = None
 
-    # Create an async mock for the get method
-    async def mock_get(*args, **kwargs):
-        return mock_response
-
-    mock_client_instance.get = mock_get
-    mock_httpx_client.return_value.__aenter__.return_value = mock_client_instance
-    mock_httpx_client.return_value.__aexit__.return_value = None
+    # Configure the mock HTTP service
+    mock_tracing_client = mock_http_service['global_client'].get_client.return_value
+    mock_tracing_client.get.return_value = mock_response
 
     # Mock repository client
     mock_repo = Mock()
@@ -85,15 +81,14 @@ class TestDirectWorkflowIntegration:
             assert app_config["source_type"] == "direct"
             assert app_config["url"] == direct_url
 
-    @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
     @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
     @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_no_direct_flag_defaults_to_github(
-        self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock
+        self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_http_service
     ):
         """Test that add without --direct flag defaults to GitHub detection."""
-        setup_github_mocks(mock_httpx_client, mock_repo_client, mock_pattern_gen, mock_prerelease)
+        setup_github_mocks(mock_http_service, mock_repo_client, mock_pattern_gen, mock_prerelease)
         runner = CliRunner(env={"NO_COLOR": "1", "TERM": "dumb"})
 
         with tempfile.TemporaryDirectory() as tmp_dir:

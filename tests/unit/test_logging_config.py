@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for logging_config module."""
 
 from pathlib import Path

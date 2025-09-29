@@ -1,3 +1,4 @@
+# type: ignore
 """Unit tests for VersionChecker class."""
 
 from appimage_updater.core.version_checker import VersionChecker

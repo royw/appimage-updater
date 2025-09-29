@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for ConfigCommand execution."""
 
 from __future__ import annotations

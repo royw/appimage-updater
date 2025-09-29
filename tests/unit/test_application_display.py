@@ -1,3 +1,4 @@
+# type: ignore
 """Unit tests for ui.display_utils.application_display module."""
 
 import re

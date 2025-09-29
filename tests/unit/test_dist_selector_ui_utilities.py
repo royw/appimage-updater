@@ -1,3 +1,4 @@
+# type: ignore
 """Unit tests for dist_selector.ui_utilities module."""
 
 from datetime import datetime

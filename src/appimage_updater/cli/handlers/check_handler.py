@@ -11,7 +11,8 @@ import typer
 
 from ..._version import __version__
 from ...commands.factory import CommandFactory
-from ...instrumentation.factory import create_http_tracker_from_params
+from ...core.http_service import disable_global_trace, enable_global_trace
+from ...core.http_trace import getHTTPTrace
 from ...ui.output.factory import create_output_formatter_from_params
 from ...ui.output.interface import OutputFormat
 from ..options import CLIOptions
@@ -48,6 +49,7 @@ class CheckCommandHandler(CommandHandler):
             instrument_http: bool = CLIOptions.INSTRUMENT_HTTP_OPTION,
             http_stack_depth: int = CLIOptions.HTTP_STACK_DEPTH_OPTION,
             http_track_headers: bool = CLIOptions.HTTP_TRACK_HEADERS_OPTION,
+            trace: bool = CLIOptions.TRACE_OPTION,
             _version: bool = CLIOptions.version_option(self._version_callback),
         ) -> None:
             """Check for updates to configured applications.
@@ -75,6 +77,7 @@ class CheckCommandHandler(CommandHandler):
                 instrument_http=instrument_http,
                 http_stack_depth=http_stack_depth,
                 http_track_headers=http_track_headers,
+                trace=trace,
             )
 
     def validate_options(self, **kwargs: Any) -> None:
@@ -108,6 +111,7 @@ class CheckCommandHandler(CommandHandler):
         instrument_http: bool,
         http_stack_depth: int,
         http_track_headers: bool,
+        trace: bool,
     ) -> None:
         """Execute the check command logic."""
         # Validate mutually exclusive options
@@ -128,15 +132,27 @@ class CheckCommandHandler(CommandHandler):
             instrument_http=instrument_http,
             http_stack_depth=http_stack_depth,
             http_track_headers=http_track_headers,
+            trace=trace,
             output_format=output_format,
         )
 
-        # Create HTTP tracker and output formatter based on parameters
-        http_tracker = create_http_tracker_from_params(command.params)
+        # Create output formatter first
         output_formatter = create_output_formatter_from_params(command.params)
 
-        # Execute command
-        result = asyncio.run(command.execute(http_tracker=http_tracker, output_formatter=output_formatter))
+        # Initialize HTTP trace singleton with output formatter
+        getHTTPTrace(output_formatter)
+
+        # Enable HTTP tracing if requested
+        if trace:
+            enable_global_trace(output_formatter)
+
+        try:
+            # Execute command
+            result = asyncio.run(command.execute(output_formatter=output_formatter))
+        finally:
+            # Disable tracing when done
+            if trace:
+                disable_global_trace()
 
         # Handle format-specific finalization
         if output_format in [OutputFormat.JSON, OutputFormat.HTML]:

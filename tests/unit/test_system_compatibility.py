@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for system compatibility detection and filtering."""
 
 from datetime import datetime

@@ -1,8 +1,9 @@
+# type: ignore
 import json
 import re
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -19,18 +20,18 @@ def strip_ansi_codes(text: str) -> str:
 def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock) -> None:
     """Set up comprehensive GitHub API mocks to prevent network calls."""
     # Mock httpx client to prevent network calls
-    mock_client_instance = Mock()
+    mock_client_instance = AsyncMock()
     mock_response = Mock()
     mock_response.json.return_value = []  # Empty releases list
     mock_response.raise_for_status.return_value = None
 
-    # Create an async mock for the get method
-    async def mock_get(*args, **kwargs):
-        return mock_response
+    # Set up the async mock for the get method
+    mock_client_instance.get.return_value = mock_response
 
-    mock_client_instance.get = mock_get
-    mock_httpx_client.return_value.__aenter__.return_value = mock_client_instance
-    mock_httpx_client.return_value.__aexit__.return_value = None
+    # Set up the async context manager AND the direct client instance
+    mock_httpx_client.return_value = mock_client_instance
+    mock_httpx_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
+    mock_httpx_client.return_value.__aexit__ = AsyncMock(return_value=None)
 
     # Mock repository client
     mock_repo = Mock()

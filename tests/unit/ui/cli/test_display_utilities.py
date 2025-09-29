@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for CLI display utilities."""
 
 from unittest.mock import Mock, patch

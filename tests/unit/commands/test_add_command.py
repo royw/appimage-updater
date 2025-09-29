@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for AddCommand execution."""
 
 from __future__ import annotations

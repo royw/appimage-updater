@@ -1,3 +1,4 @@
+# type: ignore
 """Test configuration and fixtures."""
 
 import ast
@@ -107,6 +108,52 @@ def blocked_httpx_request(*args: Any, **kwargs: Any) -> None:
     )
 
 
+class MockAsyncClient:
+    """Mock httpx.AsyncClient that blocks network calls."""
+    
+    def __init__(self, *args: Any, **kwargs: Any):
+        pass
+    
+    async def __aenter__(self) -> "MockAsyncClient":
+        return self
+    
+    async def __aexit__(self, *args: Any) -> None:
+        pass
+    
+    async def get(self, *args: Any, **kwargs: Any) -> None:
+        raise NetworkBlockedError(
+            "httpx.AsyncClient.get blocked during testing. "
+            "Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
+        )
+    
+    async def post(self, *args: Any, **kwargs: Any) -> None:
+        raise NetworkBlockedError(
+            "httpx.AsyncClient.post blocked during testing. "
+            "Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
+        )
+    
+    async def put(self, *args: Any, **kwargs: Any) -> None:
+        raise NetworkBlockedError(
+            "httpx.AsyncClient.put blocked during testing. "
+            "Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
+        )
+    
+    async def delete(self, *args: Any, **kwargs: Any) -> None:
+        raise NetworkBlockedError(
+            "httpx.AsyncClient.delete blocked during testing. "
+            "Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
+        )
+    
+    async def aclose(self) -> None:
+        pass
+    
+    def stream(self, *args: Any, **kwargs: Any) -> "MockAsyncClient":
+        return self
+    
+    def raise_for_status(self) -> None:
+        pass
+
+
 def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest with network blocking for non-regression tests."""
     # Check if we're running regression tests
@@ -182,6 +229,7 @@ def pytest_configure(config: pytest.Config) -> None:
             httpx._original_head = getattr(httpx, 'head', None)
             httpx._original_options = getattr(httpx, 'options', None)
             httpx._original_request = getattr(httpx, 'request', None)
+            httpx._original_AsyncClient = getattr(httpx, 'AsyncClient', None)
 
             # Replace with blocking versions
             httpx.get = blocked_httpx_request  # type: ignore
@@ -192,6 +240,7 @@ def pytest_configure(config: pytest.Config) -> None:
             httpx.head = blocked_httpx_request  # type: ignore
             httpx.options = blocked_httpx_request  # type: ignore
             httpx.request = blocked_httpx_request  # type: ignore
+            httpx.AsyncClient = lambda *args, **kwargs: MockAsyncClient()  # type: ignore
         except ImportError:
             pass
 
@@ -532,4 +581,71 @@ def distribution_test_data():
             "name": "Arch Linux",
             "codename": None
         }
+    }
+
+
+# Test fixtures for new HTTP service patterns
+@pytest.fixture
+def mock_http_client():
+    """Fixture that provides a mock HTTP client for testing."""
+    from unittest.mock import AsyncMock, MagicMock
+    
+    mock_client = AsyncMock()
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = []
+    mock_response.raise_for_status.return_value = None
+    
+    mock_client.get.return_value = mock_response
+    mock_client.post.return_value = mock_response
+    mock_client.put.return_value = mock_response
+    mock_client.delete.return_value = mock_response
+    
+    return mock_client
+
+
+@pytest.fixture
+def mock_global_http_client(mock_http_client):
+    """Fixture that mocks the GlobalHTTPClient singleton."""
+    from unittest.mock import patch, AsyncMock
+    
+    mock_tracing_client = AsyncMock()
+    mock_tracing_client.get = mock_http_client.get
+    mock_tracing_client.post = mock_http_client.post
+    mock_tracing_client.put = mock_http_client.put
+    mock_tracing_client.delete = mock_http_client.delete
+    mock_tracing_client.stream = mock_http_client.stream
+    
+    mock_global_client = AsyncMock()
+    mock_global_client.get_client.return_value = mock_tracing_client
+    mock_global_client.set_tracer.return_value = None
+    mock_global_client.close.return_value = None
+    
+    with patch('appimage_updater.core.http_service.GlobalHTTPClient', return_value=mock_global_client):
+        yield mock_global_client
+
+
+@pytest.fixture
+def mock_http_trace():
+    """Fixture that mocks the HTTPTrace singleton."""
+    from unittest.mock import patch, MagicMock
+    
+    mock_tracer = MagicMock()
+    mock_tracer.enabled = False
+    mock_tracer.output_formatter = None
+    mock_tracer.trace_request.return_value = None
+    mock_tracer.trace_response.return_value = None
+    mock_tracer.trace_error.return_value = None
+    mock_tracer.set_output_formatter.return_value = None
+    
+    with patch('appimage_updater.core.http_trace.getHTTPTrace', return_value=mock_tracer):
+        yield mock_tracer
+
+
+@pytest.fixture
+def mock_http_service(mock_global_http_client, mock_http_trace):
+    """Fixture that mocks both HTTP service components."""
+    return {
+        'global_client': mock_global_http_client,
+        'tracer': mock_http_trace
     }

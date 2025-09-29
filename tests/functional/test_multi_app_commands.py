@@ -1,3 +1,4 @@
+# type: ignore
 """Functional tests for multi-app CLI command support."""
 
 import json

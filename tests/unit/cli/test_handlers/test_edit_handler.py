@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for EditCommandHandler."""
 
 from __future__ import annotations

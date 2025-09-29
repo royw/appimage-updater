@@ -1,3 +1,4 @@
+# type: ignore
 """Tests for distribution detection utilities."""
 
 from unittest.mock import Mock, patch
