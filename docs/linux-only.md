@@ -6,7 +6,7 @@
 
 **AppImage Updater is designed exclusively for Linux systems.** This is a fundamental architectural decision based on the nature of the AppImage package format.
 
-## Why Linux-Only?
+## Why Linux-Only
 
 ### AppImage is Linux-Specific
 
@@ -70,7 +70,7 @@ AppImage Updater supports multiple CPU architectures on Linux:
 - **ARMv7** - 32-bit ARM processors
 - **i686** - 32-bit x86 processors (legacy)
 
-## What About Other Platforms?
+## What About Other Platforms
 
 ### macOS
 
@@ -82,7 +82,7 @@ AppImage Updater supports multiple CPU architectures on Linux:
 - **Not Supported**: Windows has its own package formats (.exe, .msi, .appx)
 - **Alternative**: Use [Chocolatey](https://chocolatey.org/) or [Scoop](https://scoop.sh/) for Windows package management
 
-### Why Not Cross-Platform?
+### Why Not Cross-Platform
 
 While the underlying Python code could theoretically run on other platforms, it would be misleading and confusing to support non-Linux platforms for a Linux-specific package format. This design decision ensures:
 
