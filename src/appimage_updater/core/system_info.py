@@ -58,7 +58,9 @@ class SystemDetector:
         supported_formats = self._detect_supported_formats(platform_name)
 
         # Detect distribution (Linux only)
-        distribution, dist_family, dist_version, dist_version_numeric = self._detect_distribution() if platform_name == "linux" else (None, None, None, None)
+        distribution, dist_family, dist_version, dist_version_numeric = (
+            self._detect_distribution() if platform_name == "linux" else (None, None, None, None)
+        )
 
         system_info = SystemInfo(
             platform=platform_name,
@@ -177,13 +179,12 @@ class SystemDetector:
 
         dist_id = dist_info.get("id", "").lower()
         version = dist_info.get("version_id", "unknown")
-        
+
         # Parse numeric version
         version_numeric = None
         if version and version != "unknown":
             try:
                 # Extract first numeric part (e.g., "24.04" -> 24.04, "40" -> 40.0)
-                import re
                 match = re.search(r"(\d+(?:\.\d+)?)", version)
                 if match:
                     version_numeric = float(match.group(1))
@@ -221,7 +222,7 @@ class SystemDetector:
     # noinspection PyMethodMayBeStatic
     def _get_distribution_info(self) -> dict[str, str] | None:
         """Get distribution information using comprehensive fallback detection.
-        
+
         Tries multiple methods in order:
         1. /etc/os-release (primary)
         2. lsb_release command (fallback)
@@ -231,17 +232,17 @@ class SystemDetector:
         info = self._parse_os_release()
         if info:
             return info
-            
+
         # Method 2: lsb_release command (fallback)
         info = self._parse_lsb_release()
         if info:
             return info
-            
+
         # Method 3: /etc/issue file (last resort)
         info = self._parse_issue_file()
         if info:
             return info
-            
+
         return None
 
     def _parse_os_release(self) -> dict[str, str] | None:
@@ -274,11 +275,7 @@ class SystemDetector:
                     version_match = re.search(r"(\d+\.\d+)", description)
                     if version_match:
                         version = version_match.group(1)
-                        return {
-                            "id": "ubuntu",
-                            "version_id": version,
-                            "name": "Ubuntu"
-                        }
+                        return {"id": "ubuntu", "version_id": version, "name": "Ubuntu"}
         except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError) as e:
             logger.debug(f"Failed to run lsb_release: {e}")
 
@@ -292,21 +289,17 @@ class SystemDetector:
 
         try:
             content = issue_path.read_text().lower()
-            
+
             # Ubuntu detection
             if "ubuntu" in content:
                 version_match = re.search(r"(\d+\.\d+)", content)
                 if version_match:
                     version = version_match.group(1)
-                    return {
-                        "id": "ubuntu", 
-                        "version_id": version,
-                        "name": "Ubuntu"
-                    }
-                    
+                    return {"id": "ubuntu", "version_id": version, "name": "Ubuntu"}
+
             # Add other distributions as needed
             # Fedora, CentOS, etc. can be added here
-            
+
         except (OSError, ValueError) as e:
             logger.debug(f"Failed to parse /etc/issue: {e}")
 

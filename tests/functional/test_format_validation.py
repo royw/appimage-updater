@@ -31,9 +31,9 @@ class TestFormatValidation:
             temp_config_dir = Path(temp_dir) / "config"
             temp_config_dir.mkdir()
             
-            # Add config-dir to args if not already present
+            # Add config-dir to args if not already present and not a help command
             full_args = command_args[:]
-            if "--config-dir" not in full_args:
+            if "--config-dir" not in full_args and "--help" not in full_args:
                 full_args.extend(["--config-dir", str(temp_config_dir)])
             
             result = runner.invoke(app, full_args)
