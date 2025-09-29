@@ -92,33 +92,10 @@ is_newer = version_service.is_version_newer(version1, version2)
 ```python
 # Replace these functions:
 - _generate_improved_pattern() → version_service.generate_pattern_from_filename()
-- fetch_appimage_pattern_from_repository() → version_service.generate_pattern_from_repository()
-```
-
-### 3. `dynamic_download_repository.py`
-```python
-# Replace this method:
-- _generate_regex_pattern() → version_service.generate_pattern_from_filename()
-```
-
-### 4. Update Operations
-```python
-# Use centralized services for:
-- Version detection during updates
-- Writing .info files after downloads: version_service.write_info_file()
-- Pattern generation during configuration
-```
-
-## ✅ Benefits After Migration
-
-1. **Single Responsibility**: Each service has one clear purpose
-2. **No Code Duplication**: Version logic exists in one place
 3. **Consistent Results**: Same algorithms used everywhere
 4. **Easy Testing**: Services can be unit tested independently
 5. **Repository Agnostic**: Works with GitHub, GitLab, dynamic downloads, etc.
 6. **Maintainable**: Bug fixes and improvements affect entire system
-
-## 🧪 Testing the Migration
 
 Use the example script to verify services work correctly:
 

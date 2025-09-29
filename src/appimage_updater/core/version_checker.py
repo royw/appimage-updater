@@ -18,6 +18,7 @@ from ..repositories.base import (
     RepositoryClient,
     RepositoryError,
 )
+from ..repositories.factory import get_repository_client_with_probing_sync
 from ..utils.version_utils import (
     create_nightly_version,
     normalize_version_string,
@@ -172,26 +173,8 @@ class VersionChecker:
         )
 
     def _get_current_version(self, app_config: ApplicationConfig) -> str | None:
-        """Get current version from .info file, .current file, or by analyzing existing files."""
-        # First try to get version from .info file
-        info_file = self._get_info_file_path(app_config)
-        if info_file.exists():
-            try:
-                content = info_file.read_text().strip()
-                processed_content = self._process_version_content(content)
-                nightly_converted = self._convert_nightly_version_string(processed_content)
-                # Apply the same normalization as we do for latest versions
-                return normalize_version_string(nightly_converted)
-            except (OSError, ValueError, AttributeError) as e:
-                logger.debug(f"Failed to parse version from info file: {e}")
-
-        # Second, try to parse version from .current file (if exists)
-        current_version = self._get_version_from_current_file(app_config)
-        if current_version:
-            return current_version
-
-        # Third, analyze existing AppImage files to determine current version
-        return self._get_current_version_from_files(app_config)
+        """Get current version using centralized version service."""
+        return version_service.get_current_version(app_config)
 
     def _get_version_from_current_file(self, app_config: ApplicationConfig) -> str | None:
         """Extract version from .current file by parsing the filename."""
@@ -594,61 +577,15 @@ class VersionChecker:
             return candidates[0]
 
     def _is_update_available(self, current_version: str | None, latest_version: str) -> bool:
-        """Check if an update is available."""
-        if not current_version:
-            return True
-
-        try:
-            current_ver = version.parse(current_version.lstrip("v"))
-            latest_ver = version.parse(latest_version.lstrip("v"))
-            return latest_ver > current_ver
-        except (ValueError, TypeError):
-            # Fallback to string comparison
-            return current_version != latest_version
+        """Check if an update is available using centralized version service."""
+        return version_service.compare_versions(current_version, latest_version)
 
     def _extract_version_from_filename(self, filename: str) -> str | None:
-        """Extract version from filename using common patterns."""
-        # First, eliminate git commit hashes and other variable identifiers to avoid false matches
-        cleaned_filename = self._clean_filename_for_version_extraction(filename)
-        
-        # Test each pattern in order of specificity
-        patterns: list[Callable[[str], str | None]] = [
-            self._extract_prerelease_version,
-            self._extract_date_version,
-            self._extract_semantic_version,
-            self._extract_two_part_version,
-            self._extract_single_number_version,
-        ]
+        """Extract version from filename using centralized version service."""
+        return version_service.extract_version_from_filename(filename)
 
-        for pattern_func in patterns:
-            result = pattern_func(cleaned_filename)
-            if result:
-                # Normalize the extracted version
-                return normalize_version_string(result)
-
-        # Fallback: return None if no version pattern found (don't return filename)
-        return None
-
-    def _clean_filename_for_version_extraction(self, filename: str) -> str:
-        """Clean filename by removing git hashes and other variable identifiers that could interfere with version extraction."""
-        # Remove file extension
-        cleaned = re.sub(r"\.AppImage$", "", filename, flags=re.IGNORECASE)
-        
-        # Remove git commit hashes (6-8 hex characters, typically 7)
-        # This prevents extracting parts of git hashes as version numbers
-        cleaned = re.sub(r"-[a-fA-F0-9]{6,8}(?=-|$)", "", cleaned)
-        
-        # Remove architecture identifiers that might contain numbers
-        cleaned = re.sub(r"-(x86_64|amd64|i386|i686|arm64|armv7|armhf)(?=-|$)", "", cleaned)
-        
-        # Remove platform identifiers
-        cleaned = re.sub(r"-(linux|win32|win64|windows|macos|darwin)(?=-|$)", "", cleaned, flags=re.IGNORECASE)
-        
-        # Clean up any double hyphens or trailing hyphens
-        cleaned = re.sub(r"-+", "-", cleaned)
-        cleaned = cleaned.strip("-")
-        
-        return cleaned
+    # Legacy methods - now handled by centralized version service
+    # These methods are kept for backward compatibility but redirect to version_service
 
     def _extract_prerelease_version(self, filename: str) -> str | None:
         """Extract pre-release versions like '2.3.1-alpha'."""
