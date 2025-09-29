@@ -142,10 +142,44 @@ async def fetch_appimage_pattern_from_repository(url: str) -> str | None:
         if not target_files:
             logger.debug("No AppImage or ZIP files found in any releases")
             return None
+        # Use improved pattern generation that eliminates variable identifiers
+        if target_files:
+            # Use the first file to generate a pattern, but eliminate variable parts
+            return _generate_improved_pattern(target_files[0])
         return create_pattern_from_filenames(target_files, include_both_formats=True)
     except (RepositoryError, ValueError, AttributeError) as e:
         logger.debug(f"Error fetching releases: {e}")
         return None
+
+
+# Keep the old function name for backward compatibility
+def _generate_improved_pattern(asset_name: str) -> str:
+    """Generate regex pattern from asset name by eliminating variable identifiers."""
+    # Start with the asset name
+    pattern = asset_name
+    
+    # Remove file extension to work with base name
+    base_name = re.sub(r"\.AppImage$", "", pattern, flags=re.IGNORECASE)
+    
+    # Eliminate git commit hashes (6-8 hex characters, typically 7)
+    base_name = re.sub(r"-[a-fA-F0-9]{6,8}(?=-|$)", "", base_name)
+    
+    # Eliminate architecture identifiers
+    base_name = re.sub(r"-(x86_64|amd64|i386|i686|arm64|armv7|armhf)(?=-|$)", "", base_name)
+    
+    # Eliminate platform identifiers
+    base_name = re.sub(r"-(linux|win32|win64|windows|macos|darwin)(?=-|$)", "", base_name, flags=re.IGNORECASE)
+    
+    # Eliminate version numbers (semantic versions)
+    base_name = re.sub(r"-\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?(?=-|$)", "", base_name)
+    
+    # Clean up any double hyphens or trailing hyphens
+    base_name = re.sub(r"-+", "-", base_name)
+    base_name = base_name.strip("-")
+    
+    # Create flexible pattern that matches the cleaned base name with any suffixes
+    escaped_base = re.escape(base_name)
+    return f"(?i)^{escaped_base}.*\\.AppImage$"
 
 
 # Keep the old function name for backward compatibility
