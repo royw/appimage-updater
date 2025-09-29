@@ -39,11 +39,6 @@ class DirectDownloadRepository(RepositoryClient):
     def __init__(self, timeout: int = 30, user_agent: str | None = None, **kwargs: Any):
         super().__init__(timeout, user_agent, **kwargs)
 
-    @property
-    def repository_type(self) -> str:
-        """Get the repository type identifier."""
-        return "direct_download"
-
     def detect_repository_type(self, url: str) -> bool:
         """Detect if URL is a direct download pattern."""
         # Patterns that indicate direct downloads

@@ -11,7 +11,6 @@ from appimage_updater.repositories.dynamic_download_repository import DynamicDow
 from appimage_updater.repositories.factory import (
     get_repository_client,
     get_repository_client_async,
-    get_repository_client_legacy,
     get_repository_client_with_probing_sync,
 )
 
@@ -26,7 +25,6 @@ class TestRepositoryFactory:
         client = get_repository_client(url)  # No explicit source_type
 
         assert isinstance(client, DirectDownloadRepository)
-        assert client.repository_type == "direct_download"
 
     def test_get_repository_client_with_explicit_github_source_type(self):
         """Test get_repository_client with explicit source_type='github'."""
@@ -43,7 +41,6 @@ class TestRepositoryFactory:
         client = get_repository_client(url, source_type="direct_download")
 
         assert isinstance(client, DirectDownloadRepository)
-        assert client.repository_type == "direct_download"
 
     def test_get_repository_client_with_dynamic_download_source_type(self):
         """Test get_repository_client with explicit source_type='dynamic_download'."""
@@ -52,7 +49,6 @@ class TestRepositoryFactory:
         client = get_repository_client(url, source_type="dynamic_download")
 
         assert isinstance(client, DynamicDownloadRepository)
-        assert client.repository_type == "dynamic_download"
 
     def test_get_repository_client_github_url_detection_fallback(self):
         """Test get_repository_client falls back to URL detection for GitHub URLs."""
@@ -78,7 +74,6 @@ class TestRepositoryFactory:
         client = get_repository_client(url, source_type="direct")
 
         assert isinstance(client, DirectDownloadRepository)
-        assert client.repository_type == "direct_download"
 
     def test_get_repository_client_direct_with_github_url(self):
         """Test --direct flag behavior with GitHub URL."""
@@ -88,7 +83,6 @@ class TestRepositoryFactory:
         client = get_repository_client(github_url, source_type="direct")
 
         assert isinstance(client, DirectDownloadRepository)
-        assert client.repository_type == "direct_download"
 
     def test_get_repository_client_preserves_url_exactly(self):
         """Test that repository client preserves URL exactly as provided."""
@@ -101,7 +95,6 @@ class TestRepositoryFactory:
         for url in urls:
             client = get_repository_client(url, source_type="direct")
             assert isinstance(client, DirectDownloadRepository)
-            assert client.repository_type == "direct_download"
 
 
 class TestRepositoryFactoryIntegration:
@@ -121,7 +114,6 @@ class TestRepositoryFactoryIntegration:
         client = get_repository_client(config["url"], source_type=config["source_type"])
 
         assert isinstance(client, DirectDownloadRepository)
-        assert client.repository_type == "direct_download"
 
     def test_configuration_with_github_source_type(self):
         """Test configuration scenario with source_type='github'."""
@@ -190,10 +182,8 @@ class TestRepositoryFactoryIntegration:
                 source_type=scenario["source_type"]
             )
             assert isinstance(client, scenario["expected_type"])
-            if isinstance(client, DirectDownloadRepository):
-                assert client.repository_type == "direct_download"
-            elif isinstance(client, GitHubRepository):
-                assert client.repository_type == "github"
+            # Just check the type, repository_type property was removed
+            pass
 
 
 class TestUnifiedRepositoryInterface:
@@ -207,7 +197,6 @@ class TestUnifiedRepositoryInterface:
         client = get_repository_client(url, enable_probing=False)
         
         assert isinstance(client, GitHubRepository)
-        assert client.repository_type == "github"
 
     def test_unified_interface_legacy_path_direct(self):
         """Test unified interface uses legacy path for direct URLs with probing disabled."""
@@ -217,7 +206,6 @@ class TestUnifiedRepositoryInterface:
         client = get_repository_client(url, enable_probing=False)
         
         assert isinstance(client, DirectDownloadRepository)
-        assert client.repository_type == "direct_download"
 
     def test_unified_interface_enhanced_path_github(self):
         """Test unified interface uses enhanced path for GitHub with probing enabled."""
@@ -227,7 +215,6 @@ class TestUnifiedRepositoryInterface:
         client = get_repository_client(url, enable_probing=True)
         
         assert isinstance(client, GitHubRepository)
-        assert client.repository_type == "github"
 
     def test_unified_interface_enhanced_path_unknown_domain(self):
         """Test unified interface uses enhanced path for unknown domains."""
@@ -238,7 +225,6 @@ class TestUnifiedRepositoryInterface:
         
         # Should fallback to dynamic download after probing fails
         assert isinstance(client, DynamicDownloadRepository)
-        assert client.repository_type == "dynamic_download"
 
     def test_unified_interface_default_behavior(self):
         """Test unified interface default behavior (probing enabled by default)."""
@@ -248,7 +234,6 @@ class TestUnifiedRepositoryInterface:
         client = get_repository_client(url)
         
         assert isinstance(client, GitHubRepository)
-        assert client.repository_type == "github"
 
     def test_unified_interface_explicit_source_type_overrides_probing(self):
         """Test that explicit source_type overrides probing behavior."""
@@ -258,7 +243,6 @@ class TestUnifiedRepositoryInterface:
         client = get_repository_client(url, source_type="direct", enable_probing=True)
         
         assert isinstance(client, DirectDownloadRepository)
-        assert client.repository_type == "direct_download"
 
     def test_unified_interface_async_version(self):
         """Test async version of unified interface (sync wrapper test)."""
@@ -270,7 +254,6 @@ class TestUnifiedRepositoryInterface:
         async def test_async():
             client = await get_repository_client_async(url, enable_probing=False)
             assert isinstance(client, GitHubRepository)
-            assert client.repository_type == "github"
             return True
         
         # Run the async test
@@ -287,7 +270,6 @@ class TestUnifiedRepositoryInterface:
         async def test_async():
             client = await get_repository_client_async(url, enable_probing=True)
             assert isinstance(client, GitHubRepository)
-            assert client.repository_type == "github"
             return True
         
         # Run the async test
@@ -298,10 +280,9 @@ class TestUnifiedRepositoryInterface:
         """Test that legacy function still works independently."""
         url = "https://github.com/user/repo"
         
-        client = get_repository_client_legacy(url)
+        client = get_repository_client(url)
         
         assert isinstance(client, GitHubRepository)
-        assert client.repository_type == "github"
 
     def test_enhanced_function_still_works(self):
         """Test that enhanced function still works independently."""
@@ -310,7 +291,6 @@ class TestUnifiedRepositoryInterface:
         client = get_repository_client_with_probing_sync(url)
         
         assert isinstance(client, GitHubRepository)
-        assert client.repository_type == "github"
 
     def test_unified_interface_performance_optimization(self):
         """Test performance optimization scenarios."""

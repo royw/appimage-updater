@@ -151,8 +151,3 @@ class RepositoryClient(ABC):
             return f"AppImage-Updater/{__version__}"
         except ImportError:
             return "AppImage-Updater/dev"
-
-    @property
-    @abstractmethod
-    def repository_type(self) -> str:
-        """Get the repository type identifier (e.g., 'github', 'gitlab')."""

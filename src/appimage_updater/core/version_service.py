@@ -67,10 +67,6 @@ class VersionService:
         """Generate flexible pattern from filename."""
         return self.parser.generate_flexible_pattern_from_filename(filename)
 
-    def normalize_version(self, version: str) -> str:
-        """Normalize version string."""
-        return self.parser.normalize_version_string(version)
-
     # Info File Operations
     def find_info_file(self, app_config: ApplicationConfig) -> Path | None:
         """Find .info file for application."""
@@ -106,16 +102,6 @@ class VersionService:
         except (ValueError, TypeError):
             # Fallback to string comparison
             return current != latest
-
-    def is_version_newer(self, version1: str, version2: str) -> bool:
-        """Check if version1 is newer than version2."""
-        try:
-            ver1 = version.parse(version1.lstrip("v"))
-            ver2 = version.parse(version2.lstrip("v"))
-            return ver1 > ver2
-        except (ValueError, TypeError):
-            # Fallback to string comparison
-            return version1 != version2
 
 
 # Global instance for easy access

@@ -23,26 +23,6 @@ from appimage_updater.repositories.domain_service import DomainKnowledgeService
 from appimage_updater.repositories.factory import detect_repository_type, get_repository_client_async
 
 
-def parse_github_url(url: str) -> tuple[str, str] | None:
-    """Parse GitHub URL and extract owner/repo information.
-
-    Returns (owner, repo) tuple or None if not a GitHub URL.
-    """
-    try:
-        parsed = urllib.parse.urlparse(url)
-        if parsed.netloc.lower() not in ("github.com", "www.github.com"):
-            logger.debug(f"URL {url} is not a GitHub repository URL (netloc: {parsed.netloc})")
-            return None
-
-        path_parts = parsed.path.strip("/").split("/")
-        if len(path_parts) >= 2:
-            return path_parts[0], path_parts[1]
-        logger.debug(f"URL {url} does not have enough path components for owner/repo")
-    except (ValueError, AttributeError) as e:
-        logger.debug(f"Failed to parse URL {url}: {e}")
-    return None
-
-
 def normalize_github_url(url: str) -> tuple[str, bool]:
     """Normalize GitHub URL to repository format and detect if it was corrected.
 
@@ -151,15 +131,6 @@ async def _legacy_fetch_pattern(url: str) -> str | None:
     except (RepositoryError, ValueError, AttributeError) as e:
         logger.debug(f"Error fetching releases: {e}")
         return None
-
-
-# Legacy function - now redirects to centralized version service
-def _generate_improved_pattern(asset_name: str) -> str:
-    """Generate regex pattern from asset name - now uses centralized version service.
-
-    Note: This function is deprecated. Use version_service.generate_pattern_from_filename() instead.
-    """
-    return version_service.generate_pattern_from_filename(asset_name)
 
 
 # Keep the old function name for backward compatibility
@@ -396,38 +367,6 @@ def find_common_prefix(strings: list[str]) -> str:
             break
 
     return prefix
-
-
-def generate_fallback_pattern(app_name: str, url: str) -> str:
-    """Generate a fallback pattern using app name and URL heuristics.
-
-    This is the original logic, kept as a fallback when we can't fetch
-    actual release data from GitHub. Now includes both ZIP and AppImage formats
-    to handle projects that package AppImages inside ZIP files.
-    """
-    # Start with the app name as base (prefer app name over repo name for better matching)
-    base_name = re.escape(app_name)
-
-    # Check if it's a GitHub URL - but prioritize app name since it's usually more accurate
-    github_info = parse_github_url(url)
-    if github_info:
-        owner, repo = github_info
-        # Only use repo name if app_name seems generic or is very different
-        # This prevents issues like "desktop" matching "GitHubDesktop"
-        if (
-            app_name.lower() in ["app", "application", "tool"]  # Generic app names
-            or (len(repo) > len(app_name) and app_name.lower() in repo.lower())  # App name is subset of repo
-        ):
-            base_name = re.escape(repo)
-
-    # Create a flexible pattern that handles common naming conventions
-    # Support both ZIP and AppImage formats to handle projects that package AppImages in ZIP files
-    # Make pattern flexible for common character substitutions (underscore/hyphen, etc.)
-    # Replace both underscores and hyphens with character class allowing either
-    flexible_name = re.sub(r"[_-]", "[_-]", base_name)
-    pattern = f"(?i){flexible_name}.*\\.(?:zip|AppImage)(\\.(|current|old))?$"
-
-    return pattern
 
 
 def detect_source_type(url: str) -> str:

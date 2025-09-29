@@ -124,7 +124,6 @@ class TestRepositoryFactory:
         url = "https://github.com/user/repo"
         
         with patch.object(GitHubRepository, 'detect_repository_type', return_value=True):
-            with patch.object(GitHubRepository, 'repository_type', "github"):
                 repo_type = detect_repository_type(url)
         
         assert repo_type == "github"
@@ -135,7 +134,6 @@ class TestRepositoryFactory:
         
         with patch.object(GitHubRepository, 'detect_repository_type', return_value=False):
             with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=True):
-                with patch.object(DynamicDownloadRepository, 'repository_type', "dynamic_download"):
                     repo_type = detect_repository_type(url)
         
         assert repo_type == "dynamic_download"
@@ -147,7 +145,6 @@ class TestRepositoryFactory:
         with patch.object(GitHubRepository, 'detect_repository_type', return_value=False):
             with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=False):
                 with patch.object(DirectDownloadRepository, 'detect_repository_type', return_value=True):
-                    with patch.object(DirectDownloadRepository, 'repository_type', "direct_download"):
                         repo_type = detect_repository_type(url)
         
         assert repo_type == "direct_download"
@@ -214,9 +211,7 @@ class TestRepositoryClientBase:
         """Test repository client initialization with defaults."""
         # Create a concrete implementation for testing
         class TestRepositoryClient(RepositoryClient):
-            @property
-            def repository_type(self) -> str:
-                return "test"
+            # repository_type property was removed
             
             def detect_repository_type(self, url: str) -> bool:
                 return True
@@ -251,9 +246,7 @@ class TestRepositoryClientBase:
     def test_repository_client_initialization_custom(self):
         """Test repository client initialization with custom values."""
         class TestRepositoryClient(RepositoryClient):
-            @property
-            def repository_type(self) -> str:
-                return "test"
+            # repository_type property was removed
             
             def detect_repository_type(self, url: str) -> bool:
                 return True
@@ -301,7 +294,7 @@ class TestRepositoryIntegration:
         assert hasattr(client, 'get_latest_release_including_prerelease')
         assert hasattr(client, 'get_releases')
         assert hasattr(client, 'detect_repository_type')
-        assert hasattr(client, 'repository_type')
+        # repository_type property was removed
 
     def test_repository_factory_integration_with_direct_download(self):
         """Test repository factory integration with direct download repository."""
@@ -315,7 +308,7 @@ class TestRepositoryIntegration:
         assert hasattr(client, 'get_latest_release_including_prerelease')
         assert hasattr(client, 'get_releases')
         assert hasattr(client, 'detect_repository_type')
-        assert hasattr(client, 'repository_type')
+        # repository_type property was removed
 
     def test_repository_factory_integration_with_dynamic_download(self):
         """Test repository factory integration with dynamic download repository."""
@@ -329,7 +322,7 @@ class TestRepositoryIntegration:
         assert hasattr(client, 'get_latest_release_including_prerelease')
         assert hasattr(client, 'get_releases')
         assert hasattr(client, 'detect_repository_type')
-        assert hasattr(client, 'repository_type')
+        # repository_type property was removed
 
     def test_repository_client_interface_consistency(self):
         """Test that all repository clients have consistent interfaces."""
@@ -344,7 +337,7 @@ class TestRepositoryIntegration:
             assert isinstance(client, RepositoryClient)
             assert hasattr(client, 'timeout')
             assert hasattr(client, 'user_agent')
-            assert hasattr(client, 'repository_type')
+            # repository_type property was removed
             assert callable(getattr(client, 'get_latest_release'))
             assert callable(getattr(client, 'get_latest_release_including_prerelease'))
             assert callable(getattr(client, 'get_releases'))
@@ -398,14 +391,11 @@ class TestRepositoryIntegration:
                                 return_value=(expected_type == "dynamic_download")):
                     with patch.object(DirectDownloadRepository, 'detect_repository_type',
                                     return_value=(expected_type == "direct_download")):
-                        with patch.object(GitHubRepository, 'repository_type', "github"):
-                            with patch.object(DynamicDownloadRepository, 'repository_type', "dynamic_download"):
-                                with patch.object(DirectDownloadRepository, 'repository_type', "direct_download"):
-                                    detected_type = detect_repository_type(url)
-                                    
-                                    if expected_type == "github":
-                                        assert detected_type == "github"
-                                    elif expected_type == "dynamic_download":
-                                        assert detected_type == "dynamic_download"
-                                    elif expected_type == "direct_download":
-                                        assert detected_type == "direct_download"
+                        detected_type = detect_repository_type(url)
+                        
+                        if expected_type == "github":
+                            assert detected_type == "github"
+                        elif expected_type == "dynamic_download":
+                            assert detected_type == "dynamic_download"
+                        elif expected_type == "direct_download":
+                            assert detected_type == "direct_download"

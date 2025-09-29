@@ -200,22 +200,6 @@ class VersionChecker:
         logger.debug(f"Could not extract version from current file: {filename}")
         return None
 
-    def _get_current_version_from_files(self, app_config: ApplicationConfig) -> str | None:
-        """Determine current version by analyzing existing files in download directory."""
-        download_dir = self._get_download_directory(app_config)
-        if not download_dir or not download_dir.exists():
-            return None
-
-        app_files = self._find_appimage_files(download_dir)
-        if not app_files:
-            return None
-
-        version_files = self._extract_versions_from_files(app_files)
-        if not version_files:
-            return None
-
-        return self._select_newest_version(version_files)
-
     def _get_download_directory(self, app_config: ApplicationConfig) -> Path | None:
         """Get the download directory for the application."""
         return getattr(app_config, "download_dir", None) or Path.home() / "Downloads"
@@ -247,28 +231,6 @@ class VersionChecker:
             version_files.sort(key=lambda x: x[1], reverse=True)
             return normalize_version_string(version_files[0][0])
 
-    def _process_version_content(self, content: str) -> str:
-        """Process version content from info file."""
-        # Handle "Version: " prefix from .info files
-        if content.startswith("Version: "):
-            content = content[9:]  # Remove "Version: " prefix
-
-        # Extract just the version number from complex version strings
-        content = self._extract_version_number(content)
-
-        # Clean up legacy formatting issues
-        content = self._clean_legacy_version_format(content)
-
-        # Handle rotation suffixes
-        return self._remove_rotation_suffixes(content)
-
-    def _clean_legacy_version_format(self, content: str) -> str:
-        """Clean up legacy version formatting issues."""
-        # Clean up double "v" prefix from legacy .info files (e.g., "vv3.3.0" -> "v3.3.0")
-        if content.startswith("vv"):
-            content = content[1:]  # Remove one "v"
-        return content
-
     def _remove_rotation_suffixes(self, content: str) -> str:
         """Remove rotation suffixes from version content."""
         # Handle rotation suffixes (.current, .old, etc.)
@@ -276,84 +238,6 @@ class VersionChecker:
             # Remove rotation suffix to get actual version
             content = content.rsplit(".", 1)[0]
         return content
-
-    def _get_info_file_path(self, app_config: ApplicationConfig) -> Path:
-        """Get path to .info file for application."""
-        download_dir = getattr(app_config, "download_dir", None) or Path.home() / "Downloads"
-        app_files = self._find_app_files(app_config, download_dir)
-
-        # Try to find info file from current files first
-        info_path = self._get_info_from_current_files(app_files, download_dir)
-        if info_path:
-            return info_path
-
-        # Look for any existing .info files in the directory
-        if download_dir.exists():
-            info_files: list[Path] = list(download_dir.glob("*.info"))
-            if info_files:
-                # Return the first .info file found (most recent by name)
-                sorted_files: list[Path] = sorted(info_files)
-                return sorted_files[-1]
-
-        # Fallback to standard naming
-        return download_dir / f"{app_config.name}.info"
-
-    def _find_app_files(self, app_config: ApplicationConfig, download_dir: Path) -> list[Path]:
-        """Find application files using various naming patterns."""
-        patterns = [
-            f"{app_config.name}*",  # Exact match
-            f"{app_config.name.replace('Studio', '_Studio')}*",  # BambuStudio -> Bambu_Studio
-            "*",  # Fallback to all files
-        ]
-
-        for pattern in patterns:
-            potential_files = list(download_dir.glob(pattern))
-            # Use basename if specified, otherwise fall back to app name
-            match_name = app_config.basename or app_config.name
-            app_files = self._filter_app_files(potential_files, match_name)
-            if app_files:
-                return app_files
-        return []
-
-    def _filter_app_files(self, files: list[Path], match_name: str) -> list[Path]:
-        """Filter files to only include those that belong to the app."""
-        app_files = []
-        match_name_lower = match_name.lower()
-
-        for f in files:
-            name_lower = f.name.lower()
-            if self._file_matches_app(name_lower, match_name_lower):
-                app_files.append(f)
-        return app_files
-
-    def _file_matches_app(self, filename_lower: str, match_name_lower: str) -> bool:
-        """Check if a filename matches the match name (app name or basename)."""
-        # Try different matching strategies
-        return (
-            self._matches_direct_name(filename_lower, match_name_lower)
-            or self._matches_studio_variant(filename_lower, match_name_lower)
-            or self._matches_suffix_pattern(filename_lower, match_name_lower)
-        )
-
-    def _matches_direct_name(self, filename_lower: str, match_name_lower: str) -> bool:
-        """Check for direct name match."""
-        return filename_lower.startswith(match_name_lower)
-
-    def _matches_studio_variant(self, filename_lower: str, match_name_lower: str) -> bool:
-        """Handle Studio -> _Studio pattern (e.g., BambuStudio -> Bambu_Studio)."""
-        studio_variant = match_name_lower.replace("studio", "_studio")
-        return studio_variant in filename_lower or filename_lower.startswith(studio_variant)
-
-    def _matches_suffix_pattern(self, filename_lower: str, match_name_lower: str) -> bool:
-        """Handle suffix patterns (e.g., OrcaSlicerNightly -> OrcaSlicer)."""
-        suffixes_to_strip = ["nightly", "rc", "beta", "alpha", "dev", "weekly"]
-        for suffix in suffixes_to_strip:
-            if match_name_lower.endswith(suffix):
-                # Use rsplit to remove only the rightmost occurrence of the suffix
-                base_name = match_name_lower.rsplit(suffix, 1)[0]
-                if filename_lower.startswith(base_name):
-                    return True
-        return False
 
     def _get_info_from_current_files(self, app_files: list[Path], download_dir: Path) -> Path | None:
         """Get info file path from current files if available."""
@@ -385,37 +269,6 @@ class VersionChecker:
 
         # If no version pattern found, return the first word (fallback)
         return version_string.split()[0] if version_string else version_string
-
-    def _convert_nightly_version_string(self, version_string: str) -> str:
-        """Convert nightly build version strings to comparable format."""
-        if not version_string:
-            return version_string
-
-        if self._is_already_date_format(version_string):
-            return version_string
-
-        if self._is_nightly_build(version_string):
-            return self._extract_nightly_date(version_string)
-
-        return version_string
-
-    def _is_already_date_format(self, version_string: str) -> bool:
-        """Check if version string is already in date format (YYYY-MM-DD)."""
-        return bool(re.match(r"^v?\d{4}-\d{2}-\d{2}$", version_string))
-
-    def _is_nightly_build(self, version_string: str) -> bool:
-        """Check if version string indicates a nightly build."""
-        nightly_patterns = ["nightly", "build", "snapshot", "dev", "daily"]
-        version_lower = version_string.lower()
-        return any(pattern in version_lower for pattern in nightly_patterns)
-
-    def _extract_nightly_date(self, version_string: str) -> str:
-        """Extract date from nightly build version string."""
-        date_match = re.search(r"(\d{4})-?(\d{2})-?(\d{2})", version_string)
-        if date_match:
-            year, month, day = date_match.groups()
-            return f"v{year}-{month}-{day}"
-        return version_string
 
     def _find_update_candidates(
         self, releases: list[Release], app_config: ApplicationConfig, current_version: str | None

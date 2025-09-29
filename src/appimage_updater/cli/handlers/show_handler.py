@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
-from typing import Any
 
 from rich.console import Console
 import typer
@@ -57,48 +56,6 @@ class ShowCommandHandler(CommandHandler):
                 debug=debug,
                 output_format=output_format,
             )
-
-    def handle_help_display(self, **kwargs: Any) -> bool:
-        """Handle help display for show command when no app names provided."""
-        app_names = kwargs.get("app_names")
-        output_format = kwargs.get("output_format", OutputFormat.RICH)
-
-        if app_names is None:
-            output_formatter = create_output_formatter_from_params({"output_format": output_format})
-
-            if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
-                # For structured formats, use the output formatter
-                output_formatter.print_info("Usage: appimage-updater show [OPTIONS] APP_NAMES...")
-                output_formatter.print_info("")
-                output_formatter.print_info("Show detailed information about a specific application.")
-                output_formatter.print_info("")
-                output_formatter.print_info("Arguments:")
-                output_formatter.print_info("  APP_NAMES...  Names of applications to display information for")
-                output_formatter.print_info("                (case-insensitive, supports glob patterns like 'Orca*').")
-                output_formatter.print_info("                Multiple names can be specified.")
-                output_formatter.print_info("")
-                output_formatter.print_info("Examples:")
-                output_formatter.print_info("  appimage-updater show FreeCAD")
-                output_formatter.print_info("  appimage-updater show FreeCAD OrcaSlicer")
-                output_formatter.print_info("  appimage-updater show 'Orca*'")
-                output_formatter.finalize()
-            else:
-                # For console formats, use typer.echo
-                typer.echo("Usage: appimage-updater show [OPTIONS] APP_NAMES...")
-                typer.echo("")
-                typer.echo("Show detailed information about a specific application.")
-                typer.echo("")
-                typer.echo("Arguments:")
-                typer.echo("  APP_NAMES...  Names of applications to display information for")
-                typer.echo("                (case-insensitive, supports glob patterns like 'Orca*').")
-                typer.echo("                Multiple names can be specified.")
-                typer.echo("")
-                typer.echo("Examples:")
-                typer.echo("  appimage-updater show FreeCAD")
-                typer.echo("  appimage-updater show FreeCAD OrcaSlicer")
-                typer.echo("  appimage-updater show 'Orca*'")
-            return True
-        return False
 
     # noinspection PyMethodMayBeStatic
     def _version_callback(self, value: bool) -> None:

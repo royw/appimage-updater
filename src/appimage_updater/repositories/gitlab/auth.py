@@ -7,7 +7,6 @@ supporting both environment variable configuration and explicit token passing.
 from __future__ import annotations
 
 import os
-from typing import Any
 
 from loguru import logger
 
@@ -79,49 +78,7 @@ class GitLabAuth:
         """
         return bool(self._token)
 
-    def get_token(self) -> str | None:
-        """Get the configured token.
-
-        Returns:
-            Token string if available, None otherwise
-        """
-        return self._token
-
-    def set_token(self, token: str | None) -> None:
-        """Update the authentication token.
-
-        Args:
-            token: New token to use, or None to clear authentication
-        """
-        self._token = token
-        if token:
-            logger.debug("GitLab authentication token updated")
-        else:
-            logger.debug("GitLab authentication token cleared")
-
     def __repr__(self) -> str:
         """String representation of GitLabAuth instance."""
         status = "authenticated" if self.is_authenticated() else "not authenticated"
         return f"GitLabAuth({status})"
-
-    def get_auth_info(self) -> dict[str, Any]:
-        """Get authentication information for debugging/logging.
-
-        Returns:
-            Dictionary with authentication status and source information
-        """
-        if not self._token:
-            return {"authenticated": False, "token_source": None, "token_length": 0}
-
-        # Determine token source
-        token_source = "explicit"  # noqa: S105
-        if os.getenv("GITLAB_TOKEN") == self._token:
-            token_source = "GITLAB_TOKEN"  # noqa: S105
-        elif os.getenv("GITLAB_PRIVATE_TOKEN") == self._token:
-            token_source = "GITLAB_PRIVATE_TOKEN"  # noqa: S105
-
-        return {
-            "authenticated": True,
-            "token_source": token_source,
-            "token_length": len(self._token) if self._token else 0,
-        }

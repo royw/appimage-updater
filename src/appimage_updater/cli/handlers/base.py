@@ -44,17 +44,3 @@ class CommandHandler(ABC):
             **kwargs: All command options and arguments
         """
         pass  # Default implementation does nothing
-
-    def handle_help_display(self, **kwargs: Any) -> bool:
-        """Handle help display for commands that require arguments.
-
-        Override this method for commands that should show help
-        when required arguments are missing.
-
-        Args:
-            **kwargs: All command options and arguments
-
-        Returns:
-            True if help was displayed and command should exit, False otherwise
-        """
-        return False

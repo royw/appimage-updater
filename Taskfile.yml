@@ -179,7 +179,7 @@ tasks:
         "print_progress" "print_success" "print_error" "print_warning" "print_info" "print_config_settings"
         "generate_pattern_from_releases" "_try_parse_last_modified_header" "_try_parse_date_header"
         "_extract_version_from_filename" "excepthook" "_print_troubleshooting_tips"
-        "_handle_edit_preview_modes" "_apply_edit_updates_to_apps"
+        "_handle_edit_preview_modes" "_apply_edit_updates_to_apps" "supported_domains"
     silent: true
 
   # === Testing ===

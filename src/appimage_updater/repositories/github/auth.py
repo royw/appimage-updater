@@ -30,7 +30,6 @@ class GitHubAuth:
         """
         self._token = token
         self._discovered_token: str | None = None
-        self._token_source: str | None = None
 
     @property
     def token(self) -> str | None:
@@ -55,17 +54,6 @@ class GitHubAuth:
             True if a valid token is available
         """
         return self.token is not None
-
-    @property
-    def token_source(self) -> str | None:
-        """Get the source of the current token for logging/debugging.
-
-        Returns:
-            String describing where the token was found
-        """
-        # Trigger token discovery if not done yet
-        _ = self.token
-        return self._token_source
 
     def _discover_token(self) -> None:
         """Discover GitHub token from various sources in priority order.
@@ -92,7 +80,6 @@ class GitHubAuth:
 
         # No token found
         logger.debug("No GitHub token found in any source")
-        self._token_source = "no token found"  # noqa: S105
 
     def get_auth_headers(self) -> dict[str, str]:
         """Get HTTP headers for GitHub API authentication.
@@ -120,7 +107,6 @@ class GitHubAuth:
         token = os.getenv("GITHUB_TOKEN")
         if token:
             self._discovered_token = token.strip()
-            self._token_source = "GITHUB_TOKEN environment variable"  # noqa: S105
             logger.debug("Found token in GITHUB_TOKEN environment variable")
             return True
 
@@ -128,7 +114,6 @@ class GitHubAuth:
         token = os.getenv("APPIMAGE_UPDATER_GITHUB_TOKEN")
         if token:
             self._discovered_token = token.strip()
-            self._token_source = "APPIMAGE_UPDATER_GITHUB_TOKEN environment variable"  # noqa: S105
             logger.debug("Found token in APPIMAGE_UPDATER_GITHUB_TOKEN environment variable")
             return True
 
@@ -153,7 +138,6 @@ class GitHubAuth:
             token = self._read_token_from_file(token_file)
             if token:
                 self._discovered_token = token
-                self._token_source = f"token file: {token_file}"
                 logger.debug(f"Found token in file: {token_file}")
                 return True
 
@@ -200,7 +184,6 @@ class GitHubAuth:
             token = self._read_token_from_config(config_path)
             if token:
                 self._discovered_token = token.strip()
-                self._token_source = f"global config: {config_path}"
                 logger.debug(f"Found token in global config: {config_path}")
                 return True
 
@@ -261,17 +244,6 @@ class GitHubAuth:
                 "period_hours": 1,
                 "type": "anonymous",
             }
-
-    def log_auth_status(self) -> None:
-        """Log current authentication status for debugging."""
-        rate_info = self.get_rate_limit_info()
-
-        if self.is_authenticated:
-            logger.debug(f"GitHub API: Authenticated via {self.token_source}")
-            logger.debug(f"Rate limit: {rate_info['limit']} requests/hour")
-        else:
-            logger.debug("GitHub API: Anonymous access (rate limited to 60 requests/hour)")
-            logger.debug("Consider setting GITHUB_TOKEN environment variable for higher limits")
 
 
 def get_github_auth(token: str | None = None) -> GitHubAuth:

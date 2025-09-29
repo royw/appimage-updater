@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -99,7 +98,6 @@ class DomainKnowledgeService:
             updated = self._add_domain_to_knowledge(knowledge, handler_name, domain)
 
             if updated:
-                knowledge.last_updated = datetime.now().isoformat()
                 self.config_manager.save_config(config)
                 logger.info(f"Learned domain: {domain} -> {handler_name}")
 
@@ -128,59 +126,8 @@ class DomainKnowledgeService:
             updated = self._remove_domain_from_knowledge(knowledge, failed_handler_name, domain)
 
             if updated:
-                knowledge.last_updated = datetime.now().isoformat()
                 self.config_manager.save_config(config)
                 logger.warning(f"Forgot domain: {domain} (failed as {failed_handler_name})")
 
         except Exception as e:
             logger.error(f"Failed to forget domain {domain}: {e}")
-
-    def get_all_known_domains(self) -> dict[str, list[str]]:
-        """Get all known domains grouped by repository type."""
-        try:
-            config = self.config_manager.load_config()
-            knowledge = config.global_config.domain_knowledge
-
-            return {
-                "github": list(knowledge.github_domains),
-                "gitlab": list(knowledge.gitlab_domains),
-                "direct_download": list(knowledge.direct_domains),
-                "dynamic_download": list(knowledge.dynamic_domains),
-            }
-        except Exception as e:
-            logger.error(f"Failed to get known domains: {e}")
-            return {"github": [], "gitlab": [], "direct_download": [], "dynamic_download": []}
-
-    def get_registry_supported_domains(self) -> dict[str, list[str]]:
-        """Get supported domains from registry handlers."""
-        return self.registry.get_supported_domains()
-
-    def initialize_default_domains(self) -> None:
-        """Initialize domain knowledge with default known domains from handlers."""
-        try:
-            config = self.config_manager.load_config()
-            knowledge = config.global_config.domain_knowledge
-
-            # Get default domains from handlers
-            registry_domains = self.get_registry_supported_domains()
-
-            updated = False
-            for handler_name, domains in registry_domains.items():
-                if handler_name == "github":
-                    for domain in domains:
-                        if domain not in knowledge.github_domains:
-                            knowledge.github_domains.append(domain)
-                            updated = True
-                elif handler_name == "gitlab":
-                    for domain in domains:
-                        if domain not in knowledge.gitlab_domains:
-                            knowledge.gitlab_domains.append(domain)
-                            updated = True
-
-            if updated:
-                knowledge.last_updated = datetime.now().isoformat()
-                self.config_manager.save_config(config)
-                logger.info("Initialized domain knowledge with handler defaults")
-
-        except Exception as e:
-            logger.error(f"Failed to initialize default domains: {e}")

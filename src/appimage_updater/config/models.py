@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from pathlib import Path
 import re
 from typing import (
@@ -87,19 +86,6 @@ class ApplicationConfig(BaseModel):
             re.compile(v)
         except re.error as e:
             msg = f"Invalid regex pattern: {e}"
-            raise ValueError(msg) from e
-        return v
-
-    @field_validator("version_pattern")
-    @classmethod
-    def validate_version_pattern(cls, v: str | None) -> str | None:
-        """Validate version pattern regex."""
-        if v is None:
-            return v
-        try:
-            re.compile(v)
-        except re.error as e:
-            msg = f"Invalid version pattern regex: {e}"
             raise ValueError(msg) from e
         return v
 
@@ -212,7 +198,6 @@ class DomainKnowledge(BaseModel):
     )
     direct_domains: list[str] = Field(default_factory=list, description="Known direct download domains")
     dynamic_domains: list[str] = Field(default_factory=list, description="Known dynamic download domains")
-    last_updated: str = Field(default_factory=lambda: datetime.now().isoformat(), description="Last update timestamp")
 
 
 class GlobalConfig(BaseModel):

@@ -71,10 +71,6 @@ class GitLabClient:
         """Async context manager exit."""
         await self._client.aclose()
 
-    async def close(self) -> None:
-        """Close the HTTP client."""
-        await self._client.aclose()
-
     def _get_base_url(self, repo_url: str) -> str:
         """Extract base URL from repository URL.
 
@@ -105,44 +101,6 @@ class GitLabClient:
         """
         project_path = f"{owner}/{repo}"
         return urllib.parse.quote(project_path, safe="")
-
-    async def get_project_info(self, owner: str, repo: str, base_url: str = "https://gitlab.com") -> dict[str, Any]:
-        """Get project information from GitLab API.
-
-        Args:
-            owner: Project owner/namespace
-            repo: Repository name
-            base_url: GitLab instance base URL
-
-        Returns:
-            Project information dictionary
-
-        Raises:
-            GitLabClientError: If the API request fails
-        """
-        project_path = self._url_encode_project_path(owner, repo)
-        api_url = f"{base_url}/api/v4/projects/{project_path}"
-
-        try:
-            logger.debug(f"Fetching GitLab project info: {api_url}")
-            response = await self._client.get(api_url)
-            response.raise_for_status()
-
-            project_info: dict[str, Any] = response.json()
-            logger.debug(f"Retrieved project info for {owner}/{repo} (ID: {project_info.get('id')})")
-            return project_info
-
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                raise GitLabClientError(f"GitLab project not found: {owner}/{repo}") from e
-            elif e.response.status_code == 401:
-                raise GitLabClientError("GitLab authentication failed - check your token") from e
-            elif e.response.status_code == 403:
-                raise GitLabClientError("GitLab access forbidden - insufficient permissions") from e
-            else:
-                raise GitLabClientError(f"GitLab API error: {e.response.status_code} {e.response.text}") from e
-        except httpx.RequestError as e:
-            raise GitLabClientError(f"GitLab API request failed: {e}") from e
 
     async def get_latest_release(self, owner: str, repo: str, base_url: str = "https://gitlab.com") -> dict[str, Any]:
         """Get the latest release for a GitLab project.
@@ -296,28 +254,3 @@ class GitLabClient:
             # If we can't analyze releases, default to False
             logger.debug(f"Could not analyze releases for {owner}/{repo}, defaulting prerelease=False")
             return False
-
-    async def check_gitlab_instance(self, base_url: str) -> bool:
-        """Check if a URL points to a GitLab instance.
-
-        Args:
-            base_url: Base URL to check
-
-        Returns:
-            True if the URL appears to be a GitLab instance, False otherwise
-        """
-        try:
-            # Try to access GitLab version endpoint
-            version_url = f"{base_url}/api/v4/version"
-            response = await self._client.get(version_url)
-
-            if response.status_code == 200:
-                version_info = response.json()
-                if "version" in version_info and "revision" in version_info:
-                    logger.debug(f"Detected GitLab instance at {base_url}: {version_info.get('version')}")
-                    return True
-
-        except Exception as e:
-            logger.debug(f"Could not detect GitLab instance at {base_url}: {e}")
-
-        return False

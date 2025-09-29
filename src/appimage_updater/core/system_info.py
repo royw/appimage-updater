@@ -147,21 +147,6 @@ class SystemDetector:
             formats.add(".pkg.tar.xz")
             formats.add(".pkg.tar.zst")
 
-    # noinspection PyMethodMayBeStatic
-    def _add_darwin_formats(self, formats: set[str]) -> None:
-        """Add macOS-specific package formats."""
-        formats.add(".dmg")
-        formats.add(".pkg")
-        formats.add(".zip")
-        formats.add(".tar.gz")
-
-    # noinspection PyMethodMayBeStatic
-    def _add_windows_formats(self, formats: set[str]) -> None:
-        """Add Windows-specific package formats."""
-        formats.add(".exe")
-        formats.add(".msi")
-        formats.add(".zip")
-
     def _detect_supported_formats(self, platform_name: str) -> set[str]:
         """Detect supported package formats for Linux."""
         if platform_name != "linux":

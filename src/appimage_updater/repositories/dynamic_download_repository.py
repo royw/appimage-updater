@@ -35,11 +35,6 @@ class DynamicDownloadRepository(RepositoryClient):
     def __init__(self, timeout: int = 30, user_agent: str | None = None, **kwargs: Any):
         super().__init__(timeout, user_agent, **kwargs)
 
-    @property
-    def repository_type(self) -> str:
-        """Get the repository type identifier."""
-        return "dynamic_download"
-
     def detect_repository_type(self, url: str) -> bool:
         """Detect if URL requires dynamic parsing."""
         # Patterns that indicate dynamic download pages

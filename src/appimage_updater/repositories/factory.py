@@ -154,33 +154,6 @@ async def _validate_client(client: RepositoryClient, url: str) -> None:
         raise RepositoryError(f"Client validation failed for {url}: {e}") from e
 
 
-async def _probe_repository_type(
-    url: str, timeout: int, user_agent: str | None, **kwargs: Any
-) -> tuple[Any, RepositoryClient | None]:
-    """Probe repository type and return both handler and working client."""
-    registry = get_repository_registry()
-
-    # Get all handlers sorted by priority
-    handlers = registry.get_all_handlers()
-
-    for handler in handlers:
-        # Skip dynamic download handler in probing (it's the fallback)
-        if handler.metadata.name == "dynamic_download":
-            continue
-
-        try:
-            if handler.can_handle_url(url):
-                client = handler.create_client(timeout=timeout, user_agent=user_agent, **kwargs)
-                await _validate_client(client, url)
-                logger.info(f"Successfully probed {url} as {handler.metadata.name}")
-                return handler, client
-        except Exception as e:
-            logger.debug(f"Probing {url} as {handler.metadata.name} failed: {e}")
-            continue
-
-    return None, None
-
-
 def detect_repository_type(url: str) -> str:
     """Detect repository type from URL without creating client.
 
@@ -212,9 +185,7 @@ def detect_repository_type(url: str) -> str:
 
 
 # Legacy function names for backward compatibility
-get_repository_client_legacy = get_repository_client_sync  # For tests
 get_repository_client_with_probing_sync = get_repository_client_sync
-get_repository_client_with_probing_async = get_repository_client_async
 
 # For backward compatibility, make the sync version the default get_repository_client
 # Tests expect this to be synchronous

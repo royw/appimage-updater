@@ -72,7 +72,6 @@ class TestGitHubAuth:
         auth = GitHubAuth(token="explicit_token")
         assert auth.token == "explicit_token"
         assert auth.is_authenticated is True
-        assert auth.token_source is None  # No discovery needed
 
     def test_github_token_environment_variable(self, monkeypatch):
         """Test token discovery from GITHUB_TOKEN environment variable."""
@@ -81,7 +80,6 @@ class TestGitHubAuth:
 
         assert auth.token == "env_token_123"
         assert auth.is_authenticated is True
-        assert auth.token_source == "GITHUB_TOKEN environment variable"
 
     def test_appimage_updater_token_environment_variable(self, monkeypatch):
         """Test token discovery from app-specific environment variable."""
@@ -90,7 +88,6 @@ class TestGitHubAuth:
 
         assert auth.token == "app_token_456"
         assert auth.is_authenticated is True
-        assert auth.token_source == "APPIMAGE_UPDATER_GITHUB_TOKEN environment variable"
 
     def test_environment_variable_priority(self, monkeypatch):
         """Test that GITHUB_TOKEN takes priority over app-specific token."""
@@ -99,7 +96,6 @@ class TestGitHubAuth:
         auth = GitHubAuth()
 
         assert auth.token == "standard_token"
-        assert auth.token_source == "GITHUB_TOKEN environment variable"
 
     def test_token_file_json_format(self, monkeypatch, mock_home):
         """Test token discovery from JSON token file."""
@@ -117,7 +113,6 @@ class TestGitHubAuth:
         auth = GitHubAuth()
         assert auth.token == "json_file_token"
         assert auth.is_authenticated is True
-        assert "github-token.json" in auth.token_source
 
     def test_token_file_alternative_json_key(self, monkeypatch, mock_home):
         """Test token discovery from JSON file with alternative key name."""
@@ -133,7 +128,6 @@ class TestGitHubAuth:
 
         auth = GitHubAuth()
         assert auth.token == "alt_json_token"
-        assert "github_token.json" in auth.token_source
 
     def test_token_file_plain_text_format(self, monkeypatch, mock_home):
         """Test token discovery from plain text token file."""
@@ -148,7 +142,6 @@ class TestGitHubAuth:
         auth = GitHubAuth()
         assert auth.token == "plain_text_token"
         assert auth.is_authenticated is True
-        assert ".appimage-updater-github-token" in auth.token_source
 
     def test_global_config_token_discovery(self, monkeypatch, mock_home):
         """Test token discovery from global config file."""
@@ -169,7 +162,6 @@ class TestGitHubAuth:
 
         auth = GitHubAuth()
         assert auth.token == "global_config_token"
-        assert "global config" in auth.token_source
 
     def test_global_config_alternative_token_locations(self, monkeypatch, mock_home):
         """Test token discovery from alternative locations in global config."""
@@ -204,7 +196,6 @@ class TestGitHubAuth:
         auth = GitHubAuth()
         assert auth.token is None
         assert auth.is_authenticated is False
-        assert auth.token_source == "no token found"
 
     def test_file_read_error_handling(self, monkeypatch, mock_home):
         """Test graceful handling of file read errors."""

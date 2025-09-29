@@ -52,11 +52,6 @@ class GitLabRepository(RepositoryClient):
 
         logger.debug(f"GitLab repository client initialized (authenticated: {self._auth.is_authenticated()})")
 
-    @property
-    def repository_type(self) -> str:
-        """Get the repository type identifier."""
-        return "gitlab"
-
     def detect_repository_type(self, url: str) -> bool:
         """Check if this client can handle the given repository URL.
 
@@ -408,33 +403,6 @@ class GitLabRepository(RepositoryClient):
                 return True
 
         return False
-
-    def _guess_content_type(self, filename: str) -> str:
-        """Guess content type from filename."""
-        filename_lower = filename.lower()
-
-        if filename_lower.endswith(".appimage"):
-            return "application/x-executable"
-        elif filename_lower.endswith(".zip"):
-            return "application/zip"
-        elif filename_lower.endswith(".tar.gz"):
-            return "application/gzip"
-        elif filename_lower.endswith(".tar.bz2"):
-            return "application/x-bzip2"
-        elif filename_lower.endswith(".tar"):
-            return "application/x-tar"
-        else:
-            return "application/octet-stream"
-
-    def _guess_content_type_from_format(self, format_str: str) -> str:
-        """Guess content type from GitLab source format."""
-        format_mapping = {
-            "zip": "application/zip",
-            "tar.gz": "application/gzip",
-            "tar.bz2": "application/x-bzip2",
-            "tar": "application/x-tar",
-        }
-        return format_mapping.get(format_str, "application/octet-stream")
 
     def _generate_pattern_from_names(self, asset_names: list[str]) -> str | None:
         """Generate regex pattern from asset names.

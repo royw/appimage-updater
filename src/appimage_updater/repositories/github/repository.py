@@ -55,11 +55,6 @@ class GitHubRepository(RepositoryClient):
             token=token,
         )
 
-    @property
-    def repository_type(self) -> str:
-        """Get the repository type identifier."""
-        return "github"
-
     async def get_latest_release(self, repo_url: str) -> Release:
         """Get the latest stable release for a GitHub repository."""
         try:
