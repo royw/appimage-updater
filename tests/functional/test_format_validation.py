@@ -5,7 +5,7 @@ without requiring existing application configurations.
 """
 
 import re
-import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -21,22 +21,26 @@ class TestFormatValidation:
 
     def run_command(self, command_args: list[str]) -> tuple[int, str, str]:
         """Run appimage-updater command and return exit code, stdout, stderr."""
-        cmd = ["uv", "run", "appimage-updater"] + command_args
+        from typer.testing import CliRunner
+        from appimage_updater.main import app  # type: ignore[import-untyped]
         
-        # Set working directory to project root
-        cwd = Path(__file__).parent.parent.parent
+        runner = CliRunner()
         
-        result = subprocess.run(
-            cmd,
-            cwd=cwd,
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-        
-        return result.returncode, result.stdout, result.stderr
+        # Use temporary config directory to avoid interference
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_config_dir = Path(temp_dir) / "config"
+            temp_config_dir.mkdir()
+            
+            # Add config-dir to args if not already present
+            full_args = command_args[:]
+            if "--config-dir" not in full_args:
+                full_args.extend(["--config-dir", str(temp_config_dir)])
+            
+            result = runner.invoke(app, full_args)
+            
+            return result.exit_code, result.stdout or "", result.stderr or ""
 
-    def test_format_option_in_help_text(self):
+    def test_format_option_in_help_text(self) -> None:
         """Test that --format option appears in help text for all commands."""
         commands = ["check", "list", "add", "edit", "show", "remove", "repository", "config"]
         
@@ -52,7 +56,7 @@ class TestFormatValidation:
             assert "json" in help_text, f"Command {cmd} help missing 'json' format option"
             assert "html" in help_text, f"Command {cmd} help missing 'html' format option"
 
-    def test_invalid_format_option_rejected(self):
+    def test_invalid_format_option_rejected(self) -> None:
         """Test that invalid format options are properly rejected."""
         # Test with list command as it's most likely to work without config
         exit_code, stdout, stderr = self.run_command(["list", "--format", "invalid"])
@@ -64,7 +68,7 @@ class TestFormatValidation:
         error_output = (stdout + stderr).lower()
         assert "invalid" in error_output or "format" in error_output, "Should mention format error"
 
-    def test_format_option_short_flag(self):
+    def test_format_option_short_flag(self) -> None:
         """Test that -f short flag works for format option."""
         # Test help text shows -f option
         exit_code, stdout, stderr = self.run_command(["list", "--help"])
@@ -73,7 +77,7 @@ class TestFormatValidation:
         help_text = stdout.lower()
         assert "-f" in help_text, "Short flag -f should be available for format option"
 
-    def test_valid_format_options_accepted(self):
+    def test_valid_format_options_accepted(self) -> None:
         """Test that all valid format options are accepted and produce output."""
         valid_formats = ["rich", "plain", "json", "html"]
         
@@ -101,7 +105,7 @@ class TestFormatValidation:
                 elif format_type == "html":
                     assert "<html>" in stdout or "<!DOCTYPE html>" in stdout, f"HTML format should produce HTML"
 
-    def test_default_format_behavior(self):
+    def test_default_format_behavior(self) -> None:
         """Test that commands work without explicit format option (default to rich)."""
         # Test that help works without format option
         exit_code, stdout, stderr = self.run_command(["--help"])
@@ -112,7 +116,7 @@ class TestFormatValidation:
         # Should not crash due to format issues
         assert "format" not in (stdout + stderr).lower() or exit_code == 0
 
-    def test_format_option_consistency(self):
+    def test_format_option_consistency(self) -> None:
         """Test that format option behavior is consistent across commands."""
         commands_with_format = ["check", "list", "add", "edit", "show", "remove", "repository", "config"]
         
@@ -131,20 +135,26 @@ class TestFormatFeatures:
 
     def run_command(self, command_args: list[str]) -> tuple[int, str, str]:
         """Run appimage-updater command and return exit code, stdout, stderr."""
-        cmd = ["uv", "run", "appimage-updater"] + command_args
-        cwd = Path(__file__).parent.parent.parent
+        from typer.testing import CliRunner
+        from appimage_updater.main import app  # type: ignore[import-untyped]
         
-        result = subprocess.run(
-            cmd,
-            cwd=cwd,
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
+        runner = CliRunner()
         
-        return result.returncode, result.stdout, result.stderr
+        # Use temporary config directory to avoid interference
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_config_dir = Path(temp_dir) / "config"
+            temp_config_dir.mkdir()
+            
+            # Add config-dir to args if not already present
+            full_args = command_args[:]
+            if "--config-dir" not in full_args:
+                full_args.extend(["--config-dir", str(temp_config_dir)])
+            
+            result = runner.invoke(app, full_args)
+            
+            return result.exit_code, result.stdout or "", result.stderr or ""
 
-    def test_rich_format_default(self):
+    def test_rich_format_default(self) -> None:
         """Test that rich format is the default."""
         # Test config list without format option
         exit_code, stdout, stderr = self.run_command(["config", "list"])
@@ -155,7 +165,7 @@ class TestFormatFeatures:
             # This is a basic check - rich format should not be plain text only
             assert len(stdout) > 0, "Should produce output"
 
-    def test_plain_format_characteristics(self):
+    def test_plain_format_characteristics(self) -> None:
         """Test that plain format produces machine-readable output."""
         exit_code, stdout, stderr = self.run_command(["config", "list", "--format", "plain"])
         
@@ -167,7 +177,7 @@ class TestFormatFeatures:
             has_structure = any(char in stdout for char in ["|", "\t", ":", "="])
             assert has_structure, "Plain format should have structured output"
 
-    def test_format_help_consistency(self):
+    def test_format_help_consistency(self) -> None:
         """Test that format help text is consistent across commands."""
         commands = ["list", "config", "check"]
         format_descriptions = []
