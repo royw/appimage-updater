@@ -9,12 +9,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from loguru import logger
+from packaging import version
 
 from appimage_updater.core.info_file_service import InfoFileService
 from appimage_updater.core.local_version_service import LocalVersionService
 from appimage_updater.core.repository_version_service import RepositoryVersionService
 from appimage_updater.core.version_parser import VersionParser
+
 
 if TYPE_CHECKING:
     from appimage_updater.config.models import ApplicationConfig
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 
 class VersionService:
     """Unified version service coordinator.
-    
+
     This service provides a single interface for all version operations,
     delegating to specialized services while maintaining consistency.
     """
@@ -38,7 +39,7 @@ class VersionService:
     # Local Version Operations
     def get_current_version(self, app_config: ApplicationConfig) -> str | None:
         """Get current installed version.
-        
+
         Uses priority: .info file -> .current file -> filename analysis
         """
         return self.local_service.get_current_version(app_config)
@@ -85,11 +86,11 @@ class VersionService:
     # Version Comparison
     def compare_versions(self, current: str | None, latest: str | None) -> bool:
         """Compare versions to determine if update is available.
-        
+
         Args:
             current: Current version string (can be None)
             latest: Latest version string (can be None)
-            
+
         Returns:
             True if update is available, False otherwise
         """
@@ -98,7 +99,6 @@ class VersionService:
             return True
 
         try:
-            from packaging import version
             current_ver = version.parse(current.lstrip("v"))
             latest_ver = version.parse(latest.lstrip("v"))
             return latest_ver > current_ver
@@ -109,7 +109,6 @@ class VersionService:
     def is_version_newer(self, version1: str, version2: str) -> bool:
         """Check if version1 is newer than version2."""
         try:
-            from packaging import version
             ver1 = version.parse(version1.lstrip("v"))
             ver2 = version.parse(version2.lstrip("v"))
             return ver1 > ver2

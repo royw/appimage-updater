@@ -7,7 +7,6 @@ through JavaScript or API calls.
 from __future__ import annotations
 
 from datetime import datetime
-import httpx
 import logging
 import re
 from typing import Any
@@ -16,6 +15,8 @@ from urllib.parse import (
     urlparse,
 )
 
+import httpx
+
 from appimage_updater.core.models import (
     Asset,
     Release,
@@ -23,6 +24,8 @@ from appimage_updater.core.models import (
 from appimage_updater.core.version_service import version_service
 from appimage_updater.repositories.base import RepositoryClient, RepositoryError
 from appimage_updater.utils.version_utils import normalize_version_string
+
+
 logger = logging.getLogger(__name__)
 
 

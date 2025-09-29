@@ -6,10 +6,8 @@ that can be used across the entire application for consistent version handling.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import re
-from typing import Callable
-
-from loguru import logger
 
 from appimage_updater.utils.version_utils import normalize_version_string
 
@@ -18,31 +16,34 @@ class VersionParser:
     """Unified version parsing for filenames, URLs, and version strings."""
 
     def clean_filename_for_version_extraction(self, filename: str) -> str:
-        """Clean filename by removing git hashes and other variable identifiers that could interfere with version extraction."""
+        """Clean filename by removing git hashes and other variable identifiers.
+
+        This prevents interference with version extraction.
+        """
         # Remove file extension
         cleaned = re.sub(r"\.AppImage$", "", filename, flags=re.IGNORECASE)
-        
+
         # Remove git commit hashes (6-8 hex characters, typically 7)
         # This prevents extracting parts of git hashes as version numbers
         cleaned = re.sub(r"-[a-fA-F0-9]{6,8}(?=-|$)", "", cleaned)
-        
+
         # Remove architecture identifiers that might contain numbers
         cleaned = re.sub(r"-(x86_64|amd64|i386|i686|arm64|armv7|armhf)(?=-|$)", "", cleaned)
-        
+
         # Remove platform identifiers
         cleaned = re.sub(r"-(linux|win32|win64|windows|macos|darwin)(?=-|$)", "", cleaned, flags=re.IGNORECASE)
-        
+
         # Clean up any double hyphens or trailing hyphens
         cleaned = re.sub(r"-+", "-", cleaned)
         cleaned = cleaned.strip("-")
-        
+
         return cleaned
 
     def extract_version_from_filename(self, filename: str) -> str | None:
         """Extract version from filename using common patterns."""
         # First, eliminate git commit hashes and other variable identifiers to avoid false matches
         cleaned_filename = self.clean_filename_for_version_extraction(filename)
-        
+
         # Test each pattern in order of specificity
         patterns: list[Callable[[str], str | None]] = [
             self._extract_prerelease_version,
@@ -69,26 +70,26 @@ class VersionParser:
         """Generate a flexible regex pattern from a filename by eliminating variable identifiers."""
         # Start with the filename
         pattern = filename
-        
+
         # Remove file extension to work with base name
         base_name = re.sub(r"\.AppImage$", "", pattern, flags=re.IGNORECASE)
-        
+
         # Eliminate git commit hashes (6-8 hex characters, typically 7)
         base_name = re.sub(r"-[a-fA-F0-9]{6,8}(?=-|$)", "", base_name)
-        
+
         # Eliminate architecture identifiers
         base_name = re.sub(r"-(x86_64|amd64|i386|i686|arm64|armv7|armhf)(?=-|$)", "", base_name)
-        
+
         # Eliminate platform identifiers
         base_name = re.sub(r"-(linux|win32|win64|windows|macos|darwin)(?=-|$)", "", base_name, flags=re.IGNORECASE)
-        
+
         # Eliminate version numbers (semantic versions)
         base_name = re.sub(r"-\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?(?=-|$)", "", base_name)
-        
+
         # Clean up any double hyphens or trailing hyphens
         base_name = re.sub(r"-+", "-", base_name)
         base_name = base_name.strip("-")
-        
+
         # Create flexible pattern that matches the cleaned base name with any suffixes
         escaped_base = re.escape(base_name)
         return f"(?i)^{escaped_base}.*\\.AppImage$"

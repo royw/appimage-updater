@@ -10,9 +10,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from loguru import logger
+from packaging import version
 
 from appimage_updater.core.info_file_service import InfoFileService
 from appimage_updater.core.version_parser import VersionParser
+
 
 if TYPE_CHECKING:
     from appimage_updater.config.models import ApplicationConfig
@@ -28,10 +30,10 @@ class LocalVersionService:
 
     def get_current_version(self, app_config: ApplicationConfig) -> str | None:
         """Get current version using priority: .info -> .current -> filename analysis.
-        
+
         Args:
             app_config: Application configuration
-            
+
         Returns:
             Current version string or None if not determinable
         """
@@ -65,7 +67,7 @@ class LocalVersionService:
         version = self.info_service.read_info_file(info_file)
         if version:
             return self.version_parser.normalize_version_string(version)
-        
+
         return None
 
     def _get_version_from_current_file(self, app_config: ApplicationConfig) -> str | None:
@@ -130,7 +132,6 @@ class LocalVersionService:
     def _select_newest_version(self, version_files: list[tuple[str, float, Path]]) -> str:
         """Select the newest version from the list of version files."""
         try:
-            from packaging import version
             # Sort by version (descending) then by modification time (newest first)
             version_files.sort(key=lambda x: (version.parse(x[0].lstrip("v")), x[1]), reverse=True)
             return self.version_parser.normalize_version_string(version_files[0][0])

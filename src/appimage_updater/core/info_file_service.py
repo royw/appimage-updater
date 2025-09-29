@@ -7,9 +7,11 @@ finding, reading, and writing .info files consistently across the application.
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from typing import TYPE_CHECKING
 
 from loguru import logger
+
 
 if TYPE_CHECKING:
     from appimage_updater.config.models import ApplicationConfig
@@ -20,17 +22,17 @@ class InfoFileService:
 
     def find_info_file(self, app_config: ApplicationConfig) -> Path | None:
         """Find .info file using multiple strategies.
-        
+
         Priority:
         1. Info file from .current files (rotation naming)
         2. Any existing .info files in directory
         3. Standard naming convention (fallback)
-        
+
         Returns:
             Path to .info file if found, None if no suitable file exists
         """
         download_dir = getattr(app_config, "download_dir", None) or Path.home() / "Downloads"
-        
+
         if not download_dir.exists():
             return None
 
@@ -51,10 +53,10 @@ class InfoFileService:
 
     def read_info_file(self, info_path: Path) -> str | None:
         """Read and parse .info file content.
-        
+
         Args:
             info_path: Path to the .info file
-            
+
         Returns:
             Parsed version string or None if reading failed
         """
@@ -70,18 +72,18 @@ class InfoFileService:
 
     def write_info_file(self, info_path: Path, version: str) -> bool:
         """Write version to .info file.
-        
+
         Args:
             info_path: Path where to write the .info file
             version: Version string to write
-            
+
         Returns:
             True if successful, False otherwise
         """
         try:
             # Ensure parent directory exists
             info_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Write version with standard format
             content = f"Version: {version}"
             info_path.write_text(content)
@@ -98,7 +100,7 @@ class InfoFileService:
             return None
 
         current_file = current_files[0]
-        
+
         # Look for .current.info file first (rotation naming)
         current_info_file = download_dir / f"{current_file.name}.info"
         if current_info_file.exists():
@@ -130,13 +132,12 @@ class InfoFileService:
         """Extract version number from complex version strings."""
         # Handle complex version strings like "OpenRGB_0.9_x86_64_b5f46e3.AppImage"
         # Extract the version part (e.g., "0.9")
-        import re
-        
+
         # Try to find semantic version pattern first
         semantic_match = re.search(r"(\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?)", content)
         if semantic_match:
             return semantic_match.group(1)
-        
+
         # Fallback to original content
         return content
 

@@ -7,17 +7,21 @@ repositories.
 
 from __future__ import annotations
 
+from pathlib import Path
 import re
+import tempfile
 import urllib.parse
-
 from warnings import deprecated
+
 from loguru import logger
 
+from .config.models import ApplicationConfig
 from .core.models import Release
+from .core.version_service import version_service
 from .repositories.base import RepositoryError
 from .repositories.domain_service import DomainKnowledgeService
-from .repositories.factory import get_repository_client_async
-from .core.version_service import version_service
+from .repositories.factory import detect_repository_type, get_repository_client_async
+
 
 def parse_github_url(url: str) -> tuple[str, str] | None:
     """Parse GitHub URL and extract owner/repo information.
@@ -102,28 +106,25 @@ async def generate_appimage_pattern_async(app_name: str, url: str) -> str:
     """
     try:
         # Create a minimal config for the repository service
-        from appimage_updater.config.models import ApplicationConfig
-        from pathlib import Path
-        
         temp_config = ApplicationConfig(
             name=app_name,
-            source_type="dynamic_download", 
+            source_type="dynamic_download",
             url=url,
-            download_dir=Path("/tmp"),
+            download_dir=Path(tempfile.gettempdir()),
             pattern="",
-            prerelease=False
+            prerelease=False,
         )
-        
+
         # Try to get pattern from centralized repository service
         pattern = await version_service.generate_pattern_from_repository(temp_config)
         if pattern:
             logger.debug(f"Generated pattern from repository releases: {pattern}")
             return pattern
-        
+
         # Fallback to old method if centralized service fails
         logger.debug("Centralized service failed, falling back to legacy method")
         return await _legacy_fetch_pattern(url)
-        
+
     except Exception as e:
         logger.debug(f"Error generating pattern from repository: {e}")
         return None
@@ -143,7 +144,7 @@ async def _legacy_fetch_pattern(url: str) -> str | None:
         if not target_files:
             logger.debug("No AppImage or ZIP files found in any releases")
             return None
-        
+
         if target_files:
             return version_service.generate_pattern_from_filename(target_files[0])
         return create_pattern_from_filenames(target_files, include_both_formats=True)
@@ -155,7 +156,7 @@ async def _legacy_fetch_pattern(url: str) -> str | None:
 # Legacy function - now redirects to centralized version service
 def _generate_improved_pattern(asset_name: str) -> str:
     """Generate regex pattern from asset name - now uses centralized version service.
-    
+
     Note: This function is deprecated. Use version_service.generate_pattern_from_filename() instead.
     """
     return version_service.generate_pattern_from_filename(asset_name)
@@ -164,7 +165,7 @@ def _generate_improved_pattern(asset_name: str) -> str:
 # Keep the old function name for backward compatibility
 async def fetch_appimage_pattern_from_github(url: str) -> str | None:
     """Legacy function name - now redirects to repository-agnostic version."""
-    return await fetch_appimage_pattern_from_repository(url)
+    return await generate_appimage_pattern_async("temp", url)
 
 
 def _categorize_asset_by_type_and_stability(asset_name: str, is_prerelease: bool, groups: dict[str, list[str]]) -> None:
