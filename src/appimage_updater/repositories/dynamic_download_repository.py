@@ -7,6 +7,7 @@ through JavaScript or API calls.
 from __future__ import annotations
 
 from datetime import datetime
+import httpx
 import logging
 import re
 from typing import Any
@@ -15,19 +16,13 @@ from urllib.parse import (
     urlparse,
 )
 
-import httpx
-
 from appimage_updater.core.models import (
     Asset,
     Release,
 )
-from appimage_updater.repositories.base import (
-    RepositoryClient,
-    RepositoryError,
-)
+from appimage_updater.core.version_service import version_service
+from appimage_updater.repositories.base import RepositoryClient, RepositoryError
 from appimage_updater.utils.version_utils import normalize_version_string
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -186,34 +181,9 @@ class DynamicDownloadRepository(RepositoryClient):
                     asset_names.append(asset.name)
         return asset_names
 
-    # noinspection PyMethodMayBeStatic
     def _generate_regex_pattern(self, asset_name: str) -> str:
-        """Generate regex pattern from asset name by eliminating variable identifiers."""
-        # Start with the asset name
-        pattern = asset_name
-
-        # Remove file extension to work with base name
-        base_name = re.sub(r"\.AppImage$", "", pattern, flags=re.IGNORECASE)
-
-        # Eliminate git commit hashes (6-8 hex characters, typically 7)
-        base_name = re.sub(r"-[a-fA-F0-9]{6,8}(?=-|$)", "", base_name)
-
-        # Eliminate architecture identifiers
-        base_name = re.sub(r"-(x86_64|amd64|i386|i686|arm64|armv7|armhf)(?=-|$)", "", base_name)
-
-        # Eliminate platform identifiers
-        base_name = re.sub(r"-(linux|win32|win64|windows|macos|darwin)(?=-|$)", "", base_name, flags=re.IGNORECASE)
-
-        # Eliminate version numbers (semantic versions)
-        base_name = re.sub(r"-\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?(?=-|$)", "", base_name)
-
-        # Clean up any double hyphens or trailing hyphens
-        base_name = re.sub(r"-+", "-", base_name)
-        base_name = base_name.strip("-")
-
-        # Create flexible pattern that matches the cleaned base name with any suffixes
-        escaped_base = re.escape(base_name)
-        return f"(?i)^{escaped_base}.*\\.AppImage$"
+        """Generate regex pattern using centralized version service."""
+        return version_service.generate_pattern_from_filename(asset_name)
 
     async def generate_pattern_from_releases(self, url: str) -> str | None:
         """Generate file pattern from releases."""
