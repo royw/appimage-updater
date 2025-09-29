@@ -228,6 +228,14 @@ async def generate_default_config(
     # Apply rotation settings
     _apply_rotation_config(config, rotation, retain, symlink, defaults, name)
 
+    # Apply symlink path independently of rotation (symlinks can exist without rotation)
+    if symlink:
+        config["symlink_path"] = str(Path(symlink).expanduser())
+    elif defaults:
+        default_symlink = defaults.get_default_symlink_path(name)
+        if default_symlink is not None:
+            config["symlink_path"] = str(default_symlink)
+
     return config, prerelease_auto_enabled
 
 
