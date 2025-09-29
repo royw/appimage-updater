@@ -189,9 +189,10 @@ tasks:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e {{.CLI_ARGS}}
 
   test:parallel:
-    desc: Run tests with pytest using multiple CPU cores (faster) - excludes regression tests
+    desc: Run tests with pytest - unit/functional/integration in parallel, E2E serially - excludes regression tests
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e -n auto {{.CLI_ARGS}}
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration -n auto {{.CLI_ARGS}}
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e {{.CLI_ARGS}}
 
   test:unit:
     desc: Run unit tests only
@@ -209,9 +210,9 @@ tasks:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/integration/ {{.CLI_ARGS}}
 
   test:e2e:
-    desc: Run end-to-end tests to validate core functionality
+    desc: Run end-to-end tests to validate core functionality (serially for test isolation)
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/ -v --tb=short --color=yes --no-cov -n auto
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/ -v --tb=short --color=yes --no-cov
 
   test:pattern-matching:
     desc: Test pattern matching functionality specifically

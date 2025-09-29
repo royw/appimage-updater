@@ -25,8 +25,14 @@ def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pat
     mock_response.json.return_value = []  # Empty releases list
     mock_response.raise_for_status.return_value = None
 
-    # Set up the async mock for the get method
+    # Set up the async mock for the get and head methods
     mock_client_instance.get.return_value = mock_response
+    mock_client_instance.head.return_value = mock_response
+    
+    # Fix transport close method to avoid RuntimeWarning
+    mock_transport = Mock()
+    mock_transport.close.return_value = None  # Synchronous close
+    mock_client_instance._transport = mock_transport
 
     # Set up the async context manager AND the direct client instance
     mock_httpx_client.return_value = mock_client_instance
