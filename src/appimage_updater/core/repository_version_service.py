@@ -17,7 +17,7 @@ from appimage_updater.repositories.factory import get_repository_client_async
 
 if TYPE_CHECKING:
     from appimage_updater.config.models import ApplicationConfig
-    from appimage_updater.repositories.models import Asset, Release
+    from appimage_updater.repositories.models import Asset, Release  # type: ignore[import-untyped]
 
 
 class RepositoryVersionService:
@@ -52,7 +52,8 @@ class RepositoryVersionService:
 
             # Return the latest version
             latest_release = filtered_releases[0]  # Releases are sorted by date descending
-            return latest_release.version
+            version_str: str = latest_release.version
+            return version_str
 
         except Exception as e:
             logger.debug(f"Failed to get latest version from {app_config.url}: {e}")

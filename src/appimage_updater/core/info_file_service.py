@@ -42,10 +42,11 @@ class InfoFileService:
             return info_path
 
         # Strategy 2: Look for any existing .info files in the directory
-        info_files = list(download_dir.glob("*.info"))
+        info_files: list[Path] = list(download_dir.glob("*.info"))
         if info_files:
             # Return the most recent .info file (sorted by name)
-            return sorted(info_files)[-1]
+            sorted_files: list[Path] = sorted(info_files)
+            return sorted_files[-1]
 
         # Strategy 3: Standard naming convention (may not exist)
         standard_path = download_dir / f"{app_config.name}.info"

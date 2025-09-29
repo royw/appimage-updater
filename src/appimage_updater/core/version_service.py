@@ -7,6 +7,7 @@ across the entire application.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from packaging import version
@@ -19,7 +20,7 @@ from appimage_updater.core.version_parser import VersionParser
 
 if TYPE_CHECKING:
     from appimage_updater.config.models import ApplicationConfig
-    from appimage_updater.repositories.models import Asset
+    from appimage_updater.repositories.models import Asset  # type: ignore[import-untyped]
 
 
 class VersionService:
@@ -29,7 +30,7 @@ class VersionService:
     delegating to specialized services while maintaining consistency.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize with all required services."""
         self.parser = VersionParser()
         self.info_service = InfoFileService()
@@ -71,15 +72,15 @@ class VersionService:
         return self.parser.normalize_version_string(version)
 
     # Info File Operations
-    def find_info_file(self, app_config: ApplicationConfig):
+    def find_info_file(self, app_config: ApplicationConfig) -> Path | None:
         """Find .info file for application."""
         return self.info_service.find_info_file(app_config)
 
-    def read_info_file(self, info_path) -> str | None:
+    def read_info_file(self, info_path: Path) -> str | None:
         """Read version from .info file."""
         return self.info_service.read_info_file(info_path)
 
-    def write_info_file(self, info_path, version: str) -> bool:
+    def write_info_file(self, info_path: Path, version: str) -> bool:
         """Write version to .info file."""
         return self.info_service.write_info_file(info_path, version)
 

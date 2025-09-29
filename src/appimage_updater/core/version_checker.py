@@ -288,10 +288,11 @@ class VersionChecker:
 
         # Look for any existing .info files in the directory
         if download_dir.exists():
-            info_files = list(download_dir.glob("*.info"))
+            info_files: list[Path] = list(download_dir.glob("*.info"))
             if info_files:
                 # Return the first .info file found (most recent by name)
-                return sorted(info_files)[-1]
+                sorted_files: list[Path] = sorted(info_files)
+                return sorted_files[-1]
 
         # Fallback to standard naming
         return download_dir / f"{app_config.name}.info"

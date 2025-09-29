@@ -98,7 +98,7 @@ def _is_download_url(path_parts: list[str]) -> bool:
     return len(path_parts) >= 4 and path_parts[2] == "releases" and path_parts[3] == "download"
 
 
-async def generate_appimage_pattern_async(app_name: str, url: str) -> str:
+async def generate_appimage_pattern_async(app_name: str, url: str) -> str | None:
     """Repository-agnostic pattern generation for use in async contexts.
 
     an accurate pattern. Works with GitHub, GitLab, and other repository types.
