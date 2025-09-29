@@ -220,7 +220,7 @@ async def generate_default_config(
     else:
         generated_pattern = await generate_appimage_pattern_async(name, url)
         final_pattern = generated_pattern if generated_pattern is not None else f"(?i)^{name}.*\\.AppImage$"
-    
+
     config = {
         "name": name,
         "source_type": "direct" if direct is True else detect_source_type(url),
