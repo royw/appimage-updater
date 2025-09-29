@@ -138,7 +138,7 @@ def test_version_extraction_patterns():
         ("TestApp-V2.3.1-alpha-Linux.AppImage.current", "2.3.1-alpha"),
         ("SomeApp_2025.09.03-Linux.AppImage.old", "2025.09.03"),
         ("App-1.0-Linux.AppImage", "1.0"),
-        ("NoVersionApp-Linux.AppImage", "NoVersionApp-Linux.AppImage"),  # Fallback
+        ("NoVersionApp-Linux.AppImage", None),  # No version found - correct behavior
     ]
 
     for filename, expected_version in test_cases:
