@@ -188,11 +188,32 @@ class DynamicDownloadRepository(RepositoryClient):
 
     # noinspection PyMethodMayBeStatic
     def _generate_regex_pattern(self, asset_name: str) -> str:
-        """Generate regex pattern from asset name."""
-        # Replace version-like patterns with regex
-        pattern = re.sub(r"\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?", r"[\\d\\.\\-\\w]+", asset_name)
-        pattern = pattern.replace(".", "\\.")
-        return f"^{pattern}$"
+        """Generate regex pattern from asset name by eliminating variable identifiers."""
+        # Start with the asset name
+        pattern = asset_name
+
+        # Remove file extension to work with base name
+        base_name = re.sub(r"\.AppImage$", "", pattern, flags=re.IGNORECASE)
+
+        # Eliminate git commit hashes (6-8 hex characters, typically 7)
+        base_name = re.sub(r"-[a-fA-F0-9]{6,8}(?=-|$)", "", base_name)
+
+        # Eliminate architecture identifiers
+        base_name = re.sub(r"-(x86_64|amd64|i386|i686|arm64|armv7|armhf)(?=-|$)", "", base_name)
+
+        # Eliminate platform identifiers
+        base_name = re.sub(r"-(linux|win32|win64|windows|macos|darwin)(?=-|$)", "", base_name, flags=re.IGNORECASE)
+
+        # Eliminate version numbers (semantic versions)
+        base_name = re.sub(r"-\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?(?=-|$)", "", base_name)
+
+        # Clean up any double hyphens or trailing hyphens
+        base_name = re.sub(r"-+", "-", base_name)
+        base_name = base_name.strip("-")
+
+        # Create flexible pattern that matches the cleaned base name with any suffixes
+        escaped_base = re.escape(base_name)
+        return f"(?i)^{escaped_base}.*\\.AppImage$"
 
     async def generate_pattern_from_releases(self, url: str) -> str | None:
         """Generate file pattern from releases."""
