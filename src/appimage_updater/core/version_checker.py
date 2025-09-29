@@ -9,8 +9,9 @@ from typing import Any
 from loguru import logger
 from packaging import version
 
+from appimage_updater.core.distribution_selector import select_best_distribution_asset
+
 from ..config.models import ApplicationConfig
-from ..distribution_selector import select_best_distribution_asset
 from ..events.event_bus import get_event_bus
 from ..events.progress_events import UpdateCheckEvent
 from ..repositories.base import (
