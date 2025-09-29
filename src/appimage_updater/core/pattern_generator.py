@@ -15,12 +15,12 @@ from warnings import deprecated
 
 from loguru import logger
 
-from .config.models import ApplicationConfig
-from .core.models import Release
-from .core.version_service import version_service
-from .repositories.base import RepositoryError
-from .repositories.domain_service import DomainKnowledgeService
-from .repositories.factory import detect_repository_type, get_repository_client_async
+from appimage_updater.config.models import ApplicationConfig
+from appimage_updater.core.models import Release
+from appimage_updater.core.version_service import version_service
+from appimage_updater.repositories.base import RepositoryError
+from appimage_updater.repositories.domain_service import DomainKnowledgeService
+from appimage_updater.repositories.factory import detect_repository_type, get_repository_client_async
 
 
 def parse_github_url(url: str) -> tuple[str, str] | None:

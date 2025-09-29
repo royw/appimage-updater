@@ -86,8 +86,8 @@ class TestDirectWorkflowIntegration:
             assert app_config["url"] == direct_url
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_no_direct_flag_defaults_to_github(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock
@@ -123,8 +123,8 @@ class TestDirectWorkflowIntegration:
             assert app_config["url"] == github_url
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_direct_flag_with_complex_options(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock

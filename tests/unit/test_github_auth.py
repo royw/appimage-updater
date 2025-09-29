@@ -368,7 +368,7 @@ class TestCLIAuthenticationIntegration:
     """Test CLI command integration with authentication."""
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_command_rate_limit_error_feedback(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_httpx_client: Mock,
@@ -384,7 +384,7 @@ class TestCLIAuthenticationIntegration:
         config_dir.mkdir()
 
         # Mock GitHub client to raise rate limit exception during prerelease detection
-        with patch("appimage_updater.pattern_generator.should_enable_prerelease") as mock_prerelease:
+        with patch("appimage_updater.core.pattern_generator.should_enable_prerelease") as mock_prerelease:
             mock_prerelease.side_effect = Exception("GitHub API rate limit exceeded")
 
             result = runner.invoke(app, [

@@ -13,10 +13,11 @@ from loguru import logger
 from rich.console import Console
 import typer
 
-from ..pattern_generator import (
+from appimage_updater.core.pattern_generator import (
     detect_source_type,
     generate_appimage_pattern_async,
 )
+
 from ..repositories.base import RepositoryError
 from ..repositories.factory import get_repository_client
 from ..ui.display import _replace_home_with_tilde

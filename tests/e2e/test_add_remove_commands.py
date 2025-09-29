@@ -55,8 +55,8 @@ def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pat
 
 # Standard GitHub mocks decorator - apply this to any test that makes GitHub API calls
 github_mocks = lambda func: patch('appimage_updater.repositories.factory.get_repository_client')(
-    patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')(
-        patch('appimage_updater.pattern_generator.should_enable_prerelease')(
+    patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')(
+        patch('appimage_updater.core.pattern_generator.should_enable_prerelease')(
             patch('appimage_updater.repositories.github.client.httpx.AsyncClient')(func)
         )
     )
@@ -67,8 +67,8 @@ class TestAddCommand:
     """Test the add command functionality."""
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_command_with_github_url(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -119,8 +119,8 @@ class TestAddCommand:
         assert app_config["checksum"]["enabled"] is True
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     def test_add_command_with_invalid_url(
         self, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
         runner: CliRunner, temp_config_dir: Path, tmp_path: Path
@@ -147,8 +147,8 @@ class TestAddCommand:
         assert len(config_files) == 1
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_command_with_different_repo_name(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -189,8 +189,8 @@ class TestAddCommand:
         assert app_config["pattern"] == "(?i)^MyApp.*\\.AppImage$"
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_command_with_existing_config_file(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -242,8 +242,8 @@ class TestAddCommand:
         assert "NewApp" in app_names
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_command_duplicate_name_error(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -277,8 +277,8 @@ class TestAddCommand:
         assert "already exists for application 'DuplicateApp'" in result2.stderr
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_command_path_expansion(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -333,8 +333,8 @@ class TestAddCommand:
         assert len(config_files) == 0
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_command_rotation_with_symlink_works(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -369,8 +369,8 @@ class TestAddCommand:
         assert app_config["symlink_path"].endswith("/bin/testapp.AppImage")
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_command_normalizes_download_url(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -411,8 +411,8 @@ class TestAddCommand:
         assert app_config["source_type"] == "github"
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_command_handles_releases_page_url(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -447,8 +447,8 @@ class TestAddCommand:
         assert app_config["url"] == "https://github.com/microsoft/vscode"
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_command_with_direct_flag(
         self,
@@ -500,8 +500,8 @@ class TestAddCommand:
         assert app_config["url"] == direct_url
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_command_with_no_direct_flag(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -534,8 +534,8 @@ class TestAddCommand:
         assert app_config["url"] == "https://github.com/user/nodirectapp"
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_command_direct_with_prerelease_and_rotation(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -583,8 +583,8 @@ class TestAddCommand:
         assert app_config["symlink_path"] == symlink_path
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_command_direct_flag_default_behavior(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -620,8 +620,8 @@ class TestRemoveCommand:
     """Test the remove command functionality."""
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_remove_command_with_confirmation_yes(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -661,8 +661,8 @@ class TestRemoveCommand:
         assert not config_file.exists()
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_remove_command_with_confirmation_no(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -695,8 +695,8 @@ class TestRemoveCommand:
         assert config_file.exists()
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_remove_command_nonexistent_app(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -726,8 +726,8 @@ class TestRemoveCommand:
         assert "Available applications: ExistingApp" in result.stdout
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_remove_command_case_insensitive(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
@@ -817,8 +817,8 @@ class TestRemoveCommand:
         assert "No applications found" in result.stdout
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_remove_command_non_interactive(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,

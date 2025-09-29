@@ -54,8 +54,8 @@ class TestPatternMatching:
             (directory / filename).touch()
 
     @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.pattern_generator.generate_appimage_pattern_async')
+    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
     @patch('appimage_updater.repositories.factory.get_repository_client_with_probing_sync')
     @patch('appimage_updater.core.version_checker.VersionChecker')
     def test_pattern_matching_with_suffixes(
