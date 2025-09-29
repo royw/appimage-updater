@@ -68,9 +68,7 @@ async def _try_registry_handlers(
     return None
 
 
-async def _try_fallback_handler(
-    url: str, timeout: int, user_agent: str | None, **kwargs: Any
-) -> RepositoryClient:
+async def _try_fallback_handler(url: str, timeout: int, user_agent: str | None, **kwargs: Any) -> RepositoryClient:
     """Try fallback dynamic download handler."""
     registry = get_repository_registry()
     fallback_handler = registry.get_handler("dynamic_download")
