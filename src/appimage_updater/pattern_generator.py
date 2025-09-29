@@ -10,6 +10,8 @@ from __future__ import annotations
 import re
 import urllib.parse
 
+from warnings import deprecated
+
 from loguru import logger
 
 from .core.models import Release
@@ -132,8 +134,8 @@ async def fetch_appimage_pattern_from_repository(url: str) -> str | None:
         known_handler = domain_service.get_handler_by_domain_knowledge(url)
         enable_probing = known_handler is None
 
-        # Get repository client using registry system
-        client = await get_repository_client_async(url, timeout=10, enable_probing=enable_probing)
+        # Get repository client using registry system (use longer timeout for pattern generation)
+        client = await get_repository_client_async(url, timeout=30, enable_probing=enable_probing)
         releases = await client.get_releases(url, limit=20)
         groups = _collect_release_files(releases)
         target_files = _select_target_files(groups)
@@ -213,6 +215,7 @@ def _select_target_files(groups: dict[str, list[str]]) -> list[str] | None:
     return _select_prerelease_files(groups)
 
 
+@deprecated("Use repository-specific pattern generation methods instead")
 def create_pattern_from_filenames(filenames: list[str], include_both_formats: bool = False) -> str:
     """Create a regex pattern from actual AppImage/ZIP filenames."""
     if not filenames:
