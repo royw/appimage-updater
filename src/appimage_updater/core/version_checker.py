@@ -18,7 +18,6 @@ from ..repositories.base import (
     RepositoryClient,
     RepositoryError,
 )
-from ..repositories.factory import get_repository_client_with_probing_sync
 from ..utils.version_utils import (
     create_nightly_version,
     normalize_version_string,
@@ -29,6 +28,7 @@ from .models import (
     Release,
     UpdateCandidate,
 )
+from .version_service import version_service
 
 
 # noinspection PyMethodMayBeStatic
