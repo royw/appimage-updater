@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-import subprocess
 
 from loguru import logger
 from rich.console import Console
@@ -127,112 +126,23 @@ class DistributionSelector:
         return len(similar) > 1 or self._is_uncommon_distribution()
 
     def _detect_current_distribution(self) -> DistributionInfo:
-        """Detect the current Linux distribution."""
-        # Try multiple methods to detect distribution
-
-        # Method 1: /etc/os-release
-        dist_info = self._parse_os_release()
-        if dist_info:
-            return dist_info
-
-        # Method 2: lsb_release command
-        dist_info = self._parse_lsb_release()
-        if dist_info:
-            return dist_info
-
-        # Method 3: /etc/issue
-        dist_info = self._parse_issue_file()
-        if dist_info:
-            return dist_info
-
+        """Detect the current Linux distribution using SystemInfo."""
+        system_info = get_system_info()
+        
+        if system_info.distribution and system_info.distribution != "unknown":
+            version = system_info.distribution_version or "unknown"
+            version_numeric = system_info.distribution_version_numeric or 0.0
+                
+            return DistributionInfo(
+                id=system_info.distribution,
+                version=version,
+                version_numeric=version_numeric
+            )
+        
         # Fallback: assume generic Linux
-        logger.warning("Could not detect distribution, assuming generic Linux")
+        logger.warning("Could not detect distribution from SystemInfo, assuming generic Linux")
         return DistributionInfo(id="linux", version="unknown", version_numeric=0.0)
 
-    # noinspection PyMethodMayBeStatic
-    def _parse_os_release_content(self, content: str) -> dict[str, str]:
-        """Parse os-release file content into key-value pairs."""
-        info = {}
-        for line in content.strip().split("\n"):
-            if "=" in line:
-                key, value = line.split("=", 1)
-                info[key] = value.strip("\"'")
-        return info
-
-    def _extract_distribution_info_from_os_release(self, info: dict[str, str]) -> DistributionInfo | None:
-        """Extract DistributionInfo from parsed os-release data."""
-        dist_id = info.get("ID", "").lower()
-        version_id = info.get("VERSION_ID", "")
-        version_codename = info.get("VERSION_CODENAME", "")
-
-        if not (dist_id and version_id):
-            return None
-
-        version_numeric = self._parse_version_number(version_id)
-        return DistributionInfo(
-            id=dist_id, version=version_id, version_numeric=version_numeric, codename=version_codename or None
-        )
-
-    def _parse_os_release(self) -> DistributionInfo | None:
-        """Parse /etc/os-release file."""
-        os_release_path = Path("/etc/os-release")
-        if not os_release_path.exists():
-            return None
-
-        try:
-            content = os_release_path.read_text()
-            info = self._parse_os_release_content(content)
-            return self._extract_distribution_info_from_os_release(info)
-
-        except (OSError, ValueError) as e:
-            logger.debug(f"Failed to parse /etc/os-release: {e}")
-
-        return None
-
-    def _parse_lsb_release(self) -> DistributionInfo | None:
-        """Parse output from lsb_release command."""
-        try:
-            result = subprocess.run(["/usr/bin/lsb_release", "-d"], capture_output=True, text=True, timeout=5)
-
-            if result.returncode != 0:
-                return None
-
-            # Example: "Description:	Ubuntu 25.04"
-            description = result.stdout.strip()
-            match = re.search(r"(\w+)\s+([\d.]+)", description)
-            if match:
-                dist_name = match.group(1).lower()
-                version = match.group(2)
-                version_numeric = self._parse_version_number(version)
-
-                return DistributionInfo(id=dist_name, version=version, version_numeric=version_numeric)
-
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError) as e:
-            logger.debug(f"Failed to run lsb_release: {e}")
-
-        return None
-
-    def _parse_issue_file(self) -> DistributionInfo | None:
-        """Parse /etc/issue file."""
-        issue_path = Path("/etc/issue")
-        if not issue_path.exists():
-            return None
-
-        try:
-            content = issue_path.read_text().strip()
-            # Example: "Ubuntu 25.04 \\n \\l"
-            match = re.search(r"(\w+)\s+([\d.]+)", content)
-            if match:
-                dist_name = match.group(1).lower()
-                version = match.group(2)
-                version_numeric = self._parse_version_number(version)
-
-                return DistributionInfo(id=dist_name, version=version, version_numeric=version_numeric)
-
-        except (OSError, ValueError) as e:
-            logger.debug(f"Failed to parse /etc/issue: {e}")
-
-        return None
 
     # noinspection PyMethodMayBeStatic
     def _parse_version_number(self, version_str: str) -> float:

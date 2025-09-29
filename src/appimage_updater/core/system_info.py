@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 import platform
+import re
+import subprocess
 
 from loguru import logger
 
@@ -26,6 +28,8 @@ class SystemInfo:
     supported_formats: set[str]  # .AppImage, .deb, .rpm, .dmg, .exe, etc.
     distribution: str | None = None  # ubuntu, fedora, etc.
     distribution_family: str | None = None  # debian, redhat, etc.
+    distribution_version: str | None = None  # 24.04, 40, etc.
+    distribution_version_numeric: float | None = None  # 24.04, 40.0, etc.
 
 
 @lru_cache(maxsize=1)
@@ -54,7 +58,7 @@ class SystemDetector:
         supported_formats = self._detect_supported_formats(platform_name)
 
         # Detect distribution (Linux only)
-        distribution, dist_family = self._detect_distribution() if platform_name == "linux" else (None, None)
+        distribution, dist_family, dist_version, dist_version_numeric = self._detect_distribution() if platform_name == "linux" else (None, None, None, None)
 
         system_info = SystemInfo(
             platform=platform_name,
@@ -64,6 +68,8 @@ class SystemDetector:
             supported_formats=supported_formats,
             distribution=distribution,
             distribution_family=dist_family,
+            distribution_version=dist_version,
+            distribution_version_numeric=dist_version_numeric,
         )
 
         logger.debug(f"Detected system: {system_info}")
@@ -163,13 +169,26 @@ class SystemDetector:
         self._add_linux_distribution_formats(formats)
         return formats
 
-    def _detect_distribution(self) -> tuple[str | None, str | None]:
-        """Detect Linux distribution and family."""
+    def _detect_distribution(self) -> tuple[str | None, str | None, str | None, float | None]:
+        """Detect Linux distribution, family, and version."""
         dist_info = self._get_distribution_info()
         if not dist_info:
-            return None, None
+            return None, None, None, None
 
         dist_id = dist_info.get("id", "").lower()
+        version = dist_info.get("version_id", "unknown")
+        
+        # Parse numeric version
+        version_numeric = None
+        if version and version != "unknown":
+            try:
+                # Extract first numeric part (e.g., "24.04" -> 24.04, "40" -> 40.0)
+                import re
+                match = re.search(r"(\d+(?:\.\d+)?)", version)
+                if match:
+                    version_numeric = float(match.group(1))
+            except (ValueError, AttributeError):
+                logger.debug(f"Could not parse version number from: {version}")
 
         # Map distributions to families
         family_mapping = {
@@ -197,11 +216,36 @@ class SystemDetector:
         }
 
         family = family_mapping.get(dist_id)
-        return dist_id, family
+        return dist_id, family, version, version_numeric
 
     # noinspection PyMethodMayBeStatic
     def _get_distribution_info(self) -> dict[str, str] | None:
-        """Get distribution information from /etc/os-release."""
+        """Get distribution information using comprehensive fallback detection.
+        
+        Tries multiple methods in order:
+        1. /etc/os-release (primary)
+        2. lsb_release command (fallback)
+        3. /etc/issue file (last resort)
+        """
+        # Method 1: /etc/os-release (primary)
+        info = self._parse_os_release()
+        if info:
+            return info
+            
+        # Method 2: lsb_release command (fallback)
+        info = self._parse_lsb_release()
+        if info:
+            return info
+            
+        # Method 3: /etc/issue file (last resort)
+        info = self._parse_issue_file()
+        if info:
+            return info
+            
+        return None
+
+    def _parse_os_release(self) -> dict[str, str] | None:
+        """Parse /etc/os-release file."""
         os_release_path = Path("/etc/os-release")
         if not os_release_path.exists():
             return None
@@ -217,6 +261,56 @@ class SystemDetector:
         except (OSError, ValueError) as e:
             logger.debug(f"Failed to parse /etc/os-release: {e}")
             return None
+
+    def _parse_lsb_release(self) -> dict[str, str] | None:
+        """Parse output from lsb_release command."""
+        try:
+            result = subprocess.run(["/usr/bin/lsb_release", "-d"], capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                description = result.stdout.strip()
+                # Parse description like "Description: Ubuntu 24.04 LTS"
+                if "ubuntu" in description.lower():
+                    # Extract version from description
+                    version_match = re.search(r"(\d+\.\d+)", description)
+                    if version_match:
+                        version = version_match.group(1)
+                        return {
+                            "id": "ubuntu",
+                            "version_id": version,
+                            "name": "Ubuntu"
+                        }
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError) as e:
+            logger.debug(f"Failed to run lsb_release: {e}")
+
+        return None
+
+    def _parse_issue_file(self) -> dict[str, str] | None:
+        """Parse /etc/issue file as last resort."""
+        issue_path = Path("/etc/issue")
+        if not issue_path.exists():
+            return None
+
+        try:
+            content = issue_path.read_text().lower()
+            
+            # Ubuntu detection
+            if "ubuntu" in content:
+                version_match = re.search(r"(\d+\.\d+)", content)
+                if version_match:
+                    version = version_match.group(1)
+                    return {
+                        "id": "ubuntu", 
+                        "version_id": version,
+                        "name": "Ubuntu"
+                    }
+                    
+            # Add other distributions as needed
+            # Fedora, CentOS, etc. can be added here
+            
+        except (OSError, ValueError) as e:
+            logger.debug(f"Failed to parse /etc/issue: {e}")
+
+        return None
 
 
 def get_system_info() -> SystemInfo:
