@@ -106,34 +106,235 @@ class TestAddCommand:
         e2e_environment: dict, runner: CliRunner, temp_config_dir: Path, tmp_path: Path
     ) -> None:
         """Test add command with valid GitHub URL (uses fallback for non-existent repo)."""
-        # Debug environment information
-        print(f"\n🔧 Test Environment Info:")
+        import os
+        import socket
+        from pathlib import Path as PathLib
+        
+        print(f"\n" + "="*80)
+        print(f"🔍 FULL INSTRUMENTATION: test_add_command_with_github_url")
+        print(f"="*80)
+        
+        # 1. Environment Analysis
+        print(f"\n📊 ENVIRONMENT ANALYSIS:")
+        print(f"  Process ID: {os.getpid()}")
+        print(f"  Current Working Dir: {os.getcwd()}")
         print(f"  Test ID: {e2e_environment['test_id']}")
-        print(f"  Config Dir: {temp_config_dir}")
-        print(f"  Global Test Config: {e2e_environment['test_config_dir']}")
-
+        print(f"  Isolated FS Root: {e2e_environment['isolated_fs']['root']}")
+        print(f"  Network Blocked: {e2e_environment['isolated_fs'].get('network_blocked', False)}")
+        
+        # 2. Environment Variables
+        print(f"\n🌍 ENVIRONMENT VARIABLES:")
+        env_vars_to_check = [
+            'HOME', 'TMPDIR', 'TMP', 'TEMP',
+            'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME',
+            'APPIMAGE_UPDATER_TEST_CONFIG_DIR',
+            'CI', 'GITHUB_ACTIONS', 'PYTEST_CURRENT_TEST'
+        ]
+        for var in env_vars_to_check:
+            value = os.environ.get(var, 'NOT_SET')
+            print(f"  {var}: {value}")
+        
+        # 3. Filesystem State
+        print(f"\n📁 FILESYSTEM STATE:")
+        print(f"  temp_config_dir: {temp_config_dir}")
+        print(f"  temp_config_dir exists: {temp_config_dir.exists()}")
+        print(f"  tmp_path: {tmp_path}")
+        print(f"  tmp_path exists: {tmp_path.exists()}")
+        
+        # Check if directories are in isolated filesystem
+        isolated_root = PathLib(e2e_environment['isolated_fs']['root'])
+        print(f"  temp_config_dir in isolated FS: {str(temp_config_dir).startswith(str(isolated_root))}")
+        print(f"  tmp_path in isolated FS: {str(tmp_path).startswith(str(isolated_root))}")
+        
+        # 4. Network Blocking Test
+        print(f"\n🌐 NETWORK BLOCKING TEST:")
+        try:
+            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            print(f"  ❌ Socket creation succeeded - network NOT blocked!")
+            test_socket.close()
+        except Exception as e:
+            print(f"  ✅ Socket creation blocked: {e}")
+        
+        # 5. Mock Setup
+        print(f"\n🎭 MOCK SETUP:")
         setup_github_mocks(mock_httpx_client, mock_repo_client, mock_pattern_gen, mock_prerelease)
-
+        print(f"  GitHub mocks configured")
+        
+        # 6. Command Preparation
         test_download_dir = tmp_path / "test-download"
-        result = runner.invoke(app, [
+        command_args = [
             "add", "TestApp",
             "https://github.com/user/testapp",
             str(test_download_dir),
             "--config-dir", str(temp_config_dir),
-            "--create-dir",  # Avoid interactive directory creation prompt
-            "--format", "plain"  # Use plain format to avoid ANSI color codes
-        ])
-
-        # Debug output if test fails
+            "--create-dir",
+            "--format", "plain"
+        ]
+        
+        print(f"\n🚀 COMMAND EXECUTION:")
+        print(f"  Command: {' '.join(command_args)}")
+        print(f"  Download dir: {test_download_dir}")
+        print(f"  Config dir: {temp_config_dir}")
+        
+        # 7. Execute Command with Detailed Monitoring
+        print(f"\n⚡ EXECUTING COMMAND...")
+        try:
+            result = runner.invoke(app, command_args)
+            print(f"  ✅ Command completed")
+        except Exception as e:
+            print(f"  ❌ Command execution failed: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
+        
+        # 8. Result Analysis
+        print(f"\n📋 RESULT ANALYSIS:")
+        print(f"  Exit code: {result.exit_code}")
+        print(f"  Stdout length: {len(result.stdout) if result.stdout else 0}")
+        print(f"  Has stderr: {hasattr(result, 'stderr') and bool(result.stderr)}")
+        print(f"  Has exception: {bool(result.exception)}")
+        
+        # 9. Detailed Output on Failure
         if result.exit_code != 0:
-            print(f"\n❌ Test failed with exit code: {result.exit_code}")
-            print(f"Stdout: {result.stdout}")
+            print(f"\n❌ FAILURE DETAILS:")
+            print(f"  Exit code: {result.exit_code}")
+            
+            if result.stdout:
+                print(f"\n📤 STDOUT ({len(result.stdout)} chars):")
+                print(f"{'─'*40}")
+                print(result.stdout)
+                print(f"{'─'*40}")
+            
             if hasattr(result, 'stderr') and result.stderr:
-                print(f"Stderr: {result.stderr}")
+                print(f"\n📥 STDERR ({len(result.stderr)} chars):")
+                print(f"{'─'*40}")
+                print(result.stderr)
+                print(f"{'─'*40}")
+            
             if result.exception:
-                print(f"Exception: {result.exception}")
+                print(f"\n💥 EXCEPTION:")
+                print(f"  Type: {type(result.exception).__name__}")
+                print(f"  Message: {result.exception}")
+                print(f"\n📚 TRACEBACK:")
                 import traceback
                 traceback.print_exception(type(result.exception), result.exception, result.exception.__traceback__)
+        else:
+            print(f"  ✅ Command succeeded!")
+            
+        # 10. Version Information
+        print(f"\n🔧 VERSION INFORMATION:")
+        import sys
+        import pytest
+        import unittest.mock
+        print(f"  Python: {sys.version}")
+        print(f"  Pytest: {pytest.__version__}")
+        print(f"  Mock: {unittest.mock.__version__ if hasattr(unittest.mock, '__version__') else 'built-in'}")
+        
+        # 11. Post-execution State - Detailed Filesystem Analysis
+        print(f"\n📊 POST-EXECUTION STATE:")
+        print(f"  test_download_dir: {test_download_dir}")
+        print(f"  test_download_dir exists: {test_download_dir.exists()}")
+        
+        # Check temp_config_dir contents
+        print(f"\n📁 CONFIG DIRECTORY ANALYSIS:")
+        print(f"  temp_config_dir: {temp_config_dir}")
+        print(f"  temp_config_dir exists: {temp_config_dir.exists()}")
+        if temp_config_dir.exists():
+            config_files = list(temp_config_dir.rglob("*"))
+            print(f"  Total files/dirs in config: {len(config_files)}")
+            for cf in sorted(config_files):
+                if cf.is_file():
+                    try:
+                        size = cf.stat().st_size
+                        print(f"    📄 {cf} ({size} bytes)")
+                        # Show content of small config files
+                        if size < 2000 and cf.suffix in ['.json', '.txt', '.conf']:
+                            try:
+                                content = cf.read_text()[:500]
+                                print(f"        Content preview: {content[:100]}...")
+                            except Exception as e:
+                                print(f"        Content read error: {e}")
+                    except Exception as e:
+                        print(f"    📄 {cf} (stat error: {e})")
+                else:
+                    print(f"    📁 {cf}/")
+        
+        # Check for expected AppImage Updater config files
+        expected_configs = [
+            temp_config_dir / "config.json",
+            temp_config_dir / "testapp.json",
+            temp_config_dir / "apps" / "testapp.json"
+        ]
+        print(f"\n🔍 EXPECTED CONFIG FILES:")
+        for expected in expected_configs:
+            exists = expected.exists()
+            print(f"  {expected}: {'✅ EXISTS' if exists else '❌ MISSING'}")
+            if exists:
+                try:
+                    size = expected.stat().st_size
+                    print(f"    Size: {size} bytes")
+                    if size < 1000:
+                        content = expected.read_text()
+                        print(f"    Content: {content}")
+                except Exception as e:
+                    print(f"    Read error: {e}")
+        
+        # 12. Isolated Filesystem Tree Dump
+        print(f"\n🌳 ISOLATED FILESYSTEM TREE:")
+        isolated_root = PathLib(e2e_environment['isolated_fs']['root'])
+        print(f"  Root: {isolated_root}")
+        
+        def dump_tree(path, prefix="", max_depth=4, current_depth=0):
+            if current_depth >= max_depth:
+                return
+            try:
+                if not path.exists():
+                    return
+                items = sorted(path.iterdir())
+                for i, item in enumerate(items):
+                    is_last = i == len(items) - 1
+                    current_prefix = "└── " if is_last else "├── "
+                    next_prefix = "    " if is_last else "│   "
+                    
+                    if item.is_file():
+                        try:
+                            size = item.stat().st_size
+                            print(f"  {prefix}{current_prefix}{item.name} ({size}b)")
+                        except:
+                            print(f"  {prefix}{current_prefix}{item.name} (stat error)")
+                    else:
+                        print(f"  {prefix}{current_prefix}{item.name}/")
+                        dump_tree(item, prefix + next_prefix, max_depth, current_depth + 1)
+            except PermissionError:
+                print(f"  {prefix}[Permission Denied]")
+            except Exception as e:
+                print(f"  {prefix}[Error: {e}]")
+        
+        # Dump key directories in isolated filesystem
+        key_dirs = [
+            isolated_root / "home",
+            isolated_root / "tmp", 
+            isolated_root / "etc",
+            isolated_root / "home" / ".config",
+            isolated_root / "home" / ".local",
+            isolated_root / "home" / "Applications"
+        ]
+        
+        for key_dir in key_dirs:
+            if key_dir.exists():
+                print(f"\n  📁 {key_dir.relative_to(isolated_root)}:")
+                dump_tree(key_dir, "    ")
+        
+        # 13. Environment Variable Changes
+        print(f"\n🌍 ENVIRONMENT CHANGES DURING TEST:")
+        current_env_vars = {var: os.environ.get(var, 'NOT_SET') for var in env_vars_to_check}
+        print(f"  Current environment state:")
+        for var, value in current_env_vars.items():
+            print(f"    {var}: {value}")
+        
+        print(f"\n" + "="*80)
+        print(f"🏁 COMPREHENSIVE INSTRUMENTATION COMPLETE")
+        print(f"="*80)
 
         # Strip ANSI color codes for clean assertions
         clean_stdout = strip_ansi_codes(result.stdout)

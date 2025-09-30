@@ -298,17 +298,39 @@ def e2e_auto_isolation(isolated_filesystem):
 
 
 @pytest.fixture
-def temp_config_dir():
-    """Create a temporary configuration directory."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        yield Path(tmp_dir)
+def temp_config_dir(request):
+    """Create a temporary configuration directory in isolated filesystem."""
+    # Check if we're in an E2E test with isolation
+    if 'isolated_filesystem' in request.fixturenames:
+        isolated_fs = request.getfixturevalue('isolated_filesystem')
+        # Create temp directory in isolated filesystem
+        isolated_tmp = isolated_fs['tmp']
+        config_dir = isolated_tmp / f"config_{os.getpid()}_{threading.get_ident()}"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        yield config_dir
+        # Cleanup is handled by isolated_filesystem fixture
+    else:
+        # Fallback for non-E2E tests
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            yield Path(tmp_dir)
 
 
 @pytest.fixture
-def temp_download_dir():
-    """Create a temporary download directory."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        yield Path(tmp_dir)
+def temp_download_dir(request):
+    """Create a temporary download directory in isolated filesystem."""
+    # Check if we're in an E2E test with isolation
+    if 'isolated_filesystem' in request.fixturenames:
+        isolated_fs = request.getfixturevalue('isolated_filesystem')
+        # Create temp directory in isolated filesystem
+        isolated_tmp = isolated_fs['tmp']
+        download_dir = isolated_tmp / f"download_{os.getpid()}_{threading.get_ident()}"
+        download_dir.mkdir(parents=True, exist_ok=True)
+        yield download_dir
+        # Cleanup is handled by isolated_filesystem fixture
+    else:
+        # Fallback for non-E2E tests
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            yield Path(tmp_dir)
 
 
 @pytest.fixture
