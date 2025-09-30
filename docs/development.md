@@ -341,6 +341,8 @@ task test -- -v                    # Verbose test output
 task version:show                  # Show current version
 ```
 
+For detailed CI/CD debugging and troubleshooting, see the [CI Debugging Guide](ci-debugging.md).
+
 ### Quick Documentation Commands
 
 ```bash
