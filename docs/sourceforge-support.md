@@ -127,18 +127,19 @@ appimage-updater add MyApp https://sourceforge.net/projects/myapp/files/ \
 SourceForge doesn't provide a traditional API for releases, so AppImage Updater uses intelligent HTML scraping:
 
 1. **Pattern Matching**: Searches for `.AppImage` files in the HTML content
-2. **URL Resolution**: Converts relative URLs to absolute download URLs
-3. **Direct Downloads**: Automatically appends `/download` to file URLs for direct downloads
+1. **URL Resolution**: Converts relative URLs to absolute download URLs
+1. **Direct Downloads**: Automatically appends `/download` to file URLs for direct downloads
 
 ### File Size Detection
 
 Unlike GitHub/GitLab, SourceForge HTML pages don't include file sizes. AppImage Updater solves this by:
 
 1. **HEAD Requests**: Makes lightweight HEAD requests to each download URL
-2. **Content-Length**: Extracts file size from HTTP headers
-3. **Progress Display**: Shows accurate download progress (e.g., `145.8/145.8 MB`)
+1. **Content-Length**: Extracts file size from HTTP headers
+1. **Progress Display**: Shows accurate download progress (e.g., `145.8/145.8 MB`)
 
 Example output:
+
 ```
 ScribusDev ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100.0% • 145.8/145.8 MB • 2.9 MB/s • 0:00:00
 ```
@@ -159,6 +160,7 @@ AppImage Updater automatically detects prereleases based on keywords in filename
 - `alpha`, `beta`, `rc`, `pre`, `dev`, `nightly`, `snapshot`
 
 Example:
+
 ```bash
 # Enable prerelease monitoring
 appimage-updater add MyApp https://sourceforge.net/projects/myapp/files/ --prerelease true
@@ -192,14 +194,14 @@ appimage-updater add MyApp https://sourceforge.net/projects/myapp/files/
    # Copy the URL of the directory containing AppImage files
    ```
 
-2. Check if AppImage files are in a subdirectory:
+1. Check if AppImage files are in a subdirectory:
 
    ```bash
    # Use the full path to the directory
    appimage-updater add MyApp https://sourceforge.net/projects/myapp/files/releases/latest/
    ```
 
-3. Verify the files are actually AppImages (end with `.AppImage` or `.appimage`)
+1. Verify the files are actually AppImages (end with `.AppImage` or `.appimage`)
 
 ### File Size Shows as 0 Bytes
 
@@ -210,9 +212,9 @@ appimage-updater add MyApp https://sourceforge.net/projects/myapp/files/
 This should not occur with the current implementation. If it does:
 
 1. Check network connectivity to SourceForge
-2. Verify the download URL is accessible
-3. Try manually accessing the URL in a browser
-4. Report the issue with the specific URL
+1. Verify the download URL is accessible
+1. Try manually accessing the URL in a browser
+1. Report the issue with the specific URL
 
 ### Download Speed Issues
 
@@ -221,9 +223,9 @@ This should not occur with the current implementation. If it does:
 **Solutions**:
 
 1. SourceForge uses a mirror system - speeds vary by location
-2. Try downloading at different times of day
-3. Check your internet connection
-4. SourceForge may throttle downloads during peak times
+1. Try downloading at different times of day
+1. Check your internet connection
+1. SourceForge may throttle downloads during peak times
 
 ### Version Detection Issues
 
@@ -232,13 +234,14 @@ This should not occur with the current implementation. If it does:
 **Solutions**:
 
 1. Check the filename format on SourceForge
-2. Use a custom version pattern if needed:
+
+1. Use a custom version pattern if needed:
 
    ```bash
    appimage-updater edit MyApp --version-pattern "^[0-9]+\.[0-9]+\.[0-9]+$"
    ```
 
-3. Verify the AppImage filename includes version information
+1. Verify the AppImage filename includes version information
 
 ## Advanced Configuration
 
@@ -353,33 +356,33 @@ Or update the configuration file directly:
    appimage-updater add MyApp https://sourceforge.net/projects/myapp/
    ```
 
-2. **Enable File Rotation**: SourceForge projects may have many versions:
+1. **Enable File Rotation**: SourceForge projects may have many versions:
 
    ```bash
    appimage-updater add MyApp https://sourceforge.net/projects/myapp/files/ --rotation --retain-count 3
    ```
 
-3. **Use Symlinks**: Create stable paths for applications:
+1. **Use Symlinks**: Create stable paths for applications:
 
    ```bash
    appimage-updater add MyApp https://sourceforge.net/projects/myapp/files/ \
        --symlink-path ~/Applications/MyApp.AppImage
    ```
 
-4. **Test Configuration**: Use dry-run to test before downloading:
+1. **Test Configuration**: Use dry-run to test before downloading:
 
    ```bash
    appimage-updater check MyApp --dry-run
    ```
 
-5. **Monitor File Sizes**: Check that file sizes are detected correctly:
+1. **Monitor File Sizes**: Check that file sizes are detected correctly:
 
    ```bash
    appimage-updater show MyApp
    # Should show actual file sizes, not 0 bytes
    ```
 
-6. **Use Specific Patterns**: Avoid downloading wrong files:
+1. **Use Specific Patterns**: Avoid downloading wrong files:
 
    ```bash
    appimage-updater add MyApp https://sourceforge.net/projects/myapp/files/ \
@@ -440,10 +443,10 @@ appimage-updater show ScribusDev
 For SourceForge-specific issues:
 
 1. Check this documentation first
-2. Verify the SourceForge project has AppImage files in the specified directory
-3. Test the URL manually in a web browser
-4. Check that AppImage files are accessible (not in a restricted area)
-5. Report issues with specific error messages and project URLs
+1. Verify the SourceForge project has AppImage files in the specified directory
+1. Test the URL manually in a web browser
+1. Check that AppImage files are accessible (not in a restricted area)
+1. Report issues with specific error messages and project URLs
 
 SourceForge support is fully integrated with all existing AppImage Updater features, providing automatic updates for the many open-source projects hosted on SourceForge.
 
@@ -451,12 +454,12 @@ SourceForge support is fully integrated with all existing AppImage Updater featu
 
 | Feature | GitHub | GitLab | SourceForge |
 |---------|--------|--------|-------------|
-| **API Access** | ✅ REST API | ✅ REST API | ❌ HTML Scraping |
-| **Authentication** | ✅ PAT | ✅ PAT | ❌ Not Required |
-| **File Size** | ✅ In API | ✅ In API | ✅ HEAD Request |
-| **Prerelease Detection** | ✅ Native | ✅ Pattern-based | ✅ Pattern-based |
-| **Rate Limits** | ⚠️ 60/hour (unauth) | ⚠️ Limited | ✅ No API Limits |
-| **Speed** | ⚡ Fast | ⚡ Fast | 🐢 Moderate |
+| **API Access** | PASS REST API | PASS REST API | FAIL HTML Scraping |
+| **Authentication** | PASS PAT | PASS PAT | FAIL Not Required |
+| **File Size** | PASS In API | PASS In API | PASS HEAD Request |
+| **Prerelease Detection** | PASS Native | PASS Pattern-based | PASS Pattern-based |
+| **Rate Limits** | WARNING 60/hour (unauth) | WARNING Limited | PASS No API Limits |
+| **Speed** | EXECUTE Fast | EXECUTE Fast | 🐢 Moderate |
 | **Reliability** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
 
 SourceForge support provides a reliable way to manage AppImages from SourceForge projects, with automatic file size detection and intelligent version tracking.

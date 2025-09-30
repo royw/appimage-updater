@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from loguru import logger
@@ -168,8 +169,8 @@ class ShowCommand(Command):
         # Add URL
         parts.append(app.url)
 
-        # Add download directory
-        parts.append(str(app.download_dir))
+        # Add download directory (home-relative)
+        parts.append(self._to_home_relative_path(app.download_dir))
 
         # Add optional parameters if they differ from defaults
         self._add_boolean_flags(parts, app)
@@ -207,7 +208,7 @@ class ShowCommand(Command):
         if app.retain_count != 3:  # Default is 3
             parts.extend(["--retain", str(app.retain_count)])
         if app.symlink_path:
-            parts.extend(["--symlink", str(app.symlink_path)])
+            parts.extend(["--symlink", self._to_home_relative_path(app.symlink_path)])
 
     def _add_checksum_parameters(self, parts: list[str], app: Any) -> None:
         """Add checksum-related value parameters."""
@@ -228,6 +229,27 @@ class ShowCommand(Command):
         self._add_file_parameters(parts, app)
         self._add_checksum_parameters(parts, app)
         self._add_pattern_parameters(parts, app)
+
+    def _to_home_relative_path(self, path: Path | str) -> str:
+        """Convert an absolute path to a home-relative path using ~ notation.
+
+        Args:
+            path: The path to convert (can be Path object or string)
+
+        Returns:
+            String representation of the path, using ~ for home directory if applicable
+        """
+        path_obj = Path(path) if isinstance(path, str) else path
+        home = Path.home()
+
+        try:
+            # Check if path is under home directory
+            path_obj.relative_to(home)
+            # If successful, replace home with ~
+            return str(path_obj).replace(str(home), "~", 1)
+        except ValueError:
+            # Path is not under home directory, return as-is
+            return str(path_obj)
 
     def _get_config_source_info(self) -> dict[str, str]:
         """Get configuration source information for display."""
