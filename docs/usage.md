@@ -105,6 +105,7 @@ AppImage Updater supports multiple repository types with comprehensive documenta
 
 - **[GitHub Repositories](github-support.md)** - Full support for GitHub releases API with authentication and enterprise support
 - **[GitLab Repositories](gitlab-support.md)** - Complete GitLab integration for both gitlab.com and self-hosted instances
+- **[SourceForge Repositories](sourceforge-support.md)** - Complete SourceForge integration for both sourceforge.net and self-hosted instances
 - **[Direct Download URLs](direct-support.md)** - Static download links, "latest" symlinks, and dynamic download pages
 
 Each repository type has detailed documentation covering setup, authentication, troubleshooting, and advanced features.

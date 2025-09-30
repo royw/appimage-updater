@@ -144,6 +144,7 @@ nav:
   - Repository Support:
     - GitHub Repositories: github-support.md
     - GitLab Repositories: gitlab-support.md
+    - SourceForge Projects: sourceforge-support.md
     - Direct Downloads: direct-support.md
   - Feature Guides:
     - ZIP Support: zip-support.md
