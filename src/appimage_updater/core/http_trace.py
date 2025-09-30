@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Awaitable
-import time
 from typing import Any
-
-import httpx
 
 
 _http_trace_instance: HTTPTraceImpl | None = None
@@ -61,60 +57,3 @@ class HTTPTraceImpl:
     def set_output_formatter(self, output_formatter: Any) -> None:
         """Set the output formatter for trace messages."""
         self.output_formatter = output_formatter
-
-
-def enable_http_trace(output_formatter: Any = None) -> None:
-    """Enable HTTP tracing globally."""
-    tracer = getHTTPTrace(output_formatter)
-    tracer.enabled = True
-    if output_formatter:
-        output_formatter.print_message("HTTP TRACE: Starting request tracking")
-
-
-def disable_http_trace() -> None:
-    """Disable HTTP tracing globally."""
-    tracer = getHTTPTrace()
-    if tracer.enabled and tracer.output_formatter:
-        tracer.output_formatter.print_message("HTTP TRACE: Stopping request tracking")
-    tracer.enabled = False
-
-
-async def traced_get(client: httpx.AsyncClient, url: str, **kwargs: Any) -> Any:
-    """Traced version of httpx client.get()."""
-    start_time = time.time()
-    tracer = getHTTPTrace()
-    tracer.trace_request("GET", url)
-
-    try:
-        response = await client.get(url, **kwargs)
-        elapsed = time.time() - start_time
-        tracer.trace_response("GET", url, response.status_code, elapsed)
-        return response
-    except Exception as e:
-        elapsed = time.time() - start_time
-        tracer.trace_error("GET", url, e, elapsed)
-        raise
-
-
-def traced_progressive_get(progressive_client: Any, method_name: str, *args: Any, **kwargs: Any) -> Awaitable[Any]:
-    """Traced version of progressive timeout get methods."""
-
-    async def _traced_call() -> Any:
-        # Extract URL from args for tracing
-        url = args[0] if args else kwargs.get("url", "unknown")
-        start_time = time.time()
-        tracer = getHTTPTrace()
-        tracer.trace_request("GET", str(url))
-
-        try:
-            method = getattr(progressive_client, method_name)
-            response = await method(*args, **kwargs)
-            elapsed = time.time() - start_time
-            tracer.trace_response("GET", str(url), response.status_code, elapsed)
-            return response
-        except Exception as e:
-            elapsed = time.time() - start_time
-            tracer.trace_error("GET", str(url), e, elapsed)
-            raise
-
-    return _traced_call()

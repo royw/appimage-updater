@@ -68,18 +68,3 @@ def create_verbose_http_tracker(stack_depth: int = 3, track_headers: bool = Fals
     """
     verbose_logger = create_default_http_logger(verbose=True)
     return HTTPTracker(stack_depth=stack_depth, track_headers=track_headers, logger=verbose_logger)
-
-
-def create_trace_http_tracker(stack_depth: int = 3, track_headers: bool = False, use_rich: bool = True) -> HTTPTracker:
-    """Create HTTP tracker with real-time trace logging.
-
-    Args:
-        stack_depth: Number of stack frames to capture
-        track_headers: Whether to track request headers
-        use_rich: Whether to use Rich console for colored output
-
-    Returns:
-        HTTPTracker with trace logging for real-time monitoring
-    """
-    trace_logger = create_trace_http_logger(use_rich=use_rich)
-    return HTTPTracker(stack_depth=stack_depth, track_headers=track_headers, logger=trace_logger)

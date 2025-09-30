@@ -192,9 +192,3 @@ def get_http_client(**kwargs: Any) -> AsyncClient:
         AsyncClient instance that uses the global client with connection pooling
     """
     return AsyncClient(**kwargs)
-
-
-async def close_global_client() -> None:
-    """Close the global HTTP client. Call this on application shutdown."""
-    global_client = GlobalHTTPClient()
-    await global_client.close()
