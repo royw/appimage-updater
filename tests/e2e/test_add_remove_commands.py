@@ -39,8 +39,12 @@ def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pat
     mock_httpx_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
     mock_httpx_client.return_value.__aexit__ = AsyncMock(return_value=None)
 
-    # Mock repository client
+    # Mock repository client with all required methods
     mock_repo = Mock()
+    mock_repo.normalize_repo_url.return_value = ("https://github.com/user/repo", False)
+    mock_repo.parse_repo_url.return_value = ("user", "repo")
+    mock_repo.detect_repository_type.return_value = True
+    mock_repo.repository_type = "github"
     mock_repo_client.return_value = mock_repo
 
     # Mock async pattern generation
