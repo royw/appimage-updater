@@ -103,9 +103,15 @@ class TestAddCommand:
     @patch('appimage_updater.repositories.factory.get_repository_client')
     def test_add_command_with_github_url(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
-        runner: CliRunner, temp_config_dir: Path, tmp_path: Path
+        e2e_environment: dict, runner: CliRunner, temp_config_dir: Path, tmp_path: Path
     ) -> None:
         """Test add command with valid GitHub URL (uses fallback for non-existent repo)."""
+        # Debug environment information
+        print(f"\n🔧 Test Environment Info:")
+        print(f"  Test ID: {e2e_environment['test_id']}")
+        print(f"  Config Dir: {temp_config_dir}")
+        print(f"  Global Test Config: {e2e_environment['test_config_dir']}")
+
         setup_github_mocks(mock_httpx_client, mock_repo_client, mock_pattern_gen, mock_prerelease)
 
         test_download_dir = tmp_path / "test-download"
@@ -118,10 +124,20 @@ class TestAddCommand:
             "--format", "plain"  # Use plain format to avoid ANSI color codes
         ])
 
+        # Debug output if test fails
+        if result.exit_code != 0:
+            print(f"\n❌ Test failed with exit code: {result.exit_code}")
+            print(f"Stdout: {result.stdout}")
+            if hasattr(result, 'stderr') and result.stderr:
+                print(f"Stderr: {result.stderr}")
+            if result.exception:
+                print(f"Exception: {result.exception}")
+                import traceback
+                traceback.print_exception(type(result.exception), result.exception, result.exception.__traceback__)
 
         # Strip ANSI color codes for clean assertions
         clean_stdout = strip_ansi_codes(result.stdout)
-        
+
         assert result.exit_code == 0
         assert "Successfully added application" in clean_stdout
         assert "TestApp" in clean_stdout

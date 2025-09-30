@@ -268,7 +268,7 @@ class GlobalConfigManager(Manager):
     @staticmethod
     def get_default_config_path(ignore_env: bool = False) -> Path:
         """Get default configuration file path.
-        
+
         Args:
             ignore_env: If True, ignore environment variables (used when CLI args provided)
         """
@@ -283,7 +283,7 @@ class GlobalConfigManager(Manager):
     @staticmethod
     def get_default_config_dir(ignore_env: bool = False) -> Path:
         """Get default configuration directory path.
-        
+
         Args:
             ignore_env: If True, ignore environment variables (used when CLI args provided)
         """
