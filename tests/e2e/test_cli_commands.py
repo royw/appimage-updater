@@ -12,11 +12,16 @@ class TestE2EFunctionality:
 
     # init command tests removed - config directory is now created automatically
 
-    @patch('appimage_updater.repositories.factory.get_repository_client')
-    @patch('appimage_updater.core.update_operations.VersionChecker')
+    @patch("appimage_updater.repositories.factory.get_repository_client")
+    @patch("appimage_updater.core.update_operations.VersionChecker")
     def test_check_command_dry_run_no_updates_needed(
-            self, mock_version_checker_class, mock_repo_client_factory,
-            runner, temp_config_dir, sample_config, temp_download_dir
+        self,
+        mock_version_checker_class,
+        mock_repo_client_factory,
+        runner,
+        temp_config_dir,
+        sample_config,
+        temp_download_dir,
     ):
         """Test check command with dry-run when no updates are needed."""
         # Create config file
@@ -41,12 +46,12 @@ class TestE2EFunctionality:
                     name="TestApp-1.0.1-Linux-x86_64.AppImage",
                     url="https://example.com/test.AppImage",
                     size=1024000,
-                    created_at="2024-01-01T00:00:00Z"
+                    created_at="2024-01-01T00:00:00Z",
                 ),
                 download_path=temp_download_dir / "TestApp-1.0.1-Linux-x86_64.AppImage",
                 is_newer=False,
-                checksum_required=False
-            )
+                checksum_required=False,
+            ),
         )
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
@@ -56,11 +61,16 @@ class TestE2EFunctionality:
         assert result.exit_code == 0
         assert "Up to date" in result.stdout or "All applications are up to date" in result.stdout
 
-    @patch('appimage_updater.repositories.factory.get_repository_client')
-    @patch('appimage_updater.core.update_operations.VersionChecker')
+    @patch("appimage_updater.repositories.factory.get_repository_client")
+    @patch("appimage_updater.core.update_operations.VersionChecker")
     def test_check_command_dry_run_with_updates_available(
-            self, mock_version_checker_class, mock_repo_client_factory,
-            runner, temp_config_dir, sample_config, temp_download_dir
+        self,
+        mock_version_checker_class,
+        mock_repo_client_factory,
+        runner,
+        temp_config_dir,
+        sample_config,
+        temp_download_dir,
     ):
         """Test check command with dry-run when updates are available."""
         # Create config file
@@ -85,13 +95,13 @@ class TestE2EFunctionality:
                     name="TestApp-1.0.1-Linux-x86_64.AppImage",
                     url="https://example.com/test.AppImage",
                     size=1024000,
-                    created_at="2024-01-01T00:00:00Z"
+                    created_at="2024-01-01T00:00:00Z",
                 ),
                 download_path=temp_download_dir / "TestApp-1.0.1-Linux-x86_64.AppImage",
                 is_newer=True,
                 checksum_required=False,
-                app_config=None
-            )
+                app_config=None,
+            ),
         )
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
@@ -101,11 +111,16 @@ class TestE2EFunctionality:
         assert result.exit_code == 0
         assert "update available" in result.stdout
 
-    @patch('appimage_updater.repositories.factory.get_repository_client')
-    @patch('appimage_updater.core.update_operations.VersionChecker')
+    @patch("appimage_updater.repositories.factory.get_repository_client")
+    @patch("appimage_updater.core.update_operations.VersionChecker")
     def test_check_command_with_app_filter(
-            self, mock_version_checker_class, mock_repo_client_factory,
-            runner, temp_config_dir, sample_config, temp_download_dir
+        self,
+        mock_version_checker_class,
+        mock_repo_client_factory,
+        runner,
+        temp_config_dir,
+        sample_config,
+        temp_download_dir,
     ):
         """Test check command with specific app filtering."""
         # Create config with multiple apps
@@ -117,7 +132,7 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/testapp1",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"TestApp1.*\.AppImage$",
-                    "enabled": True
+                    "enabled": True,
                 },
                 {
                     "name": "TestApp2",
@@ -125,8 +140,8 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/testapp2",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"TestApp2.*\.AppImage$",
-                    "enabled": True
-                }
+                    "enabled": True,
+                },
             ]
         }
 
@@ -139,7 +154,7 @@ class TestE2EFunctionality:
         mock_check_result = CheckResult(
             app_name="TestApp1",
             success=True,
-            candidate=None  # No update needed
+            candidate=None,  # No update needed
         )
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
@@ -170,11 +185,10 @@ class TestE2EFunctionality:
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
 
-    @patch('appimage_updater.repositories.factory.get_repository_client')
-    @patch('appimage_updater.core.update_operations.VersionChecker')
+    @patch("appimage_updater.repositories.factory.get_repository_client")
+    @patch("appimage_updater.core.update_operations.VersionChecker")
     def test_check_command_with_failed_version_check(
-            self, mock_version_checker_class, mock_repo_client_factory,
-            runner, temp_config_dir, sample_config
+        self, mock_version_checker_class, mock_repo_client_factory, runner, temp_config_dir, sample_config
     ):
         """Test check command when version check fails."""
         # Create config file
@@ -185,10 +199,7 @@ class TestE2EFunctionality:
         # Mock version checker to return failed check
         mock_version_checker = Mock()
         mock_check_result = CheckResult(
-            app_name="TestApp",
-            success=False,
-            error_message="Failed to fetch releases",
-            candidate=None
+            app_name="TestApp", success=False, error_message="Failed to fetch releases", candidate=None
         )
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
@@ -206,13 +217,11 @@ class TestE2EFunctionality:
             json.dump(sample_config, f)
 
         # Mock to prevent actual network calls
-        with patch('appimage_updater.repositories.factory.get_repository_client'), \
-                patch('appimage_updater.core.version_checker.VersionChecker') as mock_vc:
-            mock_check_result = CheckResult(
-                app_name="TestApp",
-                success=True,
-                candidate=None
-            )
+        with (
+            patch("appimage_updater.repositories.factory.get_repository_client"),
+            patch("appimage_updater.core.version_checker.VersionChecker") as mock_vc,
+        ):
+            mock_check_result = CheckResult(app_name="TestApp", success=True, candidate=None)
             mock_vc.return_value.check_for_updates = AsyncMock(return_value=mock_check_result)
 
             result = runner.invoke(app, ["--debug", "check", "--config", str(config_file), "--dry-run"])
@@ -249,7 +258,7 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/enabledapp",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"EnabledApp.*\.AppImage$",
-                    "enabled": True
+                    "enabled": True,
                 },
                 {
                     "name": "DisabledApp",
@@ -257,8 +266,8 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/disabledapp",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"DisabledApp.*\.AppImage$",
-                    "enabled": False
-                }
+                    "enabled": False,
+                },
             ]
         }
 
@@ -301,7 +310,7 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/app1",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"App1.*\.AppImage$",
-                    "enabled": True
+                    "enabled": True,
                 }
             ]
         }
@@ -314,7 +323,7 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/app2",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"App2.*\.AppImage$",
-                    "enabled": True
+                    "enabled": True,
                 }
             ]
         }
@@ -368,7 +377,7 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/longpathapp",
                     "download_dir": long_path,
                     "pattern": r"LongPathApp.*\.AppImage$",
-                    "enabled": True
+                    "enabled": True,
                 }
             ]
         }
@@ -384,7 +393,7 @@ class TestE2EFunctionality:
         # Should show truncated path (starts with "...")
         assert "..." in result.stdout
         # Should not show the full very long path
-        lines = result.stdout.split('\n')
+        lines = result.stdout.split("\n")
         for line in lines:
             if "LongPathApp" in line:
                 # No single line should contain the full long path
@@ -407,8 +416,8 @@ class TestE2EFunctionality:
                         "enabled": True,
                         "pattern": "{filename}-SHA256.txt",
                         "algorithm": "sha256",
-                        "required": False
-                    }
+                        "required": False,
+                    },
                 }
             ]
         }
@@ -482,7 +491,7 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/missingdirapp",
                     "download_dir": "/nonexistent/directory",
                     "pattern": r"MissingDirApp.*\.AppImage$",
-                    "enabled": True
+                    "enabled": True,
                 }
             ]
         }
@@ -507,9 +516,7 @@ class TestE2EFunctionality:
                     "download_dir": str(temp_download_dir),
                     "pattern": r"DisabledApp.*\.AppImage$",
                     "enabled": False,
-                    "checksum": {
-                        "enabled": False
-                    }
+                    "checksum": {"enabled": False},
                 }
             ]
         }
@@ -534,7 +541,7 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/nofilesapp",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"NoFilesApp.*\.AppImage$",
-                    "enabled": True
+                    "enabled": True,
                 }
             ]
         }
@@ -561,7 +568,7 @@ class TestE2EFunctionality:
                     "url": "https://github.com/test/symlinkapp",
                     "download_dir": str(temp_download_dir),
                     "pattern": r"SymlinkApp.*\.AppImage(\..*)?$",
-                    "enabled": True
+                    "enabled": True,
                 }
             ]
         }

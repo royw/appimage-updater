@@ -42,19 +42,19 @@ class TestDistributionSelector:
                 name="BambuStudio_ubuntu-22.04_PR-8017.zip",
                 url="https://example.com/file.zip",
                 size=1000000,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             ),
             Asset(
                 name="BambuStudio_ubuntu-24.04_PR-8017.zip",
                 url="https://example.com/file.zip",
                 size=1000000,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             ),
             Asset(
                 name="Bambu_Studio_linux_fedora-v02.02.01.60.AppImage",
                 url="https://example.com/file.AppImage",
                 size=1000000,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             ),
         ]
 
@@ -81,7 +81,7 @@ class TestDistributionSelector:
         # Mock the _detect_current_distribution method directly to avoid CI/local version differences
         test_dist_info = DistributionInfo(id="ubuntu", version="22.04", version_numeric=22.04)
 
-        with patch.object(DistributionSelector, '_detect_current_distribution', return_value=test_dist_info):
+        with patch.object(DistributionSelector, "_detect_current_distribution", return_value=test_dist_info):
             selector = DistributionSelector(interactive=False)
 
             # The constructor calls _detect_current_distribution
@@ -93,11 +93,7 @@ class TestDistributionSelector:
         """Test compatibility score calculation."""
         # Mock Ubuntu 24.04 system (consistent with CI environment)
         selector = DistributionSelector(interactive=False)
-        selector.current_dist = DistributionInfo(
-            id="ubuntu",
-            version="24.04",
-            version_numeric=24.04
-        )
+        selector.current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
         # Test different assets
         assets = [
@@ -107,7 +103,7 @@ class TestDistributionSelector:
                 distribution="ubuntu",
                 version="24.04",
                 version_numeric=24.04,
-                format="appimage"
+                format="appimage",
             ),
             # Good match: Ubuntu 23.04 (older, compatible)
             AssetInfo(
@@ -115,7 +111,7 @@ class TestDistributionSelector:
                 distribution="ubuntu",
                 version="23.04",
                 version_numeric=23.04,
-                format="appimage"
+                format="appimage",
             ),
             # OK match: Ubuntu 22.04 (much older)
             AssetInfo(
@@ -123,7 +119,7 @@ class TestDistributionSelector:
                 distribution="ubuntu",
                 version="22.04",
                 version_numeric=22.04,
-                format="appimage"
+                format="appimage",
             ),
             # Poor match: Fedora
             AssetInfo(
@@ -131,7 +127,7 @@ class TestDistributionSelector:
                 distribution="fedora",
                 version="38",
                 version_numeric=38.0,
-                format="appimage"
+                format="appimage",
             ),
         ]
 
@@ -176,18 +172,18 @@ class TestDistributionSelector:
                 name="BambuStudio_ubuntu-24.04_PR-8017.zip",
                 url="https://example.com/file.zip",
                 size=1000000,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             ),
             Asset(
                 name="BambuStudio_fedora-38_PR-8017.zip",
                 url="https://example.com/file.zip",
                 size=1000000,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             ),
         ]
 
         # Mock Ubuntu 24.04 system (consistent with CI environment)
-        with patch.object(DistributionSelector, '_detect_current_distribution') as mock_detect:
+        with patch.object(DistributionSelector, "_detect_current_distribution") as mock_detect:
             mock_detect.return_value = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
             selector = DistributionSelector(interactive=False)
@@ -199,10 +195,7 @@ class TestDistributionSelector:
     def test_select_best_asset_single_asset(self):
         """Test that single asset is returned without analysis."""
         asset = Asset(
-            name="OnlyOption.AppImage",
-            url="https://example.com/file.AppImage",
-            size=1000000,
-            created_at=datetime.now()
+            name="OnlyOption.AppImage", url="https://example.com/file.AppImage", size=1000000, created_at=datetime.now()
         )
 
         selector = DistributionSelector(interactive=False)
@@ -217,7 +210,7 @@ class TestDistributionSelector:
                 name="app-ubuntu-24.04.AppImage",
                 url="https://example.com/file.AppImage",
                 size=1000000,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             ),
         ]
 
@@ -233,24 +226,24 @@ class TestDistributionSelector:
                 name="BambuStudio_ubuntu-22.04_PR-8017.zip",
                 url="https://example.com/ubuntu22.zip",
                 size=1000000,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             ),
             Asset(
                 name="BambuStudio_ubuntu-24.04_PR-8017.zip",
                 url="https://example.com/ubuntu24.zip",
                 size=1000000,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             ),
             Asset(
                 name="Bambu_Studio_linux_fedora-v02.02.01.60.AppImage",
                 url="https://example.com/fedora.AppImage",
                 size=1000000,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             ),
         ]
 
         # Mock Ubuntu 24.04 system (consistent with CI environment)
-        with patch.object(DistributionSelector, '_detect_current_distribution') as mock_detect:
+        with patch.object(DistributionSelector, "_detect_current_distribution") as mock_detect:
             mock_detect.return_value = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
             selector = DistributionSelector(interactive=False)

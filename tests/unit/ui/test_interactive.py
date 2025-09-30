@@ -79,10 +79,7 @@ class TestInteractiveAddHandler:
         mock_int_prompt = Mock()
 
         handler = InteractiveAddHandler(
-            console=mock_console,
-            prompt=mock_prompt,
-            confirm=mock_confirm,
-            int_prompt=mock_int_prompt
+            console=mock_console, prompt=mock_prompt, confirm=mock_confirm, int_prompt=mock_int_prompt
         )
 
         assert handler.console is mock_console
@@ -90,7 +87,7 @@ class TestInteractiveAddHandler:
         assert handler.confirm is mock_confirm
         assert handler.int_prompt is mock_int_prompt
 
-    @patch('appimage_updater.ui.interactive.get_repository_client')
+    @patch("appimage_updater.ui.interactive.get_repository_client")
     def test_interactive_add_command_success(self, mock_get_repo_client: Mock) -> None:
         """Test successful interactive add command flow."""
         # Setup mocks
@@ -106,19 +103,19 @@ class TestInteractiveAddHandler:
             "/home/user/Downloads",  # download_dir
             "sha256",  # checksum_algorithm
             "{filename}-SHA256.txt",  # checksum_pattern
-            "/home/user/bin/TestApp"  # symlink_path
+            "/home/user/bin/TestApp",  # symlink_path
         ]
 
         mock_confirm.responses = [
-            True,   # create_dir
-            True,   # rotation
-            True,   # symlink
-            True,   # checksum
+            True,  # create_dir
+            True,  # rotation
+            True,  # symlink
+            True,  # checksum
             False,  # checksum_required
             False,  # prerelease
             False,  # direct
-            True,   # auto_subdir
-            True    # final confirmation
+            True,  # auto_subdir
+            True,  # final confirmation
         ]
 
         mock_int_prompt.responses = [3]  # retain count
@@ -131,10 +128,7 @@ class TestInteractiveAddHandler:
 
         # Create handler with mocks
         handler = InteractiveAddHandler(
-            console=mock_console,
-            prompt=mock_prompt,
-            confirm=mock_confirm,
-            int_prompt=mock_int_prompt
+            console=mock_console, prompt=mock_prompt, confirm=mock_confirm, int_prompt=mock_int_prompt
         )
 
         # Execute
@@ -160,12 +154,17 @@ class TestInteractiveAddHandler:
         handler = InteractiveAddHandler(console=mock_console, confirm=mock_confirm)
 
         # Mock all the collection methods to return valid data
-        with patch.object(handler, '_collect_basic_add_settings', return_value={"name": "TestApp", "url": "https://github.com/user/repo"}), \
-             patch.object(handler, '_collect_rotation_add_settings', return_value={"rotation": True}), \
-             patch.object(handler, '_collect_checksum_add_settings', return_value={"checksum": True}), \
-             patch.object(handler, '_collect_advanced_add_settings', return_value={"prerelease": False}), \
-             patch.object(handler, '_display_add_summary'):
-
+        with (
+            patch.object(
+                handler,
+                "_collect_basic_add_settings",
+                return_value={"name": "TestApp", "url": "https://github.com/user/repo"},
+            ),
+            patch.object(handler, "_collect_rotation_add_settings", return_value={"rotation": True}),
+            patch.object(handler, "_collect_checksum_add_settings", return_value={"checksum": True}),
+            patch.object(handler, "_collect_advanced_add_settings", return_value={"prerelease": False}),
+            patch.object(handler, "_display_add_summary"),
+        ):
             result = handler.interactive_add_command()
 
         # Verify cancellation
@@ -180,7 +179,7 @@ class TestInteractiveAddHandler:
         handler = InteractiveAddHandler(console=mock_console)
 
         # Mock the first collection method to raise KeyboardInterrupt
-        with patch.object(handler, '_collect_basic_add_settings', side_effect=KeyboardInterrupt()):
+        with patch.object(handler, "_collect_basic_add_settings", side_effect=KeyboardInterrupt()):
             result = handler.interactive_add_command()
 
         # Verify keyboard interrupt handling
@@ -200,7 +199,7 @@ class TestInteractiveAddHandler:
         # The Panel object contains the text, so we check the call was made
         assert mock_console.print.called
 
-    @patch('appimage_updater.ui.interactive.get_repository_client')
+    @patch("appimage_updater.ui.interactive.get_repository_client")
     def test_collect_basic_add_settings(self, mock_get_repo_client: Mock) -> None:
         """Test basic settings collection."""
         mock_console = Mock()
@@ -217,11 +216,7 @@ class TestInteractiveAddHandler:
         mock_repo_client.parse_repo_url.return_value = None
         mock_get_repo_client.return_value = mock_repo_client
 
-        handler = InteractiveAddHandler(
-            console=mock_console,
-            prompt=mock_prompt,
-            confirm=mock_confirm
-        )
+        handler = InteractiveAddHandler(console=mock_console, prompt=mock_prompt, confirm=mock_confirm)
 
         result = handler._collect_basic_add_settings()
 
@@ -246,10 +241,7 @@ class TestInteractiveAddHandler:
         mock_prompt.responses = ["/home/user/bin/testapp"]  # symlink path
 
         handler = InteractiveAddHandler(
-            console=mock_console,
-            prompt=mock_prompt,
-            confirm=mock_confirm,
-            int_prompt=mock_int_prompt
+            console=mock_console, prompt=mock_prompt, confirm=mock_confirm, int_prompt=mock_int_prompt
         )
 
         result = handler._collect_rotation_add_settings("testapp")
@@ -267,10 +259,7 @@ class TestInteractiveAddHandler:
         # Setup responses
         mock_confirm.responses = [False]  # rotation disabled
 
-        handler = InteractiveAddHandler(
-            console=mock_console,
-            confirm=mock_confirm
-        )
+        handler = InteractiveAddHandler(console=mock_console, confirm=mock_confirm)
 
         result = handler._collect_rotation_add_settings("testapp")
 
@@ -289,11 +278,7 @@ class TestInteractiveAddHandler:
         mock_confirm.responses = [True, True]  # checksum enabled, required
         mock_prompt.responses = ["md5", "{filename}.md5"]  # algorithm, pattern
 
-        handler = InteractiveAddHandler(
-            console=mock_console,
-            prompt=mock_prompt,
-            confirm=mock_confirm
-        )
+        handler = InteractiveAddHandler(console=mock_console, prompt=mock_prompt, confirm=mock_confirm)
 
         result = handler._collect_checksum_add_settings()
 
@@ -311,10 +296,7 @@ class TestInteractiveAddHandler:
         # Setup responses
         mock_confirm.responses = [False]  # checksum disabled
 
-        handler = InteractiveAddHandler(
-            console=mock_console,
-            confirm=mock_confirm
-        )
+        handler = InteractiveAddHandler(console=mock_console, confirm=mock_confirm)
 
         result = handler._collect_checksum_add_settings()
 
@@ -332,10 +314,7 @@ class TestInteractiveAddHandler:
         # Setup responses
         mock_confirm.responses = [True, True]  # prerelease, auto_subdir
 
-        handler = InteractiveAddHandler(
-            console=mock_console,
-            confirm=mock_confirm
-        )
+        handler = InteractiveAddHandler(console=mock_console, confirm=mock_confirm)
 
         result = handler._collect_advanced_add_settings("https://github.com/user/repo")
 
@@ -352,10 +331,7 @@ class TestInteractiveAddHandler:
         # Setup responses
         mock_confirm.responses = [False, True, False]  # prerelease, direct, auto_subdir
 
-        handler = InteractiveAddHandler(
-            console=mock_console,
-            confirm=mock_confirm
-        )
+        handler = InteractiveAddHandler(console=mock_console, confirm=mock_confirm)
 
         result = handler._collect_advanced_add_settings("https://example.com/app.AppImage")
 
@@ -397,7 +373,7 @@ class TestInteractiveAddHandler:
         for url in invalid_urls:
             assert handler._check_basic_url_format(url) is False
 
-    @patch('appimage_updater.ui.interactive.get_repository_client')
+    @patch("appimage_updater.ui.interactive.get_repository_client")
     def test_validate_url_success(self, mock_get_repo_client: Mock) -> None:
         """Test URL validation success."""
         mock_repo_client = Mock()
@@ -409,7 +385,7 @@ class TestInteractiveAddHandler:
 
         assert handler._validate_url("https://github.com/user/repo") is True
 
-    @patch('appimage_updater.ui.interactive.get_repository_client')
+    @patch("appimage_updater.ui.interactive.get_repository_client")
     def test_validate_url_failure(self, mock_get_repo_client: Mock) -> None:
         """Test URL validation failure."""
         mock_console = Mock()
@@ -464,7 +440,7 @@ class TestInteractiveAddHandler:
 class TestBackwardCompatibility:
     """Test backward compatibility function."""
 
-    @patch('appimage_updater.ui.interactive.InteractiveAddHandler')
+    @patch("appimage_updater.ui.interactive.InteractiveAddHandler")
     def test_interactive_add_command_wrapper(self, mock_handler_class: Mock) -> None:
         """Test that the backward compatibility wrapper works."""
         from appimage_updater.ui.interactive import interactive_add_command

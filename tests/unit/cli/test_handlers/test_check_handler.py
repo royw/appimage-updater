@@ -19,7 +19,7 @@ class TestCheckCommandHandler:
 
     def test_init_creates_console(self):
         """Test that handler initializes with console."""
-        with patch('appimage_updater.cli.handlers.check_handler.Console') as mock_console_class:
+        with patch("appimage_updater.cli.handlers.check_handler.Console") as mock_console_class:
             mock_console = Mock()
             mock_console_class.return_value = mock_console
 
@@ -49,11 +49,11 @@ class TestCheckCommandHandler:
 
         # Verify it's a CommandInfo object
         command_info = app.registered_commands[0]
-        assert hasattr(command_info, 'name')
+        assert hasattr(command_info, "name")
 
     def test_version_callback_prints_version_and_exits(self):
         """Test that version callback prints version and exits."""
-        with patch('appimage_updater.cli.handlers.check_handler.Console'):
+        with patch("appimage_updater.cli.handlers.check_handler.Console"):
             handler = CheckCommandHandler()
 
             with pytest.raises(typer.Exit):
@@ -68,7 +68,7 @@ class TestCheckCommandHandler:
 
     def test_version_callback_no_exit_when_false(self):
         """Test that version callback does nothing when value is False."""
-        with patch('appimage_updater.cli.handlers.check_handler.Console'):
+        with patch("appimage_updater.cli.handlers.check_handler.Console"):
             handler = CheckCommandHandler()
 
             # Should not raise any exceptions
@@ -79,7 +79,7 @@ class TestCheckCommandHandler:
 
     def test_validate_options_success(self):
         """Test successful option validation."""
-        with patch('appimage_updater.cli.handlers.check_handler.Console'):
+        with patch("appimage_updater.cli.handlers.check_handler.Console"):
             handler = CheckCommandHandler()
 
             # Should not raise any exceptions
@@ -89,7 +89,7 @@ class TestCheckCommandHandler:
 
     def test_validate_options_mutually_exclusive_error(self):
         """Test validation error for mutually exclusive options."""
-        with patch('appimage_updater.cli.handlers.check_handler.Console'):
+        with patch("appimage_updater.cli.handlers.check_handler.Console"):
             handler = CheckCommandHandler()
 
             with pytest.raises(typer.Exit) as exc_info:
@@ -103,17 +103,12 @@ class TestCheckCommandHandler:
             assert "mutually exclusive" in error_message
             assert "--yes and --no" in error_message
 
-    @patch('appimage_updater.cli.handlers.check_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command')
-    def test_execute_check_command_success(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
-    ):
+    @patch("appimage_updater.cli.handlers.check_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command")
+    def test_execute_check_command_success(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
         """Test successful execution of check command."""
-        with patch('appimage_updater.cli.handlers.check_handler.Console'):
+        with patch("appimage_updater.cli.handlers.check_handler.Console"):
             handler = CheckCommandHandler()
 
             # Setup mocks
@@ -143,7 +138,7 @@ class TestCheckCommandHandler:
                 http_stack_depth=5,
                 http_track_headers=False,
                 trace=False,
-                output_format=OutputFormat.RICH
+                output_format=OutputFormat.RICH,
             )
 
             # Verify factory called with all parameters
@@ -162,7 +157,7 @@ class TestCheckCommandHandler:
                 http_stack_depth=5,
                 http_track_headers=False,
                 trace=False,
-                output_format=OutputFormat.RICH
+                output_format=OutputFormat.RICH,
             )
 
             # Verify formatter was created
@@ -173,17 +168,14 @@ class TestCheckCommandHandler:
             call_args = mock_asyncio_run.call_args[0][0]
             # This is the coroutine that was passed to asyncio.run
 
-    @patch('appimage_updater.cli.handlers.check_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command')
+    @patch("appimage_updater.cli.handlers.check_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command")
     def test_execute_check_command_with_json_format_calls_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that JSON format calls finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.check_handler.Console'):
+        with patch("appimage_updater.cli.handlers.check_handler.Console"):
             handler = CheckCommandHandler()
 
             # Setup mocks
@@ -213,23 +205,20 @@ class TestCheckCommandHandler:
                 instrument_http=False,
                 http_stack_depth=5,
                 http_track_headers=False,
-                trace=False
+                trace=False,
             )
 
             # Verify finalize was called for JSON format
             mock_formatter.finalize.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.check_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command')
+    @patch("appimage_updater.cli.handlers.check_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command")
     def test_execute_check_command_with_html_format_calls_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that HTML format calls finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.check_handler.Console'):
+        with patch("appimage_updater.cli.handlers.check_handler.Console"):
             handler = CheckCommandHandler()
 
             # Setup mocks
@@ -259,23 +248,20 @@ class TestCheckCommandHandler:
                 instrument_http=False,
                 http_stack_depth=5,
                 http_track_headers=False,
-                trace=False
+                trace=False,
             )
 
             # Verify finalize was called for HTML format
             mock_formatter.finalize.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.check_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command')
+    @patch("appimage_updater.cli.handlers.check_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command")
     def test_execute_check_command_rich_format_no_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that RICH format does not call finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.check_handler.Console'):
+        with patch("appimage_updater.cli.handlers.check_handler.Console"):
             handler = CheckCommandHandler()
 
             # Setup mocks
@@ -305,23 +291,20 @@ class TestCheckCommandHandler:
                 instrument_http=False,
                 http_stack_depth=5,
                 http_track_headers=False,
-                trace=False
+                trace=False,
             )
 
             # Verify finalize was NOT called for RICH format
             mock_formatter.finalize.assert_not_called()
 
-    @patch('appimage_updater.cli.handlers.check_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command')
+    @patch("appimage_updater.cli.handlers.check_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command")
     def test_execute_check_command_failure_raises_typer_exit(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that command failure raises typer.Exit with correct code."""
-        with patch('appimage_updater.cli.handlers.check_handler.Console'):
+        with patch("appimage_updater.cli.handlers.check_handler.Console"):
             handler = CheckCommandHandler()
 
             # Setup mocks
@@ -353,23 +336,18 @@ class TestCheckCommandHandler:
                     instrument_http=False,
                     http_stack_depth=5,
                     http_track_headers=False,
-                    trace=True
+                    trace=True,
                 )
 
             # Verify exit code matches command result
             assert exc_info.value.exit_code == 1
 
-    @patch('appimage_updater.cli.handlers.check_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command')
-    def test_execute_check_command_validation_failure(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
-    ):
+    @patch("appimage_updater.cli.handlers.check_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command")
+    def test_execute_check_command_validation_failure(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
         """Test that validation failure raises typer.Exit."""
-        with patch('appimage_updater.cli.handlers.check_handler.Console'):
+        with patch("appimage_updater.cli.handlers.check_handler.Console"):
             handler = CheckCommandHandler()
 
             # Execute command with invalid options (yes and no both True)
@@ -389,7 +367,7 @@ class TestCheckCommandHandler:
                     instrument_http=False,
                     http_stack_depth=5,
                     http_track_headers=False,
-                    trace=False
+                    trace=False,
                 )
 
             # Verify exit code is 1 for validation failure
@@ -402,55 +380,60 @@ class TestCheckCommandHandler:
 
     def test_execute_check_command_with_comprehensive_parameters(self):
         """Test execute command with comprehensive parameter set."""
-        with patch('appimage_updater.cli.handlers.check_handler.Console'):
+        with patch("appimage_updater.cli.handlers.check_handler.Console"):
             handler = CheckCommandHandler()
 
-            with patch('appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command') as mock_factory, \
-                 patch('appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params') as mock_formatter_factory, \
-                 patch('appimage_updater.cli.handlers.check_handler.asyncio.run') as mock_run:
+            with (
+                patch(
+                    "appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command"
+                ) as mock_factory,
+                patch(
+                    "appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params"
+                ) as mock_formatter_factory,
+                patch("appimage_updater.cli.handlers.check_handler.asyncio.run") as mock_run,
+            ):
+                # Setup mocks
+                mock_command = Mock()
+                mock_factory.return_value = mock_command
+                mock_command.params = Mock()
 
-                    # Setup mocks
-                    mock_command = Mock()
-                    mock_factory.return_value = mock_command
-                    mock_command.params = Mock()
+                success_result = CommandResult(success=True, message="Success")
+                mock_run.return_value = success_result
 
-                    success_result = CommandResult(success=True, message="Success")
-                    mock_run.return_value = success_result
+                # Execute with comprehensive parameters
+                handler._execute_check_command(
+                    app_names=["App1", "App2"],
+                    config_file=Path("/test/config.json"),
+                    config_dir=Path("/test/config"),
+                    dry_run=True,
+                    yes=True,
+                    no=False,
+                    no_interactive=True,
+                    verbose=True,
+                    debug=True,
+                    output_format=OutputFormat.JSON,
+                    info=True,
+                    instrument_http=True,
+                    http_stack_depth=10,
+                    http_track_headers=True,
+                    trace=True,
+                )
 
-                    # Execute with comprehensive parameters
-                    handler._execute_check_command(
-                                app_names=["App1", "App2"],
-                                config_file=Path("/test/config.json"),
-                                config_dir=Path("/test/config"),
-                                dry_run=True,
-                                yes=True,
-                                no=False,
-                                no_interactive=True,
-                                verbose=True,
-                                debug=True,
-                                output_format=OutputFormat.JSON,
-                                info=True,
-                                instrument_http=True,
-                                http_stack_depth=10,
-                                http_track_headers=True,
-                                trace=True
-                            )
-
-                    # Verify factory called with all parameters
-                    mock_factory.assert_called_once_with(
-                        app_names=["App1", "App2"],
-                        config_file=Path("/test/config.json"),
-                        config_dir=Path("/test/config"),
-                        dry_run=True,
-                        yes=True,
-                        no=False,
-                        no_interactive=True,
-                        verbose=True,
-                        debug=True,
-                        info=True,
-                        instrument_http=True,
-                        http_stack_depth=10,
-                        http_track_headers=True,
-                        trace=True,
-                        output_format=OutputFormat.JSON
-                    )
+                # Verify factory called with all parameters
+                mock_factory.assert_called_once_with(
+                    app_names=["App1", "App2"],
+                    config_file=Path("/test/config.json"),
+                    config_dir=Path("/test/config"),
+                    dry_run=True,
+                    yes=True,
+                    no=False,
+                    no_interactive=True,
+                    verbose=True,
+                    debug=True,
+                    info=True,
+                    instrument_http=True,
+                    http_stack_depth=10,
+                    http_track_headers=True,
+                    trace=True,
+                    output_format=OutputFormat.JSON,
+                )

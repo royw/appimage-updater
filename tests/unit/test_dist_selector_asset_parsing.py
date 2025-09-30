@@ -18,14 +18,14 @@ from appimage_updater.dist_selector.models import AssetInfo
 class TestParseAssetInfo:
     """Test cases for _parse_asset_info function."""
 
-    @patch('appimage_updater.dist_selector.asset_parsing.logger')
+    @patch("appimage_updater.dist_selector.asset_parsing.logger")
     def test_parse_ubuntu_complete(self, mock_logger: Mock) -> None:
         """Test parsing Ubuntu asset with complete information."""
         asset = Asset(
             name="myapp-ubuntu-24.04-x86_64.AppImage",
             url="https://example.com/app.AppImage",
             size=1024,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         result = _parse_asset_info(asset)
@@ -37,14 +37,11 @@ class TestParseAssetInfo:
         assert result.arch == "x86_64"
         assert result.format == "appimage"
 
-    @patch('appimage_updater.dist_selector.asset_parsing.logger')
+    @patch("appimage_updater.dist_selector.asset_parsing.logger")
     def test_parse_generic_no_info(self, mock_logger: Mock) -> None:
         """Test parsing generic asset with no distribution info."""
         asset = Asset(
-            name="generic-app.AppImage",
-            url="https://example.com/app.AppImage",
-            size=1024,
-            created_at=datetime.now()
+            name="generic-app.AppImage", url="https://example.com/app.AppImage", size=1024, created_at=datetime.now()
         )
 
         result = _parse_asset_info(asset)

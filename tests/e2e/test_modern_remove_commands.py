@@ -23,7 +23,7 @@ class TestModernRemoveCommand:
                     "pattern": f"(?i){app_name}.*\\.AppImage$",
                     "enabled": True,
                     "prerelease": False,
-                    "checksum": {"enabled": True}
+                    "checksum": {"enabled": True},
                 }
             ]
         }
@@ -34,25 +34,16 @@ class TestModernRemoveCommand:
 
         return config_file
 
-    def test_remove_existing_app_with_confirmation_yes(
-        self,
-        e2e_environment,
-        runner: CliRunner,
-        temp_config_dir: Path
-    ):
+    def test_remove_existing_app_with_confirmation_yes(self, e2e_environment, runner: CliRunner, temp_config_dir: Path):
         """Test removing an existing application with 'yes' confirmation."""
         # Create test config
-        config_file = self.create_test_config(
-            temp_config_dir, "TestRemoveApp", "https://github.com/user/testapp"
-        )
+        config_file = self.create_test_config(temp_config_dir, "TestRemoveApp", "https://github.com/user/testapp")
         assert config_file.exists()
 
         # Remove with 'yes' confirmation
-        result = runner.invoke(app, [
-            "remove", "TestRemoveApp",
-            "--config-dir", str(temp_config_dir),
-            "--format", "plain"
-        ], input="y\n")
+        result = runner.invoke(
+            app, ["remove", "TestRemoveApp", "--config-dir", str(temp_config_dir), "--format", "plain"], input="y\n"
+        )
 
         assert result.exit_code == 0
         assert "Successfully removed application 'TestRemoveApp'" in result.stdout
@@ -60,25 +51,16 @@ class TestModernRemoveCommand:
         # Verify config file was deleted
         assert not config_file.exists()
 
-    def test_remove_existing_app_with_confirmation_no(
-        self,
-        e2e_environment,
-        runner: CliRunner,
-        temp_config_dir: Path
-    ):
+    def test_remove_existing_app_with_confirmation_no(self, e2e_environment, runner: CliRunner, temp_config_dir: Path):
         """Test removing an existing application with 'no' confirmation."""
         # Create test config
-        config_file = self.create_test_config(
-            temp_config_dir, "TestKeepApp", "https://github.com/user/keepapp"
-        )
+        config_file = self.create_test_config(temp_config_dir, "TestKeepApp", "https://github.com/user/keepapp")
         assert config_file.exists()
 
         # Remove with 'no' confirmation
-        result = runner.invoke(app, [
-            "remove", "TestKeepApp",
-            "--config-dir", str(temp_config_dir),
-            "--format", "plain"
-        ], input="n\n")
+        result = runner.invoke(
+            app, ["remove", "TestKeepApp", "--config-dir", str(temp_config_dir), "--format", "plain"], input="n\n"
+        )
 
         assert result.exit_code == 0
         assert "Removal cancelled" in result.stdout
@@ -86,43 +68,27 @@ class TestModernRemoveCommand:
         # Verify config file still exists
         assert config_file.exists()
 
-    def test_remove_nonexistent_app(
-        self,
-        e2e_environment,
-        runner: CliRunner,
-        temp_config_dir: Path
-    ):
+    def test_remove_nonexistent_app(self, e2e_environment, runner: CliRunner, temp_config_dir: Path):
         """Test removing a non-existent application."""
-        result = runner.invoke(app, [
-            "remove", "NonExistentApp",
-            "--config-dir", str(temp_config_dir),
-            "--format", "plain"
-        ])
+        result = runner.invoke(
+            app, ["remove", "NonExistentApp", "--config-dir", str(temp_config_dir), "--format", "plain"]
+        )
 
         assert result.exit_code == 1
         # Error message might be in stdout or stderr depending on implementation
         error_output = result.stderr or result.stdout
         assert "No applications found" in error_output or "not found" in error_output
 
-    def test_remove_case_insensitive(
-        self,
-        e2e_environment,
-        runner: CliRunner,
-        temp_config_dir: Path
-    ):
+    def test_remove_case_insensitive(self, e2e_environment, runner: CliRunner, temp_config_dir: Path):
         """Test that remove command is case insensitive."""
         # Create test config with mixed case name
-        config_file = self.create_test_config(
-            temp_config_dir, "CaseSensitiveApp", "https://github.com/user/caseapp"
-        )
+        config_file = self.create_test_config(temp_config_dir, "CaseSensitiveApp", "https://github.com/user/caseapp")
         assert config_file.exists()
 
         # Remove using different case
-        result = runner.invoke(app, [
-            "remove", "casesensitiveapp",
-            "--config-dir", str(temp_config_dir),
-            "--format", "plain"
-        ], input="y\n")
+        result = runner.invoke(
+            app, ["remove", "casesensitiveapp", "--config-dir", str(temp_config_dir), "--format", "plain"], input="y\n"
+        )
 
         assert result.exit_code == 0
         assert "Successfully removed application 'CaseSensitiveApp'" in result.stdout
@@ -130,12 +96,7 @@ class TestModernRemoveCommand:
         # Verify config file was deleted
         assert not config_file.exists()
 
-    def test_remove_non_interactive(
-        self,
-        e2e_environment,
-        runner: CliRunner,
-        temp_config_dir: Path
-    ):
+    def test_remove_non_interactive(self, e2e_environment, runner: CliRunner, temp_config_dir: Path):
         """Test removing an application in non-interactive mode."""
         # Create test config
         config_file = self.create_test_config(
@@ -144,12 +105,18 @@ class TestModernRemoveCommand:
         assert config_file.exists()
 
         # Remove in non-interactive mode (should skip confirmation)
-        result = runner.invoke(app, [
-            "remove", "NonInteractiveApp",
-            "--config-dir", str(temp_config_dir),
-            "--format", "plain",
-            "--yes"  # Non-interactive flag
-        ])
+        result = runner.invoke(
+            app,
+            [
+                "remove",
+                "NonInteractiveApp",
+                "--config-dir",
+                str(temp_config_dir),
+                "--format",
+                "plain",
+                "--yes",  # Non-interactive flag
+            ],
+        )
 
         assert result.exit_code == 0
         assert "Successfully removed application 'NonInteractiveApp'" in result.stdout
@@ -157,12 +124,7 @@ class TestModernRemoveCommand:
         # Verify config file was deleted
         assert not config_file.exists()
 
-    def test_remove_from_multi_app_config(
-        self,
-        e2e_environment,
-        runner: CliRunner,
-        temp_config_dir: Path
-    ):
+    def test_remove_from_multi_app_config(self, e2e_environment, runner: CliRunner, temp_config_dir: Path):
         """Test removing one app from a config file with multiple apps."""
         # Create config with multiple apps
         config_data = {
@@ -175,7 +137,7 @@ class TestModernRemoveCommand:
                     "pattern": "(?i)App1.*\\.AppImage$",
                     "enabled": True,
                     "prerelease": False,
-                    "checksum": {"enabled": True}
+                    "checksum": {"enabled": True},
                 },
                 {
                     "name": "App2",
@@ -185,8 +147,8 @@ class TestModernRemoveCommand:
                     "pattern": "(?i)App2.*\\.AppImage$",
                     "enabled": True,
                     "prerelease": False,
-                    "checksum": {"enabled": True}
-                }
+                    "checksum": {"enabled": True},
+                },
             ]
         }
 
@@ -195,11 +157,7 @@ class TestModernRemoveCommand:
             json.dump(config_data, f, indent=2)
 
         # Remove one app
-        result = runner.invoke(app, [
-            "remove", "App1",
-            "--config", str(config_file),
-            "--format", "plain"
-        ], input="y\n")
+        result = runner.invoke(app, ["remove", "App1", "--config", str(config_file), "--format", "plain"], input="y\n")
 
         assert result.exit_code == 0
         assert "Successfully removed application 'App1'" in result.stdout

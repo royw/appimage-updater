@@ -15,8 +15,8 @@ from appimage_updater.main import app
 
 def strip_ansi(text: str) -> str:
     """Remove ANSI escape sequences from text for testing."""
-    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-    return ansi_escape.sub('', text)
+    ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+    return ansi_escape.sub("", text)
 
 
 def normalize_text(text: str) -> str:
@@ -26,11 +26,11 @@ def normalize_text(text: str) -> str:
     # Normalize whitespace - replace multiple whitespace chars with single spaces
     # but keep line breaks for structure
     lines = []
-    for line in clean.split('\n'):
+    for line in clean.split("\n"):
         # Replace multiple spaces/tabs with single space within each line
-        normalized_line = re.sub(r'[ \t]+', ' ', line.strip())
+        normalized_line = re.sub(r"[ \t]+", " ", line.strip())
         lines.append(normalized_line)
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 @pytest.fixture
@@ -69,10 +69,7 @@ def test_config_file(tmp_path):
 
 def test_rotation_without_symlink_no_traceback(runner, test_config_file):
     """Test that setting --rotation without symlink shows clean error (no traceback)."""
-    result = runner.invoke(
-        app,
-        ["edit", "TestApp", "--rotation", "--config", str(test_config_file)]
-    )
+    result = runner.invoke(app, ["edit", "TestApp", "--rotation", "--config", str(test_config_file)])
 
     assert result.exit_code == 1
     clean_output = normalize_text(result.stdout)
@@ -81,15 +78,12 @@ def test_rotation_without_symlink_no_traceback(runner, test_config_file):
     assert "specify one" in clean_output
     # Ensure no traceback is shown
     assert "Traceback" not in clean_output
-    assert "File \"/home/royw/src/appimage-updater/src/appimage_updater/main.py\"" not in clean_output
+    assert 'File "/home/royw/src/appimage-updater/src/appimage_updater/main.py"' not in clean_output
 
 
 def test_empty_symlink_path_validation(runner, test_config_file):
     """Test validation of empty symlink paths."""
-    result = runner.invoke(
-        app,
-        ["edit", "TestApp", "--symlink-path", "", "--config", str(test_config_file)]
-    )
+    result = runner.invoke(app, ["edit", "TestApp", "--symlink-path", "", "--config", str(test_config_file)])
 
     assert result.exit_code == 1
     clean_output = normalize_text(result.stdout)
@@ -102,8 +96,7 @@ def test_empty_symlink_path_validation(runner, test_config_file):
 def test_symlink_path_without_appimage_extension(runner, test_config_file):
     """Test validation of symlink paths without .AppImage extension."""
     result = runner.invoke(
-        app,
-        ["edit", "TestApp", "--symlink-path", "/tmp/invalid_path", "--config", str(test_config_file)]
+        app, ["edit", "TestApp", "--symlink-path", "/tmp/invalid_path", "--config", str(test_config_file)]
     )
 
     assert result.exit_code == 1
@@ -116,13 +109,7 @@ def test_valid_symlink_path_with_rotation(runner, test_config_file, tmp_path):
     symlink_path = tmp_path / "bin" / "testapp.AppImage"
 
     result = runner.invoke(
-        app,
-        [
-            "edit", "TestApp",
-            "--rotation",
-            "--symlink-path", str(symlink_path),
-            "--config", str(test_config_file)
-        ]
+        app, ["edit", "TestApp", "--rotation", "--symlink-path", str(symlink_path), "--config", str(test_config_file)]
     )
 
     assert result.exit_code == 0
@@ -142,12 +129,7 @@ def test_valid_symlink_path_with_rotation(runner, test_config_file, tmp_path):
 def test_symlink_path_expansion(runner, test_config_file):
     """Test that symlink paths are properly expanded (~ and ..)."""
     result = runner.invoke(
-        app,
-        [
-            "edit", "TestApp",
-            "--symlink-path", "~/testapp.AppImage",
-            "--config", str(test_config_file)
-        ]
+        app, ["edit", "TestApp", "--symlink-path", "~/testapp.AppImage", "--config", str(test_config_file)]
     )
 
     assert result.exit_code == 0
@@ -169,12 +151,7 @@ def test_symlink_path_normalization(runner, test_config_file, tmp_path):
     expected_path = tmp_path / "normalized.AppImage"
 
     result = runner.invoke(
-        app,
-        [
-            "edit", "TestApp",
-            "--symlink-path", str(complex_path),
-            "--config", str(test_config_file)
-        ]
+        app, ["edit", "TestApp", "--symlink-path", str(complex_path), "--config", str(test_config_file)]
     )
 
     assert result.exit_code == 0
@@ -190,10 +167,7 @@ def test_symlink_path_normalization(runner, test_config_file, tmp_path):
 
 def test_whitespace_only_symlink_path(runner, test_config_file):
     """Test validation of whitespace-only symlink paths."""
-    result = runner.invoke(
-        app,
-        ["edit", "TestApp", "--symlink-path", "   ", "--config", str(test_config_file)]
-    )
+    result = runner.invoke(app, ["edit", "TestApp", "--symlink-path", "   ", "--config", str(test_config_file)])
 
     assert result.exit_code == 1
     clean_output = normalize_text(result.stdout)
@@ -206,8 +180,7 @@ def test_whitespace_only_symlink_path(runner, test_config_file):
 def test_symlink_path_with_invalid_characters(runner, test_config_file):
     """Test validation of symlink paths with invalid characters."""
     result = runner.invoke(
-        app,
-        ["edit", "TestApp", "--symlink-path", "/tmp/invalid\x00chars.AppImage", "--config", str(test_config_file)]
+        app, ["edit", "TestApp", "--symlink-path", "/tmp/invalid\x00chars.AppImage", "--config", str(test_config_file)]
     )
 
     assert result.exit_code == 1
@@ -219,8 +192,7 @@ def test_symlink_path_with_invalid_characters(runner, test_config_file):
 def test_symlink_path_with_double_extension(runner, test_config_file):
     """Test validation of symlink paths with double extensions."""
     result = runner.invoke(
-        app,
-        ["edit", "TestApp", "--symlink-path", "/tmp/app.AppImage.old", "--config", str(test_config_file)]
+        app, ["edit", "TestApp", "--symlink-path", "/tmp/app.AppImage.old", "--config", str(test_config_file)]
     )
 
     assert result.exit_code == 1
@@ -235,8 +207,7 @@ def test_symlink_path_normalization_preserves_appimage_extension(runner, test_co
     mixed_case_path = tmp_path / "test.aPpImAgE"
 
     result = runner.invoke(
-        app,
-        ["edit", "TestApp", "--symlink-path", str(mixed_case_path), "--config", str(test_config_file)]
+        app, ["edit", "TestApp", "--symlink-path", str(mixed_case_path), "--config", str(test_config_file)]
     )
 
     # Should fail validation since we require exact .AppImage spelling
@@ -249,8 +220,7 @@ def test_symlink_path_normalization_preserves_appimage_extension(runner, test_co
 def test_symlink_path_with_newline_characters(runner, test_config_file):
     """Test validation of symlink paths with newline characters."""
     result = runner.invoke(
-        app,
-        ["edit", "TestApp", "--symlink-path", "/tmp/invalid\npath.AppImage", "--config", str(test_config_file)]
+        app, ["edit", "TestApp", "--symlink-path", "/tmp/invalid\npath.AppImage", "--config", str(test_config_file)]
     )
 
     assert result.exit_code == 1
@@ -262,8 +232,7 @@ def test_symlink_path_with_newline_characters(runner, test_config_file):
 def test_symlink_path_with_carriage_return(runner, test_config_file):
     """Test validation of symlink paths with carriage return characters."""
     result = runner.invoke(
-        app,
-        ["edit", "TestApp", "--symlink-path", "/tmp/invalid\rpath.AppImage", "--config", str(test_config_file)]
+        app, ["edit", "TestApp", "--symlink-path", "/tmp/invalid\rpath.AppImage", "--config", str(test_config_file)]
     )
 
     assert result.exit_code == 1
@@ -278,8 +247,7 @@ def test_symlink_path_validation_comprehensive(runner, test_config_file, tmp_pat
     valid_path = tmp_path / "apps" / "myapp.AppImage"
 
     result = runner.invoke(
-        app,
-        ["edit", "TestApp", "--symlink-path", str(valid_path), "--config", str(test_config_file)]
+        app, ["edit", "TestApp", "--symlink-path", str(valid_path), "--config", str(test_config_file)]
     )
 
     assert result.exit_code == 0

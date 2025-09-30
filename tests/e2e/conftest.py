@@ -17,7 +17,6 @@ from appimage_updater.core.models import Asset, Release
 
 def pytest_configure(config: pytest.Config) -> None:
     """Configure E2E tests to restore original httpx.AsyncClient.
-    
     This runs after the global conftest.py pytest_configure, so we can
     restore the original httpx.AsyncClient that was replaced with MockAsyncClient.
     This MUST happen before test modules are imported so @patch decorators work.
@@ -25,11 +24,13 @@ def pytest_configure(config: pytest.Config) -> None:
     # Restore original httpx.AsyncClient for E2E tests that use @patch decorators
     try:
         import httpx
-        if hasattr(httpx, '_original_AsyncClient'):
+
+        if hasattr(httpx, "_original_AsyncClient"):
             # Restore the original NOW so @patch decorators work when modules are imported
             httpx.AsyncClient = httpx._original_AsyncClient
     except ImportError:
         pass
+
 
 # Global lock to ensure E2E tests run sequentially
 _e2e_execution_lock = threading.Lock()
@@ -55,15 +56,19 @@ class NetworkBlockingSocket:
             # Strategy 1: Check if httpx.AsyncClient is currently patched
             try:
                 import appimage_updater.repositories.github.client as github_client
-                if hasattr(github_client, 'httpx'):
+
+                if hasattr(github_client, "httpx"):
                     httpx_module = github_client.httpx
-                    if hasattr(httpx_module, 'AsyncClient'):
+                    if hasattr(httpx_module, "AsyncClient"):
                         async_client_class = httpx_module.AsyncClient
                         # Check if it's a MagicMock (patched) or has mock attributes
                         import builtins
-                        if (hasattr(async_client_class, '_mock_name') or
-                            hasattr(async_client_class, 'return_value') or
-                            str(builtins.type(async_client_class).__name__) in ('MagicMock', 'AsyncMock', '_patch')):
+
+                        if (
+                            hasattr(async_client_class, "_mock_name")
+                            or hasattr(async_client_class, "return_value")
+                            or str(builtins.type(async_client_class).__name__) in ("MagicMock", "AsyncMock", "_patch")
+                        ):
                             is_mocked = True
             except (ImportError, AttributeError):
                 pass
@@ -82,10 +87,10 @@ class NetworkBlockingSocket:
 
                         # Check if we're in a test function
                         func_name = frame.f_code.co_name
-                        if func_name.startswith('test_'):
+                        if func_name.startswith("test_"):
                             # Check for mock-related variables in test function
                             for var_name in frame.f_locals.keys():
-                                if 'mock' in var_name.lower():
+                                if "mock" in var_name.lower():
                                     is_mocked = True
                                     break
 
@@ -110,7 +115,7 @@ class NetworkBlockingSocket:
 
     def __getattr__(self, name):
         """Delegate to real socket for allowed operations."""
-        if hasattr(self, '_real_socket'):
+        if hasattr(self, "_real_socket"):
             return getattr(self._real_socket, name)
         else:
             raise OSError("External network access blocked in E2E tests for complete isolation")
@@ -130,7 +135,7 @@ def _block_network_access():
         """Block external connections but allow local/internal ones."""
         host, port = address
         # Allow localhost connections for testing
-        if host in ('localhost', '127.0.0.1', '::1'):
+        if host in ("localhost", "127.0.0.1", "::1"):
             return original_create_connection(address, timeout, source_address)
         else:
             raise OSError(f"External network connection blocked: {host}:{port}")
@@ -154,8 +159,8 @@ def _restore_network_access(original_socket, original_create_connection, origina
     socket.create_connection = original_create_connection
     socket.socketpair = original_socketpair
     # Clean up our temporary attribute
-    if hasattr(socket, '_original_socket'):
-        delattr(socket, '_original_socket')
+    if hasattr(socket, "_original_socket"):
+        delattr(socket, "_original_socket")
 
 
 def _create_minimal_chroot(chroot_path: Path) -> None:
@@ -164,9 +169,21 @@ def _create_minimal_chroot(chroot_path: Path) -> None:
 
     # Create essential directories
     essential_dirs = [
-        "bin", "usr/bin", "usr/lib", "usr/lib64", "lib", "lib64",
-        "etc", "tmp", "home", "proc", "sys", "dev",
-        "usr/local/bin", "usr/local/lib", "usr/share"
+        "bin",
+        "usr/bin",
+        "usr/lib",
+        "usr/lib64",
+        "lib",
+        "lib64",
+        "etc",
+        "tmp",
+        "home",
+        "proc",
+        "sys",
+        "dev",
+        "usr/local/bin",
+        "usr/local/lib",
+        "usr/share",
     ]
 
     for dir_name in essential_dirs:
@@ -174,8 +191,12 @@ def _create_minimal_chroot(chroot_path: Path) -> None:
 
     # Copy essential system files (read-only)
     essential_files = [
-        "/etc/passwd", "/etc/group", "/etc/hosts", "/etc/resolv.conf",
-        "/etc/nsswitch.conf", "/etc/ld.so.conf"
+        "/etc/passwd",
+        "/etc/group",
+        "/etc/hosts",
+        "/etc/resolv.conf",
+        "/etc/nsswitch.conf",
+        "/etc/ld.so.conf",
     ]
 
     for file_path in essential_files:
@@ -201,25 +222,27 @@ def _create_minimal_chroot(chroot_path: Path) -> None:
 
     # Create a minimal /etc/os-release for distribution detection
     os_release = chroot_path / "etc/os-release"
-    os_release.write_text("""
+    os_release.write_text(
+        """
 ID=test
 NAME="Test Linux"
 VERSION="1.0"
 VERSION_ID="1.0"
 PRETTY_NAME="Test Linux 1.0"
-""".strip())
+""".strip()
+    )
 
 
 @pytest.fixture(scope="function")
 def isolated_filesystem():
     """Create a completely isolated filesystem environment.
-    
+
     This fixture:
     1. Creates a minimal filesystem tree
     2. Isolates the test from the host filesystem
     3. Provides a clean, reproducible environment
     4. Prevents access to non-test files
-    
+
     Note: Network blocking has been removed to allow mocked httpx.AsyncClient calls.
     Tests should use @patch decorators to mock network calls instead.
     """
@@ -257,7 +280,7 @@ def isolated_filesystem():
                     "config": chroot_path / "home" / ".config",
                     "isolated": True,
                     "method": "env_isolation_filesystem_only",
-                    "network_blocked": False
+                    "network_blocked": False,
                 }
             finally:
                 # Restore original environment
@@ -272,7 +295,7 @@ def isolated_filesystem():
 @pytest.fixture(scope="function")
 def e2e_environment_with_mock_support(isolated_filesystem, request):
     """E2E environment that allows mocked httpx.AsyncClient calls.
-    
+
     This fixture is for tests that use @patch decorators to mock network calls.
     It temporarily restores the original httpx.AsyncClient so @patch decorators can work.
     """
@@ -286,7 +309,7 @@ def e2e_environment_with_mock_support(isolated_filesystem, request):
         test_id = _e2e_test_counter
 
         # Get test name
-        test_name = request.node.name if hasattr(request, 'node') else f"test_{test_id}"
+        test_name = request.node.name if hasattr(request, "node") else f"test_{test_id}"
 
         # Determine environment type
         is_ci = os.getenv("CI", "false").lower() == "true"
@@ -295,15 +318,16 @@ def e2e_environment_with_mock_support(isolated_filesystem, request):
 
         # Temporarily restore original httpx.AsyncClient so @patch decorators can work
         import httpx
+
         # Don't restore the mock - keep the original for all E2E tests with mock support
-        if hasattr(httpx, '_original_AsyncClient') and not hasattr(httpx, '_e2e_restored'):
+        if hasattr(httpx, "_original_AsyncClient") and not hasattr(httpx, "_e2e_restored"):
             httpx.AsyncClient = httpx._original_AsyncClient
             httpx._e2e_restored = True  # Mark that we've restored it
-            print(f"  Restored original httpx.AsyncClient: {httpx.AsyncClient}")
-        elif hasattr(httpx, '_e2e_restored'):
-            print("  httpx.AsyncClient already restored for E2E tests")
+            print(f"  Restored original httpx.AsyncClient: {httpx.AsyncClient}")  # noqa: T201
+        elif hasattr(httpx, "_e2e_restored"):
+            print("  httpx.AsyncClient already restored for E2E tests")  # noqa: T201
         else:
-            print("  No global mock found, using original httpx.AsyncClient")
+            print("  No global mock found, using original httpx.AsyncClient")  # noqa: T201
 
         # Collect environment information
         env_info = {
@@ -316,23 +340,23 @@ def e2e_environment_with_mock_support(isolated_filesystem, request):
             "mock_support": True,
         }
 
-        print(f"\nVERSION E2E Test {test_id} with Mock Support:")
-        print(f"  test_name: {test_name}")
-        print(f"  env_type: {env_type}")
-        print("  mock_support: enabled")
+        print(f"\nVERSION E2E Test {test_id} with Mock Support:")  # noqa: T201
+        print(f"  test_name: {test_name}")  # noqa: T201
+        print(f"  env_type: {env_type}")  # noqa: T201
+        print("  mock_support: enabled")  # noqa: T201
 
         yield env_info
 
     finally:
         # Don't restore the blocking mock - keep using original for all E2E tests
         _e2e_execution_lock.release()
-        print(f"UNLOCK E2E Test {test_id} completed, lock released")
+        print(f"UNLOCK E2E Test {test_id} completed, lock released")  # noqa: T201
 
 
 @pytest.fixture(scope="function", autouse=True)
-def e2e_environment(isolated_filesystem, request):
+def e2e_environment(isolated_filesystem, request):  # noqa: T201
     """Validate and ensure proper E2E test environment with filesystem isolation.
-    
+
     This fixture:
     1. Enforces sequential execution of E2E tests
     2. Validates environment variables are properly set
@@ -341,7 +365,7 @@ def e2e_environment(isolated_filesystem, request):
     5. Logs environment information to files for local vs CI comparison
     """
     # Skip if test is using e2e_environment_with_mock_support
-    if 'e2e_environment_with_mock_support' in request.fixturenames:
+    if "e2e_environment_with_mock_support" in request.fixturenames:
         yield None
         return
 
@@ -355,7 +379,7 @@ def e2e_environment(isolated_filesystem, request):
         test_id = _e2e_test_counter
 
         # Get test name from pytest request
-        test_name = request.node.name if hasattr(request, 'node') else f"test_{test_id}"
+        test_name = request.node.name if hasattr(request, "node") else f"test_{test_id}"
 
         # Determine environment type
         is_ci = os.getenv("CI", "false").lower() == "true"
@@ -379,46 +403,49 @@ def e2e_environment(isolated_filesystem, request):
 
         # Validate sequential execution
         if env_info["pytest_xdist_worker"]:
-            pytest.fail(f"E2E test {test_id} is running in parallel worker {env_info['pytest_xdist_worker']}. "
-                       "E2E tests must run sequentially. Use --dist=no flag.")
+            pytest.fail(
+                f"E2E test {test_id} is running in parallel worker {env_info['pytest_xdist_worker']}. "
+                "E2E tests must run sequentially. Use --dist=no flag."
+            )
 
         # Log environment for debugging
-        print(f"\nVERSION E2E Test {test_id} Environment:")
-        print(f"  test_name: {test_name}")
-        print(f"  env_type: {env_type}")
+        print(f"\nVERSION E2E Test {test_id} Environment:")  # noqa: T201
+        print(f"  test_name: {test_name}")  # noqa: T201
+        print(f"  env_type: {env_type}")  # noqa: T201
         for key, value in env_info.items():
             if key == "isolated_fs":
-                print(f"  {key}: {value['method']} at {value['root']}")
+                print(f"  {key}: {value['method']} at {value['root']}")  # noqa: T201
             else:
-                print(f"  {key}: {value}")
+                print(f"  {key}: {value}")  # noqa: T201
 
         # Validate filesystem isolation
         fs_info = isolated_filesystem
-        print("  LOCK Filesystem Isolation:")
-        print(f"    Root: {fs_info['root']}")
-        print(f"    Home: {fs_info['home']}")
-        print(f"    Method: {fs_info['method']}")
-        print(f"    Network Blocked: {fs_info.get('network_blocked', False)}")
+        print("  LOCK Filesystem Isolation:")  # noqa: T201
+        print(f"    Root: {fs_info['root']}")  # noqa: T201
+        print(f"    Home: {fs_info['home']}")  # noqa: T201
+        print(f"    Method: {fs_info['method']}")  # noqa: T201
+        print(f"    Network Blocked: {fs_info.get('network_blocked', False)}")  # noqa: T201
 
         # Test network blocking
-        if fs_info.get('network_blocked'):
+        if fs_info.get("network_blocked"):
             try:
                 import socket
+
                 test_socket = socket.socket()
-                print("  FAIL Network blocking failed - socket creation succeeded")
+                print("  FAIL Network blocking failed - socket creation succeeded")  # noqa: T201
             except OSError as e:
                 if "Network access blocked" in str(e):
-                    print("  PASS Network access successfully blocked")
+                    print("  PASS Network access successfully blocked")  # noqa: T201
                 else:
-                    print(f"  WARNING  Network blocked with different error: {e}")
+                    print(f"  WARNING  Network blocked with different error: {e}")  # noqa: T201
 
         # Validate test isolation
         if env_info["test_config_dir"]:
             config_dir = Path(env_info["test_config_dir"])
             if config_dir.exists():
-                print(f"  WARNING  Global test config dir exists: {config_dir}")
+                print(f"  WARNING  Global test config dir exists: {config_dir}")  # noqa: T201
             else:
-                print(f"  PASS Global test config dir clean: {config_dir}")
+                print(f"  PASS Global test config dir clean: {config_dir}")  # noqa: T201
 
         # Return environment info for tests that need it
         yield env_info
@@ -447,10 +474,10 @@ def e2e_auto_isolation(isolated_filesystem):
 def temp_config_dir(request):
     """Create a temporary configuration directory in isolated filesystem."""
     # Check if we're in an E2E test with isolation
-    if 'isolated_filesystem' in request.fixturenames:
-        isolated_fs = request.getfixturevalue('isolated_filesystem')
+    if "isolated_filesystem" in request.fixturenames:
+        isolated_fs = request.getfixturevalue("isolated_filesystem")
         # Create temp directory in isolated filesystem
-        isolated_tmp = isolated_fs['tmp']
+        isolated_tmp = isolated_fs["tmp"]
         config_dir = isolated_tmp / f"config_{os.getpid()}_{threading.get_ident()}"
         config_dir.mkdir(parents=True, exist_ok=True)
         yield config_dir
@@ -465,10 +492,10 @@ def temp_config_dir(request):
 def temp_download_dir(request):
     """Create a temporary download directory in isolated filesystem."""
     # Check if we're in an E2E test with isolation
-    if 'isolated_filesystem' in request.fixturenames:
-        isolated_fs = request.getfixturevalue('isolated_filesystem')
+    if "isolated_filesystem" in request.fixturenames:
+        isolated_fs = request.getfixturevalue("isolated_filesystem")
         # Create temp directory in isolated filesystem
-        isolated_tmp = isolated_fs['tmp']
+        isolated_tmp = isolated_fs["tmp"]
         download_dir = isolated_tmp / f"download_{os.getpid()}_{threading.get_ident()}"
         download_dir.mkdir(parents=True, exist_ok=True)
         yield download_dir
@@ -496,8 +523,8 @@ def sample_config(temp_download_dir):
                     "enabled": True,
                     "pattern": "{filename}-SHA256.txt",
                     "algorithm": "sha256",
-                    "required": False
-                }
+                    "required": False,
+                },
             }
         ]
     }
@@ -515,9 +542,9 @@ def mock_release():
                 name="TestApp-1.0.1-Linux-x86_64.AppImage",
                 url="https://github.com/test/testapp/releases/download/v1.0.1/TestApp-1.0.1-Linux-x86_64.AppImage",
                 size=1024000,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
         ],
         is_prerelease=False,
-        is_draft=False
+        is_draft=False,
     )

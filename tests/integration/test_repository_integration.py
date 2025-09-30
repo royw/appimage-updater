@@ -82,7 +82,7 @@ class TestRepositoryFactory:
         """Test repository client creation with GitHub URL detection."""
         url = "https://github.com/user/repo"
 
-        with patch.object(GitHubRepository, 'detect_repository_type', return_value=True):
+        with patch.object(GitHubRepository, "detect_repository_type", return_value=True):
             client = get_repository_client(url)
 
         assert isinstance(client, GitHubRepository)
@@ -91,8 +91,8 @@ class TestRepositoryFactory:
         """Test repository client creation with dynamic download URL detection."""
         url = "https://example.com/releases"
 
-        with patch.object(GitHubRepository, 'detect_repository_type', return_value=False):
-            with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=True):
+        with patch.object(GitHubRepository, "detect_repository_type", return_value=False):
+            with patch.object(DynamicDownloadRepository, "detect_repository_type", return_value=True):
                 client = get_repository_client(url)
 
         assert isinstance(client, DynamicDownloadRepository)
@@ -101,9 +101,9 @@ class TestRepositoryFactory:
         """Test repository client creation with direct download URL detection."""
         url = "https://example.com/download.appimage"
 
-        with patch.object(GitHubRepository, 'detect_repository_type', return_value=False):
-            with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=False):
-                with patch.object(DirectDownloadRepository, 'detect_repository_type', return_value=True):
+        with patch.object(GitHubRepository, "detect_repository_type", return_value=False):
+            with patch.object(DynamicDownloadRepository, "detect_repository_type", return_value=False):
+                with patch.object(DirectDownloadRepository, "detect_repository_type", return_value=True):
                     client = get_repository_client(url)
 
         assert isinstance(client, DirectDownloadRepository)
@@ -112,9 +112,9 @@ class TestRepositoryFactory:
         """Test repository client creation when no suitable client is found falls back to dynamic download."""
         url = "https://unsupported.example.com"
 
-        with patch.object(GitHubRepository, 'detect_repository_type', return_value=False):
-            with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=False):
-                with patch.object(DirectDownloadRepository, 'detect_repository_type', return_value=False):
+        with patch.object(GitHubRepository, "detect_repository_type", return_value=False):
+            with patch.object(DynamicDownloadRepository, "detect_repository_type", return_value=False):
+                with patch.object(DirectDownloadRepository, "detect_repository_type", return_value=False):
                     # With unified interface, unknown URLs now fall back to dynamic download after probing
                     client = get_repository_client(url)
                     # Should fallback to DynamicDownloadRepository after probing fails
@@ -124,8 +124,8 @@ class TestRepositoryFactory:
         """Test repository type detection for GitHub."""
         url = "https://github.com/user/repo"
 
-        with patch.object(GitHubRepository, 'detect_repository_type', return_value=True):
-                repo_type = detect_repository_type(url)
+        with patch.object(GitHubRepository, "detect_repository_type", return_value=True):
+            repo_type = detect_repository_type(url)
 
         assert repo_type == "github"
 
@@ -133,9 +133,9 @@ class TestRepositoryFactory:
         """Test repository type detection for dynamic download."""
         url = "https://example.com/releases"
 
-        with patch.object(GitHubRepository, 'detect_repository_type', return_value=False):
-            with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=True):
-                    repo_type = detect_repository_type(url)
+        with patch.object(GitHubRepository, "detect_repository_type", return_value=False):
+            with patch.object(DynamicDownloadRepository, "detect_repository_type", return_value=True):
+                repo_type = detect_repository_type(url)
 
         assert repo_type == "dynamic_download"
 
@@ -143,10 +143,10 @@ class TestRepositoryFactory:
         """Test repository type detection for direct download."""
         url = "https://example.com/download.appimage"
 
-        with patch.object(GitHubRepository, 'detect_repository_type', return_value=False):
-            with patch.object(DynamicDownloadRepository, 'detect_repository_type', return_value=False):
-                with patch.object(DirectDownloadRepository, 'detect_repository_type', return_value=True):
-                        repo_type = detect_repository_type(url)
+        with patch.object(GitHubRepository, "detect_repository_type", return_value=False):
+            with patch.object(DynamicDownloadRepository, "detect_repository_type", return_value=False):
+                with patch.object(DirectDownloadRepository, "detect_repository_type", return_value=True):
+                    repo_type = detect_repository_type(url)
 
         assert repo_type == "direct_download"
 
@@ -155,10 +155,21 @@ class TestRepositoryFactory:
         url = "https://unknown.example.com"
 
         # Mock all handlers to return False for can_handle_url
-        with patch('appimage_updater.repositories.handlers.github_handler.GitHubHandler.can_handle_url', return_value=False):
-            with patch('appimage_updater.repositories.handlers.dynamic_handler.DynamicDownloadHandler.can_handle_url', return_value=False):
-                with patch('appimage_updater.repositories.handlers.direct_handler.DirectDownloadHandler.can_handle_url', return_value=False):
-                    with patch('appimage_updater.repositories.handlers.gitlab_handler.GitLabHandler.can_handle_url', return_value=False):
+        with patch(
+            "appimage_updater.repositories.handlers.github_handler.GitHubHandler.can_handle_url", return_value=False
+        ):
+            with patch(
+                "appimage_updater.repositories.handlers.dynamic_handler.DynamicDownloadHandler.can_handle_url",
+                return_value=False,
+            ):
+                with patch(
+                    "appimage_updater.repositories.handlers.direct_handler.DirectDownloadHandler.can_handle_url",
+                    return_value=False,
+                ):
+                    with patch(
+                        "appimage_updater.repositories.handlers.gitlab_handler.GitLabHandler.can_handle_url",
+                        return_value=False,
+                    ):
                         repo_type = detect_repository_type(url)
 
         # Should fallback to github for backward compatibility
@@ -180,18 +191,14 @@ class TestRepositoryFactory:
         custom_kwargs = {"custom_param": "test_value"}
 
         # Patch the GitHubRepository class where it's imported in the handler
-        with patch('appimage_updater.repositories.handlers.github_handler.GitHubRepository') as mock_github_class:
+        with patch("appimage_updater.repositories.handlers.github_handler.GitHubRepository") as mock_github_class:
             mock_client = Mock()
             mock_github_class.return_value = mock_client
 
             get_repository_client(url, source_type="github", **custom_kwargs)
 
         # Verify kwargs were passed to the constructor
-        mock_github_class.assert_called_once_with(
-            timeout=30,
-            user_agent=None,
-            custom_param="test_value"
-        )
+        mock_github_class.assert_called_once_with(timeout=30, user_agent=None, custom_param="test_value")
 
 
 class TestRepositoryClientBase:
@@ -210,6 +217,7 @@ class TestRepositoryClientBase:
 
     def test_repository_client_initialization_defaults(self):
         """Test repository client initialization with defaults."""
+
         # Create a concrete implementation for testing
         class TestRepositoryClient(RepositoryClient):
             # repository_type property was removed
@@ -246,6 +254,7 @@ class TestRepositoryClientBase:
 
     def test_repository_client_initialization_custom(self):
         """Test repository client initialization with custom values."""
+
         class TestRepositoryClient(RepositoryClient):
             # repository_type property was removed
 
@@ -291,10 +300,10 @@ class TestRepositoryIntegration:
         client = get_repository_client(url, source_type="github")
 
         assert isinstance(client, GitHubRepository)
-        assert hasattr(client, 'get_latest_release')
-        assert hasattr(client, 'get_latest_release_including_prerelease')
-        assert hasattr(client, 'get_releases')
-        assert hasattr(client, 'detect_repository_type')
+        assert hasattr(client, "get_latest_release")
+        assert hasattr(client, "get_latest_release_including_prerelease")
+        assert hasattr(client, "get_releases")
+        assert hasattr(client, "detect_repository_type")
         # repository_type property was removed
 
     def test_repository_factory_integration_with_direct_download(self):
@@ -305,10 +314,10 @@ class TestRepositoryIntegration:
         client = get_repository_client(url, source_type="direct_download")
 
         assert isinstance(client, DirectDownloadRepository)
-        assert hasattr(client, 'get_latest_release')
-        assert hasattr(client, 'get_latest_release_including_prerelease')
-        assert hasattr(client, 'get_releases')
-        assert hasattr(client, 'detect_repository_type')
+        assert hasattr(client, "get_latest_release")
+        assert hasattr(client, "get_latest_release_including_prerelease")
+        assert hasattr(client, "get_releases")
+        assert hasattr(client, "detect_repository_type")
         # repository_type property was removed
 
     def test_repository_factory_integration_with_dynamic_download(self):
@@ -319,10 +328,10 @@ class TestRepositoryIntegration:
         client = get_repository_client(url, source_type="dynamic_download")
 
         assert isinstance(client, DynamicDownloadRepository)
-        assert hasattr(client, 'get_latest_release')
-        assert hasattr(client, 'get_latest_release_including_prerelease')
-        assert hasattr(client, 'get_releases')
-        assert hasattr(client, 'detect_repository_type')
+        assert hasattr(client, "get_latest_release")
+        assert hasattr(client, "get_latest_release_including_prerelease")
+        assert hasattr(client, "get_releases")
+        assert hasattr(client, "detect_repository_type")
         # repository_type property was removed
 
     def test_repository_client_interface_consistency(self):
@@ -336,8 +345,8 @@ class TestRepositoryIntegration:
         for client in clients:
             # Verify all clients implement the required interface
             assert isinstance(client, RepositoryClient)
-            assert hasattr(client, 'timeout')
-            assert hasattr(client, 'user_agent')
+            assert hasattr(client, "timeout")
+            assert hasattr(client, "user_agent")
             # repository_type property was removed
             assert callable(client.get_latest_release)
             assert callable(client.get_latest_release_including_prerelease)
@@ -363,12 +372,15 @@ class TestRepositoryIntegration:
         user_agent = "TestAgent/2.0"
 
         clients = [
-            get_repository_client("https://github.com/user/repo", source_type="github",
-                                timeout=timeout, user_agent=user_agent),
-            get_repository_client("https://example.com/download", source_type="direct_download",
-                                timeout=timeout, user_agent=user_agent),
-            get_repository_client("https://example.com/releases", source_type="dynamic_download",
-                                timeout=timeout, user_agent=user_agent),
+            get_repository_client(
+                "https://github.com/user/repo", source_type="github", timeout=timeout, user_agent=user_agent
+            ),
+            get_repository_client(
+                "https://example.com/download", source_type="direct_download", timeout=timeout, user_agent=user_agent
+            ),
+            get_repository_client(
+                "https://example.com/releases", source_type="dynamic_download", timeout=timeout, user_agent=user_agent
+            ),
         ]
 
         for client in clients:
@@ -386,12 +398,17 @@ class TestRepositoryIntegration:
 
         for url, expected_type in test_cases:
             # Mock the detection methods to return expected results
-            with patch.object(GitHubRepository, 'detect_repository_type',
-                            return_value=(expected_type == "github")):
-                with patch.object(DynamicDownloadRepository, 'detect_repository_type',
-                                return_value=(expected_type == "dynamic_download")):
-                    with patch.object(DirectDownloadRepository, 'detect_repository_type',
-                                    return_value=(expected_type == "direct_download")):
+            with patch.object(GitHubRepository, "detect_repository_type", return_value=(expected_type == "github")):
+                with patch.object(
+                    DynamicDownloadRepository,
+                    "detect_repository_type",
+                    return_value=(expected_type == "dynamic_download"),
+                ):
+                    with patch.object(
+                        DirectDownloadRepository,
+                        "detect_repository_type",
+                        return_value=(expected_type == "direct_download"),
+                    ):
                         detected_type = detect_repository_type(url)
 
                         if expected_type == "github":

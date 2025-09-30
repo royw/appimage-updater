@@ -19,7 +19,7 @@ class TestRemoveCommandHandler:
 
     def test_init_creates_console(self):
         """Test that handler initializes with console."""
-        with patch('appimage_updater.cli.handlers.remove_handler.Console') as mock_console_class:
+        with patch("appimage_updater.cli.handlers.remove_handler.Console") as mock_console_class:
             mock_console = Mock()
             mock_console_class.return_value = mock_console
 
@@ -49,11 +49,11 @@ class TestRemoveCommandHandler:
 
         # Verify it's a CommandInfo object
         command_info = app.registered_commands[0]
-        assert hasattr(command_info, 'name')
+        assert hasattr(command_info, "name")
 
     def test_version_callback_prints_version_and_exits(self):
         """Test that version callback prints version and exits."""
-        with patch('appimage_updater.cli.handlers.remove_handler.Console'):
+        with patch("appimage_updater.cli.handlers.remove_handler.Console"):
             handler = RemoveCommandHandler()
 
             with pytest.raises(typer.Exit):
@@ -68,7 +68,7 @@ class TestRemoveCommandHandler:
 
     def test_version_callback_no_exit_when_false(self):
         """Test that version callback does nothing when value is False."""
-        with patch('appimage_updater.cli.handlers.remove_handler.Console'):
+        with patch("appimage_updater.cli.handlers.remove_handler.Console"):
             handler = RemoveCommandHandler()
 
             # Should not raise any exceptions
@@ -79,7 +79,7 @@ class TestRemoveCommandHandler:
 
     def test_validate_options_success(self):
         """Test successful option validation."""
-        with patch('appimage_updater.cli.handlers.remove_handler.Console'):
+        with patch("appimage_updater.cli.handlers.remove_handler.Console"):
             handler = RemoveCommandHandler()
 
             # Should not raise any exceptions
@@ -89,7 +89,7 @@ class TestRemoveCommandHandler:
 
     def test_validate_options_mutually_exclusive_error(self):
         """Test validation error for mutually exclusive options."""
-        with patch('appimage_updater.cli.handlers.remove_handler.Console'):
+        with patch("appimage_updater.cli.handlers.remove_handler.Console"):
             handler = RemoveCommandHandler()
 
             with pytest.raises(typer.Exit) as exc_info:
@@ -105,8 +105,8 @@ class TestRemoveCommandHandler:
 
     def test_show_remove_help(self):
         """Test that help is displayed correctly."""
-        with patch('appimage_updater.cli.handlers.remove_handler.Console'):
-            with patch('appimage_updater.cli.handlers.remove_handler.typer.echo') as mock_echo:
+        with patch("appimage_updater.cli.handlers.remove_handler.Console"):
+            with patch("appimage_updater.cli.handlers.remove_handler.typer.echo") as mock_echo:
                 handler = RemoveCommandHandler()
 
                 handler._show_remove_help()
@@ -120,17 +120,12 @@ class TestRemoveCommandHandler:
                 assert usage_call is not None
                 assert "appimage-updater remove" in usage_call
 
-    @patch('appimage_updater.cli.handlers.remove_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.remove_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.remove_handler.CommandFactory.create_remove_command')
-    def test_execute_remove_command_success(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
-    ):
+    @patch("appimage_updater.cli.handlers.remove_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.remove_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.remove_handler.CommandFactory.create_remove_command")
+    def test_execute_remove_command_success(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
         """Test successful execution of remove command."""
-        with patch('appimage_updater.cli.handlers.remove_handler.Console'):
+        with patch("appimage_updater.cli.handlers.remove_handler.Console"):
             handler = RemoveCommandHandler()
 
             # Setup mocks
@@ -152,7 +147,7 @@ class TestRemoveCommandHandler:
                 yes=False,
                 no=False,
                 debug=True,
-                output_format=OutputFormat.RICH
+                output_format=OutputFormat.RICH,
             )
 
             # Verify factory was called with correct parameters
@@ -163,7 +158,7 @@ class TestRemoveCommandHandler:
                 yes=False,
                 no=False,
                 debug=True,
-                output_format=OutputFormat.RICH
+                output_format=OutputFormat.RICH,
             )
 
             # Verify formatter was created
@@ -172,17 +167,14 @@ class TestRemoveCommandHandler:
             # Verify command was executed
             mock_asyncio_run.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.remove_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.remove_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.remove_handler.CommandFactory.create_remove_command')
+    @patch("appimage_updater.cli.handlers.remove_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.remove_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.remove_handler.CommandFactory.create_remove_command")
     def test_execute_remove_command_with_json_format_calls_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that JSON format calls finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.remove_handler.Console'):
+        with patch("appimage_updater.cli.handlers.remove_handler.Console"):
             handler = RemoveCommandHandler()
 
             # Setup mocks
@@ -204,23 +196,20 @@ class TestRemoveCommandHandler:
                 yes=False,
                 no=False,
                 debug=False,
-                output_format=OutputFormat.JSON
+                output_format=OutputFormat.JSON,
             )
 
             # Verify finalize was called for JSON format
             mock_formatter.finalize.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.remove_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.remove_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.remove_handler.CommandFactory.create_remove_command')
+    @patch("appimage_updater.cli.handlers.remove_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.remove_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.remove_handler.CommandFactory.create_remove_command")
     def test_execute_remove_command_with_html_format_calls_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that HTML format calls finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.remove_handler.Console'):
+        with patch("appimage_updater.cli.handlers.remove_handler.Console"):
             handler = RemoveCommandHandler()
 
             # Setup mocks
@@ -242,23 +231,20 @@ class TestRemoveCommandHandler:
                 yes=False,
                 no=False,
                 debug=False,
-                output_format=OutputFormat.HTML
+                output_format=OutputFormat.HTML,
             )
 
             # Verify finalize was called for HTML format
             mock_formatter.finalize.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.remove_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.remove_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.remove_handler.CommandFactory.create_remove_command')
+    @patch("appimage_updater.cli.handlers.remove_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.remove_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.remove_handler.CommandFactory.create_remove_command")
     def test_execute_remove_command_rich_format_no_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that RICH format does not call finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.remove_handler.Console'):
+        with patch("appimage_updater.cli.handlers.remove_handler.Console"):
             handler = RemoveCommandHandler()
 
             # Setup mocks
@@ -280,23 +266,20 @@ class TestRemoveCommandHandler:
                 yes=False,
                 no=False,
                 debug=False,
-                output_format=OutputFormat.RICH
+                output_format=OutputFormat.RICH,
             )
 
             # Verify finalize was NOT called for RICH format
             mock_formatter.finalize.assert_not_called()
 
-    @patch('appimage_updater.cli.handlers.remove_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.remove_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.remove_handler.CommandFactory.create_remove_command')
+    @patch("appimage_updater.cli.handlers.remove_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.remove_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.remove_handler.CommandFactory.create_remove_command")
     def test_execute_remove_command_failure_raises_typer_exit(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that command failure raises typer.Exit with correct code."""
-        with patch('appimage_updater.cli.handlers.remove_handler.Console'):
+        with patch("appimage_updater.cli.handlers.remove_handler.Console"):
             handler = RemoveCommandHandler()
 
             # Setup mocks
@@ -320,7 +303,7 @@ class TestRemoveCommandHandler:
                     yes=False,
                     no=False,
                     debug=False,
-                    output_format=OutputFormat.RICH
+                    output_format=OutputFormat.RICH,
                 )
 
             # Verify exit code matches command result
@@ -328,10 +311,10 @@ class TestRemoveCommandHandler:
 
     def test_remove_command_with_none_app_names_shows_help_and_exits(self):
         """Test that None app_names shows help and exits with code 0."""
-        with patch('appimage_updater.cli.handlers.remove_handler.Console'):
+        with patch("appimage_updater.cli.handlers.remove_handler.Console"):
             handler = RemoveCommandHandler()
 
-            with patch.object(handler, '_show_remove_help') as mock_show_help:
+            with patch.object(handler, "_show_remove_help") as mock_show_help:
                 with pytest.raises(typer.Exit) as exc_info:
                     # The remove handler checks for None app_names in the command registration
                     # and calls _show_remove_help directly
@@ -345,12 +328,14 @@ class TestRemoveCommandHandler:
 
     def test_execute_remove_command_with_default_parameters(self):
         """Test execute command with default/None parameters."""
-        with patch('appimage_updater.cli.handlers.remove_handler.Console'):
+        with patch("appimage_updater.cli.handlers.remove_handler.Console"):
             handler = RemoveCommandHandler()
 
-            with patch('appimage_updater.cli.handlers.remove_handler.CommandFactory.create_remove_command') as mock_factory:
-                with patch('appimage_updater.cli.handlers.remove_handler.create_output_formatter_from_params'):
-                    with patch('appimage_updater.cli.handlers.remove_handler.asyncio.run') as mock_run:
+            with patch(
+                "appimage_updater.cli.handlers.remove_handler.CommandFactory.create_remove_command"
+            ) as mock_factory:
+                with patch("appimage_updater.cli.handlers.remove_handler.create_output_formatter_from_params"):
+                    with patch("appimage_updater.cli.handlers.remove_handler.asyncio.run") as mock_run:
                         mock_command = Mock()
                         mock_factory.return_value = mock_command
                         mock_command.params = Mock()
@@ -366,7 +351,7 @@ class TestRemoveCommandHandler:
                             yes=False,
                             no=False,
                             debug=False,
-                            output_format=OutputFormat.RICH
+                            output_format=OutputFormat.RICH,
                         )
 
                         # Verify factory called with None values
@@ -377,5 +362,5 @@ class TestRemoveCommandHandler:
                             yes=False,
                             no=False,
                             debug=False,
-                            output_format=OutputFormat.RICH
+                            output_format=OutputFormat.RICH,
                         )

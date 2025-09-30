@@ -54,7 +54,7 @@ async def test_extract_appimage_from_zip(mock_candidate, downloader):
 
         # Create a zip file with an AppImage inside
         zip_path = temp_dir / "test-app.zip"
-        with zipfile.ZipFile(zip_path, 'w') as zip_file:
+        with zipfile.ZipFile(zip_path, "w") as zip_file:
             zip_file.writestr("TestApp-1.1.0-x86_64.AppImage", test_appimage_content)
 
         # Update candidate with the actual temp path
@@ -85,7 +85,7 @@ async def test_extract_multiple_appimages_uses_first(mock_candidate, downloader)
 
         # Create zip with multiple AppImages
         zip_path = temp_dir / "test-app.zip"
-        with zipfile.ZipFile(zip_path, 'w') as zip_file:
+        with zipfile.ZipFile(zip_path, "w") as zip_file:
             zip_file.writestr("TestApp-first.AppImage", b"first content")
             zip_file.writestr("TestApp-second.AppImage", b"second content")
 
@@ -111,7 +111,7 @@ async def test_extract_no_appimage_raises_error(mock_candidate, downloader):
 
         # Create zip with no AppImages
         zip_path = temp_dir / "test-app.zip"
-        with zipfile.ZipFile(zip_path, 'w') as zip_file:
+        with zipfile.ZipFile(zip_path, "w") as zip_file:
             zip_file.writestr("readme.txt", b"no appimage here")
             zip_file.writestr("some-binary.exe", b"windows binary")
 
@@ -178,7 +178,7 @@ async def test_extract_handles_subdirectories_in_zip(mock_candidate, downloader)
 
         # Create zip with AppImage in subdirectory
         zip_path = temp_dir / "test-app.zip"
-        with zipfile.ZipFile(zip_path, 'w') as zip_file:
+        with zipfile.ZipFile(zip_path, "w") as zip_file:
             zip_file.writestr("build/linux/TestApp.AppImage", test_content)
             zip_file.writestr("other-files/readme.txt", b"readme content")
 
@@ -204,7 +204,7 @@ async def test_extract_ignores_directory_entries(mock_candidate, downloader):
 
         # Create zip with both directory entry and real file
         zip_path = temp_dir / "test-app.zip"
-        with zipfile.ZipFile(zip_path, 'w') as zip_file:
+        with zipfile.ZipFile(zip_path, "w") as zip_file:
             # This would be a directory entry
             zip_file.writestr("SomeApp.AppImage/", "")
             # This is a real file
@@ -232,7 +232,7 @@ async def test_extract_updates_candidate_path_for_rotation(mock_candidate, downl
 
         # Create zip with AppImage
         zip_path = temp_dir / "BambuStudio-1.2.3.zip"
-        with zipfile.ZipFile(zip_path, 'w') as zip_file:
+        with zipfile.ZipFile(zip_path, "w") as zip_file:
             zip_file.writestr("BambuStudio-1.2.3-Linux.AppImage", test_content)
 
         mock_candidate.download_path = zip_path

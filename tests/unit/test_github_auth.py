@@ -13,7 +13,9 @@ from appimage_updater.repositories.github.auth import GitHubAuth, get_github_aut
 from appimage_updater.repositories.github.client import GitHubClient
 
 
-def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock) -> None:
+def setup_github_mocks(
+    mock_httpx_client: Mock, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock
+) -> None:
     """Set up comprehensive GitHub API mocks to prevent network calls."""
     # Mock httpx client to prevent network calls
     mock_client_instance = Mock()
@@ -38,7 +40,7 @@ def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pat
         # Extract app name from args if available, otherwise use generic pattern
         app_name = "App"
         if args and len(args) > 0:
-            app_name = str(args[0]).split('/')[-1] if '/' in str(args[0]) else str(args[0])
+            app_name = str(args[0]).split("/")[-1] if "/" in str(args[0]) else str(args[0])
         return f"(?i){app_name}.*\\.(?:zip|AppImage)(\\.(|current|old))?$"
 
     mock_pattern_gen.side_effect = mock_async_pattern_gen
@@ -151,12 +153,7 @@ class TestGitHubAuth:
 
         # Create global config file
         config_file = mock_home / ".config" / "appimage-updater" / "config.json"
-        config_data = {
-            "github": {
-                "token": "global_config_token"
-            },
-            "applications": []
-        }
+        config_data = {"github": {"token": "global_config_token"}, "applications": []}
         with config_file.open("w") as f:
             json.dump(config_data, f)
 
@@ -301,18 +298,20 @@ class TestGitHubClientAuthentication:
 
         # Set up mock response
         mock_response = MagicMock()
-        mock_response.json.return_value = [{
-            "name": "test-release",
-            "tag_name": "v1.0.0",
-            "published_at": "2023-01-01T00:00:00Z",
-            "assets": [],
-            "prerelease": False,
-            "draft": False,
-        }]
+        mock_response.json.return_value = [
+            {
+                "name": "test-release",
+                "tag_name": "v1.0.0",
+                "published_at": "2023-01-01T00:00:00Z",
+                "assets": [],
+                "prerelease": False,
+                "draft": False,
+            }
+        ]
         mock_response.raise_for_status = MagicMock()
 
         # Configure the mock HTTP service
-        mock_tracing_client = mock_http_service['global_client'].get_client.return_value
+        mock_tracing_client = mock_http_service["global_client"].get_client.return_value
         mock_tracing_client.get.return_value = mock_response
 
         client = GitHubClient()

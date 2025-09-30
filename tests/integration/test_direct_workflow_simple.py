@@ -14,7 +14,9 @@ from typer.testing import CliRunner
 from appimage_updater.main import app
 
 
-def setup_github_mocks(mock_http_service: Any, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock) -> None:
+def setup_github_mocks(
+    mock_http_service: Any, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock
+) -> None:
     """Set up comprehensive GitHub API mocks to prevent network calls."""
     # Mock HTTP response
     mock_response = Mock()
@@ -22,7 +24,7 @@ def setup_github_mocks(mock_http_service: Any, mock_repo_client: Mock, mock_patt
     mock_response.raise_for_status.return_value = None
 
     # Configure the mock HTTP service
-    mock_tracing_client = mock_http_service['global_client'].get_client.return_value
+    mock_tracing_client = mock_http_service["global_client"].get_client.return_value
     mock_tracing_client.get.return_value = mock_response
 
     # Mock repository client
@@ -34,7 +36,7 @@ def setup_github_mocks(mock_http_service: Any, mock_repo_client: Mock, mock_patt
         # Extract app name from args if available, otherwise use generic pattern
         app_name = "App"
         if args and len(args) > 0:
-            app_name = str(args[0]).split('/')[-1] if '/' in str(args[0]) else str(args[0])
+            app_name = str(args[0]).split("/")[-1] if "/" in str(args[0]) else str(args[0])
         return f"(?i){app_name}.*\\.(?:zip|AppImage)(\\.(|current|old))?$"
 
     mock_pattern_gen.side_effect = mock_async_pattern_gen
@@ -57,14 +59,19 @@ class TestDirectWorkflowIntegration:
             temp_config_dir = Path(tmp_dir)
             direct_url = "https://nightly.example.com/app.AppImage"
 
-            result = runner.invoke(app, [
-                "add", "DirectApp",
-                direct_url,
-                str(temp_config_dir / "downloads" / "DirectApp"),
-                "--direct",
-                "--config-dir", str(temp_config_dir),
-                "--create-dir"
-            ])
+            result = runner.invoke(
+                app,
+                [
+                    "add",
+                    "DirectApp",
+                    direct_url,
+                    str(temp_config_dir / "downloads" / "DirectApp"),
+                    "--direct",
+                    "--config-dir",
+                    str(temp_config_dir),
+                    "--create-dir",
+                ],
+            )
 
             assert result.exit_code == 0
             assert "Successfully added application 'DirectApp'" in result.stdout
@@ -81,9 +88,9 @@ class TestDirectWorkflowIntegration:
             assert app_config["source_type"] == "direct"
             assert app_config["url"] == direct_url
 
-    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
-    @patch('appimage_updater.repositories.factory.get_repository_client')
+    @patch("appimage_updater.core.pattern_generator.should_enable_prerelease")
+    @patch("appimage_updater.core.pattern_generator.generate_appimage_pattern_async")
+    @patch("appimage_updater.repositories.factory.get_repository_client")
     def test_add_no_direct_flag_defaults_to_github(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_http_service
     ):
@@ -95,13 +102,18 @@ class TestDirectWorkflowIntegration:
             temp_config_dir = Path(tmp_dir)
             github_url = "https://github.com/user/repo"
 
-            result = runner.invoke(app, [
-                "add", "GitHubApp",
-                github_url,
-                str(temp_config_dir / "downloads" / "GitHubApp"),
-                "--config-dir", str(temp_config_dir),
-                "--create-dir"
-            ])
+            result = runner.invoke(
+                app,
+                [
+                    "add",
+                    "GitHubApp",
+                    github_url,
+                    str(temp_config_dir / "downloads" / "GitHubApp"),
+                    "--config-dir",
+                    str(temp_config_dir),
+                    "--create-dir",
+                ],
+            )
 
             assert result.exit_code == 0
 
@@ -117,10 +129,10 @@ class TestDirectWorkflowIntegration:
             assert app_config["source_type"] == "github"
             assert app_config["url"] == github_url
 
-    @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
-    @patch('appimage_updater.repositories.factory.get_repository_client')
+    @patch("appimage_updater.repositories.github.client.httpx.AsyncClient")
+    @patch("appimage_updater.core.pattern_generator.should_enable_prerelease")
+    @patch("appimage_updater.core.pattern_generator.generate_appimage_pattern_async")
+    @patch("appimage_updater.repositories.factory.get_repository_client")
     def test_direct_flag_with_complex_options(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock
     ):
@@ -133,20 +145,28 @@ class TestDirectWorkflowIntegration:
             direct_url = "https://ci.example.com/artifacts/latest.AppImage"
             symlink_path = str(temp_config_dir / "bin" / "complex.AppImage")
 
-            result = runner.invoke(app, [
-                "add", "ComplexApp",
-                direct_url,
-                str(temp_config_dir / "downloads" / "ComplexApp"),
-                "--direct",
-                "--prerelease",
-                "--rotation",
-                "--retain-count", "5",
-                "--symlink-path", symlink_path,
-                "--checksum-required",
-                "--checksum-algorithm", "sha1",
-                "--config-dir", str(temp_config_dir),
-                "--create-dir"
-            ])
+            result = runner.invoke(
+                app,
+                [
+                    "add",
+                    "ComplexApp",
+                    direct_url,
+                    str(temp_config_dir / "downloads" / "ComplexApp"),
+                    "--direct",
+                    "--prerelease",
+                    "--rotation",
+                    "--retain-count",
+                    "5",
+                    "--symlink-path",
+                    symlink_path,
+                    "--checksum-required",
+                    "--checksum-algorithm",
+                    "sha1",
+                    "--config-dir",
+                    str(temp_config_dir),
+                    "--create-dir",
+                ],
+            )
 
             assert result.exit_code == 0
             assert "Successfully added application 'ComplexApp'" in result.stdout

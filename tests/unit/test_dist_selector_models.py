@@ -13,11 +13,7 @@ class TestDistributionInfo:
 
     def test_distribution_info_creation_minimal(self) -> None:
         """Test creating DistributionInfo with minimal required fields."""
-        dist_info = DistributionInfo(
-            id="ubuntu",
-            version="24.04",
-            version_numeric=24.04
-        )
+        dist_info = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
         assert dist_info.id == "ubuntu"
         assert dist_info.version == "24.04"
@@ -26,12 +22,7 @@ class TestDistributionInfo:
 
     def test_distribution_info_creation_full(self) -> None:
         """Test creating DistributionInfo with all fields."""
-        dist_info = DistributionInfo(
-            id="ubuntu",
-            version="24.04",
-            version_numeric=24.04,
-            codename="noble"
-        )
+        dist_info = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04, codename="noble")
 
         assert dist_info.id == "ubuntu"
         assert dist_info.version == "24.04"
@@ -40,11 +31,7 @@ class TestDistributionInfo:
 
     def test_distribution_info_fedora(self) -> None:
         """Test creating DistributionInfo for Fedora."""
-        dist_info = DistributionInfo(
-            id="fedora",
-            version="38",
-            version_numeric=38.0
-        )
+        dist_info = DistributionInfo(id="fedora", version="38", version_numeric=38.0)
 
         assert dist_info.id == "fedora"
         assert dist_info.version == "38"
@@ -56,7 +43,7 @@ class TestDistributionInfo:
         dist_info = DistributionInfo(
             id="arch",
             version="rolling",
-            version_numeric=0.0  # Rolling release
+            version_numeric=0.0,  # Rolling release
         )
 
         assert dist_info.id == "arch"
@@ -66,37 +53,18 @@ class TestDistributionInfo:
 
     def test_distribution_info_equality(self) -> None:
         """Test equality comparison of DistributionInfo objects."""
-        dist1 = DistributionInfo(
-            id="ubuntu",
-            version="24.04",
-            version_numeric=24.04,
-            codename="noble"
-        )
+        dist1 = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04, codename="noble")
 
-        dist2 = DistributionInfo(
-            id="ubuntu",
-            version="24.04",
-            version_numeric=24.04,
-            codename="noble"
-        )
+        dist2 = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04, codename="noble")
 
-        dist3 = DistributionInfo(
-            id="fedora",
-            version="38",
-            version_numeric=38.0
-        )
+        dist3 = DistributionInfo(id="fedora", version="38", version_numeric=38.0)
 
         assert dist1 == dist2
         assert dist1 != dist3
 
     def test_distribution_info_repr(self) -> None:
         """Test string representation of DistributionInfo."""
-        dist_info = DistributionInfo(
-            id="ubuntu",
-            version="24.04",
-            version_numeric=24.04,
-            codename="noble"
-        )
+        dist_info = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04, codename="noble")
 
         repr_str = repr(dist_info)
         assert "DistributionInfo" in repr_str
@@ -110,12 +78,7 @@ class TestAssetInfo:
 
     def test_asset_info_creation_minimal(self) -> None:
         """Test creating AssetInfo with minimal required fields."""
-        asset = Asset(
-            name="app.AppImage",
-            url="https://example.com/app.AppImage",
-            size=1024,
-            created_at=datetime.now()
-        )
+        asset = Asset(name="app.AppImage", url="https://example.com/app.AppImage", size=1024, created_at=datetime.now())
 
         asset_info = AssetInfo(asset=asset)
 
@@ -133,7 +96,7 @@ class TestAssetInfo:
             name="app-ubuntu-24.04-x86_64.AppImage",
             url="https://example.com/app.AppImage",
             size=2048,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         asset_info = AssetInfo(
@@ -143,7 +106,7 @@ class TestAssetInfo:
             version_numeric=24.04,
             arch="x86_64",
             format="AppImage",
-            score=95.5
+            score=95.5,
         )
 
         assert asset_info.asset == asset
@@ -156,19 +119,9 @@ class TestAssetInfo:
 
     def test_asset_info_partial_fields(self) -> None:
         """Test creating AssetInfo with some optional fields."""
-        asset = Asset(
-            name="generic-app.zip",
-            url="https://example.com/app.zip",
-            size=512,
-            created_at=datetime.now()
-        )
+        asset = Asset(name="generic-app.zip", url="https://example.com/app.zip", size=512, created_at=datetime.now())
 
-        asset_info = AssetInfo(
-            asset=asset,
-            arch="x86_64",
-            format="zip",
-            score=50.0
-        )
+        asset_info = AssetInfo(asset=asset, arch="x86_64", format="zip", score=50.0)
 
         assert asset_info.asset == asset
         assert asset_info.distribution is None
@@ -184,7 +137,7 @@ class TestAssetInfo:
             name="myapp-fedora38-amd64.AppImage",
             url="https://example.com/myapp.AppImage",
             size=4096,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         asset_info = AssetInfo(
@@ -194,7 +147,7 @@ class TestAssetInfo:
             version_numeric=38.0,
             arch="amd64",
             format="AppImage",
-            score=88.2
+            score=88.2,
         )
 
         assert asset_info.distribution == "fedora"
@@ -208,14 +161,10 @@ class TestAssetInfo:
             name="universal-app.AppImage",
             url="https://example.com/universal.AppImage",
             size=8192,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
-        asset_info = AssetInfo(
-            asset=asset,
-            format="AppImage",
-            score=75.0
-        )
+        asset_info = AssetInfo(asset=asset, format="AppImage", score=75.0)
 
         assert asset_info.asset == asset
         assert asset_info.distribution is None
@@ -228,39 +177,18 @@ class TestAssetInfo:
     def test_asset_info_equality(self) -> None:
         """Test equality comparison of AssetInfo objects."""
         asset1 = Asset(
-            name="app.AppImage",
-            url="https://example.com/app1.AppImage",
-            size=1024,
-            created_at=datetime.now()
+            name="app.AppImage", url="https://example.com/app1.AppImage", size=1024, created_at=datetime.now()
         )
 
         asset2 = Asset(
-            name="app.AppImage",
-            url="https://example.com/app2.AppImage",
-            size=1024,
-            created_at=datetime.now()
+            name="app.AppImage", url="https://example.com/app2.AppImage", size=1024, created_at=datetime.now()
         )
 
-        info1 = AssetInfo(
-            asset=asset1,
-            distribution="ubuntu",
-            version="24.04",
-            score=90.0
-        )
+        info1 = AssetInfo(asset=asset1, distribution="ubuntu", version="24.04", score=90.0)
 
-        info2 = AssetInfo(
-            asset=asset1,
-            distribution="ubuntu",
-            version="24.04",
-            score=90.0
-        )
+        info2 = AssetInfo(asset=asset1, distribution="ubuntu", version="24.04", score=90.0)
 
-        info3 = AssetInfo(
-            asset=asset2,
-            distribution="fedora",
-            version="38",
-            score=85.0
-        )
+        info3 = AssetInfo(asset=asset2, distribution="fedora", version="38", score=85.0)
 
         assert info1 == info2
         assert info1 != info3
@@ -268,19 +196,10 @@ class TestAssetInfo:
     def test_asset_info_repr(self) -> None:
         """Test string representation of AssetInfo."""
         asset = Asset(
-            name="test-app.AppImage",
-            url="https://example.com/test.AppImage",
-            size=1024,
-            created_at=datetime.now()
+            name="test-app.AppImage", url="https://example.com/test.AppImage", size=1024, created_at=datetime.now()
         )
 
-        asset_info = AssetInfo(
-            asset=asset,
-            distribution="ubuntu",
-            version="24.04",
-            arch="x86_64",
-            score=92.5
-        )
+        asset_info = AssetInfo(asset=asset, distribution="ubuntu", version="24.04", arch="x86_64", score=92.5)
 
         repr_str = repr(asset_info)
         assert "AssetInfo" in repr_str
@@ -290,12 +209,7 @@ class TestAssetInfo:
 
     def test_asset_info_score_range(self) -> None:
         """Test AssetInfo with different score values."""
-        asset = Asset(
-            name="app.AppImage",
-            url="https://example.com/app.AppImage",
-            size=1024,
-            created_at=datetime.now()
-        )
+        asset = Asset(name="app.AppImage", url="https://example.com/app.AppImage", size=1024, created_at=datetime.now())
 
         # Test minimum score
         info_min = AssetInfo(asset=asset, score=0.0)
@@ -323,7 +237,7 @@ class TestAssetInfo:
             version_numeric=12.0,
             arch="arm64",
             format="AppImage",
-            score=78.9
+            score=78.9,
         )
 
         assert asset_info.asset == mock_asset

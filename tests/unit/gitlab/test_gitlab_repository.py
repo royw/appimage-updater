@@ -128,11 +128,9 @@ class TestGitLabRepository:
         assert "AppImage" in pattern
 
         # Test multiple assets with common prefix
-        pattern = repo._generate_pattern_from_names([
-            "MyApp-v1.0.0.AppImage",
-            "MyApp-v1.1.0.AppImage",
-            "MyApp-v2.0.0.AppImage"
-        ])
+        pattern = repo._generate_pattern_from_names(
+            ["MyApp-v1.0.0.AppImage", "MyApp-v1.1.0.AppImage", "MyApp-v2.0.0.AppImage"]
+        )
         assert pattern is not None
         assert "MyApp" in pattern
 

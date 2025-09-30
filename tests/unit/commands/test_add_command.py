@@ -19,10 +19,7 @@ class TestAddCommand:
     def test_init(self):
         """Test AddCommand initialization."""
         params = AddParams(
-            name="TestApp",
-            url="https://github.com/test/repo",
-            config_file=Path("/test/config.json"),
-            debug=True
+            name="TestApp", url="https://github.com/test/repo", config_file=Path("/test/config.json"), debug=True
         )
         command = AddCommand(params)
 
@@ -78,7 +75,7 @@ class TestAddCommand:
         assert "NAME is required" in validation_errors
         assert "URL is required" in validation_errors
 
-    @patch('appimage_updater.commands.add_command.configure_logging')
+    @patch("appimage_updater.commands.add_command.configure_logging")
     @pytest.mark.anyio
     async def test_execute_success_with_formatter(self, mock_configure_logging):
         """Test successful execution with output formatter."""
@@ -86,8 +83,8 @@ class TestAddCommand:
         command = AddCommand(params)
         mock_formatter = Mock()
 
-        with patch.object(command, '_handle_special_modes', return_value=None):
-            with patch.object(command, '_execute_main_add_workflow') as mock_workflow:
+        with patch.object(command, "_handle_special_modes", return_value=None):
+            with patch.object(command, "_execute_main_add_workflow") as mock_workflow:
                 mock_workflow.return_value = CommandResult(success=True, message="Success")
 
                 result = await command.execute(output_formatter=mock_formatter)
@@ -102,14 +99,14 @@ class TestAddCommand:
         assert result.success is True
         assert result.message == "Success"
 
-    @patch('appimage_updater.commands.add_command.configure_logging')
+    @patch("appimage_updater.commands.add_command.configure_logging")
     @pytest.mark.anyio
     async def test_execute_examples_mode(self, mock_configure_logging):
         """Test execution in examples mode."""
         params = AddParams(examples=True)
         command = AddCommand(params)
 
-        with patch.object(command, '_handle_special_modes') as mock_special:
+        with patch.object(command, "_handle_special_modes") as mock_special:
             mock_special.return_value = CommandResult(success=True, message="Examples displayed")
 
             result = await command.execute()
@@ -121,8 +118,8 @@ class TestAddCommand:
         assert result.success is True
         assert result.message == "Examples displayed"
 
-    @patch('appimage_updater.commands.add_command.configure_logging')
-    @patch('appimage_updater.commands.add_command.logger')
+    @patch("appimage_updater.commands.add_command.configure_logging")
+    @patch("appimage_updater.commands.add_command.logger")
     @pytest.mark.anyio
     async def test_execute_unexpected_exception(self, mock_logger, mock_configure_logging):
         """Test execution with unexpected exception."""
@@ -130,7 +127,7 @@ class TestAddCommand:
         command = AddCommand(params)
 
         test_exception = Exception("Test error")
-        with patch.object(command, '_handle_special_modes', side_effect=test_exception):
+        with patch.object(command, "_handle_special_modes", side_effect=test_exception):
             result = await command.execute()
 
         # Verify logging was called
@@ -149,7 +146,7 @@ class TestAddCommand:
         command = AddCommand(params)
         mock_formatter = Mock()
 
-        with patch.object(command, '_execute_with_formatter_context') as mock_with_context:
+        with patch.object(command, "_execute_with_formatter_context") as mock_with_context:
             mock_with_context.return_value = CommandResult(success=True, message="Success")
 
             result = await command._execute_main_add_workflow(mock_formatter)
@@ -163,7 +160,7 @@ class TestAddCommand:
         params = AddParams(name="TestApp", url="https://github.com/test/repo")
         command = AddCommand(params)
 
-        with patch.object(command, '_execute_without_formatter') as mock_without:
+        with patch.object(command, "_execute_without_formatter") as mock_without:
             mock_without.return_value = CommandResult(success=True, message="Success")
 
             result = await command._execute_main_add_workflow(None)
@@ -178,9 +175,9 @@ class TestAddCommand:
         command = AddCommand(params)
         mock_formatter = Mock()
 
-        with patch.object(command, '_validate_parameters', return_value=None):
-            with patch.object(command, '_execute_add_operation', return_value=True):
-                with patch.object(command, '_create_execution_result') as mock_create:
+        with patch.object(command, "_validate_parameters", return_value=None):
+            with patch.object(command, "_execute_add_operation", return_value=True):
+                with patch.object(command, "_create_execution_result") as mock_create:
                     mock_create.return_value = CommandResult(success=True, message="Success")
 
                     result = await command._execute_with_formatter_context(mock_formatter)
@@ -196,7 +193,7 @@ class TestAddCommand:
         mock_formatter = Mock()
 
         validation_error = CommandResult(success=False, message="Validation failed", exit_code=1)
-        with patch.object(command, '_validate_parameters', return_value=validation_error):
+        with patch.object(command, "_validate_parameters", return_value=validation_error):
             result = await command._execute_with_formatter_context(mock_formatter)
 
         assert result.success is False
@@ -208,9 +205,9 @@ class TestAddCommand:
         params = AddParams(name="TestApp", url="https://github.com/test/repo")
         command = AddCommand(params)
 
-        with patch.object(command, '_validate_parameters', return_value=None):
-            with patch.object(command, '_execute_add_operation', return_value=True):
-                with patch.object(command, '_create_execution_result') as mock_create:
+        with patch.object(command, "_validate_parameters", return_value=None):
+            with patch.object(command, "_execute_add_operation", return_value=True):
+                with patch.object(command, "_create_execution_result") as mock_create:
                     mock_create.return_value = CommandResult(success=True, message="Success")
 
                     result = await command._execute_without_formatter()
@@ -223,7 +220,7 @@ class TestAddCommand:
         params = AddParams(examples=True)
         command = AddCommand(params)
 
-        with patch.object(command, '_show_add_examples') as mock_show:
+        with patch.object(command, "_show_add_examples") as mock_show:
             result = command._handle_special_modes()
 
         mock_show.assert_called_once()
@@ -236,7 +233,7 @@ class TestAddCommand:
         params = AddParams(interactive=True)
         command = AddCommand(params)
 
-        with patch.object(command, '_handle_interactive_mode') as mock_interactive:
+        with patch.object(command, "_handle_interactive_mode") as mock_interactive:
             mock_interactive.return_value = CommandResult(success=True, message="Interactive complete")
 
             result = command._handle_special_modes()
@@ -253,7 +250,7 @@ class TestAddCommand:
         result = command._handle_special_modes()
         assert result is None
 
-    @patch('appimage_updater.commands.add_command.interactive_add_command')
+    @patch("appimage_updater.commands.add_command.interactive_add_command")
     def test_handle_interactive_mode_success(self, mock_interactive):
         """Test interactive mode handler - success."""
         params = AddParams(interactive=True)
@@ -279,17 +276,17 @@ class TestAddCommand:
             "direct": False,
             "auto_subdir": True,
             "verbose": False,
-            "dry_run": False
+            "dry_run": False,
         }
         mock_interactive.return_value = mock_result
 
-        with patch.object(command, '_update_params_from_interactive') as mock_update:
+        with patch.object(command, "_update_params_from_interactive") as mock_update:
             result = command._handle_interactive_mode()
 
         mock_update.assert_called_once_with(mock_result.data)
         assert result is None  # Continue with normal execution
 
-    @patch('appimage_updater.commands.add_command.interactive_add_command')
+    @patch("appimage_updater.commands.add_command.interactive_add_command")
     def test_handle_interactive_mode_cancelled(self, mock_interactive):
         """Test interactive mode handler - cancelled."""
         params = AddParams(interactive=True)
@@ -307,7 +304,7 @@ class TestAddCommand:
         assert result.message == "Operation cancelled by user"
         assert result.exit_code == 0
 
-    @patch('appimage_updater.commands.add_command.interactive_add_command')
+    @patch("appimage_updater.commands.add_command.interactive_add_command")
     def test_handle_interactive_mode_failed(self, mock_interactive):
         """Test interactive mode handler - failed."""
         params = AddParams(interactive=True)
@@ -331,7 +328,7 @@ class TestAddCommand:
         params = AddParams(name="TestApp", url="https://github.com/test/repo")
         command = AddCommand(params)
 
-        with patch.object(command, 'validate', return_value=[]):
+        with patch.object(command, "validate", return_value=[]):
             result = command._validate_parameters()
 
         assert result is None
@@ -341,8 +338,8 @@ class TestAddCommand:
         params = AddParams()
         command = AddCommand(params)
 
-        with patch.object(command, 'validate', return_value=["NAME is required", "URL is required"]):
-            with patch.object(command, '_show_validation_help') as mock_help:
+        with patch.object(command, "validate", return_value=["NAME is required", "URL is required"]):
+            with patch.object(command, "_show_validation_help") as mock_help:
                 result = command._validate_parameters()
 
         mock_help.assert_called_once_with("Validation errors: NAME is required, URL is required")
@@ -350,7 +347,7 @@ class TestAddCommand:
         assert result.success is False
         assert result.exit_code == 1
 
-    @patch('appimage_updater.commands.add_command.get_output_formatter')
+    @patch("appimage_updater.commands.add_command.get_output_formatter")
     def test_show_validation_help_with_formatter(self, mock_get_formatter):
         """Test validation help display with formatter."""
         params = AddParams()
@@ -365,7 +362,7 @@ class TestAddCommand:
         mock_formatter.print_warning.assert_called_once_with("Try one of these options:")
         assert mock_formatter.print_info.call_count == 3
 
-    @patch('appimage_updater.commands.add_command.get_output_formatter')
+    @patch("appimage_updater.commands.add_command.get_output_formatter")
     def test_show_validation_help_without_formatter(self, mock_get_formatter):
         """Test validation help display without formatter."""
         params = AddParams()
@@ -373,7 +370,7 @@ class TestAddCommand:
 
         mock_get_formatter.return_value = None
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             command._show_validation_help("Test error")
 
         assert mock_console_print.call_count == 5
@@ -423,7 +420,7 @@ class TestAddCommand:
             "direct": True,
             "auto_subdir": False,
             "verbose": True,
-            "dry_run": True
+            "dry_run": True,
         }
 
         command._update_params_from_interactive(interactive_params)
@@ -447,7 +444,7 @@ class TestAddCommand:
         assert command.params.verbose is True
         assert command.params.dry_run is True
 
-    @patch('appimage_updater.commands.add_command._add')
+    @patch("appimage_updater.commands.add_command._add")
     @pytest.mark.anyio
     async def test_execute_add_operation_success(self, mock_add):
         """Test add operation execution - success."""
@@ -472,7 +469,7 @@ class TestAddCommand:
             yes=False,
             no=False,
             dry_run=True,
-            verbose=True
+            verbose=True,
         )
         command = AddCommand(params)
 
@@ -502,12 +499,12 @@ class TestAddCommand:
             yes=False,
             no=False,
             dry_run=True,
-            verbose=True
+            verbose=True,
         )
 
         assert result is True
 
-    @patch('appimage_updater.commands.add_command._add')
+    @patch("appimage_updater.commands.add_command._add")
     @pytest.mark.anyio
     async def test_execute_add_operation_with_none_values(self, mock_add):
         """Test add operation execution with None values."""
@@ -541,12 +538,12 @@ class TestAddCommand:
             yes=False,  # Default value
             no=False,  # Default value
             dry_run=False,  # Default value
-            verbose=False  # Default value
+            verbose=False,  # Default value
         )
 
         assert result is False
 
-    @patch('appimage_updater.commands.add_command._show_add_examples')
+    @patch("appimage_updater.commands.add_command._show_add_examples")
     def test_show_add_examples(self, mock_show_examples):
         """Test show add examples."""
         params = AddParams()

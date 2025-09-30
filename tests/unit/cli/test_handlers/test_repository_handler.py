@@ -19,7 +19,7 @@ class TestRepositoryCommandHandler:
 
     def test_init_creates_console(self):
         """Test that handler initializes with console."""
-        with patch('appimage_updater.cli.handlers.repository_handler.Console') as mock_console_class:
+        with patch("appimage_updater.cli.handlers.repository_handler.Console") as mock_console_class:
             mock_console = Mock()
             mock_console_class.return_value = mock_console
 
@@ -49,11 +49,11 @@ class TestRepositoryCommandHandler:
 
         # Verify it's a CommandInfo object
         command_info = app.registered_commands[0]
-        assert hasattr(command_info, 'name')
+        assert hasattr(command_info, "name")
 
     def test_version_callback_prints_version_and_exits(self):
         """Test that version callback prints version and exits."""
-        with patch('appimage_updater.cli.handlers.repository_handler.Console'):
+        with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
 
             with pytest.raises(typer.Exit):
@@ -68,7 +68,7 @@ class TestRepositoryCommandHandler:
 
     def test_version_callback_no_exit_when_false(self):
         """Test that version callback does nothing when value is False."""
-        with patch('appimage_updater.cli.handlers.repository_handler.Console'):
+        with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
 
             # Should not raise any exceptions
@@ -77,19 +77,15 @@ class TestRepositoryCommandHandler:
             # Console print should not be called
             handler.console.print.assert_not_called()
 
-    @patch('appimage_updater.cli.handlers.repository_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params')
-    @patch('appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command')
+    @patch("appimage_updater.cli.handlers.repository_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params")
+    @patch("appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command")
     def test_execute_repository_command_success(
-        self,
-        mock_factory,
-        mock_http_tracker_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_http_tracker_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test successful execution of repository command."""
-        with patch('appimage_updater.cli.handlers.repository_handler.Console'):
+        with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
 
             # Setup mocks
@@ -121,7 +117,7 @@ class TestRepositoryCommandHandler:
                 http_track_headers=False,
                 debug=True,
                 output_format=OutputFormat.RICH,
-                trace=False
+                trace=False,
             )
 
             # Verify factory was called with correct parameters
@@ -137,7 +133,7 @@ class TestRepositoryCommandHandler:
                 http_track_headers=False,
                 trace=False,
                 debug=True,
-                output_format=OutputFormat.RICH
+                output_format=OutputFormat.RICH,
             )
 
             # Verify formatter was created
@@ -146,19 +142,15 @@ class TestRepositoryCommandHandler:
             # Verify command was executed
             mock_asyncio_run.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.repository_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params')
-    @patch('appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command')
+    @patch("appimage_updater.cli.handlers.repository_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params")
+    @patch("appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command")
     def test_execute_repository_command_with_json_format_calls_finalize(
-        self,
-        mock_factory,
-        mock_http_tracker_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_http_tracker_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that JSON format calls finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.repository_handler.Console'):
+        with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
 
             # Setup mocks
@@ -190,25 +182,21 @@ class TestRepositoryCommandHandler:
                 http_track_headers=False,
                 debug=False,
                 output_format=OutputFormat.JSON,
-                trace=False
+                trace=False,
             )
 
             # Verify finalize was called for JSON format
             mock_formatter.finalize.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.repository_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params')
-    @patch('appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command')
+    @patch("appimage_updater.cli.handlers.repository_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params")
+    @patch("appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command")
     def test_execute_repository_command_with_html_format_calls_finalize(
-        self,
-        mock_factory,
-        mock_http_tracker_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_http_tracker_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that HTML format calls finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.repository_handler.Console'):
+        with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
 
             # Setup mocks
@@ -240,25 +228,21 @@ class TestRepositoryCommandHandler:
                 http_track_headers=False,
                 debug=False,
                 output_format=OutputFormat.HTML,
-                trace=False
+                trace=False,
             )
 
             # Verify finalize was called for HTML format
             mock_formatter.finalize.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.repository_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params')
-    @patch('appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command')
+    @patch("appimage_updater.cli.handlers.repository_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params")
+    @patch("appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command")
     def test_execute_repository_command_rich_format_no_finalize(
-        self,
-        mock_factory,
-        mock_http_tracker_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_http_tracker_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that RICH format does not call finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.repository_handler.Console'):
+        with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
 
             # Setup mocks
@@ -290,25 +274,21 @@ class TestRepositoryCommandHandler:
                 http_track_headers=False,
                 debug=False,
                 output_format=OutputFormat.RICH,
-                trace=False
+                trace=False,
             )
 
             # Verify finalize was NOT called for RICH format
             mock_formatter.finalize.assert_not_called()
 
-    @patch('appimage_updater.cli.handlers.repository_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params')
-    @patch('appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command')
+    @patch("appimage_updater.cli.handlers.repository_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params")
+    @patch("appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command")
     def test_execute_repository_command_failure_raises_typer_exit(
-        self,
-        mock_factory,
-        mock_http_tracker_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_http_tracker_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that command failure raises typer.Exit with correct code."""
-        with patch('appimage_updater.cli.handlers.repository_handler.Console'):
+        with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
 
             # Setup mocks
@@ -342,7 +322,7 @@ class TestRepositoryCommandHandler:
                     http_track_headers=False,
                     debug=False,
                     output_format=OutputFormat.RICH,
-                    trace=False
+                    trace=False,
                 )
 
             # Verify exit code matches command result
@@ -350,13 +330,17 @@ class TestRepositoryCommandHandler:
 
     def test_execute_repository_command_with_default_parameters(self):
         """Test execute command with default parameters."""
-        with patch('appimage_updater.cli.handlers.repository_handler.Console'):
+        with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
 
-            with patch('appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command') as mock_factory:
-                with patch('appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params'):
-                    with patch('appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params') as mock_http_tracker_factory:
-                        with patch('appimage_updater.cli.handlers.repository_handler.asyncio.run') as mock_run:
+            with patch(
+                "appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command"
+            ) as mock_factory:
+                with patch("appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params"):
+                    with patch(
+                        "appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params"
+                    ) as mock_http_tracker_factory:
+                        with patch("appimage_updater.cli.handlers.repository_handler.asyncio.run") as mock_run:
                             mock_command = Mock()
                             mock_factory.return_value = mock_command
                             mock_command.params = Mock()
@@ -371,19 +355,19 @@ class TestRepositoryCommandHandler:
 
                             # Execute with default values
                             handler._execute_repository_command(
-                            app_names=["TestApp"],
-                            config_file=None,
-                            config_dir=None,
-                            limit=5,
-                            assets=False,
-                            dry_run=False,
-                            instrument_http=False,
-                            http_stack_depth=5,
-                            http_track_headers=False,
-                            debug=False,
-                            output_format=OutputFormat.RICH,
-                            trace=False
-                        )
+                                app_names=["TestApp"],
+                                config_file=None,
+                                config_dir=None,
+                                limit=5,
+                                assets=False,
+                                dry_run=False,
+                                instrument_http=False,
+                                http_stack_depth=5,
+                                http_track_headers=False,
+                                debug=False,
+                                output_format=OutputFormat.RICH,
+                                trace=False,
+                            )
 
                         # Verify factory called with values
                         mock_factory.assert_called_once_with(
@@ -398,5 +382,5 @@ class TestRepositoryCommandHandler:
                             http_track_headers=False,
                             trace=False,
                             debug=False,
-                            output_format=OutputFormat.RICH
+                            output_format=OutputFormat.RICH,
                         )

@@ -90,7 +90,7 @@ class TestRepositoryFactory:
         urls = [
             "https://nightly.example.com/app-latest.AppImage",
             "https://ci.example.com/artifacts/build-123/app.AppImage",
-            "https://custom.domain.com/downloads/app.AppImage?version=latest"
+            "https://custom.domain.com/downloads/app.AppImage?version=latest",
         ]
 
         for url in urls:
@@ -109,7 +109,7 @@ class TestRepositoryFactoryIntegration:
             "url": "https://nightly.example.com/app.AppImage",
             "download_dir": "/home/user/downloads/DirectApp",
             "pattern": "app.*\\.AppImage$",
-            "enabled": True
+            "enabled": True,
         }
 
         client = get_repository_client(config["url"], source_type=config["source_type"])
@@ -125,7 +125,7 @@ class TestRepositoryFactoryIntegration:
             "url": "https://github.com/user/app",
             "download_dir": "/home/user/downloads/github",
             "pattern": "app.*\\.AppImage$",
-            "enabled": True
+            "enabled": True,
         }
 
         client = get_repository_client(config["url"], source_type=config["source_type"])
@@ -140,7 +140,7 @@ class TestRepositoryFactoryIntegration:
             "url": "https://github.com/user/legacy",
             "download_dir": "/home/user/downloads/legacy",
             "pattern": "legacy.*\\.AppImage$",
-            "enabled": True
+            "enabled": True,
         }
 
         # No source_type provided - should detect from URL
@@ -155,33 +155,26 @@ class TestRepositoryFactoryIntegration:
             {
                 "url": "https://nightly.example.com/app.AppImage",
                 "source_type": "direct",
-                "expected_type": DirectDownloadRepository
+                "expected_type": DirectDownloadRepository,
             },
             # GitHub repository URL with explicit github source type
-            {
-                "url": "https://github.com/user/repo",
-                "source_type": "github",
-                "expected_type": GitHubRepository
-            },
+            {"url": "https://github.com/user/repo", "source_type": "github", "expected_type": GitHubRepository},
             # GitHub download URL treated as direct download
             {
                 "url": "https://github.com/user/repo/releases/download/v1.0/app.AppImage",
                 "source_type": "direct",
-                "expected_type": DirectDownloadRepository
+                "expected_type": DirectDownloadRepository,
             },
             # CI artifact URL
             {
                 "url": "https://ci.example.com/artifacts/latest.AppImage",
                 "source_type": "direct",
-                "expected_type": DirectDownloadRepository
-            }
+                "expected_type": DirectDownloadRepository,
+            },
         ]
 
         for scenario in scenarios:
-            client = get_repository_client(
-                scenario["url"],
-                source_type=scenario["source_type"]
-            )
+            client = get_repository_client(scenario["url"], source_type=scenario["source_type"])
             assert isinstance(client, scenario["expected_type"])
             # Just check the type, repository_type property was removed
             pass
@@ -301,31 +294,27 @@ class TestUnifiedRepositoryInterface:
                 "url": "https://github.com/user/repo",
                 "enable_probing": False,
                 "expected_type": GitHubRepository,
-                "description": "GitHub URL with probing disabled"
+                "description": "GitHub URL with probing disabled",
             },
             # Known GitHub-compatible domain - should use GitHub handler
             {
                 "url": "https://codeberg.org/user/repo",
                 "enable_probing": True,
                 "expected_type": GitHubRepository,  # Codeberg is GitHub-compatible
-                "description": "Codeberg domain with probing enabled"
+                "description": "Codeberg domain with probing enabled",
             },
             # Direct download - can skip probing
             {
                 "url": "https://example.com/app.AppImage",
                 "enable_probing": False,
                 "expected_type": DirectDownloadRepository,
-                "description": "Direct download with probing disabled"
-            }
+                "description": "Direct download with probing disabled",
+            },
         ]
 
         for scenario in scenarios:
-            client = get_repository_client(
-                scenario["url"],
-                enable_probing=scenario["enable_probing"]
-            )
-            assert isinstance(client, scenario["expected_type"]), \
-                f"Failed for {scenario['description']}"
+            client = get_repository_client(scenario["url"], enable_probing=scenario["enable_probing"])
+            assert isinstance(client, scenario["expected_type"]), f"Failed for {scenario['description']}"
 
     def test_unified_interface_backward_compatibility(self):
         """Test that unified interface maintains backward compatibility."""

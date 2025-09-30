@@ -65,8 +65,8 @@ class TestCollectEditUpdates:
 class TestValidateUrlUpdate:
     """Test the validate_url_update function."""
 
-    @patch('appimage_updater.config.operations.console')
-    @patch('appimage_updater.config.operations.logger')
+    @patch("appimage_updater.config.operations.console")
+    @patch("appimage_updater.config.operations.logger")
     def test_validate_url_update_with_force_skips_validation(self, mock_logger, mock_console):
         """Test that validate_url_update skips validation when force=True."""
         updates = {
@@ -91,7 +91,7 @@ class TestValidateUrlUpdate:
         assert "force" not in updates
         assert updates["url"] == "https://direct-download.com/app.AppImage"
 
-    @patch('appimage_updater.config.operations.get_repository_client')
+    @patch("appimage_updater.config.operations.get_repository_client")
     def test_validate_url_update_without_force_performs_validation(self, mock_get_client):
         """Test that validate_url_update performs normal validation when force=False."""
         mock_client = MagicMock()
@@ -106,9 +106,7 @@ class TestValidateUrlUpdate:
         validate_url_update(updates)
 
         # Should call repository client methods
-        mock_get_client.assert_called_once_with(
-            "https://github.com/owner/repo/releases/download/v1.0/app.AppImage"
-        )
+        mock_get_client.assert_called_once_with("https://github.com/owner/repo/releases/download/v1.0/app.AppImage")
         mock_client.normalize_repo_url.assert_called_once()
         mock_client.parse_repo_url.assert_called_once_with("https://github.com/owner/repo")
 
@@ -125,8 +123,8 @@ class TestValidateUrlUpdate:
         # Updates should remain unchanged
         assert updates == {"download_dir": "/tmp/test"}
 
-    @patch('appimage_updater.config.operations.console')
-    @patch('appimage_updater.config.operations.logger')
+    @patch("appimage_updater.config.operations.console")
+    @patch("appimage_updater.config.operations.logger")
     def test_validate_url_update_force_removes_flag_from_updates(self, mock_logger, mock_console):
         """Test that force flag is removed from updates after processing."""
         updates = {
@@ -143,7 +141,7 @@ class TestValidateUrlUpdate:
         assert updates["url"] == "https://example.com/app.AppImage"
         assert updates["other_field"] == "value"
 
-    @patch('appimage_updater.config.operations.get_repository_client')
+    @patch("appimage_updater.config.operations.get_repository_client")
     def test_validate_url_update_without_force_flag_performs_validation(self, mock_get_client):
         """Test validation when force flag is not present (defaults to False)."""
         mock_client = MagicMock()
@@ -160,7 +158,7 @@ class TestValidateUrlUpdate:
         mock_get_client.assert_called_once_with("https://github.com/test/repo")
         mock_client.normalize_repo_url.assert_called_once()
 
-    @patch('appimage_updater.config.operations.get_repository_client')
+    @patch("appimage_updater.config.operations.get_repository_client")
     def test_validate_url_update_validation_error_propagates(self, mock_get_client):
         """Test that validation errors are properly propagated when not using force."""
         mock_client = MagicMock()
@@ -175,8 +173,8 @@ class TestValidateUrlUpdate:
         with pytest.raises(ValueError, match="Invalid repository URL"):
             validate_url_update(updates)
 
-    @patch('appimage_updater.config.operations.console')
-    @patch('appimage_updater.config.operations.logger')
+    @patch("appimage_updater.config.operations.console")
+    @patch("appimage_updater.config.operations.logger")
     def test_validate_url_update_force_bypasses_validation_errors(self, mock_logger, mock_console):
         """Test that force flag bypasses validation errors completely."""
         updates = {

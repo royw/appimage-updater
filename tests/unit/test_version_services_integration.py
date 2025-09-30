@@ -28,11 +28,11 @@ class TestVersionServicesIntegration:
 
         assert "MyApp" in pattern1
         assert "(?i)" in pattern1  # Case insensitive
-        assert ".*" in pattern1    # Flexible matching
+        assert ".*" in pattern1  # Flexible matching
 
         assert "Inkscape" in pattern2
         assert "9dee831" not in pattern2  # Git hash excluded
-        assert "x86_64" not in pattern2   # Architecture excluded
+        assert "x86_64" not in pattern2  # Architecture excluded
 
     def test_version_comparison_logic(self):
         """Test centralized version comparison logic."""
@@ -60,7 +60,7 @@ class TestVersionServicesIntegration:
             url="https://github.com/test/repo",
             download_dir=Path("/tmp/test"),
             pattern="(?i)^TestApp.*\\.AppImage$",
-            prerelease=False
+            prerelease=False,
         )
 
         # Test finding info file (will return None for non-existent path)
@@ -142,13 +142,13 @@ class TestMigrationBenefits:
         # All version operations should go through version_service
         # This test verifies the service is accessible and functional
 
-        assert hasattr(version_service, 'extract_version_from_filename')
-        assert hasattr(version_service, 'generate_pattern_from_filename')
-        assert hasattr(version_service, 'compare_versions')
+        assert hasattr(version_service, "extract_version_from_filename")
+        assert hasattr(version_service, "generate_pattern_from_filename")
+        assert hasattr(version_service, "compare_versions")
         # normalize_version method was removed as it's handled internally
-        assert hasattr(version_service, 'find_info_file')
-        assert hasattr(version_service, 'read_info_file')
-        assert hasattr(version_service, 'write_info_file')
+        assert hasattr(version_service, "find_info_file")
+        assert hasattr(version_service, "read_info_file")
+        assert hasattr(version_service, "write_info_file")
 
         # All methods should be callable
         assert callable(version_service.extract_version_from_filename)

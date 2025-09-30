@@ -117,8 +117,14 @@ class TestPrereleaseAutoDetection:
                 version="v1.0.0",
                 tag_name="v1.0.0",
                 published_at=datetime.now(),
-                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000,
-                              created_at=datetime.now())],
+                assets=[
+                    Asset(
+                        name="app-v1.0.0.AppImage",
+                        url="http://test.com/app-v1.0.0.AppImage",
+                        size=1000,
+                        created_at=datetime.now(),
+                    )
+                ],
                 is_prerelease=False,
                 is_draft=False,
             ),
@@ -168,8 +174,14 @@ class TestPrereleaseAutoDetection:
                 version="Draft v1.0.0",
                 tag_name="v1.0.0",
                 published_at=datetime.now(),
-                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000,
-                              created_at=datetime.now())],
+                assets=[
+                    Asset(
+                        name="app-v1.0.0.AppImage",
+                        url="http://test.com/app-v1.0.0.AppImage",
+                        size=1000,
+                        created_at=datetime.now(),
+                    )
+                ],
                 is_prerelease=True,
                 is_draft=True,
             )
@@ -203,16 +215,24 @@ class TestPrereleaseAutoDetection:
                 version="Continuous Build",
                 tag_name="continuous",
                 published_at=datetime.now(),
-                assets=[Asset(name="appimaged.AppImage", url="http://test.com/appimaged.AppImage", size=1000,
-                              created_at=datetime.now())],
+                assets=[
+                    Asset(
+                        name="appimaged.AppImage",
+                        url="http://test.com/appimaged.AppImage",
+                        size=1000,
+                        created_at=datetime.now(),
+                    )
+                ],
                 is_prerelease=True,
                 is_draft=False,
             )
         ]
 
-        with patch("appimage_updater.core.pattern_generator.get_repository_client_async") as mock_pattern_client, \
-                patch("appimage_updater.config.operations.get_repository_client") as mock_config_client, \
-                patch("appimage_updater.core.pattern_generator.should_enable_prerelease") as mock_should_enable:
+        with (
+            patch("appimage_updater.core.pattern_generator.get_repository_client_async") as mock_pattern_client,
+            patch("appimage_updater.config.operations.get_repository_client") as mock_config_client,
+            patch("appimage_updater.core.pattern_generator.should_enable_prerelease") as mock_should_enable,
+        ):
             # Use regular Mock for the client since most methods are synchronous
             mock_client = Mock()
             mock_client.get_releases = AsyncMock(return_value=mock_releases)
@@ -229,12 +249,17 @@ class TestPrereleaseAutoDetection:
             downloads_dir = temp_config_dir / "downloads"
             downloads_dir.mkdir(parents=True, exist_ok=True)
 
-            result = runner.invoke(app, [
-                "add", "test_app",
-                "https://github.com/test/continuous",
-                str(downloads_dir),
-                "--config-dir", str(temp_config_dir)
-            ])
+            result = runner.invoke(
+                app,
+                [
+                    "add",
+                    "test_app",
+                    "https://github.com/test/continuous",
+                    str(downloads_dir),
+                    "--config-dir",
+                    str(temp_config_dir),
+                ],
+            )
 
         assert result.exit_code == 0
         assert "Prerelease downloads have been automatically enabled for this repository" in result.stdout
@@ -256,15 +281,23 @@ class TestPrereleaseAutoDetection:
                 version="v1.0.0",
                 tag_name="v1.0.0",
                 published_at=datetime.now(),
-                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000,
-                              created_at=datetime.now())],
+                assets=[
+                    Asset(
+                        name="app-v1.0.0.AppImage",
+                        url="http://test.com/app-v1.0.0.AppImage",
+                        size=1000,
+                        created_at=datetime.now(),
+                    )
+                ],
                 is_prerelease=False,
                 is_draft=False,
             )
         ]
 
-        with patch("appimage_updater.core.pattern_generator.get_repository_client_async") as mock_pattern_client, \
-                patch("appimage_updater.config.operations.get_repository_client") as mock_config_client:
+        with (
+            patch("appimage_updater.core.pattern_generator.get_repository_client_async") as mock_pattern_client,
+            patch("appimage_updater.config.operations.get_repository_client") as mock_config_client,
+        ):
             # Use regular Mock for the client since most methods are synchronous
             mock_client = Mock()
             mock_client.get_releases = AsyncMock(return_value=mock_releases)
@@ -277,13 +310,18 @@ class TestPrereleaseAutoDetection:
             mock_pattern_client.return_value = mock_client
             mock_config_client.return_value = mock_client
 
-            result = runner.invoke(app, [
-                "add", "test_stable",
-                "https://github.com/test/stable",
-                str(temp_config_dir.parent / "downloads"),
-                "--config-dir", str(temp_config_dir),
-                "--create-dir"
-            ])
+            result = runner.invoke(
+                app,
+                [
+                    "add",
+                    "test_stable",
+                    "https://github.com/test/stable",
+                    str(temp_config_dir.parent / "downloads"),
+                    "--config-dir",
+                    str(temp_config_dir),
+                    "--create-dir",
+                ],
+            )
 
         assert result.exit_code == 0
         assert "Auto-detected continuous builds" not in result.stdout
@@ -305,15 +343,23 @@ class TestPrereleaseAutoDetection:
                 version="v1.0.0",
                 tag_name="v1.0.0",
                 published_at=datetime.now(),
-                assets=[Asset(name="app-v1.0.0.AppImage", url="http://test.com/app-v1.0.0.AppImage", size=1000,
-                              created_at=datetime.now())],
+                assets=[
+                    Asset(
+                        name="app-v1.0.0.AppImage",
+                        url="http://test.com/app-v1.0.0.AppImage",
+                        size=1000,
+                        created_at=datetime.now(),
+                    )
+                ],
                 is_prerelease=False,
                 is_draft=False,
             )
         ]
 
-        with patch("appimage_updater.core.pattern_generator.get_repository_client_async") as mock_pattern_client, \
-                patch("appimage_updater.config.operations.get_repository_client") as mock_config_client:
+        with (
+            patch("appimage_updater.core.pattern_generator.get_repository_client_async") as mock_pattern_client,
+            patch("appimage_updater.config.operations.get_repository_client") as mock_config_client,
+        ):
             # Use regular Mock for the client since most methods are synchronous
             mock_client = Mock()
             mock_client.get_releases = AsyncMock(return_value=mock_releases)
@@ -325,13 +371,19 @@ class TestPrereleaseAutoDetection:
             mock_pattern_client.return_value = mock_client
             mock_config_client.return_value = mock_client
 
-            result = runner.invoke(app, [
-                "add", "--prerelease", "test_explicit",
-                "https://github.com/test/stable",
-                str(temp_config_dir.parent / "downloads"),
-                "--config-dir", str(temp_config_dir),
-                "--create-dir"
-            ])
+            result = runner.invoke(
+                app,
+                [
+                    "add",
+                    "--prerelease",
+                    "test_explicit",
+                    "https://github.com/test/stable",
+                    str(temp_config_dir.parent / "downloads"),
+                    "--config-dir",
+                    str(temp_config_dir),
+                    "--create-dir",
+                ],
+            )
 
         assert result.exit_code == 0
         assert "Auto-detected continuous builds" not in result.stdout
@@ -353,15 +405,23 @@ class TestPrereleaseAutoDetection:
                 version="Continuous Build",
                 tag_name="continuous",
                 published_at=datetime.now(),
-                assets=[Asset(name="appimaged.AppImage", url="http://test.com/appimaged.AppImage", size=1000,
-                              created_at=datetime.now())],
+                assets=[
+                    Asset(
+                        name="appimaged.AppImage",
+                        url="http://test.com/appimaged.AppImage",
+                        size=1000,
+                        created_at=datetime.now(),
+                    )
+                ],
                 is_prerelease=True,
                 is_draft=False,
             )
         ]
 
-        with patch("appimage_updater.core.pattern_generator.get_repository_client_async") as mock_pattern_client, \
-                patch("appimage_updater.config.operations.get_repository_client") as mock_config_client:
+        with (
+            patch("appimage_updater.core.pattern_generator.get_repository_client_async") as mock_pattern_client,
+            patch("appimage_updater.config.operations.get_repository_client") as mock_config_client,
+        ):
             # Use regular Mock for the client since most methods are synchronous
             mock_client = Mock()
             mock_client.get_releases = AsyncMock(return_value=mock_releases)
@@ -373,13 +433,19 @@ class TestPrereleaseAutoDetection:
             mock_pattern_client.return_value = mock_client
             mock_config_client.return_value = mock_client
 
-            result = runner.invoke(app, [
-                "add", "--no-prerelease", "test_explicit_no",
-                "https://github.com/test/continuous",
-                str(temp_config_dir.parent / "downloads"),
-                "--config-dir", str(temp_config_dir),
-                "--create-dir"
-            ])
+            result = runner.invoke(
+                app,
+                [
+                    "add",
+                    "--no-prerelease",
+                    "test_explicit_no",
+                    "https://github.com/test/continuous",
+                    str(temp_config_dir.parent / "downloads"),
+                    "--config-dir",
+                    str(temp_config_dir),
+                    "--create-dir",
+                ],
+            )
 
         assert result.exit_code == 0
         assert "Auto-detected continuous builds" not in result.stdout

@@ -20,12 +20,7 @@ class TestRemoveCommand:
 
     def test_init(self):
         """Test RemoveCommand initialization."""
-        params = RemoveParams(
-            app_names=["TestApp"],
-            config_file=Path("/test/config.json"),
-            debug=True,
-            yes=True
-        )
+        params = RemoveParams(app_names=["TestApp"], config_file=Path("/test/config.json"), debug=True, yes=True)
         command = RemoveCommand(params)
 
         assert command.params == params
@@ -55,7 +50,7 @@ class TestRemoveCommand:
         validation_errors = command.validate()
         assert "At least one application name is required" in validation_errors
 
-    @patch('appimage_updater.commands.remove_command.configure_logging')
+    @patch("appimage_updater.commands.remove_command.configure_logging")
     @pytest.mark.anyio
     async def test_execute_success_with_formatter(self, mock_configure_logging):
         """Test successful execution with output formatter."""
@@ -64,7 +59,7 @@ class TestRemoveCommand:
         mock_formatter = Mock()
 
         success_result = CommandResult(success=True, exit_code=0)
-        with patch.object(command, '_execute_remove_operation', return_value=success_result) as mock_execute:
+        with patch.object(command, "_execute_remove_operation", return_value=success_result) as mock_execute:
             result = await command.execute(output_formatter=mock_formatter)
 
         # Verify logging was configured
@@ -77,7 +72,7 @@ class TestRemoveCommand:
         assert result.success is True
         assert result.exit_code == 0
 
-    @patch('appimage_updater.commands.remove_command.configure_logging')
+    @patch("appimage_updater.commands.remove_command.configure_logging")
     @pytest.mark.anyio
     async def test_execute_success_without_formatter(self, mock_configure_logging):
         """Test successful execution without output formatter."""
@@ -85,7 +80,7 @@ class TestRemoveCommand:
         command = RemoveCommand(params)
 
         success_result = CommandResult(success=True, exit_code=0)
-        with patch.object(command, '_execute_remove_operation', return_value=success_result) as mock_execute:
+        with patch.object(command, "_execute_remove_operation", return_value=success_result) as mock_execute:
             result = await command.execute()
 
         # Verify logging was configured
@@ -97,14 +92,14 @@ class TestRemoveCommand:
         # Verify success result
         assert result.success is True
 
-    @patch('appimage_updater.commands.remove_command.configure_logging')
+    @patch("appimage_updater.commands.remove_command.configure_logging")
     @pytest.mark.anyio
     async def test_execute_validation_error(self, mock_configure_logging):
         """Test execution with validation error."""
         params = RemoveParams(app_names=None)  # Missing app names
         command = RemoveCommand(params)
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             result = await command.execute()
 
         # Verify error was printed to console
@@ -118,7 +113,7 @@ class TestRemoveCommand:
         assert "At least one application name is required" in result.message
         assert result.exit_code == 1
 
-    @patch('appimage_updater.commands.remove_command.configure_logging')
+    @patch("appimage_updater.commands.remove_command.configure_logging")
     @pytest.mark.anyio
     async def test_execute_typer_exit_handling(self, mock_configure_logging):
         """Test execution with typer.Exit exception."""
@@ -126,7 +121,7 @@ class TestRemoveCommand:
         command = RemoveCommand(params)
 
         typer_exit = typer.Exit(2)
-        with patch.object(command, '_execute_remove_operation', side_effect=typer_exit):
+        with patch.object(command, "_execute_remove_operation", side_effect=typer_exit):
             result = await command.execute()
 
         # Verify typer.Exit was handled properly
@@ -134,8 +129,8 @@ class TestRemoveCommand:
         assert result.message == "Command failed"
         assert result.exit_code == 2
 
-    @patch('appimage_updater.commands.remove_command.configure_logging')
-    @patch('appimage_updater.commands.remove_command.logger')
+    @patch("appimage_updater.commands.remove_command.configure_logging")
+    @patch("appimage_updater.commands.remove_command.logger")
     @pytest.mark.anyio
     async def test_execute_unexpected_exception(self, mock_logger, mock_configure_logging):
         """Test execution with unexpected exception."""
@@ -143,7 +138,7 @@ class TestRemoveCommand:
         command = RemoveCommand(params)
 
         test_exception = Exception("Test error")
-        with patch.object(command, '_execute_remove_operation', side_effect=test_exception):
+        with patch.object(command, "_execute_remove_operation", side_effect=test_exception):
             result = await command.execute()
 
         # Verify logging was called
@@ -162,7 +157,7 @@ class TestRemoveCommand:
         command = RemoveCommand(params)
 
         success_result = CommandResult(success=True, exit_code=0)
-        with patch.object(command, '_process_removal_workflow', return_value=success_result) as mock_process:
+        with patch.object(command, "_process_removal_workflow", return_value=success_result) as mock_process:
             result = await command._execute_remove_operation()
 
         mock_process.assert_called_once()
@@ -175,8 +170,8 @@ class TestRemoveCommand:
         command = RemoveCommand(params)
 
         config_error = ConfigLoadError("Config not found")
-        with patch.object(command, '_process_removal_workflow', side_effect=config_error):
-            with patch.object(command, '_handle_config_load_error') as mock_handle:
+        with patch.object(command, "_process_removal_workflow", side_effect=config_error):
+            with patch.object(command, "_handle_config_load_error") as mock_handle:
                 error_result = CommandResult(success=False, exit_code=1)
                 mock_handle.return_value = error_result
 
@@ -185,7 +180,7 @@ class TestRemoveCommand:
         mock_handle.assert_called_once()
         assert result.success is False
 
-    @patch('appimage_updater.commands.remove_command.logger')
+    @patch("appimage_updater.commands.remove_command.logger")
     @pytest.mark.anyio
     async def test_execute_remove_operation_unexpected_exception(self, mock_logger):
         """Test remove operation with unexpected exception."""
@@ -193,8 +188,8 @@ class TestRemoveCommand:
         command = RemoveCommand(params)
 
         test_exception = Exception("Test error")
-        with patch.object(command, '_process_removal_workflow', side_effect=test_exception):
-            with patch.object(command, '_handle_unexpected_error') as mock_handle:
+        with patch.object(command, "_process_removal_workflow", side_effect=test_exception):
+            with patch.object(command, "_handle_unexpected_error") as mock_handle:
                 with pytest.raises(Exception) as exc_info:
                     await command._execute_remove_operation()
 
@@ -211,12 +206,12 @@ class TestRemoveCommand:
         mock_config = Mock()
         mock_apps = [Mock()]
 
-        with patch.object(command, '_load_config', return_value=mock_config):
-            with patch.object(command, '_validate_applications_exist', return_value=True):
-                with patch.object(command, '_validate_and_filter_apps', return_value=mock_apps):
-                    with patch.object(command, '_should_proceed_with_removal', return_value=True):
-                        with patch.object(command, '_perform_removal') as mock_perform:
-                            with patch.object(command, '_create_success_result') as mock_success:
+        with patch.object(command, "_load_config", return_value=mock_config):
+            with patch.object(command, "_validate_applications_exist", return_value=True):
+                with patch.object(command, "_validate_and_filter_apps", return_value=mock_apps):
+                    with patch.object(command, "_should_proceed_with_removal", return_value=True):
+                        with patch.object(command, "_perform_removal") as mock_perform:
+                            with patch.object(command, "_create_success_result") as mock_success:
                                 success_result = CommandResult(success=True, exit_code=0)
                                 mock_success.return_value = success_result
 
@@ -233,9 +228,9 @@ class TestRemoveCommand:
 
         mock_config = Mock()
 
-        with patch.object(command, '_load_config', return_value=mock_config):
-            with patch.object(command, '_validate_applications_exist', return_value=False):
-                with patch.object(command, '_create_error_result') as mock_error:
+        with patch.object(command, "_load_config", return_value=mock_config):
+            with patch.object(command, "_validate_applications_exist", return_value=False):
+                with patch.object(command, "_create_error_result") as mock_error:
                     error_result = CommandResult(success=False, exit_code=1)
                     mock_error.return_value = error_result
 
@@ -252,10 +247,10 @@ class TestRemoveCommand:
 
         mock_config = Mock()
 
-        with patch.object(command, '_load_config', return_value=mock_config):
-            with patch.object(command, '_validate_applications_exist', return_value=True):
-                with patch.object(command, '_validate_and_filter_apps', return_value=None):
-                    with patch.object(command, '_create_error_result') as mock_error:
+        with patch.object(command, "_load_config", return_value=mock_config):
+            with patch.object(command, "_validate_applications_exist", return_value=True):
+                with patch.object(command, "_validate_and_filter_apps", return_value=None):
+                    with patch.object(command, "_create_error_result") as mock_error:
                         error_result = CommandResult(success=False, exit_code=1)
                         mock_error.return_value = error_result
 
@@ -273,11 +268,11 @@ class TestRemoveCommand:
         mock_config = Mock()
         mock_apps = [Mock()]
 
-        with patch.object(command, '_load_config', return_value=mock_config):
-            with patch.object(command, '_validate_applications_exist', return_value=True):
-                with patch.object(command, '_validate_and_filter_apps', return_value=mock_apps):
-                    with patch.object(command, '_should_proceed_with_removal', return_value=False):
-                        with patch.object(command, '_create_success_result') as mock_success:
+        with patch.object(command, "_load_config", return_value=mock_config):
+            with patch.object(command, "_validate_applications_exist", return_value=True):
+                with patch.object(command, "_validate_and_filter_apps", return_value=mock_apps):
+                    with patch.object(command, "_should_proceed_with_removal", return_value=False):
+                        with patch.object(command, "_create_success_result") as mock_success:
                             success_result = CommandResult(success=True, exit_code=0)
                             mock_success.return_value = success_result
 
@@ -286,7 +281,7 @@ class TestRemoveCommand:
         # Should return success even when cancelled (user choice)
         assert result.success is True
 
-    @patch('appimage_updater.commands.remove_command.AppConfigs')
+    @patch("appimage_updater.commands.remove_command.AppConfigs")
     def test_load_config_success(self, mock_app_configs_class):
         """Test successful config loading."""
         params = RemoveParams(app_names=["TestApp"], config_file=Path("/test/config.json"))
@@ -302,7 +297,7 @@ class TestRemoveCommand:
         mock_app_configs_class.assert_called_once_with(config_path=Path("/test/config.json"))
         assert result == mock_config
 
-    @patch('appimage_updater.commands.remove_command.AppConfigs')
+    @patch("appimage_updater.commands.remove_command.AppConfigs")
     def test_load_config_with_config_dir(self, mock_app_configs_class):
         """Test config loading with config directory."""
         params = RemoveParams(app_names=["TestApp"], config_dir=Path("/test/config"))
@@ -338,7 +333,7 @@ class TestRemoveCommand:
         assert result.success is True
         assert result.exit_code == 0
 
-    @patch('appimage_updater.commands.remove_command.get_output_formatter')
+    @patch("appimage_updater.commands.remove_command.get_output_formatter")
     def test_validate_applications_exist_with_applications(self, mock_get_formatter):
         """Test application existence validation with applications present."""
         params = RemoveParams(app_names=["TestApp"])
@@ -351,7 +346,7 @@ class TestRemoveCommand:
 
         assert result is True
 
-    @patch('appimage_updater.commands.remove_command.get_output_formatter')
+    @patch("appimage_updater.commands.remove_command.get_output_formatter")
     def test_validate_applications_exist_no_applications_with_formatter(self, mock_get_formatter):
         """Test application existence validation with no applications and formatter."""
         params = RemoveParams(app_names=["TestApp"])
@@ -367,7 +362,7 @@ class TestRemoveCommand:
         mock_formatter.print_error.assert_called_once_with("No applications found")
         assert result is False
 
-    @patch('appimage_updater.commands.remove_command.get_output_formatter')
+    @patch("appimage_updater.commands.remove_command.get_output_formatter")
     def test_validate_applications_exist_no_applications_without_formatter(self, mock_get_formatter):
         """Test application existence validation with no applications and no formatter."""
         params = RemoveParams(app_names=["TestApp"])
@@ -377,7 +372,7 @@ class TestRemoveCommand:
         mock_config.applications = []
         mock_get_formatter.return_value = None
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             result = command._validate_applications_exist(mock_config)
 
         mock_console_print.assert_called_once_with("No applications found")
@@ -401,7 +396,7 @@ class TestRemoveCommand:
 
         mock_apps = [Mock()]
 
-        with patch.object(command, '_get_user_confirmation', return_value=True) as mock_confirm:
+        with patch.object(command, "_get_user_confirmation", return_value=True) as mock_confirm:
             result = command._should_proceed_with_removal(mock_apps)
 
         mock_confirm.assert_called_once_with(mock_apps)
@@ -416,14 +411,14 @@ class TestRemoveCommand:
         mock_apps = [Mock()]
         mock_updated_config = Mock()
 
-        with patch.object(command, '_remove_apps_from_config', return_value=mock_updated_config) as mock_remove:
-            with patch.object(command, '_save_config') as mock_save:
+        with patch.object(command, "_remove_apps_from_config", return_value=mock_updated_config) as mock_remove:
+            with patch.object(command, "_save_config") as mock_save:
                 command._perform_removal(mock_config, mock_apps)
 
         mock_remove.assert_called_once_with(mock_config, mock_apps)
         mock_save.assert_called_once_with(mock_updated_config, mock_apps)
 
-    @patch('appimage_updater.commands.remove_command.get_output_formatter')
+    @patch("appimage_updater.commands.remove_command.get_output_formatter")
     def test_handle_config_load_error_with_formatter(self, mock_get_formatter):
         """Test config load error handling with formatter."""
         params = RemoveParams(app_names=["TestApp"])
@@ -438,7 +433,7 @@ class TestRemoveCommand:
         assert result.success is False
         assert result.exit_code == 1
 
-    @patch('appimage_updater.commands.remove_command.get_output_formatter')
+    @patch("appimage_updater.commands.remove_command.get_output_formatter")
     def test_handle_config_load_error_without_formatter(self, mock_get_formatter):
         """Test config load error handling without formatter."""
         params = RemoveParams(app_names=["TestApp"])
@@ -446,13 +441,13 @@ class TestRemoveCommand:
 
         mock_get_formatter.return_value = None
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             result = command._handle_config_load_error()
 
         mock_console_print.assert_called_once_with("No applications found")
         assert result.success is False
 
-    @patch('appimage_updater.commands.remove_command.logger')
+    @patch("appimage_updater.commands.remove_command.logger")
     def test_handle_unexpected_error(self, mock_logger):
         """Test unexpected error handling."""
         params = RemoveParams(app_names=["TestApp"])
@@ -464,7 +459,7 @@ class TestRemoveCommand:
         mock_logger.error.assert_called_once_with("Unexpected error in remove command: Test error")
         mock_logger.exception.assert_called_once_with("Full exception details")
 
-    @patch('appimage_updater.commands.remove_command.ApplicationService.filter_apps_by_names')
+    @patch("appimage_updater.commands.remove_command.ApplicationService.filter_apps_by_names")
     def test_validate_and_filter_apps_success(self, mock_filter):
         """Test app validation and filtering - success."""
         params = RemoveParams(app_names=["TestApp"])
@@ -480,7 +475,7 @@ class TestRemoveCommand:
         mock_filter.assert_called_once_with(mock_config.applications, ["TestApp"])
         assert result == mock_found_apps
 
-    @patch('appimage_updater.commands.remove_command.ApplicationService.filter_apps_by_names')
+    @patch("appimage_updater.commands.remove_command.ApplicationService.filter_apps_by_names")
     def test_validate_and_filter_apps_no_matches(self, mock_filter):
         """Test app validation and filtering - no matches."""
         params = RemoveParams(app_names=["NonExistentApp"])
@@ -495,8 +490,8 @@ class TestRemoveCommand:
         mock_filter.assert_called_once_with(mock_config.applications, ["NonExistentApp"])
         assert result == []
 
-    @patch('appimage_updater.commands.remove_command.typer.confirm')
-    @patch('appimage_updater.commands.remove_command._replace_home_with_tilde')
+    @patch("appimage_updater.commands.remove_command.typer.confirm")
+    @patch("appimage_updater.commands.remove_command._replace_home_with_tilde")
     def test_get_user_confirmation_confirmed(self, mock_replace_tilde, mock_confirm):
         """Test user confirmation - confirmed."""
         params = RemoveParams(app_names=["TestApp"])
@@ -511,7 +506,7 @@ class TestRemoveCommand:
         mock_replace_tilde.return_value = "~/test/dir"
         mock_confirm.return_value = True
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             result = command._get_user_confirmation(mock_apps)
 
         # Verify confirmation was requested
@@ -522,8 +517,8 @@ class TestRemoveCommand:
 
         assert result is True
 
-    @patch('appimage_updater.commands.remove_command.typer.confirm')
-    @patch('appimage_updater.commands.remove_command._replace_home_with_tilde')
+    @patch("appimage_updater.commands.remove_command.typer.confirm")
+    @patch("appimage_updater.commands.remove_command._replace_home_with_tilde")
     def test_get_user_confirmation_cancelled(self, mock_replace_tilde, mock_confirm):
         """Test user confirmation - cancelled."""
         params = RemoveParams(app_names=["TestApp"])
@@ -538,18 +533,17 @@ class TestRemoveCommand:
         mock_replace_tilde.return_value = "~/test/dir"
         mock_confirm.return_value = False
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             result = command._get_user_confirmation(mock_apps)
 
         # Verify cancellation message was displayed
-        cancellation_calls = [call for call in mock_console_print.call_args_list
-                            if "Removal cancelled" in str(call)]
+        cancellation_calls = [call for call in mock_console_print.call_args_list if "Removal cancelled" in str(call)]
         assert len(cancellation_calls) > 0
 
         assert result is False
 
-    @patch('appimage_updater.commands.remove_command.typer.confirm')
-    @patch('appimage_updater.commands.remove_command._replace_home_with_tilde')
+    @patch("appimage_updater.commands.remove_command.typer.confirm")
+    @patch("appimage_updater.commands.remove_command._replace_home_with_tilde")
     def test_get_user_confirmation_keyboard_interrupt(self, mock_replace_tilde, mock_confirm):
         """Test user confirmation - keyboard interrupt."""
         params = RemoveParams(app_names=["TestApp"])
@@ -564,17 +558,18 @@ class TestRemoveCommand:
         mock_replace_tilde.return_value = "~/test/dir"
         mock_confirm.side_effect = KeyboardInterrupt()
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             result = command._get_user_confirmation(mock_apps)
 
         # Verify non-interactive message was displayed
-        non_interactive_calls = [call for call in mock_console_print.call_args_list
-                               if "non-interactive mode" in str(call)]
+        non_interactive_calls = [
+            call for call in mock_console_print.call_args_list if "non-interactive mode" in str(call)
+        ]
         assert len(non_interactive_calls) > 0
 
         assert result is False
 
-    @patch('appimage_updater.commands.remove_command._replace_home_with_tilde')
+    @patch("appimage_updater.commands.remove_command._replace_home_with_tilde")
     def test_remove_apps_from_config(self, mock_replace_tilde):
         """Test removing apps from config."""
         params = RemoveParams(app_names=["TestApp"])
@@ -594,7 +589,7 @@ class TestRemoveCommand:
 
         mock_replace_tilde.return_value = "~/test/dir"
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             result = command._remove_apps_from_config(mock_config, [mock_app1])
 
         # Verify app was removed from config
@@ -602,8 +597,7 @@ class TestRemoveCommand:
         assert mock_config.applications[0].name == "KeepApp"
 
         # Verify success messages were displayed
-        success_calls = [call for call in mock_console_print.call_args_list
-                        if "Successfully removed" in str(call)]
+        success_calls = [call for call in mock_console_print.call_args_list if "Successfully removed" in str(call)]
         assert len(success_calls) > 0
 
         assert result == mock_config

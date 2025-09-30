@@ -11,7 +11,7 @@ from appimage_updater.config.models import Config
 class TestAppConfigsDirectUsage:
     """Test direct usage of AppConfigs for configuration loading."""
 
-    @patch('appimage_updater.config.manager.AppConfigs._load_config')
+    @patch("appimage_updater.config.manager.AppConfigs._load_config")
     def test_direct_appconfigs_usage(self, mock_load_config) -> None:
         """Test direct AppConfigs usage with path resolution."""
         config_path = Path("/test/config.json")

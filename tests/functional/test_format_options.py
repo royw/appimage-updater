@@ -48,16 +48,16 @@ class TestFormatOptions:
 
         # Verify we discovered the expected commands
         discovered_set = set(commands_with_params.keys())
-        assert expected_commands.issubset(
-            discovered_set), f"Missing expected commands: {expected_commands - discovered_set}"
+        assert expected_commands.issubset(discovered_set), (
+            f"Missing expected commands: {expected_commands - discovered_set}"
+        )
 
         # Test each expected command has format parameter in function signature
         for command in expected_commands:
             assert command in commands_with_params, f"Command {command} not found in source code"
             params = commands_with_params[command]
             assert "output_format" in params, (
-                f"Command {command} missing 'output_format' parameter in function signature. "
-                f"Found params: {params}"
+                f"Command {command} missing 'output_format' parameter in function signature. Found params: {params}"
             )
 
     def test_dry_run_parameters_in_source(self) -> None:
@@ -71,8 +71,7 @@ class TestFormatOptions:
             if command in commands_with_params:
                 params = commands_with_params[command]
                 assert "dry_run" in params, (
-                    f"Command {command} missing 'dry_run' parameter in function signature. "
-                    f"Found params: {params}"
+                    f"Command {command} missing 'dry_run' parameter in function signature. Found params: {params}"
                 )
 
     def test_http_tracker_parameters_in_source(self) -> None:
@@ -99,8 +98,9 @@ class TestFormatOptions:
         expected_commands = {"check", "list", "add", "edit", "show", "remove", "repository", "config"}
 
         # Source analysis should find at least the expected commands
-        assert expected_commands.issubset(
-            source_commands), f"Source analysis missing commands: {expected_commands - source_commands}"
+        assert expected_commands.issubset(source_commands), (
+            f"Source analysis missing commands: {expected_commands - source_commands}"
+        )
 
         # Print discovered commands for debugging
         print(f"Source analysis found commands: {sorted(source_commands)}")
@@ -126,9 +126,7 @@ class TestFormatOptions:
             temp_config_dir = Path(temp_dir) / "config"
             temp_config_dir.mkdir()
 
-            result = runner.invoke(app, [
-                "list", "--format", "json", "--config-dir", str(temp_config_dir)
-            ])
+            result = runner.invoke(app, ["list", "--format", "json", "--config-dir", str(temp_config_dir)])
 
             # Command should succeed
             assert result.exit_code == 0, f"Command failed with exit code {result.exit_code}. Output: {result.stdout}"
@@ -149,7 +147,9 @@ class TestFormatOptions:
 
             except json.JSONDecodeError as e:
                 # This is the failure we expect - output is not valid JSON
-                assert False, f"list command with --format json produced invalid JSON output. Error: {e}. Output: {result.stdout[:500]}"
+                assert False, (
+                    f"list command with --format json produced invalid JSON output. Error: {e}. Output: {result.stdout[:500]}"
+                )
 
     def test_list_command_html_output(self) -> None:
         """Test that list command produces valid HTML output when --format html is used."""
@@ -166,9 +166,7 @@ class TestFormatOptions:
             temp_config_dir = Path(temp_dir) / "config"
             temp_config_dir.mkdir()
 
-            result = runner.invoke(app, [
-                "list", "--format", "html", "--config-dir", str(temp_config_dir)
-            ])
+            result = runner.invoke(app, ["list", "--format", "html", "--config-dir", str(temp_config_dir)])
 
             # Command should succeed
             assert result.exit_code == 0, f"Command failed with exit code {result.exit_code}. Output: {result.stdout}"
@@ -185,10 +183,14 @@ class TestFormatOptions:
             missing_elements = [elem for elem in html_elements if elem not in output]
 
             if not has_html_start:
-                raise AssertionError(f"list command with --format html should start with HTML doctype or tag. Output: {output[:200]}")
+                raise AssertionError(
+                    f"list command with --format html should start with HTML doctype or tag. Output: {output[:200]}"
+                )
 
             if missing_elements:
-                raise AssertionError(f"list command with --format html missing HTML elements: {missing_elements}. Output: {output[:200]}")
+                raise AssertionError(
+                    f"list command with --format html missing HTML elements: {missing_elements}. Output: {output[:200]}"
+                )
 
             # Should contain title
             if "<title>" not in output:
@@ -209,9 +211,7 @@ class TestFormatOptions:
             temp_config_dir = Path(temp_dir) / "config"
             temp_config_dir.mkdir()
 
-            result = runner.invoke(app, [
-                "list", "--format", "plain", "--config-dir", str(temp_config_dir)
-            ])
+            result = runner.invoke(app, ["list", "--format", "plain", "--config-dir", str(temp_config_dir)])
 
             # Command should succeed
             assert result.exit_code == 0, f"Command failed with exit code {result.exit_code}. Output: {result.stdout}"
@@ -237,7 +237,9 @@ class TestFormatOptions:
                 missing_elements = [elem for elem in expected_elements if elem not in output]
 
                 if missing_elements:
-                    raise AssertionError(f"Plain format missing expected elements: {missing_elements}. Output: {output[:500]}")
+                    raise AssertionError(
+                        f"Plain format missing expected elements: {missing_elements}. Output: {output[:500]}"
+                    )
 
                 # Should contain table-like structure (pipes or similar)
                 if "|" not in output and "name" not in output:
@@ -258,9 +260,7 @@ class TestFormatOptions:
             temp_config_dir = Path(temp_dir) / "config"
             temp_config_dir.mkdir()
 
-            result = runner.invoke(app, [
-                "list", "--format", "rich", "--config-dir", str(temp_config_dir)
-            ])
+            result = runner.invoke(app, ["list", "--format", "rich", "--config-dir", str(temp_config_dir)])
 
             # Command should succeed
             assert result.exit_code == 0, f"Command failed with exit code {result.exit_code}. Output: {result.stdout}"
@@ -286,18 +286,22 @@ class TestFormatOptions:
                 has_rich_formatting = any(indicator in output for indicator in rich_indicators)
 
                 if not has_rich_formatting:
-                    raise AssertionError(f"Rich format should contain table formatting characters. Output: {output[:500]}")
+                    raise AssertionError(
+                        f"Rich format should contain table formatting characters. Output: {output[:500]}"
+                    )
 
                 # Should contain expected Rich table elements
                 expected_elements = ["Configured Applications", "Total:", "applications"]
                 missing_elements = [elem for elem in expected_elements if elem not in output]
 
                 if missing_elements:
-                    raise AssertionError(f"Rich format missing expected elements: {missing_elements}. Output: {output[:500]}")
+                    raise AssertionError(
+                        f"Rich format missing expected elements: {missing_elements}. Output: {output[:500]}"
+                    )
 
     def test_all_commands_format_output(self) -> None:
         """Test that all commands produce appropriate output for each format.
-        
+
         Uses CliRunner to avoid network calls and subprocess overhead.
         """
         from typer.testing import CliRunner
@@ -324,10 +328,7 @@ class TestFormatOptions:
                 for format_type in formats_to_test:
                     try:
                         # Build the command args with isolated config
-                        full_args = command_args + [
-                            "--format", format_type,
-                            "--config-dir", str(temp_config_dir)
-                        ]
+                        full_args = command_args + ["--format", format_type, "--config-dir", str(temp_config_dir)]
 
                         # Run the command using CliRunner (respects network blocking)
                         result = runner.invoke(app, full_args)
@@ -344,7 +345,7 @@ class TestFormatOptions:
                             "correct_format": format_analysis["correct_format"],
                             "analysis": format_analysis,
                             "output_length": len(output),
-                            "stderr": result.stderr if result.stderr else None
+                            "stderr": result.stderr if result.stderr else None,
                         }
 
                     except Exception as e:
@@ -353,13 +354,13 @@ class TestFormatOptions:
                             "correct_format": False,
                             "analysis": {"error": str(e)},
                             "output_length": 0,
-                            "stderr": str(e)
+                            "stderr": str(e),
                         }
 
         # Print comprehensive results for analysis
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("COMPREHENSIVE FORMAT TESTING RESULTS")
-        print("="*80)
+        print("=" * 80)
 
         for command_name in results:
             print(f"\n{command_name.upper()} COMMAND:")
@@ -377,14 +378,16 @@ class TestFormatOptions:
         total_tests = len(test_commands) * len(formats_to_test)
         passing_tests = sum(1 for cmd in results.values() for fmt in cmd.values() if fmt["correct_format"])
 
-        print("\n" + "="*80)
-        print(f"SUMMARY: {passing_tests}/{total_tests} tests passing ({passing_tests/total_tests*100:.1f}%)")
-        print("="*80)
+        print("\n" + "=" * 80)
+        print(f"SUMMARY: {passing_tests}/{total_tests} tests passing ({passing_tests / total_tests * 100:.1f}%)")
+        print("=" * 80)
 
         # Fail the test if any format is broken - this should catch regressions
         if passing_tests < total_tests:
             failing_tests = total_tests - passing_tests
-            assert False, f"Format validation failed: {failing_tests}/{total_tests} tests failing ({failing_tests/total_tests*100:.1f}% failure rate). See output above for details."
+            assert False, (
+                f"Format validation failed: {failing_tests}/{total_tests} tests failing ({failing_tests / total_tests * 100:.1f}% failure rate). See output above for details."
+            )
 
         # All formats working correctly
         assert True, f"All format tests passed: {passing_tests}/{total_tests} (100%)"

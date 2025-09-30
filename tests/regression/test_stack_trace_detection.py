@@ -20,14 +20,14 @@ def run_cli_command(args: list[str], temp_home: Path | None = None) -> tuple[int
 
     # Set environment to disable rich traceback and create clean environment
     env = dict(os.environ)
-    env['_RICH_TRACEBACK'] = '0'
-    env['RICH_TRACEBACK'] = '0'
-    env['NO_COLOR'] = '1'  # Also disable colors to make output more predictable
+    env["_RICH_TRACEBACK"] = "0"
+    env["RICH_TRACEBACK"] = "0"
+    env["NO_COLOR"] = "1"  # Also disable colors to make output more predictable
 
     # Use temporary home directory if provided to isolate from user config
     if temp_home:
-        env['HOME'] = str(temp_home)
-        env['XDG_CONFIG_HOME'] = str(temp_home / '.config')
+        env["HOME"] = str(temp_home)
+        env["XDG_CONFIG_HOME"] = str(temp_home / ".config")
 
     try:
         result = subprocess.run(
@@ -49,17 +49,17 @@ def assert_no_stack_trace_in_output(stdout: str, stderr: str, command: str) -> N
 
     stack_trace_indicators = [
         "Traceback (most recent call last):",
-        "File \"/home/royw/src/appimage-updater/src/",
-        "File \"/home/royw/.local/",
-        "File \"/home/royw/.venv/",
+        'File "/home/royw/src/appimage-updater/src/',
+        'File "/home/royw/.local/',
+        'File "/home/royw/.venv/',
         "click.exceptions.Exit:",
         "typer.Exit:",
         "raise typer.Exit",
         "└ <function",  # Rich traceback function indicators
         "│    │      └",  # Rich traceback nested indicators
         "at 0x7",  # Memory addresses
-        "> File \"/",  # Rich traceback file indicators
-        "appimage_updater/main.py\", line",  # Direct file references
+        '> File "/',  # Rich traceback file indicators
+        'appimage_updater/main.py", line',  # Direct file references
         "appimage_updater/commands/",  # Command file references
         "appimage_updater/config_command.py",  # Config command references
     ]
@@ -255,11 +255,7 @@ class TestSpecificStackTraceScenarios:
         assert_no_stack_trace_in_output(stdout, stderr, "show NonExistentApp")
 
         # Should show clean error message
-        assert any(phrase in stdout for phrase in [
-            "not found",
-            "No applications found",
-            "No applications match"
-        ])
+        assert any(phrase in stdout for phrase in ["not found", "No applications found", "No applications match"])
 
 
 @pytest.mark.slow
@@ -308,6 +304,6 @@ def test_stack_trace_detection_works():
         pytest.fail("Stack trace detection incorrectly flagged normal output")
 
     # This SHOULD trigger our detection (simulated stack trace)
-    stack_trace_output = "Traceback (most recent call last):\n  File \"/home/royw/src/appimage-updater/src/main.py\""
+    stack_trace_output = 'Traceback (most recent call last):\n  File "/home/royw/src/appimage-updater/src/main.py"'
     with pytest.raises(AssertionError, match="Found stack trace indicator"):
         assert_no_stack_trace_in_output(stack_trace_output, "", "test")

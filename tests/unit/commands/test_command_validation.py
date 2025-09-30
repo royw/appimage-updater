@@ -59,12 +59,7 @@ class TestCommandValidation:
         assert command.validate() == []
 
         # With various flags
-        command = CommandFactory.create_check_command(
-            app_names=["TestApp"],
-            dry_run=True,
-            yes=True,
-            verbose=True
-        )
+        command = CommandFactory.create_check_command(app_names=["TestApp"], dry_run=True, yes=True, verbose=True)
         assert command.validate() == []
 
     def test_edit_command_validation_success(self):
@@ -154,11 +149,7 @@ class TestCommandValidation:
         assert command.validate() == []
 
         # Valid set action with parameters
-        command = CommandFactory.create_config_command(
-            action="set",
-            setting="test_setting",
-            value="test_value"
-        )
+        command = CommandFactory.create_config_command(action="set", setting="test_setting", value="test_value")
         assert command.validate() == []
 
         # Valid reset action
@@ -166,10 +157,7 @@ class TestCommandValidation:
         assert command.validate() == []
 
         # Valid show-effective action with app parameter
-        command = CommandFactory.create_config_command(
-            action="show-effective",
-            app_name="TestApp"
-        )
+        command = CommandFactory.create_config_command(action="show-effective", app_name="TestApp")
         assert command.validate() == []
 
         # Valid list action
@@ -224,7 +212,11 @@ class TestCommandValidation:
         """Test parameter validation edge cases."""
         # Test with None values
         params = AddParams(name=None, url=None)
-        assert "NAME is required" in params.__class__(name=None, url="test").validate() if hasattr(params.__class__, 'validate') else True
+        assert (
+            "NAME is required" in params.__class__(name=None, url="test").validate()
+            if hasattr(params.__class__, "validate")
+            else True
+        )
 
         # Test with empty strings
         params = AddParams(name="", url="")
@@ -392,22 +384,19 @@ class TestCommandValidation:
             config_dir=Path("/test/config"),  # Both file and dir specified
             debug=True,
             verbose=True,
-            dry_run=True
+            dry_run=True,
         )
         # Should not have validation errors for parameter combinations
         errors = command.validate()
         # Filter to only validation-related errors (not logic conflicts)
-        validation_errors = [e for e in errors if any(keyword in e.lower()
-                           for keyword in ["required", "invalid", "missing"])]
+        validation_errors = [
+            e for e in errors if any(keyword in e.lower() for keyword in ["required", "invalid", "missing"])
+        ]
         assert len(validation_errors) == 0
 
         # ConfigCommand with complex scenarios
         command = CommandFactory.create_config_command(
-            action="set",
-            setting="test_setting",
-            value="test_value",
-            config_file=Path("/test/config.json"),
-            debug=True
+            action="set", setting="test_setting", value="test_value", config_file=Path("/test/config.json"), debug=True
         )
         errors = command.validate()
         assert len(errors) == 0
@@ -421,15 +410,9 @@ class TestCommandValidation:
         # Should not raise type errors during validation
         commands = [
             CommandFactory.create_add_command(
-                name="Test",
-                url="https://test.com",
-                config_file=config_file,
-                config_dir=config_dir
+                name="Test", url="https://test.com", config_file=config_file, config_dir=config_dir
             ),
-            CommandFactory.create_list_command(
-                config_file=config_file,
-                config_dir=config_dir
-            ),
+            CommandFactory.create_list_command(config_file=config_file, config_dir=config_dir),
         ]
 
         for command in commands:
@@ -453,12 +436,17 @@ class TestCommandValidation:
             dry_run=False,
             interactive=True,
             examples=False,
-            debug=True
+            debug=True,
         )
 
         errors = command.validate()
         # Boolean parameters should not cause validation errors
-        boolean_errors = [e for e in errors if any(param in e.lower()
-                         for param in ["create_dir", "yes", "verbose", "dry_run",
-                                     "interactive", "examples", "debug"])]
+        boolean_errors = [
+            e
+            for e in errors
+            if any(
+                param in e.lower()
+                for param in ["create_dir", "yes", "verbose", "dry_run", "interactive", "examples", "debug"]
+            )
+        ]
         assert len(boolean_errors) == 0

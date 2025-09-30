@@ -27,14 +27,14 @@ class TestEditPersistenceBug:
 
     def test_edit_prerelease_persistence_with_default_config_path(self):
         """Test that edit changes are persisted when using default config paths.
-        
+
         This reproduces the exact BambuStudio bug where:
         1. User runs: appimage-updater edit BambuStudio --no-prerelease
-        2. Command shows: "Prerelease: Yes → No" 
+        2. Command shows: "Prerelease: Yes → No"
         3. But the change is never saved to the config file
         4. Next show command still shows: "Prerelease: Yes"
-        
-        Root cause: _save_config() method does 'pass' when both config_file 
+
+        Root cause: _save_config() method does 'pass' when both config_file
         and config_dir are None (the normal usage scenario).
         """
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -75,9 +75,7 @@ class TestEditPersistenceBug:
                 os.environ["HOME"] = str(fake_home)
 
                 # Run edit command to disable prerelease (without explicit --config or --config-dir)
-                exit_code, stdout, stderr = run_cli_command([
-                    "edit", "TestApp", "--no-prerelease"
-                ])
+                exit_code, stdout, stderr = run_cli_command(["edit", "TestApp", "--no-prerelease"])
 
                 # Command should succeed and claim to make the change
                 assert exit_code == 0, f"Edit command failed: {stderr}"
@@ -141,9 +139,9 @@ class TestEditPersistenceBug:
                 os.environ["HOME"] = str(fake_home)
 
                 # Run edit command with multiple changes
-                exit_code, stdout, stderr = run_cli_command([
-                    "edit", "TestApp", "--no-prerelease", "--checksum", "--disable"
-                ])
+                exit_code, stdout, stderr = run_cli_command(
+                    ["edit", "TestApp", "--no-prerelease", "--checksum", "--disable"]
+                )
 
                 # Command should succeed and claim to make all changes
                 assert exit_code == 0, f"Edit command failed: {stderr}"

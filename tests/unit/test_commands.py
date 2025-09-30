@@ -1,5 +1,6 @@
 # type: ignore
 """Tests for command pattern implementation."""
+
 from appimage_updater.commands.base import CommandResult
 from appimage_updater.commands.factory import CommandFactory
 from appimage_updater.commands.parameters import AddParams

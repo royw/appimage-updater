@@ -12,12 +12,17 @@ from appimage_updater.main import app
 class TestAddCommand:
     """Test the add command functionality."""
 
-    @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
+    @patch("appimage_updater.repositories.github.client.httpx.AsyncClient")
+    @patch("appimage_updater.core.pattern_generator.should_enable_prerelease")
+    @patch("appimage_updater.core.pattern_generator.generate_appimage_pattern_async")
     def test_add_command_with_invalid_url(
-        self, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock,
-        runner: CliRunner, temp_config_dir: Path, tmp_path: Path
+        self,
+        mock_pattern_gen: Mock,
+        mock_prerelease: Mock,
+        mock_httpx_client: Mock,
+        runner: CliRunner,
+        temp_config_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Test add command with unknown URL falls back to dynamic download."""
         # Set up basic mocks to prevent network calls
@@ -29,17 +34,23 @@ class TestAddCommand:
         # Mock async functions
         async def mock_pattern(*args, **kwargs):
             return "(?i)InvalidTestApp.*\\.AppImage$"
+
         mock_pattern_gen.side_effect = mock_pattern
         mock_prerelease.return_value = False
 
         test_download_dir = tmp_path / "test-download"
-        result = runner.invoke(app, [
-            "add", "InvalidTestApp",
-            "https://example.com/invalid",
-            str(test_download_dir),
-            "--config-dir", str(temp_config_dir),
-            "--create-dir"
-        ])
+        result = runner.invoke(
+            app,
+            [
+                "add",
+                "InvalidTestApp",
+                "https://example.com/invalid",
+                str(test_download_dir),
+                "--config-dir",
+                str(temp_config_dir),
+                "--create-dir",
+            ],
+        )
 
         # With enhanced repository detection, unknown URLs fall back to dynamic download
         assert result.exit_code == 0
@@ -54,13 +65,18 @@ class TestAddCommand:
     ) -> None:
         """Test add command validates that --rotation requires a symlink path."""
         test_download_dir = tmp_path / "test-download"
-        result = runner.invoke(app, [
-            "add", "RotationTestApp",
-            "https://github.com/user/testapp",
-            str(test_download_dir),
-            "--rotation",
-            "--config-dir", str(temp_config_dir)
-        ])
+        result = runner.invoke(
+            app,
+            [
+                "add",
+                "RotationTestApp",
+                "https://github.com/user/testapp",
+                str(test_download_dir),
+                "--rotation",
+                "--config-dir",
+                str(temp_config_dir),
+            ],
+        )
 
         assert result.exit_code == 1
         assert "Error: --rotation requires a symlink path" in result.stdout
@@ -70,10 +86,10 @@ class TestAddCommand:
         config_files = list(temp_config_dir.glob("*.json"))
         assert len(config_files) == 0
 
-    @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
-    @patch('appimage_updater.repositories.factory.get_repository_client')
+    @patch("appimage_updater.repositories.github.client.httpx.AsyncClient")
+    @patch("appimage_updater.core.pattern_generator.should_enable_prerelease")
+    @patch("appimage_updater.core.pattern_generator.generate_appimage_pattern_async")
+    @patch("appimage_updater.repositories.factory.get_repository_client")
     def test_add_command_with_direct_flag(
         self,
         mock_repo_client: Mock,
@@ -97,19 +113,25 @@ class TestAddCommand:
         # Mock async functions
         async def mock_pattern(*args, **kwargs):
             return "(?i)DirectApp.*\\.AppImage$"
+
         mock_pattern_gen.side_effect = mock_pattern
         mock_prerelease.return_value = False
 
         direct_url = "https://nightly.example.com/app.AppImage"
 
-        result = runner.invoke(app, [
-            "add", "DirectApp",
-            direct_url,
-            str(temp_config_dir / "downloads" / "DirectApp"),
-            "--direct",
-            "--config-dir", str(temp_config_dir),
-            "--create-dir"
-        ])
+        result = runner.invoke(
+            app,
+            [
+                "add",
+                "DirectApp",
+                direct_url,
+                str(temp_config_dir / "downloads" / "DirectApp"),
+                "--direct",
+                "--config-dir",
+                str(temp_config_dir),
+                "--create-dir",
+            ],
+        )
 
         assert result.exit_code == 0
         assert "Successfully added application 'DirectApp'" in result.stdout
@@ -130,9 +152,7 @@ class TestAddCommand:
 class TestRemoveCommand:
     """Test the remove command functionality."""
 
-    def test_remove_command_from_config_file(
-        self, runner: CliRunner, temp_config_dir: Path, tmp_path: Path
-    ) -> None:
+    def test_remove_command_from_config_file(self, runner: CliRunner, temp_config_dir: Path, tmp_path: Path) -> None:
         """Test remove command with single config file (not directory-based)."""
         app1_dir = tmp_path / "app1"
         app2_dir = tmp_path / "app2"
@@ -146,7 +166,7 @@ class TestRemoveCommand:
                     "url": "https://github.com/user/app1",
                     "download_dir": str(app1_dir),
                     "pattern": "App1.*",
-                    "enabled": True
+                    "enabled": True,
                 },
                 {
                     "name": "App2",
@@ -154,8 +174,8 @@ class TestRemoveCommand:
                     "url": "https://github.com/user/app2",
                     "download_dir": str(app2_dir),
                     "pattern": "App2.*",
-                    "enabled": True
-                }
+                    "enabled": True,
+                },
             ]
         }
 
@@ -163,10 +183,7 @@ class TestRemoveCommand:
             json.dump(initial_config, f)
 
         # Remove one app from the config file
-        result = runner.invoke(app, [
-            "remove", "App1",
-            "--config", str(config_file)
-        ], input="y\n")
+        result = runner.invoke(app, ["remove", "App1", "--config", str(config_file)], input="y\n")
 
         assert result.exit_code == 0
         assert "Successfully removed application 'App1' from configuration" in result.stdout
@@ -181,10 +198,7 @@ class TestRemoveCommand:
     def test_remove_command_empty_config(self, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test remove command with empty configuration."""
         # Create empty config directory
-        result = runner.invoke(app, [
-            "remove", "AnyApp",
-            "--config-dir", str(temp_config_dir)
-        ])
+        result = runner.invoke(app, ["remove", "AnyApp", "--config-dir", str(temp_config_dir)])
 
         assert result.exit_code == 1
         assert "No applications found" in result.stdout

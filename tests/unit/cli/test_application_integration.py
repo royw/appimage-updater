@@ -37,14 +37,14 @@ class TestAppImageUpdaterCLI:
         cli = AppImageUpdaterCLI()
 
         # Verify handlers are registered by checking the app has commands
-        assert hasattr(cli.app, 'registered_commands')
+        assert hasattr(cli.app, "registered_commands")
 
         # Verify we have the expected number of commands (8 handlers)
         assert len(cli.app.registered_commands) >= 8
 
     def test_register_handlers_with_exception(self):
         """Test handler registration with exception handling."""
-        with patch('appimage_updater.cli.application.CheckCommandHandler') as mock_handler_class:
+        with patch("appimage_updater.cli.application.CheckCommandHandler") as mock_handler_class:
             mock_handler = Mock()
             mock_handler.get_command_name.return_value = "test_command"
             mock_handler.register_command.side_effect = Exception("Registration failed")
@@ -73,7 +73,7 @@ class TestAppImageUpdaterCLI:
         cli = AppImageUpdaterCLI()
 
         # Test that run method exists and can be called
-        assert hasattr(cli, 'run')
+        assert hasattr(cli, "run")
         assert callable(cli.run)
 
     def test_exception_handling_setup(self):
@@ -84,10 +84,10 @@ class TestAppImageUpdaterCLI:
         source = inspect.getsource(cli.run)
 
         # Verify key exception handling patterns are present
-        assert 'try:' in source
-        assert 'except' in source
-        assert 'KeyboardInterrupt' in source
-        assert 'SystemExit' in source
+        assert "try:" in source
+        assert "except" in source
+        assert "KeyboardInterrupt" in source
+        assert "SystemExit" in source
 
     def test_typer_app_configuration(self):
         """Test Typer application configuration."""
@@ -105,12 +105,12 @@ class TestAppImageUpdaterCLI:
         # Verify console is properly initialized
         assert cli.console is not None
         # Console should be a Rich Console instance
-        assert hasattr(cli.console, 'print')
+        assert hasattr(cli.console, "print")
 
     def test_handler_error_logging(self):
         """Test handler registration error logging."""
-        with patch('appimage_updater.cli.application.logger') as mock_logger:
-            with patch('appimage_updater.cli.application.CheckCommandHandler') as mock_handler_class:
+        with patch("appimage_updater.cli.application.logger") as mock_logger:
+            with patch("appimage_updater.cli.application.CheckCommandHandler") as mock_handler_class:
                 mock_handler = Mock()
                 mock_handler.get_command_name.return_value = "test_command"
                 mock_handler.register_command.side_effect = Exception("Test error")
@@ -126,7 +126,7 @@ class TestAppImageUpdaterCLI:
 
     def test_handler_success_logging(self):
         """Test successful handler registration logging."""
-        with patch('appimage_updater.cli.application.logger') as mock_logger:
+        with patch("appimage_updater.cli.application.logger") as mock_logger:
             AppImageUpdaterCLI()
 
             # Verify debug logging was called for each handler

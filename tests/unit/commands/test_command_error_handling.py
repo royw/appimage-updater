@@ -17,14 +17,14 @@ from appimage_updater.config.loader import ConfigLoadError
 class TestCommandErrorHandling:
     """Test error handling pathways across all command types."""
 
-    @patch('appimage_updater.commands.add_command.logger')
+    @patch("appimage_updater.commands.add_command.logger")
     @pytest.mark.anyio
     async def test_add_command_unexpected_exception_handling(self, mock_logger):
         """Test AddCommand handles unexpected exceptions properly."""
         command = CommandFactory.create_add_command(name="TestApp", url="https://test.com")
 
         # Mock an unexpected exception during execution
-        with patch.object(command, '_execute_main_add_workflow', side_effect=RuntimeError("Unexpected error")):
+        with patch.object(command, "_execute_main_add_workflow", side_effect=RuntimeError("Unexpected error")):
             result = await command.execute()
 
         # Verify error was logged
@@ -36,14 +36,14 @@ class TestCommandErrorHandling:
         assert "Unexpected error" in result.message
         assert result.exit_code == 1
 
-    @patch('appimage_updater.commands.check_command.logger')
+    @patch("appimage_updater.commands.check_command.logger")
     @pytest.mark.anyio
     async def test_check_command_unexpected_exception_handling(self, mock_logger):
         """Test CheckCommand handles unexpected exceptions properly."""
         command = CommandFactory.create_check_command(app_names=["TestApp"])
 
         # Mock an unexpected exception during execution
-        with patch.object(command, '_execute_check_operation', side_effect=ValueError("Check error")):
+        with patch.object(command, "_execute_check_operation", side_effect=ValueError("Check error")):
             result = await command.execute()
 
         # Verify error was logged
@@ -55,28 +55,28 @@ class TestCommandErrorHandling:
         assert "Check error" in result.message
         assert result.exit_code == 1
 
-    @patch('appimage_updater.commands.edit_command.logger')
+    @patch("appimage_updater.commands.edit_command.logger")
     @pytest.mark.anyio
     async def test_edit_command_typer_exit_handling(self, mock_logger):
         """Test EditCommand handles typer.Exit exceptions properly."""
         command = CommandFactory.create_edit_command(app_names=["TestApp"])
 
         # Mock typer.Exit exception during execution
-        with patch.object(command, '_execute_main_edit_workflow', side_effect=typer.Exit(2)):
+        with patch.object(command, "_execute_main_edit_workflow", side_effect=typer.Exit(2)):
             with pytest.raises(typer.Exit) as exc_info:
                 await command.execute()
 
         # Verify typer.Exit was re-raised
         assert exc_info.value.exit_code == 2
 
-    @patch('appimage_updater.commands.edit_command.logger')
+    @patch("appimage_updater.commands.edit_command.logger")
     @pytest.mark.anyio
     async def test_edit_command_unexpected_exception_handling(self, mock_logger):
         """Test EditCommand handles unexpected exceptions properly."""
         command = CommandFactory.create_edit_command(app_names=["TestApp"])
 
         # Mock an unexpected exception during execution
-        with patch.object(command, '_execute_main_edit_workflow', side_effect=OSError("File error")):
+        with patch.object(command, "_execute_main_edit_workflow", side_effect=OSError("File error")):
             result = await command.execute()
 
         # Verify error was logged
@@ -88,14 +88,14 @@ class TestCommandErrorHandling:
         assert "File error" in result.message
         assert result.exit_code == 1
 
-    @patch('appimage_updater.commands.list_command.logger')
+    @patch("appimage_updater.commands.list_command.logger")
     @pytest.mark.anyio
     async def test_list_command_config_load_error_handling(self, mock_logger):
         """Test ListCommand handles config load errors properly."""
         command = CommandFactory.create_list_command()
 
         # Mock config load error
-        with patch.object(command, '_execute_list_operation', side_effect=ConfigLoadError("Config not found")):
+        with patch.object(command, "_execute_list_operation", side_effect=ConfigLoadError("Config not found")):
             result = await command.execute()
 
         # Verify error was logged
@@ -107,14 +107,14 @@ class TestCommandErrorHandling:
         assert "Config not found" in result.message
         assert result.exit_code == 1
 
-    @patch('appimage_updater.commands.remove_command.logger')
+    @patch("appimage_updater.commands.remove_command.logger")
     @pytest.mark.anyio
     async def test_remove_command_typer_exit_handling(self, mock_logger):
         """Test RemoveCommand handles typer.Exit exceptions properly."""
         command = CommandFactory.create_remove_command(app_names=["TestApp"])
 
         # Mock typer.Exit exception during execution
-        with patch.object(command, '_execute_remove_operation', side_effect=typer.Exit(3)):
+        with patch.object(command, "_execute_remove_operation", side_effect=typer.Exit(3)):
             result = await command.execute()
 
         # Verify typer.Exit was handled and converted to CommandResult
@@ -122,14 +122,14 @@ class TestCommandErrorHandling:
         assert result.message == "Command failed"
         assert result.exit_code == 3
 
-    @patch('appimage_updater.commands.show_command.logger')
+    @patch("appimage_updater.commands.show_command.logger")
     @pytest.mark.anyio
     async def test_show_command_unexpected_exception_handling(self, mock_logger):
         """Test ShowCommand handles unexpected exceptions properly."""
         command = CommandFactory.create_show_command(app_names=["TestApp"])
 
         # Mock an unexpected exception during execution
-        with patch.object(command, '_execute_show_operation', side_effect=PermissionError("Access denied")):
+        with patch.object(command, "_execute_show_operation", side_effect=PermissionError("Access denied")):
             result = await command.execute()
 
         # Verify error was logged
@@ -141,14 +141,14 @@ class TestCommandErrorHandling:
         assert "Access denied" in result.message
         assert result.exit_code == 1
 
-    @patch('appimage_updater.commands.config_command.logger')
+    @patch("appimage_updater.commands.config_command.logger")
     @pytest.mark.anyio
     async def test_config_command_unexpected_exception_handling(self, mock_logger):
         """Test ConfigCommand handles unexpected exceptions properly."""
         command = CommandFactory.create_config_command(action="show")
 
         # Mock an unexpected exception during execution
-        with patch.object(command, '_execute_config_operation', side_effect=KeyError("Missing key")):
+        with patch.object(command, "_execute_config_operation", side_effect=KeyError("Missing key")):
             result = await command.execute()
 
         # Verify error was logged
@@ -160,14 +160,14 @@ class TestCommandErrorHandling:
         assert "Missing key" in result.message
         assert result.exit_code == 1
 
-    @patch('appimage_updater.commands.repository_command.logger')
+    @patch("appimage_updater.commands.repository_command.logger")
     @pytest.mark.anyio
     async def test_repository_command_unexpected_exception_handling(self, mock_logger):
         """Test RepositoryCommand handles unexpected exceptions properly."""
         command = CommandFactory.create_repository_command(app_names=["TestApp"])
 
         # Mock an unexpected exception during execution
-        with patch.object(command, '_execute_main_repository_workflow', side_effect=ConnectionError("Network error")):
+        with patch.object(command, "_execute_main_repository_workflow", side_effect=ConnectionError("Network error")):
             result = await command.execute()
 
         # Verify failure result (error handling is done in _handle_repository_execution_error)
@@ -199,7 +199,7 @@ class TestCommandErrorHandling:
         command = CommandFactory.create_edit_command(app_names=["TestApp"])
 
         # Mock config loading failure
-        with patch('appimage_updater.commands.edit_command.AppConfigs', side_effect=Exception("Config error")):
+        with patch("appimage_updater.commands.edit_command.AppConfigs", side_effect=Exception("Config error")):
             result = command._load_config_safely()
 
         # Verify error result was returned
@@ -213,8 +213,10 @@ class TestCommandErrorHandling:
         command = CommandFactory.create_edit_command(app_names=["TestApp"])
 
         # Mock specific "No configuration found" error
-        with patch('appimage_updater.commands.edit_command.AppConfigs', side_effect=Exception("No configuration found")):
-            with patch.object(command.console, 'print') as mock_console_print:
+        with patch(
+            "appimage_updater.commands.edit_command.AppConfigs", side_effect=Exception("No configuration found")
+        ):
+            with patch.object(command.console, "print") as mock_console_print:
                 result = command._load_config_safely()
 
         # Verify specific error message was displayed
@@ -222,7 +224,7 @@ class TestCommandErrorHandling:
         error_message = mock_console_print.call_args[0][0]
         assert "No configuration found" in error_message
 
-    @patch('appimage_updater.commands.edit_command.validate_edit_updates')
+    @patch("appimage_updater.commands.edit_command.validate_edit_updates")
     def test_edit_command_validation_error_with_hints(self, mock_validate):
         """Test EditCommand validation error handling with hints."""
         command = CommandFactory.create_edit_command(app_names=["TestApp"])
@@ -235,8 +237,8 @@ class TestCommandErrorHandling:
         mock_apps = [mock_app]
         mock_updates = {"rotation": True}
 
-        with patch.object(command.console, 'print') as mock_console_print:
-            with patch.object(command, '_show_validation_hints') as mock_hints:
+        with patch.object(command.console, "print") as mock_console_print:
+            with patch.object(command, "_show_validation_hints") as mock_hints:
                 with pytest.raises(typer.Exit):
                     command._apply_updates_to_apps(mock_apps, mock_updates)
 
@@ -249,14 +251,14 @@ class TestCommandErrorHandling:
         command = CommandFactory.create_edit_command(app_names=["TestApp"])
 
         # Test rotation error hint
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             command._show_validation_hints("File rotation requires a symlink path")
 
         mock_console_print.assert_called_once()
         hint_message = mock_console_print.call_args[0][0]
         assert "Either disable rotation or specify a symlink path" in hint_message
 
-    @patch('appimage_updater.commands.remove_command.get_output_formatter')
+    @patch("appimage_updater.commands.remove_command.get_output_formatter")
     def test_remove_command_config_load_error_with_formatter(self, mock_get_formatter):
         """Test RemoveCommand config load error handling with formatter."""
         command = CommandFactory.create_remove_command(app_names=["TestApp"])
@@ -271,21 +273,21 @@ class TestCommandErrorHandling:
         assert result.success is False
         assert result.exit_code == 1
 
-    @patch('appimage_updater.commands.remove_command.get_output_formatter')
+    @patch("appimage_updater.commands.remove_command.get_output_formatter")
     def test_remove_command_config_load_error_without_formatter(self, mock_get_formatter):
         """Test RemoveCommand config load error handling without formatter."""
         command = CommandFactory.create_remove_command(app_names=["TestApp"])
 
         mock_get_formatter.return_value = None
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             result = command._handle_config_load_error()
 
         # Verify console fallback was used
         mock_console_print.assert_called_once_with("No applications found")
         assert result.success is False
 
-    @patch('appimage_updater.commands.remove_command.typer.confirm')
+    @patch("appimage_updater.commands.remove_command.typer.confirm")
     def test_remove_command_user_confirmation_interruption(self, mock_confirm):
         """Test RemoveCommand user confirmation interruption handling."""
         command = CommandFactory.create_remove_command(app_names=["TestApp"])
@@ -299,16 +301,17 @@ class TestCommandErrorHandling:
         # Mock keyboard interrupt during confirmation
         mock_confirm.side_effect = KeyboardInterrupt()
 
-        with patch.object(command.console, 'print') as mock_console_print:
-            with patch('appimage_updater.commands.remove_command._replace_home_with_tilde', return_value="~/test/dir"):
+        with patch.object(command.console, "print") as mock_console_print:
+            with patch("appimage_updater.commands.remove_command._replace_home_with_tilde", return_value="~/test/dir"):
                 result = command._get_user_confirmation(mock_apps)
 
         # Verify interruption was handled gracefully
         assert result is False
 
         # Verify appropriate message was displayed
-        non_interactive_calls = [call for call in mock_console_print.call_args_list
-                               if "non-interactive mode" in str(call)]
+        non_interactive_calls = [
+            call for call in mock_console_print.call_args_list if "non-interactive mode" in str(call)
+        ]
         assert len(non_interactive_calls) > 0
 
     def test_show_command_config_load_error_graceful_handling(self):
@@ -318,11 +321,11 @@ class TestCommandErrorHandling:
         # Mock config load error for default config (should be handled gracefully)
         error = ConfigLoadError("Config not found")
 
-        with patch('appimage_updater.commands.show_command.Config') as mock_config_class:
+        with patch("appimage_updater.commands.show_command.Config") as mock_config_class:
             mock_config = Mock()
             mock_config_class.return_value = mock_config
 
-            with patch.object(command, '_process_and_display_apps', return_value=True) as mock_process:
+            with patch.object(command, "_process_and_display_apps", return_value=True) as mock_process:
                 result = command._handle_config_load_error(error)
 
         # Verify graceful handling created default config
@@ -343,7 +346,7 @@ class TestCommandErrorHandling:
             except ConfigLoadError as e:
                 command._handle_config_load_error(e)
 
-    @patch('appimage_updater.commands.show_command.ApplicationService.filter_apps_by_names')
+    @patch("appimage_updater.commands.show_command.ApplicationService.filter_apps_by_names")
     def test_show_command_no_applications_found(self, mock_filter):
         """Test ShowCommand handling when no applications are found."""
         command = CommandFactory.create_show_command(app_names=["NonExistentApp"])
@@ -362,7 +365,7 @@ class TestCommandErrorHandling:
         # Test set action help
         command = CommandFactory.create_config_command(action="set")
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             command._show_usage_help()
 
         mock_console_print.assert_called_once()
@@ -378,13 +381,13 @@ class TestCommandErrorHandling:
         mock_handler = Mock(return_value=False)
         action_handlers = {"set": mock_handler}
 
-        with patch.object(command, '_get_action_handlers', return_value=action_handlers):
+        with patch.object(command, "_get_action_handlers", return_value=action_handlers):
             result = await command._execute_config_operation()
 
         # Verify failure was detected
         assert result is False
 
-    @patch('appimage_updater.commands.repository_command._examine_repositories')
+    @patch("appimage_updater.commands.repository_command._examine_repositories")
     @pytest.mark.anyio
     async def test_repository_command_operation_failure(self, mock_examine):
         """Test RepositoryCommand operation failure handling."""
@@ -398,7 +401,7 @@ class TestCommandErrorHandling:
         # Verify failure was returned
         assert result is False
 
-    @patch('appimage_updater.commands.repository_command._examine_repositories')
+    @patch("appimage_updater.commands.repository_command._examine_repositories")
     @pytest.mark.anyio
     async def test_repository_command_operation_exception(self, mock_examine):
         """Test RepositoryCommand operation exception handling."""
@@ -426,7 +429,7 @@ class TestCommandErrorHandling:
 
         for command in commands:
             # Test that all commands have consistent error result creation
-            if hasattr(command, '_create_error_result'):
+            if hasattr(command, "_create_error_result"):
                 # Some commands require a message parameter
                 try:
                     result = command._create_error_result("Test error")
@@ -437,7 +440,7 @@ class TestCommandErrorHandling:
                     result = command._create_error_result()
                     assert result.success is False
                     assert result.exit_code == 1
-            elif hasattr(command, '_create_result'):
+            elif hasattr(command, "_create_result"):
                 result = command._create_result(False)
                 assert result.success is False
                 assert result.exit_code == 1
@@ -447,7 +450,7 @@ class TestCommandErrorHandling:
         command = CommandFactory.create_list_command()
 
         # Mock logging configuration failure
-        with patch('appimage_updater.commands.list_command.configure_logging', side_effect=Exception("Logging error")):
+        with patch("appimage_updater.commands.list_command.configure_logging", side_effect=Exception("Logging error")):
             # Command should still handle the error gracefully
             # (This would be caught by the outer exception handler in execute())
             pass
@@ -457,7 +460,7 @@ class TestCommandErrorHandling:
         command = CommandFactory.create_list_command()
 
         # Mock error within formatter context
-        with patch('appimage_updater.commands.list_command.OutputFormatterContext') as mock_context:
+        with patch("appimage_updater.commands.list_command.OutputFormatterContext") as mock_context:
             mock_context.side_effect = Exception("Formatter error")
 
             # Command should handle formatter context errors
@@ -482,12 +485,12 @@ class TestCommandErrorHandling:
         # Test that original exceptions are preserved in error handling
         original_error = ValueError("Original error")
 
-        with patch('appimage_updater.commands.edit_command.validate_edit_updates', side_effect=original_error):
+        with patch("appimage_updater.commands.edit_command.validate_edit_updates", side_effect=original_error):
             mock_app = Mock()
             mock_app.name = "TestApp"
 
-            with patch.object(command.console, 'print'):
-                with patch.object(command, '_show_validation_hints'):
+            with patch.object(command.console, "print"):
+                with patch.object(command, "_show_validation_hints"):
                     with pytest.raises(typer.Exit) as exc_info:
                         command._apply_updates_to_apps([mock_app], {"test": "value"})
 

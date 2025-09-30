@@ -17,7 +17,7 @@ class TestManager:
         """Test that Manager.load_config method works."""
         manager = Manager()
 
-        with patch.object(manager, '_load_config_from_file') as mock_load_file:
+        with patch.object(manager, "_load_config_from_file") as mock_load_file:
             mock_config = Config()
             mock_load_file.return_value = mock_config
 
@@ -34,10 +34,7 @@ class TestManager:
         config_path = Path("/test/config.json")
 
         m = mock_open()
-        with patch('pathlib.Path.open', m), \
-             patch('json.dump'), \
-             patch('pathlib.Path.mkdir'):
-
+        with patch("pathlib.Path.open", m), patch("json.dump"), patch("pathlib.Path.mkdir"):
             manager.save_config(config, config_path)
             # Test passes if no exception is raised
 
@@ -47,7 +44,7 @@ class TestGlobalConfigManager:
 
     def test_property_access(self):
         """Test property-based access to global configuration."""
-        with patch.object(GlobalConfigManager, '_load_global_config') as mock_load:
+        with patch.object(GlobalConfigManager, "_load_global_config") as mock_load:
             # Mock a basic config
             mock_config = Config()
             mock_load.return_value = mock_config
@@ -68,7 +65,7 @@ class TestGlobalConfigManager:
 
     def test_default_properties(self):
         """Test default configuration properties."""
-        with patch.object(GlobalConfigManager, '_load_global_config') as mock_load:
+        with patch.object(GlobalConfigManager, "_load_global_config") as mock_load:
             mock_config = Config()
             mock_load.return_value = mock_config
 
@@ -92,21 +89,21 @@ class TestAppConfigs:
 
     def test_iterator_support(self):
         """Test iterator support for app configurations."""
-        with patch.object(AppConfigs, '_load_application_configs') as mock_load:
+        with patch.object(AppConfigs, "_load_application_configs") as mock_load:
             # Create mock applications
             app1 = ApplicationConfig(
                 name="TestApp1",
                 source_type="github",
                 url="https://github.com/test/app1",
                 download_dir=Path("/tmp/app1"),
-                pattern="test.*\\.AppImage$"
+                pattern="test.*\\.AppImage$",
             )
             app2 = ApplicationConfig(
                 name="TestApp2",
                 source_type="github",
                 url="https://github.com/test/app2",
                 download_dir=Path("/tmp/app2"),
-                pattern="test.*\\.AppImage$"
+                pattern="test.*\\.AppImage$",
             )
 
             mock_config = Config(applications=[app1, app2])
@@ -125,13 +122,13 @@ class TestAppConfigs:
 
     def test_dictionary_access(self):
         """Test dictionary-style access by app name."""
-        with patch.object(AppConfigs, '_load_application_configs') as mock_load:
+        with patch.object(AppConfigs, "_load_application_configs") as mock_load:
             app1 = ApplicationConfig(
                 name="TestApp1",
                 source_type="github",
                 url="https://github.com/test/app1",
                 download_dir=Path("/tmp/app1"),
-                pattern="test.*\\.AppImage$"
+                pattern="test.*\\.AppImage$",
             )
 
             mock_config = Config(applications=[app1])
@@ -153,14 +150,14 @@ class TestAppConfigs:
 
     def test_filtering(self):
         """Test application filtering functionality."""
-        with patch.object(AppConfigs, '_load_application_configs') as mock_load:
+        with patch.object(AppConfigs, "_load_application_configs") as mock_load:
             app1 = ApplicationConfig(
                 name="TestApp1",
                 source_type="github",
                 url="https://github.com/test/app1",
                 download_dir=Path("/tmp/app1"),
                 pattern="test.*\\.AppImage$",
-                enabled=True
+                enabled=True,
             )
             app2 = ApplicationConfig(
                 name="TestApp2",
@@ -168,7 +165,7 @@ class TestAppConfigs:
                 url="https://github.com/test/app2",
                 download_dir=Path("/tmp/app2"),
                 pattern="test.*\\.AppImage$",
-                enabled=False
+                enabled=False,
             )
             app3 = ApplicationConfig(
                 name="OrcaSlicer",
@@ -176,7 +173,7 @@ class TestAppConfigs:
                 url="https://github.com/test/orca",
                 download_dir=Path("/tmp/orca"),
                 pattern="orca.*\\.AppImage$",
-                enabled=True
+                enabled=True,
             )
 
             mock_config = Config(applications=[app1, app2, app3])
@@ -195,27 +192,27 @@ class TestAppConfigs:
 
     def test_app_name_filtering(self):
         """Test filtering by specific app names."""
-        with patch.object(AppConfigs, '_load_application_configs') as mock_load:
+        with patch.object(AppConfigs, "_load_application_configs") as mock_load:
             app1 = ApplicationConfig(
                 name="TestApp1",
                 source_type="github",
                 url="https://github.com/test/app1",
                 download_dir=Path("/tmp/app1"),
-                pattern="test.*\\.AppImage$"
+                pattern="test.*\\.AppImage$",
             )
             app2 = ApplicationConfig(
                 name="TestApp2",
                 source_type="github",
                 url="https://github.com/test/app2",
                 download_dir=Path("/tmp/app2"),
-                pattern="test.*\\.AppImage$"
+                pattern="test.*\\.AppImage$",
             )
             app3 = ApplicationConfig(
                 name="TestApp3",
                 source_type="github",
                 url="https://github.com/test/app3",
                 download_dir=Path("/tmp/app3"),
-                pattern="test.*\\.AppImage$"
+                pattern="test.*\\.AppImage$",
             )
 
             mock_config = Config(applications=[app1, app2, app3])
@@ -230,13 +227,13 @@ class TestAppConfigs:
 
     def test_add_remove_operations(self):
         """Test adding and removing application configurations."""
-        with patch.object(AppConfigs, '_load_application_configs') as mock_load:
+        with patch.object(AppConfigs, "_load_application_configs") as mock_load:
             app1 = ApplicationConfig(
                 name="TestApp1",
                 source_type="github",
                 url="https://github.com/test/app1",
                 download_dir=Path("/tmp/app1"),
-                pattern="test.*\\.AppImage$"
+                pattern="test.*\\.AppImage$",
             )
 
             mock_config = Config(applications=[app1])
@@ -254,7 +251,7 @@ class TestAppConfigs:
                 source_type="github",
                 url="https://github.com/test/new",
                 download_dir=Path("/tmp/new"),
-                pattern="new.*\\.AppImage$"
+                pattern="new.*\\.AppImage$",
             )
             app_configs.add(new_app)
 

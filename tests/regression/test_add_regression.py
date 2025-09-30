@@ -167,8 +167,9 @@ class TestAddRegression:
         assert success_rate >= 0.6, f"Comprehensive command test failed: only {success_rate:.1%} success rate"
         assert total_applications > 0, "No applications found to test"
 
-    def _test_single_application_recreation(self, runner: CliRunner, original_config: dict[str, Any],
-                                            app_name: str) -> bool:
+    def _test_single_application_recreation(
+        self, runner: CliRunner, original_config: dict[str, Any], app_name: str
+    ) -> bool:
         """Test recreating a single application configuration using --add-command."""
         # Create temporary directory for testing
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -181,10 +182,7 @@ class TestAddRegression:
                 json.dump({"applications": [original_config]}, f, indent=2)
 
             # Step 1: Use show --add-command to generate the add command
-            show_result = runner.invoke(app, [
-                "show", "--add-command", app_name,
-                "--config-dir", str(temp_config_dir)
-            ])
+            show_result = runner.invoke(app, ["show", "--add-command", app_name, "--config-dir", str(temp_config_dir)])
 
             if show_result.exit_code != 0:
                 print(f"    FAILED: Show --add-command failed: {show_result.stdout}")  # noqa: T201
@@ -246,21 +244,10 @@ class TestAddRegression:
         """Compare original and generated configurations for essential equivalence."""
 
         # Essential fields that must match exactly
-        exact_match_fields = [
-            "name",
-            "source_type",
-            "url",
-            "download_dir",
-            "enabled",
-            "prerelease"
-        ]
+        exact_match_fields = ["name", "source_type", "url", "download_dir", "enabled", "prerelease"]
 
         # Optional rotation fields that should match if present
-        optional_exact_fields = [
-            "rotation_enabled",
-            "retain_count",
-            "symlink_path"
-        ]
+        optional_exact_fields = ["rotation_enabled", "retain_count", "symlink_path"]
 
         for field in exact_match_fields:
             original_value = original.get(field)
@@ -414,8 +401,9 @@ class TestAddRegression:
             print("    Testing remove command")
             return self._test_remove_command(runner, app_name, temp_config_dir)
 
-    def _test_add_command(self, runner: CliRunner, original_config: dict[str, Any], app_name: str,
-                          temp_config_dir: Path) -> bool:
+    def _test_add_command(
+        self, runner: CliRunner, original_config: dict[str, Any], app_name: str, temp_config_dir: Path
+    ) -> bool:
         """Test the add command."""
         source_url = original_config.get("url")
         download_dir = original_config.get("download_dir")

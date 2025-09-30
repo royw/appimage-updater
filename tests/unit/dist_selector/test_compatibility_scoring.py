@@ -33,34 +33,27 @@ class TestCalculateCompatibilityScore:
             name="test-app-x86_64-linux.AppImage",
             url="https://example.com/test.AppImage",
             size=1024,
-            created_at="2023-01-01T00:00:00Z"
+            created_at="2023-01-01T00:00:00Z",
         )
 
         asset_info = AssetInfo(
-            asset=asset,
-            distribution="ubuntu",
-            version="24.04",
-            version_numeric=24.04,
-            arch="x86_64",
-            format="AppImage"
+            asset=asset, distribution="ubuntu", version="24.04", version_numeric=24.04, arch="x86_64", format="AppImage"
         )
 
-        current_dist = DistributionInfo(
-            id="ubuntu",
-            version="24.04",
-            version_numeric=24.04,
-            codename="noble"
-        )
+        current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04, codename="noble")
 
-        with patch(
-            'appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture',
-            return_value=(True, 100.0)
-        ), patch(
-            'appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform',
-            return_value=(True, 100.0)
-        ), patch(
-            'appimage_updater.dist_selector.compatibility_scoring.is_supported_format',
-            return_value=(True, 100.0)
+        with (
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture",
+                return_value=(True, 100.0),
+            ),
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform",
+                return_value=(True, 100.0),
+            ),
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_supported_format", return_value=(True, 100.0)
+            ),
         ):
             score = _calculate_compatibility_score(asset_info, current_dist)
             # Should get high score: arch(50) + platform(30) + format(20) + dist(50) + version(30) = 180
@@ -72,22 +65,16 @@ class TestCalculateCompatibilityScore:
             name="test-app-arm64-linux.AppImage",
             url="https://example.com/test.AppImage",
             size=1024,
-            created_at="2023-01-01T00:00:00Z"
+            created_at="2023-01-01T00:00:00Z",
         )
 
-        asset_info = AssetInfo(
-            asset=asset,
-            arch="arm64",
-            format="AppImage"
-        )
+        asset_info = AssetInfo(asset=asset, arch="arm64", format="AppImage")
 
-        current_dist = DistributionInfo(
-            id="ubuntu",
-            version="24.04",
-            version_numeric=24.04
-        )
+        current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture', return_value=(False, 0.0)):
+        with patch(
+            "appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture", return_value=(False, 0.0)
+        ):
             score = _calculate_compatibility_score(asset_info, current_dist)
             assert score == 0.0
 
@@ -97,24 +84,22 @@ class TestCalculateCompatibilityScore:
             name="test-app-windows.exe",
             url="https://example.com/test.exe",
             size=1024,
-            created_at="2023-01-01T00:00:00Z"
+            created_at="2023-01-01T00:00:00Z",
         )
 
-        asset_info = AssetInfo(
-            asset=asset,
-            arch="x86_64",
-            format="exe"
-        )
+        asset_info = AssetInfo(asset=asset, arch="x86_64", format="exe")
 
-        current_dist = DistributionInfo(
-            id="ubuntu",
-            version="24.04",
-            version_numeric=24.04
-        )
+        current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture', return_value=(True, 100.0)), \
-             patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform', return_value=(False, 0.0)):
-
+        with (
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture",
+                return_value=(True, 100.0),
+            ),
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform", return_value=(False, 0.0)
+            ),
+        ):
             score = _calculate_compatibility_score(asset_info, current_dist)
             assert score == 0.0
 
@@ -128,55 +113,32 @@ class TestExtractAssetProperties:
             name="test-app-x86_64-linux.AppImage",
             url="https://example.com/test.AppImage",
             size=1024,
-            created_at="2023-01-01T00:00:00Z"
+            created_at="2023-01-01T00:00:00Z",
         )
 
-        asset_info = AssetInfo(
-            asset=asset,
-            arch="x86_64",
-            format="AppImage"
-        )
+        asset_info = AssetInfo(asset=asset, arch="x86_64", format="AppImage")
 
         properties = _extract_asset_properties(asset_info)
 
-        assert properties == {
-            "arch": "x86_64",
-            "platform": "linux",
-            "format": ".appimage"
-        }
+        assert properties == {"arch": "x86_64", "platform": "linux", "format": ".appimage"}
 
     def test_extract_asset_properties_minimal(self):
         """Test extraction with minimal properties."""
         asset = Asset(
-            name="test-app.zip",
-            url="https://example.com/test.zip",
-            size=1024,
-            created_at="2023-01-01T00:00:00Z"
+            name="test-app.zip", url="https://example.com/test.zip", size=1024, created_at="2023-01-01T00:00:00Z"
         )
 
         asset_info = AssetInfo(asset=asset)
 
         properties = _extract_asset_properties(asset_info)
 
-        assert properties == {
-            "arch": None,
-            "platform": None,
-            "format": ".zip"
-        }
+        assert properties == {"arch": None, "platform": None, "format": ".zip"}
 
     def test_extract_asset_properties_format_fallback(self):
         """Test format fallback when file_extension is None."""
-        asset = Asset(
-            name="test-app",
-            url="https://example.com/test",
-            size=1024,
-            created_at="2023-01-01T00:00:00Z"
-        )
+        asset = Asset(name="test-app", url="https://example.com/test", size=1024, created_at="2023-01-01T00:00:00Z")
 
-        asset_info = AssetInfo(
-            asset=asset,
-            format="AppImage"
-        )
+        asset_info = AssetInfo(asset=asset, format="AppImage")
 
         properties = _extract_asset_properties(asset_info)
 
@@ -188,39 +150,35 @@ class TestCheckCriticalCompatibility:
 
     def test_check_critical_compatibility_compatible(self):
         """Test compatible architecture and platform."""
-        properties = {
-            "arch": "x86_64",
-            "platform": "linux",
-            "format": ".AppImage"
-        }
+        properties = {"arch": "x86_64", "platform": "linux", "format": ".AppImage"}
 
-        with patch('appimage_updater.dist_selector.compatibility_scoring._is_architecture_compatible', return_value=True), \
-             patch('appimage_updater.dist_selector.compatibility_scoring._is_platform_compatible', return_value=True):
-
+        with (
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring._is_architecture_compatible", return_value=True
+            ),
+            patch("appimage_updater.dist_selector.compatibility_scoring._is_platform_compatible", return_value=True),
+        ):
             assert _check_critical_compatibility(properties) is True
 
     def test_check_critical_compatibility_incompatible_arch(self):
         """Test incompatible architecture."""
-        properties = {
-            "arch": "arm64",
-            "platform": "linux",
-            "format": ".AppImage"
-        }
+        properties = {"arch": "arm64", "platform": "linux", "format": ".AppImage"}
 
-        with patch('appimage_updater.dist_selector.compatibility_scoring._is_architecture_compatible', return_value=False):
+        with patch(
+            "appimage_updater.dist_selector.compatibility_scoring._is_architecture_compatible", return_value=False
+        ):
             assert _check_critical_compatibility(properties) is False
 
     def test_check_critical_compatibility_incompatible_platform(self):
         """Test incompatible platform."""
-        properties = {
-            "arch": "x86_64",
-            "platform": "windows",
-            "format": ".exe"
-        }
+        properties = {"arch": "x86_64", "platform": "windows", "format": ".exe"}
 
-        with patch('appimage_updater.dist_selector.compatibility_scoring._is_architecture_compatible', return_value=True), \
-             patch('appimage_updater.dist_selector.compatibility_scoring._is_platform_compatible', return_value=False):
-
+        with (
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring._is_architecture_compatible", return_value=True
+            ),
+            patch("appimage_updater.dist_selector.compatibility_scoring._is_platform_compatible", return_value=False),
+        ):
             assert _check_critical_compatibility(properties) is False
 
 
@@ -233,12 +191,17 @@ class TestArchitectureCompatibility:
 
     def test_is_architecture_compatible_valid(self):
         """Test valid architecture compatibility."""
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture', return_value=(True, 100.0)):
+        with patch(
+            "appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture",
+            return_value=(True, 100.0),
+        ):
             assert _is_architecture_compatible("x86_64") is True
 
     def test_is_architecture_compatible_invalid(self):
         """Test invalid architecture compatibility."""
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture', return_value=(False, 0.0)):
+        with patch(
+            "appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture", return_value=(False, 0.0)
+        ):
             assert _is_architecture_compatible("unknown") is False
 
     def test_score_architecture_none(self):
@@ -247,12 +210,17 @@ class TestArchitectureCompatibility:
 
     def test_score_architecture_compatible(self):
         """Test scoring compatible architecture."""
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture', return_value=(True, 100.0)):
+        with patch(
+            "appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture",
+            return_value=(True, 100.0),
+        ):
             assert _score_architecture("x86_64") == 50.0
 
     def test_score_architecture_incompatible(self):
         """Test scoring incompatible architecture."""
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture', return_value=(False, 0.0)):
+        with patch(
+            "appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture", return_value=(False, 0.0)
+        ):
             assert _score_architecture("unknown") == 0.0
 
 
@@ -265,26 +233,41 @@ class TestPlatformCompatibility:
 
     def test_is_platform_compatible_platform_only(self):
         """Test platform compatibility without format."""
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform', return_value=(True, 100.0)):
+        with patch(
+            "appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform", return_value=(True, 100.0)
+        ):
             assert _is_platform_compatible("linux", None) is True
 
     def test_is_platform_compatible_format_only(self):
         """Test format compatibility without platform."""
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_supported_format', return_value=(True, 100.0)):
+        with patch(
+            "appimage_updater.dist_selector.compatibility_scoring.is_supported_format", return_value=(True, 100.0)
+        ):
             assert _is_platform_compatible(None, ".AppImage") is True
 
     def test_is_platform_compatible_both_compatible(self):
         """Test both platform and format compatible."""
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform', return_value=(True, 100.0)), \
-             patch('appimage_updater.dist_selector.compatibility_scoring.is_supported_format', return_value=(True, 100.0)):
-
+        with (
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform",
+                return_value=(True, 100.0),
+            ),
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_supported_format", return_value=(True, 100.0)
+            ),
+        ):
             assert _is_platform_compatible("linux", ".AppImage") is True
 
     def test_is_platform_compatible_platform_incompatible(self):
         """Test incompatible platform."""
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform', return_value=(False, 0.0)), \
-             patch('appimage_updater.dist_selector.compatibility_scoring.is_supported_format', return_value=(True, 100.0)):
-
+        with (
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform", return_value=(False, 0.0)
+            ),
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_supported_format", return_value=(True, 100.0)
+            ),
+        ):
             assert _is_platform_compatible("windows", ".AppImage") is False
 
     def test_score_platform_none(self):
@@ -293,12 +276,16 @@ class TestPlatformCompatibility:
 
     def test_score_platform_compatible(self):
         """Test scoring compatible platform."""
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform', return_value=(True, 100.0)):
+        with patch(
+            "appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform", return_value=(True, 100.0)
+        ):
             assert _score_platform("linux") == 30.0
 
     def test_score_platform_incompatible(self):
         """Test scoring incompatible platform."""
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform', return_value=(False, 0.0)):
+        with patch(
+            "appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform", return_value=(False, 0.0)
+        ):
             assert _score_platform("windows") == 0.0
 
 
@@ -311,19 +298,25 @@ class TestFormatScoring:
 
     def test_score_format_appimage(self):
         """Test scoring AppImage format."""
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_supported_format', return_value=(True, 100.0)):
+        with patch(
+            "appimage_updater.dist_selector.compatibility_scoring.is_supported_format", return_value=(True, 100.0)
+        ):
             assert _score_format(".appimage") == 20.0
             assert _score_format("appimage") == 20.0
             assert _score_format(".AppImage") == 20.0
 
     def test_score_format_other_supported(self):
         """Test scoring other supported formats."""
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_supported_format', return_value=(True, 100.0)):
+        with patch(
+            "appimage_updater.dist_selector.compatibility_scoring.is_supported_format", return_value=(True, 100.0)
+        ):
             assert _score_format(".deb") == 10.0
 
     def test_score_format_unsupported(self):
         """Test scoring unsupported format."""
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_supported_format', return_value=(False, 0.0)):
+        with patch(
+            "appimage_updater.dist_selector.compatibility_scoring.is_supported_format", return_value=(False, 0.0)
+        ):
             assert _score_format(".exe") == 0.0
 
 
@@ -333,8 +326,7 @@ class TestDistributionScoring:
     def test_score_distribution_none(self):
         """Test scoring None distribution."""
         asset_info = AssetInfo(
-            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"),
-            distribution=None
+            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"), distribution=None
         )
         current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
@@ -343,8 +335,7 @@ class TestDistributionScoring:
     def test_score_distribution_exact_match(self):
         """Test scoring exact distribution match."""
         asset_info = AssetInfo(
-            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"),
-            distribution="ubuntu"
+            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"), distribution="ubuntu"
         )
         current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
@@ -353,8 +344,7 @@ class TestDistributionScoring:
     def test_score_distribution_compatible_family(self):
         """Test scoring compatible distribution family."""
         asset_info = AssetInfo(
-            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"),
-            distribution="debian"
+            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"), distribution="debian"
         )
         current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
@@ -363,8 +353,7 @@ class TestDistributionScoring:
     def test_score_distribution_different(self):
         """Test scoring different distribution."""
         asset_info = AssetInfo(
-            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"),
-            distribution="fedora"
+            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"), distribution="fedora"
         )
         current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
@@ -377,8 +366,7 @@ class TestVersionScoring:
     def test_has_version_info_both_present(self):
         """Test version info check when both have versions."""
         asset_info = AssetInfo(
-            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"),
-            version_numeric=24.04
+            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"), version_numeric=24.04
         )
         current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
@@ -387,8 +375,7 @@ class TestVersionScoring:
     def test_has_version_info_asset_missing(self):
         """Test version info check when asset version missing."""
         asset_info = AssetInfo(
-            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"),
-            version_numeric=None
+            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"), version_numeric=None
         )
         current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
@@ -397,8 +384,7 @@ class TestVersionScoring:
     def test_has_version_info_dist_missing(self):
         """Test version info check when distribution version missing."""
         asset_info = AssetInfo(
-            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"),
-            version_numeric=24.04
+            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"), version_numeric=24.04
         )
         current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=None)
 
@@ -407,8 +393,7 @@ class TestVersionScoring:
     def test_calculate_version_difference(self):
         """Test version difference calculation."""
         asset_info = AssetInfo(
-            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"),
-            version_numeric=22.04
+            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"), version_numeric=22.04
         )
         current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
@@ -436,8 +421,7 @@ class TestVersionScoring:
     def test_score_version_no_info(self):
         """Test version scoring when no version info available."""
         asset_info = AssetInfo(
-            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"),
-            version_numeric=None
+            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"), version_numeric=None
         )
         current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
@@ -446,8 +430,7 @@ class TestVersionScoring:
     def test_score_version_exact_match(self):
         """Test version scoring for exact match."""
         asset_info = AssetInfo(
-            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"),
-            version_numeric=24.04
+            asset=Asset(name="test", url="test", size=1024, created_at="2023-01-01T00:00:00Z"), version_numeric=24.04
         )
         current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
@@ -500,35 +483,30 @@ class TestCalculateTotalScore:
             name="test-app-x86_64-linux.AppImage",
             url="https://example.com/test.AppImage",
             size=1024,
-            created_at="2023-01-01T00:00:00Z"
+            created_at="2023-01-01T00:00:00Z",
         )
 
         asset_info = AssetInfo(
-            asset=asset,
-            distribution="ubuntu",
-            version="24.04",
-            version_numeric=24.04,
-            arch="x86_64",
-            format="AppImage"
+            asset=asset, distribution="ubuntu", version="24.04", version_numeric=24.04, arch="x86_64", format="AppImage"
         )
 
-        current_dist = DistributionInfo(
-            id="ubuntu",
-            version="24.04",
-            version_numeric=24.04,
-            codename="noble"
-        )
+        current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04, codename="noble")
 
-        properties = {
-            "arch": "x86_64",
-            "platform": "linux",
-            "format": ".AppImage"
-        }
+        properties = {"arch": "x86_64", "platform": "linux", "format": ".AppImage"}
 
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture', return_value=(True, 100.0)), \
-             patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform', return_value=(True, 100.0)), \
-             patch('appimage_updater.dist_selector.compatibility_scoring.is_supported_format', return_value=(True, 100.0)):
-
+        with (
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture",
+                return_value=(True, 100.0),
+            ),
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform",
+                return_value=(True, 100.0),
+            ),
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_supported_format", return_value=(True, 100.0)
+            ),
+        ):
             score = _calculate_total_score(asset_info, properties, current_dist)
 
             # arch(50) + platform(30) + format(20) + distribution(50) + version(30) = 180
@@ -537,33 +515,26 @@ class TestCalculateTotalScore:
     def test_calculate_total_score_negative_clamped(self):
         """Test that negative scores are clamped to 0.0."""
         asset = Asset(
-            name="test-app.exe",
-            url="https://example.com/test.exe",
-            size=1024,
-            created_at="2023-01-01T00:00:00Z"
+            name="test-app.exe", url="https://example.com/test.exe", size=1024, created_at="2023-01-01T00:00:00Z"
         )
 
-        asset_info = AssetInfo(
-            asset=asset,
-            arch="unknown",
-            format="exe"
-        )
+        asset_info = AssetInfo(asset=asset, arch="unknown", format="exe")
 
-        current_dist = DistributionInfo(
-            id="ubuntu",
-            version="24.04",
-            version_numeric=24.04
-        )
+        current_dist = DistributionInfo(id="ubuntu", version="24.04", version_numeric=24.04)
 
-        properties = {
-            "arch": "unknown",
-            "platform": "windows",
-            "format": ".exe"
-        }
+        properties = {"arch": "unknown", "platform": "windows", "format": ".exe"}
 
-        with patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture', return_value=(False, 0.0)), \
-             patch('appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform', return_value=(False, 0.0)), \
-             patch('appimage_updater.dist_selector.compatibility_scoring.is_supported_format', return_value=(False, 0.0)):
-
+        with (
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_compatible_architecture",
+                return_value=(False, 0.0),
+            ),
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_compatible_platform", return_value=(False, 0.0)
+            ),
+            patch(
+                "appimage_updater.dist_selector.compatibility_scoring.is_supported_format", return_value=(False, 0.0)
+            ),
+        ):
             score = _calculate_total_score(asset_info, properties, current_dist)
             assert score >= 0.0

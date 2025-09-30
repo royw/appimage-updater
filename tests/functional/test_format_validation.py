@@ -17,8 +17,8 @@ class TestFormatValidation:
 
     def strip_ansi_codes(self, text: str) -> str:
         """Strip ANSI escape codes from text."""
-        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-        return ansi_escape.sub('', text)
+        ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+        return ansi_escape.sub("", text)
 
     def run_command(self, command_args: list[str]) -> tuple[int, str, str]:
         """Run appimage-updater command and return exit code, stdout, stderr."""
@@ -101,7 +101,8 @@ class TestFormatValidation:
                 if format_type == "json":
                     try:
                         import json
-                        json.loads(stdout.split('\n')[-1])  # Last line should be JSON
+
+                        json.loads(stdout.split("\n")[-1])  # Last line should be JSON
                     except (json.JSONDecodeError, IndexError):
                         pass  # May not be pure JSON due to other output
                 elif format_type == "html":
@@ -189,7 +190,7 @@ class TestFormatFeatures:
             exit_code, stdout, stderr = self.run_command([cmd, "--help"])
             if exit_code == 0:
                 # Extract format option description
-                lines = stdout.split('\n')
+                lines = stdout.split("\n")
                 format_line = None
                 for line in lines:
                     if "--format" in line.lower():

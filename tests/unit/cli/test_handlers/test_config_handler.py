@@ -19,7 +19,7 @@ class TestConfigCommandHandler:
 
     def test_init_creates_console(self):
         """Test that handler initializes with console."""
-        with patch('appimage_updater.cli.handlers.config_handler.Console') as mock_console_class:
+        with patch("appimage_updater.cli.handlers.config_handler.Console") as mock_console_class:
             mock_console = Mock()
             mock_console_class.return_value = mock_console
 
@@ -49,11 +49,11 @@ class TestConfigCommandHandler:
 
         # Verify it's a CommandInfo object
         command_info = app.registered_commands[0]
-        assert hasattr(command_info, 'name')
+        assert hasattr(command_info, "name")
 
     def test_version_callback_prints_version_and_exits(self):
         """Test that version callback prints version and exits."""
-        with patch('appimage_updater.cli.handlers.config_handler.Console'):
+        with patch("appimage_updater.cli.handlers.config_handler.Console"):
             handler = ConfigCommandHandler()
 
             with pytest.raises(typer.Exit):
@@ -68,7 +68,7 @@ class TestConfigCommandHandler:
 
     def test_version_callback_no_exit_when_false(self):
         """Test that version callback does nothing when value is False."""
-        with patch('appimage_updater.cli.handlers.config_handler.Console'):
+        with patch("appimage_updater.cli.handlers.config_handler.Console"):
             handler = ConfigCommandHandler()
 
             # Should not raise any exceptions
@@ -79,8 +79,8 @@ class TestConfigCommandHandler:
 
     def test_show_config_help(self):
         """Test that help is displayed correctly."""
-        with patch('appimage_updater.cli.handlers.config_handler.Console'):
-            with patch('appimage_updater.cli.handlers.config_handler.typer.echo') as mock_echo:
+        with patch("appimage_updater.cli.handlers.config_handler.Console"):
+            with patch("appimage_updater.cli.handlers.config_handler.typer.echo") as mock_echo:
                 handler = ConfigCommandHandler()
 
                 handler._show_config_help()
@@ -94,17 +94,12 @@ class TestConfigCommandHandler:
                 assert usage_call is not None
                 assert "appimage-updater config" in usage_call
 
-    @patch('appimage_updater.cli.handlers.config_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.config_handler.CommandFactory.create_config_command')
-    def test_execute_config_command_success(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
-    ):
+    @patch("appimage_updater.cli.handlers.config_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.config_handler.CommandFactory.create_config_command")
+    def test_execute_config_command_success(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
         """Test successful execution of config command."""
-        with patch('appimage_updater.cli.handlers.config_handler.Console'):
+        with patch("appimage_updater.cli.handlers.config_handler.Console"):
             handler = ConfigCommandHandler()
 
             # Setup mocks
@@ -127,7 +122,7 @@ class TestConfigCommandHandler:
                 config_file=Path("/test/config.json"),
                 config_dir=Path("/test/config"),
                 debug=True,
-                output_format=OutputFormat.RICH
+                output_format=OutputFormat.RICH,
             )
 
             # Verify factory was called with correct parameters
@@ -139,7 +134,7 @@ class TestConfigCommandHandler:
                 config_file=Path("/test/config.json"),
                 config_dir=Path("/test/config"),
                 debug=True,
-                output_format=OutputFormat.RICH
+                output_format=OutputFormat.RICH,
             )
 
             # Verify formatter was created
@@ -148,17 +143,14 @@ class TestConfigCommandHandler:
             # Verify command was executed
             mock_asyncio_run.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.config_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.config_handler.CommandFactory.create_config_command')
+    @patch("appimage_updater.cli.handlers.config_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.config_handler.CommandFactory.create_config_command")
     def test_execute_config_command_with_json_format_calls_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that JSON format calls finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.config_handler.Console'):
+        with patch("appimage_updater.cli.handlers.config_handler.Console"):
             handler = ConfigCommandHandler()
 
             # Setup mocks
@@ -181,23 +173,20 @@ class TestConfigCommandHandler:
                 config_file=None,
                 config_dir=None,
                 debug=False,
-                output_format=OutputFormat.JSON
+                output_format=OutputFormat.JSON,
             )
 
             # Verify finalize was called for JSON format
             mock_formatter.finalize.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.config_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.config_handler.CommandFactory.create_config_command')
+    @patch("appimage_updater.cli.handlers.config_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.config_handler.CommandFactory.create_config_command")
     def test_execute_config_command_with_html_format_calls_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that HTML format calls finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.config_handler.Console'):
+        with patch("appimage_updater.cli.handlers.config_handler.Console"):
             handler = ConfigCommandHandler()
 
             # Setup mocks
@@ -220,23 +209,20 @@ class TestConfigCommandHandler:
                 config_file=None,
                 config_dir=None,
                 debug=False,
-                output_format=OutputFormat.HTML
+                output_format=OutputFormat.HTML,
             )
 
             # Verify finalize was called for HTML format
             mock_formatter.finalize.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.config_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.config_handler.CommandFactory.create_config_command')
+    @patch("appimage_updater.cli.handlers.config_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.config_handler.CommandFactory.create_config_command")
     def test_execute_config_command_rich_format_no_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that RICH format does not call finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.config_handler.Console'):
+        with patch("appimage_updater.cli.handlers.config_handler.Console"):
             handler = ConfigCommandHandler()
 
             # Setup mocks
@@ -259,23 +245,20 @@ class TestConfigCommandHandler:
                 config_file=None,
                 config_dir=None,
                 debug=False,
-                output_format=OutputFormat.RICH
+                output_format=OutputFormat.RICH,
             )
 
             # Verify finalize was NOT called for RICH format
             mock_formatter.finalize.assert_not_called()
 
-    @patch('appimage_updater.cli.handlers.config_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.config_handler.CommandFactory.create_config_command')
+    @patch("appimage_updater.cli.handlers.config_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.config_handler.CommandFactory.create_config_command")
     def test_execute_config_command_failure_raises_typer_exit(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that command failure raises typer.Exit with correct code."""
-        with patch('appimage_updater.cli.handlers.config_handler.Console'):
+        with patch("appimage_updater.cli.handlers.config_handler.Console"):
             handler = ConfigCommandHandler()
 
             # Setup mocks
@@ -300,7 +283,7 @@ class TestConfigCommandHandler:
                     config_file=None,
                     config_dir=None,
                     debug=False,
-                    output_format=OutputFormat.RICH
+                    output_format=OutputFormat.RICH,
                 )
 
             # Verify exit code matches command result
@@ -308,10 +291,10 @@ class TestConfigCommandHandler:
 
     def test_config_command_with_empty_action_shows_help_and_exits(self):
         """Test that empty action shows help and exits with code 0."""
-        with patch('appimage_updater.cli.handlers.config_handler.Console'):
+        with patch("appimage_updater.cli.handlers.config_handler.Console"):
             handler = ConfigCommandHandler()
 
-            with patch.object(handler, '_show_config_help') as mock_show_help:
+            with patch.object(handler, "_show_config_help") as mock_show_help:
                 with pytest.raises(typer.Exit) as exc_info:
                     # The config handler checks for empty action in the command registration
                     # and calls _show_config_help directly
@@ -325,12 +308,14 @@ class TestConfigCommandHandler:
 
     def test_execute_config_command_with_default_parameters(self):
         """Test execute command with default/None parameters."""
-        with patch('appimage_updater.cli.handlers.config_handler.Console'):
+        with patch("appimage_updater.cli.handlers.config_handler.Console"):
             handler = ConfigCommandHandler()
 
-            with patch('appimage_updater.cli.handlers.config_handler.CommandFactory.create_config_command') as mock_factory:
-                with patch('appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params'):
-                    with patch('appimage_updater.cli.handlers.config_handler.asyncio.run') as mock_run:
+            with patch(
+                "appimage_updater.cli.handlers.config_handler.CommandFactory.create_config_command"
+            ) as mock_factory:
+                with patch("appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params"):
+                    with patch("appimage_updater.cli.handlers.config_handler.asyncio.run") as mock_run:
                         mock_command = Mock()
                         mock_factory.return_value = mock_command
                         mock_command.params = Mock()
@@ -347,7 +332,7 @@ class TestConfigCommandHandler:
                             config_file=None,
                             config_dir=None,
                             debug=False,
-                            output_format=OutputFormat.RICH
+                            output_format=OutputFormat.RICH,
                         )
 
                         # Verify factory called with values
@@ -359,20 +344,22 @@ class TestConfigCommandHandler:
                             config_file=None,
                             config_dir=None,
                             debug=False,
-                            output_format=OutputFormat.RICH
+                            output_format=OutputFormat.RICH,
                         )
 
     def test_execute_config_command_with_all_actions(self):
         """Test execute command with different action types."""
-        with patch('appimage_updater.cli.handlers.config_handler.Console'):
+        with patch("appimage_updater.cli.handlers.config_handler.Console"):
             handler = ConfigCommandHandler()
 
             actions = ["show", "set", "reset", "show-effective", "list"]
 
             for action in actions:
-                with patch('appimage_updater.cli.handlers.config_handler.CommandFactory.create_config_command') as mock_factory:
-                    with patch('appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params'):
-                        with patch('appimage_updater.cli.handlers.config_handler.asyncio.run') as mock_run:
+                with patch(
+                    "appimage_updater.cli.handlers.config_handler.CommandFactory.create_config_command"
+                ) as mock_factory:
+                    with patch("appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params"):
+                        with patch("appimage_updater.cli.handlers.config_handler.asyncio.run") as mock_run:
                             mock_command = Mock()
                             mock_factory.return_value = mock_command
                             mock_command.params = Mock()
@@ -389,7 +376,7 @@ class TestConfigCommandHandler:
                                 config_file=None,
                                 config_dir=None,
                                 debug=False,
-                                output_format=OutputFormat.RICH
+                                output_format=OutputFormat.RICH,
                             )
 
                             # Verify factory called with action
@@ -401,5 +388,5 @@ class TestConfigCommandHandler:
                                 config_file=None,
                                 config_dir=None,
                                 debug=False,
-                                output_format=OutputFormat.RICH
+                                output_format=OutputFormat.RICH,
                             )

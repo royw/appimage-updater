@@ -41,7 +41,7 @@ class TestGetSuccessStatusAndIndicator:
 class TestFormatSuccessVersions:
     """Test cases for _format_success_versions function."""
 
-    @patch('appimage_updater.ui.display.format_version_display')
+    @patch("appimage_updater.ui.display.format_version_display")
     def test_both_versions(self, mock_format: Mock) -> None:
         """Test formatting when both versions are available."""
         mock_format.side_effect = ["1.0.0", "1.1.0"]
@@ -54,7 +54,7 @@ class TestFormatSuccessVersions:
         assert current == "1.0.0"
         assert latest == "1.1.0"
 
-    @patch('appimage_updater.ui.display.format_version_display')
+    @patch("appimage_updater.ui.display.format_version_display")
     def test_no_current_version(self, mock_format: Mock) -> None:
         """Test formatting when no current version."""
         mock_format.side_effect = [None, "1.1.0"]
@@ -125,7 +125,7 @@ class TestCreateNoCandidateRow:
 class TestCreateResultRow:
     """Test cases for _create_result_row function."""
 
-    @patch('appimage_updater.ui.display._create_error_row')
+    @patch("appimage_updater.ui.display._create_error_row")
     def test_error_result(self, mock_error: Mock) -> None:
         """Test creating row for error result."""
         mock_error.return_value = ["TestApp", "Error", "-", "-", "-"]
@@ -136,7 +136,7 @@ class TestCreateResultRow:
         _create_result_row(result, False)
         mock_error.assert_called_once_with(result, False)
 
-    @patch('appimage_updater.ui.display._create_success_row')
+    @patch("appimage_updater.ui.display._create_success_row")
     def test_success_result(self, mock_success: Mock) -> None:
         """Test creating row for successful result."""
         result = Mock()
@@ -198,9 +198,9 @@ class TestCreateResultsTable:
 class TestDisplayCheckResults:
     """Test cases for display_check_results function."""
 
-    @patch('appimage_updater.ui.display.console')
-    @patch('appimage_updater.ui.display._create_results_table')
-    @patch('appimage_updater.ui.display._create_result_row')
+    @patch("appimage_updater.ui.display.console")
+    @patch("appimage_updater.ui.display._create_results_table")
+    @patch("appimage_updater.ui.display._create_result_row")
     def test_display_basic(self, mock_row: Mock, mock_table: Mock, mock_console: Mock) -> None:
         """Test basic display functionality."""
         mock_table.return_value = Mock()

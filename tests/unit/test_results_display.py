@@ -54,7 +54,7 @@ class TestGetChecksumStatus:
 class TestDisplaySuccessfulDownloads:
     """Test cases for display_successful_downloads function."""
 
-    @patch('appimage_updater.ui.display.console')
+    @patch("appimage_updater.ui.display.console")
     def test_display_successful_downloads_empty_list(self, mock_console: Mock) -> None:
         """Test displaying empty successful downloads list."""
         display_successful_downloads([])
@@ -62,7 +62,7 @@ class TestDisplaySuccessfulDownloads:
         # Should not print anything for empty list
         mock_console.print.assert_not_called()
 
-    @patch('appimage_updater.ui.display.console')
+    @patch("appimage_updater.ui.display.console")
     def test_display_successful_downloads_single_result(self, mock_console: Mock) -> None:
         """Test displaying single successful download."""
         result = Mock()
@@ -77,7 +77,7 @@ class TestDisplaySuccessfulDownloads:
         mock_console.print.assert_any_call("\n[green]Successfully downloaded 1 updates:")
         mock_console.print.assert_any_call("  Downloaded: TestApp (1.0 MB)")
 
-    @patch('appimage_updater.ui.display.console')
+    @patch("appimage_updater.ui.display.console")
     def test_display_successful_downloads_multiple_results(self, mock_console: Mock) -> None:
         """Test displaying multiple successful downloads."""
         result1 = Mock()
@@ -99,7 +99,7 @@ class TestDisplaySuccessfulDownloads:
         mock_console.print.assert_any_call("  Downloaded: App1 (2.0 MB)")
         mock_console.print.assert_any_call("  Downloaded: App2 (5.0 MB) [green]verified[/green]")
 
-    @patch('appimage_updater.ui.display.console')
+    @patch("appimage_updater.ui.display.console")
     def test_display_successful_downloads_with_checksum_warning(self, mock_console: Mock) -> None:
         """Test displaying successful download with checksum warning."""
         result = Mock()
@@ -116,7 +116,7 @@ class TestDisplaySuccessfulDownloads:
 class TestDisplayFailedDownloads:
     """Test cases for display_failed_downloads function."""
 
-    @patch('appimage_updater.ui.display.console')
+    @patch("appimage_updater.ui.display.console")
     def test_display_failed_downloads_empty_list(self, mock_console: Mock) -> None:
         """Test displaying empty failed downloads list."""
         display_failed_downloads([])
@@ -124,7 +124,7 @@ class TestDisplayFailedDownloads:
         # Should not print anything for empty list
         mock_console.print.assert_not_called()
 
-    @patch('appimage_updater.ui.display.console')
+    @patch("appimage_updater.ui.display.console")
     def test_display_failed_downloads_single_result(self, mock_console: Mock) -> None:
         """Test displaying single failed download."""
         result = Mock()
@@ -138,7 +138,7 @@ class TestDisplayFailedDownloads:
         mock_console.print.assert_any_call("\n[red]Failed to download 1 updates:")
         mock_console.print.assert_any_call("  Failed: FailedApp: Network timeout")
 
-    @patch('appimage_updater.ui.display.console')
+    @patch("appimage_updater.ui.display.console")
     def test_display_failed_downloads_multiple_results(self, mock_console: Mock) -> None:
         """Test displaying multiple failed downloads."""
         result1 = Mock()
@@ -161,8 +161,8 @@ class TestDisplayFailedDownloads:
 class TestDisplayDownloadResults:
     """Test cases for display_download_results function."""
 
-    @patch('appimage_updater.ui.display.display_failed_downloads')
-    @patch('appimage_updater.ui.display.display_successful_downloads')
+    @patch("appimage_updater.ui.display.display_failed_downloads")
+    @patch("appimage_updater.ui.display.display_successful_downloads")
     def test_display_download_results_mixed(self, mock_successful: Mock, mock_failed: Mock) -> None:
         """Test displaying mixed successful and failed results."""
         successful_result = Mock()
@@ -179,8 +179,8 @@ class TestDisplayDownloadResults:
         mock_successful.assert_called_once_with([successful_result])
         mock_failed.assert_called_once_with([failed_result])
 
-    @patch('appimage_updater.ui.display.display_failed_downloads')
-    @patch('appimage_updater.ui.display.display_successful_downloads')
+    @patch("appimage_updater.ui.display.display_failed_downloads")
+    @patch("appimage_updater.ui.display.display_successful_downloads")
     def test_display_download_results_all_successful(self, mock_successful: Mock, mock_failed: Mock) -> None:
         """Test displaying all successful results."""
         result1 = Mock()
@@ -195,8 +195,8 @@ class TestDisplayDownloadResults:
         mock_successful.assert_called_once_with([result1, result2])
         mock_failed.assert_called_once_with([])
 
-    @patch('appimage_updater.ui.display.display_failed_downloads')
-    @patch('appimage_updater.ui.display.display_successful_downloads')
+    @patch("appimage_updater.ui.display.display_failed_downloads")
+    @patch("appimage_updater.ui.display.display_successful_downloads")
     def test_display_download_results_all_failed(self, mock_successful: Mock, mock_failed: Mock) -> None:
         """Test displaying all failed results."""
         result1 = Mock()
@@ -211,8 +211,8 @@ class TestDisplayDownloadResults:
         mock_successful.assert_called_once_with([])
         mock_failed.assert_called_once_with([result1, result2])
 
-    @patch('appimage_updater.ui.display.display_failed_downloads')
-    @patch('appimage_updater.ui.display.display_successful_downloads')
+    @patch("appimage_updater.ui.display.display_failed_downloads")
+    @patch("appimage_updater.ui.display.display_successful_downloads")
     def test_display_download_results_empty(self, mock_successful: Mock, mock_failed: Mock) -> None:
         """Test displaying empty results list."""
         display_download_results([])
@@ -233,16 +233,18 @@ class TestResultsDisplayIntegration:
         # Console should respect NO_COLOR environment variable
         # We can't easily test this without modifying environment, so just verify it exists
 
-    @patch.dict('os.environ', {'NO_COLOR': '1'})
+    @patch.dict("os.environ", {"NO_COLOR": "1"})
     def test_console_no_color_environment(self) -> None:
         """Test console respects NO_COLOR environment variable."""
         # Re-import to get fresh console with NO_COLOR set
         import importlib
 
         import appimage_updater.ui.display
+
         importlib.reload(appimage_updater.ui.display)
 
         from appimage_updater.ui.display import console
+
         # Test that console was created with no_color=True
         # The exact attribute name may vary, so just test that it was configured
-        assert hasattr(console, '_no_color') or hasattr(console, 'options')
+        assert hasattr(console, "_no_color") or hasattr(console, "options")

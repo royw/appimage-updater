@@ -40,10 +40,7 @@ class TestGitLabAuth:
 
     def test_env_token_priority(self):
         """Test that GITLAB_TOKEN takes priority over GITLAB_PRIVATE_TOKEN."""
-        with patch.dict(os.environ, {
-            "GITLAB_TOKEN": "primary-token",
-            "GITLAB_PRIVATE_TOKEN": "secondary-token"
-        }):
+        with patch.dict(os.environ, {"GITLAB_TOKEN": "primary-token", "GITLAB_PRIVATE_TOKEN": "secondary-token"}):
             auth = GitLabAuth()
             # get_token method was removed, just check authentication status
 

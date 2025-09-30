@@ -13,6 +13,7 @@ import pytest
 
 class NetworkBlockedError(Exception):
     """Exception raised when network calls are blocked during testing."""
+
     pass
 
 
@@ -20,7 +21,7 @@ def _is_local_address(address: Any) -> bool:
     """Check if an address is local (allowed)."""
     if isinstance(address, tuple) and len(address) >= 2:
         host = address[0]
-        return host in ('127.0.0.1', 'localhost', '::1', '0.0.0.0')
+        return host in ("127.0.0.1", "localhost", "::1", "0.0.0.0")
     return False
 
 
@@ -32,8 +33,9 @@ def _is_allowed_socket_family(family: int) -> bool:
 class NetworkBlockingSocket(socket.socket):
     """Socket wrapper that blocks external network calls but allows local operations."""
 
-    def __init__(self, family: int = socket.AF_INET, _type: int = socket.SOCK_STREAM,
-                 proto: int = 0, fileno: Any = None):
+    def __init__(
+        self, family: int = socket.AF_INET, _type: int = socket.SOCK_STREAM, proto: int = 0, fileno: Any = None
+    ):
         # Allow local socket families and file descriptors
         if _is_allowed_socket_family(family) or fileno is not None:
             super().__init__(family, _type, proto, fileno)
@@ -45,7 +47,7 @@ class NetworkBlockingSocket(socket.socket):
 
     def connect(self, address: Any) -> None:
         """Block external connections, allow local ones."""
-        if hasattr(self, '_network_blocked') and not _is_local_address(address):
+        if hasattr(self, "_network_blocked") and not _is_local_address(address):
             raise NetworkBlockedError(
                 f"Network connection to {address} blocked during testing. "
                 "Use mocks or run regression tests to allow network calls."
@@ -54,7 +56,7 @@ class NetworkBlockingSocket(socket.socket):
 
     def connect_ex(self, address: Any) -> int:
         """Block external connections, allow local ones."""
-        if hasattr(self, '_network_blocked') and not _is_local_address(address):
+        if hasattr(self, "_network_blocked") and not _is_local_address(address):
             raise NetworkBlockedError(
                 f"Network connection to {address} blocked during testing. "
                 "Use mocks or run regression tests to allow network calls."
@@ -75,10 +77,9 @@ def blocked_create_connection(address: Any, *args: Any, **kwargs: Any) -> None:
 
 def blocked_getaddrinfo(host: str, *args: Any, **kwargs: Any) -> None:
     """Block DNS lookups for external hosts."""
-    if host not in ('localhost', '127.0.0.1', '::1'):
+    if host not in ("localhost", "127.0.0.1", "::1"):
         raise NetworkBlockedError(
-            f"DNS lookup for {host} blocked during testing. "
-            "Use mocks or run regression tests to allow network calls."
+            f"DNS lookup for {host} blocked during testing. Use mocks or run regression tests to allow network calls."
         )
     # This shouldn't be reached, but if it is, use original function
     return socket._original_getaddrinfo(host, *args, **kwargs)  # type: ignore
@@ -87,24 +88,21 @@ def blocked_getaddrinfo(host: str, *args: Any, **kwargs: Any) -> None:
 def blocked_http_request(*args: Any, **kwargs: Any) -> None:
     """Block HTTP requests from requests library."""
     raise NetworkBlockedError(
-        "HTTP request blocked during testing. "
-        "Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
+        "HTTP request blocked during testing. Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
     )
 
 
 def blocked_urllib_request(*args: Any, **kwargs: Any) -> None:
     """Block HTTP requests from urllib."""
     raise NetworkBlockedError(
-        "urllib request blocked during testing. "
-        "Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
+        "urllib request blocked during testing. Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
     )
 
 
 def blocked_httpx_request(*args: Any, **kwargs: Any) -> None:
     """Block HTTP requests from httpx."""
     raise NetworkBlockedError(
-        "httpx request blocked during testing. "
-        "Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
+        "httpx request blocked during testing. Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
     )
 
 
@@ -161,14 +159,12 @@ def pytest_configure(config: pytest.Config) -> None:
     is_regression_test = any("regression" in str(path) for path in test_paths)
 
     # Also check if regression is in the test node IDs
-    if hasattr(config.option, 'keyword') and config.option.keyword:
+    if hasattr(config.option, "keyword") and config.option.keyword:
         is_regression_test = is_regression_test or "regression" in config.option.keyword
 
     # Check if we're running ONLY E2E tests (they handle their own network blocking with mocks)
     # Only skip blocking if ALL paths are e2e paths AND no regression tests
-    is_only_e2e = (len(test_paths) > 0 and
-                   all("e2e" in str(path) for path in test_paths) and
-                   not is_regression_test)
+    is_only_e2e = len(test_paths) > 0 and all("e2e" in str(path) for path in test_paths) and not is_regression_test
 
     # Check if ANY e2e tests are included (they need real httpx.AsyncClient for @patch decorators)
     has_e2e_tests = any("e2e" in str(path) for path in test_paths)
@@ -202,15 +198,16 @@ def pytest_configure(config: pytest.Config) -> None:
         # Block requests library if available
         try:
             import requests
+
             # Store originals for restoration
-            requests._original_get = getattr(requests, 'get', None)
-            requests._original_post = getattr(requests, 'post', None)
-            requests._original_put = getattr(requests, 'put', None)
-            requests._original_delete = getattr(requests, 'delete', None)
-            requests._original_patch = getattr(requests, 'patch', None)
-            requests._original_head = getattr(requests, 'head', None)
-            requests._original_options = getattr(requests, 'options', None)
-            requests._original_request = getattr(requests, 'request', None)
+            requests._original_get = getattr(requests, "get", None)
+            requests._original_post = getattr(requests, "post", None)
+            requests._original_put = getattr(requests, "put", None)
+            requests._original_delete = getattr(requests, "delete", None)
+            requests._original_patch = getattr(requests, "patch", None)
+            requests._original_head = getattr(requests, "head", None)
+            requests._original_options = getattr(requests, "options", None)
+            requests._original_request = getattr(requests, "request", None)
 
             # Replace with blocking versions
             requests.get = blocked_http_request  # type: ignore
@@ -227,9 +224,10 @@ def pytest_configure(config: pytest.Config) -> None:
         # Block urllib if available
         try:
             import urllib.request
+
             # Store originals for restoration
-            urllib.request._original_urlopen = getattr(urllib.request, 'urlopen', None)
-            urllib.request._original_urlretrieve = getattr(urllib.request, 'urlretrieve', None)
+            urllib.request._original_urlopen = getattr(urllib.request, "urlopen", None)
+            urllib.request._original_urlretrieve = getattr(urllib.request, "urlretrieve", None)
 
             # Replace with blocking versions
             urllib.request.urlopen = blocked_urllib_request  # type: ignore
@@ -240,16 +238,17 @@ def pytest_configure(config: pytest.Config) -> None:
         # Block httpx if available (but skip AsyncClient mock if e2e tests are present)
         try:
             import httpx
+
             # Store originals for restoration
-            httpx._original_get = getattr(httpx, 'get', None)
-            httpx._original_post = getattr(httpx, 'post', None)
-            httpx._original_put = getattr(httpx, 'put', None)
-            httpx._original_delete = getattr(httpx, 'delete', None)
-            httpx._original_patch = getattr(httpx, 'patch', None)
-            httpx._original_head = getattr(httpx, 'head', None)
-            httpx._original_options = getattr(httpx, 'options', None)
-            httpx._original_request = getattr(httpx, 'request', None)
-            httpx._original_AsyncClient = getattr(httpx, 'AsyncClient', None)
+            httpx._original_get = getattr(httpx, "get", None)
+            httpx._original_post = getattr(httpx, "post", None)
+            httpx._original_put = getattr(httpx, "put", None)
+            httpx._original_delete = getattr(httpx, "delete", None)
+            httpx._original_patch = getattr(httpx, "patch", None)
+            httpx._original_head = getattr(httpx, "head", None)
+            httpx._original_options = getattr(httpx, "options", None)
+            httpx._original_request = getattr(httpx, "request", None)
+            httpx._original_AsyncClient = getattr(httpx, "AsyncClient", None)
 
             # Replace with blocking versions
             httpx.get = blocked_httpx_request  # type: ignore
@@ -272,87 +271,90 @@ def pytest_configure(config: pytest.Config) -> None:
 def pytest_unconfigure(config: pytest.Config) -> None:
     """Restore original socket functions and HTTP libraries after tests complete."""
     # Restore socket originals if they were stored
-    if hasattr(socket, '_original_socket'):
+    if hasattr(socket, "_original_socket"):
         socket.socket = socket._original_socket  # type: ignore
-        delattr(socket, '_original_socket')
+        delattr(socket, "_original_socket")
 
-    if hasattr(socket, '_original_create_connection'):
+    if hasattr(socket, "_original_create_connection"):
         socket.create_connection = socket._original_create_connection  # type: ignore
-        delattr(socket, '_original_create_connection')
+        delattr(socket, "_original_create_connection")
 
-    if hasattr(socket, '_original_getaddrinfo'):
+    if hasattr(socket, "_original_getaddrinfo"):
         socket.getaddrinfo = socket._original_getaddrinfo  # type: ignore
-        delattr(socket, '_original_getaddrinfo')
+        delattr(socket, "_original_getaddrinfo")
 
     # Restore requests library if it was blocked
     try:
         import requests
-        if hasattr(requests, '_original_get'):
+
+        if hasattr(requests, "_original_get"):
             requests.get = requests._original_get
-            delattr(requests, '_original_get')
-        if hasattr(requests, '_original_post'):
+            delattr(requests, "_original_get")
+        if hasattr(requests, "_original_post"):
             requests.post = requests._original_post
-            delattr(requests, '_original_post')
-        if hasattr(requests, '_original_put'):
+            delattr(requests, "_original_post")
+        if hasattr(requests, "_original_put"):
             requests.put = requests._original_put
-            delattr(requests, '_original_put')
-        if hasattr(requests, '_original_delete'):
+            delattr(requests, "_original_put")
+        if hasattr(requests, "_original_delete"):
             requests.delete = requests._original_delete
-            delattr(requests, '_original_delete')
-        if hasattr(requests, '_original_patch'):
+            delattr(requests, "_original_delete")
+        if hasattr(requests, "_original_patch"):
             requests.patch = requests._original_patch
-            delattr(requests, '_original_patch')
-        if hasattr(requests, '_original_head'):
+            delattr(requests, "_original_patch")
+        if hasattr(requests, "_original_head"):
             requests.head = requests._original_head
-            delattr(requests, '_original_head')
-        if hasattr(requests, '_original_options'):
+            delattr(requests, "_original_head")
+        if hasattr(requests, "_original_options"):
             requests.options = requests._original_options
-            delattr(requests, '_original_options')
-        if hasattr(requests, '_original_request'):
+            delattr(requests, "_original_options")
+        if hasattr(requests, "_original_request"):
             requests.request = requests._original_request
-            delattr(requests, '_original_request')
+            delattr(requests, "_original_request")
     except ImportError:
         pass
 
     # Restore urllib if it was blocked
     try:
         import urllib.request
-        if hasattr(urllib.request, '_original_urlopen'):
+
+        if hasattr(urllib.request, "_original_urlopen"):
             urllib.request.urlopen = urllib.request._original_urlopen
-            delattr(urllib.request, '_original_urlopen')
-        if hasattr(urllib.request, '_original_urlretrieve'):
+            delattr(urllib.request, "_original_urlopen")
+        if hasattr(urllib.request, "_original_urlretrieve"):
             urllib.request.urlretrieve = urllib.request._original_urlretrieve
-            delattr(urllib.request, '_original_urlretrieve')
+            delattr(urllib.request, "_original_urlretrieve")
     except ImportError:
         pass
 
     # Restore httpx if it was blocked
     try:
         import httpx
-        if hasattr(httpx, '_original_get'):
+
+        if hasattr(httpx, "_original_get"):
             httpx.get = httpx._original_get
-            delattr(httpx, '_original_get')
-        if hasattr(httpx, '_original_post'):
+            delattr(httpx, "_original_get")
+        if hasattr(httpx, "_original_post"):
             httpx.post = httpx._original_post
-            delattr(httpx, '_original_post')
-        if hasattr(httpx, '_original_put'):
+            delattr(httpx, "_original_post")
+        if hasattr(httpx, "_original_put"):
             httpx.put = httpx._original_put
-            delattr(httpx, '_original_put')
-        if hasattr(httpx, '_original_delete'):
+            delattr(httpx, "_original_put")
+        if hasattr(httpx, "_original_delete"):
             httpx.delete = httpx._original_delete
-            delattr(httpx, '_original_delete')
-        if hasattr(httpx, '_original_patch'):
+            delattr(httpx, "_original_delete")
+        if hasattr(httpx, "_original_patch"):
             httpx.patch = httpx._original_patch
-            delattr(httpx, '_original_patch')
-        if hasattr(httpx, '_original_head'):
+            delattr(httpx, "_original_patch")
+        if hasattr(httpx, "_original_head"):
             httpx.head = httpx._original_head
-            delattr(httpx, '_original_head')
-        if hasattr(httpx, '_original_options'):
+            delattr(httpx, "_original_head")
+        if hasattr(httpx, "_original_options"):
             httpx.options = httpx._original_options
-            delattr(httpx, '_original_options')
-        if hasattr(httpx, '_original_request'):
+            delattr(httpx, "_original_options")
+        if hasattr(httpx, "_original_request"):
             httpx.request = httpx._original_request
-            delattr(httpx, '_original_request')
+            delattr(httpx, "_original_request")
     except ImportError:
         pass
 
@@ -399,7 +401,7 @@ def isolated_config_dir() -> Any:
 
 def discover_cli_commands() -> dict[str, list[str]]:
     """Discover CLI commands from source code analysis.
-    
+
     Returns:
         Dictionary mapping command names to their parameter lists
     """
@@ -446,25 +448,25 @@ def _extract_command_info(node: ast.FunctionDef) -> tuple[str, list[str]] | None
 
     for decorator in node.decorator_list:
         if isinstance(decorator, ast.Attribute):
-            if (isinstance(decorator.value, ast.Name) and
-                    decorator.value.id == 'app' and
-                    decorator.attr == 'command'):
+            if isinstance(decorator.value, ast.Name) and decorator.value.id == "app" and decorator.attr == "command":
                 has_command_decorator = True
-                command_name = node.name.lstrip('_')
-        elif (isinstance(decorator, ast.Call) and
-              isinstance(decorator.func, ast.Attribute) and
-              isinstance(decorator.func.value, ast.Name) and
-              decorator.func.value.id == 'app' and
-              decorator.func.attr == 'command'):
-                has_command_decorator = True
-                # Check if command name is specified in decorator kwargs
-                command_name = node.name.lstrip('_')  # default to function name
-                for keyword in decorator.keywords:
-                    if keyword.arg == 'name' and isinstance(keyword.value, ast.Constant):
-                        command_name = keyword.value.value
-                # Also check positional args for command name
-                if decorator.args and isinstance(decorator.args[0], ast.Constant):
-                    command_name = decorator.args[0].value
+                command_name = node.name.lstrip("_")
+        elif (
+            isinstance(decorator, ast.Call)
+            and isinstance(decorator.func, ast.Attribute)
+            and isinstance(decorator.func.value, ast.Name)
+            and decorator.func.value.id == "app"
+            and decorator.func.attr == "command"
+        ):
+            has_command_decorator = True
+            # Check if command name is specified in decorator kwargs
+            command_name = node.name.lstrip("_")  # default to function name
+            for keyword in decorator.keywords:
+                if keyword.arg == "name" and isinstance(keyword.value, ast.Constant):
+                    command_name = keyword.value.value
+            # Also check positional args for command name
+            if decorator.args and isinstance(decorator.args[0], ast.Constant):
+                command_name = decorator.args[0].value
 
     if has_command_decorator and command_name:
         param_names = [arg.arg for arg in node.args.args]
@@ -475,7 +477,7 @@ def _extract_command_info(node: ast.FunctionDef) -> tuple[str, list[str]] | None
 
 def get_testable_commands() -> list[tuple[list[str], str]]:
     """Get list of commands suitable for format testing.
-    
+
     Returns:
         List of tuples: (command_args, command_name)
         where command_args includes necessary flags to avoid interactive prompts
@@ -519,7 +521,7 @@ def platform_formats():
     return {
         "linux": {".AppImage", ".tar.gz", ".tar.xz", ".zip", ".deb", ".rpm"},
         "darwin": {".dmg", ".pkg", ".zip", ".tar.gz"},
-        "win32": {".exe", ".msi", ".zip"}
+        "win32": {".exe", ".msi", ".zip"},
     }
 
 
@@ -547,26 +549,15 @@ def platform_test_assets():
             name="app-linux-x86_64.AppImage",
             url="https://example.com/linux-x86_64",
             size=1024,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         ),
         Asset(
-            name="app-darwin-arm64.dmg",
-            url="https://example.com/darwin-arm64",
-            size=2048,
-            created_at=datetime.now()
+            name="app-darwin-arm64.dmg", url="https://example.com/darwin-arm64", size=2048, created_at=datetime.now()
         ),
         Asset(
-            name="app-win32-x86_64.exe",
-            url="https://example.com/win32-x86_64",
-            size=4096,
-            created_at=datetime.now()
+            name="app-win32-x86_64.exe", url="https://example.com/win32-x86_64", size=4096, created_at=datetime.now()
         ),
-        Asset(
-            name="generic-app.zip",
-            url="https://example.com/generic",
-            size=1024,
-            created_at=datetime.now()
-        )
+        Asset(name="generic-app.zip", url="https://example.com/generic", size=1024, created_at=datetime.now()),
     ]
 
 
@@ -577,7 +568,7 @@ def mock_system_info():
         "platform": "linux",
         "architecture": "x86_64",
         "architecture_aliases": {"x86_64", "amd64", "x64"},
-        "supported_formats": {".AppImage", ".tar.gz", ".tar.xz", ".zip", ".deb", ".rpm"}
+        "supported_formats": {".AppImage", ".tar.gz", ".tar.xz", ".zip", ".deb", ".rpm"},
     }
 
 
@@ -585,27 +576,9 @@ def mock_system_info():
 def distribution_test_data():
     """Fixture providing distribution test data for consistent testing."""
     return {
-        "ubuntu": {
-            "id": "ubuntu",
-            "version": "24.04",
-            "version_numeric": 24.04,
-            "name": "Ubuntu",
-            "codename": "noble"
-        },
-        "fedora": {
-            "id": "fedora",
-            "version": "39",
-            "version_numeric": 39.0,
-            "name": "Fedora Linux",
-            "codename": None
-        },
-        "arch": {
-            "id": "arch",
-            "version": "rolling",
-            "version_numeric": 0.0,
-            "name": "Arch Linux",
-            "codename": None
-        }
+        "ubuntu": {"id": "ubuntu", "version": "24.04", "version_numeric": 24.04, "name": "Ubuntu", "codename": "noble"},
+        "fedora": {"id": "fedora", "version": "39", "version_numeric": 39.0, "name": "Fedora Linux", "codename": None},
+        "arch": {"id": "arch", "version": "rolling", "version_numeric": 0.0, "name": "Arch Linux", "codename": None},
     }
 
 
@@ -646,7 +619,7 @@ def mock_global_http_client(mock_http_client):
     mock_global_client.set_tracer.return_value = None
     mock_global_client.close.return_value = None
 
-    with patch('appimage_updater.core.http_service.GlobalHTTPClient', return_value=mock_global_client):
+    with patch("appimage_updater.core.http_service.GlobalHTTPClient", return_value=mock_global_client):
         yield mock_global_client
 
 
@@ -663,14 +636,11 @@ def mock_http_trace():
     mock_tracer.trace_error.return_value = None
     mock_tracer.set_output_formatter.return_value = None
 
-    with patch('appimage_updater.core.http_trace.getHTTPTrace', return_value=mock_tracer):
+    with patch("appimage_updater.core.http_trace.getHTTPTrace", return_value=mock_tracer):
         yield mock_tracer
 
 
 @pytest.fixture
 def mock_http_service(mock_global_http_client, mock_http_trace):
     """Fixture that mocks both HTTP service components."""
-    return {
-        'global_client': mock_global_http_client,
-        'tracer': mock_http_trace
-    }
+    return {"global_client": mock_global_http_client, "tracer": mock_http_trace}

@@ -18,9 +18,7 @@ def test_check_command_finds_candidates():
     - But final display shows "No candidate" and "No matching assets"
     """
     # Use the appimage-updater from the current project
-    cmd = [
-        "uv", "run", "appimage-updater", "check", "appimaged", "--dry-run"
-    ]
+    cmd = ["uv", "run", "appimage-updater", "check", "appimaged", "--dry-run"]
 
     # Run the command
     result = subprocess.run(
@@ -28,7 +26,7 @@ def test_check_command_finds_candidates():
         cwd=Path(__file__).parent.parent.parent,  # Project root
         capture_output=True,
         text=True,
-        timeout=60  # Reasonable timeout for network operations
+        timeout=60,  # Reasonable timeout for network operations
     )
 
     # Check that command succeeded
@@ -69,17 +67,9 @@ def test_check_command_with_debug_shows_asset_selection():
     This test verifies that the backend logic is working (assets selected, candidates created)
     even though the frontend display is broken.
     """
-    cmd = [
-        "uv", "run", "appimage-updater", "check", "appimaged", "--dry-run", "--debug"
-    ]
+    cmd = ["uv", "run", "appimage-updater", "check", "appimaged", "--dry-run", "--debug"]
 
-    result = subprocess.run(
-        cmd,
-        cwd=Path(__file__).parent.parent.parent,
-        capture_output=True,
-        text=True,
-        timeout=60
-    )
+    result = subprocess.run(cmd, cwd=Path(__file__).parent.parent.parent, capture_output=True, text=True, timeout=60)
 
     assert result.returncode == 0, f"Command failed with: {result.stderr}"
 
@@ -91,7 +81,7 @@ def test_check_command_with_debug_shows_asset_selection():
         "Starting update checks for 1 applications",  # Version checker starting
         "Dry run mode: Skipping HTTP requests",  # Should be in dry-run mode
         "appimaged",  # Should show the app name
-        "Success"  # Should show success status
+        "Success",  # Should show success status
     ]
 
     missing_indicators = []

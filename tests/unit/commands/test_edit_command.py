@@ -20,10 +20,7 @@ class TestEditCommand:
     def test_init(self):
         """Test EditCommand initialization."""
         params = EditParams(
-            app_names=["TestApp"],
-            url="https://github.com/test/repo",
-            config_file=Path("/test/config.json"),
-            debug=True
+            app_names=["TestApp"], url="https://github.com/test/repo", config_file=Path("/test/config.json"), debug=True
         )
         command = EditCommand(params)
 
@@ -54,7 +51,7 @@ class TestEditCommand:
         validation_errors = command.validate()
         assert "At least one application name is required" in validation_errors
 
-    @patch('appimage_updater.commands.edit_command.configure_logging')
+    @patch("appimage_updater.commands.edit_command.configure_logging")
     @pytest.mark.anyio
     async def test_execute_success_with_formatter(self, mock_configure_logging):
         """Test successful execution with output formatter."""
@@ -62,7 +59,7 @@ class TestEditCommand:
         command = EditCommand(params)
         mock_formatter = Mock()
 
-        with patch.object(command, '_execute_main_edit_workflow') as mock_workflow:
+        with patch.object(command, "_execute_main_edit_workflow") as mock_workflow:
             mock_workflow.return_value = CommandResult(success=True, message="Success")
 
             result = await command.execute(output_formatter=mock_formatter)
@@ -77,19 +74,19 @@ class TestEditCommand:
         assert result.success is True
         assert result.message == "Success"
 
-    @patch('appimage_updater.commands.edit_command.configure_logging')
+    @patch("appimage_updater.commands.edit_command.configure_logging")
     @pytest.mark.anyio
     async def test_execute_typer_exit_propagation(self, mock_configure_logging):
         """Test that typer.Exit exceptions are propagated."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
 
-        with patch.object(command, '_execute_main_edit_workflow', side_effect=typer.Exit(1)):
+        with patch.object(command, "_execute_main_edit_workflow", side_effect=typer.Exit(1)):
             with pytest.raises(typer.Exit):
                 await command.execute()
 
-    @patch('appimage_updater.commands.edit_command.configure_logging')
-    @patch('appimage_updater.commands.edit_command.logger')
+    @patch("appimage_updater.commands.edit_command.configure_logging")
+    @patch("appimage_updater.commands.edit_command.logger")
     @pytest.mark.anyio
     async def test_execute_unexpected_exception(self, mock_logger, mock_configure_logging):
         """Test execution with unexpected exception."""
@@ -97,7 +94,7 @@ class TestEditCommand:
         command = EditCommand(params)
 
         test_exception = Exception("Test error")
-        with patch.object(command, '_execute_main_edit_workflow', side_effect=test_exception):
+        with patch.object(command, "_execute_main_edit_workflow", side_effect=test_exception):
             result = await command.execute()
 
         # Verify logging was called
@@ -116,7 +113,7 @@ class TestEditCommand:
         command = EditCommand(params)
         mock_formatter = Mock()
 
-        with patch.object(command, '_execute_with_formatter_context') as mock_with_context:
+        with patch.object(command, "_execute_with_formatter_context") as mock_with_context:
             mock_with_context.return_value = CommandResult(success=True, message="Success")
 
             result = await command._execute_main_edit_workflow(mock_formatter)
@@ -130,7 +127,7 @@ class TestEditCommand:
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
 
-        with patch.object(command, '_execute_without_formatter') as mock_without:
+        with patch.object(command, "_execute_without_formatter") as mock_without:
             mock_without.return_value = CommandResult(success=True, message="Success")
 
             result = await command._execute_main_edit_workflow(None)
@@ -145,9 +142,9 @@ class TestEditCommand:
         command = EditCommand(params)
         mock_formatter = Mock()
 
-        with patch.object(command, '_validate_with_formatter_error_display', return_value=None):
-            with patch.object(command, '_execute_edit_operation', return_value=None):
-                with patch.object(command, '_process_edit_result') as mock_process:
+        with patch.object(command, "_validate_with_formatter_error_display", return_value=None):
+            with patch.object(command, "_execute_edit_operation", return_value=None):
+                with patch.object(command, "_process_edit_result") as mock_process:
                     mock_process.return_value = CommandResult(success=True, message="Success")
 
                     result = await command._execute_with_formatter_context(mock_formatter)
@@ -163,7 +160,7 @@ class TestEditCommand:
         mock_formatter = Mock()
 
         validation_error = CommandResult(success=False, message="Validation failed", exit_code=1)
-        with patch.object(command, '_validate_with_formatter_error_display', return_value=validation_error):
+        with patch.object(command, "_validate_with_formatter_error_display", return_value=validation_error):
             result = await command._execute_with_formatter_context(mock_formatter)
 
         assert result.success is False
@@ -174,7 +171,7 @@ class TestEditCommand:
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
 
-        with patch.object(command, 'validate', return_value=[]):
+        with patch.object(command, "validate", return_value=[]):
             result = command._validate_with_formatter_error_display()
 
         assert result is None
@@ -184,8 +181,8 @@ class TestEditCommand:
         params = EditParams(app_names=[])
         command = EditCommand(params)
 
-        with patch.object(command, 'validate', return_value=["At least one application name is required"]):
-            with patch.object(command, '_display_validation_error_with_formatter') as mock_display:
+        with patch.object(command, "validate", return_value=["At least one application name is required"]):
+            with patch.object(command, "_display_validation_error_with_formatter") as mock_display:
                 result = command._validate_with_formatter_error_display()
 
         mock_display.assert_called_once_with("Validation errors: At least one application name is required")
@@ -198,7 +195,7 @@ class TestEditCommand:
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
 
-        with patch.object(command, 'validate', return_value=[]):
+        with patch.object(command, "validate", return_value=[]):
             result = command._validate_with_console_error_display()
 
         assert result is None
@@ -208,8 +205,8 @@ class TestEditCommand:
         params = EditParams(app_names=[])
         command = EditCommand(params)
 
-        with patch.object(command, 'validate', return_value=["At least one application name is required"]):
-            with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command, "validate", return_value=["At least one application name is required"]):
+            with patch.object(command.console, "print") as mock_console_print:
                 result = command._validate_with_console_error_display()
 
         mock_console_print.assert_called_once()
@@ -218,7 +215,7 @@ class TestEditCommand:
         assert result is not None
         assert result.success is False
 
-    @patch('appimage_updater.commands.edit_command.get_output_formatter')
+    @patch("appimage_updater.commands.edit_command.get_output_formatter")
     def test_display_validation_error_with_formatter(self, mock_get_formatter):
         """Test validation error display with formatter."""
         params = EditParams(app_names=[])
@@ -231,7 +228,7 @@ class TestEditCommand:
 
         mock_formatter.print_error.assert_called_once_with("Test error")
 
-    @patch('appimage_updater.commands.edit_command.get_output_formatter')
+    @patch("appimage_updater.commands.edit_command.get_output_formatter")
     def test_display_validation_error_without_formatter(self, mock_get_formatter):
         """Test validation error display without formatter."""
         params = EditParams(app_names=[])
@@ -239,7 +236,7 @@ class TestEditCommand:
 
         mock_get_formatter.return_value = None
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             command._display_validation_error_with_formatter("Test error")
 
         mock_console_print.assert_called_once()
@@ -267,7 +264,7 @@ class TestEditCommand:
         assert result.message == "Edit completed successfully"
         assert result.exit_code == 0
 
-    @patch('appimage_updater.commands.edit_command.AppConfigs')
+    @patch("appimage_updater.commands.edit_command.AppConfigs")
     def test_load_config_safely_success(self, mock_app_configs_class):
         """Test successful config loading."""
         params = EditParams(app_names=["TestApp"], config_file=Path("/test/config.json"))
@@ -283,7 +280,7 @@ class TestEditCommand:
         mock_app_configs_class.assert_called_once_with(config_path=Path("/test/config.json"))
         assert result == mock_config
 
-    @patch('appimage_updater.commands.edit_command.AppConfigs')
+    @patch("appimage_updater.commands.edit_command.AppConfigs")
     def test_load_config_safely_no_config_found(self, mock_app_configs_class):
         """Test config loading with no config found error."""
         params = EditParams(app_names=["TestApp"])
@@ -291,7 +288,7 @@ class TestEditCommand:
 
         mock_app_configs_class.side_effect = Exception("No configuration found")
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             result = command._load_config_safely()
 
         mock_console_print.assert_called_once()
@@ -327,7 +324,7 @@ class TestEditCommand:
         params = EditParams(app_names=None)
         command = EditCommand(params)
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             result = command._validate_app_names_provided()
 
         mock_console_print.assert_called_once()
@@ -335,7 +332,7 @@ class TestEditCommand:
         assert "No application names provided" in error_message
         assert result is None
 
-    @patch('appimage_updater.commands.edit_command.ApplicationService.filter_apps_by_names')
+    @patch("appimage_updater.commands.edit_command.ApplicationService.filter_apps_by_names")
     def test_find_matching_applications_success(self, mock_filter):
         """Test finding matching applications - success."""
         params = EditParams(app_names=["TestApp"])
@@ -351,7 +348,7 @@ class TestEditCommand:
         mock_filter.assert_called_once_with(mock_config.applications, ["TestApp"])
         assert result == mock_found_apps
 
-    @patch('appimage_updater.commands.edit_command.ApplicationService.filter_apps_by_names')
+    @patch("appimage_updater.commands.edit_command.ApplicationService.filter_apps_by_names")
     def test_find_matching_applications_no_matches(self, mock_filter):
         """Test finding matching applications - no matches."""
         params = EditParams(app_names=["NonExistentApp"])
@@ -366,7 +363,7 @@ class TestEditCommand:
         mock_filter.assert_called_once_with(mock_config.applications, ["NonExistentApp"])
         assert result is None
 
-    @patch('appimage_updater.commands.edit_command.collect_edit_updates')
+    @patch("appimage_updater.commands.edit_command.collect_edit_updates")
     def test_collect_updates_from_parameters(self, mock_collect):
         """Test collecting updates from parameters."""
         params = EditParams(
@@ -386,7 +383,7 @@ class TestEditCommand:
             checksum_required=False,
             force=True,
             direct=False,
-            auto_subdir=True
+            auto_subdir=True,
         )
         command = EditCommand(params)
 
@@ -411,7 +408,7 @@ class TestEditCommand:
             checksum_required=False,
             force=True,
             direct=False,
-            auto_subdir=True
+            auto_subdir=True,
         )
         assert result == mock_updates
 
@@ -420,7 +417,7 @@ class TestEditCommand:
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             command._show_validation_hints("File rotation requires a symlink path")
 
         mock_console_print.assert_called_once()
@@ -432,7 +429,7 @@ class TestEditCommand:
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             command._show_validation_hints("invalid characters")
 
         mock_console_print.assert_called_once()
@@ -444,7 +441,7 @@ class TestEditCommand:
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             command._show_validation_hints("should end with '.AppImage'")
 
         mock_console_print.assert_called_once()
@@ -456,7 +453,7 @@ class TestEditCommand:
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             command._show_validation_hints("Invalid checksum algorithm")
 
         mock_console_print.assert_called_once()

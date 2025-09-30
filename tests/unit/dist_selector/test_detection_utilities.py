@@ -10,7 +10,7 @@ from appimage_updater.dist_selector.detection_utilities import _detect_current_d
 class TestDetectCurrentDistribution:
     """Test current distribution detection using SystemInfo."""
 
-    @patch('appimage_updater.dist_selector.detection_utilities.get_system_info')
+    @patch("appimage_updater.dist_selector.detection_utilities.get_system_info")
     def test_detect_ubuntu_successful(self, mock_get_system_info: Mock) -> None:
         """Test successful Ubuntu detection."""
         mock_system_info = SystemInfo(
@@ -22,7 +22,7 @@ class TestDetectCurrentDistribution:
             distribution="ubuntu",
             distribution_family="debian",
             distribution_version="24.04",
-            distribution_version_numeric=24.04
+            distribution_version_numeric=24.04,
         )
         mock_get_system_info.return_value = mock_system_info
 
@@ -31,7 +31,7 @@ class TestDetectCurrentDistribution:
         assert result.version == "24.04"
         assert result.version_numeric == 24.04
 
-    @patch('appimage_updater.dist_selector.detection_utilities.get_system_info')
+    @patch("appimage_updater.dist_selector.detection_utilities.get_system_info")
     def test_detect_fedora_successful(self, mock_get_system_info: Mock) -> None:
         """Test successful Fedora detection."""
         mock_system_info = SystemInfo(
@@ -43,7 +43,7 @@ class TestDetectCurrentDistribution:
             distribution="fedora",
             distribution_family="redhat",
             distribution_version="40",
-            distribution_version_numeric=40.0
+            distribution_version_numeric=40.0,
         )
         mock_get_system_info.return_value = mock_system_info
 
@@ -52,7 +52,7 @@ class TestDetectCurrentDistribution:
         assert result.version == "40"
         assert result.version_numeric == 40.0
 
-    @patch('appimage_updater.dist_selector.detection_utilities.get_system_info')
+    @patch("appimage_updater.dist_selector.detection_utilities.get_system_info")
     def test_detect_unknown_distribution(self, mock_get_system_info: Mock) -> None:
         """Test detection when distribution is unknown."""
         mock_system_info = SystemInfo(
@@ -64,7 +64,7 @@ class TestDetectCurrentDistribution:
             distribution="unknown",
             distribution_family=None,
             distribution_version=None,
-            distribution_version_numeric=None
+            distribution_version_numeric=None,
         )
         mock_get_system_info.return_value = mock_system_info
 
@@ -73,7 +73,7 @@ class TestDetectCurrentDistribution:
         assert result.version == "unknown"
         assert result.version_numeric == 0.0
 
-    @patch('appimage_updater.dist_selector.detection_utilities.get_system_info')
+    @patch("appimage_updater.dist_selector.detection_utilities.get_system_info")
     def test_detect_no_distribution(self, mock_get_system_info: Mock) -> None:
         """Test detection when no distribution is detected."""
         mock_system_info = SystemInfo(
@@ -85,7 +85,7 @@ class TestDetectCurrentDistribution:
             distribution=None,
             distribution_family=None,
             distribution_version=None,
-            distribution_version_numeric=None
+            distribution_version_numeric=None,
         )
         mock_get_system_info.return_value = mock_system_info
 
@@ -94,7 +94,7 @@ class TestDetectCurrentDistribution:
         assert result.version == "unknown"
         assert result.version_numeric == 0.0
 
-    @patch('appimage_updater.dist_selector.detection_utilities.get_system_info')
+    @patch("appimage_updater.dist_selector.detection_utilities.get_system_info")
     def test_detect_missing_version_info(self, mock_get_system_info: Mock) -> None:
         """Test detection when version info is missing."""
         mock_system_info = SystemInfo(
@@ -106,7 +106,7 @@ class TestDetectCurrentDistribution:
             distribution="ubuntu",
             distribution_family="debian",
             distribution_version=None,
-            distribution_version_numeric=None
+            distribution_version_numeric=None,
         )
         mock_get_system_info.return_value = mock_system_info
 

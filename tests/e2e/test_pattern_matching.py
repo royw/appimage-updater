@@ -8,7 +8,9 @@ from appimage_updater.core.version_checker import VersionChecker
 from appimage_updater.main import app
 
 
-def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock) -> None:
+def setup_github_mocks(
+    mock_httpx_client: Mock, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock
+) -> None:
     """Set up comprehensive GitHub API mocks to prevent network calls."""
     # Mock httpx client to prevent network calls
     mock_client_instance = AsyncMock()
@@ -23,7 +25,7 @@ def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pat
             "published_at": "2024-01-01T00:00:00Z",
             "assets": [],
             "prerelease": False,
-            "draft": False
+            "draft": False,
         }
 
     mock_response = Mock()
@@ -54,6 +56,7 @@ def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pat
     # Add async method for prerelease detection
     async def mock_should_enable_prerelease(*args, **kwargs):
         return False
+
     mock_repo.should_enable_prerelease = AsyncMock(side_effect=mock_should_enable_prerelease)
 
     mock_repo_client.return_value = mock_repo
@@ -63,7 +66,7 @@ def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pat
         # Extract app name from args if available, otherwise use generic pattern
         app_name = "App"
         if args and len(args) > 0:
-            app_name = str(args[0]).split('/')[-1] if '/' in str(args[0]) else str(args[0])
+            app_name = str(args[0]).split("/")[-1] if "/" in str(args[0]) else str(args[0])
         return f"(?i){app_name}.*\\.(?:zip|AppImage)(\\.(|current|old))?$"
 
     mock_pattern_gen.side_effect = mock_async_pattern_gen
@@ -82,6 +85,7 @@ class TestPatternMatching:
         """Helper to create test files."""
         for filename in filenames:
             (directory / filename).touch()
+
         def mock_check_for_updates(_config):
             # The version checker should have found one of the TestApp files
             return CheckResult(
@@ -95,12 +99,12 @@ class TestPatternMatching:
                         name="TestApp-1.0.3-Linux.AppImage",
                         url="https://example.com/test.AppImage",
                         size=1024000,
-                        created_at="2024-01-01T00:00:00Z"
+                        created_at="2024-01-01T00:00:00Z",
                     ),
                     download_path=temp_download_dir / "TestApp-1.0.3-Linux.AppImage",
                     is_newer=False,  # Up to date
-                    checksum_required=False
-                )
+                    checksum_required=False,
+                ),
             )
 
         mock_version_checker.check_for_updates = AsyncMock(side_effect=mock_check_for_updates)

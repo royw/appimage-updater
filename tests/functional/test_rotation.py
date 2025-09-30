@@ -20,10 +20,10 @@ from appimage_updater.core.models import Asset, UpdateCandidate, rebuild_models
 rebuild_models()
 
 # Configure anyio to use only asyncio backend
-pytest_plugins = ('anyio',)
+pytest_plugins = ("anyio",)
 
 # Use only asyncio backend for anyio tests
-anyio_backends = ['asyncio']
+anyio_backends = ["asyncio"]
 
 
 @pytest.fixture
@@ -51,7 +51,7 @@ def basic_app_config(temp_download_dir):
         pattern=r"TestApp.*\.AppImage$",
         enabled=True,
         rotation_enabled=False,
-        checksum=ChecksumConfig()
+        checksum=ChecksumConfig(),
     )
 
 
@@ -69,7 +69,7 @@ def rotation_app_config(temp_download_dir, temp_symlink_dir):
         rotation_enabled=True,
         symlink_path=symlink_path,
         retain_count=3,
-        checksum=ChecksumConfig()
+        checksum=ChecksumConfig(),
     )
 
 
@@ -77,11 +77,12 @@ def rotation_app_config(temp_download_dir, temp_symlink_dir):
 def sample_asset():
     """Create a sample asset for testing."""
     from datetime import datetime
+
     return Asset(
         name="TestApp-2.0.0-Linux-x86_64.AppImage",
         url="https://example.com/TestApp-2.0.0-Linux-x86_64.AppImage",
         size=1024000,
-        created_at=datetime.now()
+        created_at=datetime.now(),
     )
 
 
@@ -95,8 +96,9 @@ class TestRotationDisabled:
     """Test behavior when rotation is disabled."""
 
     @pytest.mark.anyio
-    async def test_rotation_disabled_returns_original_path(self, downloader, basic_app_config, sample_asset,
-                                                           temp_download_dir):
+    async def test_rotation_disabled_returns_original_path(
+        self, downloader, basic_app_config, sample_asset, temp_download_dir
+    ):
         """Test that when rotation is disabled, the original download path is returned."""
         candidate = UpdateCandidate(
             app_name="TestApp",
@@ -106,7 +108,7 @@ class TestRotationDisabled:
             download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
             is_newer=True,
             checksum_required=False,
-            app_config=basic_app_config
+            app_config=basic_app_config,
         )
 
         # Test the rotation handling directly
@@ -116,8 +118,9 @@ class TestRotationDisabled:
         assert result_path == candidate.download_path
 
     @pytest.mark.anyio
-    async def test_rotation_disabled_no_symlink_created(self, downloader, basic_app_config, sample_asset,
-                                                        temp_download_dir):
+    async def test_rotation_disabled_no_symlink_created(
+        self, downloader, basic_app_config, sample_asset, temp_download_dir
+    ):
         """Test that no symlink operations occur when rotation is disabled."""
         candidate = UpdateCandidate(
             app_name="TestApp",
@@ -127,7 +130,7 @@ class TestRotationDisabled:
             download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
             is_newer=True,
             checksum_required=False,
-            app_config=basic_app_config
+            app_config=basic_app_config,
         )
 
         # Create the "downloaded" file
@@ -148,8 +151,9 @@ class TestRotationEnabled:
     """Test behavior when rotation is enabled."""
 
     @pytest.mark.anyio
-    async def test_rotation_enabled_creates_current_file(self, downloader, rotation_app_config, sample_asset,
-                                                         temp_download_dir):
+    async def test_rotation_enabled_creates_current_file(
+        self, downloader, rotation_app_config, sample_asset, temp_download_dir
+    ):
         """Test that rotation creates a .current file."""
         candidate = UpdateCandidate(
             app_name="TestApp",
@@ -159,7 +163,7 @@ class TestRotationEnabled:
             download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
             is_newer=True,
             checksum_required=False,
-            app_config=rotation_app_config
+            app_config=rotation_app_config,
         )
 
         # Create the "downloaded" file
@@ -176,8 +180,9 @@ class TestRotationEnabled:
         assert not candidate.download_path.exists()
 
     @pytest.mark.anyio
-    async def test_rotation_creates_symlink(self, downloader, rotation_app_config, sample_asset, temp_download_dir,
-                                            temp_symlink_dir):
+    async def test_rotation_creates_symlink(
+        self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir
+    ):
         """Test that rotation creates and updates symlink."""
         candidate = UpdateCandidate(
             app_name="TestApp",
@@ -187,7 +192,7 @@ class TestRotationEnabled:
             download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
             is_newer=True,
             checksum_required=False,
-            app_config=rotation_app_config
+            app_config=rotation_app_config,
         )
 
         # Create the "downloaded" file
@@ -201,8 +206,9 @@ class TestRotationEnabled:
         assert symlink_path.resolve() == result_path.resolve()
 
     @pytest.mark.anyio
-    async def test_rotation_moves_existing_current_to_old(self, downloader, rotation_app_config, sample_asset,
-                                                          temp_download_dir):
+    async def test_rotation_moves_existing_current_to_old(
+        self, downloader, rotation_app_config, sample_asset, temp_download_dir
+    ):
         """Test that existing .current file is moved to .old during rotation."""
         # Create existing .current file with SAME base name as the new download
         existing_current = temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.current"
@@ -216,7 +222,7 @@ class TestRotationEnabled:
             download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
             is_newer=True,
             checksum_required=False,
-            app_config=rotation_app_config
+            app_config=rotation_app_config,
         )
 
         # Create the "downloaded" file with different content
@@ -236,8 +242,9 @@ class TestRotationEnabled:
         assert result_path == new_current
 
     @pytest.mark.anyio
-    async def test_rotation_sequence_old_to_old2_to_old3(self, downloader, rotation_app_config, sample_asset,
-                                                         temp_download_dir):
+    async def test_rotation_sequence_old_to_old2_to_old3(
+        self, downloader, rotation_app_config, sample_asset, temp_download_dir
+    ):
         """Test full rotation sequence: .current -> .old -> .old2 -> .old3 (with retain_count=3)."""
         # Create existing files in rotation chain (all with SAME base name)
         files_to_create = [
@@ -257,7 +264,7 @@ class TestRotationEnabled:
             download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
             is_newer=True,
             checksum_required=False,
-            app_config=rotation_app_config
+            app_config=rotation_app_config,
         )
 
         # Create the "downloaded" file
@@ -285,7 +292,7 @@ class TestRotationEnabled:
             rotation_enabled=True,
             symlink_path=temp_symlink_dir / "testapp.AppImage",
             retain_count=2,  # Only keep .old and .old2
-            checksum=ChecksumConfig()
+            checksum=ChecksumConfig(),
         )
 
         # Create existing files beyond retain count (all with SAME base name)
@@ -308,7 +315,7 @@ class TestRotationEnabled:
             download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
             is_newer=True,
             checksum_required=False,
-            app_config=rotation_config
+            app_config=rotation_config,
         )
 
         # Create the "downloaded" file
@@ -326,8 +333,9 @@ class TestRotationEnabled:
         assert not (temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage.old4").exists()
 
     @pytest.mark.anyio
-    async def test_symlink_update_replaces_existing(self, downloader, rotation_app_config, sample_asset,
-                                                    temp_download_dir, temp_symlink_dir):
+    async def test_symlink_update_replaces_existing(
+        self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir
+    ):
         """Test that symlink is properly updated when it already exists."""
         # Create an existing symlink pointing to something else
         old_target = temp_download_dir / "old-target.AppImage"
@@ -342,7 +350,7 @@ class TestRotationEnabled:
             download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
             is_newer=True,
             checksum_required=False,
-            app_config=rotation_app_config
+            app_config=rotation_app_config,
         )
 
         # Create the "downloaded" file
@@ -368,14 +376,14 @@ class TestRotationEnabled:
             download_path=temp_download_dir / "TestApp-2.0.0-Linux-x86_64.AppImage",
             is_newer=True,
             checksum_required=False,
-            app_config=rotation_app_config
+            app_config=rotation_app_config,
         )
 
         # Create the "downloaded" file
         candidate.download_path.touch()
 
         # Mock the rotation method to raise an exception
-        with patch.object(downloader, '_perform_rotation', side_effect=OSError("Rotation failed")):
+        with patch.object(downloader, "_perform_rotation", side_effect=OSError("Rotation failed")):
             result_path = await downloader._handle_rotation(candidate)
 
             # Should fallback to original path when rotation fails
@@ -398,7 +406,7 @@ class TestRotationValidation:
                 enabled=True,
                 rotation_enabled=True,  # This should require symlink_path
                 symlink_path=None,  # Missing required symlink_path
-                checksum=ChecksumConfig()
+                checksum=ChecksumConfig(),
             )
 
     def test_rotation_disabled_allows_no_symlink_path(self, temp_download_dir):
@@ -413,7 +421,7 @@ class TestRotationValidation:
             enabled=True,
             rotation_enabled=False,
             symlink_path=None,
-            checksum=ChecksumConfig()
+            checksum=ChecksumConfig(),
         )
         assert config.rotation_enabled is False
         assert config.symlink_path is None

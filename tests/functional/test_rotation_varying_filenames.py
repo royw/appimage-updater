@@ -21,10 +21,10 @@ from appimage_updater.core.models import Asset, UpdateCandidate, rebuild_models
 rebuild_models()
 
 # Configure anyio to use only asyncio backend
-pytest_plugins = ('anyio',)
+pytest_plugins = ("anyio",)
 
 # Use only asyncio backend for anyio tests
-anyio_backends = ['asyncio']
+anyio_backends = ["asyncio"]
 
 
 class TestRotationVaryingFilenames:
@@ -49,7 +49,7 @@ class TestRotationVaryingFilenames:
             name="Bambu_Studio_ubuntu-22.04_PR-8017.zip",
             url="https://github.com/bambulab/BambuStudio/releases/download/test/Bambu_Studio_ubuntu-22.04_PR-8017.zip",
             size=1000000,
-            created_at="2024-01-01T00:00:00Z"
+            created_at="2024-01-01T00:00:00Z",
         )
 
     @pytest.fixture
@@ -66,7 +66,7 @@ class TestRotationVaryingFilenames:
             rotation_enabled=True,
             symlink_path=symlink_path,
             retain_count=3,
-            checksum=ChecksumConfig()
+            checksum=ChecksumConfig(),
         )
 
     @pytest.fixture
@@ -76,7 +76,7 @@ class TestRotationVaryingFilenames:
 
     @pytest.mark.anyio
     async def test_rotation_with_varying_filenames_bambu_scenario(
-            self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir
+        self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir
     ):
         """Test rotation handles different filenames correctly (BambuStudio scenario)."""
         # Create scenario: existing .current file with different filename
@@ -95,7 +95,7 @@ class TestRotationVaryingFilenames:
             download_path=temp_download_dir / "Bambu_Studio_ubuntu-22.04_PR-8017.AppImage",
             is_newer=True,
             checksum_required=False,
-            app_config=rotation_app_config
+            app_config=rotation_app_config,
         )
 
         # Create the "downloaded" new file and its metadata
@@ -137,7 +137,7 @@ class TestRotationVaryingFilenames:
 
     @pytest.mark.anyio
     async def test_rotation_with_multiple_varying_current_files(
-            self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir
+        self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir
     ):
         """Test rotation handles multiple .current files with different base names."""
         # Create multiple existing .current files (simulate scenario with multiple versions)
@@ -159,7 +159,7 @@ class TestRotationVaryingFilenames:
             download_path=temp_download_dir / "Bambu_Studio_ubuntu-22.04_PR-8017.AppImage",
             is_newer=True,
             checksum_required=False,
-            app_config=rotation_app_config
+            app_config=rotation_app_config,
         )
 
         candidate.download_path.write_text("new content")
@@ -222,15 +222,12 @@ class TestRotationVaryingFilenames:
         test_cases = [
             (
                 temp_download_dir / "Bambu_Studio_ubuntu-24.04_PR-7829.AppImage.current",
-                "Bambu_Studio_ubuntu-24.04_PR-7829.AppImage"
+                "Bambu_Studio_ubuntu-24.04_PR-7829.AppImage",
             ),
-            (
-                temp_download_dir / "SomeApp.AppImage.current",
-                "SomeApp.AppImage"
-            ),
+            (temp_download_dir / "SomeApp.AppImage.current", "SomeApp.AppImage"),
             (
                 temp_download_dir / "Complex_Name_With_Version_1.2.3.AppImage.current",
-                "Complex_Name_With_Version_1.2.3.AppImage"
+                "Complex_Name_With_Version_1.2.3.AppImage",
             ),
         ]
 

@@ -46,11 +46,11 @@ class TestCheckCommandWorkflows:
                             "enabled": False,
                             "pattern": "{filename}-SHA256.txt",
                             "algorithm": "sha256",
-                            "required": False
+                            "required": False,
                         },
                         "rotation_enabled": False,
                         "retain_count": 3,
-                        "symlink_path": None
+                        "symlink_path": None,
                     }
                 ]
             }
@@ -88,7 +88,10 @@ class TestCheckCommandWorkflows:
         formats = ["rich", "plain", "json", "html"]
 
         for format_type in formats:
-            result = runner.invoke(app, ["check", "TestApp", "--dry-run", "--format", format_type, "--config-dir", str(temp_config_with_app)])
+            result = runner.invoke(
+                app,
+                ["check", "TestApp", "--dry-run", "--format", format_type, "--config-dir", str(temp_config_with_app)],
+            )
 
             # All formats should succeed
             assert result.exit_code == 0, f"Format {format_type} failed: {result.stdout}"

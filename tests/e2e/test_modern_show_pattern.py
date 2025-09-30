@@ -26,7 +26,7 @@ class TestModernShowCommand:
                     "prerelease": False,
                     "rotation_enabled": True,
                     "symlink_path": f"/home/user/bin/{app_name.lower()}.AppImage",
-                    "checksum": {"enabled": True}
+                    "checksum": {"enabled": True},
                 }
             ]
         }
@@ -37,22 +37,13 @@ class TestModernShowCommand:
 
         return config_file
 
-    def test_show_command_with_configured_symlink_path(
-        self,
-        e2e_environment,
-        runner: CliRunner,
-        temp_config_dir: Path
-    ):
+    def test_show_command_with_configured_symlink_path(self, e2e_environment, runner: CliRunner, temp_config_dir: Path):
         """Test show command displays symlink path correctly."""
         # Create test config with symlink
         config_file = self.create_test_config_with_symlink(temp_config_dir, "SymlinkApp")
         assert config_file.exists()
 
-        result = runner.invoke(app, [
-            "show", "SymlinkApp",
-            "--config-dir", str(temp_config_dir),
-            "--format", "plain"
-        ])
+        result = runner.invoke(app, ["show", "SymlinkApp", "--config-dir", str(temp_config_dir), "--format", "plain"])
 
         assert result.exit_code == 0
         assert "SymlinkApp" in result.stdout
@@ -62,30 +53,18 @@ class TestModernShowCommand:
         # Check that rotation is mentioned (the config has rotation_enabled: True)
         assert "true" in result.stdout.lower() or "enabled" in result.stdout.lower()
 
-    def test_show_nonexistent_application(
-        self,
-        e2e_environment,
-        runner: CliRunner,
-        temp_config_dir: Path
-    ):
+    def test_show_nonexistent_application(self, e2e_environment, runner: CliRunner, temp_config_dir: Path):
         """Test show command with non-existent application."""
-        result = runner.invoke(app, [
-            "show", "NonExistentApp",
-            "--config-dir", str(temp_config_dir),
-            "--format", "plain"
-        ])
+        result = runner.invoke(
+            app, ["show", "NonExistentApp", "--config-dir", str(temp_config_dir), "--format", "plain"]
+        )
 
         assert result.exit_code == 1
         # Error message might be in stdout or stderr depending on implementation
         error_output = result.stderr or result.stdout
         assert "No applications found" in error_output or "not found" in error_output
 
-    def test_show_disabled_application(
-        self,
-        e2e_environment,
-        runner: CliRunner,
-        temp_config_dir: Path
-    ):
+    def test_show_disabled_application(self, e2e_environment, runner: CliRunner, temp_config_dir: Path):
         """Test show command with disabled application."""
         # Create disabled app config
         config_data = {
@@ -98,7 +77,7 @@ class TestModernShowCommand:
                     "pattern": "(?i)DisabledApp.*\\.AppImage$",
                     "enabled": False,  # Disabled
                     "prerelease": False,
-                    "checksum": {"enabled": True}
+                    "checksum": {"enabled": True},
                 }
             ]
         }
@@ -107,11 +86,7 @@ class TestModernShowCommand:
         with config_file.open("w") as f:
             json.dump(config_data, f, indent=2)
 
-        result = runner.invoke(app, [
-            "show", "DisabledApp",
-            "--config-dir", str(temp_config_dir),
-            "--format", "plain"
-        ])
+        result = runner.invoke(app, ["show", "DisabledApp", "--config-dir", str(temp_config_dir), "--format", "plain"])
 
         assert result.exit_code == 0
         assert "DisabledApp" in result.stdout
@@ -122,10 +97,10 @@ class TestModernShowCommand:
 class TestModernPatternMatching:
     """Modern E2E tests for pattern matching functionality."""
 
-    @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.repositories.factory.get_repository_client_with_probing_sync')
-    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
-    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
+    @patch("appimage_updater.repositories.github.client.httpx.AsyncClient")
+    @patch("appimage_updater.repositories.factory.get_repository_client_with_probing_sync")
+    @patch("appimage_updater.core.pattern_generator.generate_appimage_pattern_async")
+    @patch("appimage_updater.core.pattern_generator.should_enable_prerelease")
     def test_pattern_matching_with_suffixes(
         self,
         mock_prerelease,
@@ -135,7 +110,7 @@ class TestModernPatternMatching:
         e2e_environment_with_mock_support,
         runner: CliRunner,
         temp_config_dir: Path,
-        tmp_path: Path
+        tmp_path: Path,
     ):
         """Test pattern matching handles various AppImage suffixes correctly."""
         # Setup httpx mock to prevent network calls
@@ -152,6 +127,7 @@ class TestModernPatternMatching:
             app_name = args[0] if args else "SuffixApp"
             # Pattern includes suffix handling for .current and .old files
             return f"(?i)^{app_name}.*\\.AppImage(\\.(current|old))?$"
+
         mock_pattern_gen.side_effect = mock_pattern_with_suffixes
 
         # Setup repository client mock
@@ -165,14 +141,20 @@ class TestModernPatternMatching:
 
         test_download_dir = tmp_path / "suffix-test"
 
-        result = runner.invoke(app, [
-            "add", "SuffixApp",
-            "https://github.com/user/suffixapp",
-            str(test_download_dir),
-            "--config-dir", str(temp_config_dir),
-            "--create-dir",
-            "--format", "plain"
-        ])
+        result = runner.invoke(
+            app,
+            [
+                "add",
+                "SuffixApp",
+                "https://github.com/user/suffixapp",
+                str(test_download_dir),
+                "--config-dir",
+                str(temp_config_dir),
+                "--create-dir",
+                "--format",
+                "plain",
+            ],
+        )
 
         assert result.exit_code == 0
         assert "Successfully added application" in result.stdout
@@ -196,12 +178,7 @@ class TestModernPatternMatching:
         # Verify it's a valid regex pattern
         assert pattern.startswith("(?i)") or "(?i)" in pattern
 
-    def test_pattern_validation_in_config(
-        self,
-        e2e_environment,
-        runner: CliRunner,
-        temp_config_dir: Path
-    ):
+    def test_pattern_validation_in_config(self, e2e_environment, runner: CliRunner, temp_config_dir: Path):
         """Test that pattern validation works correctly in configuration."""
         # Create config with custom pattern
         config_data = {
@@ -214,7 +191,7 @@ class TestModernPatternMatching:
                     "pattern": "(?i)PatternApp-v[0-9]+\\.[0-9]+\\.[0-9]+.*\\.AppImage$",
                     "enabled": True,
                     "prerelease": False,
-                    "checksum": {"enabled": True}
+                    "checksum": {"enabled": True},
                 }
             ]
         }
@@ -224,11 +201,7 @@ class TestModernPatternMatching:
             json.dump(config_data, f, indent=2)
 
         # Show the app to verify pattern is displayed correctly
-        result = runner.invoke(app, [
-            "show", "PatternApp",
-            "--config-dir", str(temp_config_dir),
-            "--format", "plain"
-        ])
+        result = runner.invoke(app, ["show", "PatternApp", "--config-dir", str(temp_config_dir), "--format", "plain"])
 
         assert result.exit_code == 0
         assert "PatternApp" in result.stdout

@@ -40,12 +40,9 @@ def multi_app_config():
                     "enabled": False,
                     "algorithm": "sha256",
                     "pattern": "{filename}-SHA256.txt",
-                    "required": False
+                    "required": False,
                 },
-                "rotation": {
-                    "enabled": False,
-                    "keep_count": 3
-                }
+                "rotation": {"enabled": False, "keep_count": 3},
             },
             {
                 "name": "App2",
@@ -58,12 +55,9 @@ def multi_app_config():
                     "enabled": False,
                     "algorithm": "sha256",
                     "pattern": "{filename}-SHA256.txt",
-                    "required": False
+                    "required": False,
                 },
-                "rotation": {
-                    "enabled": False,
-                    "keep_count": 3
-                }
+                "rotation": {"enabled": False, "keep_count": 3},
             },
             {
                 "name": "App3",
@@ -76,13 +70,10 @@ def multi_app_config():
                     "enabled": False,
                     "algorithm": "sha256",
                     "pattern": "{filename}-SHA256.txt",
-                    "required": False
+                    "required": False,
                 },
-                "rotation": {
-                    "enabled": False,
-                    "keep_count": 3
-                }
-            }
+                "rotation": {"enabled": False, "keep_count": 3},
+            },
         ]
     }
 
@@ -218,11 +209,7 @@ class TestMultiAppEdit:
             json.dump(multi_app_config, f)
 
         new_url = "https://github.com/newuser/newrepo"
-        result = runner.invoke(app, [
-            "edit", "App1", "App2",
-            "--url", new_url,
-            "--config", str(config_file)
-        ])
+        result = runner.invoke(app, ["edit", "App1", "App2", "--url", new_url, "--config", str(config_file)])
 
         assert result.exit_code == 0
         assert "Successfully updated configuration for 'App1'" in result.stdout
@@ -234,11 +221,7 @@ class TestMultiAppEdit:
         with config_file.open("w") as f:
             json.dump(multi_app_config, f)
 
-        result = runner.invoke(app, [
-            "edit", "App1", "App2",
-            "--disable",
-            "--config", str(config_file)
-        ])
+        result = runner.invoke(app, ["edit", "App1", "App2", "--disable", "--config", str(config_file)])
 
         assert result.exit_code == 0
         assert "Successfully updated configuration for 'App1'" in result.stdout
@@ -250,11 +233,7 @@ class TestMultiAppEdit:
         with config_file.open("w") as f:
             json.dump(multi_app_config, f)
 
-        result = runner.invoke(app, [
-            "edit", "NonExistent1", "NonExistent2",
-            "--disable",
-            "--config", str(config_file)
-        ])
+        result = runner.invoke(app, ["edit", "NonExistent1", "NonExistent2", "--disable", "--config", str(config_file)])
 
         assert result.exit_code == 1
         assert "Applications not found: NonExistent1, NonExistent2" in result.stdout
@@ -265,11 +244,7 @@ class TestMultiAppEdit:
         with config_file.open("w") as f:
             json.dump(multi_app_config, f)
 
-        result = runner.invoke(app, [
-            "edit", "App1", "NonExistent",
-            "--disable",
-            "--config", str(config_file)
-        ])
+        result = runner.invoke(app, ["edit", "App1", "NonExistent", "--disable", "--config", str(config_file)])
 
         assert result.exit_code == 1
         assert "Applications not found: NonExistent" in result.stdout

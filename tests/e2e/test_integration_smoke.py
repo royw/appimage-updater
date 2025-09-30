@@ -48,7 +48,7 @@ def test_version_option(runner):
     assert "AppImage Updater" in result.stdout
 
     # Strip ANSI color codes to check version
-    clean_output = re.sub(r'\x1b\[[0-9;]*m', '', result.stdout)
+    clean_output = re.sub(r"\x1b\[[0-9;]*m", "", result.stdout)
     assert expected_version in clean_output
 
     # Test -V short flag
@@ -57,7 +57,7 @@ def test_version_option(runner):
     assert "AppImage Updater" in result_short.stdout
 
     # Strip ANSI color codes to check version
-    clean_output_short = re.sub(r'\x1b\[[0-9;]*m', '', result_short.stdout)
+    clean_output_short = re.sub(r"\x1b\[[0-9;]*m", "", result_short.stdout)
     assert expected_version in clean_output_short
 
     # Version output should be identical for both flags

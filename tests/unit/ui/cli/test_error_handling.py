@@ -110,7 +110,7 @@ class TestErrorTypeCheckers:
 class TestDisplayErrorMessage:
     """Test error message display functionality."""
 
-    @patch('appimage_updater.ui.cli.error_handling.console')
+    @patch("appimage_updater.ui.cli.error_handling.console")
     def test_display_rate_limit_error(self, mock_console: Mock) -> None:
         """Test display of rate limit error message."""
         _display_error_message("rate_limit", "TestApp", "Rate limit exceeded")
@@ -123,7 +123,7 @@ class TestDisplayErrorMessage:
         assert "Try again later or set up GitHub authentication" in str(calls[1])
         assert "https://docs.github.com/en/authentication" in str(calls[2])
 
-    @patch('appimage_updater.ui.cli.error_handling.console')
+    @patch("appimage_updater.ui.cli.error_handling.console")
     def test_display_not_found_error(self, mock_console: Mock) -> None:
         """Test display of not found error message."""
         _display_error_message("not_found", "TestApp", "Repository not found")
@@ -135,7 +135,7 @@ class TestDisplayErrorMessage:
         assert "Failed to add application 'TestApp': Repository not found" in str(calls[0])
         assert "Please check that the URL is correct" in str(calls[1])
 
-    @patch('appimage_updater.ui.cli.error_handling.console')
+    @patch("appimage_updater.ui.cli.error_handling.console")
     def test_display_network_error(self, mock_console: Mock) -> None:
         """Test display of network error message."""
         _display_error_message("network", "TestApp", "Connection timeout")
@@ -147,7 +147,7 @@ class TestDisplayErrorMessage:
         assert "Failed to add application 'TestApp': Network connection error" in str(calls[0])
         assert "Please check your internet connection" in str(calls[1])
 
-    @patch('appimage_updater.ui.cli.error_handling.console')
+    @patch("appimage_updater.ui.cli.error_handling.console")
     def test_display_generic_error(self, mock_console: Mock) -> None:
         """Test display of generic error message."""
         error_msg = "Some unexpected error"
@@ -164,9 +164,9 @@ class TestDisplayErrorMessage:
 class TestHandleAddError:
     """Test add error handling functionality."""
 
-    @patch('appimage_updater.ui.cli.error_handling.logger')
-    @patch('appimage_updater.ui.cli.error_handling._display_error_message')
-    @patch('appimage_updater.ui.cli.error_handling._classify_error')
+    @patch("appimage_updater.ui.cli.error_handling.logger")
+    @patch("appimage_updater.ui.cli.error_handling._display_error_message")
+    @patch("appimage_updater.ui.cli.error_handling._classify_error")
     def test_handle_add_error_flow(self, mock_classify: Mock, mock_display: Mock, mock_logger: Mock) -> None:
         """Test complete add error handling flow."""
         mock_classify.return_value = "rate_limit"
@@ -183,8 +183,8 @@ class TestHandleAddError:
         # Verify exception was logged
         mock_logger.exception.assert_called_once_with("Full exception details")
 
-    @patch('appimage_updater.ui.cli.error_handling.logger')
-    @patch('appimage_updater.ui.cli.error_handling._display_error_message')
+    @patch("appimage_updater.ui.cli.error_handling.logger")
+    @patch("appimage_updater.ui.cli.error_handling._display_error_message")
     def test_handle_add_error_with_different_error_types(self, mock_display: Mock, mock_logger: Mock) -> None:
         """Test handling different types of errors."""
         # Test with different exception types
@@ -192,7 +192,7 @@ class TestHandleAddError:
             ValueError("Invalid value"),
             ConnectionError("Network error"),
             FileNotFoundError("File not found"),
-            RuntimeError("Runtime error")
+            RuntimeError("Runtime error"),
         ]
 
         for exception in exceptions:
@@ -210,8 +210,8 @@ class TestHandleAddError:
 class TestLogRepositoryAuthStatus:
     """Test repository authentication status logging."""
 
-    @patch('appimage_updater.ui.cli.error_handling.get_repository_client')
-    @patch('appimage_updater.ui.cli.error_handling._log_client_auth_status')
+    @patch("appimage_updater.ui.cli.error_handling.get_repository_client")
+    @patch("appimage_updater.ui.cli.error_handling._log_client_auth_status")
     def test_log_repository_auth_status_success(self, mock_log_client: Mock, mock_get_client: Mock) -> None:
         """Test successful repository auth status logging."""
         mock_client = Mock()
@@ -223,8 +223,8 @@ class TestLogRepositoryAuthStatus:
         mock_get_client.assert_called_once_with("https://github.com/user/repo")
         mock_log_client.assert_called_once_with(mock_client)
 
-    @patch('appimage_updater.ui.cli.error_handling.get_repository_client')
-    @patch('appimage_updater.ui.cli.error_handling.logger')
+    @patch("appimage_updater.ui.cli.error_handling.get_repository_client")
+    @patch("appimage_updater.ui.cli.error_handling.logger")
     def test_log_repository_auth_status_exception(self, mock_logger: Mock, mock_get_client: Mock) -> None:
         """Test repository auth status logging with exception."""
         mock_get_client.side_effect = Exception("Client error")
@@ -238,7 +238,7 @@ class TestLogRepositoryAuthStatus:
 class TestLogClientAuthStatus:
     """Test client authentication status logging."""
 
-    @patch('appimage_updater.ui.cli.error_handling._log_github_auth_status')
+    @patch("appimage_updater.ui.cli.error_handling._log_github_auth_status")
     def test_log_client_auth_status_with_github_client(self, mock_log_github: Mock) -> None:
         """Test logging auth status for GitHub client."""
         mock_client = Mock()
@@ -250,7 +250,7 @@ class TestLogClientAuthStatus:
         # Verify GitHub auth status was logged
         mock_log_github.assert_called_once_with(mock_github_client)
 
-    @patch('appimage_updater.ui.cli.error_handling.logger')
+    @patch("appimage_updater.ui.cli.error_handling.logger")
     def test_log_client_auth_status_without_client_attr(self, mock_logger: Mock) -> None:
         """Test logging auth status for client without _client attribute."""
         mock_client = Mock(spec=[])  # Mock without _client attribute
@@ -267,7 +267,7 @@ class TestLogClientAuthStatus:
 class TestLogGithubAuthStatus:
     """Test GitHub authentication status logging."""
 
-    @patch('appimage_updater.ui.cli.error_handling.logger')
+    @patch("appimage_updater.ui.cli.error_handling.logger")
     def test_log_github_auth_status_with_token(self, mock_logger: Mock) -> None:
         """Test logging GitHub auth status with token."""
         mock_client = Mock()
@@ -280,7 +280,7 @@ class TestLogGithubAuthStatus:
         # Verify token configured message was logged
         mock_logger.debug.assert_called_once_with("GitHub authentication: Token configured")
 
-    @patch('appimage_updater.ui.cli.error_handling.logger')
+    @patch("appimage_updater.ui.cli.error_handling.logger")
     def test_log_github_auth_status_without_token(self, mock_logger: Mock) -> None:
         """Test logging GitHub auth status without token."""
         mock_client = Mock()
@@ -293,7 +293,7 @@ class TestLogGithubAuthStatus:
         # Verify no token message was logged
         mock_logger.debug.assert_called_once_with("GitHub authentication: No token configured")
 
-    @patch('appimage_updater.ui.cli.error_handling.logger')
+    @patch("appimage_updater.ui.cli.error_handling.logger")
     def test_log_github_auth_status_no_auth(self, mock_logger: Mock) -> None:
         """Test logging GitHub auth status with no auth."""
         mock_client = Mock()
@@ -304,7 +304,7 @@ class TestLogGithubAuthStatus:
         # Verify no authentication message was logged
         mock_logger.debug.assert_called_once_with("GitHub authentication: No authentication configured")
 
-    @patch('appimage_updater.ui.cli.error_handling.logger')
+    @patch("appimage_updater.ui.cli.error_handling.logger")
     def test_log_github_auth_status_no_auth_attr(self, mock_logger: Mock) -> None:
         """Test logging GitHub auth status with no auth attribute."""
         mock_client = Mock(spec=[])  # Mock without auth attribute
@@ -319,10 +319,12 @@ class TestLogGithubAuthStatus:
 class TestHandleVerboseLogging:
     """Test verbose logging functionality."""
 
-    @patch('appimage_updater.ui.cli.error_handling._log_resolved_parameters')
-    @patch('appimage_updater.ui.cli.error_handling._log_repository_auth_status')
-    @patch('appimage_updater.ui.cli.error_handling.console')
-    def test_handle_verbose_logging_enabled(self, mock_console: Mock, mock_log_auth: Mock, mock_log_params: Mock) -> None:
+    @patch("appimage_updater.ui.cli.error_handling._log_resolved_parameters")
+    @patch("appimage_updater.ui.cli.error_handling._log_repository_auth_status")
+    @patch("appimage_updater.ui.cli.error_handling.console")
+    def test_handle_verbose_logging_enabled(
+        self, mock_console: Mock, mock_log_auth: Mock, mock_log_params: Mock
+    ) -> None:
         """Test verbose logging when enabled."""
         resolved_params = {"test": "value"}
 
@@ -339,7 +341,7 @@ class TestHandleVerboseLogging:
             direct=None,
             config_file="/test/config.json",
             config_dir="/test/config",
-            resolved_params=resolved_params
+            resolved_params=resolved_params,
         )
 
         # Verify console output
@@ -363,10 +365,12 @@ class TestHandleVerboseLogging:
         assert original_params["auto_subdir"] is True
         assert original_params["rotation"] is False
 
-    @patch('appimage_updater.ui.cli.error_handling._log_resolved_parameters')
-    @patch('appimage_updater.ui.cli.error_handling._log_repository_auth_status')
-    @patch('appimage_updater.ui.cli.error_handling.console')
-    def test_handle_verbose_logging_disabled(self, mock_console: Mock, mock_log_auth: Mock, mock_log_params: Mock) -> None:
+    @patch("appimage_updater.ui.cli.error_handling._log_resolved_parameters")
+    @patch("appimage_updater.ui.cli.error_handling._log_repository_auth_status")
+    @patch("appimage_updater.ui.cli.error_handling.console")
+    def test_handle_verbose_logging_disabled(
+        self, mock_console: Mock, mock_log_auth: Mock, mock_log_params: Mock
+    ) -> None:
         """Test verbose logging when disabled."""
         _handle_verbose_logging(
             verbose=False,
@@ -381,7 +385,7 @@ class TestHandleVerboseLogging:
             direct=None,
             config_file=None,
             config_dir=None,
-            resolved_params={}
+            resolved_params={},
         )
 
         # Verify no logging occurred
@@ -389,10 +393,12 @@ class TestHandleVerboseLogging:
         mock_log_auth.assert_not_called()
         mock_log_params.assert_not_called()
 
-    @patch('appimage_updater.ui.cli.error_handling._log_resolved_parameters')
-    @patch('appimage_updater.ui.cli.error_handling._log_repository_auth_status')
-    @patch('appimage_updater.ui.cli.error_handling.console')
-    def test_handle_verbose_logging_with_none_values(self, mock_console: Mock, mock_log_auth: Mock, mock_log_params: Mock) -> None:
+    @patch("appimage_updater.ui.cli.error_handling._log_resolved_parameters")
+    @patch("appimage_updater.ui.cli.error_handling._log_repository_auth_status")
+    @patch("appimage_updater.ui.cli.error_handling.console")
+    def test_handle_verbose_logging_with_none_values(
+        self, mock_console: Mock, mock_log_auth: Mock, mock_log_params: Mock
+    ) -> None:
         """Test verbose logging with None values."""
         resolved_params = {"test": "value"}
 
@@ -409,7 +415,7 @@ class TestHandleVerboseLogging:
             direct=None,
             config_file=None,
             config_dir=None,
-            resolved_params=resolved_params
+            resolved_params=resolved_params,
         )
 
         # Verify logging still occurred

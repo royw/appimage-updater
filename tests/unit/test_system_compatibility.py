@@ -102,6 +102,7 @@ class TestCompatibilityFunctions:
         """Test that Windows platform raises RuntimeError."""
         with pytest.raises(RuntimeError, match="AppImage Updater only supports Linux"):
             is_supported_format(".exe", "win32")
+
     def test_architecture_parsing(self):
         """Test architecture extraction from asset filenames."""
         test_cases = [
@@ -115,12 +116,7 @@ class TestCompatibilityFunctions:
         ]
 
         for filename, expected_arch in test_cases:
-            asset = Asset(
-                name=filename,
-                url="https://example.com/download",
-                size=1024,
-                created_at=datetime.now()
-            )
+            asset = Asset(name=filename, url="https://example.com/download", size=1024, created_at=datetime.now())
             assert asset.architecture == expected_arch
 
     def test_platform_parsing(self):
@@ -135,12 +131,7 @@ class TestCompatibilityFunctions:
         ]
 
         for filename, expected_platform in test_cases:
-            asset = Asset(
-                name=filename,
-                url="https://example.com/download",
-                size=1024,
-                created_at=datetime.now()
-            )
+            asset = Asset(name=filename, url="https://example.com/download", size=1024, created_at=datetime.now())
             assert asset.platform == expected_platform
 
     def test_format_parsing(self):
@@ -158,12 +149,7 @@ class TestCompatibilityFunctions:
         ]
 
         for filename, expected_ext in test_cases:
-            asset = Asset(
-                name=filename,
-                url="https://example.com/download",
-                size=1024,
-                created_at=datetime.now()
-            )
+            asset = Asset(name=filename, url="https://example.com/download", size=1024, created_at=datetime.now())
             assert asset.file_extension == expected_ext
 
 
@@ -179,7 +165,7 @@ class TestReleaseFiltering:
                 name="app-linux-arm64.tar.gz",
                 url="https://example.com/linux-arm64",
                 size=8192,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
         )
         return assets
@@ -187,12 +173,7 @@ class TestReleaseFiltering:
     def test_pattern_matching_no_filter(self, platform_test_assets):
         """Test basic pattern matching without filtering."""
         assets = self.create_test_assets(platform_test_assets)
-        release = Release(
-            version="1.0.0",
-            tag_name="v1.0.0",
-            published_at=datetime.now(),
-            assets=assets
-        )
+        release = Release(version="1.0.0", tag_name="v1.0.0", published_at=datetime.now(), assets=assets)
 
         # Match all AppImage files
         matching = release.get_matching_assets(r".*\.AppImage$", filter_compatible=False)
@@ -205,12 +186,7 @@ class TestReleaseFiltering:
     def test_compatibility_filtering(self, platform_test_assets):
         """Test compatibility filtering (mock system info)."""
         assets = self.create_test_assets(platform_test_assets)
-        release = Release(
-            version="1.0.0",
-            tag_name="v1.0.0",
-            published_at=datetime.now(),
-            assets=assets
-        )
+        release = Release(version="1.0.0", tag_name="v1.0.0", published_at=datetime.now(), assets=assets)
 
         # This test demonstrates the interface with actual filtering
         # filter_compatible=True filters based on current system compatibility
@@ -219,6 +195,7 @@ class TestReleaseFiltering:
         # The actual number depends on system compatibility filtering
         # Since we're running on a real system, some assets may be filtered out
         assert len(matching) >= 1  # At least some assets should match
+
 
 class TestEdgeCases:
     """Test edge cases and error conditions."""
@@ -246,7 +223,7 @@ class TestEdgeCases:
             name="generic-file.txt",  # No recognizable patterns
             url="https://example.com/generic",
             size=1024,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         assert asset.architecture is None

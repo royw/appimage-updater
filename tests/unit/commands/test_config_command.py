@@ -18,11 +18,7 @@ class TestConfigCommand:
 
     def test_init(self):
         """Test ConfigCommand initialization."""
-        params = ConfigParams(
-            action="show",
-            config_file=Path("/test/config.json"),
-            debug=True
-        )
+        params = ConfigParams(action="show", config_file=Path("/test/config.json"), debug=True)
         command = ConfigCommand(params)
 
         assert command.params == params
@@ -182,7 +178,7 @@ class TestConfigCommand:
         assert len(validation_errors) >= 1
         assert any("Invalid action 'invalid'" in error for error in validation_errors)
 
-    @patch('appimage_updater.commands.config_command.configure_logging')
+    @patch("appimage_updater.commands.config_command.configure_logging")
     @pytest.mark.anyio
     async def test_execute_success_with_formatter(self, mock_configure_logging):
         """Test successful execution with output formatter."""
@@ -190,9 +186,9 @@ class TestConfigCommand:
         command = ConfigCommand(params)
         mock_formatter = Mock()
 
-        with patch.object(command, '_validate_and_show_help', return_value=None):
-            with patch.object(command, '_execute_config_operation', return_value=True):
-                with patch.object(command, '_create_result') as mock_create:
+        with patch.object(command, "_validate_and_show_help", return_value=None):
+            with patch.object(command, "_execute_config_operation", return_value=True):
+                with patch.object(command, "_create_result") as mock_create:
                     success_result = CommandResult(success=True, message="Success")
                     mock_create.return_value = success_result
 
@@ -205,16 +201,16 @@ class TestConfigCommand:
         mock_create.assert_called_once_with(True)
         assert result.success is True
 
-    @patch('appimage_updater.commands.config_command.configure_logging')
+    @patch("appimage_updater.commands.config_command.configure_logging")
     @pytest.mark.anyio
     async def test_execute_success_without_formatter(self, mock_configure_logging):
         """Test successful execution without output formatter."""
         params = ConfigParams(action="list", debug=False)
         command = ConfigCommand(params)
 
-        with patch.object(command, '_validate_and_show_help', return_value=None):
-            with patch.object(command, '_execute_config_operation', return_value=True):
-                with patch.object(command, '_create_result') as mock_create:
+        with patch.object(command, "_validate_and_show_help", return_value=None):
+            with patch.object(command, "_execute_config_operation", return_value=True):
+                with patch.object(command, "_create_result") as mock_create:
                     success_result = CommandResult(success=True, message="Success")
                     mock_create.return_value = success_result
 
@@ -226,7 +222,7 @@ class TestConfigCommand:
         # Verify success result
         assert result.success is True
 
-    @patch('appimage_updater.commands.config_command.configure_logging')
+    @patch("appimage_updater.commands.config_command.configure_logging")
     @pytest.mark.anyio
     async def test_execute_validation_error(self, mock_configure_logging):
         """Test execution with validation error."""
@@ -234,7 +230,7 @@ class TestConfigCommand:
         command = ConfigCommand(params)
 
         validation_error = CommandResult(success=False, message="Validation failed", exit_code=1)
-        with patch.object(command, '_validate_and_show_help', return_value=validation_error):
+        with patch.object(command, "_validate_and_show_help", return_value=validation_error):
             result = await command.execute()
 
         # Verify failure result
@@ -242,8 +238,8 @@ class TestConfigCommand:
         assert result.message == "Validation failed"
         assert result.exit_code == 1
 
-    @patch('appimage_updater.commands.config_command.configure_logging')
-    @patch('appimage_updater.commands.config_command.logger')
+    @patch("appimage_updater.commands.config_command.configure_logging")
+    @patch("appimage_updater.commands.config_command.logger")
     @pytest.mark.anyio
     async def test_execute_unexpected_exception(self, mock_logger, mock_configure_logging):
         """Test execution with unexpected exception."""
@@ -251,7 +247,7 @@ class TestConfigCommand:
         command = ConfigCommand(params)
 
         test_exception = Exception("Test error")
-        with patch.object(command, '_validate_and_show_help', side_effect=test_exception):
+        with patch.object(command, "_validate_and_show_help", side_effect=test_exception):
             result = await command.execute()
 
         # Verify logging was called
@@ -268,7 +264,7 @@ class TestConfigCommand:
         params = ConfigParams(action="show")
         command = ConfigCommand(params)
 
-        with patch.object(command, 'validate', return_value=[]):
+        with patch.object(command, "validate", return_value=[]):
             result = command._validate_and_show_help()
 
         assert result is None
@@ -279,9 +275,9 @@ class TestConfigCommand:
         command = ConfigCommand(params)
 
         validation_errors = ["Invalid action 'invalid'"]
-        with patch.object(command, 'validate', return_value=validation_errors):
-            with patch.object(command.console, 'print') as mock_console_print:
-                with patch.object(command, '_show_usage_help') as mock_show_help:
+        with patch.object(command, "validate", return_value=validation_errors):
+            with patch.object(command.console, "print") as mock_console_print:
+                with patch.object(command, "_show_usage_help") as mock_show_help:
                     result = command._validate_and_show_help()
 
         # Verify error was printed
@@ -303,7 +299,7 @@ class TestConfigCommand:
         params = ConfigParams(action="set")
         command = ConfigCommand(params)
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             command._show_usage_help()
 
         mock_console_print.assert_called_once()
@@ -315,7 +311,7 @@ class TestConfigCommand:
         params = ConfigParams(action="show-effective")
         command = ConfigCommand(params)
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             command._show_usage_help()
 
         mock_console_print.assert_called_once()
@@ -327,7 +323,7 @@ class TestConfigCommand:
         params = ConfigParams(action="show")
         command = ConfigCommand(params)
 
-        with patch.object(command.console, 'print') as mock_console_print:
+        with patch.object(command.console, "print") as mock_console_print:
             command._show_usage_help()
 
         mock_console_print.assert_called_once()
@@ -365,7 +361,7 @@ class TestConfigCommand:
         mock_handler = Mock(return_value=None)  # None indicates success
         action_handlers = {"show": mock_handler}
 
-        with patch.object(command, '_get_action_handlers', return_value=action_handlers):
+        with patch.object(command, "_get_action_handlers", return_value=action_handlers):
             result = await command._execute_config_operation()
 
         mock_handler.assert_called_once()
@@ -380,7 +376,7 @@ class TestConfigCommand:
         mock_handler = Mock(return_value=False)  # False indicates failure
         action_handlers = {"set": mock_handler}
 
-        with patch.object(command, '_get_action_handlers', return_value=action_handlers):
+        with patch.object(command, "_get_action_handlers", return_value=action_handlers):
             result = await command._execute_config_operation()
 
         mock_handler.assert_called_once()
@@ -394,20 +390,16 @@ class TestConfigCommand:
 
         action_handlers = {}
 
-        with patch.object(command, '_get_action_handlers', return_value=action_handlers):
+        with patch.object(command, "_get_action_handlers", return_value=action_handlers):
             result = await command._execute_config_operation()
 
         # Unknown action should return True (no-op)
         assert result is True
 
-    @patch('appimage_updater.commands.config_command.show_global_config')
+    @patch("appimage_updater.commands.config_command.show_global_config")
     def test_get_action_handlers_show(self, mock_show_global_config):
         """Test action handlers for show action."""
-        params = ConfigParams(
-            action="show",
-            config_file=Path("/test/config.json"),
-            config_dir=Path("/test/config")
-        )
+        params = ConfigParams(action="show", config_file=Path("/test/config.json"), config_dir=Path("/test/config"))
         command = ConfigCommand(params)
 
         handlers = command._get_action_handlers()
@@ -415,12 +407,9 @@ class TestConfigCommand:
         # Execute the show handler
         handlers["show"]()
 
-        mock_show_global_config.assert_called_once_with(
-            Path("/test/config.json"),
-            Path("/test/config")
-        )
+        mock_show_global_config.assert_called_once_with(Path("/test/config.json"), Path("/test/config"))
 
-    @patch('appimage_updater.commands.config_command.set_global_config_value')
+    @patch("appimage_updater.commands.config_command.set_global_config_value")
     def test_get_action_handlers_set(self, mock_set_global_config_value):
         """Test action handlers for set action."""
         params = ConfigParams(
@@ -428,7 +417,7 @@ class TestConfigCommand:
             setting="test_setting",
             value="test_value",
             config_file=Path("/test/config.json"),
-            config_dir=Path("/test/config")
+            config_dir=Path("/test/config"),
         )
         command = ConfigCommand(params)
 
@@ -438,20 +427,13 @@ class TestConfigCommand:
         handlers["set"]()
 
         mock_set_global_config_value.assert_called_once_with(
-            "test_setting",
-            "test_value",
-            Path("/test/config.json"),
-            Path("/test/config")
+            "test_setting", "test_value", Path("/test/config.json"), Path("/test/config")
         )
 
-    @patch('appimage_updater.commands.config_command.reset_global_config')
+    @patch("appimage_updater.commands.config_command.reset_global_config")
     def test_get_action_handlers_reset(self, mock_reset_global_config):
         """Test action handlers for reset action."""
-        params = ConfigParams(
-            action="reset",
-            config_file=Path("/test/config.json"),
-            config_dir=Path("/test/config")
-        )
+        params = ConfigParams(action="reset", config_file=Path("/test/config.json"), config_dir=Path("/test/config"))
         command = ConfigCommand(params)
 
         handlers = command._get_action_handlers()
@@ -459,19 +441,16 @@ class TestConfigCommand:
         # Execute the reset handler
         handlers["reset"]()
 
-        mock_reset_global_config.assert_called_once_with(
-            Path("/test/config.json"),
-            Path("/test/config")
-        )
+        mock_reset_global_config.assert_called_once_with(Path("/test/config.json"), Path("/test/config"))
 
-    @patch('appimage_updater.commands.config_command.show_effective_config')
+    @patch("appimage_updater.commands.config_command.show_effective_config")
     def test_get_action_handlers_show_effective(self, mock_show_effective_config):
         """Test action handlers for show-effective action."""
         params = ConfigParams(
             action="show-effective",
             app_name="TestApp",
             config_file=Path("/test/config.json"),
-            config_dir=Path("/test/config")
+            config_dir=Path("/test/config"),
         )
         command = ConfigCommand(params)
 
@@ -480,13 +459,9 @@ class TestConfigCommand:
         # Execute the show-effective handler
         handlers["show-effective"]()
 
-        mock_show_effective_config.assert_called_once_with(
-            "TestApp",
-            Path("/test/config.json"),
-            Path("/test/config")
-        )
+        mock_show_effective_config.assert_called_once_with("TestApp", Path("/test/config.json"), Path("/test/config"))
 
-    @patch('appimage_updater.commands.config_command.list_available_settings')
+    @patch("appimage_updater.commands.config_command.list_available_settings")
     def test_get_action_handlers_list(self, mock_list_available_settings):
         """Test action handlers for list action."""
         params = ConfigParams(action="list")

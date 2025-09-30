@@ -36,7 +36,7 @@ class TestListCommandHandler:
         # Find the list command
         list_command = None
         for command_info in app.registered_commands:
-            if hasattr(command_info, 'name') and command_info.name == "list":
+            if hasattr(command_info, "name") and command_info.name == "list":
                 list_command = command_info
                 break
 
@@ -47,7 +47,7 @@ class TestListCommandHandler:
         """Test that version callback prints version and exits."""
         handler = ListCommandHandler()
 
-        with patch('appimage_updater.cli.handlers.list_handler.Console') as mock_console_class:
+        with patch("appimage_updater.cli.handlers.list_handler.Console") as mock_console_class:
             mock_console = Mock()
             mock_console_class.return_value = mock_console
 
@@ -69,15 +69,10 @@ class TestListCommandHandler:
         # Should not raise any exceptions or print anything
         handler._version_callback(False)
 
-    @patch('appimage_updater.cli.handlers.list_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command')
-    def test_execute_list_command_success(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
-    ):
+    @patch("appimage_updater.cli.handlers.list_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command")
+    def test_execute_list_command_success(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
         """Test successful execution of list command."""
         handler = ListCommandHandler()
 
@@ -97,7 +92,7 @@ class TestListCommandHandler:
             config_file=Path("/test/config.json"),
             config_dir=Path("/test/config"),
             debug=True,
-            output_format=OutputFormat.RICH
+            output_format=OutputFormat.RICH,
         )
 
         # Verify factory was called with correct parameters
@@ -105,7 +100,7 @@ class TestListCommandHandler:
             config_file=Path("/test/config.json"),
             config_dir=Path("/test/config"),
             debug=True,
-            output_format=OutputFormat.RICH
+            output_format=OutputFormat.RICH,
         )
 
         # Verify formatter was created
@@ -114,14 +109,11 @@ class TestListCommandHandler:
         # Verify command was executed
         mock_asyncio_run.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.list_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command')
+    @patch("appimage_updater.cli.handlers.list_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command")
     def test_execute_list_command_with_json_format_calls_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that JSON format calls finalize on formatter."""
         handler = ListCommandHandler()
@@ -138,24 +130,16 @@ class TestListCommandHandler:
         mock_asyncio_run.return_value = success_result
 
         # Execute command with JSON format
-        handler._execute_list_command(
-            config_file=None,
-            config_dir=None,
-            debug=False,
-            output_format=OutputFormat.JSON
-        )
+        handler._execute_list_command(config_file=None, config_dir=None, debug=False, output_format=OutputFormat.JSON)
 
         # Verify finalize was called for JSON format
         mock_formatter.finalize.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.list_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command')
+    @patch("appimage_updater.cli.handlers.list_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command")
     def test_execute_list_command_with_html_format_calls_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that HTML format calls finalize on formatter."""
         handler = ListCommandHandler()
@@ -172,25 +156,15 @@ class TestListCommandHandler:
         mock_asyncio_run.return_value = success_result
 
         # Execute command with HTML format
-        handler._execute_list_command(
-            config_file=None,
-            config_dir=None,
-            debug=False,
-            output_format=OutputFormat.HTML
-        )
+        handler._execute_list_command(config_file=None, config_dir=None, debug=False, output_format=OutputFormat.HTML)
 
         # Verify finalize was called for HTML format
         mock_formatter.finalize.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.list_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command')
-    def test_execute_list_command_rich_format_no_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
-    ):
+    @patch("appimage_updater.cli.handlers.list_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command")
+    def test_execute_list_command_rich_format_no_finalize(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
         """Test that RICH format does not call finalize on formatter."""
         handler = ListCommandHandler()
 
@@ -206,24 +180,16 @@ class TestListCommandHandler:
         mock_asyncio_run.return_value = success_result
 
         # Execute command with RICH format
-        handler._execute_list_command(
-            config_file=None,
-            config_dir=None,
-            debug=False,
-            output_format=OutputFormat.RICH
-        )
+        handler._execute_list_command(config_file=None, config_dir=None, debug=False, output_format=OutputFormat.RICH)
 
         # Verify finalize was NOT called for RICH format
         mock_formatter.finalize.assert_not_called()
 
-    @patch('appimage_updater.cli.handlers.list_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command')
+    @patch("appimage_updater.cli.handlers.list_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command")
     def test_execute_list_command_failure_raises_typer_exit(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that command failure raises typer.Exit with correct code."""
         handler = ListCommandHandler()
@@ -243,10 +209,7 @@ class TestListCommandHandler:
         # Execute command and expect typer.Exit
         with pytest.raises(typer.Exit) as exc_info:
             handler._execute_list_command(
-                config_file=None,
-                config_dir=None,
-                debug=False,
-                output_format=OutputFormat.RICH
+                config_file=None, config_dir=None, debug=False, output_format=OutputFormat.RICH
             )
 
         # Verify exit code matches command result
@@ -256,9 +219,9 @@ class TestListCommandHandler:
         """Test execute command with default/None parameters."""
         handler = ListCommandHandler()
 
-        with patch('appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command') as mock_factory:
-            with patch('appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params'):
-                with patch('appimage_updater.cli.handlers.list_handler.asyncio.run') as mock_run:
+        with patch("appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command") as mock_factory:
+            with patch("appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params"):
+                with patch("appimage_updater.cli.handlers.list_handler.asyncio.run") as mock_run:
                     mock_command = Mock()
                     mock_factory.return_value = mock_command
                     mock_command.params = Mock()
@@ -268,16 +231,10 @@ class TestListCommandHandler:
 
                     # Execute with None values
                     handler._execute_list_command(
-                        config_file=None,
-                        config_dir=None,
-                        debug=False,
-                        output_format=OutputFormat.RICH
+                        config_file=None, config_dir=None, debug=False, output_format=OutputFormat.RICH
                     )
 
                     # Verify factory called with None values
                     mock_factory.assert_called_once_with(
-                        config_file=None,
-                        config_dir=None,
-                        debug=False,
-                        output_format=OutputFormat.RICH
+                        config_file=None, config_dir=None, debug=False, output_format=OutputFormat.RICH
                     )

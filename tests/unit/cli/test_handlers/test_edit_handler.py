@@ -19,7 +19,7 @@ class TestEditCommandHandler:
 
     def test_init_creates_console(self):
         """Test that handler initializes with console."""
-        with patch('appimage_updater.cli.handlers.edit_handler.Console') as mock_console_class:
+        with patch("appimage_updater.cli.handlers.edit_handler.Console") as mock_console_class:
             mock_console = Mock()
             mock_console_class.return_value = mock_console
 
@@ -49,11 +49,11 @@ class TestEditCommandHandler:
 
         # Verify it's a CommandInfo object
         command_info = app.registered_commands[0]
-        assert hasattr(command_info, 'name')
+        assert hasattr(command_info, "name")
 
     def test_version_callback_prints_version_and_exits(self):
         """Test that version callback prints version and exits."""
-        with patch('appimage_updater.cli.handlers.edit_handler.Console'):
+        with patch("appimage_updater.cli.handlers.edit_handler.Console"):
             handler = EditCommandHandler()
 
             with pytest.raises(typer.Exit):
@@ -68,7 +68,7 @@ class TestEditCommandHandler:
 
     def test_version_callback_no_exit_when_false(self):
         """Test that version callback does nothing when value is False."""
-        with patch('appimage_updater.cli.handlers.edit_handler.Console'):
+        with patch("appimage_updater.cli.handlers.edit_handler.Console"):
             handler = EditCommandHandler()
 
             # Should not raise any exceptions
@@ -79,7 +79,7 @@ class TestEditCommandHandler:
 
     def test_validate_options_success(self):
         """Test successful option validation."""
-        with patch('appimage_updater.cli.handlers.edit_handler.Console'):
+        with patch("appimage_updater.cli.handlers.edit_handler.Console"):
             handler = EditCommandHandler()
 
             # Should not raise any exceptions
@@ -89,7 +89,7 @@ class TestEditCommandHandler:
 
     def test_validate_options_mutually_exclusive_error(self):
         """Test validation error for mutually exclusive options."""
-        with patch('appimage_updater.cli.handlers.edit_handler.Console'):
+        with patch("appimage_updater.cli.handlers.edit_handler.Console"):
             handler = EditCommandHandler()
 
             with pytest.raises(typer.Exit) as exc_info:
@@ -105,8 +105,8 @@ class TestEditCommandHandler:
 
     def test_show_edit_help(self):
         """Test that help is displayed correctly."""
-        with patch('appimage_updater.cli.handlers.edit_handler.Console'):
-            with patch('appimage_updater.cli.handlers.edit_handler.typer.echo') as mock_echo:
+        with patch("appimage_updater.cli.handlers.edit_handler.Console"):
+            with patch("appimage_updater.cli.handlers.edit_handler.typer.echo") as mock_echo:
                 handler = EditCommandHandler()
 
                 handler._show_edit_help()
@@ -120,17 +120,12 @@ class TestEditCommandHandler:
                 assert usage_call is not None
                 assert "appimage-updater edit" in usage_call
 
-    @patch('appimage_updater.cli.handlers.edit_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.edit_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.edit_handler.CommandFactory.create_edit_command')
-    def test_execute_edit_command_success(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
-    ):
+    @patch("appimage_updater.cli.handlers.edit_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.edit_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.edit_handler.CommandFactory.create_edit_command")
+    def test_execute_edit_command_success(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
         """Test successful execution of edit command."""
-        with patch('appimage_updater.cli.handlers.edit_handler.Console'):
+        with patch("appimage_updater.cli.handlers.edit_handler.Console"):
             handler = EditCommandHandler()
 
             # Setup mocks
@@ -170,7 +165,7 @@ class TestEditCommandHandler:
                 "verbose": True,
                 "dry_run": False,
                 "debug": True,
-                "output_format": OutputFormat.RICH
+                "output_format": OutputFormat.RICH,
             }
 
             handler._execute_edit_command(**kwargs)
@@ -184,17 +179,14 @@ class TestEditCommandHandler:
             # Verify command was executed
             mock_asyncio_run.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.edit_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.edit_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.edit_handler.CommandFactory.create_edit_command')
+    @patch("appimage_updater.cli.handlers.edit_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.edit_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.edit_handler.CommandFactory.create_edit_command")
     def test_execute_edit_command_with_json_format_calls_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that JSON format calls finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.edit_handler.Console'):
+        with patch("appimage_updater.cli.handlers.edit_handler.Console"):
             handler = EditCommandHandler()
 
             # Setup mocks
@@ -209,28 +201,21 @@ class TestEditCommandHandler:
             mock_asyncio_run.return_value = success_result
 
             # Execute command with JSON format
-            kwargs = {
-                "app_names": ["TestApp"],
-                "yes": False,
-                "output_format": OutputFormat.JSON
-            }
+            kwargs = {"app_names": ["TestApp"], "yes": False, "output_format": OutputFormat.JSON}
 
             handler._execute_edit_command(**kwargs)
 
             # Verify finalize was called for JSON format
             mock_formatter.finalize.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.edit_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.edit_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.edit_handler.CommandFactory.create_edit_command')
+    @patch("appimage_updater.cli.handlers.edit_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.edit_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.edit_handler.CommandFactory.create_edit_command")
     def test_execute_edit_command_with_html_format_calls_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that HTML format calls finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.edit_handler.Console'):
+        with patch("appimage_updater.cli.handlers.edit_handler.Console"):
             handler = EditCommandHandler()
 
             # Setup mocks
@@ -245,28 +230,19 @@ class TestEditCommandHandler:
             mock_asyncio_run.return_value = success_result
 
             # Execute command with HTML format
-            kwargs = {
-                "app_names": ["TestApp"],
-                "yes": False,
-                "output_format": OutputFormat.HTML
-            }
+            kwargs = {"app_names": ["TestApp"], "yes": False, "output_format": OutputFormat.HTML}
 
             handler._execute_edit_command(**kwargs)
 
             # Verify finalize was called for HTML format
             mock_formatter.finalize.assert_called_once()
 
-    @patch('appimage_updater.cli.handlers.edit_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.edit_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.edit_handler.CommandFactory.create_edit_command')
-    def test_execute_edit_command_rich_format_no_finalize(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
-    ):
+    @patch("appimage_updater.cli.handlers.edit_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.edit_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.edit_handler.CommandFactory.create_edit_command")
+    def test_execute_edit_command_rich_format_no_finalize(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
         """Test that RICH format does not call finalize on formatter."""
-        with patch('appimage_updater.cli.handlers.edit_handler.Console'):
+        with patch("appimage_updater.cli.handlers.edit_handler.Console"):
             handler = EditCommandHandler()
 
             # Setup mocks
@@ -281,28 +257,21 @@ class TestEditCommandHandler:
             mock_asyncio_run.return_value = success_result
 
             # Execute command with RICH format
-            kwargs = {
-                "app_names": ["TestApp"],
-                "yes": False,
-                "output_format": OutputFormat.RICH
-            }
+            kwargs = {"app_names": ["TestApp"], "yes": False, "output_format": OutputFormat.RICH}
 
             handler._execute_edit_command(**kwargs)
 
             # Verify finalize was NOT called for RICH format
             mock_formatter.finalize.assert_not_called()
 
-    @patch('appimage_updater.cli.handlers.edit_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.edit_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.edit_handler.CommandFactory.create_edit_command')
+    @patch("appimage_updater.cli.handlers.edit_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.edit_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.edit_handler.CommandFactory.create_edit_command")
     def test_execute_edit_command_failure_raises_typer_exit(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
+        self, mock_factory, mock_formatter_factory, mock_asyncio_run
     ):
         """Test that command failure raises typer.Exit with correct code."""
-        with patch('appimage_updater.cli.handlers.edit_handler.Console'):
+        with patch("appimage_updater.cli.handlers.edit_handler.Console"):
             handler = EditCommandHandler()
 
             # Setup mocks
@@ -318,11 +287,7 @@ class TestEditCommandHandler:
             mock_asyncio_run.return_value = failure_result
 
             # Execute command and expect typer.Exit
-            kwargs = {
-                "app_names": ["TestApp"],
-                "yes": False,
-                "output_format": OutputFormat.RICH
-            }
+            kwargs = {"app_names": ["TestApp"], "yes": False, "output_format": OutputFormat.RICH}
 
             with pytest.raises(typer.Exit) as exc_info:
                 handler._execute_edit_command(**kwargs)
@@ -330,17 +295,12 @@ class TestEditCommandHandler:
             # Verify exit code matches command result
             assert exc_info.value.exit_code == 1
 
-    @patch('appimage_updater.cli.handlers.edit_handler.asyncio.run')
-    @patch('appimage_updater.cli.handlers.edit_handler.create_output_formatter_from_params')
-    @patch('appimage_updater.cli.handlers.edit_handler.CommandFactory.create_edit_command')
-    def test_execute_edit_command_validation_failure(
-        self,
-        mock_factory,
-        mock_formatter_factory,
-        mock_asyncio_run
-    ):
+    @patch("appimage_updater.cli.handlers.edit_handler.asyncio.run")
+    @patch("appimage_updater.cli.handlers.edit_handler.create_output_formatter_from_params")
+    @patch("appimage_updater.cli.handlers.edit_handler.CommandFactory.create_edit_command")
+    def test_execute_edit_command_validation_failure(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
         """Test that validation failure prevents command execution."""
-        with patch('appimage_updater.cli.handlers.edit_handler.Console'):
+        with patch("appimage_updater.cli.handlers.edit_handler.Console"):
             handler = EditCommandHandler()
 
             # Execute command with invalid options (yes and no both True)
@@ -348,7 +308,7 @@ class TestEditCommandHandler:
                 "app_names": ["TestApp"],
                 "yes": True,
                 "no": True,  # This should cause validation failure
-                "output_format": OutputFormat.RICH
+                "output_format": OutputFormat.RICH,
             }
 
             with pytest.raises(typer.Exit) as exc_info:
@@ -364,10 +324,10 @@ class TestEditCommandHandler:
 
     def test_edit_command_with_none_app_names_shows_help_and_exits(self):
         """Test that None app_names shows help and exits with code 0."""
-        with patch('appimage_updater.cli.handlers.edit_handler.Console'):
+        with patch("appimage_updater.cli.handlers.edit_handler.Console"):
             handler = EditCommandHandler()
 
-            with patch.object(handler, '_show_edit_help') as mock_show_help:
+            with patch.object(handler, "_show_edit_help") as mock_show_help:
                 with pytest.raises(typer.Exit) as exc_info:
                     # The edit handler checks for None app_names in the command registration
                     # and calls _show_edit_help directly, not through _execute_edit_command
@@ -382,12 +342,12 @@ class TestEditCommandHandler:
 
     def test_execute_edit_command_minimal_parameters(self):
         """Test execute command with minimal required parameters."""
-        with patch('appimage_updater.cli.handlers.edit_handler.Console'):
+        with patch("appimage_updater.cli.handlers.edit_handler.Console"):
             handler = EditCommandHandler()
 
-            with patch('appimage_updater.cli.handlers.edit_handler.CommandFactory.create_edit_command') as mock_factory:
-                with patch('appimage_updater.cli.handlers.edit_handler.create_output_formatter_from_params'):
-                    with patch('appimage_updater.cli.handlers.edit_handler.asyncio.run') as mock_run:
+            with patch("appimage_updater.cli.handlers.edit_handler.CommandFactory.create_edit_command") as mock_factory:
+                with patch("appimage_updater.cli.handlers.edit_handler.create_output_formatter_from_params"):
+                    with patch("appimage_updater.cli.handlers.edit_handler.asyncio.run") as mock_run:
                         mock_command = Mock()
                         mock_factory.return_value = mock_command
                         mock_command.params = Mock()
@@ -396,11 +356,7 @@ class TestEditCommandHandler:
                         mock_run.return_value = success_result
 
                         # Execute with minimal parameters
-                        kwargs = {
-                            "app_names": ["TestApp"],
-                            "yes": False,
-                            "output_format": OutputFormat.RICH
-                        }
+                        kwargs = {"app_names": ["TestApp"], "yes": False, "output_format": OutputFormat.RICH}
 
                         handler._execute_edit_command(**kwargs)
 

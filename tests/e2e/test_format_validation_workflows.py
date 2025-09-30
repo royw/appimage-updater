@@ -53,7 +53,9 @@ class TestFormatValidationWorkflows:
 
         for command_args in commands_to_test:
             for format_type in valid_formats:
-                result = runner.invoke(app, command_args + ["--format", format_type, "--config-dir", str(temp_config_dir)])
+                result = runner.invoke(
+                    app, command_args + ["--format", format_type, "--config-dir", str(temp_config_dir)]
+                )
 
                 # Should not fail due to format validation
                 # (may fail for other reasons like missing apps, but not format validation)
@@ -104,20 +106,17 @@ class TestFormatValidationWorkflows:
         """Test that --format rich contains rich styling elements."""
         # Create a sample config with an application to ensure table formatting
         sample_config = {
-            "applications": [{
-                "name": "TestApp",
-                "url": "https://github.com/test/test",
-                "download_dir": str(temp_config_dir / "downloads"),
-                "pattern": r"(?i)TestApp.*\.AppImage$",
-                "enabled": True,
-                "source_type": "github",
-                "checksum": {
-                    "enabled": False,
-                    "algorithm": "sha256",
-                    "pattern": "",
-                    "required": False
+            "applications": [
+                {
+                    "name": "TestApp",
+                    "url": "https://github.com/test/test",
+                    "download_dir": str(temp_config_dir / "downloads"),
+                    "pattern": r"(?i)TestApp.*\.AppImage$",
+                    "enabled": True,
+                    "source_type": "github",
+                    "checksum": {"enabled": False, "algorithm": "sha256", "pattern": "", "required": False},
                 }
-            }]
+            ]
         }
 
         config_file = temp_config_dir / "config.json"
