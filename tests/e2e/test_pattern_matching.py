@@ -13,8 +13,22 @@ def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pat
     """Set up comprehensive GitHub API mocks to prevent network calls."""
     # Mock httpx client to prevent network calls
     mock_client_instance = AsyncMock()
+    
+    # Create different responses for different endpoints
+    def mock_json_response(*args, **kwargs):
+        # Return a single release dict for /releases/latest endpoint
+        # Return empty list for /releases endpoint
+        return {
+            "tag_name": "v1.0.0",
+            "name": "Test Release",
+            "published_at": "2024-01-01T00:00:00Z",
+            "assets": [],
+            "prerelease": False,
+            "draft": False
+        }
+    
     mock_response = Mock()
-    mock_response.json.return_value = []  # Empty releases list
+    mock_response.json.side_effect = mock_json_response
     mock_response.raise_for_status.return_value = None
 
     # Set up the async mock for the get and head methods
