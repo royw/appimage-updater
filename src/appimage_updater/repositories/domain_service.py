@@ -33,27 +33,36 @@ class DomainKnowledgeService:
             return None
 
         try:
-            config = self.config_manager.load_config()
-            knowledge = config.global_config.domain_knowledge
-
-            # Check each repository type's known domains
-            domain_mappings = {
-                "github": knowledge.github_domains,
-                "gitlab": knowledge.gitlab_domains,
-                "direct_download": knowledge.direct_domains,
-                "dynamic_download": knowledge.dynamic_domains,
-            }
-
-            for handler_name, domains in domain_mappings.items():
-                if domain in domains:
-                    handler = self.registry.get_handler(handler_name)
-                    if handler:
-                        logger.debug(f"Fast-path: {domain} -> {handler_name}")
-                        return handler
-
+            knowledge = self._load_domain_knowledge()
+            return self._find_handler_for_domain(domain, knowledge)
         except Exception as e:
             logger.debug(f"Error loading domain knowledge: {e}")
+            return None
 
+    def _load_domain_knowledge(self) -> Any:
+        """Load domain knowledge from configuration."""
+        config = self.config_manager.load_config()
+        return config.global_config.domain_knowledge
+
+    def _get_domain_mappings(self, knowledge: Any) -> dict[str, list[str]]:
+        """Get domain mappings for known repository types."""
+        return {
+            "github": knowledge.github_domains,
+            "gitlab": knowledge.gitlab_domains,
+            "direct_download": knowledge.direct_domains,
+            "dynamic_download": knowledge.dynamic_domains,
+        }
+
+    def _find_handler_for_domain(self, domain: str, knowledge: Any) -> RepositoryHandler | None:
+        """Find a handler for the given domain using domain knowledge."""
+        domain_mappings = self._get_domain_mappings(knowledge)
+
+        for handler_name, domains in domain_mappings.items():
+            if domain in domains:
+                handler = self.registry.get_handler(handler_name)
+                if handler:
+                    logger.debug(f"Fast-path: {domain} -> {handler_name}")
+                    return handler
         return None
 
     def get_handlers_for_url(self, url: str) -> list[RepositoryHandler]:

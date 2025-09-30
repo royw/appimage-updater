@@ -78,40 +78,91 @@ class GitLabRepository(RepositoryClient):
         """Parse repository URL to extract owner and repo name.
 
         Args:
-            url: Repository URL
+            url: Repository URL to parse
 
         Returns:
-            Tuple of (owner, repo_name)
+            Tuple of (owner, repo_name) where owner may contain slashes for nested groups
 
         Raises:
-            RepositoryError: If URL format is invalid
+            RepositoryError: If URL format is invalid or parsing fails
+            ValueError: If URL is empty or whitespace only
         """
+        if not url or not url.strip():
+            raise ValueError("URL cannot be empty")
+
         try:
-            # Remove .git suffix if present
-            if url.endswith(".git"):
-                url = url[:-4]
-
-            # Parse URL components
-            parsed = urllib.parse.urlparse(url)
-            path_parts = [part for part in parsed.path.strip("/").split("/") if part]
-
-            if len(path_parts) < 2:
-                raise RepositoryError(f"Invalid GitLab URL format: {url}")
-
-            # For GitLab, we typically expect owner/repo structure
-            # But GitLab also supports nested groups: group/subgroup/project
-            # For simplicity, we'll take the last two parts as owner/repo
-            if len(path_parts) >= 2:
-                owner = "/".join(path_parts[:-1])  # Support nested groups
-                repo = path_parts[-1]
-            else:
-                raise RepositoryError(f"Could not parse owner/repo from GitLab URL: {url}")
+            url = self._clean_git_url(url)
+            path_parts = self._extract_path_parts(url)
+            self._validate_path_parts(path_parts, url)
+            owner, repo = self._extract_owner_and_repo(path_parts)
 
             logger.debug(f"Parsed GitLab URL {url} -> owner='{owner}', repo='{repo}'")
             return owner, repo
 
+        except RepositoryError:
+            raise
         except Exception as e:
             raise RepositoryError(f"Failed to parse GitLab URL {url}: {e}") from e
+
+    def _clean_git_url(self, url: str) -> str:
+        """Clean and normalize the Git URL.
+
+        Args:
+            url: The URL to clean
+
+        Returns:
+            Cleaned URL with .git suffix removed
+        """
+        return url.rstrip("/").removesuffix(".git")
+
+    def _extract_path_parts(self, url: str) -> list[str]:
+        """Extract path components from URL.
+
+        Args:
+            url: The URL to parse
+
+        Returns:
+            List of non-empty path components
+
+        Raises:
+            RepositoryError: If URL parsing fails
+        """
+        try:
+            parsed = urllib.parse.urlparse(url)
+            return [part for part in parsed.path.strip("/").split("/") if part]
+        except Exception as e:
+            raise RepositoryError(f"Invalid URL format: {e}") from e
+
+    def _validate_path_parts(self, path_parts: list[str], original_url: str) -> None:
+        """Validate that path parts contain enough components.
+
+        Args:
+            path_parts: List of path components
+            original_url: Original URL for error messages
+
+        Raises:
+            RepositoryError: If path doesn't contain enough components
+        """
+        if len(path_parts) < 2:
+            raise RepositoryError(
+                f"Invalid GitLab URL format: {original_url}. Expected format: https://gitlab.example.com/owner/repo"
+            )
+
+    def _extract_owner_and_repo(self, path_parts: list[str]) -> tuple[str, str]:
+        """Extract owner and repo from path parts.
+
+        Args:
+            path_parts: List of path components
+
+        Returns:
+            Tuple of (owner, repo_name)
+
+        Note:
+            For GitLab, the owner can contain slashes for nested groups
+        """
+        owner = "/".join(path_parts[:-1])  # Support nested groups
+        repo = path_parts[-1]
+        return owner, repo
 
     def normalize_repo_url(self, url: str) -> tuple[str, bool]:
         """Normalize repository URL and detect if it was corrected.
@@ -123,36 +174,72 @@ class GitLabRepository(RepositoryClient):
             Tuple of (normalized_url, was_corrected)
         """
         original_url = url
-        was_corrected = False
+        url, corrected_suffix = self._remove_git_suffix(url)
+        url, corrected_slash = self._remove_trailing_slashes(url)
+        url, corrected_protocol = self._ensure_https_protocol(url)
+        url, corrected_domain = self._normalize_gitlab_domain(url, original_url)
 
-        # Remove .git suffix
-        if url.endswith(".git"):
-            url = url[:-4]
-            was_corrected = True
-
-        # Remove trailing slashes
-        if url.endswith("/"):
-            url = url.rstrip("/")
-            was_corrected = True
-
-        # Ensure HTTPS protocol
-        if url.startswith("http://"):
-            url = url.replace("http://", "https://", 1)
-            was_corrected = True
-        elif not url.startswith("https://"):
-            # Add https:// if no protocol specified
-            url = f"https://{url}"
-            was_corrected = True
-
-        # Normalize gitlab.com URLs
-        if "gitlab.com" in url:
-            # Ensure canonical gitlab.com format
-            url = re.sub(r"(www\.)?gitlab\.com", "gitlab.com", url)
-            if url != original_url:
-                was_corrected = True
+        was_corrected = any([corrected_suffix, corrected_slash, corrected_protocol, corrected_domain])
 
         logger.debug(f"Normalized GitLab URL: {original_url} -> {url} (corrected: {was_corrected})")
         return url, was_corrected
+
+    def _remove_git_suffix(self, url: str) -> tuple[str, bool]:
+        """Remove .git suffix from URL if present.
+
+        Args:
+            url: URL to process
+
+        Returns:
+            Tuple of (processed_url, was_modified)
+        """
+        if url.endswith(".git"):
+            return url[:-4], True
+        return url, False
+
+    def _remove_trailing_slashes(self, url: str) -> tuple[str, bool]:
+        """Remove trailing slashes from URL.
+
+        Args:
+            url: URL to process
+
+        Returns:
+            Tuple of (processed_url, was_modified)
+        """
+        if url.endswith("/"):
+            return url.rstrip("/"), True
+        return url, False
+
+    def _ensure_https_protocol(self, url: str) -> tuple[str, bool]:
+        """Ensure URL uses HTTPS protocol.
+
+        Args:
+            url: URL to process
+
+        Returns:
+            Tuple of (processed_url, was_modified)
+        """
+        if url.startswith("http://"):
+            return url.replace("http://", "https://", 1), True
+        if not url.startswith("https://"):
+            return f"https://{url}", True
+        return url, False
+
+    def _normalize_gitlab_domain(self, url: str, original_url: str) -> tuple[str, bool]:
+        """Normalize GitLab domain to canonical format.
+
+        Args:
+            url: URL to process
+            original_url: Original URL for comparison
+
+        Returns:
+            Tuple of (processed_url, was_modified)
+        """
+        if "gitlab.com" not in url:
+            return url, False
+
+        normalized_url = re.sub(r"(www\.)?gitlab\.com", "gitlab.com", url)
+        return normalized_url, normalized_url != original_url
 
     async def get_latest_release(self, repo_url: str) -> Release:
         """Get the latest stable release for a repository.
@@ -252,36 +339,69 @@ class GitLabRepository(RepositoryClient):
         """Generate file pattern from actual releases.
 
         Args:
-            url: Repository URL
+            url: Repository URL to analyze for release patterns
 
         Returns:
-            Regex pattern string or None if generation fails
+            str | None: Regex pattern string if successful, None otherwise
         """
         try:
-            # Get recent releases to analyze asset patterns
-            releases = await self.get_releases(url, limit=10)
-
-            if not releases:
-                logger.debug(f"No releases found for pattern generation: {url}")
-                return None
-
-            # Collect asset names from releases
-            asset_names = []
-            for release in releases:
-                for asset in release.assets:
-                    if asset.name and asset.name.lower().endswith((".appimage", ".zip", ".tar.gz")):
-                        asset_names.append(asset.name)
-
-            if not asset_names:
-                logger.debug(f"No suitable assets found for pattern generation: {url}")
-                return None
-
-            # Generate pattern from common prefixes and suffixes
-            return self._generate_pattern_from_names(asset_names)
-
+            asset_names = await self._collect_asset_names_from_releases(url)
+            return self._generate_pattern_from_names(asset_names) if asset_names else None
         except Exception as e:
             logger.debug(f"Failed to generate pattern from GitLab releases: {e}")
             return None
+
+    async def _collect_asset_names_from_releases(self, url: str) -> list[str] | None:
+        """Collect asset names from recent releases.
+
+        Args:
+            url: Repository URL to fetch releases from
+
+        Returns:
+            list[str] | None: List of valid asset names, or None if no releases found
+        """
+        releases = await self.get_releases(url, limit=10)
+        if not releases:
+            logger.debug(f"No releases found for pattern generation: {url}")
+            return None
+
+        asset_names = self._extract_valid_asset_names(releases)
+        if not asset_names:
+            logger.debug(f"No suitable assets found for pattern generation: {url}")
+            return None
+
+        return asset_names
+
+    def _extract_valid_asset_names(self, releases: list[Any]) -> list[str]:
+        """Extract valid asset names from a list of releases.
+
+        Args:
+            releases: List of release objects to extract assets from
+
+        Returns:
+            list[str]: List of valid asset names
+        """
+        valid_extensions = (".appimage", ".zip", ".tar.gz")
+        asset_names = []
+
+        for release in releases:
+            for asset in release.assets:
+                if self._is_valid_asset(asset, valid_extensions):
+                    asset_names.append(asset.name)
+
+        return asset_names
+
+    def _is_valid_asset(self, asset: Any, valid_extensions: tuple[str, ...]) -> bool:
+        """Check if an asset is valid for pattern generation.
+
+        Args:
+            asset: Asset object to validate
+            valid_extensions: Tuple of valid file extensions
+
+        Returns:
+            bool: True if the asset is valid, False otherwise
+        """
+        return bool(asset.name and asset.name.lower().endswith(valid_extensions))
 
     def _get_base_url(self, repo_url: str) -> str:
         """Extract base URL from repository URL."""
@@ -416,31 +536,65 @@ class GitLabRepository(RepositoryClient):
         if not asset_names:
             return None
 
-        # Find common prefix
+        # Handle single asset case
         if len(asset_names) == 1:
-            name = asset_names[0]
-            # Remove version-like patterns and create pattern
-            base_name = re.sub(r"[v]?\d+\.\d+.*", "", name)
-            if base_name:
-                return f"(?i){re.escape(base_name)}.*\\.AppImage$"
+            return self._generate_single_asset_pattern(asset_names[0])
 
-        # For multiple assets, find common prefix
-        common_prefix = ""
-        if len(asset_names) > 1:
-            # Find longest common prefix
-            sorted_names = sorted(asset_names)
-            first, last = sorted_names[0], sorted_names[-1]
+        # Handle multiple assets case
+        common_prefix = self._find_common_prefix(asset_names)
+        return self._create_pattern_from_prefix(common_prefix)
 
-            for i, char in enumerate(first):
-                if i < len(last) and char.lower() == last[i].lower():
-                    common_prefix += char
-                else:
-                    break
+    def _generate_single_asset_pattern(self, name: str) -> str | None:
+        """Generate pattern for a single asset name.
 
-            # Clean up prefix (remove version numbers, etc.)
-            common_prefix = re.sub(r"[v]?\d+.*", "", common_prefix).rstrip(".-_")
+        Args:
+            name: The asset name to generate a pattern for
 
-        if common_prefix and len(common_prefix) > 2:
-            return f"(?i){re.escape(common_prefix)}.*\\.AppImage$"
+        Returns:
+            Regex pattern string or None if generation fails
+        """
+        base_name = re.sub(r"[v]?\d+\.\d+.*", "", name)
+        return f"(?i){re.escape(base_name)}.*\\.AppImage$" if base_name else None
 
-        return None
+    def _find_common_prefix(self, strings: list[str]) -> str:
+        """Find the longest common prefix among a list of strings.
+
+        Args:
+            strings: List of strings to find common prefix in
+
+        Returns:
+            The longest common prefix string
+        """
+        if not strings:
+            return ""
+
+        sorted_strings = sorted(strings)
+        first, last = sorted_strings[0], sorted_strings[-1]
+        common = []
+
+        for i, char in enumerate(first):
+            if i < len(last) and char.lower() == last[i].lower():
+                common.append(char)
+            else:
+                break
+
+        return "".join(common)
+
+    def _create_pattern_from_prefix(self, prefix: str) -> str | None:
+        """Create a regex pattern from a common prefix.
+
+        Args:
+            prefix: The prefix to create a pattern from
+
+        Returns:
+            Regex pattern string or None if prefix is too short
+        """
+        if not prefix or len(prefix) <= 2:
+            return None
+
+        # Clean up prefix (remove version numbers, etc.)
+        clean_prefix = re.sub(r"[v]?\d+.*", "", prefix).rstrip(".-_")
+        if not clean_prefix:
+            return None
+
+        return f"(?i){re.escape(clean_prefix)}.*\\.AppImage$"

@@ -262,65 +262,94 @@ class DirectDownloadRepository(RepositoryClient):
         return [release]
 
     async def _handle_direct_download_progressive(self, progressive_client: Any, url: str) -> list[Release]:
-        """Handle direct download URLs with progressive timeout strategy."""
-        # Extract original filename before making requests
+        """Handle direct download URLs with progressive timeout strategy.
+
+        Args:
+            progressive_client: Client for making progressive HTTP requests
+            url: The URL to process
+
+        Returns:
+            List containing a single Release object with the download information
+        """
         original_filename = self._extract_filename_from_url(url)
 
-        # For URLs ending with -latest or similar, use HEAD request first for efficiency
-        if "-latest" in url or "latest" in url:
-            try:
-                # Use HEAD request to get metadata without downloading the file
-                response = await self._get_file_metadata_efficiently(progressive_client, url)
-
-                # Get the final URL after redirects
-                final_url = str(response.url)
-                filename = self._extract_filename_from_url(final_url)
-
-                # If we got a different filename from the redirect, use it
-                if filename != original_filename:
-                    logger.debug(f"Redirect resolved: {original_filename} -> {filename}")
-                else:
-                    filename = original_filename
-
-                # Extract file size and last modified from headers
-                file_size = self._extract_file_size(response)
-                last_modified = self._extract_last_modified(response)
-
-            except (httpx.HTTPError, httpx.TimeoutException, OSError) as e:
-                logger.debug(f"Failed to resolve redirect for {url}: {e}")
-                # Fall back to original filename if redirect resolution fails
-                filename = original_filename
-                final_url = url
-                file_size = 0
-                last_modified = datetime.now()
+        if self._is_latest_url(url):
+            metadata = await self._handle_latest_url(progressive_client, url, original_filename)
         else:
-            # For direct URLs, still try HEAD request for metadata
-            try:
-                response = await self._get_file_metadata_efficiently(progressive_client, url)
-                file_size = self._extract_file_size(response)
-                last_modified = self._extract_last_modified(response)
-            except (httpx.HTTPError, httpx.TimeoutException, OSError):
-                file_size = 0
-                last_modified = datetime.now()
+            metadata = await self._handle_regular_url(progressive_client, url, original_filename)
 
-            filename = original_filename
-            final_url = url
+        asset = self._create_asset(metadata)
+        return [self._create_release(asset, str(metadata["version"]))]
 
-        # Extract version from filename or URL
-        version = self._extract_version_from_url(final_url)
+    def _is_latest_url(self, url: str) -> bool:
+        """Check if URL indicates it's a 'latest' version URL."""
+        return "-latest" in url or "latest" in url
 
-        # Create asset with metadata from HEAD request
-        asset = Asset(
-            name=filename,
-            url=final_url,
-            size=file_size,  # Size from HEAD request
-            created_at=last_modified,  # Use last modified as created_at
+    async def _handle_latest_url(
+        self, progressive_client: Any, url: str, original_filename: str
+    ) -> dict[str, str | int | datetime]:
+        """Handle URLs that point to 'latest' versions with redirects."""
+        try:
+            response = await self._get_file_metadata_efficiently(progressive_client, url)
+            final_url = str(response.url)
+            filename = self._extract_filename_from_url(final_url)
+
+            if filename != original_filename:
+                logger.debug(f"Redirect resolved: {original_filename} -> {filename}")
+            else:
+                filename = original_filename
+
+            return {
+                "filename": filename,
+                "final_url": final_url,
+                "file_size": self._extract_file_size(response),
+                "last_modified": self._extract_last_modified(response),
+                "version": self._extract_version_from_url(final_url),
+            }
+
+        except (httpx.HTTPError, httpx.TimeoutException, OSError) as e:
+            logger.debug(f"Failed to resolve redirect for {url}: {e}")
+            return self._get_fallback_metadata(url, original_filename)
+
+    async def _handle_regular_url(
+        self, progressive_client: Any, url: str, original_filename: str
+    ) -> dict[str, str | int | datetime]:
+        """Handle regular direct download URLs."""
+        try:
+            response = await self._get_file_metadata_efficiently(progressive_client, url)
+            return {
+                "filename": original_filename,
+                "final_url": url,
+                "file_size": self._extract_file_size(response),
+                "last_modified": self._extract_last_modified(response),
+                "version": self._extract_version_from_url(url),
+            }
+        except (httpx.HTTPError, httpx.TimeoutException, OSError):
+            return self._get_fallback_metadata(url, original_filename)
+
+    def _get_fallback_metadata(self, url: str, filename: str) -> dict[str, str | int | datetime]:
+        """Get fallback metadata when requests fail."""
+        return {
+            "filename": filename,
+            "final_url": url,
+            "file_size": 0,
+            "last_modified": datetime.now(),
+            "version": self._extract_version_from_url(url),
+        }
+
+    def _create_asset(self, metadata: dict[str, Any]) -> Asset:
+        """Create an Asset object from metadata."""
+        return Asset(
+            name=str(metadata["filename"]),
+            url=str(metadata["final_url"]),
+            size=int(metadata["file_size"]),
+            created_at=cast(datetime, metadata["last_modified"]),
         )
 
-        # Create release object
-
+    def _create_release(self, asset: Asset, version: str) -> Release:
+        """Create a Release object from an Asset and version."""
         normalized_version = normalize_version_string(version)
-        release = Release(
+        return Release(
             version=normalized_version,
             tag_name=normalized_version,
             published_at=datetime.now(),
@@ -328,8 +357,6 @@ class DirectDownloadRepository(RepositoryClient):
             is_prerelease=False,
             is_draft=False,
         )
-
-        return [release]
 
     async def _get_file_metadata_efficiently(self, progressive_client: Any, url: str) -> httpx.Response:
         """Get file metadata using HEAD request for efficiency.
@@ -354,54 +381,157 @@ class DirectDownloadRepository(RepositoryClient):
                 return cast(httpx.Response, response)
 
     def _extract_file_size(self, response: httpx.Response) -> int:
-        """Extract file size from HTTP response headers."""
-        # Try Content-Length header first
-        content_length = response.headers.get("content-length")
-        if content_length:
-            try:
-                return int(content_length)
-            except ValueError:
-                pass
+        """Extract file size from HTTP response headers.
 
-        # Try Content-Range header for range requests
-        content_range = response.headers.get("content-range")
-        if content_range:
-            # Format: "bytes 0-0/12345" -> extract 12345
-            try:
-                total_size = content_range.split("/")[-1]
-                if total_size != "*":
-                    return int(total_size)
-            except (ValueError, IndexError):
-                pass
+        Args:
+            response: HTTP response to extract file size from
+
+        Returns:
+            File size in bytes, or 0 if not available
+        """
+        size = self._extract_from_content_length(response)
+        if size is not None:
+            return size
+
+        size = self._extract_from_content_range(response)
+        if size is not None:
+            return size
 
         return 0
 
+    def _extract_from_content_length(self, response: httpx.Response) -> int | None:
+        """Extract file size from Content-Length header.
+
+        Args:
+            response: HTTP response to extract from
+
+        Returns:
+            File size in bytes, or None if not available or invalid
+        """
+        content_length = response.headers.get("content-length")
+        if not content_length:
+            return None
+
+        try:
+            return int(content_length)
+        except ValueError:
+            return None
+
+    def _extract_from_content_range(self, response: httpx.Response) -> int | None:
+        """Extract file size from Content-Range header.
+
+        Args:
+            response: HTTP response to extract from
+
+        Returns:
+            File size in bytes, or None if not available or invalid
+
+        Note:
+            Content-Range format: "bytes 0-0/12345" where 12345 is the total size
+        """
+        content_range = response.headers.get("content-range")
+        if not content_range:
+            return None
+
+        try:
+            total_size = content_range.split("/")[-1]
+            if total_size != "*":
+                return int(total_size)
+        except (ValueError, IndexError):
+            pass
+
+        return None
+
     def _extract_last_modified(self, response: httpx.Response) -> datetime:
         """Extract last modified date from HTTP response headers."""
-        last_modified = response.headers.get("last-modified")
+        last_modified = self._extract_from_last_modified_header(response)
         if last_modified:
-            try:
-                parsed_date = parsedate_to_datetime(last_modified)
-                if parsed_date is not None:
-                    return cast(datetime, parsed_date)
-            except (ValueError, TypeError):
-                pass
+            return last_modified
 
-        # Fall back to ETag-based timestamp if available
-        etag = response.headers.get("etag")
-        if etag and etag.startswith('"') and etag.endswith('"'):
-            # Some servers include timestamp in ETag
-            try:
-                # Try to extract timestamp from ETag (format varies by server)
-                etag_clean = etag.strip('"')
-                if "-" in etag_clean:
-                    timestamp_part = etag_clean.split("-")[0]
-                    if timestamp_part.isdigit() and len(timestamp_part) >= 10:
-                        return datetime.fromtimestamp(int(timestamp_part))
-            except (ValueError, OSError):
-                pass
+        last_modified = self._extract_from_etag(response)
+        if last_modified:
+            return last_modified
 
         return datetime.now()
+
+    def _extract_from_last_modified_header(self, response: httpx.Response) -> datetime | None:
+        """Extract last modified date from Last-Modified header."""
+        last_modified = response.headers.get("last-modified")
+        if not last_modified:
+            return None
+
+        try:
+            parsed_date = parsedate_to_datetime(last_modified)
+            return cast(datetime, parsed_date) if parsed_date is not None else None
+        except (ValueError, TypeError):
+            return None
+
+    def _extract_from_etag(self, response: httpx.Response) -> datetime | None:
+        """Extract timestamp from ETag header if it contains one.
+
+        Args:
+            response: HTTP response to extract from
+
+        Returns:
+            Datetime extracted from ETag, or None if not available
+
+        Note:
+            Some servers include timestamps in ETags (e.g., "12345678-hash")
+        """
+        etag = response.headers.get("etag", "")
+        if not self._is_valid_etag_format(etag):
+            return None
+
+        etag_clean = etag.strip('"')
+        timestamp_part = self._extract_timestamp_from_etag(etag_clean)
+
+        if timestamp_part:
+            return self._parse_timestamp(timestamp_part)
+
+        return None
+
+    def _is_valid_etag_format(self, etag: str) -> bool:
+        """Check if ETag has valid format (quoted string).
+
+        Args:
+            etag: ETag header value
+
+        Returns:
+            True if ETag is properly quoted
+        """
+        return etag.startswith('"') and etag.endswith('"')
+
+    def _extract_timestamp_from_etag(self, etag_clean: str) -> str | None:
+        """Extract timestamp part from cleaned ETag.
+
+        Args:
+            etag_clean: ETag value without quotes
+
+        Returns:
+            Timestamp string if found, None otherwise
+        """
+        if "-" not in etag_clean:
+            return None
+
+        timestamp_part = etag_clean.split("-")[0]
+        if timestamp_part.isdigit() and len(timestamp_part) >= 10:
+            return timestamp_part
+
+        return None
+
+    def _parse_timestamp(self, timestamp_str: str) -> datetime | None:
+        """Parse timestamp string to datetime.
+
+        Args:
+            timestamp_str: Unix timestamp as string
+
+        Returns:
+            Datetime object, or None if parsing fails
+        """
+        try:
+            return datetime.fromtimestamp(int(timestamp_str))
+        except (ValueError, OSError):
+            return None
 
     async def _make_head_request(self, url: str, **kwargs: Any) -> httpx.Response:
         """Make a HEAD request using the same client configuration as progressive timeout."""

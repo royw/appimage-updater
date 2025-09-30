@@ -36,23 +36,56 @@ class HTTPTraceImpl:
             self.output_formatter.print_message(f"HTTP {method.upper()} {url} -> {status_code} ({elapsed:.3f}s)")
 
     def trace_error(self, method: str, url: str, error: Exception, elapsed: float) -> None:
-        """Print trace message for HTTP error."""
-        if self.enabled and self.output_formatter:
-            # Determine error type for better display
-            if "timeout" in str(error).lower() or "TimeoutException" in str(type(error)):
-                error_msg = "TIMEOUT"
-            elif "404" in str(error):
-                error_msg = "404 NOT FOUND"
-            elif "403" in str(error):
-                error_msg = "403 FORBIDDEN"
-            elif "500" in str(error):
-                error_msg = "500 SERVER ERROR"
-            elif "connection" in str(error).lower():
-                error_msg = "CONNECTION ERROR"
-            else:
-                error_msg = f"ERROR: {error}"
+        """Print trace message for HTTP error.
 
-            self.output_formatter.print_message(f"HTTP {method.upper()} {url} -> {error_msg} ({elapsed:.3f}s)")
+        Args:
+            method: HTTP method (GET, POST, etc.)
+            url: URL that was requested
+            error: Exception that occurred
+            elapsed: Time elapsed in seconds
+        """
+        if not (self.enabled and self.output_formatter):
+            return
+
+        error_msg = self._format_error_message(error)
+        self.output_formatter.print_message(f"HTTP {method.upper()} {url} -> {error_msg} ({elapsed:.3f}s)")
+
+    def _format_error_message(self, error: Exception) -> str:
+        """Format error message based on error type.
+
+        Args:
+            error: Exception to format
+
+        Returns:
+            Formatted error message string
+        """
+        error_str = str(error)
+        error_type = str(type(error))
+
+        if self._is_timeout_error(error_str, error_type):
+            return "TIMEOUT"
+        if "404" in error_str:
+            return "404 NOT FOUND"
+        if "403" in error_str:
+            return "403 FORBIDDEN"
+        if "500" in error_str:
+            return "500 SERVER ERROR"
+        if "connection" in error_str.lower():
+            return "CONNECTION ERROR"
+
+        return f"ERROR: {error}"
+
+    def _is_timeout_error(self, error_str: str, error_type: str) -> bool:
+        """Check if error is a timeout error.
+
+        Args:
+            error_str: String representation of error
+            error_type: String representation of error type
+
+        Returns:
+            True if error is a timeout
+        """
+        return "timeout" in error_str.lower() or "TimeoutException" in error_type
 
     def set_output_formatter(self, output_formatter: Any) -> None:
         """Set the output formatter for trace messages."""

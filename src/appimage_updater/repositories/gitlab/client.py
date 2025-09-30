@@ -7,7 +7,7 @@ supporting both gitlab.com and self-hosted GitLab instances.
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, NoReturn
 import urllib.parse
 
 import httpx
@@ -129,16 +129,31 @@ class GitLabClient:
             return release_info
 
         except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                raise GitLabClientError(f"No releases found for GitLab project: {owner}/{repo}") from e
-            elif e.response.status_code == 401:
-                raise GitLabClientError("GitLab authentication failed - check your token") from e
-            elif e.response.status_code == 403:
-                raise GitLabClientError("GitLab access forbidden - insufficient permissions") from e
-            else:
-                raise GitLabClientError(f"GitLab API error: {e.response.status_code} {e.response.text}") from e
+            self._handle_http_status_error(e, owner, repo)
         except httpx.RequestError as e:
             raise GitLabClientError(f"GitLab API request failed: {e}") from e
+
+    def _handle_http_status_error(self, error: httpx.HTTPStatusError, owner: str, repo: str) -> NoReturn:
+        """Handle HTTP status errors from GitLab API.
+
+        Args:
+            error: The HTTP status error
+            owner: Project owner/namespace
+            repo: Repository name
+
+        Raises:
+            GitLabClientError: Always raises with appropriate error message
+        """
+        status_code = error.response.status_code
+
+        if status_code == 404:
+            raise GitLabClientError(f"No releases found for GitLab project: {owner}/{repo}") from error
+        elif status_code == 401:
+            raise GitLabClientError("GitLab authentication failed - check your token") from error
+        elif status_code == 403:
+            raise GitLabClientError("GitLab access forbidden - insufficient permissions") from error
+        else:
+            raise GitLabClientError(f"GitLab API error: {status_code} {error.response.text}") from error
 
     async def get_releases(
         self, owner: str, repo: str, base_url: str = "https://gitlab.com", limit: int = 10
@@ -159,12 +174,7 @@ class GitLabClient:
         """
         project_path = self._url_encode_project_path(owner, repo)
         api_url = f"{base_url}/api/v4/projects/{project_path}/releases"
-
-        params: dict[str, str | int] = {
-            "per_page": min(limit, 100),  # GitLab API max per_page is 100
-            "order_by": "released_at",
-            "sort": "desc",
-        }
+        params = self._build_releases_params(limit)
 
         try:
             logger.debug(f"Fetching GitLab releases: {api_url} (limit={limit})")
@@ -176,18 +186,50 @@ class GitLabClient:
             return releases[:limit]  # Ensure we don't exceed requested limit
 
         except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                # Project exists but no releases - return empty list
-                logger.debug(f"No releases found for GitLab project: {owner}/{repo}")
-                return []
-            elif e.response.status_code == 401:
-                raise GitLabClientError("GitLab authentication failed - check your token") from e
-            elif e.response.status_code == 403:
-                raise GitLabClientError("GitLab access forbidden - insufficient permissions") from e
-            else:
-                raise GitLabClientError(f"GitLab API error: {e.response.status_code} {e.response.text}") from e
+            return self._handle_get_releases_error(e, owner, repo)
         except httpx.RequestError as e:
             raise GitLabClientError(f"GitLab API request failed: {e}") from e
+
+    def _build_releases_params(self, limit: int) -> dict[str, str | int]:
+        """Build query parameters for releases API request.
+
+        Args:
+            limit: Maximum number of releases to fetch
+
+        Returns:
+            Dictionary of query parameters
+        """
+        return {
+            "per_page": min(limit, 100),  # GitLab API max per_page is 100
+            "order_by": "released_at",
+            "sort": "desc",
+        }
+
+    def _handle_get_releases_error(self, error: httpx.HTTPStatusError, owner: str, repo: str) -> list[dict[str, Any]]:
+        """Handle HTTP errors when fetching releases.
+
+        Args:
+            error: The HTTP status error
+            owner: Project owner/namespace
+            repo: Repository name
+
+        Returns:
+            Empty list for 404 errors
+
+        Raises:
+            GitLabClientError: For other error types
+        """
+        status_code = error.response.status_code
+
+        if status_code == 404:
+            logger.debug(f"No releases found for GitLab project: {owner}/{repo}")
+            return []
+        elif status_code == 401:
+            raise GitLabClientError("GitLab authentication failed - check your token") from error
+        elif status_code == 403:
+            raise GitLabClientError("GitLab access forbidden - insufficient permissions") from error
+        else:
+            raise GitLabClientError(f"GitLab API error: {status_code} {error.response.text}") from error
 
     async def should_enable_prerelease(self, owner: str, repo: str, base_url: str = "https://gitlab.com") -> bool:
         """Check if prerelease should be automatically enabled for a repository.
@@ -208,38 +250,13 @@ class GitLabClient:
             GitLabClientError: If the API request fails
         """
         try:
-            # Get recent releases to analyze
             releases = await self.get_releases(owner, repo, base_url, limit=20)
 
             if not releases:
                 logger.debug(f"No releases found for {owner}/{repo}, prerelease detection inconclusive")
                 return False
 
-            # Check for stable releases (non-prerelease patterns)
-            stable_count = 0
-            prerelease_count = 0
-
-            for release in releases:
-                tag_name = release.get("tag_name", "")
-                name = release.get("name", "")
-
-                # Check for prerelease indicators in tag or name
-                prerelease_patterns = [
-                    r"(alpha|beta|rc|pre|dev|nightly|snapshot)",
-                    r"\d+\.\d+\.\d+-",  # Semver prerelease (e.g., 1.0.0-alpha)
-                ]
-
-                is_prerelease = any(
-                    re.search(pattern, tag_name, re.IGNORECASE) or re.search(pattern, name, re.IGNORECASE)
-                    for pattern in prerelease_patterns
-                )
-
-                if is_prerelease:
-                    prerelease_count += 1
-                else:
-                    stable_count += 1
-
-            # If we have prereleases but no stable releases, suggest enabling prerelease
+            stable_count, prerelease_count = self._count_release_types(releases)
             should_enable = prerelease_count > 0 and stable_count == 0
 
             logger.debug(
@@ -251,6 +268,47 @@ class GitLabClient:
             return should_enable
 
         except GitLabClientError:
-            # If we can't analyze releases, default to False
             logger.debug(f"Could not analyze releases for {owner}/{repo}, defaulting prerelease=False")
             return False
+
+    def _count_release_types(self, releases: list[dict[str, Any]]) -> tuple[int, int]:
+        """Count stable and prerelease versions in releases.
+
+        Args:
+            releases: List of release dictionaries
+
+        Returns:
+            Tuple of (stable_count, prerelease_count)
+        """
+        stable_count = 0
+        prerelease_count = 0
+
+        for release in releases:
+            if self._is_prerelease_version(release):
+                prerelease_count += 1
+            else:
+                stable_count += 1
+
+        return stable_count, prerelease_count
+
+    def _is_prerelease_version(self, release: dict[str, Any]) -> bool:
+        """Check if a release is a prerelease version.
+
+        Args:
+            release: Release dictionary
+
+        Returns:
+            True if release is a prerelease
+        """
+        tag_name = release.get("tag_name", "")
+        name = release.get("name", "")
+
+        prerelease_patterns = [
+            r"(alpha|beta|rc|pre|dev|nightly|snapshot)",
+            r"\d+\.\d+\.\d+-",  # Semver prerelease (e.g., 1.0.0-alpha)
+        ]
+
+        return any(
+            re.search(pattern, tag_name, re.IGNORECASE) or re.search(pattern, name, re.IGNORECASE)
+            for pattern in prerelease_patterns
+        )

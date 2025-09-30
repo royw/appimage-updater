@@ -100,10 +100,12 @@ class RepositoryHandlerRegistry:
         from .handlers.dynamic_handler import DynamicDownloadHandler  # noqa: PLC0415
         from .handlers.github_handler import GitHubHandler  # noqa: PLC0415
         from .handlers.gitlab_handler import GitLabHandler  # noqa: PLC0415
+        from .handlers.sourceforge_handler import SourceForgeHandler  # noqa: PLC0415
 
         # Register handlers
         self.register(GitHubHandler())
         self.register(GitLabHandler())
+        self.register(SourceForgeHandler())
         self.register(DirectDownloadHandler())
         self.register(DynamicDownloadHandler())
 

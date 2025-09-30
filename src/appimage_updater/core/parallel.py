@@ -43,44 +43,121 @@ class ConcurrentProcessor:
         total_items = len(items)
 
         if total_items <= 1:
-            logger.debug(f"Processing {total_items} items sequentially with async")
-            # Process sequentially for single items
-            results = []
-            for i, item in enumerate(items):
-                if progress_callback:
-                    progress_callback(i, total_items, f"Checking {getattr(item, 'name', 'application')}")
-                result = await async_worker_func(item)
-                results.append(result)
-                if progress_callback:
-                    progress_callback(i + 1, total_items, f"Completed {getattr(item, 'name', 'application')}")
-            return results
-        else:
-            logger.debug(f"Processing {total_items} items concurrently with async tasks")
+            return await self._process_sequentially(items, async_worker_func, progress_callback, total_items)
+
+        return await self._process_concurrently(items, async_worker_func, progress_callback, total_items)
+
+    async def _process_sequentially(
+        self,
+        items: list[Any],
+        async_worker_func: Callable[[Any], Coroutine[Any, Any, Any]],
+        progress_callback: Callable[[int, int, str], None] | None,
+        total_items: int,
+    ) -> list[Any]:
+        """Process items sequentially.
+
+        Args:
+            items: List of items to process
+            async_worker_func: Async function to process each item
+            progress_callback: Optional callback for progress updates
+            total_items: Total number of items
+
+        Returns:
+            List of processing results
+        """
+        logger.debug(f"Processing {total_items} items sequentially with async")
+        results = []
+
+        for i, item in enumerate(items):
+            if progress_callback:
+                progress_callback(i, total_items, f"Checking {getattr(item, 'name', 'application')}")
+
+            result = await async_worker_func(item)
+            results.append(result)
 
             if progress_callback:
-                progress_callback(0, total_items, "Starting concurrent checks")
+                progress_callback(i + 1, total_items, f"Completed {getattr(item, 'name', 'application')}")
 
-            # For concurrent processing with progress tracking, we'll use a wrapper approach
-            if progress_callback:
-                completed_count = 0
+        return results
 
-                async def progress_wrapper(item: Any, index: int) -> Any:
-                    """Wrapper that tracks progress for each item."""
-                    nonlocal completed_count
-                    result = await async_worker_func(item)
-                    completed_count += 1
-                    item_name = getattr(item, "name", f"app {index + 1}")
-                    progress_callback(completed_count, total_items, f"Completed {item_name}")
-                    return result
+    async def _process_concurrently(
+        self,
+        items: list[Any],
+        async_worker_func: Callable[[Any], Coroutine[Any, Any, Any]],
+        progress_callback: Callable[[int, int, str], None] | None,
+        total_items: int,
+    ) -> list[Any]:
+        """Process items concurrently.
 
-                # Create tasks with progress tracking
-                tasks = [progress_wrapper(item, i) for i, item in enumerate(items)]
-                return await asyncio.gather(*tasks)
-            else:
-                # Use asyncio.gather() for concurrent processing without progress tracking
-                # 1. Compatibility: gather() works with Python 3.7+, TaskGroup requires 3.11+
-                # 2. Simplicity: Perfect for straightforward I/O-bound network operations
-                # 3. Ordered results: Results match input order automatically
-                # 4. Clean error handling: Exceptions propagate naturally
-                tasks = [async_worker_func(item) for item in items]
-                return await asyncio.gather(*tasks)
+        Args:
+            items: List of items to process
+            async_worker_func: Async function to process each item
+            progress_callback: Optional callback for progress updates
+            total_items: Total number of items
+
+        Returns:
+            List of processing results
+        """
+        logger.debug(f"Processing {total_items} items concurrently with async tasks")
+
+        if progress_callback:
+            progress_callback(0, total_items, "Starting concurrent checks")
+            return await self._process_with_progress(items, async_worker_func, progress_callback, total_items)
+
+        return await self._process_without_progress(items, async_worker_func)
+
+    async def _process_with_progress(
+        self,
+        items: list[Any],
+        async_worker_func: Callable[[Any], Coroutine[Any, Any, Any]],
+        progress_callback: Callable[[int, int, str], None],
+        total_items: int,
+    ) -> list[Any]:
+        """Process items with progress tracking.
+
+        Args:
+            items: List of items to process
+            async_worker_func: Async function to process each item
+            progress_callback: Callback for progress updates
+            total_items: Total number of items
+
+        Returns:
+            List of processing results
+        """
+        completed_count = 0
+
+        async def progress_wrapper(item: Any, index: int) -> Any:
+            """Wrapper that tracks progress for each item."""
+            nonlocal completed_count
+            result = await async_worker_func(item)
+            completed_count += 1
+            item_name = getattr(item, "name", f"app {index + 1}")
+            progress_callback(completed_count, total_items, f"Completed {item_name}")
+            return result
+
+        tasks = [progress_wrapper(item, i) for i, item in enumerate(items)]
+        return await asyncio.gather(*tasks)
+
+    async def _process_without_progress(
+        self,
+        items: list[Any],
+        async_worker_func: Callable[[Any], Coroutine[Any, Any, Any]],
+    ) -> list[Any]:
+        """Process items without progress tracking.
+
+        Args:
+            items: List of items to process
+            async_worker_func: Async function to process each item
+
+        Returns:
+            List of processing results
+
+        Note:
+            Uses asyncio.gather() for concurrent processing:
+            1. Compatibility: gather() works with Python 3.7+, TaskGroup requires 3.11+
+            2. Simplicity: Perfect for straightforward I/O-bound network operations
+            3. Ordered results: Results match input order automatically
+            4. Clean error handling: Exceptions propagate naturally
+        """
+        tasks = [async_worker_func(item) for item in items]
+        return await asyncio.gather(*tasks)
