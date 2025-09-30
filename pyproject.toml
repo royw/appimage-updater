@@ -152,8 +152,25 @@ addopts = [
 markers = [
     "slow: marks tests as slow (deselect with '-m not slow')",
 ]
+# The e2e test warnings are caused by AsyncMockMixin._execute_mock_call creating unawaited coroutines in test mocks. These are test infrastructure issues that:
+#
+# Don't affect test functionality
+# Don't affect production code
+# Are safe to suppress
+#
+# Affected Tests:
+#
+# - test_add_command_with_invalid_url
+# - test_add_command_with_direct_flag
+# - test_add_with_direct_flag_modern
+# - test_add_github_repository_modern
+# - test_add_duplicate_name_error_modern
+# - test_add_path_expansion_modern
+# - test_pattern_matching_with_suffixes
+#
+# The remaining RuntimeWarning printed after tests complete is from cleanup code (http_service.py:136) and doesn't affect test results or CI success.
 filterwarnings = [
-    "ignore::RuntimeWarning",
+    "ignore::RuntimeWarning:.*AsyncMockMixin.*",
 ]
 
 [tool.coverage.run]
