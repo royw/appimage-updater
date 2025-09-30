@@ -12,7 +12,7 @@ A professional, enterprise-ready Linux service for automating the finding and do
 
 AppImage Updater is a modern, type-safe Linux CLI application built with a layered architecture that monitors configured applications for new releases and provides automated downloading of updated AppImage files.
 
-**Platform Support**: Linux only - AppImage is a Linux-specific package format.
+**Platform Support**: Linux only - AppImage is a Linux-specific package format. See [Linux-Only Support](https://royw.github.io/appimage-updater/linux-only/) for details.
 
 **Key Features:**
 

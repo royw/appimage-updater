@@ -1,5 +1,9 @@
 # Usage Guide
 
+## Platform Support
+
+**AppImage Updater is designed exclusively for Linux systems.** For details on supported distributions and platform limitations, see the [Linux-Only Support](linux-only.md) guide.
+
 ## Quick Start
 
 For installation instructions, see the [Installation Guide](installation.md).
