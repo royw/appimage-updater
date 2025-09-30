@@ -1,0 +1,45 @@
+{
+  "system": {
+    "platform": "Linux-6.14.0-32-generic-x86_64-with-glibc2.41",
+    "system": "Linux",
+    "release": "6.14.0-32-generic",
+    "version": "#32-Ubuntu SMP PREEMPT_DYNAMIC Fri Aug 29 14:21:26 UTC 2025",
+    "machine": "x86_64",
+    "processor": "x86_64",
+    "architecture": [
+      "64bit",
+      "ELF"
+    ],
+    "python_version": "3.13.1 (main, Dec 19 2024, 14:32:25) [Clang 18.1.8 ]",
+    "python_executable": "/home/royw/src/appimage-updater/.venv/bin/python"
+  },
+  "environment_variables": {
+    "CI": "Not set",
+    "GITHUB_ACTIONS": "Not set",
+    "RUNNER_OS": "Not set",
+    "RUNNER_ARCH": "Not set",
+    "PYTHONPATH": "Not set",
+    "PATH": "/home/royw/src/appimage-updater/.venv/bin:/home/royw/.pyenv/plugins/pyenv-virtualenv/shims:/home/royw/.pyenv/shims:/home/royw/.pyenv/bin:/home/royw/.pyenv/plugins/pyenv-virtualenv/shims:/home/royw/.py..."
+  },
+  "python_packages": {
+    "uv_version": "uv 0.5.12",
+    "pip_version": "pip 25.0.1 from /home/royw/.pyenv/versions/3.13.3/lib/python3.13/site-packages/pip (python 3.13)",
+    "pytest_version": "8.4.1",
+    "typer_version": "0.17.3",
+    "httpx_version": "0.28.1"
+  },
+  "project_info": {
+    "current_directory": "/home/royw/src/appimage-updater",
+    "project_files": {
+      "pyproject.toml": true,
+      "uv.lock": true,
+      "src/appimage_updater": true,
+      "tests/": true
+    }
+  },
+  "test_environment": {
+    "pytest_plugins": "ERROR: Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import pytest; print([p for p in pytest.config.get_plugin_manager().list_plugin_distinfo()])\n                                     ^^^^^^^^^^^^^\nAttributeError: module 'pytest' has no attribute 'config'. Did you mean: 'Config'?",
+    "asyncio_version": "The asyncio package, tracking PEP 3156.",
+    "mock_available": "Available"
+  }
+}

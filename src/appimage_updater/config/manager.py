@@ -266,22 +266,32 @@ class GlobalConfigManager(Manager):
     """
 
     @staticmethod
-    def get_default_config_path() -> Path:
-        """Get default configuration file path."""
-        # Check for test environment override
-        test_config_dir = os.environ.get("APPIMAGE_UPDATER_TEST_CONFIG_DIR")
-        if test_config_dir:
-            return Path(test_config_dir) / "config.json"
+    def get_default_config_path(ignore_env: bool = False) -> Path:
+        """Get default configuration file path.
+        
+        Args:
+            ignore_env: If True, ignore environment variables (used when CLI args provided)
+        """
+        # Check for test environment override only if not ignoring env
+        if not ignore_env:
+            test_config_dir = os.environ.get("APPIMAGE_UPDATER_TEST_CONFIG_DIR")
+            if test_config_dir:
+                return Path(test_config_dir) / "config.json"
 
         return Path.home() / ".config" / "appimage-updater" / "config.json"
 
     @staticmethod
-    def get_default_config_dir() -> Path:
-        """Get default configuration directory path."""
-        # Check for test environment override
-        test_config_dir = os.environ.get("APPIMAGE_UPDATER_TEST_CONFIG_DIR")
-        if test_config_dir:
-            return Path(test_config_dir) / "apps"
+    def get_default_config_dir(ignore_env: bool = False) -> Path:
+        """Get default configuration directory path.
+        
+        Args:
+            ignore_env: If True, ignore environment variables (used when CLI args provided)
+        """
+        # Check for test environment override only if not ignoring env
+        if not ignore_env:
+            test_config_dir = os.environ.get("APPIMAGE_UPDATER_TEST_CONFIG_DIR")
+            if test_config_dir:
+                return Path(test_config_dir) / "apps"
 
         return Path.home() / ".config" / "appimage-updater" / "apps"
 

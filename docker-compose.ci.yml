@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  ci-runner:
+    build:
+      context: .
+      dockerfile: docker/ci-runner.Dockerfile
+    volumes:
+      - .:/workspace
+      - ci-cache:/root/.cache
+    environment:
+      - GITHUB_ACTIONS=true
+      - CI=true
+      - RUNNER_OS=Linux
+      - RUNNER_ARCH=X64
+    working_dir: /workspace
+    
+  # Python 3.11 runner (matches primary CI)
+  ci-python311:
+    build:
+      context: .
+      dockerfile: docker/ci-runner.Dockerfile
+    volumes:
+      - .:/workspace
+      - ci-cache:/root/.cache
+    environment:
+      - GITHUB_ACTIONS=true
+      - CI=true
+      - RUNNER_OS=Linux
+      - RUNNER_ARCH=X64
+      - PYTHON_VERSION=3.11
+    working_dir: /workspace
+    command: python3.11 --version
+    
+  # Python 3.12 runner (matches CI matrix)
+  ci-python312:
+    build:
+      context: .
+      dockerfile: docker/ci-runner.Dockerfile
+    volumes:
+      - .:/workspace
+      - ci-cache:/root/.cache
+    environment:
+      - GITHUB_ACTIONS=true
+      - CI=true
+      - RUNNER_OS=Linux
+      - RUNNER_ARCH=X64
+      - PYTHON_VERSION=3.12
+    working_dir: /workspace
+    command: python3.12 --version
+
+volumes:
+  ci-cache:

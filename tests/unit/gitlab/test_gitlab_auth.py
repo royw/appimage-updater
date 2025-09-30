@@ -18,7 +18,8 @@ class TestGitLabAuth:
 
     def test_init_without_token(self):
         """Test initialization without token."""
-        with patch.dict(os.environ, {}, clear=True):
+        # Only clear GitLab-specific environment variables, not all variables
+        with patch.dict(os.environ, {"GITLAB_TOKEN": "", "GITLAB_PRIVATE_TOKEN": ""}, clear=False):
             auth = GitLabAuth()
             assert not auth.is_authenticated()
             # get_token method was removed, just check authentication status
@@ -54,7 +55,8 @@ class TestGitLabAuth:
 
     def test_get_headers_not_authenticated(self):
         """Test header generation when not authenticated."""
-        with patch.dict(os.environ, {}, clear=True):
+        # Only clear GitLab-specific environment variables, not all variables
+        with patch.dict(os.environ, {"GITLAB_TOKEN": "", "GITLAB_PRIVATE_TOKEN": ""}, clear=False):
             auth = GitLabAuth()
             headers = auth.get_headers()
             assert headers == {}
@@ -73,7 +75,8 @@ class TestGitLabAuth:
 
     def test_get_auth_info_not_authenticated(self):
         """Test auth info when not authenticated - method was removed."""
-        with patch.dict(os.environ, {}, clear=True):
+        # Only clear GitLab-specific environment variables, not all variables
+        with patch.dict(os.environ, {"GITLAB_TOKEN": "", "GITLAB_PRIVATE_TOKEN": ""}, clear=False):
             auth = GitLabAuth()
             # get_auth_info method was removed, just test basic functionality
             assert not auth.is_authenticated()

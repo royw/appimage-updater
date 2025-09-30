@@ -1,0 +1,60 @@
+# GitHub Actions CI simulation commands
+.PHONY: help ci-local ci-docker ci-debug ci-test-only ci-build-only ci-clean
+
+help: ## Show this help message
+	@echo "🔧 AppImage Updater - CI Simulation Commands"
+	@echo "============================================="
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+ci-local: ## Run full CI pipeline locally (fastest)
+	@echo "🚀 Running CI pipeline locally..."
+	./scripts/ci-local.sh
+
+ci-docker: ## Run CI in Docker container (exact GitHub Actions environment)
+	@echo "🐳 Running CI in Docker (GitHub Actions compatible)..."
+	docker-compose -f docker-compose.ci.yml run --rm ci-runner
+
+ci-debug: ## Debug environment differences
+	@echo "🔍 Analyzing environment..."
+	python scripts/debug-env.py
+
+ci-test-only: ## Run only tests (skip linting/formatting)
+	@echo "🧪 Running tests only..."
+	uv run pytest --cov=src/appimage_updater --cov-report=xml --cov-report=term-missing
+
+ci-e2e-only: ## Run only E2E tests
+	@echo "🎯 Running E2E tests only..."
+	uv run pytest tests/e2e/ -v --tb=short --no-cov
+
+ci-format: ## Run formatting and linting fixes
+	@echo "🎨 Fixing formatting and linting..."
+	uv run ruff format src/
+	uv run ruff check --fix src/
+
+ci-build-only: ## Build package only
+	@echo "📦 Building package..."
+	uv build
+
+ci-clean: ## Clean up CI artifacts
+	@echo "🧹 Cleaning up..."
+	rm -rf dist/ .coverage coverage.xml .pytest_cache/ .mypy_cache/
+	docker-compose -f docker-compose.ci.yml down --volumes
+
+ci-matrix: ## Test both Python versions (like CI matrix)
+	@echo "🐍 Testing Python 3.11..."
+	docker-compose -f docker-compose.ci.yml run --rm ci-python311
+	@echo "🐍 Testing Python 3.12..."
+	docker-compose -f docker-compose.ci.yml run --rm ci-python312
+
+# Individual CI steps for debugging
+ci-step-format: ## Run formatting check only
+	uv run ruff format --check src/
+
+ci-step-lint: ## Run linting only
+	uv run ruff check src/
+
+ci-step-types: ## Run type checking only
+	uv run mypy src/
+
+ci-step-complexity: ## Run complexity analysis only
+	uv run radon cc src/ --min C
