@@ -85,6 +85,6 @@ class TestGitLabAuth:
         """Test string representation."""
         auth_with_token = GitLabAuth(token="test-token")
         auth_without_token = GitLabAuth()
-        
+
         assert "authenticated" in str(auth_with_token)
         assert "not authenticated" in str(auth_without_token)

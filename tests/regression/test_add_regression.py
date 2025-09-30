@@ -13,10 +13,10 @@ The test:
 5. Validates that essential fields match (allowing for intelligent pattern improvements)
 """
 
-import json
-import tempfile
 from collections.abc import Sequence
+import json
 from pathlib import Path
+import tempfile
 from typing import Any
 
 import pytest

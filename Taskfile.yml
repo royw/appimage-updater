@@ -8,6 +8,10 @@ vars:
   PYTHON_VERSION:
     sh: cat .python-version | head -n1
   TEST_TIMEOUT: 30
+  # Global emoji replacements dictionary - single source of truth
+  # Format: "emoji:replacement emoji:replacement ..."
+  # Used by both lint:emoji (keys) and fix:emoji (full mapping)
+  EMOJI_REPLACEMENTS_MAP: '✅:PASS ❌:FAIL ⚠️:WARNING 🔍:SEARCH 📦:PACKAGE 🐧:LINUX 🚀:DEPLOY 🎯:TARGET 🏆:SUCCESS 🎉:COMPLETE 📊:REPORT 🧪:TEST 🔴:HIGH 🟡:MEDIUM 🟢:LOW 📚:DOCS 🌍:SERVER 🏗️:BUILD 📈:BUMP 📝:COMMIT 🐍:PYTHON 📋:LIST ✓:DONE 📁:FOLDER 🌐:NETWORK 🎭:MOCK ⚡:EXECUTE 📤:STDOUT 📥:STDERR 💥:EXCEPTION 🔧:VERSION 📄:FILE 🌳:TREE 🏁:COMPLETE 🔒:LOCK 🔓:UNLOCK 🐛:BUG 🛠️:TOOLS 🚨:0'
 
 tasks:
   output:
@@ -15,6 +19,7 @@ tasks:
     cmds:
       - cmd: echo "{{.MESSAGE}}"
         silent: true
+
   # === Setup and Environment ===
   
   # Environment validation
@@ -99,46 +104,49 @@ tasks:
     desc: Search for emojis in source code, docs, and configuration files
     cmds:
       - cmd: |
-          echo "🔍 Searching for emojis in codebase..."
+          echo "SEARCH Searching for emojis in codebase..."
           EMOJI_FOUND=0
           
-          # Define emoji regex pattern (matches most common emoji ranges)
-          EMOJI_PATTERN='[\x{1F600}-\x{1F64F}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{1F1E0}-\x{1F1FF}]|[\x{2600}-\x{26FF}]|[\x{2700}-\x{27BF}]|[\x{1F900}-\x{1F9FF}]|[\x{1F018}-\x{1F270}]|[\x{238C}-\x{2454}]|[\x{20D0}-\x{20FF}]'
+          # Extract emoji keys from global EMOJI_REPLACEMENTS_MAP
+          EMOJI_MAP='{{.EMOJI_REPLACEMENTS_MAP}}'
+          
+          # Extract just the emojis (keys before the colon)
+          EMOJI_LIST=$(echo "$EMOJI_MAP" | tr ' ' '\n' | cut -d':' -f1)
           
           # Search in source code
-          if grep -rn --include="*.py" -P "$EMOJI_PATTERN" src/ 2>/dev/null; then
-            echo "❌ Emojis found in source code (src/)"
+          if echo "$EMOJI_LIST" | xargs -I {} grep -rn --include="*.py" -F {} src/ 2>/dev/null; then
+            echo "FAIL Emojis found in source code (src/)"
             EMOJI_FOUND=1
           fi
           
           # Search in tests
-          if grep -rn --include="*.py" -P "$EMOJI_PATTERN" tests/ 2>/dev/null; then
-            echo "❌ Emojis found in tests (tests/)"
+          if echo "$EMOJI_LIST" | xargs -I {} grep -rn --include="*.py" -F {} tests/ 2>/dev/null; then
+            echo "FAIL Emojis found in tests (tests/)"
             EMOJI_FOUND=1
           fi
           
           # Search in docs
-          if grep -rn --include="*.md" -P "$EMOJI_PATTERN" docs/ 2>/dev/null; then
-            echo "❌ Emojis found in documentation (docs/)"
+          if echo "$EMOJI_LIST" | xargs -I {} grep -rn --include="*.md" -F {} docs/ 2>/dev/null; then
+            echo "FAIL Emojis found in documentation (docs/)"
             EMOJI_FOUND=1
           fi
           
           # Search in README.md
-          if grep -rn -P "$EMOJI_PATTERN" README.md 2>/dev/null; then
-            echo "❌ Emojis found in README.md"
+          if echo "$EMOJI_LIST" | xargs -I {} grep -rn -F {} README.md 2>/dev/null; then
+            echo "FAIL Emojis found in README.md"
             EMOJI_FOUND=1
           fi
           
           # Search in mkdocs.yml
-          if grep -rn -P "$EMOJI_PATTERN" mkdocs.yml 2>/dev/null; then
-            echo "❌ Emojis found in mkdocs.yml"
+          if echo "$EMOJI_LIST" | xargs -I {} grep -rn -F {} mkdocs.yml 2>/dev/null; then
+            echo "FAIL Emojis found in mkdocs.yml"
             EMOJI_FOUND=1
           fi
           
           if [ $EMOJI_FOUND -eq 0 ]; then
-            echo "✅ No emojis found in codebase"
+            echo "PASS No emojis found in codebase"
           else
-            echo "❌ Emoji check failed - emojis found in codebase"
+            echo "FAIL Emoji check failed - emojis found in codebase"
             exit 1
           fi
         silent: true
@@ -255,7 +263,7 @@ tasks:
   check:
     desc: Run all code quality checks including end-to-end tests
     cmds:
-      - task: docs:fix:emoji
+      - task: fix:emoji
       - task: format
       - task: lint
       - task: complexity
@@ -287,73 +295,85 @@ tasks:
       - docs:build
       - docs:serve
 
-  docs:fix:emoji:
-    desc: Remove emojis from markdown files (*.md and docs/*.md)
+  fix:emoji:
+    desc: Remove emojis from markdown and test files (*.md, docs/*.md, tests/*.py)
     cmds:
       - cmd: |
-          echo "Removing emojis from markdown files..."
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import glob
+          from pathlib import Path
           
-          # Define emoji regex pattern (matches most common emoji ranges)
-          EMOJI_PATTERN='[\x{1F600}-\x{1F64F}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{1F1E0}-\x{1F1FF}]|[\x{2600}-\x{26FF}]|[\x{2700}-\x{27BF}]|[\x{1F900}-\x{1F9FF}]|[\x{1F018}-\x{1F270}]|[\x{238C}-\x{2454}]|[\x{20D0}-\x{20FF}]'
+          # Build emoji replacements map from Taskfile variable
+          EMOJI_MAP = '{{.EMOJI_REPLACEMENTS_MAP}}'
           
-          # Common emoji replacements
-          declare -A REPLACEMENTS=(
-            ["✅"]="PASS"
-            ["❌"]="FAIL" 
-            ["⚠️"]="WARNING"
-            ["🔍"]="SEARCH"
-            ["📦"]="PACKAGE"
-            ["🐧"]="LINUX"
-            ["🚀"]="DEPLOY"
-            ["🎯"]="TARGET"
-            ["🏆"]="SUCCESS"
-            ["🎉"]="COMPLETE"
-            ["📊"]="REPORT"
-            ["🧪"]="TEST"
-            ["🔴"]="HIGH"
-            ["🟡"]="MEDIUM"
-            ["🟢"]="LOW"
-            ["📚"]="DOCS"
-            ["🌍"]="SERVER"
-            ["🏗️"]="BUILD"
-            ["📈"]="BUMP"
-            ["📝"]="COMMIT"
-            ["🐍"]="PYTHON"
-            ["📋"]="LIST"
-            [" ✓ "]="DONE"
-          )
+          # Parse the map into a dictionary
+          replacements = {}
+          for pair in EMOJI_MAP.split():
+              if ':' in pair:
+                  emoji, replacement = pair.split(':', 1)
+                  replacements[emoji] = replacement
           
-          # Process all markdown files
-          find . -name "*.md" -o -path "./docs/*.md" | while read -r file; do
-            if [ -f "$file" ]; then
-              # echo "Processing: $file"
-              
-              # Create backup
-              cp "$file" "$file.bak"
-              
-              # Apply specific replacements first
-              for emoji in "${!REPLACEMENTS[@]}"; do
-                replacement="${REPLACEMENTS[$emoji]}"
-                sed -i "s/$emoji/$replacement/g" "$file"
-              done
-              
-              # Remove any remaining emojis using perl regex
-              perl -i -pe "s/$EMOJI_PATTERN//g" "$file"
-              
-              # Check if file was modified
-              if ! cmp -s "$file" "$file.bak"; then
-                echo "  - Emojis removed from $file"
-              # else
-                # echo "  - No emojis found in $file"
-              fi
-              
-              # Remove backup
-              rm "$file.bak"
-            fi
-          done
+          print("Removing emojis from markdown and test files...")
           
-          echo "Emoji removal complete!"
+          def process_file(filepath):
+              """Process a single file and replace emojis."""
+              try:
+                  with open(filepath, 'r', encoding='utf-8') as f:
+                      content = f.read()
+                  
+                  original_content = content
+                  
+                  # Apply all emoji replacements
+                  for emoji, replacement in replacements.items():
+                      content = content.replace(emoji, replacement)
+                  
+                  # Only write if content changed
+                  if content != original_content:
+                      with open(filepath, 'w', encoding='utf-8') as f:
+                          f.write(content)
+                      print(f"  - Emojis removed from {filepath}")
+              except Exception as e:
+                  print(f"  ! Error processing {filepath}: {e}")
+          
+          print("Processing markdown files...")
+          # Process markdown files in project root (max depth 1)
+          for md_file in glob.glob("*.md"):
+              process_file(md_file)
+          
+          # Process markdown files in docs/ directory
+          if os.path.isdir("docs"):
+              for md_file in Path("docs").rglob("*.md"):
+                  process_file(str(md_file))
+          
+          print("Processing test Python files...")
+          # Process all test python files (including subdirectories)
+          if os.path.isdir("tests"):
+              for py_file in Path("tests").rglob("*.py"):
+                  process_file(str(py_file))
+          
+          print("Emoji removal complete!")
+          PYTHON_SCRIPT
         silent: true
+
+  # === E2E Test Analysis ===
+  e2e:analyze-failures:
+    desc: Analyze failing E2E tests by comparing local vs CI environment logs
+    cmds:
+      - cmd: |
+          echo "Analyzing E2E test failures..."
+          if [ ! -d "e2e_environment_logs" ]; then
+            echo "❌ No e2e_environment_logs directory found. Run some E2E tests first."
+            exit 1
+          fi
+          
+          echo "Usage: task check 2>&1 | python scripts/extract-failing-tests.py --from-stdin"
+          echo "Or manually run: python scripts/extract-failing-tests.py <ci_output_file>"
+          echo ""
+          echo "Available log files:"
+          ls -1 e2e_environment_logs/ | head -10
+          echo "... (showing first 10 files)"
+        silent: false
 
   # === Build and Release ===
   build:

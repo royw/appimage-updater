@@ -22,9 +22,9 @@ class TestCheckCommandHandler:
         with patch('appimage_updater.cli.handlers.check_handler.Console') as mock_console_class:
             mock_console = Mock()
             mock_console_class.return_value = mock_console
-            
+
             handler = CheckCommandHandler()
-            
+
             mock_console_class.assert_called_once()
             assert handler.console == mock_console
 
@@ -37,16 +37,16 @@ class TestCheckCommandHandler:
         """Test that handler registers command with Typer app."""
         handler = CheckCommandHandler()
         app = typer.Typer()
-        
+
         # Verify no commands initially
         assert len(app.registered_commands) == 0
-        
+
         # Should not raise any exceptions
         handler.register_command(app)
-        
+
         # Verify command was registered
         assert len(app.registered_commands) == 1
-        
+
         # Verify it's a CommandInfo object
         command_info = app.registered_commands[0]
         assert hasattr(command_info, 'name')
@@ -55,13 +55,13 @@ class TestCheckCommandHandler:
         """Test that version callback prints version and exits."""
         with patch('appimage_updater.cli.handlers.check_handler.Console'):
             handler = CheckCommandHandler()
-            
+
             with pytest.raises(typer.Exit):
                 handler._version_callback(True)
-            
+
             # Verify console print was called
             handler.console.print.assert_called_once()
-            
+
             # Check that version string was printed
             call_args = handler.console.print.call_args[0][0]
             assert "AppImage Updater" in call_args
@@ -70,10 +70,10 @@ class TestCheckCommandHandler:
         """Test that version callback does nothing when value is False."""
         with patch('appimage_updater.cli.handlers.check_handler.Console'):
             handler = CheckCommandHandler()
-            
+
             # Should not raise any exceptions
             handler._version_callback(False)
-            
+
             # Console print should not be called
             handler.console.print.assert_not_called()
 
@@ -81,7 +81,7 @@ class TestCheckCommandHandler:
         """Test successful option validation."""
         with patch('appimage_updater.cli.handlers.check_handler.Console'):
             handler = CheckCommandHandler()
-            
+
             # Should not raise any exceptions
             handler.validate_options(yes=False, no=False)
             handler.validate_options(yes=True, no=False)
@@ -91,12 +91,12 @@ class TestCheckCommandHandler:
         """Test validation error for mutually exclusive options."""
         with patch('appimage_updater.cli.handlers.check_handler.Console'):
             handler = CheckCommandHandler()
-            
+
             with pytest.raises(typer.Exit) as exc_info:
                 handler.validate_options(yes=True, no=True)
-            
+
             assert exc_info.value.exit_code == 1
-            
+
             # Verify error message was printed
             handler.console.print.assert_called_once()
             error_message = handler.console.print.call_args[0][0]
@@ -107,26 +107,26 @@ class TestCheckCommandHandler:
     @patch('appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params')
     @patch('appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command')
     def test_execute_check_command_success(
-        self, 
-        mock_factory, 
+        self,
+        mock_factory,
         mock_formatter_factory,
         mock_asyncio_run
     ):
         """Test successful execution of check command."""
         with patch('appimage_updater.cli.handlers.check_handler.Console'):
             handler = CheckCommandHandler()
-            
+
             # Setup mocks
             mock_command = Mock()
             mock_factory.return_value = mock_command
             mock_command.params = Mock()
-            
+
             mock_formatter = Mock()
             mock_formatter_factory.return_value = mock_formatter
-            
+
             success_result = CommandResult(success=True, message="Success")
             mock_asyncio_run.return_value = success_result
-            
+
             # Execute command
             handler._execute_check_command(
                 app_names=["TestApp"],
@@ -145,7 +145,7 @@ class TestCheckCommandHandler:
                 trace=False,
                 output_format=OutputFormat.RICH
             )
-            
+
             # Verify factory called with all parameters
             mock_factory.assert_called_once_with(
                 app_names=["TestApp"],
@@ -164,10 +164,10 @@ class TestCheckCommandHandler:
                 trace=False,
                 output_format=OutputFormat.RICH
             )
-            
+
             # Verify formatter was created
             mock_formatter_factory.assert_called_once_with(mock_command.params)
-            
+
             # Verify command was executed
             mock_asyncio_run.assert_called_once()
             call_args = mock_asyncio_run.call_args[0][0]
@@ -177,26 +177,26 @@ class TestCheckCommandHandler:
     @patch('appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params')
     @patch('appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command')
     def test_execute_check_command_with_json_format_calls_finalize(
-        self, 
-        mock_factory, 
+        self,
+        mock_factory,
         mock_formatter_factory,
         mock_asyncio_run
     ):
         """Test that JSON format calls finalize on formatter."""
         with patch('appimage_updater.cli.handlers.check_handler.Console'):
             handler = CheckCommandHandler()
-            
+
             # Setup mocks
             mock_command = Mock()
             mock_factory.return_value = mock_command
             mock_command.params = Mock()
-            
+
             mock_formatter = Mock()
             mock_formatter_factory.return_value = mock_formatter
-            
+
             success_result = CommandResult(success=True, message="Success")
             mock_asyncio_run.return_value = success_result
-            
+
             # Execute command with JSON format
             handler._execute_check_command(
                 app_names=[],
@@ -215,7 +215,7 @@ class TestCheckCommandHandler:
                 http_track_headers=False,
                 trace=False
             )
-            
+
             # Verify finalize was called for JSON format
             mock_formatter.finalize.assert_called_once()
 
@@ -223,26 +223,26 @@ class TestCheckCommandHandler:
     @patch('appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params')
     @patch('appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command')
     def test_execute_check_command_with_html_format_calls_finalize(
-        self, 
-        mock_factory, 
+        self,
+        mock_factory,
         mock_formatter_factory,
         mock_asyncio_run
     ):
         """Test that HTML format calls finalize on formatter."""
         with patch('appimage_updater.cli.handlers.check_handler.Console'):
             handler = CheckCommandHandler()
-            
+
             # Setup mocks
             mock_command = Mock()
             mock_factory.return_value = mock_command
             mock_command.params = Mock()
-            
+
             mock_formatter = Mock()
             mock_formatter_factory.return_value = mock_formatter
-            
+
             success_result = CommandResult(success=True, message="Success")
             mock_asyncio_run.return_value = success_result
-            
+
             # Execute command with HTML format
             handler._execute_check_command(
                 app_names=[],
@@ -261,7 +261,7 @@ class TestCheckCommandHandler:
                 http_track_headers=False,
                 trace=False
             )
-            
+
             # Verify finalize was called for HTML format
             mock_formatter.finalize.assert_called_once()
 
@@ -269,26 +269,26 @@ class TestCheckCommandHandler:
     @patch('appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params')
     @patch('appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command')
     def test_execute_check_command_rich_format_no_finalize(
-        self, 
-        mock_factory, 
+        self,
+        mock_factory,
         mock_formatter_factory,
         mock_asyncio_run
     ):
         """Test that RICH format does not call finalize on formatter."""
         with patch('appimage_updater.cli.handlers.check_handler.Console'):
             handler = CheckCommandHandler()
-            
+
             # Setup mocks
             mock_command = Mock()
             mock_factory.return_value = mock_command
             mock_command.params = Mock()
-            
+
             mock_formatter = Mock()
             mock_formatter_factory.return_value = mock_formatter
-            
+
             success_result = CommandResult(success=True, message="Success")
             mock_asyncio_run.return_value = success_result
-            
+
             # Execute command with RICH format
             handler._execute_check_command(
                 app_names=[],
@@ -307,7 +307,7 @@ class TestCheckCommandHandler:
                 http_track_headers=False,
                 trace=False
             )
-            
+
             # Verify finalize was NOT called for RICH format
             mock_formatter.finalize.assert_not_called()
 
@@ -315,27 +315,27 @@ class TestCheckCommandHandler:
     @patch('appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params')
     @patch('appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command')
     def test_execute_check_command_failure_raises_typer_exit(
-        self, 
-        mock_factory, 
+        self,
+        mock_factory,
         mock_formatter_factory,
         mock_asyncio_run
     ):
         """Test that command failure raises typer.Exit with correct code."""
         with patch('appimage_updater.cli.handlers.check_handler.Console'):
             handler = CheckCommandHandler()
-            
+
             # Setup mocks
             mock_command = Mock()
             mock_factory.return_value = mock_command
             mock_command.params = Mock()
-            
+
             mock_formatter = Mock()
             mock_formatter_factory.return_value = mock_formatter
-            
+
             # Mock command failure
             failure_result = CommandResult(success=False, message="Error", exit_code=1)
             mock_asyncio_run.return_value = failure_result
-            
+
             # Execute command and expect typer.Exit
             with pytest.raises(typer.Exit) as exc_info:
                 handler._execute_check_command(
@@ -355,7 +355,7 @@ class TestCheckCommandHandler:
                     http_track_headers=False,
                     trace=True
                 )
-            
+
             # Verify exit code matches command result
             assert exc_info.value.exit_code == 1
 
@@ -363,15 +363,15 @@ class TestCheckCommandHandler:
     @patch('appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params')
     @patch('appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command')
     def test_execute_check_command_validation_failure(
-        self, 
-        mock_factory, 
+        self,
+        mock_factory,
         mock_formatter_factory,
         mock_asyncio_run
     ):
         """Test that validation failure raises typer.Exit."""
         with patch('appimage_updater.cli.handlers.check_handler.Console'):
             handler = CheckCommandHandler()
-            
+
             # Execute command with invalid options (yes and no both True)
             with pytest.raises(typer.Exit) as exc_info:
                 handler._execute_check_command(
@@ -391,10 +391,10 @@ class TestCheckCommandHandler:
                     http_track_headers=False,
                     trace=False
                 )
-            
+
             # Verify exit code is 1 for validation failure
             assert exc_info.value.exit_code == 1
-            
+
             # Verify factory was not called due to validation failure
             mock_factory.assert_not_called()
             mock_formatter_factory.assert_not_called()
@@ -404,19 +404,19 @@ class TestCheckCommandHandler:
         """Test execute command with comprehensive parameter set."""
         with patch('appimage_updater.cli.handlers.check_handler.Console'):
             handler = CheckCommandHandler()
-            
+
             with patch('appimage_updater.cli.handlers.check_handler.CommandFactory.create_check_command') as mock_factory, \
                  patch('appimage_updater.cli.handlers.check_handler.create_output_formatter_from_params') as mock_formatter_factory, \
                  patch('appimage_updater.cli.handlers.check_handler.asyncio.run') as mock_run:
-                
+
                     # Setup mocks
                     mock_command = Mock()
                     mock_factory.return_value = mock_command
                     mock_command.params = Mock()
-                    
+
                     success_result = CommandResult(success=True, message="Success")
                     mock_run.return_value = success_result
-                    
+
                     # Execute with comprehensive parameters
                     handler._execute_check_command(
                                 app_names=["App1", "App2"],
@@ -435,7 +435,7 @@ class TestCheckCommandHandler:
                                 http_track_headers=True,
                                 trace=True
                             )
-                            
+
                     # Verify factory called with all parameters
                     mock_factory.assert_called_once_with(
                         app_names=["App1", "App2"],

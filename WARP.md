@@ -513,7 +513,7 @@ Error editing application: Symlink path should end with '.AppImage': /tmp/invali
 
 # Path normalization and expansion
 $ appimage-updater edit MyApp --symlink-path "~/bin/../apps/test.AppImage"
-✓ Successfully updated configuration for 'MyApp'
+DONE Successfully updated configuration for 'MyApp'
 Changes made:
   • Symlink Path: None → /home/user/apps/test.AppImage
 
@@ -815,9 +815,9 @@ Comprehensive security through checksum verification:
 #### Compatibility Benefits
 
 - **🚫 Eliminates Download Errors**: No more "cannot execute binary file" errors
-- **⚡ Faster Selection**: Reduced noise = quicker decisions
+- **EXECUTE Faster Selection**: Reduced noise = quicker decisions
 - **TARGET Better UX**: Clear visual compatibility indicators
-- **🔒 Future-Proof**: Handles new architectures automatically
+- **LOCK Future-Proof**: Handles new architectures automatically
 - **REPORT Intelligent Scoring**: Prioritizes best compatibility matches
 
 ### GitHub Integration

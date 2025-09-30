@@ -3,11 +3,8 @@
 
 from unittest.mock import Mock, patch
 
-import pytest
-
 from appimage_updater.core.system_info import SystemInfo
 from appimage_updater.dist_selector.detection_utilities import _detect_current_distribution
-from appimage_updater.dist_selector.models import DistributionInfo
 
 
 class TestDetectCurrentDistribution:

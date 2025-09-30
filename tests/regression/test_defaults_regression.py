@@ -2,8 +2,8 @@
 """Regression tests for default configuration behavior."""
 
 import json
-import tempfile
 from pathlib import Path
+import tempfile
 
 import pytest
 

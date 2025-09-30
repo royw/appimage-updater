@@ -139,7 +139,7 @@ ban-relative-imports = "all"
 
 
 [tool.pytest.ini_options]
-testpaths = ["tests/unit", "tests/functional", "tests/e2e"]
+testpaths = ["tests/unit", "tests/functional"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

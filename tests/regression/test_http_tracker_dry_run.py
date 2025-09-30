@@ -1,10 +1,10 @@
 # type: ignore
 """Functional tests for HTTP tracker with --dry-run options."""
 
-import ast
-import subprocess
 from _ast import arg
+import ast
 from pathlib import Path
+import subprocess
 from typing import Any
 
 

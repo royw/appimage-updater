@@ -2,8 +2,8 @@
 """Functional tests for multi-app CLI command support."""
 
 import json
-import tempfile
 from pathlib import Path
+import tempfile
 
 import pytest
 from typer.testing import CliRunner

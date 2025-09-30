@@ -3,9 +3,9 @@
 
 import ast
 import os
+from pathlib import Path
 import socket
 import tempfile
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -110,53 +110,53 @@ def blocked_httpx_request(*args: Any, **kwargs: Any) -> None:
 
 class MockAsyncClient:
     """Mock httpx.AsyncClient that blocks network calls."""
-    
+
     def __init__(self, *args: Any, **kwargs: Any):
         pass
-    
+
     async def __aenter__(self) -> "MockAsyncClient":
         return self
-    
+
     async def __aexit__(self, *args: Any) -> None:
         pass
-    
+
     async def get(self, *args: Any, **kwargs: Any) -> None:
         raise NetworkBlockedError(
             "httpx.AsyncClient.get blocked during testing. "
             "Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
         )
-    
+
     async def post(self, *args: Any, **kwargs: Any) -> None:
         raise NetworkBlockedError(
             "httpx.AsyncClient.post blocked during testing. "
             "Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
         )
-    
+
     async def put(self, *args: Any, **kwargs: Any) -> None:
         raise NetworkBlockedError(
             "httpx.AsyncClient.put blocked during testing. "
             "Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
         )
-    
+
     async def delete(self, *args: Any, **kwargs: Any) -> None:
         raise NetworkBlockedError(
             "httpx.AsyncClient.delete blocked during testing. "
             "Use mocks or set PYTEST_ALLOW_NETWORK=1 to allow network calls."
         )
-    
+
     async def aclose(self) -> None:
         pass
-    
+
     def stream(self, *args: Any, **kwargs: Any) -> "MockAsyncClient":
         return self
-    
+
     def raise_for_status(self) -> None:
         pass
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    """Configure pytest with network blocking for non-regression tests."""
-    # Check if we're running regression tests
+    """Configure pytest with network blocking for non-regression and non-E2E tests."""
+    # Check if we're running regression tests (they need real network access)
     test_paths = config.getoption("file_or_dir", default=[])
     is_regression_test = any("regression" in str(path) for path in test_paths)
 
@@ -164,11 +164,31 @@ def pytest_configure(config: pytest.Config) -> None:
     if hasattr(config.option, 'keyword') and config.option.keyword:
         is_regression_test = is_regression_test or "regression" in config.option.keyword
 
+    # Check if we're running ONLY E2E tests (they handle their own network blocking with mocks)
+    # Only skip blocking if ALL paths are e2e paths AND no regression tests
+    is_only_e2e = (len(test_paths) > 0 and
+                   all("e2e" in str(path) for path in test_paths) and
+                   not is_regression_test)
+
+    # Check if ANY e2e tests are included (they need real httpx.AsyncClient for @patch decorators)
+    has_e2e_tests = any("e2e" in str(path) for path in test_paths)
+
     # Check environment variable override
     allow_network = os.environ.get("PYTEST_ALLOW_NETWORK", "").lower() in ("1", "true", "yes")
 
-    # Block network calls unless it's a regression test or explicitly allowed
-    if not is_regression_test and not allow_network:
+    # Debug output (can be removed after verification)
+    # print(f"\n[Global conftest] pytest_configure:")
+    # print(f"  test_paths: {test_paths}")
+    # print(f"  is_regression_test: {is_regression_test}")
+    # print(f"  is_only_e2e: {is_only_e2e}")
+    # print(f"  has_e2e_tests: {has_e2e_tests}")
+    # print(f"  allow_network: {allow_network}")
+    # print(f"  will_block_network: {not is_regression_test and not is_only_e2e and not allow_network}")
+    # print(f"  will_skip_httpx_AsyncClient_mock: {has_e2e_tests}")
+
+    # Block network calls unless it's a regression test, ONLY E2E tests, or explicitly allowed
+    # Regression tests always get network access
+    if not is_regression_test and not is_only_e2e and not allow_network:
         # Store originals for restoration
         socket._original_socket = socket.socket  # type: ignore
         socket._original_create_connection = socket.create_connection  # type: ignore
@@ -217,7 +237,7 @@ def pytest_configure(config: pytest.Config) -> None:
         except ImportError:
             pass
 
-        # Block httpx if available
+        # Block httpx if available (but skip AsyncClient mock if e2e tests are present)
         try:
             import httpx
             # Store originals for restoration
@@ -240,7 +260,11 @@ def pytest_configure(config: pytest.Config) -> None:
             httpx.head = blocked_httpx_request  # type: ignore
             httpx.options = blocked_httpx_request  # type: ignore
             httpx.request = blocked_httpx_request  # type: ignore
-            httpx.AsyncClient = lambda *args, **kwargs: MockAsyncClient()  # type: ignore
+
+            # Only replace AsyncClient if NO e2e tests are present
+            # E2E tests need the real AsyncClient for @patch decorators to work
+            if not has_e2e_tests:
+                httpx.AsyncClient = lambda *args, **kwargs: MockAsyncClient()  # type: ignore
         except ImportError:
             pass
 
@@ -457,10 +481,10 @@ def get_testable_commands() -> list[tuple[list[str], str]]:
         where command_args includes necessary flags to avoid interactive prompts
     """
     discovered_commands = discover_cli_commands()
-    
+
     # Map discovered commands to testable command configurations
     testable_commands = []
-    
+
     for command_name in discovered_commands:
         if command_name == "check":
             testable_commands.append((["check", "--dry-run"], "check"))
@@ -478,7 +502,7 @@ def get_testable_commands() -> list[tuple[list[str], str]]:
         elif command_name == "repository":
             # Repository command with a valid app name (using first available app)
             testable_commands.append(([command_name, "nonexistent"], command_name))
-    
+
     return testable_commands
 
 
@@ -515,8 +539,9 @@ def architecture_mappings():
 def platform_test_assets():
     """Fixture providing platform-specific test assets."""
     from datetime import datetime
+
     from appimage_updater.core.models import Asset
-    
+
     return [
         Asset(
             name="app-linux-x86_64.AppImage",
@@ -589,38 +614,38 @@ def distribution_test_data():
 def mock_http_client():
     """Fixture that provides a mock HTTP client for testing."""
     from unittest.mock import AsyncMock, MagicMock
-    
+
     mock_client = AsyncMock()
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = []
     mock_response.raise_for_status.return_value = None
-    
+
     mock_client.get.return_value = mock_response
     mock_client.post.return_value = mock_response
     mock_client.put.return_value = mock_response
     mock_client.delete.return_value = mock_response
-    
+
     return mock_client
 
 
 @pytest.fixture
 def mock_global_http_client(mock_http_client):
     """Fixture that mocks the GlobalHTTPClient singleton."""
-    from unittest.mock import patch, AsyncMock
-    
+    from unittest.mock import AsyncMock, patch
+
     mock_tracing_client = AsyncMock()
     mock_tracing_client.get = mock_http_client.get
     mock_tracing_client.post = mock_http_client.post
     mock_tracing_client.put = mock_http_client.put
     mock_tracing_client.delete = mock_http_client.delete
     mock_tracing_client.stream = mock_http_client.stream
-    
+
     mock_global_client = AsyncMock()
     mock_global_client.get_client.return_value = mock_tracing_client
     mock_global_client.set_tracer.return_value = None
     mock_global_client.close.return_value = None
-    
+
     with patch('appimage_updater.core.http_service.GlobalHTTPClient', return_value=mock_global_client):
         yield mock_global_client
 
@@ -628,8 +653,8 @@ def mock_global_http_client(mock_http_client):
 @pytest.fixture
 def mock_http_trace():
     """Fixture that mocks the HTTPTrace singleton."""
-    from unittest.mock import patch, MagicMock
-    
+    from unittest.mock import MagicMock, patch
+
     mock_tracer = MagicMock()
     mock_tracer.enabled = False
     mock_tracer.output_formatter = None
@@ -637,7 +662,7 @@ def mock_http_trace():
     mock_tracer.trace_response.return_value = None
     mock_tracer.trace_error.return_value = None
     mock_tracer.set_output_formatter.return_value = None
-    
+
     with patch('appimage_updater.core.http_trace.getHTTPTrace', return_value=mock_tracer):
         yield mock_tracer
 

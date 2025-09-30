@@ -1,16 +1,16 @@
 # type: ignore
 """Tests for automatic prerelease detection feature in add command."""
 
-import json
 from datetime import datetime
+import json
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from typer.testing import CliRunner
 
 from appimage_updater.core.models import Asset, Release
-from appimage_updater.main import app
 from appimage_updater.core.pattern_generator import should_enable_prerelease
+from appimage_updater.main import app
 from appimage_updater.repositories.base import RepositoryError
 
 

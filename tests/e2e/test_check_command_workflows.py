@@ -8,8 +8,8 @@ This allows running before build while maintaining comprehensive workflow testin
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
+import tempfile
 
 import pytest
 from typer.testing import CliRunner
@@ -30,7 +30,7 @@ class TestCheckCommandWorkflows:
         """Create a temporary config directory with a test application."""
         with tempfile.TemporaryDirectory() as tmp_dir:
             config_dir = Path(tmp_dir)
-            
+
             # Create a test app configuration with all required fields
             app_config = {
                 "applications": [
@@ -54,31 +54,31 @@ class TestCheckCommandWorkflows:
                     }
                 ]
             }
-            
+
             # Write the config file
             config_file = config_dir / "testapp.json"
             with config_file.open("w") as f:
                 json.dump(app_config, f, indent=2)
-            
+
             yield config_dir
 
     def test_check_command_dry_run_shows_correct_output(self, runner, temp_config_with_app):
         """Test that check --dry-run shows proper application data and status."""
         # This test verifies the fix for empty field values issue
         result = runner.invoke(app, ["check", "TestApp", "--dry-run", "--config-dir", str(temp_config_with_app)])
-        
+
         assert result.exit_code == 0
-        
+
         # Verify expected content appears in output
         expected_indicators = [
             "TestApp",  # Should show the app name
             "Not checked",  # Should show dry-run status for latest version
             "(dry-run)",  # Should show dry-run indicator
         ]
-        
+
         for indicator in expected_indicators:
             assert indicator in result.stdout, f"Expected to see '{indicator}' in output"
-        
+
         # Verify we don't see error indicators
         assert "No candidate" not in result.stdout
         assert "Unknown error" not in result.stdout
@@ -86,13 +86,13 @@ class TestCheckCommandWorkflows:
     def test_check_command_with_format_options(self, runner, temp_config_with_app):
         """Test that check command works with different format options."""
         formats = ["rich", "plain", "json", "html"]
-        
+
         for format_type in formats:
             result = runner.invoke(app, ["check", "TestApp", "--dry-run", "--format", format_type, "--config-dir", str(temp_config_with_app)])
-            
+
             # All formats should succeed
             assert result.exit_code == 0, f"Format {format_type} failed: {result.stdout}"
-            
+
             # All formats should show the application name (except JSON which structures differently)
             if format_type != "json":
                 assert "TestApp" in result.stdout, f"Format {format_type} missing app name"
@@ -100,13 +100,13 @@ class TestCheckCommandWorkflows:
     def test_check_command_handles_nonexistent_app(self, runner, temp_config_with_app):
         """Test that check command handles non-existent applications gracefully."""
         result = runner.invoke(app, ["check", "NonExistentApp123", "--config-dir", str(temp_config_with_app)])
-        
+
         # Should handle gracefully with controlled failure
         assert result.exit_code == 1
-        
+
         # Should show helpful error message
         assert "Applications not found" in result.stdout
-        
+
         # Should not crash with unhandled exceptions
         assert "Traceback" not in result.stdout
         assert "Traceback" not in result.stderr if result.stderr else True

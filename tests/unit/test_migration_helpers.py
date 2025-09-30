@@ -29,11 +29,11 @@ class TestAppConfigsDirectUsage:
         """Test that path resolution logic works as expected."""
         config_file = Path("/test/config.json")
         config_dir = Path("/test/dir")
-        
+
         # Test file takes precedence
         resolved_path = config_file or config_dir
         assert resolved_path == config_file
-        
+
         # Test directory fallback
         resolved_path = None or config_dir
         assert resolved_path == config_dir

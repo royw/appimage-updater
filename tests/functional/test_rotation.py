@@ -5,8 +5,8 @@ These tests verify both rotation-disabled and rotation-enabled scenarios,
 including symlink management, file rotation, and cleanup behavior.
 """
 
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import patch
 
 import pytest
@@ -14,6 +14,7 @@ import pytest
 from appimage_updater.config.models import ApplicationConfig, ChecksumConfig
 from appimage_updater.core.downloader import Downloader
 from appimage_updater.core.models import Asset, UpdateCandidate, rebuild_models
+
 
 # Rebuild models to resolve forward references for testing
 rebuild_models()

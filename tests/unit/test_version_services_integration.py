@@ -1,12 +1,10 @@
 # type: ignore
 """Integration tests for centralized version services architecture."""
 
-import pytest
 from pathlib import Path
-from unittest.mock import Mock
 
-from appimage_updater.core.version_service import version_service
 from appimage_updater.config.models import ApplicationConfig
+from appimage_updater.core.version_service import version_service
 
 
 class TestVersionServicesIntegration:
@@ -17,7 +15,7 @@ class TestVersionServicesIntegration:
         # Should extract version numbers
         assert version_service.extract_version_from_filename("MyApp-v1.2.3-linux-x86_64.AppImage") == "1.2.3"
         assert version_service.extract_version_from_filename("Tool-2.1.0-x86_64.AppImage") == "2.1.0"
-        
+
         # Should exclude git hashes
         assert version_service.extract_version_from_filename("Inkscape-9dee831-x86_64.AppImage") is None
         assert version_service.extract_version_from_filename("App-abc1234-linux.AppImage") is None
@@ -27,11 +25,11 @@ class TestVersionServicesIntegration:
         # Should create flexible patterns that eliminate variable parts
         pattern1 = version_service.generate_pattern_from_filename("MyApp-v1.2.3-linux-x86_64.AppImage")
         pattern2 = version_service.generate_pattern_from_filename("Inkscape-9dee831-x86_64.AppImage")
-        
+
         assert "MyApp" in pattern1
         assert "(?i)" in pattern1  # Case insensitive
         assert ".*" in pattern1    # Flexible matching
-        
+
         assert "Inkscape" in pattern2
         assert "9dee831" not in pattern2  # Git hash excluded
         assert "x86_64" not in pattern2   # Architecture excluded
@@ -42,7 +40,7 @@ class TestVersionServicesIntegration:
         assert version_service.compare_versions("1.0.0", "1.0.1") is True
         assert version_service.compare_versions("1.0.1", "1.0.0") is False
         assert version_service.compare_versions("1.0.0", "1.0.0") is False
-        
+
         # Handle None values
         assert version_service.compare_versions(None, "1.0.0") is True
         assert version_service.compare_versions("1.0.0", None) is True
@@ -52,7 +50,7 @@ class TestVersionServicesIntegration:
         # Version normalization is now handled by the parser internally
         # This test is kept for backward compatibility but doesn't test the removed method
         assert True  # Placeholder test
-        
+
     def test_info_file_operations(self):
         """Test info file service operations."""
         # Create a mock config
@@ -64,7 +62,7 @@ class TestVersionServicesIntegration:
             pattern="(?i)^TestApp.*\\.AppImage$",
             prerelease=False
         )
-        
+
         # Test finding info file (will return None for non-existent path)
         info_file = version_service.find_info_file(config)
         # Should return a Path object even if file doesn't exist
@@ -74,16 +72,16 @@ class TestVersionServicesIntegration:
         """Test that all services work together consistently."""
         # Test that the same filename produces consistent results across services
         filename = "MyApp-v2.1.0-linux-x86_64.AppImage"
-        
+
         # Extract version
         version = version_service.extract_version_from_filename(filename)
         assert version == "2.1.0"
-        
+
         # Generate pattern
         pattern = version_service.generate_pattern_from_filename(filename)
         assert "MyApp" in pattern
         assert "2.1.0" not in pattern  # Version should be eliminated for flexibility
-        
+
         # Version is already normalized by the extraction process
         assert version == "2.1.0"
 
@@ -91,20 +89,20 @@ class TestVersionServicesIntegration:
         """Test that the migration maintains backward compatibility."""
         # These are the core operations that existing code relies on
         # They should all work without errors
-        
+
         # Version extraction
         result = version_service.extract_version_from_filename("test-1.0.0.AppImage")
         assert result == "1.0.0"
-        
-        # Pattern generation  
+
+        # Pattern generation
         result = version_service.generate_pattern_from_filename("test-1.0.0.AppImage")
         assert isinstance(result, str)
         assert len(result) > 0
-        
+
         # Version comparison
         result = version_service.compare_versions("1.0.0", "1.0.1")
         assert isinstance(result, bool)
-        
+
         # Version normalization is handled internally by the parser
         # This test is kept for backward compatibility
         assert True  # Placeholder test
@@ -116,11 +114,11 @@ class TestMigrationBenefits:
     def test_consistent_git_hash_handling(self):
         """Test that git hash handling is consistent across all operations."""
         git_hash_filename = "App-abc1234-x86_64.AppImage"
-        
+
         # Version extraction should exclude git hash
         version = version_service.extract_version_from_filename(git_hash_filename)
         assert version is None
-        
+
         # Pattern generation should exclude git hash
         pattern = version_service.generate_pattern_from_filename(git_hash_filename)
         assert "abc1234" not in pattern
@@ -129,11 +127,11 @@ class TestMigrationBenefits:
     def test_consistent_architecture_handling(self):
         """Test that architecture handling is consistent across all operations."""
         arch_filename = "MyApp-v1.0.0-x86_64.AppImage"
-        
+
         # Version extraction should work despite architecture
         version = version_service.extract_version_from_filename(arch_filename)
         assert version == "1.0.0"
-        
+
         # Pattern generation should exclude architecture for flexibility
         pattern = version_service.generate_pattern_from_filename(arch_filename)
         assert "x86_64" not in pattern
@@ -143,7 +141,7 @@ class TestMigrationBenefits:
         """Test that there's now a single source of truth for version operations."""
         # All version operations should go through version_service
         # This test verifies the service is accessible and functional
-        
+
         assert hasattr(version_service, 'extract_version_from_filename')
         assert hasattr(version_service, 'generate_pattern_from_filename')
         assert hasattr(version_service, 'compare_versions')
@@ -151,7 +149,7 @@ class TestMigrationBenefits:
         assert hasattr(version_service, 'find_info_file')
         assert hasattr(version_service, 'read_info_file')
         assert hasattr(version_service, 'write_info_file')
-        
+
         # All methods should be callable
         assert callable(version_service.extract_version_from_filename)
         assert callable(version_service.generate_pattern_from_filename)

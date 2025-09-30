@@ -1,10 +1,7 @@
 # type: ignore
 """Tests for CLI error handling utilities."""
 
-from unittest.mock import Mock, patch, MagicMock
-from typing import Any
-
-import pytest
+from unittest.mock import Mock, patch
 
 from appimage_updater.ui.cli.error_handling import (
     _classify_error,
@@ -117,11 +114,11 @@ class TestDisplayErrorMessage:
     def test_display_rate_limit_error(self, mock_console: Mock) -> None:
         """Test display of rate limit error message."""
         _display_error_message("rate_limit", "TestApp", "Rate limit exceeded")
-        
+
         # Verify rate limit specific messages were displayed
         assert mock_console.print.call_count == 3
         calls = mock_console.print.call_args_list
-        
+
         assert "Failed to add application 'TestApp': GitHub API rate limit exceeded" in str(calls[0])
         assert "Try again later or set up GitHub authentication" in str(calls[1])
         assert "https://docs.github.com/en/authentication" in str(calls[2])
@@ -130,11 +127,11 @@ class TestDisplayErrorMessage:
     def test_display_not_found_error(self, mock_console: Mock) -> None:
         """Test display of not found error message."""
         _display_error_message("not_found", "TestApp", "Repository not found")
-        
+
         # Verify not found specific messages were displayed
         assert mock_console.print.call_count == 2
         calls = mock_console.print.call_args_list
-        
+
         assert "Failed to add application 'TestApp': Repository not found" in str(calls[0])
         assert "Please check that the URL is correct" in str(calls[1])
 
@@ -142,11 +139,11 @@ class TestDisplayErrorMessage:
     def test_display_network_error(self, mock_console: Mock) -> None:
         """Test display of network error message."""
         _display_error_message("network", "TestApp", "Connection timeout")
-        
+
         # Verify network specific messages were displayed
         assert mock_console.print.call_count == 2
         calls = mock_console.print.call_args_list
-        
+
         assert "Failed to add application 'TestApp': Network connection error" in str(calls[0])
         assert "Please check your internet connection" in str(calls[1])
 
@@ -155,11 +152,11 @@ class TestDisplayErrorMessage:
         """Test display of generic error message."""
         error_msg = "Some unexpected error"
         _display_error_message("generic", "TestApp", error_msg)
-        
+
         # Verify generic error messages were displayed
         assert mock_console.print.call_count == 2
         calls = mock_console.print.call_args_list
-        
+
         assert f"Failed to add application 'TestApp': {error_msg}" in str(calls[0])
         assert "Use --debug for more detailed error information" in str(calls[1])
 
@@ -174,15 +171,15 @@ class TestHandleAddError:
         """Test complete add error handling flow."""
         mock_classify.return_value = "rate_limit"
         exception = Exception("Rate limit exceeded")
-        
+
         _handle_add_error(exception, "TestApp")
-        
+
         # Verify error was classified
         mock_classify.assert_called_once_with("Rate limit exceeded")
-        
+
         # Verify error message was displayed
         mock_display.assert_called_once_with("rate_limit", "TestApp", "Rate limit exceeded")
-        
+
         # Verify exception was logged
         mock_logger.exception.assert_called_once_with("Full exception details")
 
@@ -197,14 +194,14 @@ class TestHandleAddError:
             FileNotFoundError("File not found"),
             RuntimeError("Runtime error")
         ]
-        
+
         for exception in exceptions:
             _handle_add_error(exception, "TestApp")
-            
+
             # Verify display was called with error message
             mock_display.assert_called()
             mock_logger.exception.assert_called_with("Full exception details")
-            
+
             # Reset mocks for next iteration
             mock_display.reset_mock()
             mock_logger.reset_mock()
@@ -219,9 +216,9 @@ class TestLogRepositoryAuthStatus:
         """Test successful repository auth status logging."""
         mock_client = Mock()
         mock_get_client.return_value = mock_client
-        
+
         _log_repository_auth_status("https://github.com/user/repo")
-        
+
         # Verify client was obtained and auth status logged
         mock_get_client.assert_called_once_with("https://github.com/user/repo")
         mock_log_client.assert_called_once_with(mock_client)
@@ -231,9 +228,9 @@ class TestLogRepositoryAuthStatus:
     def test_log_repository_auth_status_exception(self, mock_logger: Mock, mock_get_client: Mock) -> None:
         """Test repository auth status logging with exception."""
         mock_get_client.side_effect = Exception("Client error")
-        
+
         _log_repository_auth_status("https://github.com/user/repo")
-        
+
         # Verify exception was logged
         mock_logger.debug.assert_called_once_with("Could not determine repository authentication status: Client error")
 
@@ -247,9 +244,9 @@ class TestLogClientAuthStatus:
         mock_client = Mock()
         mock_github_client = Mock()
         mock_client._client = mock_github_client
-        
+
         _log_client_auth_status(mock_client)
-        
+
         # Verify GitHub auth status was logged
         mock_log_github.assert_called_once_with(mock_github_client)
 
@@ -258,9 +255,9 @@ class TestLogClientAuthStatus:
         """Test logging auth status for client without _client attribute."""
         mock_client = Mock(spec=[])  # Mock without _client attribute
         del mock_client._client  # Ensure _client doesn't exist
-        
+
         _log_client_auth_status(mock_client)
-        
+
         # Verify client type was logged
         mock_logger.debug.assert_called_once()
         call_args = mock_logger.debug.call_args[0][0]
@@ -277,9 +274,9 @@ class TestLogGithubAuthStatus:
         mock_auth = Mock()
         mock_auth.token = "test_token"
         mock_client.auth = mock_auth
-        
+
         _log_github_auth_status(mock_client)
-        
+
         # Verify token configured message was logged
         mock_logger.debug.assert_called_once_with("GitHub authentication: Token configured")
 
@@ -290,9 +287,9 @@ class TestLogGithubAuthStatus:
         mock_auth = Mock()
         mock_auth.token = None
         mock_client.auth = mock_auth
-        
+
         _log_github_auth_status(mock_client)
-        
+
         # Verify no token message was logged
         mock_logger.debug.assert_called_once_with("GitHub authentication: No token configured")
 
@@ -301,9 +298,9 @@ class TestLogGithubAuthStatus:
         """Test logging GitHub auth status with no auth."""
         mock_client = Mock()
         mock_client.auth = None
-        
+
         _log_github_auth_status(mock_client)
-        
+
         # Verify no authentication message was logged
         mock_logger.debug.assert_called_once_with("GitHub authentication: No authentication configured")
 
@@ -312,9 +309,9 @@ class TestLogGithubAuthStatus:
         """Test logging GitHub auth status with no auth attribute."""
         mock_client = Mock(spec=[])  # Mock without auth attribute
         del mock_client.auth  # Ensure auth doesn't exist
-        
+
         _log_github_auth_status(mock_client)
-        
+
         # Verify no authentication message was logged
         mock_logger.debug.assert_called_once_with("GitHub authentication: No authentication configured")
 
@@ -328,7 +325,7 @@ class TestHandleVerboseLogging:
     def test_handle_verbose_logging_enabled(self, mock_console: Mock, mock_log_auth: Mock, mock_log_params: Mock) -> None:
         """Test verbose logging when enabled."""
         resolved_params = {"test": "value"}
-        
+
         _handle_verbose_logging(
             verbose=True,
             name="TestApp",
@@ -344,22 +341,22 @@ class TestHandleVerboseLogging:
             config_dir="/test/config",
             resolved_params=resolved_params
         )
-        
+
         # Verify console output
         assert mock_console.print.call_count == 2
         calls = mock_console.print.call_args_list
         assert "Adding application: TestApp" in str(calls[0])
         assert "Repository URL: https://github.com/user/repo" in str(calls[1])
-        
+
         # Verify auth status was logged
         mock_log_auth.assert_called_once_with("https://github.com/user/repo")
-        
+
         # Verify parameters were logged
         mock_log_params.assert_called_once()
         call_args = mock_log_params.call_args
         assert call_args[0][0] == "add"
         assert call_args[0][1] == resolved_params
-        
+
         # Verify original parameters were passed correctly
         original_params = call_args[0][2]
         assert original_params["download_dir"] == "/test/dir"
@@ -386,7 +383,7 @@ class TestHandleVerboseLogging:
             config_dir=None,
             resolved_params={}
         )
-        
+
         # Verify no logging occurred
         mock_console.print.assert_not_called()
         mock_log_auth.assert_not_called()
@@ -398,7 +395,7 @@ class TestHandleVerboseLogging:
     def test_handle_verbose_logging_with_none_values(self, mock_console: Mock, mock_log_auth: Mock, mock_log_params: Mock) -> None:
         """Test verbose logging with None values."""
         resolved_params = {"test": "value"}
-        
+
         _handle_verbose_logging(
             verbose=True,
             name="TestApp",
@@ -414,12 +411,12 @@ class TestHandleVerboseLogging:
             config_dir=None,
             resolved_params=resolved_params
         )
-        
+
         # Verify logging still occurred
         mock_console.print.assert_called()
         mock_log_auth.assert_called_once()
         mock_log_params.assert_called_once()
-        
+
         # Verify None values were passed correctly
         call_args = mock_log_params.call_args
         original_params = call_args[0][2]

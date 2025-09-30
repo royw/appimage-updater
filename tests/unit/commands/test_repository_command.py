@@ -9,8 +9,8 @@ from unittest.mock import Mock, patch
 import pytest
 
 from appimage_updater.commands.base import CommandResult
-from appimage_updater.commands.repository_command import RepositoryCommand
 from appimage_updater.commands.parameters import RepositoryParams
+from appimage_updater.commands.repository_command import RepositoryCommand
 
 
 class TestRepositoryCommand:
@@ -26,7 +26,7 @@ class TestRepositoryCommand:
             limit=20
         )
         command = RepositoryCommand(params)
-        
+
         assert command.params == params
         assert command.console is not None
 
@@ -34,7 +34,7 @@ class TestRepositoryCommand:
         """Test successful validation with app names provided."""
         params = RepositoryParams(app_names=["TestApp", "AnotherApp"])
         command = RepositoryCommand(params)
-        
+
         validation_errors = command.validate()
         assert validation_errors == []
 
@@ -42,7 +42,7 @@ class TestRepositoryCommand:
         """Test validation error when app names are missing."""
         params = RepositoryParams(app_names=None)
         command = RepositoryCommand(params)
-        
+
         validation_errors = command.validate()
         assert "At least one application name is required" in validation_errors
 
@@ -50,7 +50,7 @@ class TestRepositoryCommand:
         """Test validation error when app names list is empty."""
         params = RepositoryParams(app_names=[])
         command = RepositoryCommand(params)
-        
+
         validation_errors = command.validate()
         assert "At least one application name is required" in validation_errors
 
@@ -61,17 +61,17 @@ class TestRepositoryCommand:
         params = RepositoryParams(app_names=["TestApp"], debug=True)
         command = RepositoryCommand(params)
         mock_formatter = Mock()
-        
+
         success_result = CommandResult(success=True, message="Success")
         with patch.object(command, '_execute_main_repository_workflow', return_value=success_result) as mock_workflow:
             result = await command.execute(output_formatter=mock_formatter)
-        
+
         # Verify logging was configured
         mock_configure_logging.assert_called_once_with(debug=True)
-        
+
         # Verify workflow was executed
         mock_workflow.assert_called_once_with(mock_formatter)
-        
+
         # Verify success result
         assert result.success is True
         assert result.message == "Success"
@@ -82,17 +82,17 @@ class TestRepositoryCommand:
         """Test successful execution without output formatter."""
         params = RepositoryParams(app_names=["TestApp"], debug=False)
         command = RepositoryCommand(params)
-        
+
         success_result = CommandResult(success=True, message="Success")
         with patch.object(command, '_execute_main_repository_workflow', return_value=success_result) as mock_workflow:
             result = await command.execute()
-        
+
         # Verify logging was configured
         mock_configure_logging.assert_called_once_with(debug=False)
-        
+
         # Verify workflow was executed
         mock_workflow.assert_called_once_with(None)
-        
+
         # Verify success result
         assert result.success is True
 
@@ -103,11 +103,11 @@ class TestRepositoryCommand:
         """Test execution with unexpected exception."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
-        
+
         test_exception = Exception("Test error")
         with patch.object(command, '_execute_main_repository_workflow', side_effect=test_exception):
             result = await command.execute()
-        
+
         # Verify error handling was called
         assert result.success is False
         assert result.message == "Test error"
@@ -119,12 +119,12 @@ class TestRepositoryCommand:
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
         mock_formatter = Mock()
-        
+
         with patch.object(command, '_execute_with_formatter_context') as mock_with_context:
             mock_with_context.return_value = CommandResult(success=True, message="Success")
-            
+
             result = await command._execute_main_repository_workflow(mock_formatter)
-        
+
         mock_with_context.assert_called_once_with(mock_formatter)
         assert result.success is True
 
@@ -133,12 +133,12 @@ class TestRepositoryCommand:
         """Test main workflow execution without formatter."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
-        
+
         with patch.object(command, '_execute_without_formatter') as mock_without:
             mock_without.return_value = CommandResult(success=True, message="Success")
-            
+
             result = await command._execute_main_repository_workflow(None)
-        
+
         mock_without.assert_called_once()
         assert result.success is True
 
@@ -148,14 +148,14 @@ class TestRepositoryCommand:
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
         mock_formatter = Mock()
-        
+
         with patch.object(command, '_validate_with_formatter_error_display', return_value=None):
             with patch.object(command, '_execute_repository_operation', return_value=True):
                 with patch.object(command, '_create_repository_result') as mock_create:
                     mock_create.return_value = CommandResult(success=True, message="Success")
-                    
+
                     result = await command._execute_with_formatter_context(mock_formatter)
-        
+
         mock_create.assert_called_once_with(True)
         assert result.success is True
 
@@ -165,11 +165,11 @@ class TestRepositoryCommand:
         params = RepositoryParams(app_names=[])  # Empty app names
         command = RepositoryCommand(params)
         mock_formatter = Mock()
-        
+
         validation_error = CommandResult(success=False, message="Validation failed", exit_code=1)
         with patch.object(command, '_validate_with_formatter_error_display', return_value=validation_error):
             result = await command._execute_with_formatter_context(mock_formatter)
-        
+
         assert result.success is False
         assert result.message == "Validation failed"
 
@@ -178,14 +178,14 @@ class TestRepositoryCommand:
         """Test execution without formatter - success path."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
-        
+
         with patch.object(command, '_validate_with_console_error_display', return_value=None):
             with patch.object(command, '_execute_repository_operation', return_value=True):
                 with patch.object(command, '_create_repository_result') as mock_create:
                     mock_create.return_value = CommandResult(success=True, message="Success")
-                    
+
                     result = await command._execute_without_formatter()
-        
+
         mock_create.assert_called_once_with(True)
         assert result.success is True
 
@@ -193,21 +193,21 @@ class TestRepositoryCommand:
         """Test validation with formatter - success."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
-        
+
         with patch.object(command, 'validate', return_value=[]):
             result = command._validate_with_formatter_error_display()
-        
+
         assert result is None
 
     def test_validate_with_formatter_error_display_errors(self):
         """Test validation with formatter - errors."""
         params = RepositoryParams(app_names=[])
         command = RepositoryCommand(params)
-        
+
         with patch.object(command, 'validate', return_value=["At least one application name is required"]):
             with patch.object(command, '_display_validation_error_with_formatter') as mock_display:
                 result = command._validate_with_formatter_error_display()
-        
+
         mock_display.assert_called_once_with("Validation errors: At least one application name is required")
         assert result is not None
         assert result.success is False
@@ -217,21 +217,21 @@ class TestRepositoryCommand:
         """Test validation with console - success."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
-        
+
         with patch.object(command, 'validate', return_value=[]):
             result = command._validate_with_console_error_display()
-        
+
         assert result is None
 
     def test_validate_with_console_error_display_errors(self):
         """Test validation with console - errors."""
         params = RepositoryParams(app_names=[])
         command = RepositoryCommand(params)
-        
+
         with patch.object(command, 'validate', return_value=["At least one application name is required"]):
             with patch.object(command.console, 'print') as mock_console_print:
                 result = command._validate_with_console_error_display()
-        
+
         mock_console_print.assert_called_once()
         error_call = mock_console_print.call_args[0][0]
         assert "Validation errors" in error_call
@@ -243,12 +243,12 @@ class TestRepositoryCommand:
         """Test validation error display with formatter."""
         params = RepositoryParams(app_names=[])
         command = RepositoryCommand(params)
-        
+
         mock_formatter = Mock()
         mock_get_formatter.return_value = mock_formatter
-        
+
         command._display_validation_error_with_formatter("Test error")
-        
+
         mock_formatter.print_error.assert_called_once_with("Test error")
 
     @patch('appimage_updater.commands.repository_command.get_output_formatter')
@@ -256,12 +256,12 @@ class TestRepositoryCommand:
         """Test validation error display without formatter."""
         params = RepositoryParams(app_names=[])
         command = RepositoryCommand(params)
-        
+
         mock_get_formatter.return_value = None
-        
+
         with patch.object(command.console, 'print') as mock_console_print:
             command._display_validation_error_with_formatter("Test error")
-        
+
         mock_console_print.assert_called_once()
         error_call = mock_console_print.call_args[0][0]
         assert "Test error" in error_call
@@ -270,9 +270,9 @@ class TestRepositoryCommand:
         """Test repository result creation - success."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
-        
+
         result = command._create_repository_result(True)
-        
+
         assert result.success is True
         assert result.message == "Repository examination completed successfully"
         assert result.exit_code == 0
@@ -281,9 +281,9 @@ class TestRepositoryCommand:
         """Test repository result creation - failure."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
-        
+
         result = command._create_repository_result(False)
-        
+
         assert result.success is False
         assert result.message == "Repository examination failed"
         assert result.exit_code == 1
@@ -293,13 +293,13 @@ class TestRepositoryCommand:
         """Test repository execution error handling."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
-        
+
         test_error = Exception("Test error")
         result = command._handle_repository_execution_error(test_error)
-        
+
         mock_logger.error.assert_called_once_with("Unexpected error in repository command: Test error")
         mock_logger.exception.assert_called_once_with("Full exception details")
-        
+
         assert result.success is False
         assert result.message == "Test error"
         assert result.exit_code == 1
@@ -317,11 +317,11 @@ class TestRepositoryCommand:
             dry_run=True
         )
         command = RepositoryCommand(params)
-        
+
         mock_examine.return_value = True
-        
+
         result = await command._execute_repository_operation()
-        
+
         mock_examine.assert_called_once_with(
             config_file=Path("/test/config.json"),
             config_dir=Path("/test/config"),
@@ -330,7 +330,7 @@ class TestRepositoryCommand:
             show_assets=True,
             dry_run=True
         )
-        
+
         assert result is True
 
     @patch('appimage_updater.commands.repository_command._examine_repositories')
@@ -339,11 +339,11 @@ class TestRepositoryCommand:
         """Test failed repository operation execution."""
         params = RepositoryParams(app_names=["NonExistentApp"])
         command = RepositoryCommand(params)
-        
+
         mock_examine.return_value = False
-        
+
         result = await command._execute_repository_operation()
-        
+
         mock_examine.assert_called_once_with(
             config_file=None,
             config_dir=None,
@@ -352,7 +352,7 @@ class TestRepositoryCommand:
             show_assets=False,  # Default value
             dry_run=False  # Default value
         )
-        
+
         assert result is False
 
     @patch('appimage_updater.commands.repository_command._examine_repositories')
@@ -361,11 +361,11 @@ class TestRepositoryCommand:
         """Test repository operation execution with None app names."""
         params = RepositoryParams(app_names=None)
         command = RepositoryCommand(params)
-        
+
         mock_examine.return_value = True
-        
+
         result = await command._execute_repository_operation()
-        
+
         # Verify None app_names is converted to empty list
         mock_examine.assert_called_once_with(
             config_file=None,
@@ -375,7 +375,7 @@ class TestRepositoryCommand:
             show_assets=False,
             dry_run=False
         )
-        
+
         assert result is True
 
     @patch('appimage_updater.commands.repository_command._examine_repositories')
@@ -384,11 +384,11 @@ class TestRepositoryCommand:
         """Test repository operation execution with all default parameters."""
         params = RepositoryParams(app_names=["TestApp"])  # Only app_names specified
         command = RepositoryCommand(params)
-        
+
         mock_examine.return_value = True
-        
+
         result = await command._execute_repository_operation()
-        
+
         # Verify all default values are used
         mock_examine.assert_called_once_with(
             config_file=None,
@@ -398,7 +398,7 @@ class TestRepositoryCommand:
             show_assets=False,
             dry_run=False
         )
-        
+
         assert result is True
 
     @patch('appimage_updater.commands.repository_command._examine_repositories')
@@ -414,11 +414,11 @@ class TestRepositoryCommand:
             dry_run=True
         )
         command = RepositoryCommand(params)
-        
+
         mock_examine.return_value = True
-        
+
         result = await command._execute_repository_operation()
-        
+
         # Verify custom values are passed correctly
         mock_examine.assert_called_once_with(
             config_file=Path("/custom/config.json"),
@@ -428,5 +428,5 @@ class TestRepositoryCommand:
             show_assets=True,
             dry_run=True
         )
-        
+
         assert result is True

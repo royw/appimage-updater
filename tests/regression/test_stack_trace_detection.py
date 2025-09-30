@@ -6,9 +6,9 @@ that might not appear in unit test environments.
 """
 
 import os
+from pathlib import Path
 import subprocess
 import tempfile
-from pathlib import Path
 
 import pytest
 

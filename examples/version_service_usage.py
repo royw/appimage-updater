@@ -19,7 +19,7 @@ from appimage_updater.core.version_service import version_service
 async def demonstrate_version_services():
     """Demonstrate the new centralized version services."""
     
-    print("🎯 Centralized Version Services Architecture Demo")
+    print("TARGET Centralized Version Services Architecture Demo")
     print("=" * 60)
     
     # Create example application config
@@ -44,9 +44,9 @@ async def demonstrate_version_services():
     print(f"Current Version: {current_version}")
     
     if current_version:
-        print("✅ Found version from .info file")
+        print("PASS Found version from .info file")
     else:
-        print("❌ No current version detected")
+        print("FAIL No current version detected")
     
     # === REPOSITORY VERSION DETECTION ===
     print(f"\n🌐 REPOSITORY VERSION DETECTION")
@@ -56,9 +56,9 @@ async def demonstrate_version_services():
     print(f"Latest Version: {latest_version}")
     
     if latest_version:
-        print("✅ Successfully retrieved from repository")
+        print("PASS Successfully retrieved from repository")
     else:
-        print("❌ Failed to get latest version")
+        print("FAIL Failed to get latest version")
     
     # === VERSION COMPARISON ===
     print(f"\n⚖️  VERSION COMPARISON")
@@ -71,12 +71,12 @@ async def demonstrate_version_services():
         if update_available:
             print("🔄 Update recommended")
         else:
-            print("✅ Application is up to date")
+            print("PASS Application is up to date")
     else:
         print("❓ Cannot compare versions (missing data)")
     
     # === PATTERN GENERATION ===
-    print(f"\n🎯 PATTERN GENERATION")
+    print(f"\nTARGET PATTERN GENERATION")
     print("-" * 21)
     
     # From repository
@@ -89,7 +89,7 @@ async def demonstrate_version_services():
     print(f"Filename Pattern: {file_pattern}")
     
     # === VERSION PARSING ===
-    print(f"\n🔍 VERSION PARSING")
+    print(f"\nSEARCH VERSION PARSING")
     print("-" * 18)
     
     # Test with git hash (should return None)
@@ -103,16 +103,16 @@ async def demonstrate_version_services():
     print(f"From '{version_file}': {extracted_version2}")
     
     # === ARCHITECTURE BENEFITS ===
-    print(f"\n🏗️  ARCHITECTURE BENEFITS")
+    print(f"\nBUILD  ARCHITECTURE BENEFITS")
     print("-" * 26)
-    print("✅ Single Responsibility: Each service has one clear purpose")
-    print("✅ Centralized Logic: No more scattered version processing")
-    print("✅ Consistent Results: Same logic used everywhere")
-    print("✅ Easy Testing: Services can be tested independently")
-    print("✅ Repository Agnostic: Works with any repository type")
-    print("✅ Maintainable: Changes in one place affect entire system")
+    print("PASS Single Responsibility: Each service has one clear purpose")
+    print("PASS Centralized Logic: No more scattered version processing")
+    print("PASS Consistent Results: Same logic used everywhere")
+    print("PASS Easy Testing: Services can be tested independently")
+    print("PASS Repository Agnostic: Works with any repository type")
+    print("PASS Maintainable: Changes in one place affect entire system")
     
-    print(f"\n🎉 Demo Complete!")
+    print(f"\nCOMPLETE Demo Complete!")
 
 
 if __name__ == "__main__":

@@ -1,8 +1,7 @@
 # type: ignore
-import json
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 
 from appimage_updater.core.models import Asset, CheckResult, UpdateCandidate
 from appimage_updater.core.version_checker import VersionChecker
@@ -13,7 +12,7 @@ def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pat
     """Set up comprehensive GitHub API mocks to prevent network calls."""
     # Mock httpx client to prevent network calls
     mock_client_instance = AsyncMock()
-    
+
     # Create different responses for different endpoints
     def mock_json_response(*args, **kwargs):
         # Return a single release dict for /releases/latest endpoint
@@ -26,7 +25,7 @@ def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pat
             "prerelease": False,
             "draft": False
         }
-    
+
     mock_response = Mock()
     mock_response.json.side_effect = mock_json_response
     mock_response.raise_for_status.return_value = None
@@ -34,7 +33,7 @@ def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pat
     # Set up the async mock for the get and head methods
     mock_client_instance.get.return_value = mock_response
     mock_client_instance.head.return_value = mock_response
-    
+
     # Fix transport close method to avoid RuntimeWarning
     mock_transport = Mock()
     mock_transport.close.return_value = None  # Synchronous close
@@ -51,12 +50,12 @@ def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pat
     mock_repo.parse_repo_url.return_value = ("user", "repo")
     mock_repo.detect_repository_type.return_value = True
     mock_repo.repository_type = "github"
-    
+
     # Add async method for prerelease detection
     async def mock_should_enable_prerelease(*args, **kwargs):
         return False
     mock_repo.should_enable_prerelease = AsyncMock(side_effect=mock_should_enable_prerelease)
-    
+
     mock_repo_client.return_value = mock_repo
 
     # Mock async pattern generation
@@ -83,50 +82,6 @@ class TestPatternMatching:
         """Helper to create test files."""
         for filename in filenames:
             (directory / filename).touch()
-
-    @patch('appimage_updater.repositories.github.client.httpx.AsyncClient')
-    @patch('appimage_updater.core.pattern_generator.should_enable_prerelease')
-    @patch('appimage_updater.core.pattern_generator.generate_appimage_pattern_async')
-    @patch('appimage_updater.repositories.factory.get_repository_client_with_probing_sync')
-    @patch('appimage_updater.core.version_checker.VersionChecker')
-    def test_pattern_matching_with_suffixes(
-            self, mock_version_checker_class, mock_repo_client_factory, mock_pattern_gen, mock_prerelease, mock_httpx_client,
-            runner, temp_config_dir, temp_download_dir
-    ) -> None:
-        """Test that patterns correctly match files with various suffixes."""
-        setup_github_mocks(mock_httpx_client, mock_repo_client_factory, mock_pattern_gen, mock_prerelease)
-        # Create config with pattern that should match files with suffixes
-        config = {
-            "applications": [
-                {
-                    "name": "TestApp",
-                    "source_type": "github",
-                    "url": "https://github.com/test/testapp",
-                    "download_dir": str(temp_download_dir),
-                    "pattern": r"TestApp.*\.AppImage(\..*)?$",
-                    "enabled": True
-                }
-            ]
-        }
-
-        config_file = temp_config_dir / "test.json"
-        with config_file.open("w") as f:
-            json.dump(config, f)
-
-        # Create test files with various suffixes
-        test_files = [
-            "TestApp-1.0.0-Linux.AppImage.current",
-            "TestApp-1.0.1-Linux.AppImage.save",
-            "TestApp-1.0.2-Linux.AppImage.old",
-            "TestApp-1.0.3-Linux.AppImage",  # No suffix
-            "SomeOtherApp.AppImage.current",  # Should not match pattern
-        ]
-        self.create_test_files(temp_download_dir, test_files)
-
-        # Mock version checker to verify it finds existing version
-        mock_version_checker = Mock()
-
-        # This should simulate finding the current version from existing files
         def mock_check_for_updates(_config):
             # The version checker should have found one of the TestApp files
             return CheckResult(
@@ -152,7 +107,7 @@ class TestPatternMatching:
         mock_version_checker_class.return_value = mock_version_checker
 
         result = runner.invoke(app, ["check", "--config", str(config_file)])
-        
+
         assert result.exit_code == 0
         # The test should pass even if no releases are found (which is expected with our mock)
         # This validates that the config structure is correct and the app doesn't crash

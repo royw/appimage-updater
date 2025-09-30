@@ -13,6 +13,7 @@ from appimage_updater.core.system_info import (
     is_supported_format,
 )
 
+
 # from appimage_updater.models import Asset, Release
 # from appimage_updater.system_info import (
 #     SystemDetector,
@@ -60,14 +61,14 @@ class TestSystemDetector:
     def test_format_detection_darwin_raises_error(self):
         """Test that non-Linux platforms raise RuntimeError."""
         detector = SystemDetector()
-        
+
         with pytest.raises(RuntimeError, match="AppImage Updater only supports Linux"):
             detector._detect_supported_formats("darwin")
 
     def test_format_detection_windows_raises_error(self):
         """Test that non-Linux platforms raise RuntimeError."""
         detector = SystemDetector()
-        
+
         with pytest.raises(RuntimeError, match="AppImage Updater only supports Linux"):
             detector._detect_supported_formats("win32")
 
@@ -81,12 +82,12 @@ class TestCompatibilityFunctions:
         is_compat, score = is_compatible_platform("linux", "linux")
         assert is_compat is True
         assert score == 100.0
-        
+
         # Test non-Linux asset on Linux system
         is_compat, score = is_compatible_platform("darwin", "linux")
         assert is_compat is False
         assert score == 0.0
-        
+
     def test_platform_compatibility_non_linux_system_raises_error(self):
         """Test that non-Linux system platforms raise RuntimeError."""
         with pytest.raises(RuntimeError, match="AppImage Updater only supports Linux"):

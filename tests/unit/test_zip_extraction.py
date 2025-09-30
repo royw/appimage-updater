@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
-import tempfile
-import zipfile
 from pathlib import Path
+import tempfile
 from unittest.mock import patch
+import zipfile
 
 import pytest
 

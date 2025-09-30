@@ -5,8 +5,8 @@ This test reproduces the issue where the check command shows "No candidate"
 even when assets are available and being processed correctly.
 """
 
-import subprocess
 from pathlib import Path
+import subprocess
 
 
 def test_check_command_finds_candidates():

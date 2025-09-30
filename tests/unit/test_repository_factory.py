@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import pytest
 
-from appimage_updater.repositories.github.repository import GitHubRepository
 from appimage_updater.repositories.base import RepositoryError
 from appimage_updater.repositories.direct_download_repository import DirectDownloadRepository
 from appimage_updater.repositories.dynamic_download_repository import DynamicDownloadRepository
@@ -14,6 +13,7 @@ from appimage_updater.repositories.factory import (
     get_repository_client_async,
     get_repository_client_with_probing_sync,
 )
+from appimage_updater.repositories.github.repository import GitHubRepository
 
 
 class TestRepositoryFactory:
@@ -193,70 +193,70 @@ class TestUnifiedRepositoryInterface:
     def test_unified_interface_legacy_path_github(self):
         """Test unified interface uses legacy path for GitHub with probing disabled."""
         url = "https://github.com/user/repo"
-        
+
         # Test with probing disabled (should use legacy path)
         client = get_repository_client(url, enable_probing=False)
-        
+
         assert isinstance(client, GitHubRepository)
 
     def test_unified_interface_legacy_path_direct(self):
         """Test unified interface uses legacy path for direct URLs with probing disabled."""
         url = "https://example.com/app.AppImage"
-        
+
         # Test with probing disabled (should use legacy path)
         client = get_repository_client(url, enable_probing=False)
-        
+
         assert isinstance(client, DirectDownloadRepository)
 
     def test_unified_interface_enhanced_path_github(self):
         """Test unified interface uses enhanced path for GitHub with probing enabled."""
         url = "https://github.com/user/repo"
-        
+
         # Test with probing enabled (default - should use enhanced path)
         client = get_repository_client(url, enable_probing=True)
-        
+
         assert isinstance(client, GitHubRepository)
 
     def test_unified_interface_enhanced_path_unknown_domain(self):
         """Test unified interface uses enhanced path for unknown domains."""
         url = "https://unknown-domain.example/user/repo"
-        
+
         # Test with probing enabled (should try enhanced detection and fallback)
         client = get_repository_client(url, enable_probing=True)
-        
+
         # Should fallback to dynamic download after probing fails
         assert isinstance(client, DynamicDownloadRepository)
 
     def test_unified_interface_default_behavior(self):
         """Test unified interface default behavior (probing enabled by default)."""
         url = "https://github.com/user/repo"
-        
+
         # Default behavior should enable probing
         client = get_repository_client(url)
-        
+
         assert isinstance(client, GitHubRepository)
 
     def test_unified_interface_explicit_source_type_overrides_probing(self):
         """Test that explicit source_type overrides probing behavior."""
         url = "https://unknown-domain.example/file.AppImage"
-        
+
         # Even with probing enabled, explicit source_type should be used
         client = get_repository_client(url, source_type="direct", enable_probing=True)
-        
+
         assert isinstance(client, DirectDownloadRepository)
 
     def test_unified_interface_async_version(self):
         """Test async version of unified interface (sync wrapper test)."""
         url = "https://github.com/user/repo"
-        
+
         # Test that async function exists and can be called synchronously for basic validation
         import asyncio
-        
+
         async def test_async():
             client = await get_repository_client_async(url, enable_probing=False)
             assert isinstance(client, GitHubRepository)
             return True
-        
+
         # Run the async test
         result = asyncio.run(test_async())
         assert result is True
@@ -264,15 +264,15 @@ class TestUnifiedRepositoryInterface:
     def test_unified_interface_async_enhanced_path(self):
         """Test async version uses enhanced path with probing enabled (sync wrapper test)."""
         url = "https://github.com/user/repo"
-        
+
         # Test that async function exists and can be called synchronously for basic validation
         import asyncio
-        
+
         async def test_async():
             client = await get_repository_client_async(url, enable_probing=True)
             assert isinstance(client, GitHubRepository)
             return True
-        
+
         # Run the async test
         result = asyncio.run(test_async())
         assert result is True
@@ -280,17 +280,17 @@ class TestUnifiedRepositoryInterface:
     def test_legacy_function_still_works(self):
         """Test that legacy function still works independently."""
         url = "https://github.com/user/repo"
-        
+
         client = get_repository_client(url)
-        
+
         assert isinstance(client, GitHubRepository)
 
     def test_enhanced_function_still_works(self):
         """Test that enhanced function still works independently."""
         url = "https://github.com/user/repo"
-        
+
         client = get_repository_client_with_probing_sync(url)
-        
+
         assert isinstance(client, GitHubRepository)
 
     def test_unified_interface_performance_optimization(self):
@@ -318,7 +318,7 @@ class TestUnifiedRepositoryInterface:
                 "description": "Direct download with probing disabled"
             }
         ]
-        
+
         for scenario in scenarios:
             client = get_repository_client(
                 scenario["url"],
@@ -334,15 +334,15 @@ class TestUnifiedRepositoryInterface:
             ("https://github.com/user/repo", GitHubRepository),
             ("https://example.com/app.AppImage", DirectDownloadRepository),
         ]
-        
+
         for url, expected_type in test_cases:
             # Old style call (no enable_probing parameter)
             client = get_repository_client(url)
             assert isinstance(client, expected_type)
-            
+
             # New style call with explicit probing
             client_with_probing = get_repository_client(url, enable_probing=True)
             assert isinstance(client_with_probing, expected_type)
-            
+
             # Both should return the same type
             assert type(client) == type(client_with_probing)

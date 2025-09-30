@@ -2,21 +2,24 @@
 
 This guide helps you debug GitHub Actions CI failures locally, eliminating the "hit or miss guessing" cycle.
 
-## 🚀 Quick Start
+## DEPLOY Quick Start
 
 ### 1. Run Local CI Simulation
+
 ```bash
 # Run the exact same steps as GitHub Actions
 ./scripts/ci-local.sh
 ```
 
 ### 2. Debug Environment Differences
+
 ```bash
 # Compare your environment with GitHub Actions
 python scripts/debug-env.py
 ```
 
 ### 3. Test Specific Components
+
 ```bash
 # Test only E2E tests (common failure point)
 make -f Makefile.ci ci-e2e-only
@@ -28,14 +31,16 @@ make -f Makefile.ci ci-format
 make -f Makefile.ci ci-step-types
 ```
 
-## 🔧 Available Tools
+## VERSION Available Tools
 
 ### Local CI Scripts
+
 - **`./scripts/ci-local.sh`** - Full CI pipeline simulation
 - **`python scripts/debug-env.py`** - Environment analysis
 - **`Makefile.ci`** - Individual CI step commands
 
 ### Docker Environment (Exact GitHub Actions Match)
+
 ```bash
 # Run in exact GitHub Actions environment
 docker-compose -f docker-compose.ci.yml run --rm ci-runner
@@ -45,6 +50,7 @@ make -f Makefile.ci ci-matrix
 ```
 
 ### Individual CI Steps
+
 ```bash
 # Format checking
 make -f Makefile.ci ci-step-format
@@ -62,9 +68,10 @@ make -f Makefile.ci ci-step-complexity
 make -f Makefile.ci ci-test-only
 ```
 
-## 🐛 Common Debugging Scenarios
+## BUG Common Debugging Scenarios
 
 ### E2E Test Failures
+
 ```bash
 # Run E2E tests with verbose output
 uv run pytest tests/e2e/ -v --tb=long
@@ -77,6 +84,7 @@ GITHUB_ACTIONS=true CI=true uv run pytest tests/e2e/ -v
 ```
 
 ### Environment Differences
+
 ```bash
 # Check what's different from GitHub Actions
 python scripts/debug-env.py
@@ -89,6 +97,7 @@ export RUNNER_ARCH=X64
 ```
 
 ### Mock Issues
+
 ```bash
 # Test with network blocking (like CI)
 PYTEST_ALLOW_NETWORK=0 uv run pytest tests/e2e/ -v
@@ -97,9 +106,10 @@ PYTEST_ALLOW_NETWORK=0 uv run pytest tests/e2e/ -v
 PYTEST_ALLOW_NETWORK=1 uv run pytest tests/e2e/ -v
 ```
 
-## 📊 Understanding CI Failures
+## REPORT Understanding CI Failures
 
 ### Exit Codes
+
 - **0** - Success
 - **1** - Test failures or linting issues
 - **2** - Command not found or syntax errors
@@ -107,28 +117,33 @@ PYTEST_ALLOW_NETWORK=1 uv run pytest tests/e2e/ -v
 ### Common Failure Patterns
 
 1. **Mock Configuration Issues**
+
    - Async/sync method mismatches
    - Missing method mocks
    - Incorrect return value types
 
-2. **Environment Differences**
+1. **Environment Differences**
+
    - Missing CI environment variables
    - Different Python versions
    - Package version mismatches
 
-3. **Test Isolation Issues**
+1. **Test Isolation Issues**
+
    - Network calls in tests
    - File system permissions
    - Temporary directory cleanup
 
-## 🔍 Debugging Workflow
+## SEARCH Debugging Workflow
 
 1. **Reproduce Locally**
+
    ```bash
    ./scripts/ci-local.sh
    ```
 
-2. **Identify Failing Component**
+1. **Identify Failing Component**
+
    ```bash
    # Test each step individually
    make -f Makefile.ci ci-step-format
@@ -137,25 +152,29 @@ PYTEST_ALLOW_NETWORK=1 uv run pytest tests/e2e/ -v
    make -f Makefile.ci ci-test-only
    ```
 
-3. **Debug Specific Tests**
+1. **Debug Specific Tests**
+
    ```bash
    # Run with maximum verbosity
    uv run pytest tests/e2e/test_add_remove_commands.py -v --tb=long --no-cov
    ```
 
-4. **Check Environment**
+1. **Check Environment**
+
    ```bash
    python scripts/debug-env.py
    ```
 
-5. **Test in Docker (if needed)**
+1. **Test in Docker (if needed)**
+
    ```bash
    docker-compose -f docker-compose.ci.yml run --rm ci-runner
    ```
 
-## 🛠️ Fixing Common Issues
+## TOOLS Fixing Common Issues
 
 ### Mock Problems
+
 ```python
 # Ensure async methods are mocked as AsyncMock
 mock_repo.should_enable_prerelease = AsyncMock(return_value=False)
@@ -165,6 +184,7 @@ mock_response.json.return_value = {"key": "value"}  # Dict, not list
 ```
 
 ### Environment Issues
+
 ```bash
 # Set CI environment variables
 export GITHUB_ACTIONS=true
@@ -175,6 +195,7 @@ python3.11 -m pytest tests/
 ```
 
 ### Test Isolation
+
 ```python
 # Use proper temporary directories
 temp_dir = tmp_path / "test-specific"
@@ -187,18 +208,18 @@ def reset_mocks():
     pass
 ```
 
-## 📈 Success Indicators
+## BUMP Success Indicators
 
 When your local CI passes, GitHub Actions should also pass:
 
 ```bash
 $ ./scripts/ci-local.sh
-🎉 All CI steps passed! Your code is ready for GitHub Actions.
-📊 Coverage report saved to coverage.xml
-📦 Build artifacts in dist/
+COMPLETE All CI steps passed! Your code is ready for GitHub Actions.
+REPORT Coverage report saved to coverage.xml
+PACKAGE Build artifacts in dist/
 ```
 
-## 🚨 Emergency Debugging
+## 0 0 Debugging
 
 If you need to debug a specific CI failure quickly:
 

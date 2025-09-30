@@ -3,14 +3,15 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
+import tempfile
 
 import pytest
 
 from appimage_updater.config.models import ApplicationConfig, ChecksumConfig
 from appimage_updater.core.downloader import Downloader
 from appimage_updater.core.models import Asset, UpdateCandidate, rebuild_models
+
 
 # from appimage_updater.config import ApplicationConfig, ChecksumConfig
 # from appimage_updater.downloader import Downloader

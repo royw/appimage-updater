@@ -4,14 +4,13 @@
 import json
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock
 
 import pytest
 from typer.testing import CliRunner
 
 from appimage_updater.repositories.github.auth import GitHubAuth, get_github_auth
 from appimage_updater.repositories.github.client import GitHubClient
-from appimage_updater.main import app
 
 
 def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock) -> None:
@@ -311,7 +310,7 @@ class TestGitHubClientAuthentication:
             "draft": False,
         }]
         mock_response.raise_for_status = MagicMock()
-        
+
         # Configure the mock HTTP service
         mock_tracing_client = mock_http_service['global_client'].get_client.return_value
         mock_tracing_client.get.return_value = mock_response

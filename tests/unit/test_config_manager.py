@@ -1,9 +1,10 @@
 # type: ignore
 """Tests for the new configuration manager API."""
 
-import pytest
 from pathlib import Path
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
+
+import pytest
 
 from appimage_updater.config.manager import AppConfigs, GlobalConfigManager, Manager
 from appimage_updater.config.models import ApplicationConfig, Config
@@ -15,14 +16,14 @@ class TestManager:
     def test_load_config_method(self):
         """Test that Manager.load_config method works."""
         manager = Manager()
-        
+
         with patch.object(manager, '_load_config_from_file') as mock_load_file:
             mock_config = Config()
             mock_load_file.return_value = mock_config
-            
+
             config_path = Path("/test/config.json")
             result = manager.load_config(config_path)
-            
+
             assert result == mock_config
             mock_load_file.assert_called_once_with(config_path)
 
@@ -31,12 +32,12 @@ class TestManager:
         manager = Manager()
         config = Config()
         config_path = Path("/test/config.json")
-        
+
         m = mock_open()
         with patch('pathlib.Path.open', m), \
              patch('json.dump'), \
              patch('pathlib.Path.mkdir'):
-            
+
             manager.save_config(config, config_path)
             # Test passes if no exception is raised
 
@@ -50,18 +51,18 @@ class TestGlobalConfigManager:
             # Mock a basic config
             mock_config = Config()
             mock_load.return_value = mock_config
-            
+
             globals = GlobalConfigManager()
-            
+
             # Test reading properties
             assert globals.concurrent_downloads == 3  # default value
             assert globals.timeout_seconds == 30  # default value
             assert isinstance(globals.user_agent, str)
-            
+
             # Test writing properties
             globals.concurrent_downloads = 5
             globals.timeout_seconds = 45
-            
+
             assert globals.concurrent_downloads == 5
             assert globals.timeout_seconds == 45
 
@@ -70,18 +71,18 @@ class TestGlobalConfigManager:
         with patch.object(GlobalConfigManager, '_load_global_config') as mock_load:
             mock_config = Config()
             mock_load.return_value = mock_config
-            
+
             globals = GlobalConfigManager()
-            
+
             # Test default properties
             assert not globals.default_prerelease
             assert not globals.default_rotation_enabled
             assert globals.default_retain_count == 3
-            
+
             # Test modifying defaults
             globals.default_prerelease = True
             globals.default_retain_count = 5
-            
+
             assert globals.default_prerelease
             assert globals.default_retain_count == 5
 
@@ -101,24 +102,24 @@ class TestAppConfigs:
                 pattern="test.*\\.AppImage$"
             )
             app2 = ApplicationConfig(
-                name="TestApp2", 
+                name="TestApp2",
                 source_type="github",
                 url="https://github.com/test/app2",
                 download_dir=Path("/tmp/app2"),
                 pattern="test.*\\.AppImage$"
             )
-            
+
             mock_config = Config(applications=[app1, app2])
             mock_load.return_value = mock_config
-            
+
             app_configs = AppConfigs("TestApp1", "TestApp2")
-            
+
             # Test iteration
             apps = list(app_configs)
             assert len(apps) == 2
             assert apps[0].name == "TestApp1"
             assert apps[1].name == "TestApp2"
-            
+
             # Test length
             assert len(app_configs) == 2
 
@@ -127,25 +128,25 @@ class TestAppConfigs:
         with patch.object(AppConfigs, '_load_application_configs') as mock_load:
             app1 = ApplicationConfig(
                 name="TestApp1",
-                source_type="github", 
+                source_type="github",
                 url="https://github.com/test/app1",
                 download_dir=Path("/tmp/app1"),
                 pattern="test.*\\.AppImage$"
             )
-            
+
             mock_config = Config(applications=[app1])
             mock_load.return_value = mock_config
-            
+
             app_configs = AppConfigs("TestApp1")
-            
+
             # Test dictionary access
             assert "TestApp1" in app_configs
             assert "NonExistent" not in app_configs
-            
+
             app = app_configs["TestApp1"]
             assert app.name == "TestApp1"
             assert app.url == "https://github.com/test/app1"
-            
+
             # Test KeyError for non-existent app
             with pytest.raises(KeyError):
                 app_configs["NonExistent"]
@@ -156,7 +157,7 @@ class TestAppConfigs:
             app1 = ApplicationConfig(
                 name="TestApp1",
                 source_type="github",
-                url="https://github.com/test/app1", 
+                url="https://github.com/test/app1",
                 download_dir=Path("/tmp/app1"),
                 pattern="test.*\\.AppImage$",
                 enabled=True
@@ -165,7 +166,7 @@ class TestAppConfigs:
                 name="TestApp2",
                 source_type="github",
                 url="https://github.com/test/app2",
-                download_dir=Path("/tmp/app2"), 
+                download_dir=Path("/tmp/app2"),
                 pattern="test.*\\.AppImage$",
                 enabled=False
             )
@@ -177,15 +178,15 @@ class TestAppConfigs:
                 pattern="orca.*\\.AppImage$",
                 enabled=True
             )
-            
+
             mock_config = Config(applications=[app1, app2, app3])
             mock_load.return_value = mock_config
-            
+
             app_configs = AppConfigs()  # Load all apps
-            
+
             # Test basic functionality - just ensure we can load apps
             assert len(list(app_configs)) == 3  # All apps loaded
-            
+
             # Test that we can iterate through apps
             app_names = [app.name for app in app_configs]
             assert "TestApp1" in app_names
@@ -204,7 +205,7 @@ class TestAppConfigs:
             )
             app2 = ApplicationConfig(
                 name="TestApp2",
-                source_type="github", 
+                source_type="github",
                 url="https://github.com/test/app2",
                 download_dir=Path("/tmp/app2"),
                 pattern="test.*\\.AppImage$"
@@ -212,17 +213,17 @@ class TestAppConfigs:
             app3 = ApplicationConfig(
                 name="TestApp3",
                 source_type="github",
-                url="https://github.com/test/app3", 
+                url="https://github.com/test/app3",
                 download_dir=Path("/tmp/app3"),
                 pattern="test.*\\.AppImage$"
             )
-            
+
             mock_config = Config(applications=[app1, app2, app3])
             mock_load.return_value = mock_config
-            
+
             # Test filtering by specific names
             app_configs = AppConfigs("TestApp1", "TestApp3")
-            
+
             apps = list(app_configs)
             assert len(apps) == 2
             assert {app.name for app in apps} == {"TestApp1", "TestApp3"}
@@ -237,16 +238,16 @@ class TestAppConfigs:
                 download_dir=Path("/tmp/app1"),
                 pattern="test.*\\.AppImage$"
             )
-            
+
             mock_config = Config(applications=[app1])
             mock_load.return_value = mock_config
-            
+
             app_configs = AppConfigs()
-            
+
             # Test initial state
             assert len(app_configs) == 1
             assert "TestApp1" in app_configs
-            
+
             # Test adding new app
             new_app = ApplicationConfig(
                 name="NewApp",
@@ -256,13 +257,13 @@ class TestAppConfigs:
                 pattern="new.*\\.AppImage$"
             )
             app_configs.add(new_app)
-            
+
             assert len(app_configs) == 2
             assert "NewApp" in app_configs
-            
+
             # Test removing app
             app_configs.remove("TestApp1")
-            
+
             assert len(app_configs) == 1
             assert "TestApp1" not in app_configs
             assert "NewApp" in app_configs

@@ -13,8 +13,6 @@ from appimage_updater.config.operations import (
 )
 
 
-
-
 class TestCollectEditUpdates:
     """Test the collect_edit_updates function."""
 

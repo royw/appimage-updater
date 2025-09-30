@@ -24,7 +24,7 @@ class TestConfigCommand:
             debug=True
         )
         command = ConfigCommand(params)
-        
+
         assert command.params == params
         assert command.console is not None
 
@@ -32,7 +32,7 @@ class TestConfigCommand:
         """Test action validation with valid 'show' action."""
         params = ConfigParams(action="show")
         command = ConfigCommand(params)
-        
+
         errors = command._validate_action()
         assert errors == []
 
@@ -40,7 +40,7 @@ class TestConfigCommand:
         """Test action validation with valid 'set' action."""
         params = ConfigParams(action="set")
         command = ConfigCommand(params)
-        
+
         errors = command._validate_action()
         assert errors == []
 
@@ -48,7 +48,7 @@ class TestConfigCommand:
         """Test action validation with valid 'reset' action."""
         params = ConfigParams(action="reset")
         command = ConfigCommand(params)
-        
+
         errors = command._validate_action()
         assert errors == []
 
@@ -56,7 +56,7 @@ class TestConfigCommand:
         """Test action validation with valid 'show-effective' action."""
         params = ConfigParams(action="show-effective")
         command = ConfigCommand(params)
-        
+
         errors = command._validate_action()
         assert errors == []
 
@@ -64,7 +64,7 @@ class TestConfigCommand:
         """Test action validation with valid 'list' action."""
         params = ConfigParams(action="list")
         command = ConfigCommand(params)
-        
+
         errors = command._validate_action()
         assert errors == []
 
@@ -72,7 +72,7 @@ class TestConfigCommand:
         """Test action validation with invalid action."""
         params = ConfigParams(action="invalid")
         command = ConfigCommand(params)
-        
+
         errors = command._validate_action()
         assert len(errors) == 1
         assert "Invalid action 'invalid'" in errors[0]
@@ -85,7 +85,7 @@ class TestConfigCommand:
         """Test set action parameter validation with valid parameters."""
         params = ConfigParams(action="set", setting="test_setting", value="test_value")
         command = ConfigCommand(params)
-        
+
         errors = command._validate_set_action_parameters()
         assert errors == []
 
@@ -93,7 +93,7 @@ class TestConfigCommand:
         """Test set action parameter validation with missing setting."""
         params = ConfigParams(action="set", setting="", value="test_value")
         command = ConfigCommand(params)
-        
+
         errors = command._validate_set_action_parameters()
         assert len(errors) == 1
         assert "'set' action requires both setting and value" in errors[0]
@@ -102,7 +102,7 @@ class TestConfigCommand:
         """Test set action parameter validation with missing value."""
         params = ConfigParams(action="set", setting="test_setting", value="")
         command = ConfigCommand(params)
-        
+
         errors = command._validate_set_action_parameters()
         assert len(errors) == 1
         assert "'set' action requires both setting and value" in errors[0]
@@ -111,7 +111,7 @@ class TestConfigCommand:
         """Test set action parameter validation with missing setting and value."""
         params = ConfigParams(action="set", setting="", value="")
         command = ConfigCommand(params)
-        
+
         errors = command._validate_set_action_parameters()
         assert len(errors) == 1
         assert "'set' action requires both setting and value" in errors[0]
@@ -120,7 +120,7 @@ class TestConfigCommand:
         """Test set action parameter validation with non-set action."""
         params = ConfigParams(action="show", setting="", value="")
         command = ConfigCommand(params)
-        
+
         errors = command._validate_set_action_parameters()
         assert errors == []
 
@@ -128,7 +128,7 @@ class TestConfigCommand:
         """Test show-effective action parameter validation with valid parameters."""
         params = ConfigParams(action="show-effective", app_name="TestApp")
         command = ConfigCommand(params)
-        
+
         errors = command._validate_show_effective_parameters()
         assert errors == []
 
@@ -136,7 +136,7 @@ class TestConfigCommand:
         """Test show-effective action parameter validation with missing app name."""
         params = ConfigParams(action="show-effective", app_name="")
         command = ConfigCommand(params)
-        
+
         errors = command._validate_show_effective_parameters()
         assert len(errors) == 1
         assert "'show-effective' action requires --app parameter" in errors[0]
@@ -145,7 +145,7 @@ class TestConfigCommand:
         """Test show-effective action parameter validation with non-show-effective action."""
         params = ConfigParams(action="show", app_name="")
         command = ConfigCommand(params)
-        
+
         errors = command._validate_show_effective_parameters()
         assert errors == []
 
@@ -153,7 +153,7 @@ class TestConfigCommand:
         """Test overall validation success for show action."""
         params = ConfigParams(action="show")
         command = ConfigCommand(params)
-        
+
         validation_errors = command.validate()
         assert validation_errors == []
 
@@ -161,7 +161,7 @@ class TestConfigCommand:
         """Test overall validation success for set action."""
         params = ConfigParams(action="set", setting="test_setting", value="test_value")
         command = ConfigCommand(params)
-        
+
         validation_errors = command.validate()
         assert validation_errors == []
 
@@ -169,7 +169,7 @@ class TestConfigCommand:
         """Test overall validation success for show-effective action."""
         params = ConfigParams(action="show-effective", app_name="TestApp")
         command = ConfigCommand(params)
-        
+
         validation_errors = command.validate()
         assert validation_errors == []
 
@@ -177,7 +177,7 @@ class TestConfigCommand:
         """Test validation with multiple errors."""
         params = ConfigParams(action="invalid", setting="", value="")
         command = ConfigCommand(params)
-        
+
         validation_errors = command.validate()
         assert len(validation_errors) >= 1
         assert any("Invalid action 'invalid'" in error for error in validation_errors)
@@ -189,18 +189,18 @@ class TestConfigCommand:
         params = ConfigParams(action="show", debug=True)
         command = ConfigCommand(params)
         mock_formatter = Mock()
-        
+
         with patch.object(command, '_validate_and_show_help', return_value=None):
             with patch.object(command, '_execute_config_operation', return_value=True):
                 with patch.object(command, '_create_result') as mock_create:
                     success_result = CommandResult(success=True, message="Success")
                     mock_create.return_value = success_result
-                    
+
                     result = await command.execute(output_formatter=mock_formatter)
-        
+
         # Verify logging was configured
         mock_configure_logging.assert_called_once_with(debug=True)
-        
+
         # Verify success result
         mock_create.assert_called_once_with(True)
         assert result.success is True
@@ -211,18 +211,18 @@ class TestConfigCommand:
         """Test successful execution without output formatter."""
         params = ConfigParams(action="list", debug=False)
         command = ConfigCommand(params)
-        
+
         with patch.object(command, '_validate_and_show_help', return_value=None):
             with patch.object(command, '_execute_config_operation', return_value=True):
                 with patch.object(command, '_create_result') as mock_create:
                     success_result = CommandResult(success=True, message="Success")
                     mock_create.return_value = success_result
-                    
+
                     result = await command.execute()
-        
+
         # Verify logging was configured
         mock_configure_logging.assert_called_once_with(debug=False)
-        
+
         # Verify success result
         assert result.success is True
 
@@ -232,11 +232,11 @@ class TestConfigCommand:
         """Test execution with validation error."""
         params = ConfigParams(action="invalid")
         command = ConfigCommand(params)
-        
+
         validation_error = CommandResult(success=False, message="Validation failed", exit_code=1)
         with patch.object(command, '_validate_and_show_help', return_value=validation_error):
             result = await command.execute()
-        
+
         # Verify failure result
         assert result.success is False
         assert result.message == "Validation failed"
@@ -249,15 +249,15 @@ class TestConfigCommand:
         """Test execution with unexpected exception."""
         params = ConfigParams(action="show")
         command = ConfigCommand(params)
-        
+
         test_exception = Exception("Test error")
         with patch.object(command, '_validate_and_show_help', side_effect=test_exception):
             result = await command.execute()
-        
+
         # Verify logging was called
         mock_logger.error.assert_called_once_with("Unexpected error in config command: Test error")
         mock_logger.exception.assert_called_once_with("Full exception details")
-        
+
         # Verify failure result
         assert result.success is False
         assert result.message == "Test error"
@@ -267,32 +267,32 @@ class TestConfigCommand:
         """Test validation and help display - success."""
         params = ConfigParams(action="show")
         command = ConfigCommand(params)
-        
+
         with patch.object(command, 'validate', return_value=[]):
             result = command._validate_and_show_help()
-        
+
         assert result is None
 
     def test_validate_and_show_help_with_errors(self):
         """Test validation and help display - with errors."""
         params = ConfigParams(action="invalid")
         command = ConfigCommand(params)
-        
+
         validation_errors = ["Invalid action 'invalid'"]
         with patch.object(command, 'validate', return_value=validation_errors):
             with patch.object(command.console, 'print') as mock_console_print:
                 with patch.object(command, '_show_usage_help') as mock_show_help:
                     result = command._validate_and_show_help()
-        
+
         # Verify error was printed
         mock_console_print.assert_called_once()
         error_call = mock_console_print.call_args[0][0]
         assert "Validation errors" in error_call
         assert "Invalid action 'invalid'" in error_call
-        
+
         # Verify help was shown
         mock_show_help.assert_called_once()
-        
+
         # Verify failure result
         assert result is not None
         assert result.success is False
@@ -302,10 +302,10 @@ class TestConfigCommand:
         """Test usage help display for set action."""
         params = ConfigParams(action="set")
         command = ConfigCommand(params)
-        
+
         with patch.object(command.console, 'print') as mock_console_print:
             command._show_usage_help()
-        
+
         mock_console_print.assert_called_once()
         help_message = mock_console_print.call_args[0][0]
         assert "appimage-updater config set <setting> <value>" in help_message
@@ -314,10 +314,10 @@ class TestConfigCommand:
         """Test usage help display for show-effective action."""
         params = ConfigParams(action="show-effective")
         command = ConfigCommand(params)
-        
+
         with patch.object(command.console, 'print') as mock_console_print:
             command._show_usage_help()
-        
+
         mock_console_print.assert_called_once()
         help_message = mock_console_print.call_args[0][0]
         assert "appimage-updater config show-effective --app <app-name>" in help_message
@@ -326,10 +326,10 @@ class TestConfigCommand:
         """Test usage help display for other actions."""
         params = ConfigParams(action="show")
         command = ConfigCommand(params)
-        
+
         with patch.object(command.console, 'print') as mock_console_print:
             command._show_usage_help()
-        
+
         mock_console_print.assert_called_once()
         help_message = mock_console_print.call_args[0][0]
         assert "Available actions: show, set, reset, show-effective, list" in help_message
@@ -338,9 +338,9 @@ class TestConfigCommand:
         """Test result creation for success case."""
         params = ConfigParams(action="show")
         command = ConfigCommand(params)
-        
+
         result = command._create_result(True)
-        
+
         assert result.success is True
         assert result.message == "Config operation completed successfully"
         assert result.exit_code == 0
@@ -349,9 +349,9 @@ class TestConfigCommand:
         """Test result creation for failure case."""
         params = ConfigParams(action="show")
         command = ConfigCommand(params)
-        
+
         result = command._create_result(False)
-        
+
         assert result.success is False
         assert result.message == "Configuration operation failed"
         assert result.exit_code == 1
@@ -361,13 +361,13 @@ class TestConfigCommand:
         """Test successful config operation execution."""
         params = ConfigParams(action="show")
         command = ConfigCommand(params)
-        
+
         mock_handler = Mock(return_value=None)  # None indicates success
         action_handlers = {"show": mock_handler}
-        
+
         with patch.object(command, '_get_action_handlers', return_value=action_handlers):
             result = await command._execute_config_operation()
-        
+
         mock_handler.assert_called_once()
         assert result is True
 
@@ -376,13 +376,13 @@ class TestConfigCommand:
         """Test failed config operation execution."""
         params = ConfigParams(action="set")
         command = ConfigCommand(params)
-        
+
         mock_handler = Mock(return_value=False)  # False indicates failure
         action_handlers = {"set": mock_handler}
-        
+
         with patch.object(command, '_get_action_handlers', return_value=action_handlers):
             result = await command._execute_config_operation()
-        
+
         mock_handler.assert_called_once()
         assert result is False
 
@@ -391,12 +391,12 @@ class TestConfigCommand:
         """Test config operation execution with unknown action."""
         params = ConfigParams(action="unknown")
         command = ConfigCommand(params)
-        
+
         action_handlers = {}
-        
+
         with patch.object(command, '_get_action_handlers', return_value=action_handlers):
             result = await command._execute_config_operation()
-        
+
         # Unknown action should return True (no-op)
         assert result is True
 
@@ -409,12 +409,12 @@ class TestConfigCommand:
             config_dir=Path("/test/config")
         )
         command = ConfigCommand(params)
-        
+
         handlers = command._get_action_handlers()
-        
+
         # Execute the show handler
         handlers["show"]()
-        
+
         mock_show_global_config.assert_called_once_with(
             Path("/test/config.json"),
             Path("/test/config")
@@ -431,12 +431,12 @@ class TestConfigCommand:
             config_dir=Path("/test/config")
         )
         command = ConfigCommand(params)
-        
+
         handlers = command._get_action_handlers()
-        
+
         # Execute the set handler
         handlers["set"]()
-        
+
         mock_set_global_config_value.assert_called_once_with(
             "test_setting",
             "test_value",
@@ -453,12 +453,12 @@ class TestConfigCommand:
             config_dir=Path("/test/config")
         )
         command = ConfigCommand(params)
-        
+
         handlers = command._get_action_handlers()
-        
+
         # Execute the reset handler
         handlers["reset"]()
-        
+
         mock_reset_global_config.assert_called_once_with(
             Path("/test/config.json"),
             Path("/test/config")
@@ -474,12 +474,12 @@ class TestConfigCommand:
             config_dir=Path("/test/config")
         )
         command = ConfigCommand(params)
-        
+
         handlers = command._get_action_handlers()
-        
+
         # Execute the show-effective handler
         handlers["show-effective"]()
-        
+
         mock_show_effective_config.assert_called_once_with(
             "TestApp",
             Path("/test/config.json"),
@@ -491,20 +491,20 @@ class TestConfigCommand:
         """Test action handlers for list action."""
         params = ConfigParams(action="list")
         command = ConfigCommand(params)
-        
+
         handlers = command._get_action_handlers()
-        
+
         # Execute the list handler
         handlers["list"]()
-        
+
         mock_list_available_settings.assert_called_once()
 
     def test_get_action_handlers_all_actions_present(self):
         """Test that all expected actions have handlers."""
         params = ConfigParams(action="show")
         command = ConfigCommand(params)
-        
+
         handlers = command._get_action_handlers()
-        
+
         expected_actions = {"show", "set", "reset", "show-effective", "list"}
         assert set(handlers.keys()) == expected_actions

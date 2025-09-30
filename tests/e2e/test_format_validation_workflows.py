@@ -8,8 +8,8 @@ Tests complete format validation workflows using CliRunner.
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
+import tempfile
 
 import pytest
 from typer.testing import CliRunner
@@ -34,7 +34,7 @@ class TestFormatValidationWorkflows:
     def test_invalid_format_option_shows_error(self, runner, temp_config_dir):
         """Test that invalid --format option shows appropriate error."""
         result = runner.invoke(app, ["list", "--format", "invalid", "--config-dir", str(temp_config_dir)])
-        
+
         assert result.exit_code != 0
         # Should show format validation error in stderr (typer puts validation errors there)
         error_output = result.stderr or result.stdout
@@ -48,13 +48,13 @@ class TestFormatValidationWorkflows:
             ["show", "TestApp"],  # Will fail gracefully if app doesn't exist
             ["config", "show"],
         ]
-        
+
         valid_formats = ["rich", "plain", "json", "html"]
-        
+
         for command_args in commands_to_test:
             for format_type in valid_formats:
                 result = runner.invoke(app, command_args + ["--format", format_type, "--config-dir", str(temp_config_dir)])
-                
+
                 # Should not fail due to format validation
                 # (may fail for other reasons like missing apps, but not format validation)
                 if result.exit_code != 0:
@@ -65,7 +65,7 @@ class TestFormatValidationWorkflows:
     def test_json_format_produces_valid_json(self, runner, temp_config_dir):
         """Test that --format json produces valid JSON output."""
         result = runner.invoke(app, ["list", "--format", "json", "--config-dir", str(temp_config_dir)])
-        
+
         if result.exit_code == 0:
             try:
                 # Should be valid JSON
@@ -76,10 +76,10 @@ class TestFormatValidationWorkflows:
     def test_html_format_produces_valid_html(self, runner, temp_config_dir):
         """Test that --format html produces valid HTML output."""
         result = runner.invoke(app, ["list", "--format", "html", "--config-dir", str(temp_config_dir)])
-        
+
         if result.exit_code == 0:
             output = result.stdout
-            
+
             # Should contain basic HTML structure
             html_indicators = ["<html", "<head", "<body", "</html>"]
             for indicator in html_indicators:
@@ -88,13 +88,13 @@ class TestFormatValidationWorkflows:
     def test_plain_format_produces_readable_output(self, runner, temp_config_dir):
         """Test that --format plain produces readable plain text output."""
         result = runner.invoke(app, ["list", "--format", "plain", "--config-dir", str(temp_config_dir)])
-        
+
         if result.exit_code == 0:
             output = result.stdout
-            
+
             # Plain format should not contain ANSI escape codes
             assert "\x1b[" not in output, "Plain format contains ANSI escape codes"
-            
+
             # Should be readable text (if there's content)
             if output.strip():
                 # Should contain some structure (headers, separators, etc.)
@@ -119,16 +119,16 @@ class TestFormatValidationWorkflows:
                 }
             }]
         }
-        
+
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
             json.dump(sample_config, f)
-        
+
         result = runner.invoke(app, ["list", "--format", "rich", "--config-dir", str(temp_config_dir)])
-        
+
         if result.exit_code == 0:
             output = result.stdout
-            
+
             # Rich format may contain box drawing characters or structured output
             # (Note: In test environment, rich may not show colors but should show structure)
             if output.strip():
@@ -136,5 +136,5 @@ class TestFormatValidationWorkflows:
                 rich_indicators = ["┏", "┃", "│", "║", "╔", "╗", "╚", "╝", "┌", "┐", "└", "┘"]
                 has_box_chars = any(char in output for char in rich_indicators)
                 has_structure = "|" in output or "─" in output or "-" in output
-                
+
                 assert has_box_chars or has_structure, "Rich format lacks visual structure"
