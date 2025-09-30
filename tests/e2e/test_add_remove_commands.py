@@ -45,6 +45,12 @@ def setup_github_mocks(mock_httpx_client: Mock, mock_repo_client: Mock, mock_pat
     mock_repo.parse_repo_url.return_value = ("user", "repo")
     mock_repo.detect_repository_type.return_value = True
     mock_repo.repository_type = "github"
+    
+    # Add async method for prerelease detection
+    async def mock_should_enable_prerelease(*args, **kwargs):
+        return False
+    mock_repo.should_enable_prerelease = AsyncMock(side_effect=mock_should_enable_prerelease)
+    
     mock_repo_client.return_value = mock_repo
 
     # Mock async pattern generation
