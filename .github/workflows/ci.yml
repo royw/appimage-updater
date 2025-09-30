@@ -45,7 +45,7 @@ jobs:
         run: uv run radon cc src/ --min C
         
       - name: Run tests
-        run: uv run pytest --cov=src/appimage_updater --cov-report=xml --cov-report=term-missing
+        run: uv run pytest --cov=src/appimage_updater --cov-report=xml --cov-report=term-missing --dist=no
         
       - name: Upload coverage reports to Codecov
         if: matrix.python-version == '3.11'

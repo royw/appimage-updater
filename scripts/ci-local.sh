@@ -79,8 +79,8 @@ run_ci_step "Complexity Analysis" "uv run radon cc src/ --min C" || {
     exit 1
 }
 
-# Run tests with same coverage settings as CI
-run_ci_step "Tests with Coverage" "uv run pytest --cov=src/appimage_updater --cov-report=xml --cov-report=term-missing" || {
+# Run tests with same coverage settings as CI (sequential execution)
+run_ci_step "Tests with Coverage" "uv run pytest --cov=src/appimage_updater --cov-report=xml --cov-report=term-missing --dist=no" || {
     echo -e "${RED}💡 Check test failures above${NC}"
     exit 1
 }
