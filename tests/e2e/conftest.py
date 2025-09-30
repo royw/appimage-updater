@@ -382,90 +382,10 @@ def e2e_environment(isolated_filesystem, request):
             pytest.fail(f"E2E test {test_id} is running in parallel worker {env_info['pytest_xdist_worker']}. "
                        "E2E tests must run sequentially. Use --dist=no flag.")
 
-        # Create logs directory and write environment log
-        logs_dir = Path("e2e_environment_logs")
-        logs_dir.mkdir(exist_ok=True)
-
-        # Create log file with environment type and test name
-        log_file = logs_dir / f"{env_type}.{test_name}.txt"
-
-        # Prepare detailed environment log content
-        log_content = []
-        log_content.append(f"E2E Environment Log: {env_type}.{test_name}")
-        log_content.append("=" * 80)
-        log_content.append(f"Timestamp: {datetime.now().isoformat()}")
-        log_content.append(f"Test ID: {test_id}")
-        log_content.append(f"Test Name: {test_name}")
-        log_content.append(f"Environment Type: {env_type}")
-        log_content.append("")
-
-        # Process and environment info
-        log_content.append("PROCESS INFORMATION:")
-        log_content.append(f"  Process ID: {env_info['process_id']}")
-        log_content.append(f"  Thread ID: {env_info['thread_id']}")
-        log_content.append(f"  Current Working Dir: {os.getcwd()}")
-        log_content.append("")
-
-        # CI/Environment detection
-        log_content.append("ENVIRONMENT DETECTION:")
-        log_content.append(f"  CI Environment: {env_info['ci_environment']}")
-        log_content.append(f"  GitHub Actions: {env_info['github_actions']}")
-        log_content.append(f"  Pytest Current Test: {env_info['pytest_current_test']}")
-        log_content.append(f"  Pytest XDist Worker: {env_info['pytest_xdist_worker']}")
-        log_content.append("")
-
-        # Filesystem isolation info
-        log_content.append("FILESYSTEM ISOLATION:")
-        log_content.append(f"  Isolated FS Root: {isolated_filesystem['root']}")
-        log_content.append(f"  Isolated FS Method: {isolated_filesystem['method']}")
-        log_content.append(f"  Home Directory: {env_info['home_dir']}")
-        log_content.append(f"  Temp Directory: {env_info['tmp_dir']}")
-        log_content.append(f"  Network Blocked: {isolated_filesystem.get('network_blocked', False)}")
-        log_content.append("")
-
-        # Environment variables
-        log_content.append("ENVIRONMENT VARIABLES:")
-        env_vars_to_log = [
-            'HOME', 'TMPDIR', 'TMP', 'TEMP',
-            'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME',
-            'APPIMAGE_UPDATER_TEST_CONFIG_DIR',
-            'CI', 'GITHUB_ACTIONS', 'PYTEST_CURRENT_TEST', 'PYTEST_XDIST_WORKER',
-            'PATH', 'PYTHONPATH', 'VIRTUAL_ENV'
-        ]
-        for var in env_vars_to_log:
-            value = os.environ.get(var, 'NOT_SET')
-            log_content.append(f"  {var}: {value}")
-        log_content.append("")
-
-        # Network test
-        log_content.append("NETWORK ISOLATION TEST:")
-        try:
-            import socket
-            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            log_content.append("  FAIL Network NOT blocked - socket creation succeeded!")
-            test_socket.close()
-        except Exception as e:
-            log_content.append(f"  PASS Network blocked: {e}")
-        log_content.append("")
-
-        # Global state checks
-        log_content.append("GLOBAL STATE CHECKS:")
-        global_test_config = env_info['test_config_dir']
-        if global_test_config and Path(global_test_config).exists():
-            log_content.append(f"  WARNING  Global test config dir exists: {global_test_config}")
-        else:
-            log_content.append(f"  PASS Global test config dir: {global_test_config}")
-        log_content.append("")
-
-        # Write log file (overwrite if exists)
-        with log_file.open('w') as f:
-            f.write('\n'.join(log_content))
-
         # Log environment for debugging
         print(f"\nVERSION E2E Test {test_id} Environment:")
         print(f"  test_name: {test_name}")
         print(f"  env_type: {env_type}")
-        print(f"  COMMIT Environment logged to: {log_file}")
         for key, value in env_info.items():
             if key == "isolated_fs":
                 print(f"  {key}: {value['method']} at {value['root']}")
