@@ -22,21 +22,14 @@ def pytest_configure(config: pytest.Config) -> None:
     restore the original httpx.AsyncClient that was replaced with MockAsyncClient.
     This MUST happen before test modules are imported so @patch decorators work.
     """
-    print("\n[E2E conftest] pytest_configure called!")
     # Restore original httpx.AsyncClient for E2E tests that use @patch decorators
     try:
         import httpx
-        print(f"[E2E conftest] httpx.AsyncClient = {httpx.AsyncClient}")
-        print(f"[E2E conftest] hasattr _original_AsyncClient = {hasattr(httpx, '_original_AsyncClient')}")
         if hasattr(httpx, '_original_AsyncClient'):
             # Restore the original NOW so @patch decorators work when modules are imported
             httpx.AsyncClient = httpx._original_AsyncClient
-            print("[E2E conftest] Restored original httpx.AsyncClient for E2E tests")
-            print(f"[E2E conftest] httpx.AsyncClient is now: {httpx.AsyncClient}")
-        else:
-            print("[E2E conftest] No _original_AsyncClient found, not restoring")
-    except ImportError as e:
-        print(f"[E2E conftest] ImportError: {e}")
+    except ImportError:
+        pass
 
 # Global lock to ensure E2E tests run sequentially
 _e2e_execution_lock = threading.Lock()
