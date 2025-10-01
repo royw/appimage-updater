@@ -2,7 +2,7 @@
 
 from rich.console import Console
 
-from appimage_updater.ui.output.factory import get_output_formatter
+from appimage_updater.ui.output.context import get_output_formatter
 
 console = Console()
 
