@@ -46,10 +46,11 @@ Source Code (src/)
 - **Total SLOC**: Source Lines of Code (excludes comments and blank lines)
 - **Average code paths per file**: Mean cyclomatic complexity across all files
 - **Maximum code paths in a file**: Highest complexity in any single file
-- **Code duplication score**: Measured by pylint (10/10 is perfect, <8/10 indicates significant duplication)
+- **Code duplication score**: Measured by pylint (10/10 is perfect, \<8/10 indicates significant duplication)
 - **Top 5 files with most imports**: Files with many dependencies (may indicate coupling issues)
 
 **Interpretation:**
+
 - Files over 500 lines may benefit from refactoring
 - Average code paths > 50 suggests high complexity
 - Duplication score < 8.0 indicates copy-paste code that should be refactored
@@ -84,6 +85,7 @@ Test Code (tests/)
 - **Source files without tests**: Files that have no test file importing them (based on import detection)
 
 **Interpretation:**
+
 - Test SLOC > Source SLOC is a good sign (indicates thorough testing)
 - Files without tests are candidates for adding test coverage
 - A healthy mix of test types provides comprehensive coverage
@@ -106,11 +108,13 @@ This list uses **import detection heuristic** (checking if test files import the
 - **High risk files**: Complex code with low test coverage (most likely to contain bugs)
 
 **Interpretation:**
+
 - Risk score > 5.0: High priority for adding tests
 - Risk score > 10.0: Critical - complex code with no safety net
 - Focus testing efforts on high-risk files first for maximum impact
 
 **Formula explanation:**
+
 - A file with complexity 10 and 0% coverage has risk = 10 × (100 - 0) / 100 = 10.0
 - A file with complexity 10 and 80% coverage has risk = 10 × (100 - 80) / 100 = 2.0
 - Testing reduces risk proportionally to coverage
@@ -135,12 +139,14 @@ Cyclomatic Complexity
 - **Total code paths**: Sum of all code paths across the entire codebase
 
 **Complexity ratings:**
+
 - **1-5 (A)**: Simple, easy to understand and test
 - **6-10 (B)**: Moderate complexity, may need refactoring
 - **11-20 (C)**: High complexity, should be refactored
 - **21+ (D/E/F)**: Very high complexity, difficult to maintain
 
 **Interpretation:**
+
 - Functions with complexity > 10 should be broken into smaller functions
 - Files with many B-rated functions are refactoring candidates
 - Total code paths helps calculate test/path ratio (see Summary)
@@ -172,6 +178,7 @@ Code Coverage
 - **Coverage distribution**: Number of files in each coverage range
 
 **Coverage targets:**
+
 - **100%**: Perfect coverage (46 files achieved this)
 - **90-99%**: Excellent coverage
 - **80-89%**: Good coverage
@@ -180,12 +187,14 @@ Code Coverage
 - **Below 60%**: Priority for adding tests
 
 **Interpretation:**
+
 - Overall coverage > 70% is good, > 80% is excellent
 - Focus on files with 0-9% coverage first (highest impact)
 - Files with 100% coverage are well-tested and safe to refactor
 
 **Why "Without tests" differs from "0-9% coverage":**
 These measure different things:
+
 - **"Without tests"**: Uses import detection heuristic (may miss indirect imports)
 - **"0-9% coverage"**: Actual line execution from pytest (ground truth)
 - A file can be imported but have low coverage if tests don't exercise much code
@@ -211,6 +220,7 @@ These measure different things:
 - **Coverage**: Overall percentage of code executed by tests
 
 **Interpretation:**
+
 - **Test/Path ratio**:
   - < 0.3: Insufficient tests for code complexity
   - 0.3-0.5: Reasonable test coverage
@@ -225,7 +235,9 @@ These measure different things:
 The script follows a **two-phase architecture** for maintainability and extensibility:
 
 ### Phase 1: Data Gathering
+
 All metrics are collected into structured dataclasses:
+
 - `gather_complexity_metrics()`: Radon integration for cyclomatic complexity
 - `gather_source_metrics()`: Source code analysis (files, SLOC, imports)
 - `gather_test_metrics()`: Test code analysis and untested file detection
@@ -234,7 +246,9 @@ All metrics are collected into structured dataclasses:
 - `gather_all_metrics()`: Orchestrates all gathering
 
 ### Phase 2: Report Generation
+
 Formatted output from collected data:
+
 - `report_source_metrics()`: Display source code metrics
 - `report_test_metrics()`: Display test metrics
 - `report_risk_metrics()`: Display risk analysis
@@ -246,14 +260,15 @@ Formatted output from collected data:
 ### Benefits of This Architecture
 
 1. **Separation of Concerns**: Data gathering is independent of presentation
-2. **Testability**: Each phase can be tested independently
-3. **Reusability**: Data can be used for multiple output formats (JSON, HTML, etc.)
-4. **Maintainability**: Changes to one phase don't affect the other
-5. **Extensibility**: Easy to add new metrics or output formats
+1. **Testability**: Each phase can be tested independently
+1. **Reusability**: Data can be used for multiple output formats (JSON, HTML, etc.)
+1. **Maintainability**: Changes to one phase don't affect the other
+1. **Extensibility**: Easy to add new metrics or output formats
 
 ## Dependencies
 
 The metrics script requires these tools:
+
 - **pytest**: For running tests and generating coverage data
 - **radon**: For cyclomatic complexity analysis
 - **pylint**: For code duplication detection (optional)
@@ -265,26 +280,27 @@ All dependencies are included in the project's `pyproject.toml`.
 ### High Priority Actions
 
 1. **Files with 0-9% coverage**: Add basic tests first
-2. **High risk files (risk > 10)**: Add tests to complex, untested code
-3. **Functions with complexity > 10**: Refactor into smaller functions
-4. **Code duplication < 8.0**: Identify and eliminate duplicate code
+1. **High risk files (risk > 10)**: Add tests to complex, untested code
+1. **Functions with complexity > 10**: Refactor into smaller functions
+1. **Code duplication < 8.0**: Identify and eliminate duplicate code
 
 ### Medium Priority Actions
 
 1. **Files with 10-49% coverage**: Expand existing tests
-2. **Files with complexity 6-10**: Consider refactoring if difficult to test
-3. **Files > 500 lines**: Consider splitting into smaller modules
+1. **Files with complexity 6-10**: Consider refactoring if difficult to test
+1. **Files > 500 lines**: Consider splitting into smaller modules
 
 ### Maintenance Goals
 
 1. **Overall coverage**: Maintain > 70%, target > 80%
-2. **Test/Path ratio**: Maintain > 0.3, target > 0.4
-3. **Code duplication**: Keep > 9.0/10
-4. **Complexity**: Keep all functions at A-rating (complexity ≤ 5)
+1. **Test/Path ratio**: Maintain > 0.3, target > 0.4
+1. **Code duplication**: Keep > 9.0/10
+1. **Complexity**: Keep all functions at A-rating (complexity ≤ 5)
 
 ## Continuous Improvement
 
 Run metrics regularly to track progress:
+
 ```bash
 # Before making changes
 task metrics > metrics_before.txt
