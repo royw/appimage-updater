@@ -260,6 +260,13 @@ tasks:
         "_handle_edit_preview_modes" "_apply_edit_updates_to_apps" "supported_domains"
     silent: true
 
+  lint:duplication:
+    desc: Check for duplicate code using pylint
+    cmds:
+      - cmd: echo "Checking for code duplication..."
+        silent: true
+      - uv run pylint --disable=all --enable=duplicate-code {{.CLI_ARGS | default .SRC}}
+
   # === Metrics ===
   metrics:
     desc: Display comprehensive project metrics summary
