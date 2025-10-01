@@ -19,6 +19,10 @@ from ..repositories.base import (
     RepositoryError,
 )
 from ..repositories.factory import get_repository_client_with_probing_sync
+from ..utils.version_file_utils import (
+    extract_versions_from_files,
+    select_newest_version,
+)
 from ..utils.version_utils import (
     create_nightly_version,
     normalize_version_string,
@@ -213,23 +217,17 @@ class VersionChecker:
 
     def _extract_versions_from_files(self, app_files: list[Path]) -> list[tuple[str, float, Path]]:
         """Extract version information from AppImage files."""
-        version_files = []
-        for file_path in app_files:
-            version_str = self._extract_version_from_filename(file_path.name)
-            if version_str:
-                version_files.append((version_str, file_path.stat().st_mtime, file_path))
-        return version_files
+        return extract_versions_from_files(
+            app_files,
+            self._extract_version_from_filename,
+        )
 
     def _select_newest_version(self, version_files: list[tuple[str, float, Path]]) -> str:
         """Select the newest version from the list of version files."""
-        try:
-            # Sort by version (descending) then by modification time (newest first)
-            version_files.sort(key=lambda x: (version.parse(x[0].lstrip("v")), x[1]), reverse=True)
-            return normalize_version_string(version_files[0][0])
-        except (ValueError, TypeError, IndexError):
-            # Fallback to sorting by modification time only
-            version_files.sort(key=lambda x: x[1], reverse=True)
-            return normalize_version_string(version_files[0][0])
+        return select_newest_version(
+            version_files,
+            normalize_version_string,
+        )
 
     def _remove_rotation_suffixes(self, content: str) -> str:
         """Remove rotation suffixes from version content."""

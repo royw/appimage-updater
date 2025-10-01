@@ -10,10 +10,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from loguru import logger
-from packaging import version
 
 from appimage_updater.core.info_file_service import InfoFileService
 from appimage_updater.core.version_parser import VersionParser
+from appimage_updater.utils.version_file_utils import (
+    extract_versions_from_files,
+    select_newest_version,
+)
 
 
 if TYPE_CHECKING:
@@ -122,20 +125,14 @@ class LocalVersionService:
 
     def _extract_versions_from_files(self, app_files: list[Path]) -> list[tuple[str, float, Path]]:
         """Extract version information from AppImage files."""
-        version_files = []
-        for file_path in app_files:
-            version_str = self.version_parser.extract_version_from_filename(file_path.name)
-            if version_str:
-                version_files.append((version_str, file_path.stat().st_mtime, file_path))
-        return version_files
+        return extract_versions_from_files(
+            app_files,
+            self.version_parser.extract_version_from_filename,
+        )
 
     def _select_newest_version(self, version_files: list[tuple[str, float, Path]]) -> str:
         """Select the newest version from the list of version files."""
-        try:
-            # Sort by version (descending) then by modification time (newest first)
-            version_files.sort(key=lambda x: (version.parse(x[0].lstrip("v")), x[1]), reverse=True)
-            return self.version_parser.normalize_version_string(version_files[0][0])
-        except (ValueError, TypeError, IndexError):
-            # Fallback to sorting by modification time only
-            version_files.sort(key=lambda x: x[1], reverse=True)
-            return self.version_parser.normalize_version_string(version_files[0][0])
+        return select_newest_version(
+            version_files,
+            self.version_parser.normalize_version_string,
+        )
