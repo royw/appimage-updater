@@ -210,8 +210,8 @@ else:
     print("    None - all significant files have tests!")
 EOF
 
-# Top 5 files with highest complexity/coverage ratio
-echo "  Top 5 files with highest complexity/coverage ratio:"
+# Top 5 highest risk files (high complexity + low coverage)
+echo "  Top 5 highest risk files (high complexity + low coverage):"
 if [ -f "coverage.xml" ] && [ "$total_code_paths" != "N/A" ]; then
     uv run python3 << 'EOF'
 import xml.etree.ElementTree as ET
@@ -256,7 +256,7 @@ try:
             coverage_pct = line_rate * 100
             file_coverage[full_path] = coverage_pct
     
-    # Calculate complexity/coverage ratio
+    # Calculate complexity/coverage ratio (high complexity + low coverage = high risk)
     ratios = []
     for filepath, complexity in file_complexity.items():
         # Normalize path
@@ -265,16 +265,17 @@ try:
             normalized = f"src/appimage_updater/{normalized}"
         
         coverage = file_coverage.get(normalized, 0)
-        if coverage > 0:  # Avoid division by zero
-            ratio = complexity / coverage
-            ratios.append((normalized, complexity, coverage, ratio))
+        # Calculate risk score: complexity * (100 - coverage)
+        # High complexity + low coverage = high risk score
+        risk_score = complexity * (100 - coverage) / 100
+        ratios.append((normalized, complexity, coverage, risk_score))
     
-    # Sort by ratio descending
+    # Sort by risk score descending (highest risk first)
     ratios.sort(key=lambda x: x[3], reverse=True)
     
     # Print top 5
-    for filepath, complexity, coverage, ratio in ratios[:5]:
-        print(f"    {filepath:60s} (complexity: {complexity}, coverage: {coverage:.1f}%, ratio: {ratio:.2f})")
+    for filepath, complexity, coverage, risk_score in ratios[:5]:
+        print(f"    {filepath:60s} (complexity: {complexity}, coverage: {coverage:.1f}%, risk: {risk_score:.1f})")
         
 except Exception as e:
     print(f"    Error calculating ratios: {e}")
