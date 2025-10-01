@@ -14,7 +14,14 @@ vars:
   EMOJI_REPLACEMENTS_MAP: '✅:PASS ❌:FAIL ⚠️:WARNING 🔍:SEARCH 📦:PACKAGE 🐧:LINUX 🚀:DEPLOY 🎯:TARGET 🏆:SUCCESS 🎉:COMPLETE 📊:REPORT 🧪:TEST 🔴:HIGH 🟡:MEDIUM 🟢:LOW 📚:DOCS 🌍:SERVER 🏗️:BUILD 📈:BUMP 📝:COMMIT 🐍:PYTHON 📋:LIST ✓:DONE 📁:FOLDER 🌐:NETWORK 🎭:MOCK ⚡:EXECUTE 📤:STDOUT 📥:STDERR 💥:EXCEPTION 🔧:VERSION 📄:FILE 🌳:TREE 🏁:COMPLETE 🔒:LOCK 🔓:UNLOCK 🐛:BUG 🛠️:TOOLS 🚨:0'
 
 tasks:
-  output:
+# === Default ===
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list --sort none
+
+# === Internal ===
+  _output:
     desc: Internal task to output messages silently
     cmds:
       - cmd: echo "{{.MESSAGE}}"
@@ -26,7 +33,7 @@ tasks:
   env:check:
     desc: Verify development environment setup
     cmds:
-      - task: output
+      - task: _output
         vars:
           MESSAGE: "Checking Prerequisite versions..."
       - uv --version
@@ -36,14 +43,21 @@ tasks:
       - pymarkdownlnt version
 
   install:
-    desc: Install project dependencies (first-time setup)
+    desc: Install project dependencies (first-time setup) into .venv/
     deps:
+      - env:check
       - sync
 
   sync:
-    desc: Sync project dependencies with uv
+    desc: Sync project dependencies with uv into .venv/
     cmds:
       - uv sync --extra dev
+
+  resync:
+    desc: Resync project dependencies by first deleting .venv/ and then syncing with uv into .venv/
+    cmds:
+      - rm -rf .venv/
+      - task: sync
 
   clean:
     desc: Clean up generated files
@@ -56,13 +70,7 @@ tasks:
       - rm -rf build/
       - rm -rf site/
 
-  # === Development and Running ===
-  run:
-    desc: Run the application
-    cmds:
-      - uv run python -m appimage_updater {{.CLI_ARGS}}
-
-  # === Code Quality and Linting ===
+  # === Code Quality ===
   format:
     desc: Format code with ruff (including import sorting) and format markdown files with mdformat
     cmds:
@@ -75,6 +83,75 @@ tasks:
         silent: true
       - mdformat {{.CLI_ARGS | default "*.md docs/*.md"}}
 
+  format:tests:
+    desc: Format tests with ruff (including import sorting)
+    deps:
+      - lint:fix:tests
+    cmds:
+      - uv run ruff format {{.CLI_ARGS | default .TESTS}}  # Format code
+
+  fix:emoji:
+    desc: Remove emojis from markdown and test files (*.md, docs/*.md, tests/*.py)
+    cmds:
+      - cmd: |
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import glob
+          from pathlib import Path
+          
+          # Build emoji replacements map from Taskfile variable
+          EMOJI_MAP = '{{.EMOJI_REPLACEMENTS_MAP}}'
+          
+          # Parse the map into a dictionary
+          replacements = {}
+          for pair in EMOJI_MAP.split():
+              if ':' in pair:
+                  emoji, replacement = pair.split(':', 1)
+                  replacements[emoji] = replacement
+          
+          print("Removing emojis from markdown and test files...")
+          
+          def process_file(filepath):
+              """Process a single file and replace emojis."""
+              try:
+                  with open(filepath, 'r', encoding='utf-8') as f:
+                      content = f.read()
+                  
+                  original_content = content
+                  
+                  # Apply all emoji replacements
+                  for emoji, replacement in replacements.items():
+                      content = content.replace(emoji, replacement)
+                  
+                  # Only write if content changed
+                  if content != original_content:
+                      with open(filepath, 'w', encoding='utf-8') as f:
+                          f.write(content)
+                      print(f"  - Emojis removed from {filepath}")
+              except Exception as e:
+                  print(f"  ! Error processing {filepath}: {e}")
+          
+          print("Processing markdown files...")
+          # Process markdown files in project root (max depth 1)
+          for md_file in glob.glob("*.md"):
+              process_file(md_file)
+          
+          # Process markdown files in docs/ directory
+          if os.path.isdir("docs"):
+              for md_file in Path("docs").rglob("*.md"):
+                  process_file(str(md_file))
+          
+          print("Processing test Python files...")
+          # Process all test python files (including subdirectories)
+          if os.path.isdir("tests"):
+              for py_file in Path("tests").rglob("*.py"):
+                  process_file(str(py_file))
+          
+          print("Emoji removal complete!")
+          PYTHON_SCRIPT
+        silent: true
+
+  # === Linting ===
   lint:
     desc: Run all linting tasks
     cmds:
@@ -93,12 +170,12 @@ tasks:
   lint:fix:
     desc: Automatically fix linting issues with ruff
     cmds:
-      - uv run ruff check --fix {{.CLI_ARGS | default .SRC}}
+      - uv run ruff check --fix --select I {{.CLI_ARGS | default .SRC}}
 
   lint:fix:tests:
     desc: Automatically fix linting issues with ruff
     cmds:
-      - uv run ruff check --fix {{.CLI_ARGS | default .TESTS}}
+      - uv run ruff check --fix --select I {{.CLI_ARGS | default .TESTS}}
 
   lint:emoji:
     desc: Search for emojis in source code, docs, and configuration files
@@ -166,13 +243,6 @@ tasks:
         silent: true
       - uv run pymarkdownlnt --config .pymarkdown.json scan {{.CLI_ARGS | default "*.md docs/*.md"}} || true
 
-  complexity:
-    desc: Analyze code complexity with radon
-    cmds:
-      - cmd: echo "Checking complexity..."
-        silent: true
-      - uv run radon cc {{.CLI_ARGS | default .SRC}} --min B
-
   lint:deadcode:
     desc: Find dead (unreachable/unused) code with deadcode
     cmds:
@@ -189,6 +259,14 @@ tasks:
         "_extract_version_from_filename" "excepthook" "_print_troubleshooting_tips"
         "_handle_edit_preview_modes" "_apply_edit_updates_to_apps" "supported_domains"
     silent: true
+
+  # === Metrics ===
+  complexity:
+    desc: Analyze code complexity with radon
+    cmds:
+      - cmd: echo "Checking complexity..."
+        silent: true
+      - uv run radon cc {{.CLI_ARGS | default .SRC}} --min B
 
   # === Testing ===
   test:
@@ -229,11 +307,11 @@ tasks:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/test_intelligent_pattern_generation.py -v 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
 
   test:regression:
-    desc: Run regression tests to validate fixed issues - full coverage reporting
+    desc: Run regression tests to validate fixed issues (uses network) - full coverage reporting
     cmds:
     # do not use timeout here as it will cause the test to fail
       - uv run pytest tests/regression/ -v --tb=short --color=yes
-      - task: output
+      - task: _output
         vars:
           MESSAGE: "✅ Regression tests passed - fixed issues remain resolved!"
 
@@ -255,9 +333,67 @@ tasks:
     desc: Run all tests with coverage reporting (excludes regression tests) - full coverage reporting
     cmds:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e --cov={{.SRC}}appimage_updater --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
-      - task: output
+      - task: _output
         vars:
           MESSAGE: "📊 Coverage report saved to htmlcov/index.html"
+
+  # === Documentation ===
+  docs:build:
+    desc: Build documentation with MkDocs
+    cmds:
+      - task: _output
+        vars:
+          MESSAGE: "📚 Building documentation..."
+      - uv run mkdocs build {{.CLI_ARGS}} 2>&1 | grep -v "MERMAID2.*Found superfences config" | grep -v "MERMAID2.*Initialization arguments" | grep -v "MERMAID2.*Using javascript library" || true
+      - task: _output
+        vars:
+          MESSAGE: "✅ Documentation built successfully in site/"
+
+  docs:serve:
+    desc: Serve documentation locally for development
+    cmds:
+      - task: _output
+        vars:
+          MESSAGE: "🌍 Starting documentation server..."
+      - uv run mkdocs serve {{.CLI_ARGS}}
+
+  docs:
+    desc: Build and serve documentation locally
+    deps:
+      - docs:build
+      - docs:serve
+
+  # === Version ===
+  version:pyproject:
+    desc: Extract version from pyproject.toml (internal task)
+    cmds:
+      - python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data['project']['version'])"
+    silent: true
+
+  version:
+    desc: Display the current project version
+    cmds:
+      - task: _output
+        vars:
+          MESSAGE: "v$(task version:pyproject)"
+
+  # === Build Packages ===
+
+  build:
+    desc: Build distribution packages
+    deps:
+      - clean
+    cmds:
+      - task: _output
+        vars:
+          MESSAGE: "🏗️  Building AppImage Updater distribution packages..."
+      - uv build {{.CLI_ARGS}}
+      - task: _output
+        vars:
+          MESSAGE: "✅ Build complete! Packages created in dist/"
+      - ls -la dist/
+
+# === Development Workflow ===
 
   # === Quality Checks ===
   check:
@@ -269,144 +405,25 @@ tasks:
       - task: complexity
       - task: test:parallel
 
-  # === Documentation ===
-  docs:build:
-    desc: Build documentation with MkDocs
-    cmds:
-      - task: output
-        vars:
-          MESSAGE: "📚 Building documentation..."
-      - uv run mkdocs build {{.CLI_ARGS}} 2>&1 | grep -v "MERMAID2.*Found superfences config" | grep -v "MERMAID2.*Initialization arguments" | grep -v "MERMAID2.*Using javascript library" || true
-      - task: output
-        vars:
-          MESSAGE: "✅ Documentation built successfully in site/"
-
-  docs:serve:
-    desc: Serve documentation locally for development
-    cmds:
-      - task: output
-        vars:
-          MESSAGE: "🌍 Starting documentation server..."
-      - uv run mkdocs serve {{.CLI_ARGS}}
-
-  docs:
-    desc: Build and serve documentation locally (alias for docs:serve)
-    deps:
-      - docs:build
-      - docs:serve
-
-  fix:emoji:
-    desc: Remove emojis from markdown and test files (*.md, docs/*.md, tests/*.py)
-    cmds:
-      - cmd: |
-          python3 << 'PYTHON_SCRIPT'
-          import os
-          import glob
-          from pathlib import Path
-          
-          # Build emoji replacements map from Taskfile variable
-          EMOJI_MAP = '{{.EMOJI_REPLACEMENTS_MAP}}'
-          
-          # Parse the map into a dictionary
-          replacements = {}
-          for pair in EMOJI_MAP.split():
-              if ':' in pair:
-                  emoji, replacement = pair.split(':', 1)
-                  replacements[emoji] = replacement
-          
-          print("Removing emojis from markdown and test files...")
-          
-          def process_file(filepath):
-              """Process a single file and replace emojis."""
-              try:
-                  with open(filepath, 'r', encoding='utf-8') as f:
-                      content = f.read()
-                  
-                  original_content = content
-                  
-                  # Apply all emoji replacements
-                  for emoji, replacement in replacements.items():
-                      content = content.replace(emoji, replacement)
-                  
-                  # Only write if content changed
-                  if content != original_content:
-                      with open(filepath, 'w', encoding='utf-8') as f:
-                          f.write(content)
-                      print(f"  - Emojis removed from {filepath}")
-              except Exception as e:
-                  print(f"  ! Error processing {filepath}: {e}")
-          
-          print("Processing markdown files...")
-          # Process markdown files in project root (max depth 1)
-          for md_file in glob.glob("*.md"):
-              process_file(md_file)
-          
-          # Process markdown files in docs/ directory
-          if os.path.isdir("docs"):
-              for md_file in Path("docs").rglob("*.md"):
-                  process_file(str(md_file))
-          
-          print("Processing test Python files...")
-          # Process all test python files (including subdirectories)
-          if os.path.isdir("tests"):
-              for py_file in Path("tests").rglob("*.py"):
-                  process_file(str(py_file))
-          
-          print("Emoji removal complete!")
-          PYTHON_SCRIPT
-        silent: true
-
-  # === E2E Test Analysis ===
-  e2e:analyze-failures:
-    desc: Analyze failing E2E tests by comparing local vs CI environment logs
-    cmds:
-      - cmd: |
-          echo "Analyzing E2E test failures..."
-          if [ ! -d "e2e_environment_logs" ]; then
-            echo "❌ No e2e_environment_logs directory found. Run some E2E tests first."
-            exit 1
-          fi
-          
-          echo "Usage: task check 2>&1 | python scripts/extract-failing-tests.py --from-stdin"
-          echo "Or manually run: python scripts/extract-failing-tests.py <ci_output_file>"
-          echo ""
-          echo "Available log files:"
-          ls -1 e2e_environment_logs/ | head -10
-          echo "... (showing first 10 files)"
-        silent: false
-
   # === Build and Release ===
-  build:
-    desc: Build distribution packages
-    deps:
-      - clean
+  make:
+    desc: Complete build pipeline - run all checks, build, docs, and show version
     cmds:
-      - task: output
+      - task: _output
         vars:
-          MESSAGE: "🏗️  Building AppImage Updater distribution packages..."
-      - uv build {{.CLI_ARGS}}
-      - task: output
+          MESSAGE: "🚀 Starting build pipeline..."
+      - task: check
+      - task: build
+      - task: docs:build
+      - task: version
+      - task: _output
         vars:
-          MESSAGE: "✅ Build complete! Packages created in dist/"
-      - ls -la dist/
-
-  version:pyproject:
-    desc: Extract version from pyproject.toml (internal task)
-    cmds:
-      - python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data['project']['version'])"
-    silent: true
-
-  version:
-    desc: Display the current project version
-    cmds:
-      - task: output
-        vars:
-          MESSAGE: "v$(task version:pyproject)"
+          MESSAGE: "✅ Build pipeline completed successfully! Ready to push to GitHub 🎉"
 
   version:bump:
     desc: Bump the patch version, build, and commit changes
     cmds:
-      - task: output
+      - task: _output
         vars:
           MESSAGE: "🔍 Checking for uncommitted changes..."
       - |
@@ -417,19 +434,19 @@ tasks:
         else
           task output MESSAGE="✅ Working directory is clean"
         fi
-      - task: output
+      - task: _output
         vars:
           MESSAGE: "📈 Bumping version..."
       - uv run version_bumper bump patch
-      - task: output
+      - task: _output
         vars:
           MESSAGE: "✅ Version bumped! New version:"
       - task: version
-      - task: output
+      - task: _output
         vars:
           MESSAGE: "🏗️  Building package..."
       - task: build
-      - task: output
+      - task: _output
         vars:
           MESSAGE: "📝 Committing version bump..."
       - |
@@ -443,11 +460,11 @@ tasks:
     deps:
       - build
     cmds:
-      - task: output
+      - task: _output
         vars:
           MESSAGE: "🚀 Installing locally with pipx..."
       - pipx install --force dist/*.whl
-      - task: output
+      - task: _output
         vars:
           MESSAGE: "✅ Successfully deployed appimage-updater v$(task version) locally!"
 
@@ -458,32 +475,23 @@ tasks:
     cmds:
       - cmd:  VERSION=$(task version:pyproject)
         silent: true
-      - task: output
+      - task: _output
         vars:
           MESSAGE: "Creating tag v$VERSION..."
       - cmd:  git tag "v$VERSION"
       - cmd:  git push origin "v$VERSION"
-      - task: output
+      - task: _output
         vars:
           MESSAGE: "✅ Tag v$VERSION created and pushed to origin!"
 
   # === CI/CD Pipeline ===
   ci:
-    desc: Complete CI pipeline - run all checks, build, docs, and show version before pushing to GitHub
+    desc: Run GitHub CI build locally using scripts/ci-local.sh.  This is the same pipeline that runs on GitHub Actions.
     cmds:
-      - task: output
-        vars:
-          MESSAGE: "🚀 Starting CI pipeline..."
-      - task: check
-      - task: build
-      - task: docs:build
-      - task: version
-      - task: output
-        vars:
-          MESSAGE: "✅ CI pipeline completed successfully! Ready to push to GitHub 🎉"
+      - bash scripts/ci-local.sh
 
-  # === Default ===
-  default:
-    desc: Show available tasks
+  # === Development and Running ===
+  run:
+    desc: Run the application
     cmds:
-      - task --list
+      - uv run python -m appimage_updater {{.CLI_ARGS}}
