@@ -110,6 +110,24 @@ fi
 echo "  Average code paths per file: $avg_paths_per_file"
 echo "  Maximum code paths in a file: $max_paths_in_file"
 
+# Pylint duplication score
+if command -v pylint &> /dev/null; then
+    duplication_score=$(uv run pylint --disable=all --enable=duplicate-code src/ 2>/dev/null | grep -oP 'Your code has been rated at \K[0-9.]+' || echo "N/A")
+    if [ "$duplication_score" != "N/A" ]; then
+        echo "  Code duplication score: ${duplication_score}/10"
+    else
+        echo "  Code duplication score: N/A (no duplicates found or pylint error)"
+    fi
+else
+    echo "  ${YELLOW}Code duplication score: N/A (pylint not installed)${NC}"
+fi
+
+# Top 5 files with most imports
+echo "  Top 5 files with most imports:"
+find src/ -name "*.py" -type f -exec sh -c 'echo "$(grep -c "^import \|^from " "$1"):$1"' _ {} \; | sort -rn | head -5 | while IFS=: read -r count filepath; do
+    printf "    %-60s (%s imports)\n" "$filepath" "$count"
+done
+
 # === Test Code Metrics ===
 echo -e "\n${BOLD}${GREEN}Test Code (tests/)${NC}"
 
@@ -139,6 +157,131 @@ echo "    Functional: $functional_tests"
 echo "    Integration: $integration_tests"
 echo "    E2E: $e2e_tests"
 echo "    Regression: $regression_tests"
+
+# Files without tests (SLOC > 20)
+echo "  Source files (SLOC > 20) without tests:"
+uv run python3 << 'EOF'
+import os
+import re
+from pathlib import Path
+
+# Get all source files with SLOC > 20
+src_files_with_sloc = {}
+for src_file in Path("src").rglob("*.py"):
+    if "__pycache__" in str(src_file):
+        continue
+    with open(src_file, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+        # Count non-empty, non-comment lines
+        sloc = sum(1 for line in lines if line.strip() and not line.strip().startswith('#'))
+        if sloc > 20:
+            src_files_with_sloc[str(src_file)] = sloc
+
+# Get all test files and extract what they test
+tested_modules = set()
+for test_file in Path("tests").rglob("test_*.py"):
+    with open(test_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+        # Look for imports from appimage_updater
+        imports = re.findall(r'from appimage_updater\.([^\s]+) import', content)
+        imports += re.findall(r'import appimage_updater\.([^\s]+)', content)
+        for imp in imports:
+            # Convert import path to file path
+            module_path = imp.replace('.', '/')
+            tested_modules.add(f"src/appimage_updater/{module_path}.py")
+
+# Find untested files
+untested = []
+for src_file, sloc in src_files_with_sloc.items():
+    # Normalize path for comparison
+    normalized = src_file.replace('\\', '/')
+    if normalized not in tested_modules:
+        # Check if it's a test-related file that doesn't need tests
+        if not any(x in normalized for x in ['__init__.py', '__main__.py', '_version.py']):
+            untested.append((normalized, sloc))
+
+# Sort by SLOC descending
+untested.sort(key=lambda x: x[1], reverse=True)
+
+if untested:
+    for filepath, sloc in untested[:10]:  # Show top 10
+        print(f"    {filepath:60s} (SLOC: {sloc})")
+else:
+    print("    None - all significant files have tests!")
+EOF
+
+# Top 5 files with highest complexity/coverage ratio
+echo "  Top 5 files with highest complexity/coverage ratio:"
+if [ -f "coverage.xml" ] && [ "$total_code_paths" != "N/A" ]; then
+    uv run python3 << 'EOF'
+import xml.etree.ElementTree as ET
+import subprocess
+import json
+
+try:
+    # Get complexity per file
+    result = subprocess.run(
+        ['radon', 'cc', 'src/', '-a', '-j'],
+        capture_output=True,
+        text=True,
+        check=True
+    )
+    complexity_data = json.loads(result.stdout)
+    
+    # Calculate total complexity per file
+    file_complexity = {}
+    for filepath, blocks in complexity_data.items():
+        if blocks:
+            total = sum(block.get('complexity', 0) for block in blocks)
+            file_complexity[filepath] = total
+    
+    # Get coverage per file
+    tree = ET.parse('coverage.xml')
+    root = tree.getroot()
+    
+    file_coverage = {}
+    for package in root.findall('.//package'):
+        package_name = package.attrib.get('name', '')
+        for cls in package.findall('.//class'):
+            filename = cls.attrib.get('filename', '')
+            if not filename or '__pycache__' in filename:
+                continue
+            # Construct full path
+            if package_name and package_name != '.':
+                full_path = f"src/appimage_updater/{package_name}/{filename}"
+            else:
+                full_path = f"src/appimage_updater/{filename}"
+            
+            line_rate = float(cls.attrib.get('line-rate', 0))
+            coverage_pct = line_rate * 100
+            file_coverage[full_path] = coverage_pct
+    
+    # Calculate complexity/coverage ratio
+    ratios = []
+    for filepath, complexity in file_complexity.items():
+        # Normalize path
+        normalized = filepath.replace('\\', '/')
+        if not normalized.startswith('src/'):
+            normalized = f"src/appimage_updater/{normalized}"
+        
+        coverage = file_coverage.get(normalized, 0)
+        if coverage > 0:  # Avoid division by zero
+            ratio = complexity / coverage
+            ratios.append((normalized, complexity, coverage, ratio))
+    
+    # Sort by ratio descending
+    ratios.sort(key=lambda x: x[3], reverse=True)
+    
+    # Print top 5
+    for filepath, complexity, coverage, ratio in ratios[:5]:
+        print(f"    {filepath:60s} (complexity: {complexity}, coverage: {coverage:.1f}%, ratio: {ratio:.2f})")
+        
+except Exception as e:
+    print(f"    Error calculating ratios: {e}")
+EOF
+else
+    echo "    ${YELLOW}N/A (requires coverage.xml and radon)${NC}"
+fi
 
 # === Complexity Metrics ===
 echo -e "\n${BOLD}${GREEN}Cyclomatic Complexity${NC}"

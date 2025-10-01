@@ -204,6 +204,7 @@ dev = [
     "mkdocs-mermaid2-plugin>=1.2.2",
     "mkdocstrings[python]>=0.30.0",
     "mypy>=1.17.1",
+    "pylint>=3.3.8",
     "pytest>=8.4.1",
     "pytest-anyio>=0.0.0",
     "pytest-cov>=6.2.1",
