@@ -14,6 +14,75 @@ NC='\033[0m' # No Color
 
 echo -e "${BOLD}${CYAN}=== Project Metrics Summary ===${NC}\n"
 
+# === Calculate Complexity First (needed for Source Code metrics) ===
+if command -v radon &> /dev/null; then
+    complexity_output=$(uv run python3 << 'EOF'
+import subprocess
+import json
+import sys
+
+try:
+    # Get complexity in JSON format
+    result = subprocess.run(
+        ['radon', 'cc', 'src/', '-a', '-j'],
+        capture_output=True,
+        text=True,
+        check=True
+    )
+    
+    data = json.loads(result.stdout)
+    
+    # Calculate maximum complexity per file and total code paths
+    file_complexities = []
+    file_code_paths = []
+    total_code_paths = 0
+    
+    for filepath, blocks in data.items():
+        if not blocks:
+            continue
+        # Get the maximum complexity for this file
+        max_complexity = max(block.get('complexity', 0) for block in blocks)
+        file_complexities.append((filepath, max_complexity))
+        
+        # Sum all complexities for this file
+        file_total = sum(block.get('complexity', 0) for block in blocks)
+        file_code_paths.append(file_total)
+        total_code_paths += file_total
+    
+    # Sort by maximum complexity descending
+    file_complexities.sort(key=lambda x: x[1], reverse=True)
+    
+    # Calculate stats
+    avg_paths_per_file = total_code_paths / len(file_code_paths) if file_code_paths else 0
+    max_paths_in_file = max(file_code_paths) if file_code_paths else 0
+    
+    # Print top 5
+    print("TOP5_START")
+    for filepath, max_cc in file_complexities[:5]:
+        print(f"{filepath}|{max_cc}")
+    print("TOP5_END")
+    
+    # Print stats
+    print(f"TOTAL_PATHS:{total_code_paths}")
+    print(f"AVG_PATHS:{avg_paths_per_file:.1f}")
+    print(f"MAX_PATHS:{max_paths_in_file}")
+        
+except Exception as e:
+    print(f"ERROR: {e}", file=sys.stderr)
+EOF
+)
+    # Extract metrics
+    total_code_paths=$(echo "$complexity_output" | grep "TOTAL_PATHS:" | cut -d: -f2)
+    avg_paths_per_file=$(echo "$complexity_output" | grep "AVG_PATHS:" | cut -d: -f2)
+    max_paths_in_file=$(echo "$complexity_output" | grep "MAX_PATHS:" | cut -d: -f2)
+    files_high_cc=$(radon cc src/ -n B -s 2>/dev/null | grep -E "^[^ ]" | wc -l || echo "0")
+else
+    total_code_paths="N/A"
+    avg_paths_per_file="N/A"
+    max_paths_in_file="N/A"
+    files_high_cc="N/A"
+fi
+
 # === Source Code Metrics ===
 echo -e "${BOLD}${GREEN}Source Code (src/)${NC}"
 
@@ -36,6 +105,10 @@ else
     sloc=$(find src/ -name "*.py" -type f -exec grep -v '^\s*#' {} \; | grep -v '^\s*$' | wc -l)
     echo "  Total SLOC (approx): $sloc"
 fi
+
+# Code paths metrics
+echo "  Average code paths per file: $avg_paths_per_file"
+echo "  Maximum code paths in a file: $max_paths_in_file"
 
 # === Test Code Metrics ===
 echo -e "\n${BOLD}${GREEN}Test Code (tests/)${NC}"
@@ -71,71 +144,16 @@ echo "    Regression: $regression_tests"
 echo -e "\n${BOLD}${GREEN}Cyclomatic Complexity${NC}"
 
 if command -v radon &> /dev/null; then
-    # Get top 5 files by complexity and calculate total code paths
-    complexity_output=$(uv run python3 << 'EOF'
-import subprocess
-import json
-import sys
-
-try:
-    # Get complexity in JSON format
-    result = subprocess.run(
-        ['radon', 'cc', 'src/', '-a', '-j'],
-        capture_output=True,
-        text=True,
-        check=True
-    )
-    
-    data = json.loads(result.stdout)
-    
-    # Calculate maximum complexity per file and total code paths
-    file_complexities = []
-    total_code_paths = 0
-    
-    for filepath, blocks in data.items():
-        if not blocks:
-            continue
-        # Get the maximum complexity for this file
-        max_complexity = max(block.get('complexity', 0) for block in blocks)
-        file_complexities.append((filepath, max_complexity))
-        
-        # Sum all complexities for total code paths
-        for block in blocks:
-            total_code_paths += block.get('complexity', 0)
-    
-    # Sort by maximum complexity descending
-    file_complexities.sort(key=lambda x: x[1], reverse=True)
-    
-    # Print top 5
-    print("TOP5_START")
-    for filepath, max_cc in file_complexities[:5]:
-        print(f"{filepath}|{max_cc}")
-    print("TOP5_END")
-    
-    # Print total code paths
-    print(f"TOTAL_PATHS:{total_code_paths}")
-        
-except Exception as e:
-    print(f"ERROR: {e}", file=sys.stderr)
-EOF
-)
-    
-    # Parse output
+    # Parse output (already calculated above)
     echo "  Top 5 most complex files:"
     echo "$complexity_output" | sed -n '/TOP5_START/,/TOP5_END/p' | grep -v "TOP5" | while IFS='|' read -r filepath max_cc; do
         printf "    %-60s (max: %s)\n" "$filepath" "$max_cc"
     done
     
-    # Extract total code paths
-    total_code_paths=$(echo "$complexity_output" | grep "TOTAL_PATHS:" | cut -d: -f2)
-    
-    # Count files with complexity > 5
-    files_high_cc=$(radon cc src/ -n B -s 2>/dev/null | grep -E "^[^ ]" | wc -l || echo "0")
     echo "  Files with complexity > 5: $files_high_cc"
     echo "  Total code paths: $total_code_paths"
 else
     echo "  ${YELLOW}radon not installed - skipping complexity analysis${NC}"
-    total_code_paths="N/A"
 fi
 
 # === Code Coverage ===
