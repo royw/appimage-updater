@@ -1,9 +1,9 @@
 # Repository URL Handling Refactoring Plan
 
-**Status:** Planning Phase  
-**Priority:** Medium (Phase 4 Part 2)  
-**Complexity:** High  
-**Estimated Effort:** 2-3 weeks  
+**Status:** Planning Phase\
+**Priority:** Medium (Phase 4 Part 2)\
+**Complexity:** High\
+**Estimated Effort:** 2-3 weeks
 
 ## Executive Summary
 
@@ -14,25 +14,30 @@ This plan outlines the refactoring of repository URL handling to reduce code dup
 ### Existing Repository Types
 
 1. **GitHub Repository** (`repositories/github/repository.py`)
+
    - Well-established with comprehensive tests
    - Uses GitHub API v3
    - ~95% test coverage
 
-2. **GitLab Repository** (`repositories/gitlab/repository.py`)
+1. **GitLab Repository** (`repositories/gitlab/repository.py`)
+
    - Well-established with comprehensive tests
    - Uses GitLab API v4
    - ~90% test coverage
 
-3. **SourceForge Repository** (`repositories/sourceforge/repository.py`)
+1. **SourceForge Repository** (`repositories/sourceforge/repository.py`)
+
    - Specialized handling for SourceForge URLs
    - ~85% test coverage
 
-4. **Direct Download Repository** (`repositories/direct_download_repository.py`)
+1. **Direct Download Repository** (`repositories/direct_download_repository.py`)
+
    - Handles static download URLs
    - ~70% test coverage
    - **Target for refactoring**
 
-5. **Dynamic Download Repository** (`repositories/dynamic_download_repository.py`)
+1. **Dynamic Download Repository** (`repositories/dynamic_download_repository.py`)
+
    - Handles dynamic download pages requiring parsing
    - ~65% test coverage
    - **Target for refactoring**
@@ -42,20 +47,22 @@ This plan outlines the refactoring of repository URL handling to reduce code dup
 Between `DirectDownloadRepository` and `DynamicDownloadRepository`:
 
 1. **`normalize_repo_url()`** - Identical implementation (3 lines)
-2. **`_extract_version_from_url()`** - 90% similar (15+ lines)
-3. **`parse_repo_url()`** - Similar structure (8 lines)
-4. **URL parsing logic** - Shared patterns
+1. **`_extract_version_from_url()`** - 90% similar (15+ lines)
+1. **`parse_repo_url()`** - Similar structure (8 lines)
+1. **URL parsing logic** - Shared patterns
 
 **Total Duplication:** ~30-40 lines of nearly identical code
 
 ## Phase 1: Comprehensive Testing (Week 1)
 
 ### Objective
+
 Establish robust test coverage before any refactoring to ensure no regressions.
 
 ### Tasks
 
 #### 1.1 Test Coverage Analysis
+
 - [ ] Audit existing tests for DirectDownloadRepository
 - [ ] Audit existing tests for DynamicDownloadRepository
 - [ ] Identify gaps in test coverage
@@ -64,6 +71,7 @@ Establish robust test coverage before any refactoring to ensure no regressions.
 #### 1.2 Create Comprehensive Test Suite
 
 **Direct Download Repository Tests:**
+
 ```python
 # tests/unit/repositories/test_direct_download_repository.py
 
@@ -100,6 +108,7 @@ class TestDirectDownloadRepository:
 ```
 
 **Dynamic Download Repository Tests:**
+
 ```python
 # tests/unit/repositories/test_dynamic_download_repository.py
 
@@ -124,6 +133,7 @@ class TestDynamicDownloadRepository:
 ```
 
 **Integration Tests:**
+
 ```python
 # tests/integration/test_download_repositories.py
 
@@ -139,6 +149,7 @@ class TestDownloadRepositoriesIntegration:
 ```
 
 #### 1.3 Acceptance Criteria
+
 - [ ] Achieve 90%+ test coverage for DirectDownloadRepository
 - [ ] Achieve 90%+ test coverage for DynamicDownloadRepository
 - [ ] All tests passing
@@ -147,6 +158,7 @@ class TestDownloadRepositoriesIntegration:
 ## Phase 2: Exploration & Analysis (Week 1-2)
 
 ### Objective
+
 Determine the best approach for unifying repository handling.
 
 ### 2.1 Unification Analysis
@@ -154,6 +166,7 @@ Determine the best approach for unifying repository handling.
 **Question:** Should DirectDownloadRepository and DynamicDownloadRepository be unified?
 
 **Exploration Tasks:**
+
 - [ ] Document differences between direct and dynamic repositories
 - [ ] Identify use cases unique to each type
 - [ ] Analyze if differences are fundamental or implementation details
@@ -170,6 +183,7 @@ Determine the best approach for unifying repository handling.
 | Typical Use Cases | Latest symlinks, versioned URLs | Project download pages |
 
 **Decision Criteria:**
+
 - If differences are **fundamental** → Keep separate, extract common base
 - If differences are **implementation details** → Consider unification
 - If unification adds complexity → Keep separate with shared utilities
@@ -177,6 +191,7 @@ Determine the best approach for unifying repository handling.
 ### 2.2 Base Class Design Exploration
 
 **Option A: Abstract Base Class**
+
 ```python
 # repositories/base_download_repository.py
 
@@ -209,6 +224,7 @@ class BaseDownloadRepository(RepositoryClient):
 ```
 
 **Option B: Composition with Shared Utilities**
+
 ```python
 # repositories/download_utils.py
 
@@ -234,6 +250,7 @@ class DirectDownloadRepository(RepositoryClient):
 ```
 
 **Option C: Mixin Pattern**
+
 ```python
 # repositories/mixins/download_mixin.py
 
@@ -251,6 +268,7 @@ class DirectDownloadRepository(DownloadRepositoryMixin, RepositoryClient):
 ```
 
 **Evaluation Criteria:**
+
 - **Maintainability:** How easy to understand and modify?
 - **Extensibility:** How easy to add new repository types?
 - **Testability:** How easy to test in isolation?
@@ -262,6 +280,7 @@ class DirectDownloadRepository(DownloadRepositoryMixin, RepositoryClient):
 **Question:** Should we have a common base class for ALL repository types?
 
 **Current Architecture:**
+
 ```
 RepositoryClient (abstract base)
 ├── GitHubRepository
@@ -272,6 +291,7 @@ RepositoryClient (abstract base)
 ```
 
 **Proposed Enhancement:**
+
 ```
 RepositoryClient (abstract base)
 ├── APIBasedRepository (abstract)
@@ -284,16 +304,19 @@ RepositoryClient (abstract base)
 ```
 
 **Benefits:**
+
 - Clear separation between API-based and download-based repositories
 - Shared functionality within each category
 - Better organization and discoverability
 
 **Risks:**
+
 - Additional abstraction layer
 - Potential over-engineering
 - Migration complexity
 
 **Exploration Tasks:**
+
 - [ ] Identify common patterns across ALL repository types
 - [ ] Document API-based vs download-based differences
 - [ ] Evaluate if intermediate abstractions add value
@@ -302,6 +325,7 @@ RepositoryClient (abstract base)
 ## Phase 3: Implementation (Week 2-3)
 
 ### Objective
+
 Implement the chosen approach based on Phase 2 findings.
 
 ### 3.1 Implementation Strategy
@@ -311,31 +335,36 @@ Implement the chosen approach based on Phase 2 findings.
 **Steps:**
 
 1. **Create Base/Utility Module**
+
    - [ ] Implement chosen design (base class, utilities, or mixin)
    - [ ] Add comprehensive docstrings
    - [ ] Add type hints
    - [ ] Write unit tests for new module
 
-2. **Refactor DirectDownloadRepository**
+1. **Refactor DirectDownloadRepository**
+
    - [ ] Update to use base/utility functionality
    - [ ] Remove duplicated code
    - [ ] Maintain all existing functionality
    - [ ] Run tests after each change
    - [ ] Verify no regressions
 
-3. **Refactor DynamicDownloadRepository**
+1. **Refactor DynamicDownloadRepository**
+
    - [ ] Update to use base/utility functionality
    - [ ] Remove duplicated code
    - [ ] Maintain all existing functionality
    - [ ] Run tests after each change
    - [ ] Verify no regressions
 
-4. **Update Repository Factory**
+1. **Update Repository Factory**
+
    - [ ] Update detection logic if needed
    - [ ] Update factory methods
    - [ ] Ensure backward compatibility
 
-5. **Integration Testing**
+1. **Integration Testing**
+
    - [ ] Run full test suite
    - [ ] Test with real-world configurations
    - [ ] Verify all repository types still work
@@ -355,6 +384,7 @@ Implement the chosen approach based on Phase 2 findings.
 ### 4.1 Validation
 
 **Functional Testing:**
+
 - [ ] Test with 10+ real AppImage applications
 - [ ] Test direct download URLs (YubiKey Manager, etc.)
 - [ ] Test dynamic download URLs
@@ -362,11 +392,13 @@ Implement the chosen approach based on Phase 2 findings.
 - [ ] Test error handling and fallbacks
 
 **Performance Testing:**
+
 - [ ] Measure impact on download times
 - [ ] Verify no performance regressions
 - [ ] Test progressive timeout strategy
 
 **Regression Testing:**
+
 - [ ] Run full test suite (1,100+ tests)
 - [ ] Run E2E tests
 - [ ] Test with existing user configurations
@@ -374,17 +406,20 @@ Implement the chosen approach based on Phase 2 findings.
 ### 4.2 Documentation Updates
 
 **Code Documentation:**
+
 - [ ] Update module docstrings
 - [ ] Update class docstrings
 - [ ] Update method docstrings
 - [ ] Add usage examples
 
 **User Documentation:**
+
 - [ ] Update repository support documentation
 - [ ] Update troubleshooting guide
 - [ ] Add examples for new patterns
 
 **Developer Documentation:**
+
 - [ ] Document new architecture
 - [ ] Update architecture diagrams
 - [ ] Add migration guide for contributors
@@ -395,28 +430,34 @@ Implement the chosen approach based on Phase 2 findings.
 ### Identified Risks
 
 1. **Breaking Existing Configurations**
+
    - **Mitigation:** Maintain backward compatibility, extensive testing
    - **Rollback Plan:** Keep original implementations until fully validated
 
-2. **Performance Degradation**
+1. **Performance Degradation**
+
    - **Mitigation:** Performance testing, profiling
    - **Rollback Plan:** Revert if performance drops >10%
 
-3. **Increased Complexity**
+1. **Increased Complexity**
+
    - **Mitigation:** Keep design simple, avoid over-engineering
    - **Rollback Plan:** Use simpler approach if complexity increases
 
-4. **Test Coverage Gaps**
+1. **Test Coverage Gaps**
+
    - **Mitigation:** Comprehensive test suite before refactoring
    - **Rollback Plan:** Don't proceed without 90%+ coverage
 
-5. **Subtle Behavioral Differences**
+1. **Subtle Behavioral Differences**
+
    - **Mitigation:** Document all differences, test edge cases
    - **Rollback Plan:** Keep both implementations if unification proves problematic
 
 ## Success Criteria
 
 ### Must Have
+
 - [ ] All existing tests pass
 - [ ] No breaking changes to public APIs
 - [ ] Code duplication reduced by 50%+
@@ -424,12 +465,14 @@ Implement the chosen approach based on Phase 2 findings.
 - [ ] Documentation complete and accurate
 
 ### Should Have
+
 - [ ] Code duplication reduced by 70%+
 - [ ] Performance maintained or improved
 - [ ] Cleaner, more maintainable architecture
 - [ ] Easier to add new repository types
 
 ### Nice to Have
+
 - [ ] Unified direct/dynamic repository handling
 - [ ] Common base class for all repositories
 - [ ] Improved error messages and debugging
@@ -448,9 +491,11 @@ Implement the chosen approach based on Phase 2 findings.
 ## Decision Points
 
 ### Decision 1: Unification (End of Phase 2)
+
 **Question:** Should DirectDownloadRepository and DynamicDownloadRepository be unified?
 
 **Options:**
+
 - A) Keep separate, extract common base class
 - B) Unify into single DownloadRepository with strategy pattern
 - C) Keep separate, use shared utility module
@@ -458,9 +503,11 @@ Implement the chosen approach based on Phase 2 findings.
 **Decision Criteria:** Complexity vs. benefit analysis
 
 ### Decision 2: Base Class Design (End of Phase 2)
+
 **Question:** What base class architecture should we use?
 
 **Options:**
+
 - A) Abstract base class with inheritance
 - B) Composition with utility classes
 - C) Mixin pattern
@@ -468,9 +515,11 @@ Implement the chosen approach based on Phase 2 findings.
 **Decision Criteria:** Maintainability, testability, extensibility
 
 ### Decision 3: Scope (End of Phase 2)
+
 **Question:** Should we refactor all repository types or just download-based?
 
 **Options:**
+
 - A) Only DirectDownload and DynamicDownload
 - B) All repository types with new intermediate abstractions
 - C) Phased approach - downloads first, others later
@@ -482,6 +531,7 @@ Implement the chosen approach based on Phase 2 findings.
 ### A. Current Duplication Examples
 
 **normalize_repo_url() - Identical in both:**
+
 ```python
 def normalize_repo_url(self, url: str) -> tuple[str, bool]:
     """Normalize download URL."""
@@ -489,7 +539,8 @@ def normalize_repo_url(self, url: str) -> tuple[str, bool]:
     return url, False
 ```
 
-**_extract_version_from_url() - 90% similar:**
+**\_extract_version_from_url() - 90% similar:**
+
 ```python
 # DirectDownloadRepository
 def _extract_version_from_url(self, url: str) -> str:
@@ -523,9 +574,9 @@ def _extract_version_from_url(self, url: str) -> str:
 - [Duplication Reduction Plan](duplication-reduction-plan.md)
 - [Testing Strategy](testing-strategy.md)
 
----
+______________________________________________________________________
 
-**Document Version:** 1.0  
-**Last Updated:** 2025-10-01  
-**Author:** Development Team  
+**Document Version:** 1.0\
+**Last Updated:** 2025-10-01\
+**Author:** Development Team\
 **Status:** Draft - Awaiting Phase 1 Completion
