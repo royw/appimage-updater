@@ -357,20 +357,27 @@ ______________________________________________________________________
 - Reduces parameter list complexity from 5 individual params to 1 object
 - Foundation in place for future CLI handler updates to use these convenience methods
 
-### Phase 4: Complex Refactoring (Week 4)
+### Phase 4: Complex Refactoring (Week 4) 🔄 IN PROGRESS
 
-1. **Repository URL Handling** - Base repository class
-1. **Version File Handling** - Shared utilities
+1. **Repository URL Handling** - Base repository class (Deferred - very complex)
+2. **Version File Handling** - Shared utilities ✅ COMPLETED
 
-**Expected Improvement:** 9.96/10 → 9.98/10
+**Expected Improvement:** 9.96/10 → 9.97/10
 
-**Note:** These refactorings are more complex than initially estimated due to:
+**Status:** Part 1 complete - Version File Handling:
+- Created `version_file_utils.py` with `extract_versions_from_files()` and `select_newest_version()`
+- Updated `LocalVersionService` to use shared utilities
+- Updated `VersionChecker` to use shared utilities
+- Eliminated 20+ lines of duplicate version file handling logic
+- Both services now use consistent version selection algorithm
+
+**Repository URL Handling Note:** This refactoring is more complex than initially estimated due to:
 
 - Subtle differences between direct and dynamic download repositories
 - Need for extensive testing to ensure no regressions
 - Multiple shared methods with slight variations in implementation
 - Risk of breaking existing repository functionality
-- Version file handling has duplicate logic across multiple services
+- Deferred to future work as it requires dedicated time and careful implementation
 
 ### Phase 5: CLI Handler Updates (Week 5)
 
@@ -480,17 +487,12 @@ ______________________________________________________________________
 - Convenience factory methods reduce parameter list complexity
 - Helper methods in CheckParams and RepositoryParams for parameter extraction
 
-### Deferred to Phase 4
+**Phase 4: Complex Refactoring** 🔄 IN PROGRESS
 
-**Version File Handling** - Deferred
-
-- Shared utilities for version file handling
-- More complex than initially estimated, requires careful refactoring
-
-**Phase 4: Complex Refactoring** - Planned
-
-- Repository URL Handling base class (moved from Phase 2 due to complexity)
-- Version File Handling shared utilities
+- Version File Handling shared utilities ✅ COMPLETED
+- Created version_file_utils.py with extract_versions_from_files() and select_newest_version()
+- Eliminated duplicate logic in LocalVersionService and VersionChecker
+- Repository URL Handling base class - Deferred (very complex, requires dedicated time)
 
 **Phase 5: CLI Handler Updates** - Planned
 
@@ -500,5 +502,5 @@ ______________________________________________________________________
 ______________________________________________________________________
 
 **Last Updated:** 2025-10-01
-**Status:** Phase 3 Complete, Phase 4 Planned
+**Status:** Phase 4 Part 1 Complete (Version File Handling), Phase 5 Planned
 **Owner:** Development Team
