@@ -358,7 +358,7 @@ appimage-updater edit [OPTIONS] APP_NAMES...
 - `--url TEXT`: Update repository URL
 - `--download-dir TEXT`: Update download directory
 - `--pattern TEXT`: Update file pattern (regex)
-- `--enable/--disable`: Enable/disable the application
+- `--enable/--disable`: Enable or disable the application (disabled apps are excluded from update checks but still visible in list/check output)
 - `--prerelease/--no-prerelease`: Enable/disable prereleases
 - `--rotation/--no-rotation`: Enable/disable file rotation
 - `--symlink-path TEXT`: Update symlink path for rotation
@@ -377,6 +377,13 @@ appimage-updater edit [OPTIONS] APP_NAMES...
 **Examples:**
 
 ```bash
+# Enable/disable applications
+appimage-updater edit OpenRGB --disable
+appimage-updater edit OpenRGB --enable
+
+# Disable multiple applications
+appimage-updater edit App1 App2 App3 --disable
+
 # Enable prerelease versions for single application
 appimage-updater edit GitHubDesktop --prerelease
 
@@ -385,9 +392,6 @@ appimage-updater edit FreeCAD VSCode OrcaSlicer --enable
 
 # Edit applications using glob patterns
 appimage-updater edit "Orca*" --prerelease
-
-# Disable multiple applications
-appimage-updater edit App1 App2 App3 --disable
 
 # Add rotation with symlink
 appimage-updater edit MyApp --rotation --symlink ~/bin/myapp.AppImage
@@ -416,6 +420,50 @@ appimage-updater edit OrcaSlicer --rotation --verbose
 # Combine verbose and dry-run for detailed preview
 appimage-updater edit "Orca*" --prerelease --verbose --dry-run
 ```
+
+#### Enabling and Disabling Applications
+
+You can temporarily disable applications without removing them from your configuration. Disabled applications:
+
+- **Are excluded from update checks** - They won't be checked when you run `appimage-updater check`
+- **Remain visible in output** - They appear in `list` and `check` commands with "Disabled" status
+- **Keep their configuration** - All settings are preserved and can be re-enabled anytime
+
+**Use cases for disabling applications:**
+
+- Temporarily pause updates for specific apps
+- Test configurations without removing apps
+- Keep rarely-used apps configured but not actively checked
+- Manage seasonal or project-specific applications
+
+**Examples:**
+
+```bash
+# Disable an application
+appimage-updater edit OpenRGB --disable
+
+# Check status in list command
+appimage-updater list
+# Shows: OpenRGB | Disabled | ...
+
+# Check command shows disabled apps with "Disabled" status
+appimage-updater check
+# Shows: OpenRGB | Disabled | - | - | N/A
+
+# Re-enable when needed
+appimage-updater edit OpenRGB --enable
+
+# Disable multiple applications at once
+appimage-updater edit OldApp TestApp DevApp --disable
+
+# Use glob patterns to disable groups
+appimage-updater edit "Test*" --disable
+```
+
+**Disabled vs Removed:**
+
+- **Disabled**: Configuration preserved, can be re-enabled, visible in output
+- **Removed**: Configuration deleted, must be re-added, not visible in output
 
 ### `remove`
 
