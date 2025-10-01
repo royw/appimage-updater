@@ -297,15 +297,6 @@ def _convert_check_results_to_dict(check_results: list[Any]) -> list[dict[str, A
     return results_data
 
 
-def _get_update_candidates(check_results: list[Any], dry_run: bool = False) -> list[Any]:
-    """Process check results and extract update candidates."""
-    _display_check_results(check_results, dry_run)
-    candidates = _filter_update_candidates(check_results)
-    _log_check_statistics(check_results, candidates)
-    _display_update_summary(candidates)
-    return candidates
-
-
 def _handle_check_errors(e: Exception) -> None:
     """Handle errors during check process."""
     if isinstance(e, ConfigLoadError):
@@ -421,19 +412,6 @@ def _load_config_with_fallback(config_file: Path | None, config_dir: Path | None
         else:
             # Re-raise for explicit config files or other errors
             raise
-
-
-def _filter_enabled_apps(config: Any, app_names: list[str] | None) -> list[Any] | None:
-    """Filter enabled applications by names if specified."""
-    enabled_apps: list[Any] = config.get_enabled_apps()
-
-    if app_names:
-        filtered_apps = ApplicationService.filter_apps_by_names(enabled_apps, app_names)
-        if filtered_apps is None:
-            return None  # Apps not found
-        return filtered_apps
-
-    return enabled_apps
 
 
 def _get_all_apps_for_check(config: Any, app_names: list[str] | None) -> tuple[list[Any], list[Any]] | None:
