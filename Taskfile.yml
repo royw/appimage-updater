@@ -192,44 +192,44 @@ tasks:
 
   # === Testing ===
   test:
-    desc: Run tests with pytest (sequential) - excludes regression tests
+    desc: Run tests with pytest (sequential) - excludes regression tests - full coverage reporting
     cmds:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e {{.CLI_ARGS}}
 
   test:parallel:
-    desc: Run tests with pytest - unit/functional/integration in parallel, E2E serially - excludes regression tests
+    desc: Run tests with pytest - unit/functional/integration in parallel, E2E serially - excludes regression tests - summary coverage reporting
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration -n auto {{.CLI_ARGS}}
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e {{.CLI_ARGS}}
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration -n auto {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
 
   test:unit:
-    desc: Run unit tests only
+    desc: Run unit tests only - summary coverage reporting
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/ {{.CLI_ARGS}}
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
 
   test:functional:
-    desc: Run functional tests only
+    desc: Run functional tests only - summary coverage reporting
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/functional/ {{.CLI_ARGS}}
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/functional/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
 
   test:integration:
-    desc: Run integration tests only
+    desc: Run integration tests only - summary coverage reporting
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/integration/ {{.CLI_ARGS}}
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/integration/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
 
   test:e2e:
-    desc: Run end-to-end tests to validate core functionality (serially for test isolation)
+    desc: Run end-to-end tests to validate core functionality (serially for test isolation) - summary coverage reporting
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/ -v --tb=short --color=yes --no-cov
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/ -v --tb=short --color=yes --no-cov 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
 
   test:pattern-matching:
-    desc: Test pattern matching functionality specifically
+    desc: Test pattern matching functionality specifically - summary coverage reporting
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/test_pattern_matching.py -v
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/test_intelligent_pattern_generation.py -v
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/test_pattern_matching.py -v 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/test_intelligent_pattern_generation.py -v 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
 
   test:regression:
-    desc: Run regression tests to validate fixed issues
+    desc: Run regression tests to validate fixed issues - full coverage reporting
     cmds:
     # do not use timeout here as it will cause the test to fail
       - uv run pytest tests/regression/ -v --tb=short --color=yes
@@ -238,7 +238,7 @@ tasks:
           MESSAGE: "✅ Regression tests passed - fixed issues remain resolved!"
 
   test:all:
-    desc: Run all tests against all Python versions (excludes regression)
+    desc: Run all tests against all Python versions (excludes regression) - summary coverage reporting
     cmds:
       - cmd: echo "🐍 Running tests against all Python versions..."
         silent: true
@@ -247,12 +247,12 @@ tasks:
           split: ' '
         cmd: |
           echo "📋 Testing with Python {{.ITEM}}"
-          uv run --python {{.ITEM}} pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e --tb=short --color=yes
+          uv run --python {{.ITEM}} pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e --tb=short --color=yes 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
       - cmd: echo "✅ All Python versions tested successfully!"
         silent: true
 
   test:coverage:
-    desc: Run all tests with coverage reporting (excludes regression tests)
+    desc: Run all tests with coverage reporting (excludes regression tests) - full coverage reporting
     cmds:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e --cov={{.SRC}}appimage_updater --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
       - task: output

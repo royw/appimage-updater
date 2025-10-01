@@ -145,7 +145,7 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
     "--cov=src/appimage_updater",
-    "--cov-report=term-missing",
+    "--cov-report=term:skip-covered",
     "--cov-report=html",
     "--cov-config=pyproject.toml",
 ]
@@ -170,7 +170,8 @@ markers = [
 #
 # The remaining RuntimeWarning printed after tests complete is from cleanup code (http_service.py:136) and doesn't affect test results or CI success.
 filterwarnings = [
-    "ignore::RuntimeWarning:.*AsyncMockMixin.*",
+    "ignore:coroutine.*AsyncMockMixin.*was never awaited:RuntimeWarning",
+    "ignore::RuntimeWarning:appimage_updater.core.http_service",
 ]
 
 [tool.coverage.run]

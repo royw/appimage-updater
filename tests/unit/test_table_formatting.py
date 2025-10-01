@@ -104,6 +104,7 @@ class TestCreateErrorRow:
         result = Mock()
         result.app_name = "TestApp"
         result.error_message = "Test error"
+        result.download_url = None
 
         row = _create_error_row(result, True)
         assert row == ["TestApp", "Error", "-", "-", "Test error", "-"]
