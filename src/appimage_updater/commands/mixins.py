@@ -2,8 +2,8 @@
 
 from typing import Any, Callable
 
-from appimage_updater.commands.result import CommandResult
-from appimage_updater.ui.output.context import OutputFormatterContext
+from .base import CommandResult
+from ..ui.output.context import OutputFormatterContext
 
 
 class FormatterContextMixin:

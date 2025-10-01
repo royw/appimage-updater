@@ -5,7 +5,7 @@ from typing import Any
 
 from rich.console import Console
 
-from appimage_updater.commands.result import CommandResult
+from .base import CommandResult
 
 
 class BaseCommand(ABC):
