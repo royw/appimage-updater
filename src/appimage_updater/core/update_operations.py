@@ -84,19 +84,19 @@ async def _execute_check_workflow(
     info: bool,
 ) -> bool:
     """Execute the check workflow logic."""
-    config, enabled_apps = await _prepare_check_environment(
+    config, enabled_apps, disabled_apps = await _prepare_check_environment(
         config_file, config_dir, app_names, verbose, dry_run, yes, no, no_interactive
     )
     if enabled_apps is None:
         # Applications not found - return False to indicate error
         return False
-    if not enabled_apps:
+    if not enabled_apps and not disabled_apps:
         return True  # No apps to check, but not an error
 
     if info:
         await _execute_info_update_workflow(enabled_apps)
     else:
-        await _execute_update_workflow(config, enabled_apps, dry_run, yes, no, no_interactive)
+        await _execute_update_workflow(config, enabled_apps, disabled_apps, dry_run, yes, no, no_interactive)
     return True
 
 
@@ -109,26 +109,31 @@ async def _prepare_check_environment(
     yes: bool,
     no: bool,
     no_interactive: bool,
-) -> tuple[Any, list[Any] | None]:
-    """Prepare the environment for update checks."""
+) -> tuple[Any, list[Any] | None, list[Any]]:
+    """Prepare the environment for update checks.
+
+    Returns:
+        Tuple of (config, enabled_apps, disabled_apps)
+    """
     normalized_names = _normalize_app_names(app_names)
-    config, enabled_apps = await _load_and_filter_config(config_file, config_dir, normalized_names)
+    config, enabled_apps, disabled_apps = await _load_and_filter_config(config_file, config_dir, normalized_names)
 
     if enabled_apps is None:
-        return config, None
+        return config, None, []
 
-    if not enabled_apps:
+    if not enabled_apps and not disabled_apps:
         _handle_no_enabled_apps()
-        return config, []
+        return config, [], []
 
     _handle_verbose_display(verbose, normalized_names, dry_run, yes, no, no_interactive, len(enabled_apps))
     _log_app_summary(config, enabled_apps, normalized_names)
-    return config, enabled_apps
+    return config, enabled_apps, disabled_apps
 
 
 async def _execute_update_workflow(
     config: Any,
     enabled_apps: list[Any],
+    disabled_apps: list[Any],
     dry_run: bool,
     yes: bool,
     no: bool,
@@ -136,7 +141,16 @@ async def _execute_update_workflow(
 ) -> None:
     """Execute the main update workflow."""
     check_results = await _perform_update_checks(enabled_apps, no_interactive, dry_run)
-    candidates = _get_update_candidates(check_results, dry_run)
+
+    # Add disabled apps to results for display
+    disabled_results = _create_disabled_results(disabled_apps)
+    all_results = check_results + disabled_results
+
+    # Display all results (enabled + disabled) and get candidates from enabled apps only
+    _display_check_results(all_results, dry_run)
+    candidates = _filter_update_candidates(check_results)
+    _log_check_statistics(check_results, candidates)
+    _display_update_summary(candidates)
 
     if not candidates:
         await _handle_no_updates_scenario(config, enabled_apps)
@@ -204,12 +218,8 @@ def _display_check_results(check_results: list[Any], dry_run: bool) -> None:
     if output_formatter:
         results_data = _convert_check_results_to_dict(check_results)
         logger.debug("Results data: {}", results_data)
-        if dry_run:
-            logger.debug("Dry run mode, not printing check results")
-            output_formatter.print_table(results_data, title="Download URLs")
-        else:
-            logger.debug("Run mode, printing check results")
-            output_formatter.print_check_results(results_data)
+        # Always use print_check_results for consistent disabled app handling
+        output_formatter.print_check_results(results_data)
     else:
         # Fallback to original display function
         logger.debug("Output formatter not found, using fallback display function")
@@ -240,6 +250,30 @@ def _create_dry_run_result(app_config: Any, version_checker: Any) -> Any:
             error_message=f"Error reading current version: {str(e)}",
             download_url=None,
         )
+
+
+def _create_disabled_results(disabled_apps: list[Any]) -> list[CheckResult]:
+    """Create CheckResult objects for disabled applications.
+
+    Args:
+        disabled_apps: List of disabled ApplicationConfig objects
+
+    Returns:
+        List of CheckResult objects with "Disabled" status
+    """
+    disabled_results = []
+    for app in disabled_apps:
+        result = CheckResult(
+            app_name=app.name,
+            success=False,
+            current_version=None,
+            available_version=None,
+            update_available=False,
+            error_message="Disabled",
+            download_url=app.url,
+        )
+        disabled_results.append(result)
+    return disabled_results
 
 
 def _log_processing_method(enabled_apps: list[Any]) -> None:
@@ -346,24 +380,29 @@ async def _load_and_filter_config(
     config_file: Path | None,
     config_dir: Path | None,
     app_names: list[str] | None,
-) -> tuple[Any, list[Any] | None]:
+) -> tuple[Any, list[Any] | None, list[Any]]:
     """Load configuration and filter applications.
 
     Args:
         app_names: List of app names to filter by, or None for all apps
+
+    Returns:
+        Tuple of (config, enabled_apps, disabled_apps)
+        enabled_apps will be None if specified apps not found
 
     Raises:
         typer.Exit: If specified applications are not found
     """
     logger.debug("Loading configuration")
     config = _load_config_with_fallback(config_file, config_dir)
-    enabled_apps = _filter_enabled_apps(config, app_names)
+    result = _get_all_apps_for_check(config, app_names)
 
-    if enabled_apps is None:
-        return config, None  # Apps not found
+    if result is None:
+        return config, None, []  # Apps not found
 
+    enabled_apps, disabled_apps = result
     _log_app_summary(config, enabled_apps, app_names)
-    return config, enabled_apps
+    return config, enabled_apps, disabled_apps
 
 
 def _load_config_with_fallback(config_file: Path | None, config_dir: Path | None) -> Any:
@@ -391,6 +430,30 @@ def _filter_enabled_apps(config: Any, app_names: list[str] | None) -> list[Any] 
         return filtered_apps
 
     return enabled_apps
+
+
+def _get_all_apps_for_check(config: Any, app_names: list[str] | None) -> tuple[list[Any], list[Any]] | None:
+    """Get enabled and disabled applications for check command.
+
+    Returns:
+        Tuple of (enabled_apps, disabled_apps) or None if apps not found
+    """
+    if app_names:
+        # When specific apps are requested, filter from all apps
+        all_apps = config.applications
+        filtered_apps = ApplicationService.filter_apps_by_names(all_apps, app_names)
+        if filtered_apps is None:
+            return None  # Apps not found
+
+        # Separate into enabled and disabled
+        enabled = [app for app in filtered_apps if app.enabled]
+        disabled = [app for app in filtered_apps if not app.enabled]
+        return enabled, disabled
+    else:
+        # When checking all apps, get both enabled and disabled
+        enabled_apps = config.get_enabled_apps()
+        disabled_apps = [app for app in config.applications if not app.enabled]
+        return enabled_apps, disabled_apps
 
 
 def _log_app_summary(config: Any, enabled_apps: list[Any], app_names: list[str] | None) -> None:

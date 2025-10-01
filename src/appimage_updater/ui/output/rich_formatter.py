@@ -421,13 +421,23 @@ class RichOutputFormatter(OutputFormatter):
     # noinspection PyMethodMayBeStatic
     def _add_error_row(self, table: Table, app_name: str, error_message: str | None) -> None:
         """Add an error row to the table."""
-        table.add_row(
-            app_name,
-            "[red]Error[/red]",
-            "[dim]N/A[/dim]",
-            "[dim]N/A[/dim]",
-            error_message or "Unknown error",
-        )
+        # Special handling for disabled applications
+        if error_message == "Disabled":
+            table.add_row(
+                app_name,
+                "[dim]Disabled[/dim]",
+                "[dim]-[/dim]",
+                "[dim]-[/dim]",
+                "[dim]N/A[/dim]",
+            )
+        else:
+            table.add_row(
+                app_name,
+                "[red]Error[/red]",
+                "[dim]N/A[/dim]",
+                "[dim]N/A[/dim]",
+                error_message or "Unknown error",
+            )
 
     def _add_no_candidate_row(self, table: Table, app_name: str, result: CheckResult) -> None:
         """Add a row for results with no candidate."""

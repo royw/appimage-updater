@@ -273,15 +273,25 @@ def _create_error_row(result: CheckResult, show_urls: bool) -> list[str]:
     if not app_name:  # Handle case where app_name is just whitespace
         app_name = "Unknown App"
 
-    row = [
-        app_name,
-        "Error",
-        "-",
-        "-",
-        result.error_message or "Unknown error",
-    ]
+    # Special handling for disabled applications
+    if result.error_message == "Disabled":
+        row = [
+            app_name,
+            "Disabled",
+            "-",
+            "-",
+            "N/A",
+        ]
+    else:
+        row = [
+            app_name,
+            "Error",
+            "-",
+            "-",
+            result.error_message or "Unknown error",
+        ]
     if show_urls:
-        row.append("-")
+        row.append(result.download_url or "-")
     return row
 
 
