@@ -87,8 +87,9 @@ class AppImageUpdaterCLI:
                 self.console.print(f"AppImage Updater {__version__}")
                 raise typer.Exit()
 
-        @self.app.callback()
+        @self.app.callback(invoke_without_command=True)
         def main_callback(
+            ctx: typer.Context,
             debug: bool = typer.Option(
                 False,
                 "--debug",
@@ -107,6 +108,12 @@ class AppImageUpdaterCLI:
             # Store global state
             self.global_state.debug = debug
             configure_logging(debug=debug)
+
+            # If no command was provided, show help message
+            if ctx.invoked_subcommand is None:
+                self.console.print("[red]Error: Missing command.[/red]")
+                self.console.print(ctx.get_help())
+                raise typer.Exit(code=2)
 
     def run(self) -> None:
         """Run the CLI application with proper exception handling."""
