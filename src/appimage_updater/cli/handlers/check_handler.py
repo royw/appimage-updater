@@ -11,6 +11,7 @@ import typer
 
 from ..._version import __version__
 from ...commands.factory import CommandFactory
+from ...commands.parameters import InstrumentationParams
 from ...core.http_service import disable_global_trace, enable_global_trace
 from ...core.http_trace import getHTTPTrace
 from ...ui.output.factory import create_output_formatter_from_params
@@ -117,8 +118,17 @@ class CheckCommandHandler(CommandHandler):
         # Validate mutually exclusive options
         self.validate_options(yes=yes, no=no)
 
-        # Create command via factory (existing pattern)
-        command = CommandFactory.create_check_command(
+        # Create instrumentation params to reduce parameter list complexity
+        instrumentation = InstrumentationParams(
+            info=info,
+            instrument_http=instrument_http,
+            http_stack_depth=http_stack_depth,
+            http_track_headers=http_track_headers,
+            trace=trace,
+        )
+
+        # Create command via factory using convenience method
+        command = CommandFactory.create_check_command_with_instrumentation(
             app_names=app_names,
             config_file=config_file,
             config_dir=config_dir,
@@ -128,11 +138,7 @@ class CheckCommandHandler(CommandHandler):
             no_interactive=no_interactive,
             verbose=verbose,
             debug=debug,
-            info=info,
-            instrument_http=instrument_http,
-            http_stack_depth=http_stack_depth,
-            http_track_headers=http_track_headers,
-            trace=trace,
+            instrumentation=instrumentation,
             output_format=output_format,
         )
 

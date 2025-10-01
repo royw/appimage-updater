@@ -10,6 +10,7 @@ import typer
 
 from ..._version import __version__
 from ...commands.factory import CommandFactory
+from ...commands.parameters import InstrumentationParams
 from ...instrumentation.factory import create_http_tracker_from_params
 from ...ui.output.factory import create_output_formatter_from_params
 from ...ui.output.interface import OutputFormat
@@ -86,17 +87,24 @@ class RepositoryCommandHandler(CommandHandler):
         output_format: OutputFormat,
     ) -> None:
         """Execute the repository command logic."""
-        command = CommandFactory.create_repository_command(
+        # Create instrumentation params to reduce parameter list complexity
+        instrumentation = InstrumentationParams(
+            info=False,  # Repository command doesn't use info flag
+            instrument_http=instrument_http,
+            http_stack_depth=http_stack_depth,
+            http_track_headers=http_track_headers,
+            trace=trace,
+        )
+
+        # Create command via factory using convenience method
+        command = CommandFactory.create_repository_command_with_instrumentation(
             app_names=app_names,
             config_file=config_file,
             config_dir=config_dir,
             assets=assets,
             limit=limit,
             dry_run=dry_run,
-            instrument_http=instrument_http,
-            http_stack_depth=http_stack_depth,
-            http_track_headers=http_track_headers,
-            trace=trace,
+            instrumentation=instrumentation,
             debug=debug,
             output_format=output_format,
         )
