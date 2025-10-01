@@ -9,6 +9,7 @@ from rich.table import Table
 
 from ...core.models import CheckResult
 from ...utils.version_utils import format_version_display
+from ..table_factory import TableFactory
 from .interface import OutputFormatter
 
 
@@ -159,11 +160,7 @@ class RichOutputFormatter(OutputFormatter):
         Args:
             applications: List of application dictionaries
         """
-        table = Table(title="Configured Applications")
-        table.add_column("Application", style="cyan", no_wrap=False)
-        table.add_column("Status", style="green")
-        table.add_column("Source", style="yellow", no_wrap=False, overflow="fold")
-        table.add_column("Download Directory", style="magenta", no_wrap=False)
+        table = TableFactory.create_applications_table()
 
         for app in applications:
             # Handle dict format as specified by interface

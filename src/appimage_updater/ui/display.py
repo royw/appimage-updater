@@ -21,6 +21,7 @@ from rich.table import Table
 from ..core.models import CheckResult
 from ..utils.version_utils import format_version_display
 from .output.context import get_output_formatter
+from .table_factory import TableFactory
 
 
 # Console instance for all display operations
@@ -209,12 +210,7 @@ def _display_applications_with_rich_table(applications: list[Any]) -> None:
 
 def _create_applications_table() -> Table:
     """Create the Rich table for applications display."""
-    table = Table(title="Configured Applications")
-    table.add_column("Application", style="cyan", no_wrap=False)
-    table.add_column("Status", style="green")
-    table.add_column("Source", style="yellow", no_wrap=False, overflow="fold")
-    table.add_column("Download Directory", style="magenta", no_wrap=False)
-    return table
+    return TableFactory.create_applications_table()
 
 
 def _populate_applications_table(table: Table, applications: list[Any]) -> None:
