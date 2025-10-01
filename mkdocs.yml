@@ -160,6 +160,7 @@ nav:
     - Development Setup: development.md
     - Testing: testing.md
     - Test Analysis: test_analysis.md
+    - Project Metrics: metrics.md
     - CI Debugging: ci-debugging.md
     - Contributing: contributing.md
   - API Reference: reference/

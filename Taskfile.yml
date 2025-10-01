@@ -271,7 +271,7 @@ tasks:
   metrics:
     desc: Display comprehensive project metrics summary
     cmds:
-      - bash scripts/metrics.sh
+      - uv run python scripts/metrics.py
 
   complexity:
     desc: Analyze code complexity with radon
