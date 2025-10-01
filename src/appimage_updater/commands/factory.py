@@ -17,6 +17,7 @@ from .parameters import (
     CheckParams,
     ConfigParams,
     EditParams,
+    InstrumentationParams,
     ListParams,
     RemoveParams,
     RepositoryParams,
@@ -126,6 +127,62 @@ class CommandFactory:
             http_stack_depth=http_stack_depth,
             http_track_headers=http_track_headers,
             trace=trace,
+            output_format=output_format,
+        )
+        return CheckCommand(params)
+
+    @staticmethod
+    def create_check_command_with_instrumentation(
+        app_names: list[str] | None = None,
+        config_file: Path | None = None,
+        config_dir: Path | None = None,
+        dry_run: bool = False,
+        yes: bool = False,
+        no: bool = False,
+        no_interactive: bool = False,
+        verbose: bool = False,
+        debug: bool = False,
+        instrumentation: InstrumentationParams | None = None,
+        output_format: str = "rich",
+    ) -> CheckCommand:
+        """Create a CheckCommand instance using InstrumentationParams.
+
+        This is a convenience method that reduces parameter list complexity
+        by accepting an InstrumentationParams object instead of individual
+        instrumentation parameters.
+
+        Args:
+            app_names: List of application names to check
+            config_file: Path to configuration file
+            config_dir: Path to configuration directory
+            dry_run: Whether to run in dry-run mode
+            yes: Automatically answer yes to prompts
+            no: Automatically answer no to prompts
+            no_interactive: Disable interactive prompts
+            verbose: Enable verbose output
+            debug: Enable debug output
+            instrumentation: Instrumentation parameters object
+            output_format: Output format (rich, plain, json, html)
+
+        Returns:
+            CheckCommand instance
+        """
+        instr = instrumentation or InstrumentationParams()
+        params = CheckParams(
+            app_names=app_names,
+            config_file=config_file,
+            config_dir=config_dir,
+            dry_run=dry_run,
+            yes=yes,
+            no=no,
+            no_interactive=no_interactive,
+            verbose=verbose,
+            debug=debug,
+            info=instr.info,
+            instrument_http=instr.instrument_http,
+            http_stack_depth=instr.http_stack_depth,
+            http_track_headers=instr.http_track_headers,
+            trace=instr.trace,
             output_format=output_format,
         )
         return CheckCommand(params)
@@ -282,6 +339,58 @@ class CommandFactory:
             http_stack_depth=http_stack_depth,
             http_track_headers=http_track_headers,
             trace=trace,
+            verbose=verbose,
+            debug=debug,
+            output_format=output_format,
+        )
+        return RepositoryCommand(params)
+
+    @staticmethod
+    def create_repository_command_with_instrumentation(
+        app_names: list[str] | None = None,
+        config_file: Path | None = None,
+        config_dir: Path | None = None,
+        assets: bool = False,
+        limit: int = 10,
+        dry_run: bool = False,
+        instrumentation: InstrumentationParams | None = None,
+        verbose: bool = False,
+        debug: bool = False,
+        output_format: Any = None,
+    ) -> RepositoryCommand:
+        """Create a RepositoryCommand instance using InstrumentationParams.
+
+        This is a convenience method that reduces parameter list complexity
+        by accepting an InstrumentationParams object instead of individual
+        instrumentation parameters.
+
+        Args:
+            app_names: List of application names
+            config_file: Path to configuration file
+            config_dir: Path to configuration directory
+            assets: Whether to show assets
+            limit: Maximum number of releases to fetch
+            dry_run: Whether to run in dry-run mode
+            instrumentation: Instrumentation parameters object
+            verbose: Enable verbose output
+            debug: Enable debug output
+            output_format: Output format
+
+        Returns:
+            RepositoryCommand instance
+        """
+        instr = instrumentation or InstrumentationParams()
+        params = RepositoryParams(
+            app_names=app_names,
+            config_file=config_file,
+            config_dir=config_dir,
+            assets=assets,
+            limit=limit,
+            dry_run=dry_run,
+            instrument_http=instr.instrument_http,
+            http_stack_depth=instr.http_stack_depth,
+            http_track_headers=instr.http_track_headers,
+            trace=instr.trace,
             verbose=verbose,
             debug=debug,
             output_format=output_format,
