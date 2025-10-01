@@ -140,7 +140,7 @@ Unlike GitHub/GitLab, SourceForge HTML pages don't include file sizes. AppImage 
 
 Example output:
 
-```
+```bash
 ScribusDev ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100.0% • 145.8/145.8 MB • 2.9 MB/s • 0:00:00
 ```
 
