@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 from loguru import logger
-from rich.console import Console
 
 from ..config.loader import ConfigLoadError
 from ..config.manager import (
@@ -22,15 +21,17 @@ from .base import (
     Command,
     CommandResult,
 )
+from .base_command import BaseCommand
+from .mixins import FormatterContextMixin
 from .parameters import ShowParams
 
 
-class ShowCommand(Command):
+class ShowCommand(BaseCommand, FormatterContextMixin, Command):
     """Command to show application details."""
 
     def __init__(self, params: ShowParams):
+        super().__init__()
         self.params = params
-        self.console = Console()
 
     def validate(self) -> list[str]:
         """Validate command parameters."""
@@ -44,11 +45,9 @@ class ShowCommand(Command):
 
         try:
             # Validate required parameters
-            validation_errors = self.validate()
-            if validation_errors:
-                error_msg = f"Validation errors: {', '.join(validation_errors)}"
-                self.console.print(f"[red]Error: {error_msg}[/red]")
-                return CommandResult(success=False, message=error_msg, exit_code=1)
+            validation_result = self._handle_validation_errors()
+            if validation_result:
+                return validation_result
 
             # Two distinct paths: add command output vs normal show output
             if self.params.add_command:

@@ -5,27 +5,25 @@ from __future__ import annotations
 from typing import Any
 
 from loguru import logger
-from rich.console import Console
 
 from ..core.repository_operations import _examine_repositories
-from ..ui.output.context import (
-    OutputFormatterContext,
-    get_output_formatter,
-)
+from ..ui.output.context import OutputFormatterContext
 from ..utils.logging_config import configure_logging
 from .base import (
     Command,
     CommandResult,
 )
+from .base_command import BaseCommand
+from .mixins import FormatterContextMixin
 from .parameters import RepositoryParams
 
 
-class RepositoryCommand(Command):
+class RepositoryCommand(BaseCommand, FormatterContextMixin, Command):
     """Command to examine repositories."""
 
     def __init__(self, params: RepositoryParams):
+        super().__init__()
         self.params = params
-        self.console = Console()
 
     def validate(self) -> list[str]:
         """Validate command parameters."""
@@ -75,29 +73,11 @@ class RepositoryCommand(Command):
 
     def _validate_with_formatter_error_display(self) -> CommandResult | None:
         """Validate parameters and display errors using formatter."""
-        validation_errors = self.validate()
-        if validation_errors:
-            error_msg = f"Validation errors: {', '.join(validation_errors)}"
-            self._display_validation_error_with_formatter(error_msg)
-            return CommandResult(success=False, message=error_msg, exit_code=1)
-        return None
+        return self._handle_validation_errors()
 
     def _validate_with_console_error_display(self) -> CommandResult | None:
         """Validate parameters and display errors using console."""
-        validation_errors = self.validate()
-        if validation_errors:
-            error_msg = f"Validation errors: {', '.join(validation_errors)}"
-            self.console.print(f"[red]Error: {error_msg}[/red]")
-            return CommandResult(success=False, message=error_msg, exit_code=1)
-        return None
-
-    def _display_validation_error_with_formatter(self, error_msg: str) -> None:
-        """Display validation error using output formatter."""
-        formatter = get_output_formatter()
-        if formatter:
-            formatter.print_error(error_msg)
-        else:
-            self.console.print(f"[red]Error: {error_msg}[/red]")
+        return self._handle_validation_errors()
 
     # noinspection PyMethodMayBeStatic
     def _create_repository_result(self, success: bool) -> CommandResult:

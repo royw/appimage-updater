@@ -6,7 +6,6 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from rich.console import Console
 import typer
 
 from ..config.loader import ConfigLoadError
@@ -19,24 +18,27 @@ from ..config.models import Config
 from ..core.models import ApplicationConfig
 from ..services.application_service import ApplicationService
 from ..ui.display import _replace_home_with_tilde
-from ..ui.output.context import OutputFormatterContext, get_output_formatter
+from ..ui.error_display import display_error
+from ..ui.output.context import OutputFormatterContext
 from ..utils.logging_config import configure_logging
 from .base import (
     Command,
     CommandResult,
 )
+from .base_command import BaseCommand
+from .mixins import FormatterContextMixin
 from .parameters import RemoveParams
 
 
 logger = logging.getLogger(__name__)
 
 
-class RemoveCommand(Command):
+class RemoveCommand(BaseCommand, FormatterContextMixin, Command):
     """Command to remove applications from configuration."""
 
     def __init__(self, params: RemoveParams):
+        super().__init__()
         self.params = params
-        self.console = Console(force_terminal=False, no_color=True)
 
     def validate(self) -> list[str]:
         """Validate command parameters."""
@@ -53,11 +55,9 @@ class RemoveCommand(Command):
 
         try:
             # Validate required parameters
-            validation_errors = self.validate()
-            if validation_errors:
-                error_msg = f"Validation errors: {', '.join(validation_errors)}"
-                self.console.print(f"[red]Error: {error_msg}[/red]")
-                return CommandResult(success=False, message=error_msg, exit_code=1)
+            validation_result = self._handle_validation_errors()
+            if validation_result:
+                return validation_result
 
             # Use context manager to make output formatter available throughout the execution
             if output_formatter:
@@ -122,12 +122,7 @@ class RemoveCommand(Command):
     def _validate_applications_exist(self, config: Config) -> bool:
         """Check if there are any applications configured."""
         if not config.applications:
-            # Use output formatter if available, otherwise fallback to console
-            formatter = get_output_formatter()
-            if formatter:
-                formatter.print_error("No applications found")
-            else:
-                self.console.print("No applications found")
+            display_error("No applications found")
             return False
         return True
 
@@ -142,12 +137,7 @@ class RemoveCommand(Command):
 
     def _handle_config_load_error(self) -> CommandResult:
         """Handle configuration load errors."""
-        # Use output formatter if available, otherwise fallback to console
-        formatter = get_output_formatter()
-        if formatter:
-            formatter.print_error("No applications found")
-        else:
-            self.console.print("No applications found")
+        display_error("No applications found")
         return CommandResult(success=False, exit_code=1)
 
     # noinspection PyMethodMayBeStatic
