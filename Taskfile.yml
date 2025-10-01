@@ -289,34 +289,34 @@ tasks:
   test:parallel:
     desc: Run tests with pytest - unit/functional/integration in parallel, E2E serially - excludes regression tests - summary coverage reporting
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration -n auto {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
+      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration -n auto {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
 
   test:unit:
     desc: Run unit tests only - summary coverage reporting
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
+      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
 
   test:functional:
     desc: Run functional tests only - summary coverage reporting
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/functional/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
+      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/functional/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
 
   test:integration:
     desc: Run integration tests only - summary coverage reporting
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/integration/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
+      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/integration/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
 
   test:e2e:
     desc: Run end-to-end tests to validate core functionality (serially for test isolation) - summary coverage reporting
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/ -v --tb=short --color=yes --no-cov 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
+      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/ -v --tb=short --color=yes --no-cov 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
 
   test:pattern-matching:
     desc: Test pattern matching functionality specifically - summary coverage reporting
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/test_pattern_matching.py -v 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/test_intelligent_pattern_generation.py -v 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
+      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/test_pattern_matching.py -v 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/test_intelligent_pattern_generation.py -v 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
 
   test:regression:
     desc: Run regression tests to validate fixed issues (uses network) - full coverage reporting
@@ -337,7 +337,7 @@ tasks:
           split: ' '
         cmd: |
           echo "📋 Testing with Python {{.ITEM}}"
-          uv run --python {{.ITEM}} pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e --tb=short --color=yes 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
+          bash -c 'set -o pipefail; uv run --python {{.ITEM}} pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e --tb=short --color=yes 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
       - cmd: echo "✅ All Python versions tested successfully!"
         silent: true
 

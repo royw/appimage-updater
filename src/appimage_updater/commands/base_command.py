@@ -18,7 +18,7 @@ class BaseCommand(ABC):
     @abstractmethod
     def validate(self) -> list[str]:
         """Validate command parameters.
-        
+
         Returns:
             List of validation error messages (empty if valid)
         """
@@ -27,10 +27,10 @@ class BaseCommand(ABC):
     @abstractmethod
     async def execute(self, output_formatter: Any = None) -> CommandResult:
         """Execute the command.
-        
+
         Args:
             output_formatter: Optional output formatter for structured output
-            
+
         Returns:
             CommandResult with success status and message
         """
@@ -38,7 +38,7 @@ class BaseCommand(ABC):
 
     def _handle_validation_errors(self) -> CommandResult | None:
         """Handle validation errors consistently across commands.
-        
+
         Returns:
             CommandResult with error if validation fails, None if validation passes
         """

@@ -333,7 +333,7 @@ class TestRemoveCommand:
         assert result.success is True
         assert result.exit_code == 0
 
-    @patch("appimage_updater.commands.remove_command.get_output_formatter")
+    @patch("appimage_updater.ui.output.context.get_output_formatter")
     def test_validate_applications_exist_with_applications(self, mock_get_formatter):
         """Test application existence validation with applications present."""
         params = RemoveParams(app_names=["TestApp"])
@@ -346,36 +346,32 @@ class TestRemoveCommand:
 
         assert result is True
 
-    @patch("appimage_updater.commands.remove_command.get_output_formatter")
-    def test_validate_applications_exist_no_applications_with_formatter(self, mock_get_formatter):
+    @patch("appimage_updater.commands.remove_command.display_error")
+    def test_validate_applications_exist_no_applications_with_formatter(self, mock_display_error):
         """Test application existence validation with no applications and formatter."""
         params = RemoveParams(app_names=["TestApp"])
         command = RemoveCommand(params)
 
         mock_config = Mock()
         mock_config.applications = []
-        mock_formatter = Mock()
-        mock_get_formatter.return_value = mock_formatter
 
         result = command._validate_applications_exist(mock_config)
 
-        mock_formatter.print_error.assert_called_once_with("No applications found")
+        mock_display_error.assert_called_once_with("No applications found")
         assert result is False
 
-    @patch("appimage_updater.commands.remove_command.get_output_formatter")
-    def test_validate_applications_exist_no_applications_without_formatter(self, mock_get_formatter):
+    @patch("appimage_updater.commands.remove_command.display_error")
+    def test_validate_applications_exist_no_applications_without_formatter(self, mock_display_error):
         """Test application existence validation with no applications and no formatter."""
         params = RemoveParams(app_names=["TestApp"])
         command = RemoveCommand(params)
 
         mock_config = Mock()
         mock_config.applications = []
-        mock_get_formatter.return_value = None
 
-        with patch.object(command.console, "print") as mock_console_print:
-            result = command._validate_applications_exist(mock_config)
+        result = command._validate_applications_exist(mock_config)
 
-        mock_console_print.assert_called_once_with("No applications found")
+        mock_display_error.assert_called_once_with("No applications found")
         assert result is False
 
     def test_should_proceed_with_removal_yes_flag(self):
@@ -418,34 +414,29 @@ class TestRemoveCommand:
         mock_remove.assert_called_once_with(mock_config, mock_apps)
         mock_save.assert_called_once_with(mock_updated_config, mock_apps)
 
-    @patch("appimage_updater.commands.remove_command.get_output_formatter")
-    def test_handle_config_load_error_with_formatter(self, mock_get_formatter):
+    @patch("appimage_updater.commands.remove_command.display_error")
+    def test_handle_config_load_error_with_formatter(self, mock_display_error):
         """Test config load error handling with formatter."""
         params = RemoveParams(app_names=["TestApp"])
         command = RemoveCommand(params)
 
-        mock_formatter = Mock()
-        mock_get_formatter.return_value = mock_formatter
-
         result = command._handle_config_load_error()
 
-        mock_formatter.print_error.assert_called_once_with("No applications found")
+        mock_display_error.assert_called_once_with("No applications found")
         assert result.success is False
         assert result.exit_code == 1
 
-    @patch("appimage_updater.commands.remove_command.get_output_formatter")
-    def test_handle_config_load_error_without_formatter(self, mock_get_formatter):
+    @patch("appimage_updater.commands.remove_command.display_error")
+    def test_handle_config_load_error_without_formatter(self, mock_display_error):
         """Test config load error handling without formatter."""
         params = RemoveParams(app_names=["TestApp"])
         command = RemoveCommand(params)
 
-        mock_get_formatter.return_value = None
+        result = command._handle_config_load_error()
 
-        with patch.object(command.console, "print") as mock_console_print:
-            result = command._handle_config_load_error()
-
-        mock_console_print.assert_called_once_with("No applications found")
+        mock_display_error.assert_called_once_with("No applications found")
         assert result.success is False
+        assert result.exit_code == 1
 
     @patch("appimage_updater.commands.remove_command.logger")
     def test_handle_unexpected_error(self, mock_logger):

@@ -258,34 +258,29 @@ class TestCommandErrorHandling:
         hint_message = mock_console_print.call_args[0][0]
         assert "Either disable rotation or specify a symlink path" in hint_message
 
-    @patch("appimage_updater.commands.remove_command.get_output_formatter")
-    def test_remove_command_config_load_error_with_formatter(self, mock_get_formatter):
+    @patch("appimage_updater.commands.remove_command.display_error")
+    def test_remove_command_config_load_error_with_formatter(self, mock_display_error):
         """Test RemoveCommand config load error handling with formatter."""
         command = CommandFactory.create_remove_command(app_names=["TestApp"])
 
-        mock_formatter = Mock()
-        mock_get_formatter.return_value = mock_formatter
-
         result = command._handle_config_load_error()
 
-        # Verify formatter was used for error display
-        mock_formatter.print_error.assert_called_once_with("No applications found")
+        # Verify display_error was called
+        mock_display_error.assert_called_once_with("No applications found")
         assert result.success is False
         assert result.exit_code == 1
 
-    @patch("appimage_updater.commands.remove_command.get_output_formatter")
-    def test_remove_command_config_load_error_without_formatter(self, mock_get_formatter):
+    @patch("appimage_updater.commands.remove_command.display_error")
+    def test_remove_command_config_load_error_without_formatter(self, mock_display_error):
         """Test RemoveCommand config load error handling without formatter."""
         command = CommandFactory.create_remove_command(app_names=["TestApp"])
 
-        mock_get_formatter.return_value = None
+        result = command._handle_config_load_error()
 
-        with patch.object(command.console, "print") as mock_console_print:
-            result = command._handle_config_load_error()
-
-        # Verify console fallback was used
-        mock_console_print.assert_called_once_with("No applications found")
+        # Verify display_error was called
+        mock_display_error.assert_called_once_with("No applications found")
         assert result.success is False
+        assert result.exit_code == 1
 
     @patch("appimage_updater.commands.remove_command.typer.confirm")
     def test_remove_command_user_confirmation_interruption(self, mock_confirm):

@@ -195,20 +195,6 @@ class TestRepositoryCommand:
 
         assert result is None
 
-    def test_validate_with_formatter_error_display_errors(self):
-        """Test validation with formatter - errors."""
-        params = RepositoryParams(app_names=[])
-        command = RepositoryCommand(params)
-
-        with patch.object(command, "validate", return_value=["At least one application name is required"]):
-            with patch.object(command, "_display_validation_error_with_formatter") as mock_display:
-                result = command._validate_with_formatter_error_display()
-
-        mock_display.assert_called_once_with("Validation errors: At least one application name is required")
-        assert result is not None
-        assert result.success is False
-        assert result.exit_code == 1
-
     def test_validate_with_console_error_display_success(self):
         """Test validation with console - success."""
         params = RepositoryParams(app_names=["TestApp"])
@@ -233,34 +219,6 @@ class TestRepositoryCommand:
         assert "Validation errors" in error_call
         assert result is not None
         assert result.success is False
-
-    @patch("appimage_updater.commands.repository_command.get_output_formatter")
-    def test_display_validation_error_with_formatter(self, mock_get_formatter):
-        """Test validation error display with formatter."""
-        params = RepositoryParams(app_names=[])
-        command = RepositoryCommand(params)
-
-        mock_formatter = Mock()
-        mock_get_formatter.return_value = mock_formatter
-
-        command._display_validation_error_with_formatter("Test error")
-
-        mock_formatter.print_error.assert_called_once_with("Test error")
-
-    @patch("appimage_updater.commands.repository_command.get_output_formatter")
-    def test_display_validation_error_without_formatter(self, mock_get_formatter):
-        """Test validation error display without formatter."""
-        params = RepositoryParams(app_names=[])
-        command = RepositoryCommand(params)
-
-        mock_get_formatter.return_value = None
-
-        with patch.object(command.console, "print") as mock_console_print:
-            command._display_validation_error_with_formatter("Test error")
-
-        mock_console_print.assert_called_once()
-        error_call = mock_console_print.call_args[0][0]
-        assert "Test error" in error_call
 
     def test_create_repository_result_success(self):
         """Test repository result creation - success."""

@@ -4,32 +4,24 @@ from rich.console import Console
 
 from appimage_updater.ui.output.context import get_output_formatter
 
+
 console = Console()
 
 
 def display_error(message: str, error_type: str = "Error") -> None:
     """Display error message using formatter if available, otherwise console.
-    
+
     Args:
         message: Error message to display
         error_type: Type of error (e.g., "Error", "Configuration error")
-        
+
     Note:
         Does not log to stdout as it contaminates JSON output
     """
     formatter = get_output_formatter()
     full_message = f"{error_type}: {message}" if error_type != "Error" else message
-    
+
     if formatter:
         formatter.print_error(full_message)
     else:
         console.print(f"[red]{full_message}[/red]")
-
-
-def display_config_error(error: Exception) -> None:
-    """Display configuration error consistently.
-    
-    Args:
-        error: Configuration error exception
-    """
-    display_error(str(error), "Configuration error")
