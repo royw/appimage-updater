@@ -261,6 +261,11 @@ tasks:
     silent: true
 
   # === Metrics ===
+  metrics:
+    desc: Display comprehensive project metrics summary
+    cmds:
+      - bash scripts/metrics.sh
+
   complexity:
     desc: Analyze code complexity with radon
     cmds:
