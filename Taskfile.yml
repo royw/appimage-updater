@@ -440,11 +440,11 @@ tasks:
           MESSAGE: "🔍 Checking for uncommitted changes..."
       - |
         if [ -n "$(git status --porcelain)" ]; then
-          task output MESSAGE="❌ Error: There are uncommitted changes. Please commit or stash them first."
+          task _output MESSAGE="❌ Error: There are uncommitted changes. Please commit or stash them first."
           git status --short
           exit 1
         else
-          task output MESSAGE="✅ Working directory is clean"
+          task _output MESSAGE="✅ Working directory is clean"
         fi
       - task: _output
         vars:
@@ -465,7 +465,7 @@ tasks:
         NEW_VERSION=$(task version:pyproject)
         git add pyproject.toml
         git commit -m "chore: bump version to v$NEW_VERSION"
-        task output MESSAGE="✅ Committed version bump to v$NEW_VERSION"
+        task _output MESSAGE="✅ Committed version bump to v$NEW_VERSION"
 
   deploy:
     desc: Deploy the built package locally with pipx
