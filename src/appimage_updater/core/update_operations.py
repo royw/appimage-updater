@@ -212,18 +212,22 @@ async def _perform_real_update_checks(enabled_apps: list[Any], no_interactive: b
 def _display_check_results(check_results: list[Any], dry_run: bool) -> None:
     """Display check results."""
     logger.debug("Displaying check results: {}", check_results)
+
+    # Sort results by app_name for consistent display
+    sorted_results = sorted(check_results, key=lambda r: r.app_name.lower())
+
     output_formatter = get_output_formatter()
     logger.debug("Output formatter: {}", output_formatter)
 
     if output_formatter:
-        results_data = _convert_check_results_to_dict(check_results)
+        results_data = _convert_check_results_to_dict(sorted_results)
         logger.debug("Results data: {}", results_data)
         # Always use print_check_results for consistent disabled app handling
         output_formatter.print_check_results(results_data)
     else:
         # Fallback to original display function
         logger.debug("Output formatter not found, using fallback display function")
-        display_check_results(check_results, show_urls=dry_run)
+        display_check_results(sorted_results, show_urls=dry_run)
 
 
 def _create_dry_run_result(app_config: Any, version_checker: Any) -> Any:
