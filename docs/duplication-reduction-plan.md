@@ -359,15 +359,35 @@ ______________________________________________________________________
 ### Phase 4: Complex Refactoring (Week 4)
 
 1. **Repository URL Handling** - Base repository class
+2. **Version File Handling** - Shared utilities
 
-{{ ... }}
+**Expected Improvement:** 9.96/10 → 9.98/10
 
-**Note:** This refactoring is more complex than initially estimated due to:
+**Note:** These refactorings are more complex than initially estimated due to:
 
 - Subtle differences between direct and dynamic download repositories
 - Need for extensive testing to ensure no regressions
 - Multiple shared methods with slight variations in implementation
 - Risk of breaking existing repository functionality
+- Version file handling has duplicate logic across multiple services
+
+### Phase 5: CLI Handler Updates (Week 5)
+
+1. **Update CLI Handlers** - Use InstrumentationParams convenience methods
+
+**Expected Improvement:** 9.98/10 → 9.99/10
+
+**Description:** Update CLI handlers to use the new convenience factory methods created in Phase 3:
+- Update `cli/handlers/check_handler.py` to use `create_check_command_with_instrumentation()`
+- Update `cli/handlers/repository_handler.py` to use `create_repository_command_with_instrumentation()`
+- Reduces parameter passing duplication from 5 individual params to 1 object
+- Improves code readability and maintainability
+
+**Benefits:**
+- Eliminates the last remaining parameter list duplication
+- Demonstrates the value of the InstrumentationParams abstraction
+- Cleaner, more maintainable CLI handler code
+- Consistent pattern across all CLI handlers
 
 ______________________________________________________________________
 
@@ -467,6 +487,12 @@ ______________________________________________________________________
 **Phase 4: Complex Refactoring** - Planned
 
 - Repository URL Handling base class (moved from Phase 2 due to complexity)
+- Version File Handling shared utilities
+
+**Phase 5: CLI Handler Updates** - Planned
+
+- Update CLI handlers to use InstrumentationParams convenience methods
+- Eliminates remaining parameter list duplication in check and repository handlers
 
 ______________________________________________________________________
 
