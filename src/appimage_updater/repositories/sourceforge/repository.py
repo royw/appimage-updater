@@ -71,22 +71,25 @@ class SourceForgeRepository(RepositoryClient):
             parsed = urlparse(url)
             path_parts = [part for part in parsed.path.strip("/").split("/") if part]
 
-            if len(path_parts) < 2 or path_parts[0] != "projects":
-                raise RepositoryError(
-                    f"Invalid SourceForge URL format: {url}. "
-                    "Expected format: https://sourceforge.net/projects/PROJECT/files/PATH/"
-                )
-
-            project = path_parts[1]
-
-            # Extract file path if present
-            file_path = "/".join(path_parts[3:]) if len(path_parts) > 3 and path_parts[2] == "files" else ""
-
-            logger.debug(f"Parsed SourceForge URL {url} -> project='{project}', path='{file_path}'")
-            return project, file_path
+            return self._parse_repo_url_parts(url, path_parts)
 
         except Exception as e:
             raise RepositoryError(f"Failed to parse SourceForge URL {url}: {e}") from e
+
+    def _parse_repo_url_parts(self, url: str, path_parts: list[str]) -> tuple[str, str]:
+        if len(path_parts) < 2 or path_parts[0] != "projects":
+            raise RepositoryError(
+                f"Invalid SourceForge URL format: {url}. "
+                "Expected format: https://sourceforge.net/projects/PROJECT/files/PATH/"
+            )
+
+        project = path_parts[1]
+
+        # Extract file path if present
+        file_path = "/".join(path_parts[3:]) if len(path_parts) > 3 and path_parts[2] == "files" else ""
+
+        logger.debug(f"Parsed SourceForge URL {url} -> project='{project}', path='{file_path}'")
+        return project, file_path
 
     def normalize_repo_url(self, url: str) -> tuple[str, bool]:
         """Normalize repository URL and detect if it was corrected.
@@ -342,22 +345,34 @@ class SourceForgeRepository(RepositoryClient):
                 logger.debug(f"No releases found for {url}, prerelease detection inconclusive")
                 return False
 
-            stable_count = sum(1 for r in releases if not r.is_prerelease)
-            prerelease_count = sum(1 for r in releases if r.is_prerelease)
-
-            should_enable = prerelease_count > 0 and stable_count == 0
-
-            logger.debug(
-                f"Prerelease analysis for {url}: "
-                f"stable={stable_count}, prerelease={prerelease_count}, "
-                f"should_enable={should_enable}"
-            )
-
-            return should_enable
+            return self._should_enable_prerelease(url, releases)
 
         except Exception as e:
             logger.debug(f"Could not determine prerelease status for {url}: {e}")
             return False
+
+    def _should_enable_prerelease(self, url: str, releases: list[Release]) -> bool:
+        """Determine if prerelease should be automatically enabled based on release data.
+
+        Args:
+            url: Repository URL
+            releases: List of Release objects
+
+        Returns:
+            True if only prereleases are found, False if stable releases exist
+        """
+        stable_count = sum(1 for r in releases if not r.is_prerelease)
+        prerelease_count = sum(1 for r in releases if r.is_prerelease)
+
+        should_enable = prerelease_count > 0 and stable_count == 0
+
+        logger.debug(
+            f"Prerelease analysis for {url}: "
+            f"stable={stable_count}, prerelease={prerelease_count}, "
+            f"should_enable={should_enable}"
+        )
+
+        return should_enable
 
     async def get_latest_release_including_prerelease(self, repo_url: str) -> Release:
         """Get the latest release including prereleases.
