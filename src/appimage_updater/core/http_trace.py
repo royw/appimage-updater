@@ -64,12 +64,17 @@ class HTTPTraceImpl:
 
         if self._is_timeout_error(error_str, error_type):
             return "TIMEOUT"
-        if "404" in error_str:
-            return "404 NOT FOUND"
-        if "403" in error_str:
-            return "403 FORBIDDEN"
-        if "500" in error_str:
-            return "500 SERVER ERROR"
+
+        # Check for HTTP status codes and connection errors
+        error_mappings = {
+            "404": "404 NOT FOUND",
+            "403": "403 FORBIDDEN",
+            "500": "500 SERVER ERROR",
+        }
+        for code, message in error_mappings.items():
+            if code in error_str:
+                return message
+
         if "connection" in error_str.lower():
             return "CONNECTION ERROR"
 

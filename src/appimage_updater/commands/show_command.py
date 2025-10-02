@@ -44,31 +44,36 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
         configure_logging(debug=self.params.debug)
 
         try:
-            # Validate required parameters
             validation_result = self._handle_validation_errors()
             if validation_result:
                 return validation_result
 
-            # Two distinct paths: add command output vs normal show output
-            if self.params.add_command:
-                success = await self._execute_add_command_operation()
-            else:
-                # Use context manager to make output formatter available throughout the execution
-                if output_formatter:
-                    with OutputFormatterContext(output_formatter):
-                        success = await self._execute_show_operation()
-                else:
-                    success = await self._execute_show_operation()
-
-            if success:
-                return CommandResult(success=True, message="Show completed successfully")
-            else:
-                return CommandResult(success=False, message="Applications not found", exit_code=1)
+            success = await self._execute_operation(output_formatter)
+            return self._create_result(success)
 
         except Exception as e:
             logger.error(f"Unexpected error in show command: {e}")
             logger.exception("Full exception details")
             return CommandResult(success=False, message=str(e), exit_code=1)
+
+    async def _execute_operation(self, output_formatter: Any) -> bool:
+        """Execute the appropriate operation based on command parameters."""
+        if self.params.add_command:
+            return await self._execute_add_command_operation()
+        return await self._execute_show_with_formatter(output_formatter)
+
+    async def _execute_show_with_formatter(self, output_formatter: Any) -> bool:
+        """Execute show operation with optional output formatter context."""
+        if output_formatter:
+            with OutputFormatterContext(output_formatter):
+                return await self._execute_show_operation()
+        return await self._execute_show_operation()
+
+    def _create_result(self, success: bool) -> CommandResult:
+        """Create command result based on success status."""
+        if success:
+            return CommandResult(success=True, message="Show completed successfully")
+        return CommandResult(success=False, message="Applications not found", exit_code=1)
 
     async def _execute_add_command_operation(self) -> bool:
         """Execute the add command generation operation.

@@ -421,21 +421,30 @@ def _get_all_apps_for_check(config: Any, app_names: list[str] | None) -> tuple[l
         Tuple of (enabled_apps, disabled_apps) or None if apps not found
     """
     if app_names:
-        # When specific apps are requested, filter from all apps
-        all_apps = config.applications
-        filtered_apps = ApplicationService.filter_apps_by_names(all_apps, app_names)
-        if filtered_apps is None:
-            return None  # Apps not found
+        return _get_filtered_apps(config, app_names)
+    return _get_all_apps(config)
 
-        # Separate into enabled and disabled
-        enabled = [app for app in filtered_apps if app.enabled]
-        disabled = [app for app in filtered_apps if not app.enabled]
-        return enabled, disabled
-    else:
-        # When checking all apps, get both enabled and disabled
-        enabled_apps = config.get_enabled_apps()
-        disabled_apps = [app for app in config.applications if not app.enabled]
-        return enabled_apps, disabled_apps
+
+def _get_filtered_apps(config: Any, app_names: list[str]) -> tuple[list[Any], list[Any]] | None:
+    """Get filtered apps separated by enabled status."""
+    filtered_apps = ApplicationService.filter_apps_by_names(config.applications, app_names)
+    if filtered_apps is None:
+        return None
+    return _separate_by_enabled_status(filtered_apps)
+
+
+def _get_all_apps(config: Any) -> tuple[list[Any], list[Any]]:
+    """Get all apps separated by enabled status."""
+    enabled_apps = config.get_enabled_apps()
+    disabled_apps = [app for app in config.applications if not app.enabled]
+    return enabled_apps, disabled_apps
+
+
+def _separate_by_enabled_status(apps: list[Any]) -> tuple[list[Any], list[Any]]:
+    """Separate apps into enabled and disabled lists."""
+    enabled = [app for app in apps if app.enabled]
+    disabled = [app for app in apps if not app.enabled]
+    return enabled, disabled
 
 
 def _log_app_summary(config: Any, enabled_apps: list[Any], app_names: list[str] | None) -> None:
