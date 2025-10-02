@@ -164,19 +164,42 @@ class SystemDetector:
 
         dist_id = dist_info.get("id", "").lower()
         version = dist_info.get("version_id", "unknown")
+        version_numeric = self._parse_version_numeric(version)
 
-        # Parse numeric version
-        version_numeric = None
-        if version and version != "unknown":
-            try:
-                # Extract first numeric part (e.g., "24.04" -> 24.04, "40" -> 40.0)
-                match = re.search(r"(\d+(?:\.\d+)?)", version)
-                if match:
-                    version_numeric = float(match.group(1))
-            except (ValueError, AttributeError):
-                logger.debug(f"Could not parse version number from: {version}")
+        family = self._get_distribution_family(dist_id)
+        return dist_id, family, version, version_numeric
 
-        # Map distributions to families
+    def _parse_version_numeric(self, version: str | None) -> float | None:
+        """Parse numeric version from version string.
+
+        Args:
+            version: Version string to parse
+
+        Returns:
+            Numeric version or None if parsing fails
+        """
+        if not version or version == "unknown":
+            return None
+
+        try:
+            # Extract first numeric part (e.g., "24.04" -> 24.04, "40" -> 40.0)
+            match = re.search(r"(\d+(?:\.\d+)?)", version)
+            if match:
+                return float(match.group(1))
+        except (ValueError, AttributeError):
+            logger.debug(f"Could not parse version number from: {version}")
+
+        return None
+
+    def _get_distribution_family(self, dist_id: str) -> str | None:
+        """Get distribution family from distribution ID.
+
+        Args:
+            dist_id: Distribution ID (e.g., 'ubuntu', 'fedora')
+
+        Returns:
+            Distribution family or None if not recognized
+        """
         family_mapping = {
             # Debian family
             "ubuntu": "debian",
@@ -200,9 +223,7 @@ class SystemDetector:
             "manjaro": "arch",
             "endeavouros": "arch",
         }
-
-        family = family_mapping.get(dist_id)
-        return dist_id, family, version, version_numeric
+        return family_mapping.get(dist_id)
 
     # noinspection PyMethodMayBeStatic
     def _get_distribution_info(self) -> dict[str, str] | None:
