@@ -132,7 +132,9 @@ def load_complexity_exclusions() -> list[str]:
             return []
         exclusions = data.get("tool", {}).get(project_name, {}).get("complexity", {}).get("exclude", [])
         # Ensure we return a list of strings
-        return list(exclusions) if isinstance(exclusions, list) else []
+        if isinstance(exclusions, list):
+            return [str(item) for item in exclusions]
+        return []
     except Exception:
         return []
 
