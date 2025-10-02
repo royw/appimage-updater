@@ -68,6 +68,16 @@ include = [
     "/LICENSE",
 ]
 
+[tool.appimage-updater.complexity]
+# Functions with legitimate domain complexity that are excluded from complexity checks
+exclude = [
+    "SourceForgeRepository.generate_pattern_from_releases",
+    "SourceForgeRepository.parse_repo_url",
+    "SourceForgeRepository._convert_to_direct_download_url",
+    "SourceForgeRepository._should_enable_prerelease",
+    "VersionChecker._is_release_compatible_with_config",
+]
+
 [tool.mypy]
 python_version = "3.13"
 strict = true

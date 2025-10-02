@@ -286,23 +286,45 @@ tasks:
 
   complexity:
     desc: Analyze code complexity with radon
-    vars:
-      EXCLUDED_FUNCTIONS: |
-        SourceForgeRepository.generate_pattern_from_releases
-        SourceForgeRepository.parse_repo_url
-        SourceForgeRepository._convert_to_direct_download_url
-        SourceForgeRepository._should_enable_prerelease
-        VersionChecker._is_release_compatible_with_config
     cmds:
       - cmd: echo "Checking complexity..."
         silent: true
       - cmd: |
-          OUTPUT=$(uv run radon cc --show-complexity {{.CLI_ARGS | default .SRC}} --min B | \
-          grep -vE "(SourceForgeRepository\.generate_pattern_from_releases|SourceForgeRepository\.parse_repo_url|SourceForgeRepository\._convert_to_direct_download_url|SourceForgeRepository\._should_enable_prerelease|VersionChecker\._is_release_compatible_with_config)")
-          if [ -z "$OUTPUT" ] || echo "$OUTPUT" | grep -qE "^src/.*\.py$" && ! echo "$OUTPUT" | grep -qE "^\s+[MFC]"; then
-            echo "✅ No complexity issues found (all B-rated functions are in exclusion list)"
+          # Read exclusion list from pyproject.toml
+          EXCLUDED=$(uv run --quiet python -c "
+          import sys
+          import tomllib
+          try:
+              with open('pyproject.toml', 'rb') as f:
+                  data = tomllib.load(f)
+              project_name = data.get('project', {}).get('name')
+              if not project_name:
+                  print('', file=sys.stderr)
+                  sys.exit(0)
+              excludes = data.get('tool', {}).get(project_name, {}).get('complexity', {}).get('exclude', [])
+              if not excludes:
+                  print('', file=sys.stderr)
+                  sys.exit(0)
+              # Escape dots and underscores for regex
+              pattern = '|'.join(e.replace('.', r'\.').replace('_', r'_') for e in excludes)
+              print(pattern)
+          except Exception as e:
+              print(f'Warning: Could not read exclusion list from pyproject.toml: {e}', file=sys.stderr)
+              sys.exit(0)
+          " 2>/dev/null)
+          
+          if [ -z "$EXCLUDED" ]; then
+            # No exclusion list, show all results
+            uv run radon cc --show-complexity {{.CLI_ARGS | default .SRC}} --min B
           else
-            echo "$OUTPUT"
+            OUTPUT=$(uv run radon cc --show-complexity {{.CLI_ARGS | default .SRC}} --min B | \
+            grep -vE "($EXCLUDED)")
+            
+            if [ -z "$OUTPUT" ] || echo "$OUTPUT" | grep -qE "^src/.*\.py$" && ! echo "$OUTPUT" | grep -qE "^\s+[MFC]"; then
+              echo "✅ No complexity issues found (all B-rated functions are in exclusion list)"
+            else
+              echo "$OUTPUT"
+            fi
           fi
         silent: true
 
