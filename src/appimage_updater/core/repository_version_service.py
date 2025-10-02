@@ -108,13 +108,7 @@ class RepositoryVersionService:
             if not releases:
                 return None
 
-            # Collect AppImage files from releases
-            appimage_files = []
-            for release in releases:
-                for asset in release.assets:
-                    if asset.name.lower().endswith(".appimage"):
-                        appimage_files.append(asset.name)
-
+            appimage_files = self._collect_appimage_files_from_releases(releases)
             if not appimage_files:
                 return None
 
@@ -124,6 +118,22 @@ class RepositoryVersionService:
         except Exception as e:
             logger.debug(f"Failed to generate pattern from {app_config.url}: {e}")
             return None
+
+    def _collect_appimage_files_from_releases(self, releases: list[Release]) -> list[str]:
+        """Collect AppImage filenames from releases.
+
+        Args:
+            releases: List of releases to extract AppImage files from
+
+        Returns:
+            List of AppImage filenames
+        """
+        appimage_files = []
+        for release in releases:
+            for asset in release.assets:
+                if asset.name.lower().endswith(".appimage"):
+                    appimage_files.append(asset.name)
+        return appimage_files
 
     def _filter_releases_by_prerelease(self, releases: list[Release], include_prerelease: bool) -> list[Release]:
         """Filter releases based on prerelease preference."""
