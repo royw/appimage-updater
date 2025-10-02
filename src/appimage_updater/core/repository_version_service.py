@@ -80,17 +80,27 @@ class RepositoryVersionService:
             if not filtered_releases:
                 return None
 
-            # Find matching asset in the latest compatible release
-            for release in filtered_releases:
-                matching_asset = self._find_matching_asset(release, app_config.pattern)
-                if matching_asset:
-                    return matching_asset
-
-            return None
+            return self._find_first_matching_asset(filtered_releases, app_config.pattern)
 
         except Exception as e:
             logger.debug(f"Failed to get latest asset from {app_config.url}: {e}")
             return None
+
+    def _find_first_matching_asset(self, releases: list[Release], pattern: str) -> Asset | None:
+        """Find first matching asset across releases.
+
+        Args:
+            releases: List of releases to search
+            pattern: Pattern to match against asset names
+
+        Returns:
+            First matching asset or None if not found
+        """
+        for release in releases:
+            matching_asset = self._find_matching_asset(release, pattern)
+            if matching_asset:
+                return matching_asset
+        return None
 
     async def generate_pattern_from_repository(self, app_config: ApplicationConfig) -> str | None:
         """Generate a flexible pattern from repository assets.
