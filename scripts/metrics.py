@@ -19,6 +19,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import tomllib
 
 
 # ANSI color codes
@@ -45,6 +46,7 @@ class SourceMetrics:
     max_code_paths: int = 0
     duplication_score: str = "N/A"
     top_imports: list[tuple[str, int]] = field(default_factory=list)
+    complexity_exclusions: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -103,17 +105,32 @@ class ProjectMetrics:
 def output(message: str) -> None:
     print(message)  # noqa: T201
 
+
 def run_command(cmd: list[str], message: str = "") -> subprocess.CompletedProcess[str]:
     """Run a shell command and return the result."""
-    if not message:
-        message = f"Running: {' '.join(cmd)}..."
-    output(f"{Colors.CYAN}{message}{Colors.NC}")
+    if message:
+        output(f"{Colors.CYAN}{message}{Colors.NC}")
+    else:
+        output(f"Running: {' '.join(cmd)}...")
     return subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
 
 
 # ============================================================================
-# DATA GATHERING PHASE
+# METRICS GATHERING
 # ============================================================================
+
+
+def load_complexity_exclusions() -> list[str]:
+    """Load complexity exclusion list from pyproject.toml."""
+    try:
+        with open("pyproject.toml", "rb") as f:
+            data = tomllib.load(f)
+        project_name = data.get("project", {}).get("name")
+        if not project_name:
+            return []
+        return data.get("tool", {}).get(project_name, {}).get("complexity", {}).get("exclude", [])
+    except Exception:
+        return []
 
 
 def gather_complexity_metrics() -> ComplexityMetrics:
@@ -166,6 +183,9 @@ def gather_complexity_metrics() -> ComplexityMetrics:
 def gather_source_metrics(complexity: ComplexityMetrics) -> SourceMetrics:
     """Gather source code metrics."""
     metrics = SourceMetrics()
+
+    # Load complexity exclusions
+    metrics.complexity_exclusions = load_complexity_exclusions()
 
     py_files = list(Path("src").rglob("*.py"))
     metrics.total_files = len(py_files)
@@ -454,6 +474,18 @@ def report_source_metrics(metrics: SourceMetrics) -> None:
         output(f"    {filepath:60s} ({count} imports)")
 
 
+def report_complexity_exclusions(metrics: SourceMetrics) -> None:
+    """Display complexity exclusions."""
+    if not metrics.complexity_exclusions:
+        return
+
+    output_header("Functions Excluded from Complexity Checks")
+    output(f"  Total excluded: {len(metrics.complexity_exclusions)}")
+    output("  Excluded functions (legitimate domain complexity):")
+    for func in metrics.complexity_exclusions:
+        output(f"    - {func}")
+
+
 def report_test_metrics(metrics: TestMetrics) -> None:
     """Display test code metrics."""
     output_header("Test Code (tests/)")
@@ -546,6 +578,7 @@ def generate_report(metrics: ProjectMetrics) -> None:
     output_section_header("=== Project Metrics Summary ===")
 
     report_source_metrics(metrics.source)
+    report_complexity_exclusions(metrics.source)
     report_test_metrics(metrics.tests)
     report_risk_metrics(metrics.risk)
     report_complexity_metrics(metrics.complexity)
