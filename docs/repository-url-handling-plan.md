@@ -158,6 +158,7 @@ class TestDownloadRepositoriesIntegration:
 ## Phase 2: Exploration & Analysis (Week 1-2)
 
 <!-- markdownlint-disable MD024 -->
+
 ### Objective
 
 Determine the best approach for unifying repository handling.
@@ -326,6 +327,7 @@ RepositoryClient (abstract base)
 ## Phase 3: Implementation (Week 2-3)
 
 <!-- markdownlint-disable MD024 -->
+
 ### Objective
 
 Implement the chosen approach based on Phase 2 findings.

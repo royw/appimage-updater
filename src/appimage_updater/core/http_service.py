@@ -142,6 +142,7 @@ class GlobalHTTPClientImpl:
                 if hasattr(transport, "close"):
                     transport.close()
 
+
 class AsyncClient:
     """HTTP client context manager that uses the global client."""
 
