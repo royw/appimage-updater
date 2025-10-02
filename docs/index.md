@@ -78,7 +78,7 @@ graph TD
     A --> C[GitHub Client]
     A --> D[Version Checker]
     A --> E[Downloader]
-    
+
     B --> F[JSON Config Files]
     C --> G[GitHub API]
     D --> H[Version Comparison]
@@ -87,7 +87,7 @@ graph TD
     E --> J[ZIP Extraction]
     E --> K[Checksum Verification]
     E --> L[File Rotation]
-    
+
     M --> N[System Detection]
     M --> O[Compatibility Scoring]
     M --> P[Interactive Selection]

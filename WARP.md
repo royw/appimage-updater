@@ -39,9 +39,9 @@ The application now provides **comprehensive support** for downloading and autom
 **Example error when ZIP contains non-AppImage files:**
 
 ```text
-No AppImage files found in zip: EdgeTX-Companion.zip. 
+No AppImage files found in zip: EdgeTX-Companion.zip.
 Contains: companion.exe, companion.dll, readme.txt...
-This project may have stopped providing AppImage format. 
+This project may have stopped providing AppImage format.
 Check the project's releases page for alternative download options.
 ```
 
@@ -62,7 +62,7 @@ Check the project's releases page for alternative download options.
 (?i)FreeCAD.*\.(zip|AppImage)(\.(|current|old))?$
 
 # Legacy AppImage-only patterns (no longer generated)
-(?i)BambuStudio.*\.AppImage(\.(|current|old))?$ 
+(?i)BambuStudio.*\.AppImage(\.(|current|old))?$
 ```
 
 **Benefits of Universal Patterns:**
@@ -81,7 +81,7 @@ AppImage Updater now provides **comprehensive compatibility filtering** that aut
 # Available assets:
 # - balenaEtcher-linux-x86_64-1.18.11.AppImage   ← Selected automatically
 # - balenaEtcher-linux-arm64-1.18.11.AppImage    ← Filtered out (wrong arch)
-# - balenaEtcher-darwin-x86_64-1.18.11.dmg       ← Filtered out (wrong platform) 
+# - balenaEtcher-darwin-x86_64-1.18.11.dmg       ← Filtered out (wrong platform)
 # - balenaEtcher-win32-x86_64-1.18.11.exe        ← Filtered out (wrong platform)
 
 appimage-updater add BelenaEtcher https://github.com/balena-io/etcher ~/Apps/BelenaEtcher
@@ -133,7 +133,7 @@ Building on the architecture/platform filtering, the system also provides intell
 ```bash
 # BambuStudio example with multiple distributions:
 # - BambuStudio_ubuntu-22.04_PR-8017.zip
-# - BambuStudio_ubuntu-24.04_PR-8017.zip  
+# - BambuStudio_ubuntu-24.04_PR-8017.zip
 # - Bambu_Studio_linux_fedora-v02.02.01.60.AppImage
 
 appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio
@@ -876,7 +876,7 @@ When GitHub API is unavailable, the system uses enhanced heuristic patterns:
 # Input: EdgeTX_Companion
 # Output: (?i)EdgeTX[_-]Companion.*\.(?:zip|AppImage)(\.(|current|old))?$
 
-# Input: BambuStudio  
+# Input: BambuStudio
 # Output: (?i)BambuStudio.*\.(?:zip|AppImage)(\.(|current|old))?$
 ```
 
@@ -920,7 +920,7 @@ The project uses pytest with coverage reporting configured to avoid common confl
 task test
 
 # Run e2e tests without coverage (used in task check)
-task test:e2e  
+task test:e2e
 
 # Run e2e tests with coverage (standalone)
 task test:e2e-coverage

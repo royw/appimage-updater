@@ -844,7 +844,7 @@ ______________________________________________________________________
   "checksum": {
     "enabled": true,
     "pattern": "{filename}-SHA256.txt",
-    "algorithm": "sha256", 
+    "algorithm": "sha256",
     "required": false
   }
   ```

@@ -89,7 +89,7 @@ async def _execute_with_formatter_context(self, output_formatter: Any) -> Comman
 # commands/mixins.py
 class FormatterContextMixin:
     async def execute_with_optional_formatter(
-        self, 
+        self,
         output_formatter: Any,
         execution_func: Callable
     ) -> CommandResult:
@@ -216,7 +216,7 @@ class BaseDownloadRepository:
     def normalize_repo_url(self, url: str) -> tuple[str, bool]:
         """Normalize download URL (shared implementation)."""
         return url, False
-    
+
     def _extract_version_from_url(self, url: str) -> str:
         """Extract version from URL using common patterns."""
         # Shared implementation

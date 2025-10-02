@@ -44,7 +44,7 @@ This document provides a comprehensive analysis of the AppImage Updater test sui
 tests/
 ├── conftest.py (18.5KB) - Main test configuration
 ├── unit/ (24 files) - Pure unit tests
-├── functional/ (9 files) - Feature workflow tests  
+├── functional/ (9 files) - Feature workflow tests
 ├── integration/ (2 files) - Component integration tests
 ├── e2e/ (8 files) - End-to-end system tests
 └── regression/ (6 files) - Bug regression tests
@@ -305,10 +305,10 @@ tests/
    class TestAddCommandHandler:
        def test_register_command(self, app):
            """Test handler registration with Typer."""
-           
+
        def test_argument_parsing(self, handler):
            """Test CLI argument parsing."""
-           
+
        def test_command_execution(self, handler, mock_factory):
            """Test handler → command integration."""
    ```
@@ -319,10 +319,10 @@ tests/
    class TestAddCommand:
        async def test_execute_success(self, command):
            """Test successful command execution."""
-           
+
        async def test_execute_validation_error(self, command):
            """Test validation error handling."""
-           
+
        async def test_execute_network_error(self, command):
            """Test network error handling."""
    ```

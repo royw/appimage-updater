@@ -18,7 +18,7 @@ AppImage Updater provides helpful usage information when you run commands withou
 # See config command help
 appimage-updater config
 
-# See show command help  
+# See show command help
 appimage-updater show
 
 # See edit command help
@@ -95,7 +95,7 @@ AppImage Updater automatically detects the repository type from the URL:
 # GitHub (detected automatically)
 appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
 
-# GitLab (detected automatically) 
+# GitLab (detected automatically)
 appimage-updater add Inkscape https://gitlab.com/inkscape/inkscape ~/Apps/Inkscape
 
 # Codeberg (GitHub-compatible, detected automatically)
@@ -150,7 +150,7 @@ When applications provide multiple distribution-specific releases (like BambuStu
 ```bash
 # BambuStudio example with multiple distributions:
 # - BambuStudio_ubuntu-22.04_PR-8017.zip
-# - BambuStudio_ubuntu-24.04_PR-8017.zip  
+# - BambuStudio_ubuntu-24.04_PR-8017.zip
 # - Bambu_Studio_linux_fedora-v02.02.01.60.AppImage
 
 appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio

@@ -38,7 +38,7 @@ AppImage Updater is a modern, type-safe Linux CLI application built with a layer
 ```bash
 # Add applications from different repository types
 appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
-appimage-updater add Inkscape https://gitlab.com/inkscape/inkscape ~/Applications/Inkscape  
+appimage-updater add Inkscape https://gitlab.com/inkscape/inkscape ~/Applications/Inkscape
 appimage-updater add OpenRGB https://codeberg.org/OpenRGB/OpenRGB ~/Applications/OpenRGB
 
 # Filter versions with patterns (exclude prereleases)
@@ -105,7 +105,7 @@ Check what appimage-updater is currently managing:
 
 ```bash
 ~/Applications $ appimage-updater list
-                                                        Configured Applications                                                         
+                                                        Configured Applications
 ┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
 ┃ Application        ┃ Status  ┃ Source                                           ┃ Download Directory                     ┃ Frequency ┃
 ┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
@@ -156,7 +156,7 @@ See that the two new apps are being managed:
 
 ```bash
 ~/Applications $ appimage-updater list
-                                                        Configured Applications                                                         
+                                                        Configured Applications
 ┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
 ┃ Application        ┃ Status  ┃ Source                                           ┃ Download Directory                     ┃ Frequency ┃
 ┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
@@ -178,9 +178,9 @@ Total: 10 applications (10 enabled, 0 disabled)
 Check for any updates:
 
 ```bash
-152:~ $ appimage-updater check 
+152:~ $ appimage-updater check
 Checking 10 applications for updates...
-                                                     Update Check Results                                                     
+                                                     Update Check Results
 ┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
 ┃ Application        ┃ Status           ┃ Current                             ┃ Latest                              ┃ Update ┃
 ┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
@@ -368,7 +368,7 @@ uv run python -m appimage_updater add BalenaEtcher https://github.com/balena-io/
 # Automatically selects best distribution match
 uv run python -m appimage_updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Apps/BambuStudio
 # Ubuntu 25.04 → Selects ubuntu-24.04 (closest compatible)
-# Fedora 38 → Selects fedora version  
+# Fedora 38 → Selects fedora version
 # Gentoo → Shows interactive selection menu
 ```
 

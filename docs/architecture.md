@@ -16,7 +16,7 @@ graph TB
     D --> E[Repository Layer]
     D --> F[Configuration Layer]
     D --> G[Output System]
-    
+
     subgraph "CLI Layer"
         A --> A1[Typer Application]
         B --> B1[Add Handler]
@@ -28,7 +28,7 @@ graph TB
         B --> B7[Config Handler]
         B --> B8[Repository Handler]
     end
-    
+
     subgraph "Command Layer"
         C --> C1[Add Command]
         C --> C2[Check Command]
@@ -40,7 +40,7 @@ graph TB
         C --> C8[Repository Command]
         C --> C9[Command Factory]
     end
-    
+
     subgraph "Core Services"
         D --> D1[Application Service]
         D --> D2[Version Checker]
@@ -49,7 +49,7 @@ graph TB
         D --> D5[System Info]
         D --> D6[HTTP Instrumentation]
     end
-    
+
     subgraph "Repository Layer"
         E --> E1[GitHub Repository]
         E --> E2[GitLab Repository]
@@ -62,14 +62,14 @@ graph TB
         E2 --> E9[GitLab Client]
         E2 --> E10[GitLab Auth]
     end
-    
+
     subgraph "Configuration Layer"
         F --> F1[Config Manager]
         F --> F2[Global Config Manager]
         F --> F3[JSON Config Files]
         F --> F4[Config Operations]
     end
-    
+
     subgraph "Output System"
         G --> G1[Rich Formatter]
         G --> G2[Plain Formatter]
@@ -77,7 +77,7 @@ graph TB
         G --> G4[HTML Formatter]
         G --> G5[Output Context]
     end
-    
+
     style A fill:#e1f5fe
     style B fill:#f3e5f5
     style C fill:#e8f5e8
@@ -284,7 +284,7 @@ class AddCommandHandler(CommandHandler):
     def register_command(self, app: typer.Typer) -> None:
         # Register with Typer
         app.command("add")(self._add_command)
-    
+
     async def _add_command(self, name: str, url: str, ...) -> None:
         # Create parameters and execute command
         params = AddParams(name=name, url=url, ...)
@@ -335,7 +335,7 @@ sequenceDiagram
     participant Service as Core Service
     participant Repo as Repository
     participant Config as Configuration
-    
+
     User->>CLI: Execute command
     CLI->>CLI: Parse arguments
     CLI->>Factory: Create command
@@ -357,12 +357,12 @@ sequenceDiagram
     participant ConfigManager as Config Manager
     participant File as JSON Files
     participant GlobalConfig as Global Config
-    
+
     Command->>ConfigManager: Load configuration
     ConfigManager->>File: Read JSON files
     ConfigManager->>GlobalConfig: Load global settings
     ConfigManager-->>Command: Configuration object
-    
+
     Command->>ConfigManager: Save changes
     ConfigManager->>File: Write JSON files
     ConfigManager-->>Command: Success/Error
@@ -464,15 +464,15 @@ class RepositoryClient(ABC):
     @abstractmethod
     async def get_latest_release(self, url: str) -> Release:
         """Get the latest release from repository."""
-    
+
     @abstractmethod
     async def get_releases(self, url: str, limit: int = 10) -> list[Release]:
         """Get recent releases from repository."""
-    
+
     @abstractmethod
     def parse_repo_url(self, url: str) -> tuple[str, str]:
         """Parse repository URL to extract owner and repo name."""
-    
+
     @abstractmethod
     def normalize_repo_url(self, url: str) -> tuple[str, bool]:
         """Normalize repository URL and detect corrections."""
@@ -485,7 +485,7 @@ Factory pattern implementation for automatic client creation:
 ```python
 def get_repository_client(url: str, **kwargs) -> RepositoryClient:
     """Create appropriate repository client based on URL pattern."""
-    
+
 def detect_repository_type(url: str) -> str:
     """Detect repository type from URL (github, gitlab, etc.)."""
 ```
@@ -614,7 +614,7 @@ Comprehensive type annotations with strict mypy checking.
 ```python
 def parse_version(filename: str, patterns: list[str]) -> tuple[str | None, str]:
     """Parse version from filename using regex patterns.
-    
+
     Returns:
         Tuple of (version, original_filename)
     """
@@ -659,7 +659,7 @@ sequenceDiagram
     participant CLI as CLI
     participant C as Config
     participant V as Validator
-    
+
     U->>CLI: add FreeCAD github.com/FreeCAD/FreeCAD ~/Apps
     CLI->>V: Validate URL and path
     V-->>CLI: Validation results
@@ -677,7 +677,7 @@ sequenceDiagram
     participant GH as GitHub Client
     participant VC as Version Checker
     participant D as Downloader
-    
+
     CLI->>GH: Get latest releases
     GH-->>CLI: Release data with assets
     CLI->>VC: Compare with local versions
@@ -902,12 +902,12 @@ def get_repository_client(url: str, **kwargs) -> RepositoryClient:
         GitHubRepository,
         # Future repository types added here
     ]
-    
+
     for repo_class in repository_types:
         temp_client = repo_class(**kwargs)
         if temp_client.detect_repository_type(url):
             return temp_client
-    
+
     raise RepositoryError(f"No repository client available for URL: {url}")
 ```
 
@@ -975,7 +975,7 @@ The repository abstraction layer makes adding new platforms straightforward:
    class GitLabRepository(RepositoryClient):
        def detect_repository_type(self, url: str) -> bool:
            return "gitlab.com" in url.lower()
-       
+
        async def get_releases(self, url: str, limit: int = 10) -> list[Release]:
            # GitLab API implementation
    ```
@@ -1045,13 +1045,13 @@ graph TB
     D --> E[LoguruHTTPLogger]
     D --> F[ConfigurableHTTPLogger]
     D --> G[SilentHTTPLogger]
-    
+
     C --> H[httpx.AsyncClient]
     H --> I[Monkey Patching]
     I --> J[Request Wrapper]
     J --> K[Original Request]
     K --> L[Response Tracking]
-    
+
     style A fill:#e1f5fe
     style B fill:#f3e5f5
     style C fill:#e8f5e8
@@ -1224,7 +1224,7 @@ flowchart TD
     E --> F[typer.Exit]
     F --> G[Main Exception Handler]
     G --> H[sys.exit]
-    
+
     I[Interactive Functions] --> J[InteractiveResult]
     J --> K[Success/Cancelled/Error]
     K --> C

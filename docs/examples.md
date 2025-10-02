@@ -123,7 +123,7 @@ appimage-updater add --prerelease --rotation \
     },
     {
       "name": "OrcaSlicer",
-      "source_type": "github", 
+      "source_type": "github",
       "url": "https://github.com/SoftFever/OrcaSlicer",
       "download_dir": "/home/user/Applications/OrcaSlicer",
       "pattern": "OrcaSlicer_Linux_AppImage_Ubuntu2404_.*\\.AppImage(\\\\..*)?$",
@@ -194,7 +194,7 @@ crontab -e
 # Add daily check at 9 AM
 0 9 * * * /usr/local/bin/appimage-updater check
 
-# Add weekly check on Sunday at 10 AM  
+# Add weekly check on Sunday at 10 AM
 0 10 * * 0 /usr/local/bin/appimage-updater check
 
 # Check every 6 hours
@@ -346,7 +346,7 @@ BASE_DIR="$HOME/Applications"
 
 for app_info in "${APPS[@]}"; do
     read -r app_name app_url <<< "$app_info"
-    
+
     echo "Setting up $app_name..."
     appimage-updater add \
         --checksum \

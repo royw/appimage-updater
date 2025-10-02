@@ -58,7 +58,7 @@ make -f Makefile.ci ci-step-format
 # Linting
 make -f Makefile.ci ci-step-lint
 
-# Type checking  
+# Type checking
 make -f Makefile.ci ci-step-types
 
 # Complexity analysis

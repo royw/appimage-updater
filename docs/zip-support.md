@@ -38,7 +38,7 @@ EdgeTX-Companion-2.9.4-x64.zip
 # 2. ZIP is extracted automatically
 EdgeTX-Companion-2.9.4-x64.zip → EdgeTX-Companion-2.9.4-x64.AppImage
 
-# 3. ZIP file is removed, AppImage is made executable  
+# 3. ZIP file is removed, AppImage is made executable
 EdgeTX-Companion-2.9.4-x64.AppImage (executable)
 EdgeTX-Companion-2.9.4-x64.AppImage.info (version metadata)
 ```
@@ -155,14 +155,14 @@ For fallback patterns when GitHub API is unavailable:
 # Fallback pattern generation with flexible character matching
 def generate_fallback_pattern(app_name: str, url: str) -> str:
     base_name = re.escape(app_name)
-    
+
     # Use repo name if app name seems generic
     github_info = parse_github_url(url)
     if github_info:
         owner, repo = github_info
         if app_name.lower() in ["app", "application", "tool"]:
             base_name = re.escape(repo)
-    
+
     # Create flexible pattern for character substitutions
     flexible_name = re.sub(r"[_-]", "[_-]", base_name)
     # Support both ZIP and AppImage formats
@@ -177,9 +177,9 @@ def generate_fallback_pattern(app_name: str, url: str) -> str:
 When a ZIP file doesn't contain AppImage files, users receive informative feedback:
 
 ```text
-No AppImage files found in zip: EdgeTX-Companion.zip. 
-Contains: companion.exe, companion.dll, readme.txt, lib/... 
-This project may have stopped providing AppImage format. 
+No AppImage files found in zip: EdgeTX-Companion.zip.
+Contains: companion.exe, companion.dll, readme.txt, lib/...
+This project may have stopped providing AppImage format.
 Check the project's releases page for alternative download options.
 ```
 
@@ -232,7 +232,7 @@ Handles both ZIP and direct AppImage releases seamlessly.
 **Solution**: Future-proof pattern
 
 ```regex
-(?i)FreeCAD.*\.(zip|AppImage)(\.(|current|old))?$  
+(?i)FreeCAD.*\.(zip|AppImage)(\.(|current|old))?$
 ```
 
 Works regardless of format changes.
@@ -347,7 +347,7 @@ GitHub Client
 
 Downloader
 ├── ZIP Detection
-├── AppImage Extraction  
+├── AppImage Extraction
 ├── File Management
 └── Error Handling
 ```

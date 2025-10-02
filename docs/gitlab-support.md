@@ -125,7 +125,7 @@ appimage-updater add MyApp https://gitlab.com/owner/project \
 {
   "applications": {
     "CompanyApp": {
-      "name": "CompanyApp", 
+      "name": "CompanyApp",
       "url": "https://git.company.com/team/project",
       "source_type": "gitlab",
       "enabled": true,

@@ -172,7 +172,7 @@ matching_assets = release.get_matching_assets(
 ```python
 from appimage_updater.system_info import (
     is_compatible_architecture,
-    is_compatible_platform, 
+    is_compatible_platform,
     is_supported_format
 )
 
@@ -180,12 +180,12 @@ from appimage_updater.system_info import (
 compatible, score = is_compatible_architecture("x86_64", "x86_64")
 print(f"Compatible: {compatible}, Score: {score}")  # True, 100.0
 
-# Check platform compatibility  
+# Check platform compatibility
 compatible, score = is_compatible_platform("linux", "darwin")
 print(f"Compatible: {compatible}, Score: {score}")  # False, 0.0
 
 # Check format support
-supported, score = is_supported_format(".AppImage", "linux") 
+supported, score = is_supported_format(".AppImage", "linux")
 print(f"Supported: {supported}, Score: {score}")   # True, 100.0
 ```
 
@@ -327,7 +327,7 @@ appimage-updater add BelenaEtcher https://github.com/balena-io/etcher ~/Apps/Bel
 **GitHubDesktop** (x86_64, arm64, armv7l):
 
 ```bash
-appimage-updater add GitHubDesktop https://github.com/shiftkey/desktop ~/Apps/GitHubDesktop  
+appimage-updater add GitHubDesktop https://github.com/shiftkey/desktop ~/Apps/GitHubDesktop
 # Ubuntu x86_64 Result: GitHubDesktop-linux-x86_64-3.4.13.AppImage (score: 270.0)
 # Raspberry Pi Result: GitHubDesktop-linux-armv7l-3.4.13.AppImage (score: 270.0)
 ```

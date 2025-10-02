@@ -24,7 +24,7 @@ The report is organized into several sections, each providing different insights
 
 ### 1. Source Code Metrics
 
-```
+```text
 Source Code (src/)
   Total files: 126
   Maximum lines in a file: 1082
@@ -57,7 +57,7 @@ Source Code (src/)
 
 ### 2. Test Code Metrics
 
-```
+```text
 Test Code (tests/)
   Total test files: 85
   Total SLOC: 19322
@@ -95,7 +95,7 @@ This list uses **import detection heuristic** (checking if test files import the
 
 ### 3. Risk Analysis
 
-```
+```text
   Top 5 highest risk files (high complexity + low coverage):
     src/appimage_updater/repositories/sourceforge/repository.py  (complexity: 10, coverage: 0.0%, risk: 10.0)
     src/appimage_updater/core/update_operations.py               (complexity: 9, coverage: 0.0%, risk: 9.0)
@@ -121,7 +121,7 @@ This list uses **import detection heuristic** (checking if test files import the
 
 ### 4. Cyclomatic Complexity
 
-```
+```text
 Cyclomatic Complexity
   Top 5 most complex files:
     src/appimage_updater/repositories/sourceforge/repository.py  (max: 10)
@@ -153,7 +153,7 @@ Cyclomatic Complexity
 
 ### 5. Code Coverage
 
-```
+```text
 Code Coverage
   1735 passed, 3 xfailed in 12.51s
   Overall coverage: 70.7%
@@ -202,7 +202,7 @@ These measure different things:
 
 ### 6. Summary Statistics
 
-```
+```text
 === Summary ===
 
   Source files: 126 | Test files: 85 | Tests: 1416

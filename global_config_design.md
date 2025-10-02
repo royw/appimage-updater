@@ -13,7 +13,7 @@ Enhance the existing GlobalConfig to provide default settings that can be overri
     "concurrent_downloads": 3,
     "timeout_seconds": 30,
     "user_agent": "AppImage-Updater/1.0.0",
-    
+
     // New default settings
     "defaults": {
       "download_dir": "~/Downloads/AppImages",

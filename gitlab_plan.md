@@ -28,7 +28,7 @@ This document outlines the comprehensive plan for adding GitLab repository suppo
 ```json
 {
     "tag_name": "v0.2",
-    "name": "Awesome app v0.2 beta", 
+    "name": "Awesome app v0.2 beta",
     "description": "Release notes...",
     "created_at": "2019-01-03T01:56:19.539Z",
     "released_at": "2019-01-03T01:56:19.539Z",
@@ -63,14 +63,14 @@ This document outlines the comprehensive plan for adding GitLab repository suppo
 ```python
 class GitLabAuth:
     """GitLab authentication using personal access tokens."""
-    
+
     def __init__(self, token: str | None = None):
         # Support GITLAB_TOKEN environment variable
         # Handle token validation and headers
-    
+
     def get_headers(self) -> dict[str, str]:
         # Return PRIVATE-TOKEN header for API requests
-        
+
     def is_authenticated(self) -> bool:
         # Check if valid token is available
 ```
@@ -89,19 +89,19 @@ class GitLabAuth:
 ```python
 class GitLabClient:
     """GitLab API v4 client for release information."""
-    
+
     def __init__(self, timeout: int = 30, user_agent: str | None = None, auth: GitLabAuth | None = None):
         # Initialize HTTP client with GitLab-specific configuration
-        
+
     async def get_project_id(self, owner: str, repo: str, base_url: str = "https://gitlab.com") -> str:
         # Convert owner/repo to GitLab project ID or URL-encoded path
-        
+
     async def get_latest_release(self, project_id: str, base_url: str = "https://gitlab.com") -> dict[str, Any]:
         # GET /projects/:id/releases/permalink/latest
-        
+
     async def get_releases(self, project_id: str, base_url: str = "https://gitlab.com", limit: int = 10) -> list[dict[str, Any]]:
         # GET /projects/:id/releases with pagination
-        
+
     async def should_enable_prerelease(self, project_id: str, base_url: str = "https://gitlab.com") -> bool:
         # Check if only prereleases exist
 ```
@@ -121,32 +121,32 @@ class GitLabClient:
 ```python
 class GitLabRepository(RepositoryClient):
     """GitLab repository implementation following the abstract base."""
-    
+
     def __init__(self, timeout: int = 30, user_agent: str | None = None, auth: GitLabAuth | None = None, token: str | None = None, **kwargs: Any):
         # Initialize with GitLab-specific parameters
-    
+
     @property
     def repository_type(self) -> str:
         return "gitlab"
-    
+
     def detect_repository_type(self, url: str) -> bool:
         # Detect gitlab.com and self-hosted GitLab instances
-        
+
     def parse_repo_url(self, url: str) -> tuple[str, str]:
         # Extract owner/repo from GitLab URLs
-        
+
     def normalize_repo_url(self, url: str) -> tuple[str, bool]:
         # Normalize GitLab URLs and detect corrections
-        
+
     async def get_latest_release(self, repo_url: str) -> Release:
         # Map GitLab release data to AppImage Updater Release model
-        
+
     async def get_releases(self, repo_url: str, limit: int = 10) -> list[Release]:
         # Fetch and convert multiple releases
-        
+
     async def should_enable_prerelease(self, url: str) -> bool:
         # Check prerelease status for repository
-        
+
     async def generate_pattern_from_releases(self, url: str) -> str | None:
         # Generate file patterns from GitLab releases
 ```
@@ -170,9 +170,9 @@ def _map_gitlab_assets_to_release(gitlab_release: dict[str, Any]) -> Release:
     # 1. Custom links with AppImage files
     # 2. Custom links with other binaries
     # 3. Auto-generated source archives
-    
+
     assets = []
-    
+
     # Process custom linked assets first (higher priority)
     for link in gitlab_release.get("assets", {}).get("links", []):
         if link["name"].lower().endswith(".appimage"):
@@ -180,11 +180,11 @@ def _map_gitlab_assets_to_release(gitlab_release: dict[str, Any]) -> Release:
             assets.insert(0, create_asset_from_link(link))
         else:
             assets.append(create_asset_from_link(link))
-    
+
     # Add source archives as fallback
     for source in gitlab_release.get("assets", {}).get("sources", []):
         assets.append(create_asset_from_source(source))
-    
+
     return Release(
         tag_name=gitlab_release["tag_name"],
         name=gitlab_release["name"],
@@ -201,7 +201,7 @@ def _detect_gitlab_url(url: str) -> bool:
     # gitlab.com patterns
     if "gitlab.com" in url:
         return True
-    
+
     # Self-hosted GitLab detection
     # Look for GitLab-specific API endpoints or UI patterns
     try:
@@ -215,21 +215,21 @@ def _detect_gitlab_url(url: str) -> bool:
 def _normalize_gitlab_url(url: str) -> tuple[str, bool]:
     """Normalize GitLab URLs and detect corrections."""
     original_url = url
-    
+
     # Remove .git suffix
     if url.endswith(".git"):
         url = url[:-4]
-    
+
     # Remove trailing slashes
     url = url.rstrip("/")
-    
+
     # Ensure proper HTTPS protocol
     if url.startswith("http://"):
         url = url.replace("http://", "https://", 1)
-    
+
     # Convert various GitLab URL formats to canonical form
     # Handle project URLs, release URLs, etc.
-    
+
     was_corrected = url != original_url
     return url, was_corrected
 ```
@@ -253,7 +253,7 @@ def get_repository_client(...):
         "dynamic_download": DynamicDownloadRepository,
         "direct": DirectDownloadRepository,
     }
-    
+
     # Update detection order
     repository_types = [
         GitHubRepository,
@@ -278,7 +278,7 @@ def get_repository_client(...):
 
 # Self-hosted GitLab example
 {
-    "name": "SelfHostedApp", 
+    "name": "SelfHostedApp",
     "url": "https://git.company.com/team/project",
     "source_type": "gitlab",
     "enabled": true,
@@ -302,12 +302,12 @@ def get_repository_client(...):
 ```python
 class GitLabInstanceDetector:
     """Detect and validate GitLab instances."""
-    
+
     async def detect_gitlab_instance(self, base_url: str) -> bool:
         # Probe /api/v4/version endpoint
         # Check for GitLab-specific headers
         # Validate API compatibility
-        
+
     async def get_api_version(self, base_url: str) -> str:
         # Determine GitLab version for compatibility
 ```
@@ -326,13 +326,13 @@ class GitLabInstanceDetector:
 ```python
 class ProjectIdCache:
     """Cache GitLab project ID lookups."""
-    
+
     def __init__(self, ttl: int = 3600):
         # Time-based cache with configurable TTL
-        
+
     async def get_project_id(self, owner: str, repo: str, base_url: str) -> str:
         # Check cache first, then API lookup
-        
+
     def invalidate(self, owner: str, repo: str, base_url: str) -> None:
         # Manual cache invalidation
 ```
@@ -374,7 +374,7 @@ class ProjectIdCache:
 ```python
 # Test files to create:
 - test_gitlab_auth.py
-- test_gitlab_client.py  
+- test_gitlab_client.py
 - test_gitlab_repository.py
 - test_gitlab_url_detection.py
 - test_gitlab_asset_mapping.py

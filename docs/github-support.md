@@ -142,7 +142,7 @@ appimage-updater add MyApp https://github.com/owner/repository \
 {
   "applications": {
     "PrivateApp": {
-      "name": "PrivateApp", 
+      "name": "PrivateApp",
       "url": "https://github.com/owner/private-repo",
       "source_type": "github",
       "enabled": true,

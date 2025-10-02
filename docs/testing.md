@@ -303,14 +303,14 @@ CLI commands are tested using Typer's `CliRunner`:
 def test_edit_prerelease_single_file(runner, single_config_file):
     """Test editing prerelease setting in a single config file."""
     result = runner.invoke(
-        app, 
-        ["edit", "TestApp", "--prerelease", 
+        app,
+        ["edit", "TestApp", "--prerelease",
          "--config", str(single_config_file)]
     )
-    
+
     assert result.exit_code == 0
     assert "Prerelease: Disabled → Enabled" in result.stdout
-    
+
     # Verify persistence
     with single_config_file.open() as f:
         config_data = json.load(f)
@@ -329,7 +329,7 @@ def test_empty_symlink_path_validation(runner, test_config_file):
         app,
         ["edit", "TestApp", "--symlink-path", "", "--config", str(test_config_file)]
     )
-    
+
     assert result.exit_code == 1
     assert "Symlink path cannot be empty" in result.stdout
     assert "Traceback" not in result.stdout  # Clean error messages
@@ -362,7 +362,7 @@ def normalize_text(text: str) -> str:
     """Normalize text by removing ANSI codes and extra whitespace."""
     clean = strip_ansi(text)
     # Normalize whitespace while preserving structure
-    return '\n'.join(re.sub(r'[ \t]+', ' ', line.strip()) 
+    return '\n'.join(re.sub(r'[ \t]+', ' ', line.strip())
                      for line in clean.split('\n'))
 ```
 
@@ -536,13 +536,13 @@ Tests run across:
 ```python
 class TestEditCommand:
     """Group related tests together."""
-    
+
     def test_edit_frequency(self):
         """Test frequency editing functionality."""
         pass
-    
+
     def test_edit_invalid_input(self):
-        """Test validation of invalid inputs.""" 
+        """Test validation of invalid inputs."""
         pass
 ```
 
@@ -554,7 +554,7 @@ Always test error conditions:
 def test_edit_nonexistent_app(runner, config_file):
     """Test editing a non-existent application."""
     result = runner.invoke(app, ["edit", "NonExistent", "--frequency", "5"])
-    
+
     assert result.exit_code == 1
     assert "Application 'NonExistent' not found" in result.stdout
     assert "Available applications:" in result.stdout
