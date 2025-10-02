@@ -40,7 +40,7 @@ class TestCommandErrorHandling:
     @pytest.mark.anyio
     async def test_check_command_unexpected_exception_handling(self, mock_logger):
         """Test CheckCommand handles unexpected exceptions properly."""
-        command = CommandFactory.create_check_command(app_names=["TestApp"])
+        command = CommandFactory.create_check_command_with_instrumentation(app_names=["TestApp"])
 
         # Mock an unexpected exception during execution
         with patch.object(command, "_execute_check_operation", side_effect=ValueError("Check error")):
@@ -164,7 +164,7 @@ class TestCommandErrorHandling:
     @pytest.mark.anyio
     async def test_repository_command_unexpected_exception_handling(self, mock_logger):
         """Test RepositoryCommand handles unexpected exceptions properly."""
-        command = CommandFactory.create_repository_command(app_names=["TestApp"])
+        command = CommandFactory.create_repository_command_with_instrumentation(app_names=["TestApp"])
 
         # Mock an unexpected exception during execution
         with patch.object(command, "_execute_main_repository_workflow", side_effect=ConnectionError("Network error")):
@@ -386,7 +386,7 @@ class TestCommandErrorHandling:
     @pytest.mark.anyio
     async def test_repository_command_operation_failure(self, mock_examine):
         """Test RepositoryCommand operation failure handling."""
-        command = CommandFactory.create_repository_command(app_names=["TestApp"])
+        command = CommandFactory.create_repository_command_with_instrumentation(app_names=["TestApp"])
 
         # Mock repository examination failure
         mock_examine.return_value = False
@@ -400,7 +400,7 @@ class TestCommandErrorHandling:
     @pytest.mark.anyio
     async def test_repository_command_operation_exception(self, mock_examine):
         """Test RepositoryCommand operation exception handling."""
-        command = CommandFactory.create_repository_command(app_names=["TestApp"])
+        command = CommandFactory.create_repository_command_with_instrumentation(app_names=["TestApp"])
 
         # Mock repository examination exception
         mock_examine.side_effect = ConnectionError("Network failure")
@@ -413,13 +413,13 @@ class TestCommandErrorHandling:
         # Test that all commands create consistent error results
         commands = [
             CommandFactory.create_add_command(name="Test", url="https://test.com"),
-            CommandFactory.create_check_command(),
+            CommandFactory.create_check_command_with_instrumentation(),
             CommandFactory.create_edit_command(app_names=["Test"]),
             CommandFactory.create_list_command(),
             CommandFactory.create_remove_command(app_names=["Test"]),
             CommandFactory.create_show_command(app_names=["Test"]),
             CommandFactory.create_config_command(action="show"),
-            CommandFactory.create_repository_command(app_names=["Test"]),
+            CommandFactory.create_repository_command_with_instrumentation(app_names=["Test"]),
         ]
 
         for command in commands:

@@ -51,15 +51,15 @@ class TestCommandValidation:
     def test_check_command_validation_success(self):
         """Test CheckCommand validation success scenarios."""
         # No required parameters for check command
-        command = CommandFactory.create_check_command()
+        command = CommandFactory.create_check_command_with_instrumentation()
         assert command.validate() == []
 
         # With app names
-        command = CommandFactory.create_check_command(app_names=["TestApp"])
+        command = CommandFactory.create_check_command_with_instrumentation(app_names=["TestApp"])
         assert command.validate() == []
 
         # With various flags
-        command = CommandFactory.create_check_command(app_names=["TestApp"], dry_run=True, yes=True, verbose=True)
+        command = CommandFactory.create_check_command_with_instrumentation(app_names=["TestApp"], dry_run=True, yes=True, verbose=True)
         assert command.validate() == []
 
     def test_edit_command_validation_success(self):
@@ -189,22 +189,22 @@ class TestCommandValidation:
     def test_repository_command_validation_success(self):
         """Test RepositoryCommand validation success scenarios."""
         # Valid with app names
-        command = CommandFactory.create_repository_command(app_names=["TestApp"])
+        command = CommandFactory.create_repository_command_with_instrumentation(app_names=["TestApp"])
         assert command.validate() == []
 
         # Valid with multiple app names
-        command = CommandFactory.create_repository_command(app_names=["TestApp", "AnotherApp"])
+        command = CommandFactory.create_repository_command_with_instrumentation(app_names=["TestApp", "AnotherApp"])
         assert command.validate() == []
 
     def test_repository_command_validation_failures(self):
         """Test RepositoryCommand validation failure scenarios."""
         # Missing app names
-        command = CommandFactory.create_repository_command()
+        command = CommandFactory.create_repository_command_with_instrumentation()
         errors = command.validate()
         assert "At least one application name is required" in errors
 
         # Empty app names list
-        command = CommandFactory.create_repository_command(app_names=[])
+        command = CommandFactory.create_repository_command_with_instrumentation(app_names=[])
         errors = command.validate()
         assert "At least one application name is required" in errors
 
@@ -233,13 +233,13 @@ class TestCommandValidation:
 
         commands = [
             CommandFactory.create_add_command(name="Test", url="https://test.com", config_file=config_file),
-            CommandFactory.create_check_command(config_file=config_file),
+            CommandFactory.create_check_command_with_instrumentation(config_file=config_file),
             CommandFactory.create_edit_command(app_names=["Test"], config_file=config_file),
             CommandFactory.create_list_command(config_file=config_file),
             CommandFactory.create_remove_command(app_names=["Test"], config_file=config_file),
             CommandFactory.create_show_command(app_names=["Test"], config_file=config_file),
             CommandFactory.create_config_command(action="show", config_file=config_file),
-            CommandFactory.create_repository_command(app_names=["Test"], config_file=config_file),
+            CommandFactory.create_repository_command_with_instrumentation(app_names=["Test"], config_file=config_file),
         ]
 
         for command in commands:
@@ -256,13 +256,13 @@ class TestCommandValidation:
 
         commands = [
             CommandFactory.create_add_command(name="Test", url="https://test.com", config_dir=config_dir),
-            CommandFactory.create_check_command(config_dir=config_dir),
+            CommandFactory.create_check_command_with_instrumentation(config_dir=config_dir),
             CommandFactory.create_edit_command(app_names=["Test"], config_dir=config_dir),
             CommandFactory.create_list_command(config_dir=config_dir),
             CommandFactory.create_remove_command(app_names=["Test"], config_dir=config_dir),
             CommandFactory.create_show_command(app_names=["Test"], config_dir=config_dir),
             CommandFactory.create_config_command(action="show", config_dir=config_dir),
-            CommandFactory.create_repository_command(app_names=["Test"], config_dir=config_dir),
+            CommandFactory.create_repository_command_with_instrumentation(app_names=["Test"], config_dir=config_dir),
         ]
 
         for command in commands:
@@ -276,13 +276,13 @@ class TestCommandValidation:
         """Test debug flag validation across commands."""
         commands = [
             CommandFactory.create_add_command(name="Test", url="https://test.com", debug=True),
-            CommandFactory.create_check_command(debug=True),
+            CommandFactory.create_check_command_with_instrumentation(debug=True),
             CommandFactory.create_edit_command(app_names=["Test"], debug=True),
             CommandFactory.create_list_command(debug=True),
             CommandFactory.create_remove_command(app_names=["Test"], debug=True),
             CommandFactory.create_show_command(app_names=["Test"], debug=True),
             CommandFactory.create_config_command(action="show", debug=True),
-            CommandFactory.create_repository_command(app_names=["Test"], debug=True),
+            CommandFactory.create_repository_command_with_instrumentation(app_names=["Test"], debug=True),
         ]
 
         for command in commands:
@@ -297,7 +297,7 @@ class TestCommandValidation:
         commands_requiring_app_names = [
             (CommandFactory.create_edit_command, {}),
             (CommandFactory.create_remove_command, {}),
-            (CommandFactory.create_repository_command, {}),
+            (CommandFactory.create_repository_command_with_instrumentation, {}),
         ]
 
         for factory_func, extra_params in commands_requiring_app_names:
@@ -321,7 +321,7 @@ class TestCommandValidation:
         """Test app names validation for commands where they're optional."""
         # Commands where app names are optional
         optional_commands = [
-            CommandFactory.create_check_command,
+            CommandFactory.create_check_command_with_instrumentation,
         ]
 
         for factory_func in optional_commands:
@@ -347,7 +347,7 @@ class TestCommandValidation:
         """Test validation for commands with no required parameters."""
         # Commands with no required parameters
         no_required_params_commands = [
-            CommandFactory.create_check_command,
+            CommandFactory.create_check_command_with_instrumentation,
             CommandFactory.create_list_command,
         ]
 
@@ -362,7 +362,7 @@ class TestCommandValidation:
         # Test app name requirement messages (show command no longer requires app names)
         edit_command = CommandFactory.create_edit_command()
         remove_command = CommandFactory.create_remove_command()
-        repo_command = CommandFactory.create_repository_command()
+        repo_command = CommandFactory.create_repository_command_with_instrumentation()
 
         edit_errors = edit_command.validate()
         remove_errors = remove_command.validate()

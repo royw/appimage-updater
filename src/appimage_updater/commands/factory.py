@@ -92,45 +92,6 @@ class CommandFactory:
             output_format=output_format,
         )
         return AddCommand(params)
-
-    @staticmethod
-    def create_check_command(
-        app_names: list[str] | None = None,
-        config_file: Path | None = None,
-        config_dir: Path | None = None,
-        dry_run: bool = False,
-        yes: bool = False,
-        no: bool = False,
-        no_interactive: bool = False,
-        verbose: bool = False,
-        debug: bool = False,
-        info: bool = False,
-        instrument_http: bool = False,
-        http_stack_depth: int = 4,
-        http_track_headers: bool = False,
-        trace: bool = False,
-        output_format: str = "rich",
-    ) -> CheckCommand:
-        """Create a CheckCommand instance."""
-        params = CheckParams(
-            app_names=app_names,
-            config_file=config_file,
-            config_dir=config_dir,
-            dry_run=dry_run,
-            yes=yes,
-            no=no,
-            no_interactive=no_interactive,
-            verbose=verbose,
-            debug=debug,
-            info=info,
-            instrument_http=instrument_http,
-            http_stack_depth=http_stack_depth,
-            http_track_headers=http_track_headers,
-            trace=trace,
-            output_format=output_format,
-        )
-        return CheckCommand(params)
-
     @staticmethod
     def create_check_command_with_instrumentation(
         app_names: list[str] | None = None,
@@ -310,40 +271,6 @@ class CommandFactory:
             output_format=output_format,
         )
         return RemoveCommand(params)
-
-    @staticmethod
-    def create_repository_command(
-        app_names: list[str] | None = None,
-        config_file: Path | None = None,
-        config_dir: Path | None = None,
-        assets: bool = False,
-        limit: int = 10,
-        dry_run: bool = False,
-        instrument_http: bool = False,
-        http_stack_depth: int = 3,
-        http_track_headers: bool = False,
-        trace: bool = False,
-        verbose: bool = False,
-        debug: bool = False,
-        output_format: Any = None,
-    ) -> RepositoryCommand:
-        """Create a RepositoryCommand instance."""
-        params = RepositoryParams(
-            app_names=app_names,
-            config_file=config_file,
-            config_dir=config_dir,
-            assets=assets,
-            limit=limit,
-            dry_run=dry_run,
-            instrument_http=instrument_http,
-            http_stack_depth=http_stack_depth,
-            http_track_headers=http_track_headers,
-            trace=trace,
-            verbose=verbose,
-            debug=debug,
-            output_format=output_format,
-        )
-        return RepositoryCommand(params)
 
     @staticmethod
     def create_repository_command_with_instrumentation(

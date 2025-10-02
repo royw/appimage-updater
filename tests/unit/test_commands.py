@@ -28,9 +28,9 @@ class TestCommandFactory:
         assert command.params.url == "https://github.com/user/repo"
         assert command.params.debug is True
 
-    def test_create_check_command(self):
+    def test_create_check_command_with_instrumentation(self):
         """Test creating a check command."""
-        command = CommandFactory.create_check_command(
+        command = CommandFactory.create_check_command_with_instrumentation(
             app_names=["TestApp"],
             verbose=True,
         )
@@ -93,14 +93,14 @@ class TestCheckCommand:
 
     def test_check_command_validation(self):
         """Test check command validation (no required parameters)."""
-        command = CommandFactory.create_check_command()
+        command = CommandFactory.create_check_command_with_instrumentation()
 
         errors = command.validate()
         assert errors == []
 
     def test_check_command_execution(self):
         """Test check command execution."""
-        command = CommandFactory.create_check_command(
+        command = CommandFactory.create_check_command_with_instrumentation(
             app_names=["TestApp"],
             verbose=True,
         )

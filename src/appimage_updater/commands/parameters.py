@@ -79,20 +79,6 @@ class CheckParams(BaseParams):
     # Output formatting options
     output_format: str = "rich"
 
-    def get_instrumentation_params(self) -> InstrumentationParams:
-        """Extract instrumentation parameters as a separate object.
-
-        Returns:
-            InstrumentationParams instance with current values
-        """
-        return InstrumentationParams(
-            info=self.info,
-            instrument_http=self.instrument_http,
-            http_stack_depth=self.http_stack_depth,
-            http_track_headers=self.http_track_headers,
-            trace=self.trace,
-        )
-
 
 @dataclass
 class EditParams(BaseParams):
@@ -165,23 +151,6 @@ class RepositoryParams(BaseParams):
     http_track_headers: bool = False
     trace: bool = False
     output_format: Any = None  # OutputFormat, avoiding circular import
-
-    def get_instrumentation_params(self) -> InstrumentationParams:
-        """Extract instrumentation parameters as a separate object.
-
-        Returns:
-            InstrumentationParams instance with current values
-        """
-        return InstrumentationParams(
-            info=False,  # Repository command doesn't use info flag
-            instrument_http=self.instrument_http,
-            http_stack_depth=self.http_stack_depth,
-            http_track_headers=self.http_track_headers,
-            trace=self.trace,
-        )
-
-
-# InitParams removed with init command
 
 
 @dataclass
