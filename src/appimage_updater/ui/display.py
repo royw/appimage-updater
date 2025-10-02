@@ -264,31 +264,25 @@ def _create_result_row(result: CheckResult, show_urls: bool) -> list[str]:
 
 def _create_error_row(result: CheckResult, show_urls: bool) -> list[str]:
     """Create row for error results."""
-    # Ensure app_name is never empty - use "Unknown App" as fallback
-    app_name = result.app_name.strip() if result.app_name else "Unknown App"
-    if not app_name:  # Handle case where app_name is just whitespace
-        app_name = "Unknown App"
-
-    # Special handling for disabled applications
-    if result.error_message == "Disabled":
-        row = [
-            app_name,
-            "Disabled",
-            "-",
-            "-",
-            "N/A",
-        ]
-    else:
-        row = [
-            app_name,
-            "Error",
-            "-",
-            "-",
-            result.error_message or "Unknown error",
-        ]
+    app_name = _normalize_app_name(result.app_name)
+    row = _build_error_row_data(app_name, result.error_message)
     if show_urls:
         row.append(result.download_url or "-")
     return row
+
+
+def _normalize_app_name(app_name: str | None) -> str:
+    """Normalize app name, using fallback if empty."""
+    if not app_name or not app_name.strip():
+        return "Unknown App"
+    return app_name.strip()
+
+
+def _build_error_row_data(app_name: str, error_message: str | None) -> list[str]:
+    """Build error row data based on error type."""
+    if error_message == "Disabled":
+        return [app_name, "Disabled", "-", "-", "N/A"]
+    return [app_name, "Error", "-", "-", error_message or "Unknown error"]
 
 
 def _create_no_candidate_row(result: CheckResult, show_urls: bool) -> list[str]:

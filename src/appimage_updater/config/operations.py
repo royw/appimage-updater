@@ -236,15 +236,20 @@ async def generate_default_config(
     # Apply rotation settings
     _apply_rotation_config(config, rotation, retain, symlink, defaults, name)
 
-    # Apply symlink path independently of rotation (symlinks can exist without rotation)
+    # Apply symlink path independently of rotation
+    _apply_symlink_config(config, symlink, defaults, name)
+
+    return config, prerelease_auto_enabled
+
+
+def _apply_symlink_config(config: dict[str, Any], symlink: str | None, defaults: Any, name: str) -> None:
+    """Apply symlink configuration to config dict."""
     if symlink:
         config["symlink_path"] = str(Path(symlink).expanduser())
     elif defaults:
         default_symlink = defaults.get_default_symlink_path(name)
         if default_symlink is not None:
             config["symlink_path"] = str(default_symlink)
-
-    return config, prerelease_auto_enabled
 
 
 def _get_effective_download_dir(download_dir: str | None, defaults: Any, name: str) -> str:

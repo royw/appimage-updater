@@ -92,6 +92,7 @@ class CommandFactory:
             output_format=output_format,
         )
         return AddCommand(params)
+
     @staticmethod
     def create_check_command_with_instrumentation(
         app_names: list[str] | None = None,
