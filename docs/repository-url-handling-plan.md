@@ -157,6 +157,7 @@ class TestDownloadRepositoriesIntegration:
 
 ## Phase 2: Exploration & Analysis (Week 1-2)
 
+<!-- markdownlint-disable MD024 -->
 ### Objective
 
 Determine the best approach for unifying repository handling.
@@ -190,7 +191,7 @@ Determine the best approach for unifying repository handling.
 
 ### 2.2 Base Class Design Exploration
 
-**Option A: Abstract Base Class**
+#### Option A: Abstract Base Class
 
 ```python
 # repositories/base_download_repository.py
@@ -223,7 +224,7 @@ class BaseDownloadRepository(RepositoryClient):
         pass
 ```
 
-**Option B: Composition with Shared Utilities**
+#### Option B: Composition with Shared Utilities
 
 ```python
 # repositories/download_utils.py
@@ -249,7 +250,7 @@ class DirectDownloadRepository(RepositoryClient):
         self.utils = DownloadRepositoryUtils()
 ```
 
-**Option C: Mixin Pattern**
+#### Option C: Mixin Pattern
 
 ```python
 # repositories/mixins/download_mixin.py
@@ -267,7 +268,7 @@ class DirectDownloadRepository(DownloadRepositoryMixin, RepositoryClient):
     """Direct download repository with mixin functionality."""
 ```
 
-**Evaluation Criteria:**
+#### Evaluation Criteria
 
 - **Maintainability:** How easy to understand and modify?
 - **Extensibility:** How easy to add new repository types?
@@ -324,6 +325,7 @@ RepositoryClient (abstract base)
 
 ## Phase 3: Implementation (Week 2-3)
 
+<!-- markdownlint-disable MD024 -->
 ### Objective
 
 Implement the chosen approach based on Phase 2 findings.

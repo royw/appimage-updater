@@ -3,9 +3,12 @@
     "md013": {
       "enabled": false
     },
+    "md022": {
+      "enabled": false
+    },
     "md024": {
       "enabled": true,
-      "siblings_only": false
+      "siblings_only": true
     },
     "md026": {
       "enabled": true,
