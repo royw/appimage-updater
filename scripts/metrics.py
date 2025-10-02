@@ -81,6 +81,7 @@ class CoverageMetrics:
 
     overall_coverage: str = "N/A"
     coverage_distribution: dict[str, int] = field(default_factory=dict)
+    coverage_sloc_distribution: dict[str, int] = field(default_factory=dict)
     test_results: str = ""
 
 
@@ -352,6 +353,7 @@ def _parse_coverage_json(metrics: CoverageMetrics) -> None:
 def _calculate_coverage_distribution_from_json(data: dict, metrics: CoverageMetrics) -> None:
     """Calculate coverage distribution across files from JSON data."""
     ranges: dict[str, int] = defaultdict(int)
+    sloc_ranges: dict[str, int] = defaultdict(int)
     files = data.get("files", {})
 
     for filepath, file_data in files.items():
@@ -364,7 +366,12 @@ def _calculate_coverage_distribution_from_json(data: dict, metrics: CoverageMetr
         range_key = _get_coverage_range(coverage_pct)
         ranges[range_key] += 1
 
+        # Add SLOC for this file to the range
+        num_statements = summary.get("num_statements", 0)
+        sloc_ranges[range_key] += num_statements
+
     metrics.coverage_distribution = dict(ranges)
+    metrics.coverage_sloc_distribution = dict(sloc_ranges)
 
 
 def _get_coverage_range(coverage_pct: int) -> str:
@@ -542,7 +549,8 @@ def report_coverage_metrics(metrics: CoverageMetrics) -> None:
         for range_key in order:
             if range_key in metrics.coverage_distribution:
                 count = metrics.coverage_distribution[range_key]
-                output(f"    {range_key:8s}: {count:3d} files")
+                sloc = metrics.coverage_sloc_distribution.get(range_key, 0)
+                output(f"    {range_key:8s}: {count:3d} files, {sloc:5d} SLOC")
 
 
 def report_summary(metrics: ProjectMetrics) -> None:
