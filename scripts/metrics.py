@@ -19,7 +19,6 @@ import json
 from pathlib import Path
 import re
 import subprocess
-import xml.etree.ElementTree as ET  # noqa: S405
 
 
 # ANSI color codes
@@ -288,7 +287,7 @@ def gather_coverage_metrics() -> CoverageMetrics:
         "--timeout", "30",
         "tests/unit", "tests/functional", "tests/integration", "tests/e2e",
         "--cov=src/appimage_updater",
-        "--cov-report=xml",
+        "--cov-report=json:coverage.json",
         "--cov-report=html:htmlcov",
         "--quiet", "--no-header", "--tb=no",
     ])
@@ -296,10 +295,10 @@ def gather_coverage_metrics() -> CoverageMetrics:
     # Extract test results
     _extract_test_results(result, metrics)
 
-    if not Path("coverage.xml").exists():
+    if not Path("coverage.json").exists():
         return metrics
 
-    _parse_coverage_xml(metrics)
+    _parse_coverage_json(metrics)
 
     return metrics
 
@@ -312,34 +311,38 @@ def _extract_test_results(result: subprocess.CompletedProcess[str], metrics: Cov
             break
 
 
-def _parse_coverage_xml(metrics: CoverageMetrics) -> None:
-    """Parse coverage.xml file for coverage metrics."""
+def _parse_coverage_json(metrics: CoverageMetrics) -> None:
+    """Parse coverage.json file for coverage metrics."""
     try:
-        tree = ET.parse("coverage.xml")  # noqa: S314
-        root = tree.getroot()
-        line_rate = float(root.attrib.get("line-rate", 0))
-        metrics.overall_coverage = f"{line_rate * 100:.1f}%"
+        with open("coverage.json") as f:
+            data = json.load(f)
+
+        # Overall coverage
+        totals = data.get("totals", {})
+        percent_covered = totals.get("percent_covered", 0)
+        metrics.overall_coverage = f"{percent_covered:.1f}%"
 
         # Coverage distribution
-        _calculate_coverage_distribution(root, metrics)
+        _calculate_coverage_distribution_from_json(data, metrics)
 
     except Exception as e:
         output(f"{Colors.YELLOW}Error parsing coverage: {e}{Colors.NC}")
 
 
-def _calculate_coverage_distribution(root: ET.Element, metrics: CoverageMetrics) -> None:
-    """Calculate coverage distribution across files."""
+def _calculate_coverage_distribution_from_json(data: dict, metrics: CoverageMetrics) -> None:
+    """Calculate coverage distribution across files from JSON data."""
     ranges: dict[str, int] = defaultdict(int)
-    for package in root.findall(".//package"):
-        for cls in package.findall(".//class"):
-            filename = cls.attrib.get("filename", "")
-            if not filename or "__pycache__" in filename:
-                continue
+    files = data.get("files", {})
 
-            line_rate = float(cls.attrib.get("line-rate", 0))
-            coverage_pct = int(line_rate * 100)
-            range_key = _get_coverage_range(coverage_pct)
-            ranges[range_key] += 1
+    for filepath, file_data in files.items():
+        if "__pycache__" in filepath:
+            continue
+
+        summary = file_data.get("summary", {})
+        percent_covered = summary.get("percent_covered", 0)
+        coverage_pct = int(percent_covered)
+        range_key = _get_coverage_range(coverage_pct)
+        ranges[range_key] += 1
 
     metrics.coverage_distribution = dict(ranges)
 
@@ -368,28 +371,24 @@ def gather_risk_metrics(complexity: ComplexityMetrics) -> RiskMetrics:
     """Gather risk analysis metrics."""
     metrics = RiskMetrics()
 
-    if not Path("coverage.xml").exists() or not complexity.all_complexities:
+    if not Path("coverage.json").exists() or not complexity.all_complexities:
         return metrics
 
     try:
-        tree = ET.parse("coverage.xml")  # noqa: S314
-        root = tree.getroot()
+        with open("coverage.json") as f:
+            data = json.load(f)
 
+        # Build file coverage map from JSON
         file_coverage = {}
-        for package in root.findall(".//package"):
-            package_name = package.attrib.get("name", "")
-            for cls in package.findall(".//class"):
-                filename = cls.attrib.get("filename", "")
-                if not filename or "__pycache__" in filename:
-                    continue
-
-                if package_name and package_name != ".":
-                    full_path = f"src/appimage_updater/{package_name}/{filename}"
-                else:
-                    full_path = f"src/appimage_updater/{filename}"
-
-                line_rate = float(cls.attrib.get("line-rate", 0))
-                file_coverage[full_path] = line_rate * 100
+        files = data.get("files", {})
+        for filepath, file_data in files.items():
+            if "__pycache__" in filepath:
+                continue
+            summary = file_data.get("summary", {})
+            percent_covered = summary.get("percent_covered", 0)
+            # Normalize path for comparison
+            normalized = filepath.replace("\\", "/")
+            file_coverage[normalized] = percent_covered
 
         # Calculate risk scores
         ratios = []
