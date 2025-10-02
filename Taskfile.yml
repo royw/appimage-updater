@@ -3,6 +3,7 @@ version: '3'
 vars:
   SRC: src/
   TESTS: tests/
+  SCRIPTS: scripts/
   PYTHON_VERSIONS:
     sh: cat .python-versions | grep -v '^$' | tr '\n' ' ' | sed 's/[[:space:]]*$//'
   PYTHON_VERSION:
@@ -101,6 +102,12 @@ tasks:
     cmds:
       - uv run ruff format {{.CLI_ARGS | default .TESTS}}  # Format code
 
+  format:scripts:
+    desc: Format scripts with ruff (including import sorting)
+    cmds:
+      - uv run ruff check --fix --select I {{.CLI_ARGS | default .SCRIPTS}}  # Fix import sorting
+      - uv run ruff format {{.CLI_ARGS | default .SCRIPTS}}  # Format code
+
   fix:emoji:
     desc: Remove emojis from markdown and test files (*.md, docs/*.md, tests/*.py)
     cmds:
@@ -178,6 +185,11 @@ tasks:
     cmds:
       - uv run ruff check {{.CLI_ARGS | default .SRC}}
 
+  lint:mypy:
+    desc: Run type checking with mypy
+    cmds:
+      - uv run mypy {{.CLI_ARGS | default .SRC}}
+
   lint:fix:
     desc: Automatically fix linting issues with ruff
     cmds:
@@ -187,6 +199,22 @@ tasks:
     desc: Automatically fix linting issues with ruff
     cmds:
       - uv run ruff check --fix --select I {{.CLI_ARGS | default .TESTS}}
+
+  lint:scripts:
+    desc: Run linting with ruff
+    cmds:
+      - uv run ruff check --fix --select I {{.CLI_ARGS | default .SCRIPTS}}
+      - uv run mypy {{.CLI_ARGS | default .SCRIPTS}}
+  
+  lint:markdown:
+    desc: Lint markdown files with pymarkdownlnt
+    cmds:
+      - cmd: |
+          if ! command -v pymarkdownlnt &> /dev/null; then
+            uv tool install pymarkdownlnt
+          fi
+        silent: true
+      - uv run pymarkdownlnt --config .pymarkdown.json scan {{.CLI_ARGS | default "*.md docs/*.md"}} || true
 
   lint:emoji:
     desc: Search for emojis in source code, docs, and configuration files
@@ -238,21 +266,6 @@ tasks:
             exit 1
           fi
         silent: true
-
-  lint:mypy:
-    desc: Run type checking with mypy
-    cmds:
-      - uv run mypy {{.CLI_ARGS | default .SRC}}
-
-  lint:markdown:
-    desc: Lint markdown files with pymarkdownlnt
-    cmds:
-      - cmd: |
-          if ! command -v pymarkdownlnt &> /dev/null; then
-            uv tool install pymarkdownlnt
-          fi
-        silent: true
-      - uv run pymarkdownlnt --config .pymarkdown.json scan {{.CLI_ARGS | default "*.md docs/*.md"}} || true
 
   lint:deadcode:
     desc: Find dead (unreachable/unused) code with deadcode

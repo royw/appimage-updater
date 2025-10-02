@@ -20,6 +20,7 @@ from pathlib import Path
 import re
 import subprocess
 import tomllib
+from typing import Any
 
 
 # ANSI color codes
@@ -129,7 +130,9 @@ def load_complexity_exclusions() -> list[str]:
         project_name = data.get("project", {}).get("name")
         if not project_name:
             return []
-        return data.get("tool", {}).get(project_name, {}).get("complexity", {}).get("exclude", [])
+        exclusions = data.get("tool", {}).get(project_name, {}).get("complexity", {}).get("exclude", [])
+        # Ensure we return a list of strings
+        return list(exclusions) if isinstance(exclusions, list) else []
     except Exception:
         return []
 
@@ -350,7 +353,7 @@ def _parse_coverage_json(metrics: CoverageMetrics) -> None:
         output(f"{Colors.YELLOW}Error parsing coverage: {e}{Colors.NC}")
 
 
-def _calculate_coverage_distribution_from_json(data: dict, metrics: CoverageMetrics) -> None:
+def _calculate_coverage_distribution_from_json(data: dict[str, Any], metrics: CoverageMetrics) -> None:
     """Calculate coverage distribution across files from JSON data."""
     ranges: dict[str, int] = defaultdict(int)
     sloc_ranges: dict[str, int] = defaultdict(int)
