@@ -289,7 +289,7 @@ tasks:
     cmds:
       - cmd: echo "Checking complexity..."
         silent: true
-      - uv run radon cc {{.CLI_ARGS | default .SRC}} --min B
+      - uv run radon cc --show-complexity {{.CLI_ARGS | default .SRC}} --min B
 
   # === Testing ===
   test:

@@ -135,12 +135,12 @@ class GlobalHTTPClientImpl:
 
     def _force_close_transport(self) -> None:
         """Force close transport without async (best effort fallback)."""
-        if hasattr(self._client, "_transport") and self._client._transport:
+        transport = getattr(self._client, "_transport", None)
+        if transport is not None:
             with contextlib.suppress(Exception):
                 # Only try sync close method to avoid runtime warnings
-                if hasattr(self._client._transport, "close"):
-                    self._client._transport.close()
-
+                if hasattr(transport, "close"):
+                    transport.close()
 
 class AsyncClient:
     """HTTP client context manager that uses the global client."""

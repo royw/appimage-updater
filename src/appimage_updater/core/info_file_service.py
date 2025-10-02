@@ -36,19 +36,30 @@ class InfoFileService:
         if not download_dir.exists():
             return None
 
-        # Strategy 1: Try to find info file from current files first
+        return (
+            self._strategy_1(download_dir)
+            or self._strategy_2(download_dir)
+            or self._strategy_3(download_dir, app_config)
+        )
+
+    def _strategy_1(self, download_dir: Path) -> Path | None:
+        """Strategy 1: Try to find info file from current files first."""
         info_path = self._get_info_from_current_files(download_dir)
         if info_path and info_path.exists():
             return info_path
+        return None
 
-        # Strategy 2: Look for any existing .info files in the directory
+    def _strategy_2(self, download_dir: Path) -> Path | None:
+        """Strategy 2: Look for any existing .info files in the directory."""
         info_files: list[Path] = list(download_dir.glob("*.info"))
         if info_files:
             # Return the most recent .info file (sorted by name)
             sorted_files: list[Path] = sorted(info_files)
             return sorted_files[-1]
+        return None
 
-        # Strategy 3: Standard naming convention (may not exist)
+    def _strategy_3(self, download_dir: Path, app_config: ApplicationConfig) -> Path | None:
+        """Strategy 3: Standard naming convention (may not exist)."""
         standard_path = download_dir / f"{app_config.name}.info"
         return standard_path if standard_path.exists() else None
 
