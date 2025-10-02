@@ -73,14 +73,25 @@ tasks:
   # === Code Quality ===
   format:
     desc: Format code with ruff (including import sorting) and format markdown files with mdformat
+    deps:
+      - task: format:src
+      - task: format:markdown
+
+  format:src:
+    desc: Format source code with ruff (including import sorting)
     cmds:
       - uv run ruff check --fix --select I {{.CLI_ARGS | default .SRC}}  # Fix import sorting
       - uv run ruff format {{.CLI_ARGS | default .SRC}}  # Format code
+
+  format:markdown:
+    desc: Format markdown files with mdformat
+    cmds:
       - cmd: |
           if ! command -v mdformat &> /dev/null; then
             uv tool install mdformat
           fi
         silent: true
+      - sed -i 's/[[:space:]]*$//' {{.CLI_ARGS | default "*.md docs/*.md"}}
       - mdformat {{.CLI_ARGS | default "*.md docs/*.md"}}
 
   format:tests:

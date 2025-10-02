@@ -78,31 +78,31 @@ Establish robust test coverage before any refactoring to ensure no regressions.
 class TestDirectDownloadRepository:
     def test_normalize_repo_url_no_modification(self):
         """Test that direct URLs are not modified."""
-        
+
     def test_parse_repo_url_extracts_domain_and_name(self):
         """Test URL parsing into components."""
-        
+
     def test_extract_version_from_url_semantic_version(self):
         """Test semantic version extraction."""
-        
+
     def test_extract_version_from_url_nightly_build(self):
         """Test nightly build detection."""
-        
+
     def test_extract_version_from_url_no_version(self):
         """Test fallback to date-based version."""
-        
+
     def test_get_latest_release_direct_url(self):
         """Test fetching latest release from direct URL."""
-        
+
     def test_get_latest_release_with_last_modified_header(self):
         """Test using Last-Modified header."""
-        
+
     def test_get_latest_release_with_date_header_fallback(self):
         """Test fallback to Date header."""
-        
+
     def test_handle_releases_page_parsing(self):
         """Test parsing releases page HTML."""
-        
+
     def test_handle_direct_download_progressive_timeout(self):
         """Test progressive timeout strategy."""
 ```
@@ -115,19 +115,19 @@ class TestDirectDownloadRepository:
 class TestDynamicDownloadRepository:
     def test_normalize_repo_url_no_modification(self):
         """Test that dynamic URLs are not modified."""
-        
+
     def test_parse_repo_url_extracts_domain_and_name(self):
         """Test URL parsing into components."""
-        
+
     def test_extract_version_from_url_semantic_version(self):
         """Test semantic version extraction."""
-        
+
     def test_extract_version_from_content_version_patterns(self):
         """Test version extraction from page content."""
-        
+
     def test_get_latest_release_dynamic_page(self):
         """Test fetching from dynamic download page."""
-        
+
     def test_detect_repository_type_dynamic_patterns(self):
         """Test detection of dynamic download patterns."""
 ```
@@ -140,10 +140,10 @@ class TestDynamicDownloadRepository:
 class TestDownloadRepositoriesIntegration:
     def test_direct_download_real_url(self):
         """Test with real direct download URL (mocked HTTP)."""
-        
+
     def test_dynamic_download_real_url(self):
         """Test with real dynamic download URL (mocked HTTP)."""
-        
+
     def test_fallback_between_direct_and_dynamic(self):
         """Test fallback behavior."""
 ```
@@ -200,23 +200,23 @@ from .base import RepositoryClient
 
 class BaseDownloadRepository(RepositoryClient):
     """Base class for download-based repositories.
-    
+
     Provides common functionality for repositories that download
     files directly without a traditional release API.
     """
-    
+
     def normalize_repo_url(self, url: str) -> tuple[str, bool]:
         """Normalize download URL (common implementation)."""
         return url, False
-    
+
     def _parse_url_components(self, url: str) -> tuple[str, str]:
         """Parse URL into domain and repository name."""
         # Common implementation
-        
+
     def _extract_version_from_url(self, url: str) -> str:
         """Extract version from URL using common patterns."""
         # Common implementation with extensibility
-        
+
     @abstractmethod
     def _extract_version_from_content(self, content: str, url: str) -> str:
         """Extract version from page content (subclass-specific)."""
@@ -230,15 +230,15 @@ class BaseDownloadRepository(RepositoryClient):
 
 class DownloadRepositoryUtils:
     """Shared utilities for download repositories."""
-    
+
     @staticmethod
     def normalize_url(url: str) -> tuple[str, bool]:
         """Normalize download URL."""
-        
+
     @staticmethod
     def parse_url_components(url: str) -> tuple[str, str]:
         """Parse URL into components."""
-        
+
     @staticmethod
     def extract_version_from_url(url: str) -> str:
         """Extract version from URL."""
@@ -256,10 +256,10 @@ class DirectDownloadRepository(RepositoryClient):
 
 class DownloadRepositoryMixin:
     """Mixin providing common download repository functionality."""
-    
+
     def normalize_repo_url(self, url: str) -> tuple[str, bool]:
         """Normalize download URL."""
-        
+
     def _parse_url_components(self, url: str) -> tuple[str, str]:
         """Parse URL into components."""
 
@@ -281,7 +281,7 @@ class DirectDownloadRepository(DownloadRepositoryMixin, RepositoryClient):
 
 **Current Architecture:**
 
-```
+```text
 RepositoryClient (abstract base)
 ├── GitHubRepository
 ├── GitLabRepository
@@ -292,7 +292,7 @@ RepositoryClient (abstract base)
 
 **Proposed Enhancement:**
 
-```
+```text
 RepositoryClient (abstract base)
 ├── APIBasedRepository (abstract)
 │   ├── GitHubRepository
@@ -553,7 +553,7 @@ def _extract_version_from_url(self, url: str) -> str:
     ]
     # ... extraction logic
 
-# DynamicDownloadRepository  
+# DynamicDownloadRepository
 def _extract_version_from_url(self, url: str) -> str:
     version_patterns = [
         r"v?(\d+\.\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?)",
