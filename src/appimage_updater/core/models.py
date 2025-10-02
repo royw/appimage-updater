@@ -7,11 +7,13 @@ from pathlib import Path
 import re
 from typing import (
     TYPE_CHECKING,
+    Annotated,
     Any,
 )
 
 from pydantic import (
     BaseModel,
+    BeforeValidator,
     Field,
 )
 
@@ -34,13 +36,25 @@ else:
         ApplicationConfig = None
 
 
+def _parse_datetime(v: datetime | str) -> datetime:
+    """Parse string dates to datetime objects.
+
+    Accepts ISO 8601 formatted strings or datetime objects.
+    Handles both 'Z' suffix and timezone offsets.
+    """
+    if isinstance(v, str):
+        # Replace 'Z' with '+00:00' for proper ISO format parsing
+        return datetime.fromisoformat(v.replace("Z", "+00:00"))
+    return v
+
+
 class Asset(BaseModel):
     """Represents a downloadable asset."""
 
     name: str = Field(description="Asset filename")
     url: str = Field(description="Download URL")
     size: int = Field(description="File size in bytes")
-    created_at: datetime = Field(description="Asset creation time")
+    created_at: Annotated[datetime, BeforeValidator(_parse_datetime)] = Field(description="Asset creation time")
     checksum_asset: Asset | None = Field(
         default=None,
         description="Associated checksum file asset",

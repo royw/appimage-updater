@@ -1,8 +1,10 @@
-# type: ignore
 """Tests for automatic prerelease detection feature in add command."""
+
+from __future__ import annotations
 
 from datetime import datetime
 import json
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -15,13 +17,13 @@ from appimage_updater.repositories.base import RepositoryError
 
 
 @pytest.fixture
-def runner():
+def runner() -> CliRunner:
     """Create a CLI runner for testing."""
     return CliRunner()
 
 
 @pytest.fixture
-def temp_config_dir(tmp_path):
+def temp_config_dir(tmp_path: Any) -> Any:
     """Create a temporary config directory."""
     config_dir = tmp_path / "config"
     config_dir.mkdir()
@@ -32,7 +34,7 @@ class TestPrereleaseAutoDetection:
     """Test automatic prerelease detection functionality."""
 
     @pytest.mark.anyio
-    async def test_should_enable_prerelease_only_prereleases(self):
+    async def test_should_enable_prerelease_only_prereleases(self) -> None:
         """Test that prerelease is enabled when repository only has prereleases."""
         now = datetime.now()
         mock_releases = [
@@ -64,7 +66,7 @@ class TestPrereleaseAutoDetection:
         mock_client.get_releases.assert_called_once_with("https://github.com/test/repo", limit=10)
 
     @pytest.mark.anyio
-    async def test_should_enable_prerelease_mixed_releases(self):
+    async def test_should_enable_prerelease_mixed_releases(self) -> None:
         """Test that prerelease is not enabled when repository has both stable and prerelease versions."""
         now = datetime.now()
         mock_releases = [
@@ -110,7 +112,7 @@ class TestPrereleaseAutoDetection:
         assert result is False
 
     @pytest.mark.anyio
-    async def test_should_enable_prerelease_only_stable_releases(self):
+    async def test_should_enable_prerelease_only_stable_releases(self) -> None:
         """Test that prerelease is not enabled when repository only has stable releases."""
         mock_releases = [
             Release(
@@ -155,7 +157,7 @@ class TestPrereleaseAutoDetection:
         assert result is False
 
     @pytest.mark.anyio
-    async def test_should_enable_prerelease_no_releases(self):
+    async def test_should_enable_prerelease_no_releases(self) -> None:
         """Test that prerelease is not enabled when repository has no releases."""
         with patch("appimage_updater.core.pattern_generator.get_repository_client_async") as mock_client_factory:
             mock_client = AsyncMock()
@@ -167,7 +169,7 @@ class TestPrereleaseAutoDetection:
         assert result is False
 
     @pytest.mark.anyio
-    async def test_should_enable_prerelease_only_draft_releases(self):
+    async def test_should_enable_prerelease_only_draft_releases(self) -> None:
         """Test that prerelease is not enabled when repository only has draft releases."""
         mock_releases = [
             Release(
@@ -197,7 +199,7 @@ class TestPrereleaseAutoDetection:
         assert result is False
 
     @pytest.mark.anyio
-    async def test_should_enable_prerelease_api_error(self):
+    async def test_should_enable_prerelease_api_error(self) -> None:
         """Test that prerelease is not enabled when GitHub API fails."""
         with patch("appimage_updater.core.pattern_generator.get_repository_client_async") as mock_client_factory:
             mock_client = AsyncMock()
@@ -208,7 +210,7 @@ class TestPrereleaseAutoDetection:
 
         assert result is False
 
-    def test_add_command_auto_enables_prerelease(self, runner, temp_config_dir):
+    def test_add_command_auto_enables_prerelease(self, runner: Any, temp_config_dir: Any) -> None:
         """Test that add command automatically enables prerelease for continuous build repos."""
         mock_releases = [
             Release(
@@ -274,7 +276,7 @@ class TestPrereleaseAutoDetection:
         app_config = config["applications"][0]
         assert app_config["prerelease"] is True
 
-    def test_add_command_does_not_auto_enable_prerelease_for_stable(self, runner, temp_config_dir):
+    def test_add_command_does_not_auto_enable_prerelease_for_stable(self, runner: Any, temp_config_dir: Any) -> None:
         """Test that add command does not auto-enable prerelease for repos with stable releases."""
         mock_releases = [
             Release(
@@ -336,7 +338,7 @@ class TestPrereleaseAutoDetection:
         app_config = config["applications"][0]
         assert app_config["prerelease"] is False
 
-    def test_add_command_respects_explicit_prerelease_setting(self, runner, temp_config_dir):
+    def test_add_command_respects_explicit_prerelease_setting(self, runner: Any, temp_config_dir: Any) -> None:
         """Test that add command respects explicitly set --prerelease flag even with auto-detection."""
         mock_releases = [
             Release(
@@ -398,7 +400,7 @@ class TestPrereleaseAutoDetection:
         app_config = config["applications"][0]
         assert app_config["prerelease"] is True
 
-    def test_add_command_respects_explicit_no_prerelease_setting(self, runner, temp_config_dir):
+    def test_add_command_respects_explicit_no_prerelease_setting(self, runner: Any, temp_config_dir: Any) -> None:
         """Test that add command respects explicitly set --no-prerelease flag even with auto-detection."""
         mock_releases = [
             Release(

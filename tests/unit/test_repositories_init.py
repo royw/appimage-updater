@@ -1,5 +1,6 @@
-# type: ignore
 """Tests for repositories package modules."""
+
+from __future__ import annotations
 
 from appimage_updater.repositories.base import RepositoryClient, RepositoryError
 from appimage_updater.repositories.direct_download_repository import DirectDownloadRepository
@@ -52,7 +53,7 @@ def test_repository_client_is_abstract() -> None:
 
     # Should have abstract methods (can't instantiate directly)
     try:
-        RepositoryClient()  # type: ignore
+        RepositoryClient()  # type: ignore[abstract]
         raise AssertionError("Should not be able to instantiate abstract class")
     except TypeError:
         # Expected - abstract class cannot be instantiated

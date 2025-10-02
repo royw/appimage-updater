@@ -1,11 +1,10 @@
-# type: ignore
 """Tests for zip file extraction functionality."""
 
 from __future__ import annotations
 
 from pathlib import Path
 import tempfile
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import zipfile
 
 import pytest
@@ -15,7 +14,7 @@ from appimage_updater.core.models import Asset, UpdateCandidate
 
 
 @pytest.fixture
-def mock_candidate():
+def mock_candidate() -> UpdateCandidate:
     """Create a mock UpdateCandidate for testing."""
     asset = Asset(
         name="test-app.zip",
@@ -38,16 +37,16 @@ def mock_candidate():
 
 
 @pytest.fixture
-def downloader():
+def downloader() -> Downloader:
     """Create a Downloader instance for testing."""
     return Downloader(timeout=30, max_concurrent=1)
 
 
 @pytest.mark.anyio
-async def test_extract_appimage_from_zip(mock_candidate, downloader):
+async def test_extract_appimage_from_zip(mock_candidate: Mock, downloader: Downloader) -> None:
     """Test successful extraction of AppImage from zip file."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_dir = Path(temp_dir)
+    with tempfile.TemporaryDirectory() as temp_dir_str:
+        temp_dir = Path(temp_dir_str)
 
         # Create a test AppImage file content
         test_appimage_content = b"fake appimage content"
@@ -78,10 +77,10 @@ async def test_extract_appimage_from_zip(mock_candidate, downloader):
 
 
 @pytest.mark.anyio
-async def test_extract_multiple_appimages_uses_first(mock_candidate, downloader):
+async def test_extract_multiple_appimages_uses_first(mock_candidate: Mock, downloader: Downloader) -> None:
     """Test that when multiple AppImages are in zip, first one is used."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_dir = Path(temp_dir)
+    with tempfile.TemporaryDirectory() as temp_dir_str:
+        temp_dir = Path(temp_dir_str)
 
         # Create zip with multiple AppImages
         zip_path = temp_dir / "test-app.zip"
@@ -104,10 +103,10 @@ async def test_extract_multiple_appimages_uses_first(mock_candidate, downloader)
 
 
 @pytest.mark.anyio
-async def test_extract_no_appimage_raises_error(mock_candidate, downloader):
+async def test_extract_no_appimage_raises_error(mock_candidate: Mock, downloader: Downloader) -> None:
     """Test that zip with no AppImage files raises an error."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_dir = Path(temp_dir)
+    with tempfile.TemporaryDirectory() as temp_dir_str:
+        temp_dir = Path(temp_dir_str)
 
         # Create zip with no AppImages
         zip_path = temp_dir / "test-app.zip"
@@ -128,10 +127,10 @@ async def test_extract_no_appimage_raises_error(mock_candidate, downloader):
 
 
 @pytest.mark.anyio
-async def test_extract_invalid_zip_raises_error(mock_candidate, downloader):
+async def test_extract_invalid_zip_raises_error(mock_candidate: Mock, downloader: Downloader) -> None:
     """Test that invalid zip file raises an error."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_dir = Path(temp_dir)
+    with tempfile.TemporaryDirectory() as temp_dir_str:
+        temp_dir = Path(temp_dir_str)
 
         # Create a file that's not a valid zip
         zip_path = temp_dir / "test-app.zip"
@@ -147,10 +146,10 @@ async def test_extract_invalid_zip_raises_error(mock_candidate, downloader):
 
 
 @pytest.mark.anyio
-async def test_extract_skips_non_zip_files(mock_candidate, downloader):
+async def test_extract_skips_non_zip_files(mock_candidate: Mock, downloader: Downloader) -> None:
     """Test that non-zip files are skipped."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_dir = Path(temp_dir)
+    with tempfile.TemporaryDirectory() as temp_dir_str:
+        temp_dir = Path(temp_dir_str)
 
         # Create a non-zip file
         appimage_path = temp_dir / "test-app.AppImage"
@@ -169,10 +168,10 @@ async def test_extract_skips_non_zip_files(mock_candidate, downloader):
 
 
 @pytest.mark.anyio
-async def test_extract_handles_subdirectories_in_zip(mock_candidate, downloader):
+async def test_extract_handles_subdirectories_in_zip(mock_candidate: Mock, downloader: Downloader) -> None:
     """Test extraction of AppImage from subdirectories in zip."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_dir = Path(temp_dir)
+    with tempfile.TemporaryDirectory() as temp_dir_str:
+        temp_dir = Path(temp_dir_str)
 
         test_content = b"appimage in subdirectory"
 
@@ -195,10 +194,10 @@ async def test_extract_handles_subdirectories_in_zip(mock_candidate, downloader)
 
 
 @pytest.mark.anyio
-async def test_extract_ignores_directory_entries(mock_candidate, downloader):
+async def test_extract_ignores_directory_entries(mock_candidate: Mock, downloader: Downloader) -> None:
     """Test that directory entries ending with .AppImage are ignored."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_dir = Path(temp_dir)
+    with tempfile.TemporaryDirectory() as temp_dir_str:
+        temp_dir = Path(temp_dir_str)
 
         test_content = b"real appimage content"
 
@@ -223,10 +222,10 @@ async def test_extract_ignores_directory_entries(mock_candidate, downloader):
 
 
 @pytest.mark.anyio
-async def test_extract_updates_candidate_path_for_rotation(mock_candidate, downloader):
+async def test_extract_updates_candidate_path_for_rotation(mock_candidate: Mock, downloader: Downloader) -> None:
     """Test that ZIP extraction updates the candidate path correctly for file rotation."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_dir = Path(temp_dir)
+    with tempfile.TemporaryDirectory() as temp_dir_str:
+        temp_dir = Path(temp_dir_str)
 
         test_content = b"appimage content for rotation"
 

@@ -15,7 +15,7 @@ class DistributionInfo:
 
     id: str  # ubuntu, fedora, arch, etc.
     version: str  # 24.04, 38, rolling, etc.
-    version_numeric: float  # 24.04 -> 24.04, 38 -> 38.0
+    version_numeric: float | None  # 24.04 -> 24.04, 38 -> 38.0, None for rolling releases
     codename: str | None = None  # jammy, noble, etc.
 
 

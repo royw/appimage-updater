@@ -1,5 +1,6 @@
-# type: ignore
 """Tests for GitHub authentication functionality."""
+
+from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -24,7 +25,7 @@ def setup_github_mocks(
     mock_response.raise_for_status.return_value = None
 
     # Create an async mock for the get method
-    async def mock_get(*args, **kwargs):
+    async def mock_get(*args: Any, **kwargs: Any) -> Any:
         return mock_response
 
     mock_client_instance.get = mock_get
@@ -53,13 +54,13 @@ def setup_github_mocks(
 
 
 @pytest.fixture
-def runner():
+def runner() -> CliRunner:
     """Create a CLI runner for testing."""
     return CliRunner()
 
 
 @pytest.fixture
-def mock_home(tmp_path):
+def mock_home(tmp_path: Any) -> Any:
     """Mock home directory for testing file-based token discovery."""
     config_dir = tmp_path / ".config" / "appimage-updater"
     config_dir.mkdir(parents=True)
@@ -69,13 +70,13 @@ def mock_home(tmp_path):
 class TestGitHubAuth:
     """Test GitHub authentication token discovery and management."""
 
-    def test_explicit_token_overrides_discovery(self):
+    def test_explicit_token_overrides_discovery(self) -> None:
         """Test that explicit token parameter overrides auto-discovery."""
         auth = GitHubAuth(token="explicit_token")
         assert auth.token == "explicit_token"
         assert auth.is_authenticated is True
 
-    def test_github_token_environment_variable(self, monkeypatch):
+    def test_github_token_environment_variable(self, monkeypatch: Any) -> None:
         """Test token discovery from GITHUB_TOKEN environment variable."""
         monkeypatch.setenv("GITHUB_TOKEN", "env_token_123")
         auth = GitHubAuth()
@@ -83,7 +84,7 @@ class TestGitHubAuth:
         assert auth.token == "env_token_123"
         assert auth.is_authenticated is True
 
-    def test_appimage_updater_token_environment_variable(self, monkeypatch):
+    def test_appimage_updater_token_environment_variable(self, monkeypatch: Any) -> None:
         """Test token discovery from app-specific environment variable."""
         monkeypatch.setenv("APPIMAGE_UPDATER_GITHUB_TOKEN", "app_token_456")
         auth = GitHubAuth()
@@ -91,7 +92,7 @@ class TestGitHubAuth:
         assert auth.token == "app_token_456"
         assert auth.is_authenticated is True
 
-    def test_environment_variable_priority(self, monkeypatch):
+    def test_environment_variable_priority(self, monkeypatch: Any) -> None:
         """Test that GITHUB_TOKEN takes priority over app-specific token."""
         monkeypatch.setenv("GITHUB_TOKEN", "standard_token")
         monkeypatch.setenv("APPIMAGE_UPDATER_GITHUB_TOKEN", "app_token")
@@ -99,7 +100,7 @@ class TestGitHubAuth:
 
         assert auth.token == "standard_token"
 
-    def test_token_file_json_format(self, monkeypatch, mock_home):
+    def test_token_file_json_format(self, monkeypatch: Any, mock_home: Any) -> None:
         """Test token discovery from JSON token file."""
         # Clear environment variables
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
@@ -116,7 +117,7 @@ class TestGitHubAuth:
         assert auth.token == "json_file_token"
         assert auth.is_authenticated is True
 
-    def test_token_file_alternative_json_key(self, monkeypatch, mock_home):
+    def test_token_file_alternative_json_key(self, monkeypatch: Any, mock_home: Any) -> None:
         """Test token discovery from JSON file with alternative key name."""
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         monkeypatch.delenv("APPIMAGE_UPDATER_GITHUB_TOKEN", raising=False)
@@ -131,7 +132,7 @@ class TestGitHubAuth:
         auth = GitHubAuth()
         assert auth.token == "alt_json_token"
 
-    def test_token_file_plain_text_format(self, monkeypatch, mock_home):
+    def test_token_file_plain_text_format(self, monkeypatch: Any, mock_home: Any) -> None:
         """Test token discovery from plain text token file."""
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         monkeypatch.delenv("APPIMAGE_UPDATER_GITHUB_TOKEN", raising=False)
@@ -145,7 +146,7 @@ class TestGitHubAuth:
         assert auth.token == "plain_text_token"
         assert auth.is_authenticated is True
 
-    def test_global_config_token_discovery(self, monkeypatch, mock_home):
+    def test_global_config_token_discovery(self, monkeypatch: Any, mock_home: Any) -> None:
         """Test token discovery from global config file."""
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         monkeypatch.delenv("APPIMAGE_UPDATER_GITHUB_TOKEN", raising=False)
@@ -160,7 +161,7 @@ class TestGitHubAuth:
         auth = GitHubAuth()
         assert auth.token == "global_config_token"
 
-    def test_global_config_alternative_token_locations(self, monkeypatch, mock_home):
+    def test_global_config_alternative_token_locations(self, monkeypatch: Any, mock_home: Any) -> None:
         """Test token discovery from alternative locations in global config."""
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         monkeypatch.delenv("APPIMAGE_UPDATER_GITHUB_TOKEN", raising=False)
@@ -168,7 +169,7 @@ class TestGitHubAuth:
 
         # Test direct github_token field
         config_file = mock_home / ".config" / "appimage-updater" / "config.json"
-        config_data = {"github_token": "direct_token"}
+        config_data: dict[str, str] = {"github_token": "direct_token"}
         with config_file.open("w") as f:
             json.dump(config_data, f)
 
@@ -176,15 +177,15 @@ class TestGitHubAuth:
         assert auth.token == "direct_token"
 
         # Test authentication.github_token field
-        config_data = {"authentication": {"github_token": "auth_section_token"}}
+        config_data2: dict[str, str | dict[str, str]] = {"authentication": {"github_token": "auth_section_token"}}
         with config_file.open("w") as f:
-            json.dump(config_data, f)
+            json.dump(config_data2, f)
 
         # Create new auth instance to reset discovery
         auth = GitHubAuth()
         assert auth.token == "auth_section_token"
 
-    def test_no_token_found(self, monkeypatch, mock_home):
+    def test_no_token_found(self, monkeypatch: Any, mock_home: Any) -> None:
         """Test behavior when no token is found anywhere."""
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         monkeypatch.delenv("APPIMAGE_UPDATER_GITHUB_TOKEN", raising=False)
@@ -194,7 +195,7 @@ class TestGitHubAuth:
         assert auth.token is None
         assert auth.is_authenticated is False
 
-    def test_file_read_error_handling(self, monkeypatch, mock_home):
+    def test_file_read_error_handling(self, monkeypatch: Any, mock_home: Any) -> None:
         """Test graceful handling of file read errors."""
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         monkeypatch.delenv("APPIMAGE_UPDATER_GITHUB_TOKEN", raising=False)
@@ -208,7 +209,7 @@ class TestGitHubAuth:
         assert auth.token is None
         assert auth.is_authenticated is False
 
-    def test_get_auth_headers_authenticated(self, monkeypatch):
+    def test_get_auth_headers_authenticated(self, monkeypatch: Any) -> None:
         """Test auth headers generation with authentication."""
         monkeypatch.setenv("GITHUB_TOKEN", "test_token")
         auth = GitHubAuth()
@@ -218,7 +219,7 @@ class TestGitHubAuth:
         assert headers["Accept"] == "application/vnd.github.v3+json"
         assert "AppImage-Updater" in headers["User-Agent"]
 
-    def test_get_auth_headers_anonymous(self, monkeypatch, mock_home):
+    def test_get_auth_headers_anonymous(self, monkeypatch: Any, mock_home: Any) -> None:
         """Test auth headers generation without authentication."""
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         monkeypatch.delenv("APPIMAGE_UPDATER_GITHUB_TOKEN", raising=False)
@@ -230,7 +231,7 @@ class TestGitHubAuth:
         assert headers["Accept"] == "application/vnd.github.v3+json"
         assert "AppImage-Updater" in headers["User-Agent"]
 
-    def test_rate_limit_info_authenticated(self, monkeypatch):
+    def test_rate_limit_info_authenticated(self, monkeypatch: Any) -> None:
         """Test rate limit information for authenticated requests."""
         monkeypatch.setenv("GITHUB_TOKEN", "test_token")
         auth = GitHubAuth()
@@ -239,7 +240,7 @@ class TestGitHubAuth:
         assert rate_info["limit"] == 5000
         assert rate_info["type"] == "authenticated"
 
-    def test_rate_limit_info_anonymous(self, monkeypatch, mock_home):
+    def test_rate_limit_info_anonymous(self, monkeypatch: Any, mock_home: Any) -> None:
         """Test rate limit information for anonymous requests."""
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         monkeypatch.delenv("APPIMAGE_UPDATER_GITHUB_TOKEN", raising=False)
@@ -250,13 +251,13 @@ class TestGitHubAuth:
         assert rate_info["limit"] == 60
         assert rate_info["type"] == "anonymous"
 
-    def test_factory_function_with_explicit_token(self):
+    def test_factory_function_with_explicit_token(self) -> None:
         """Test factory function with explicit token."""
         auth = get_github_auth(token="factory_token")
         assert auth.token == "factory_token"
         assert auth.is_authenticated is True
 
-    def test_factory_function_with_discovery(self, monkeypatch):
+    def test_factory_function_with_discovery(self, monkeypatch: Any) -> None:
         """Test factory function with token discovery."""
         monkeypatch.setenv("GITHUB_TOKEN", "discovered_token")
         auth = get_github_auth()
@@ -267,7 +268,7 @@ class TestGitHubAuth:
 class TestGitHubClientAuthentication:
     """Test GitHubClient integration with authentication."""
 
-    def test_client_with_explicit_auth(self, monkeypatch):
+    def test_client_with_explicit_auth(self, monkeypatch: Any) -> None:
         """Test GitHubClient with explicit GitHubAuth instance."""
         monkeypatch.setenv("GITHUB_TOKEN", "test_token")
         auth = GitHubAuth()
@@ -276,14 +277,14 @@ class TestGitHubClientAuthentication:
         assert client.auth is auth
         assert client.auth.is_authenticated is True
 
-    def test_client_with_explicit_token(self):
+    def test_client_with_explicit_token(self) -> None:
         """Test GitHubClient with explicit token parameter."""
         client = GitHubClient(token="explicit_token")
 
         assert client.auth.token == "explicit_token"
         assert client.auth.is_authenticated is True
 
-    def test_client_with_auto_discovery(self, monkeypatch):
+    def test_client_with_auto_discovery(self, monkeypatch: Any) -> None:
         """Test GitHubClient with automatic token discovery."""
         monkeypatch.setenv("GITHUB_TOKEN", "auto_discovered")
         client = GitHubClient()
@@ -292,7 +293,7 @@ class TestGitHubClientAuthentication:
         assert client.auth.is_authenticated is True
 
     @pytest.mark.anyio
-    async def test_authenticated_api_request(self, monkeypatch, mock_http_service):
+    async def test_authenticated_api_request(self, monkeypatch: Any, mock_http_service: Any) -> None:
         """Test that API requests include authentication headers."""
         monkeypatch.setenv("GITHUB_TOKEN", "test_token")
 

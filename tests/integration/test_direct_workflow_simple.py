@@ -51,7 +51,7 @@ def setup_github_mocks(
 class TestDirectWorkflowIntegration:
     """Test complete --direct flag workflow integration."""
 
-    def test_add_direct_creates_correct_configuration(self):
+    def test_add_direct_creates_correct_configuration(self) -> None:
         """Test that add --direct creates configuration with direct source_type."""
         runner = CliRunner(env={"NO_COLOR": "1", "TERM": "dumb"})
 
@@ -93,7 +93,7 @@ class TestDirectWorkflowIntegration:
     @patch("appimage_updater.repositories.factory.get_repository_client")
     def test_add_no_direct_flag_defaults_to_github(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_http_service
-    ):
+    ) -> None:
         """Test that add without --direct flag defaults to GitHub detection."""
         setup_github_mocks(mock_http_service, mock_repo_client, mock_pattern_gen, mock_prerelease)
         runner = CliRunner(env={"NO_COLOR": "1", "TERM": "dumb"})
@@ -135,7 +135,7 @@ class TestDirectWorkflowIntegration:
     @patch("appimage_updater.repositories.factory.get_repository_client")
     def test_direct_flag_with_complex_options(
         self, mock_repo_client: Mock, mock_pattern_gen: Mock, mock_prerelease: Mock, mock_httpx_client: Mock
-    ):
+    ) -> None:
         """Test --direct flag works with other configuration options."""
         setup_github_mocks(mock_httpx_client, mock_repo_client, mock_pattern_gen, mock_prerelease)
         runner = CliRunner(env={"NO_COLOR": "1", "TERM": "dumb"})

@@ -1,4 +1,3 @@
-# type: ignore
 """Tests for AddCommandHandler."""
 
 from __future__ import annotations
@@ -17,7 +16,7 @@ from appimage_updater.ui.output.interface import OutputFormat
 class TestAddCommandHandler:
     """Test AddCommandHandler functionality."""
 
-    def test_init_creates_console(self):
+    def test_init_creates_console(self) -> None:
         """Test that handler initializes with console."""
         with patch("appimage_updater.cli.handlers.add_handler.Console") as mock_console_class:
             mock_console = Mock()
@@ -28,12 +27,12 @@ class TestAddCommandHandler:
             mock_console_class.assert_called_once()
             assert handler.console == mock_console
 
-    def test_get_command_name(self):
+    def test_get_command_name(self) -> None:
         """Test that handler returns correct command name."""
         handler = AddCommandHandler()
         assert handler.get_command_name() == "add"
 
-    def test_register_command(self):
+    def test_register_command(self) -> None:
         """Test that handler registers command with Typer app."""
         handler = AddCommandHandler()
         app = typer.Typer()
@@ -51,7 +50,7 @@ class TestAddCommandHandler:
         command_info = app.registered_commands[0]
         assert hasattr(command_info, "name")  # Has name attribute (even if None)
 
-    def test_version_callback_prints_version_and_exits(self):
+    def test_version_callback_prints_version_and_exits(self) -> None:
         """Test that version callback prints version and exits."""
         with patch("appimage_updater.cli.handlers.add_handler.Console"):
             handler = AddCommandHandler()
@@ -60,13 +59,13 @@ class TestAddCommandHandler:
                 handler._version_callback(True)
 
             # Verify console print was called
-            handler.console.print.assert_called_once()
+            handler.console.print.assert_called_once()  # type: ignore[attr-defined]
 
             # Check that version string was printed
-            call_args = handler.console.print.call_args[0][0]
+            call_args = handler.console.print.call_args[0][0]  # type: ignore[attr-defined]
             assert "AppImage Updater" in call_args
 
-    def test_version_callback_no_exit_when_false(self):
+    def test_version_callback_no_exit_when_false(self) -> None:
         """Test that version callback does nothing when value is False."""
         with patch("appimage_updater.cli.handlers.add_handler.Console"):
             handler = AddCommandHandler()
@@ -75,9 +74,9 @@ class TestAddCommandHandler:
             handler._version_callback(False)
 
             # Console print should not be called
-            handler.console.print.assert_not_called()
+            handler.console.print.assert_not_called()  # type: ignore[attr-defined]
 
-    def test_validate_options_success(self):
+    def test_validate_options_success(self) -> None:
         """Test successful option validation."""
         with patch("appimage_updater.cli.handlers.add_handler.Console"):
             handler = AddCommandHandler()
@@ -87,7 +86,7 @@ class TestAddCommandHandler:
             handler.validate_options(yes=True, no=False)
             handler.validate_options(yes=False, no=True)
 
-    def test_validate_options_mutually_exclusive_error(self):
+    def test_validate_options_mutually_exclusive_error(self) -> None:
         """Test validation error for mutually exclusive options."""
         with patch("appimage_updater.cli.handlers.add_handler.Console"):
             handler = AddCommandHandler()
@@ -98,15 +97,17 @@ class TestAddCommandHandler:
             assert exc_info.value.exit_code == 1
 
             # Verify error message was printed
-            handler.console.print.assert_called_once()
-            error_message = handler.console.print.call_args[0][0]
+            handler.console.print.assert_called_once()  # type: ignore[attr-defined]
+            error_message = handler.console.print.call_args[0][0]  # type: ignore[attr-defined]
             assert "mutually exclusive" in error_message
             assert "--yes and --no" in error_message
 
     @patch("appimage_updater.cli.handlers.add_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.add_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.add_handler.CommandFactory.create_add_command")
-    def test_execute_add_command_success(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
+    def test_execute_add_command_success(
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test successful execution of add command."""
         with patch("appimage_updater.cli.handlers.add_handler.Console"):
             handler = AddCommandHandler()
@@ -148,8 +149,8 @@ class TestAddCommandHandler:
     @patch("appimage_updater.cli.handlers.add_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.add_handler.CommandFactory.create_add_command")
     def test_execute_add_command_with_json_format_calls_finalize(
-        self, mock_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that JSON format calls finalize on formatter."""
         with patch("appimage_updater.cli.handlers.add_handler.Console"):
             handler = AddCommandHandler()
@@ -183,8 +184,8 @@ class TestAddCommandHandler:
     @patch("appimage_updater.cli.handlers.add_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.add_handler.CommandFactory.create_add_command")
     def test_execute_add_command_with_html_format_calls_finalize(
-        self, mock_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that HTML format calls finalize on formatter."""
         with patch("appimage_updater.cli.handlers.add_handler.Console"):
             handler = AddCommandHandler()
@@ -217,7 +218,9 @@ class TestAddCommandHandler:
     @patch("appimage_updater.cli.handlers.add_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.add_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.add_handler.CommandFactory.create_add_command")
-    def test_execute_add_command_rich_format_no_finalize(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
+    def test_execute_add_command_rich_format_no_finalize(
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that RICH format does not call finalize on formatter."""
         with patch("appimage_updater.cli.handlers.add_handler.Console"):
             handler = AddCommandHandler()
@@ -251,8 +254,8 @@ class TestAddCommandHandler:
     @patch("appimage_updater.cli.handlers.add_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.add_handler.CommandFactory.create_add_command")
     def test_execute_add_command_failure_raises_typer_exit(
-        self, mock_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that command failure raises typer.Exit with correct code."""
         with patch("appimage_updater.cli.handlers.add_handler.Console"):
             handler = AddCommandHandler()
@@ -287,7 +290,9 @@ class TestAddCommandHandler:
     @patch("appimage_updater.cli.handlers.add_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.add_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.add_handler.CommandFactory.create_add_command")
-    def test_execute_add_command_validation_failure(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
+    def test_execute_add_command_validation_failure(
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that validation failure prevents command execution."""
         with patch("appimage_updater.cli.handlers.add_handler.Console"):
             handler = AddCommandHandler()
@@ -312,7 +317,7 @@ class TestAddCommandHandler:
             mock_formatter_factory.assert_not_called()
             mock_asyncio_run.assert_not_called()
 
-    def test_execute_add_command_with_all_parameters(self):
+    def test_execute_add_command_with_all_parameters(self) -> None:
         """Test execute command with comprehensive parameter set."""
         with patch("appimage_updater.cli.handlers.add_handler.Console"):
             handler = AddCommandHandler()

@@ -1,4 +1,3 @@
-# type: ignore
 """Tests for AddCommand execution."""
 
 from __future__ import annotations
@@ -16,7 +15,7 @@ from appimage_updater.commands.parameters import AddParams
 class TestAddCommand:
     """Test AddCommand execution functionality."""
 
-    def test_init(self):
+    def test_init(self) -> None:
         """Test AddCommand initialization."""
         params = AddParams(
             name="TestApp", url="https://github.com/test/repo", config_file=Path("/test/config.json"), debug=True
@@ -26,7 +25,7 @@ class TestAddCommand:
         assert command.params == params
         assert command.console is not None
 
-    def test_validate_success_with_name_and_url(self):
+    def test_validate_success_with_name_and_url(self) -> None:
         """Test successful validation with name and URL provided."""
         params = AddParams(name="TestApp", url="https://github.com/test/repo")
         command = AddCommand(params)
@@ -34,7 +33,7 @@ class TestAddCommand:
         validation_errors = command.validate()
         assert validation_errors == []
 
-    def test_validate_interactive_mode_skips_validation(self):
+    def test_validate_interactive_mode_skips_validation(self) -> None:
         """Test that interactive mode skips validation."""
         params = AddParams(interactive=True)  # No name or URL
         command = AddCommand(params)
@@ -42,7 +41,7 @@ class TestAddCommand:
         validation_errors = command.validate()
         assert validation_errors == []
 
-    def test_validate_examples_mode_skips_validation(self):
+    def test_validate_examples_mode_skips_validation(self) -> None:
         """Test that examples mode skips validation."""
         params = AddParams(examples=True)  # No name or URL
         command = AddCommand(params)
@@ -50,7 +49,7 @@ class TestAddCommand:
         validation_errors = command.validate()
         assert validation_errors == []
 
-    def test_validate_missing_name(self):
+    def test_validate_missing_name(self) -> None:
         """Test validation error when name is missing."""
         params = AddParams(url="https://github.com/test/repo")  # No name
         command = AddCommand(params)
@@ -58,7 +57,7 @@ class TestAddCommand:
         validation_errors = command.validate()
         assert "NAME is required" in validation_errors
 
-    def test_validate_missing_url(self):
+    def test_validate_missing_url(self) -> None:
         """Test validation error when URL is missing."""
         params = AddParams(name="TestApp")  # No URL
         command = AddCommand(params)
@@ -66,7 +65,7 @@ class TestAddCommand:
         validation_errors = command.validate()
         assert "URL is required" in validation_errors
 
-    def test_validate_missing_both(self):
+    def test_validate_missing_both(self) -> None:
         """Test validation errors when both name and URL are missing."""
         params = AddParams()  # No name or URL
         command = AddCommand(params)
@@ -77,7 +76,7 @@ class TestAddCommand:
 
     @patch("appimage_updater.commands.add_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_success_with_formatter(self, mock_configure_logging):
+    async def test_execute_success_with_formatter(self, mock_configure_logging: Mock) -> None:
         """Test successful execution with output formatter."""
         params = AddParams(name="TestApp", url="https://github.com/test/repo", debug=True)
         command = AddCommand(params)
@@ -101,7 +100,7 @@ class TestAddCommand:
 
     @patch("appimage_updater.commands.add_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_examples_mode(self, mock_configure_logging):
+    async def test_execute_examples_mode(self, mock_configure_logging: Mock) -> None:
         """Test execution in examples mode."""
         params = AddParams(examples=True)
         command = AddCommand(params)
@@ -121,7 +120,7 @@ class TestAddCommand:
     @patch("appimage_updater.commands.add_command.configure_logging")
     @patch("appimage_updater.commands.add_command.logger")
     @pytest.mark.anyio
-    async def test_execute_unexpected_exception(self, mock_logger, mock_configure_logging):
+    async def test_execute_unexpected_exception(self, mock_logger: Mock, mock_configure_logging: Mock) -> None:
         """Test execution with unexpected exception."""
         params = AddParams(name="TestApp", url="https://github.com/test/repo")
         command = AddCommand(params)
@@ -140,7 +139,7 @@ class TestAddCommand:
         assert result.exit_code == 1
 
     @pytest.mark.anyio
-    async def test_execute_main_add_workflow_with_formatter(self):
+    async def test_execute_main_add_workflow_with_formatter(self) -> None:
         """Test main workflow execution with formatter."""
         params = AddParams(name="TestApp", url="https://github.com/test/repo")
         command = AddCommand(params)
@@ -155,7 +154,7 @@ class TestAddCommand:
         assert result.success is True
 
     @pytest.mark.anyio
-    async def test_execute_main_add_workflow_without_formatter(self):
+    async def test_execute_main_add_workflow_without_formatter(self) -> None:
         """Test main workflow execution without formatter."""
         params = AddParams(name="TestApp", url="https://github.com/test/repo")
         command = AddCommand(params)
@@ -169,7 +168,7 @@ class TestAddCommand:
         assert result.success is True
 
     @pytest.mark.anyio
-    async def test_execute_with_formatter_context_success(self):
+    async def test_execute_with_formatter_context_success(self) -> None:
         """Test execution with formatter context - success path."""
         params = AddParams(name="TestApp", url="https://github.com/test/repo")
         command = AddCommand(params)
@@ -186,7 +185,7 @@ class TestAddCommand:
         assert result.success is True
 
     @pytest.mark.anyio
-    async def test_execute_with_formatter_context_validation_error(self):
+    async def test_execute_with_formatter_context_validation_error(self) -> None:
         """Test execution with formatter context - validation error."""
         params = AddParams()  # Missing name and URL
         command = AddCommand(params)
@@ -200,7 +199,7 @@ class TestAddCommand:
         assert result.message == "Validation failed"
 
     @pytest.mark.anyio
-    async def test_execute_without_formatter_success(self):
+    async def test_execute_without_formatter_success(self) -> None:
         """Test execution without formatter - success path."""
         params = AddParams(name="TestApp", url="https://github.com/test/repo")
         command = AddCommand(params)
@@ -215,7 +214,7 @@ class TestAddCommand:
         mock_create.assert_called_once_with(True)
         assert result.success is True
 
-    def test_handle_special_modes_examples(self):
+    def test_handle_special_modes_examples(self) -> None:
         """Test special modes handler for examples mode."""
         params = AddParams(examples=True)
         command = AddCommand(params)
@@ -228,7 +227,7 @@ class TestAddCommand:
         assert result.success is True
         assert result.message == "Examples displayed"
 
-    def test_handle_special_modes_interactive(self):
+    def test_handle_special_modes_interactive(self) -> None:
         """Test special modes handler for interactive mode."""
         params = AddParams(interactive=True)
         command = AddCommand(params)
@@ -242,7 +241,7 @@ class TestAddCommand:
         assert result is not None
         assert result.success is True
 
-    def test_handle_special_modes_normal(self):
+    def test_handle_special_modes_normal(self) -> None:
         """Test special modes handler for normal mode."""
         params = AddParams(name="TestApp", url="https://github.com/test/repo")
         command = AddCommand(params)
@@ -251,7 +250,7 @@ class TestAddCommand:
         assert result is None
 
     @patch("appimage_updater.commands.add_command.interactive_add_command")
-    def test_handle_interactive_mode_success(self, mock_interactive):
+    def test_handle_interactive_mode_success(self, mock_interactive: Mock) -> None:
         """Test interactive mode handler - success."""
         params = AddParams(interactive=True)
         command = AddCommand(params)
@@ -287,7 +286,7 @@ class TestAddCommand:
         assert result is None  # Continue with normal execution
 
     @patch("appimage_updater.commands.add_command.interactive_add_command")
-    def test_handle_interactive_mode_cancelled(self, mock_interactive):
+    def test_handle_interactive_mode_cancelled(self, mock_interactive: Mock) -> None:
         """Test interactive mode handler - cancelled."""
         params = AddParams(interactive=True)
         command = AddCommand(params)
@@ -305,7 +304,7 @@ class TestAddCommand:
         assert result.exit_code == 0
 
     @patch("appimage_updater.commands.add_command.interactive_add_command")
-    def test_handle_interactive_mode_failed(self, mock_interactive):
+    def test_handle_interactive_mode_failed(self, mock_interactive: Mock) -> None:
         """Test interactive mode handler - failed."""
         params = AddParams(interactive=True)
         command = AddCommand(params)
@@ -323,7 +322,7 @@ class TestAddCommand:
         assert result.message == "Interactive validation failed"
         assert result.exit_code == 1
 
-    def test_validate_parameters_success(self):
+    def test_validate_parameters_success(self) -> None:
         """Test parameter validation - success."""
         params = AddParams(name="TestApp", url="https://github.com/test/repo")
         command = AddCommand(params)
@@ -333,7 +332,7 @@ class TestAddCommand:
 
         assert result is None
 
-    def test_validate_parameters_with_errors(self):
+    def test_validate_parameters_with_errors(self) -> None:
         """Test parameter validation - with errors."""
         params = AddParams()
         command = AddCommand(params)
@@ -348,7 +347,7 @@ class TestAddCommand:
         assert result.exit_code == 1
 
     @patch("appimage_updater.commands.add_command.get_output_formatter")
-    def test_show_validation_help_with_formatter(self, mock_get_formatter):
+    def test_show_validation_help_with_formatter(self, mock_get_formatter: Mock) -> None:
         """Test validation help display with formatter."""
         params = AddParams()
         command = AddCommand(params)
@@ -363,7 +362,7 @@ class TestAddCommand:
         assert mock_formatter.print_info.call_count == 3
 
     @patch("appimage_updater.commands.add_command.get_output_formatter")
-    def test_show_validation_help_without_formatter(self, mock_get_formatter):
+    def test_show_validation_help_without_formatter(self, mock_get_formatter: Mock) -> None:
         """Test validation help display without formatter."""
         params = AddParams()
         command = AddCommand(params)
@@ -375,7 +374,7 @@ class TestAddCommand:
 
         assert mock_console_print.call_count == 5
 
-    def test_create_execution_result_success(self):
+    def test_create_execution_result_success(self) -> None:
         """Test execution result creation - success."""
         params = AddParams(name="TestApp")
         command = AddCommand(params)
@@ -386,7 +385,7 @@ class TestAddCommand:
         assert result.message == "Successfully added application 'TestApp'"
         assert result.exit_code == 0
 
-    def test_create_execution_result_failure(self):
+    def test_create_execution_result_failure(self) -> None:
         """Test execution result creation - failure."""
         params = AddParams(name="TestApp")
         command = AddCommand(params)
@@ -397,7 +396,7 @@ class TestAddCommand:
         assert result.message == "Add operation failed"
         assert result.exit_code == 1
 
-    def test_update_params_from_interactive(self):
+    def test_update_params_from_interactive(self) -> None:
         """Test parameter update from interactive input."""
         params = AddParams()
         command = AddCommand(params)
@@ -446,7 +445,7 @@ class TestAddCommand:
 
     @patch("appimage_updater.commands.add_command._add")
     @pytest.mark.anyio
-    async def test_execute_add_operation_success(self, mock_add):
+    async def test_execute_add_operation_success(self, mock_add: Mock) -> None:
         """Test add operation execution - success."""
         params = AddParams(
             name="TestApp",
@@ -506,7 +505,7 @@ class TestAddCommand:
 
     @patch("appimage_updater.commands.add_command._add")
     @pytest.mark.anyio
-    async def test_execute_add_operation_with_none_values(self, mock_add):
+    async def test_execute_add_operation_with_none_values(self, mock_add: Mock) -> None:
         """Test add operation execution with None values."""
         params = AddParams(name="TestApp", url="https://github.com/test/repo")
         command = AddCommand(params)
@@ -544,7 +543,7 @@ class TestAddCommand:
         assert result is False
 
     @patch("appimage_updater.commands.add_command._show_add_examples")
-    def test_show_add_examples(self, mock_show_examples):
+    def test_show_add_examples(self, mock_show_examples: Mock) -> None:
         """Test show add examples."""
         params = AddParams()
         command = AddCommand(params)

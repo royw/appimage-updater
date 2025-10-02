@@ -1,8 +1,9 @@
-# type: ignore
 """Unit tests for ui.display_utils.path_formatting module."""
 
+from __future__ import annotations
+
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from appimage_updater.ui.display import (
     _add_ellipsis_if_truncated,
@@ -26,7 +27,7 @@ class TestReplaceHomeWithTilde:
         assert result == ""
 
     @patch("pathlib.Path.home")
-    def test_replace_home_with_tilde_exact_home(self, mock_home: object) -> None:
+    def test_replace_home_with_tilde_exact_home(self, mock_home: Mock) -> None:
         """Test replacing exact home directory."""
         mock_home.return_value = Path("/home/user")
 
@@ -34,7 +35,7 @@ class TestReplaceHomeWithTilde:
         assert result == "~"
 
     @patch("pathlib.Path.home")
-    def test_replace_home_with_tilde_home_subdir(self, mock_home: object) -> None:
+    def test_replace_home_with_tilde_home_subdir(self, mock_home: Mock) -> None:
         """Test replacing home subdirectory."""
         mock_home.return_value = Path("/home/user")
 
@@ -42,7 +43,7 @@ class TestReplaceHomeWithTilde:
         assert result == "~/Documents"
 
     @patch("pathlib.Path.home")
-    def test_replace_home_with_tilde_home_nested_subdir(self, mock_home: object) -> None:
+    def test_replace_home_with_tilde_home_nested_subdir(self, mock_home: Mock) -> None:
         """Test replacing home nested subdirectory."""
         mock_home.return_value = Path("/home/user")
 
@@ -50,7 +51,7 @@ class TestReplaceHomeWithTilde:
         assert result == "~/Documents/Projects/app"
 
     @patch("pathlib.Path.home")
-    def test_replace_home_with_tilde_no_separator(self, mock_home: object) -> None:
+    def test_replace_home_with_tilde_no_separator(self, mock_home: Mock) -> None:
         """Test replacing home when path continues without separator."""
         mock_home.return_value = Path("/home/user")
 
@@ -59,7 +60,7 @@ class TestReplaceHomeWithTilde:
         assert result == "~/data"  # Does replace and adds separator
 
     @patch("pathlib.Path.home")
-    def test_replace_home_with_tilde_not_home_path(self, mock_home: object) -> None:
+    def test_replace_home_with_tilde_not_home_path(self, mock_home: Mock) -> None:
         """Test not replacing non-home paths."""
         mock_home.return_value = Path("/home/user")
 
@@ -67,7 +68,7 @@ class TestReplaceHomeWithTilde:
         assert result == "/opt/applications/app"
 
     @patch("pathlib.Path.home")
-    def test_replace_home_with_tilde_similar_path(self, mock_home: object) -> None:
+    def test_replace_home_with_tilde_similar_path(self, mock_home: Mock) -> None:
         """Test replacing similar paths - actually does replace."""
         mock_home.return_value = Path("/home/user")
 
@@ -153,7 +154,7 @@ class TestAddEllipsisIfTruncated:
 
     def test_add_ellipsis_if_truncated_empty_result(self) -> None:
         """Test adding ellipsis to empty result."""
-        result_parts = []
+        result_parts: list[str] = []
         original_parts = ["some", "path"]
 
         result = _add_ellipsis_if_truncated(result_parts, original_parts)
@@ -182,7 +183,7 @@ class TestWrapPath:
         assert result == ""
 
     @patch("appimage_updater.ui.display._replace_home_with_tilde")
-    def test_wrap_path_short_path(self, mock_replace: object) -> None:
+    def test_wrap_path_short_path(self, mock_replace: Mock) -> None:
         """Test wrapping path that's already short enough."""
         mock_replace.return_value = "/short/path"
 
@@ -190,7 +191,7 @@ class TestWrapPath:
         assert result == "/short/path"
 
     @patch("appimage_updater.ui.display._replace_home_with_tilde")
-    def test_wrap_path_long_path_with_separators(self, mock_replace: object) -> None:
+    def test_wrap_path_long_path_with_separators(self, mock_replace: Mock) -> None:
         """Test wrapping long path with separators."""
         mock_replace.return_value = "/very/long/path/to/file.txt"
 
@@ -200,7 +201,7 @@ class TestWrapPath:
         assert "file.txt" in result
 
     @patch("appimage_updater.ui.display._replace_home_with_tilde")
-    def test_wrap_path_windows_separators(self, mock_replace: object) -> None:
+    def test_wrap_path_windows_separators(self, mock_replace: Mock) -> None:
         """Test wrapping path with Windows separators."""
         mock_replace.return_value = "C:\\Users\\Name\\Documents\\file.txt"
 
@@ -210,7 +211,7 @@ class TestWrapPath:
         assert "/" in result or result.startswith("...")
 
     @patch("appimage_updater.ui.display._replace_home_with_tilde")
-    def test_wrap_path_no_separators_fallback(self, mock_replace: object) -> None:
+    def test_wrap_path_no_separators_fallback(self, mock_replace: Mock) -> None:
         """Test wrapping path with no separators (fallback to truncation)."""
         mock_replace.return_value = "verylongfilenamewithoutseparators"
 
@@ -229,7 +230,7 @@ class TestWrapPath:
         assert len(result) <= 40
 
     @patch("appimage_updater.ui.display._replace_home_with_tilde")
-    def test_wrap_path_exact_max_width(self, mock_replace: object) -> None:
+    def test_wrap_path_exact_max_width(self, mock_replace: Mock) -> None:
         """Test wrapping path that's exactly at max width."""
         path = "/exact/width/path"  # 18 characters
         mock_replace.return_value = path
@@ -238,7 +239,7 @@ class TestWrapPath:
         assert result == path
 
     @patch("pathlib.Path.home")
-    def test_wrap_path_integration_with_home_replacement(self, mock_home: object) -> None:
+    def test_wrap_path_integration_with_home_replacement(self, mock_home: Mock) -> None:
         """Test integration between path wrapping and home replacement."""
         mock_home.return_value = Path("/home/user")
 

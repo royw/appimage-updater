@@ -1,4 +1,3 @@
-# type: ignore
 """Tests for ShowCommandHandler."""
 
 from __future__ import annotations
@@ -17,12 +16,12 @@ from appimage_updater.ui.output.interface import OutputFormat
 class TestShowCommandHandler:
     """Test ShowCommandHandler functionality."""
 
-    def test_get_command_name(self):
+    def test_get_command_name(self) -> None:
         """Test that handler returns correct command name."""
         handler = ShowCommandHandler()
         assert handler.get_command_name() == "show"
 
-    def test_register_command(self):
+    def test_register_command(self) -> None:
         """Test that handler registers command with Typer app."""
         handler = ShowCommandHandler()
         app = typer.Typer()
@@ -40,7 +39,7 @@ class TestShowCommandHandler:
         command_info = app.registered_commands[0]
         assert hasattr(command_info, "name")
 
-    def test_version_callback_prints_version_and_exits(self):
+    def test_version_callback_prints_version_and_exits(self) -> None:
         """Test that version callback prints version and exits."""
         handler = ShowCommandHandler()
 
@@ -59,7 +58,7 @@ class TestShowCommandHandler:
             call_args = mock_console.print.call_args[0][0]
             assert "AppImage Updater" in call_args
 
-    def test_version_callback_no_exit_when_false(self):
+    def test_version_callback_no_exit_when_false(self) -> None:
         """Test that version callback does nothing when value is False."""
         handler = ShowCommandHandler()
 
@@ -69,7 +68,9 @@ class TestShowCommandHandler:
     @patch("appimage_updater.cli.handlers.show_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.show_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.show_handler.CommandFactory.create_show_command")
-    def test_execute_show_command_success(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
+    def test_execute_show_command_success(
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test successful execution of show command."""
         handler = ShowCommandHandler()
 
@@ -121,8 +122,8 @@ class TestShowCommandHandler:
     @patch("appimage_updater.cli.handlers.show_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.show_handler.CommandFactory.create_show_command")
     def test_execute_show_command_with_html_format_calls_finalize(
-        self, mock_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that HTML format calls finalize on formatter."""
         handler = ShowCommandHandler()
 
@@ -154,8 +155,8 @@ class TestShowCommandHandler:
     @patch("appimage_updater.cli.handlers.show_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.show_handler.CommandFactory.create_show_command")
     def test_execute_show_command_with_rich_format_no_finalize(
-        self, mock_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that RICH format does not call finalize on formatter."""
         handler = ShowCommandHandler()
 
@@ -187,8 +188,8 @@ class TestShowCommandHandler:
     @patch("appimage_updater.cli.handlers.show_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.show_handler.CommandFactory.create_show_command")
     def test_execute_show_command_failure_raises_typer_exit(
-        self, mock_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that command failure raises typer.Exit with correct code."""
         handler = ShowCommandHandler()
 
@@ -222,8 +223,8 @@ class TestShowCommandHandler:
     @patch("appimage_updater.cli.handlers.show_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.show_handler.CommandFactory.create_show_command")
     def test_execute_show_command_with_none_app_names_shows_all_apps(
-        self, mock_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that None app_names shows all applications instead of help."""
         handler = ShowCommandHandler()
 
@@ -258,7 +259,7 @@ class TestShowCommandHandler:
             output_format=OutputFormat.RICH,
         )
 
-    def test_execute_show_command_with_default_parameters(self):
+    def test_execute_show_command_with_default_parameters(self) -> None:
         """Test execute command with default/None parameters."""
         handler = ShowCommandHandler()
 

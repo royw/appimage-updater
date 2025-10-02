@@ -1,5 +1,6 @@
-# type: ignore
 """Tests for system compatibility detection and filtering."""
+
+from __future__ import annotations
 
 from datetime import datetime
 
@@ -27,7 +28,7 @@ from appimage_updater.core.system_info import (
 class TestSystemDetector:
     """Test system information detection."""
 
-    def test_architecture_detection(self, architecture_mappings):
+    def test_architecture_detection(self, architecture_mappings: dict[str, tuple[str, set[str]]]) -> None:
         """Test architecture detection and aliasing."""
         detector = SystemDetector()
 
@@ -40,7 +41,7 @@ class TestSystemDetector:
                 assert expected_primary == expected_primary
                 assert expected_aliases == expected_aliases
 
-    def test_platform_detection(self, supported_platforms):
+    def test_platform_detection(self, supported_platforms: set[str]) -> None:
         """Test platform detection."""
         detector = SystemDetector()
         platform = detector._detect_platform()
@@ -48,7 +49,7 @@ class TestSystemDetector:
         # Should be one of the known platforms from fixture
         assert platform in supported_platforms
 
-    def test_format_detection_linux(self, platform_formats):
+    def test_format_detection_linux(self, platform_formats: dict[str, set[str]]) -> None:
         """Test supported format detection for Linux."""
         detector = SystemDetector()
         formats = detector._detect_supported_formats("linux")
@@ -58,14 +59,14 @@ class TestSystemDetector:
         # Verify against fixture data
         assert expected_formats.issubset(platform_formats["linux"])
 
-    def test_format_detection_darwin_raises_error(self):
+    def test_format_detection_darwin_raises_error(self) -> None:
         """Test that non-Linux platforms raise RuntimeError."""
         detector = SystemDetector()
 
         with pytest.raises(RuntimeError, match="AppImage Updater only supports Linux"):
             detector._detect_supported_formats("darwin")
 
-    def test_format_detection_windows_raises_error(self):
+    def test_format_detection_windows_raises_error(self) -> None:
         """Test that non-Linux platforms raise RuntimeError."""
         detector = SystemDetector()
 
@@ -76,7 +77,7 @@ class TestSystemDetector:
 class TestCompatibilityFunctions:
     """Test compatibility checking functions."""
 
-    def test_platform_compatibility_linux_only(self):
+    def test_platform_compatibility_linux_only(self) -> None:
         """Test platform compatibility checking for Linux only."""
         # Test Linux platform compatibility
         is_compat, score = is_compatible_platform("linux", "linux")
@@ -88,22 +89,22 @@ class TestCompatibilityFunctions:
         assert is_compat is False
         assert score == 0.0
 
-    def test_platform_compatibility_non_linux_system_raises_error(self):
+    def test_platform_compatibility_non_linux_system_raises_error(self) -> None:
         """Test that non-Linux system platforms raise RuntimeError."""
         with pytest.raises(RuntimeError, match="AppImage Updater only supports Linux"):
             is_compatible_platform("linux", "darwin")
 
-    def test_format_compatibility_non_linux_raises_error(self):
+    def test_format_compatibility_non_linux_raises_error(self) -> None:
         """Test that non-Linux platforms raise RuntimeError."""
         with pytest.raises(RuntimeError, match="AppImage Updater only supports Linux"):
             is_supported_format(".dmg", "darwin")
 
-    def test_format_compatibility_windows_raises_error(self):
+    def test_format_compatibility_windows_raises_error(self) -> None:
         """Test that Windows platform raises RuntimeError."""
         with pytest.raises(RuntimeError, match="AppImage Updater only supports Linux"):
             is_supported_format(".exe", "win32")
 
-    def test_architecture_parsing(self):
+    def test_architecture_parsing(self) -> None:
         """Test architecture extraction from asset filenames."""
         test_cases = [
             ("GitHubDesktop-linux-x86_64-3.4.13-linux1.AppImage", "x86_64"),
@@ -119,7 +120,7 @@ class TestCompatibilityFunctions:
             asset = Asset(name=filename, url="https://example.com/download", size=1024, created_at=datetime.now())
             assert asset.architecture == expected_arch
 
-    def test_platform_parsing(self):
+    def test_platform_parsing(self) -> None:
         """Test platform extraction from asset filenames."""
         test_cases = [
             ("app-linux-x86_64.AppImage", "linux"),
@@ -134,7 +135,7 @@ class TestCompatibilityFunctions:
             asset = Asset(name=filename, url="https://example.com/download", size=1024, created_at=datetime.now())
             assert asset.platform == expected_platform
 
-    def test_format_parsing(self):
+    def test_format_parsing(self) -> None:
         """Test file extension extraction from asset filenames."""
         test_cases = [
             ("app.AppImage", ".appimage"),
@@ -156,7 +157,7 @@ class TestCompatibilityFunctions:
 class TestReleaseFiltering:
     """Test Release asset filtering functionality."""
 
-    def create_test_assets(self, platform_test_assets) -> list[Asset]:
+    def create_test_assets(self, platform_test_assets: list[Asset]) -> list[Asset]:
         """Create test assets with different architectures and platforms."""
         # Use fixture assets and add one more for completeness
         assets = list(platform_test_assets)  # Copy from fixture
@@ -170,7 +171,7 @@ class TestReleaseFiltering:
         )
         return assets
 
-    def test_pattern_matching_no_filter(self, platform_test_assets):
+    def test_pattern_matching_no_filter(self, platform_test_assets: list[Asset]) -> None:
         """Test basic pattern matching without filtering."""
         assets = self.create_test_assets(platform_test_assets)
         release = Release(version="1.0.0", tag_name="v1.0.0", published_at=datetime.now(), assets=assets)
@@ -183,7 +184,7 @@ class TestReleaseFiltering:
         matching = release.get_matching_assets(r".*", filter_compatible=False)
         assert len(matching) == 5  # All assets
 
-    def test_compatibility_filtering(self, platform_test_assets):
+    def test_compatibility_filtering(self, platform_test_assets: list[Asset]) -> None:
         """Test compatibility filtering (mock system info)."""
         assets = self.create_test_assets(platform_test_assets)
         release = Release(version="1.0.0", tag_name="v1.0.0", published_at=datetime.now(), assets=assets)
@@ -200,24 +201,24 @@ class TestReleaseFiltering:
 class TestEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_unknown_architecture(self):
+    def test_unknown_architecture(self) -> None:
         """Test handling of unknown architectures."""
         # Should be treated as incompatible
         assert is_compatible_architecture("unknown", "x86_64") == (False, 0.0)
         assert is_compatible_architecture("x86_64", "unknown") == (False, 0.0)
 
-    def test_empty_strings(self):
+    def test_empty_strings(self) -> None:
         """Test handling of empty strings."""
         assert is_compatible_architecture("", "x86_64") == (False, 0.0)
         assert is_compatible_platform("", "linux") == (False, 0.0)
         assert is_supported_format("", "linux") == (False, 0.0)
 
-    def test_case_insensitivity(self):
+    def test_case_insensitivity(self) -> None:
         """Test case-insensitive matching."""
         assert is_compatible_architecture("X86_64", "x86_64") == (True, 100.0)
         assert is_compatible_platform("Linux", "linux") == (True, 100.0)
 
-    def test_asset_without_parsed_info(self):
+    def test_asset_without_parsed_info(self) -> None:
         """Test assets without architecture/platform information."""
         asset = Asset(
             name="generic-file.txt",  # No recognizable patterns

@@ -1,5 +1,6 @@
-# type: ignore
 """Unit tests for ui.display_utils.application_display module."""
+
+from __future__ import annotations
 
 import re
 from unittest.mock import Mock, patch
@@ -155,7 +156,7 @@ class TestAddChecksumStatusLine:
         """Test adding status line for enabled checksum."""
         app = Mock()
         app.checksum.enabled = True
-        config_lines = []
+        config_lines: list[str] = []
 
         _add_checksum_status_line(app, config_lines)
         assert config_lines == ["[bold]Checksum Verification:[/bold] Enabled"]
@@ -164,7 +165,7 @@ class TestAddChecksumStatusLine:
         """Test adding status line for disabled checksum."""
         app = Mock()
         app.checksum.enabled = False
-        config_lines = []
+        config_lines: list[str] = []
 
         _add_checksum_status_line(app, config_lines)
         assert config_lines == ["[bold]Checksum Verification:[/bold] Disabled"]
@@ -179,7 +180,7 @@ class TestAddChecksumDetails:
         app.checksum.algorithm = "sha256"
         app.checksum.pattern = "*.sha256"
         app.checksum.required = True
-        config_lines = []
+        config_lines: list[str] = []
 
         _add_checksum_details(app, config_lines)
         expected = ["  [dim]Algorithm:[/dim] SHA256", "  [dim]Pattern:[/dim] *.sha256", "  [dim]Required:[/dim] Yes"]
@@ -193,7 +194,7 @@ class TestAddRotationStatusLine:
         """Test adding status line for enabled rotation."""
         app = Mock()
         app.rotation_enabled = True
-        config_lines = []
+        config_lines: list[str] = []
 
         _add_rotation_status_line(app, config_lines)
         assert config_lines == ["[bold]File Rotation:[/bold] Enabled"]
@@ -202,7 +203,7 @@ class TestAddRotationStatusLine:
         """Test adding status line for disabled rotation."""
         app = Mock()
         app.rotation_enabled = False
-        config_lines = []
+        config_lines: list[str] = []
 
         _add_rotation_status_line(app, config_lines)
         assert config_lines == ["[bold]File Rotation:[/bold] Disabled"]
@@ -215,7 +216,7 @@ class TestAddRetainCountLine:
         """Test adding retain count line."""
         app = Mock()
         app.retain_count = 5
-        config_lines = []
+        config_lines: list[str] = []
 
         _add_retain_count_line(app, config_lines)
         assert config_lines == ["  [dim]Retain Count:[/dim] 5 files"]
@@ -223,7 +224,7 @@ class TestAddRetainCountLine:
     def test_without_retain_count(self) -> None:
         """Test not adding retain count line when attribute missing."""
         app = Mock(spec=[])  # No retain_count attribute
-        config_lines = []
+        config_lines: list[str] = []
 
         _add_retain_count_line(app, config_lines)
         assert config_lines == []

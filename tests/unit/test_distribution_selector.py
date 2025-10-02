@@ -1,4 +1,3 @@
-# type: ignore
 """Tests for distribution-aware asset selection."""
 
 from __future__ import annotations
@@ -6,10 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from unittest.mock import patch
 
-from appimage_updater.core.distribution_selector import (
-    DistributionSelector,
-    select_best_distribution_asset,
-)
+from appimage_updater.core.distribution_selector import DistributionSelector, select_best_distribution_asset
 from appimage_updater.core.models import Asset
 from appimage_updater.dist_selector.asset_parsing import _parse_asset_info
 from appimage_updater.dist_selector.models import AssetInfo, DistributionInfo
@@ -18,7 +14,7 @@ from appimage_updater.dist_selector.models import AssetInfo, DistributionInfo
 class TestDistributionSelector:
     """Test the distribution selector functionality."""
 
-    def test_parse_version_number(self):
+    def test_parse_version_number(self) -> None:
         """Test version number parsing."""
         selector = DistributionSelector(interactive=False)
 
@@ -34,7 +30,7 @@ class TestDistributionSelector:
             result = selector._parse_version_number(version_str)
             assert result == expected, f"Expected {expected} for '{version_str}', got {result}"
 
-    def test_parse_asset_info_ubuntu(self):
+    def test_parse_asset_info_ubuntu(self) -> None:
         """Test parsing Ubuntu asset information."""
 
         assets = [
@@ -76,7 +72,7 @@ class TestDistributionSelector:
         assert parsed[2].distribution == "fedora"
         assert parsed[2].format == "appimage"
 
-    def test_detect_ubuntu_distribution(self):
+    def test_detect_ubuntu_distribution(self) -> None:
         """Test Ubuntu distribution detection."""
         # Mock the _detect_current_distribution method directly to avoid CI/local version differences
         test_dist_info = DistributionInfo(id="ubuntu", version="22.04", version_numeric=22.04)
@@ -89,7 +85,7 @@ class TestDistributionSelector:
             assert selector.current_dist.version == "22.04"
             assert selector.current_dist.version_numeric == 22.04
 
-    def test_calculate_compatibility_score(self):
+    def test_calculate_compatibility_score(self) -> None:
         """Test compatibility score calculation."""
         # Mock Ubuntu 24.04 system (consistent with CI environment)
         selector = DistributionSelector(interactive=False)
@@ -139,7 +135,7 @@ class TestDistributionSelector:
         # Ubuntu matches should be much higher than Fedora
         assert scores[2] > scores[3] + 50
 
-    def test_is_compatible_distribution(self):
+    def test_is_compatible_distribution(self) -> None:
         """Test distribution compatibility checking."""
         selector = DistributionSelector(interactive=False)
 
@@ -152,7 +148,7 @@ class TestDistributionSelector:
         assert not selector._is_compatible_distribution("fedora")  # Different family
         assert not selector._is_compatible_distribution("arch")  # Different family
 
-    def test_is_uncommon_distribution(self):
+    def test_is_uncommon_distribution(self) -> None:
         """Test uncommon distribution detection."""
         selector = DistributionSelector(interactive=False)
 
@@ -165,7 +161,7 @@ class TestDistributionSelector:
         selector.current_dist = DistributionInfo(id="gentoo", version="1.0", version_numeric=1.0)
         assert selector._is_uncommon_distribution()
 
-    def test_select_best_asset_automatic_selection(self):
+    def test_select_best_asset_automatic_selection(self) -> None:
         """Test automatic asset selection for good matches."""
         assets = [
             Asset(
@@ -192,7 +188,7 @@ class TestDistributionSelector:
             # Should automatically select Ubuntu version
             assert "ubuntu-24.04" in selected.name
 
-    def test_select_best_asset_single_asset(self):
+    def test_select_best_asset_single_asset(self) -> None:
         """Test that single asset is returned without analysis."""
         asset = Asset(
             name="OnlyOption.AppImage", url="https://example.com/file.AppImage", size=1000000, created_at=datetime.now()
@@ -203,7 +199,7 @@ class TestDistributionSelector:
 
         assert result == asset
 
-    def test_convenience_function(self):
+    def test_convenience_function(self) -> None:
         """Test the convenience function."""
         assets = [
             Asset(
@@ -218,7 +214,7 @@ class TestDistributionSelector:
         result = select_best_distribution_asset(assets, interactive=False)
         assert result == assets[0]
 
-    def test_bambu_studio_scenario(self):
+    def test_bambu_studio_scenario(self) -> None:
         """Test the specific BambuStudio scenario mentioned by user."""
         # Example BambuStudio assets
         assets = [

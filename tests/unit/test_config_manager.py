@@ -1,5 +1,6 @@
-# type: ignore
 """Tests for the new configuration manager API."""
+
+from __future__ import annotations
 
 from pathlib import Path
 from unittest.mock import mock_open, patch
@@ -13,7 +14,7 @@ from appimage_updater.config.models import ApplicationConfig, Config
 class TestManager:
     """Test Manager base class."""
 
-    def test_load_config_method(self):
+    def test_load_config_method(self) -> None:
         """Test that Manager.load_config method works."""
         manager = Manager()
 
@@ -27,7 +28,7 @@ class TestManager:
             assert result == mock_config
             mock_load_file.assert_called_once_with(config_path)
 
-    def test_save_config_method(self):
+    def test_save_config_method(self) -> None:
         """Test that Manager.save_config method works."""
         manager = Manager()
         config = Config()
@@ -42,7 +43,7 @@ class TestManager:
 class TestGlobalConfigManager:
     """Test GlobalConfigManager class."""
 
-    def test_property_access(self):
+    def test_property_access(self) -> None:
         """Test property-based access to global configuration."""
         with patch.object(GlobalConfigManager, "_load_global_config") as mock_load:
             # Mock a basic config
@@ -63,7 +64,7 @@ class TestGlobalConfigManager:
             assert globals.concurrent_downloads == 5
             assert globals.timeout_seconds == 45
 
-    def test_default_properties(self):
+    def test_default_properties(self) -> None:
         """Test default configuration properties."""
         with patch.object(GlobalConfigManager, "_load_global_config") as mock_load:
             mock_config = Config()
@@ -87,7 +88,7 @@ class TestGlobalConfigManager:
 class TestAppConfigs:
     """Test AppConfigs class."""
 
-    def test_iterator_support(self):
+    def test_iterator_support(self) -> None:
         """Test iterator support for app configurations."""
         with patch.object(AppConfigs, "_load_application_configs") as mock_load:
             # Create mock applications
@@ -120,7 +121,7 @@ class TestAppConfigs:
             # Test length
             assert len(app_configs) == 2
 
-    def test_dictionary_access(self):
+    def test_dictionary_access(self) -> None:
         """Test dictionary-style access by app name."""
         with patch.object(AppConfigs, "_load_application_configs") as mock_load:
             app1 = ApplicationConfig(
@@ -148,7 +149,7 @@ class TestAppConfigs:
             with pytest.raises(KeyError):
                 app_configs["NonExistent"]
 
-    def test_filtering(self):
+    def test_filtering(self) -> None:
         """Test application filtering functionality."""
         with patch.object(AppConfigs, "_load_application_configs") as mock_load:
             app1 = ApplicationConfig(
@@ -190,7 +191,7 @@ class TestAppConfigs:
             assert "TestApp2" in app_names
             assert "OrcaSlicer" in app_names
 
-    def test_app_name_filtering(self):
+    def test_app_name_filtering(self) -> None:
         """Test filtering by specific app names."""
         with patch.object(AppConfigs, "_load_application_configs") as mock_load:
             app1 = ApplicationConfig(
@@ -225,7 +226,7 @@ class TestAppConfigs:
             assert len(apps) == 2
             assert {app.name for app in apps} == {"TestApp1", "TestApp3"}
 
-    def test_add_remove_operations(self):
+    def test_add_remove_operations(self) -> None:
         """Test adding and removing application configurations."""
         with patch.object(AppConfigs, "_load_application_configs") as mock_load:
             app1 = ApplicationConfig(

@@ -9,6 +9,11 @@ from typing import Protocol, runtime_checkable
 class AuthProtocol(Protocol):
     """Protocol for authentication providers."""
 
+    @property
+    def token(self) -> str | None:
+        """Get the authentication token."""
+        ...
+
     def get_auth_headers(self) -> dict[str, str]:
         """Get authentication headers for API requests."""
         ...

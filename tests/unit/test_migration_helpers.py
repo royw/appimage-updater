@@ -1,8 +1,9 @@
-# type: ignore
 """Tests for configuration manager classes."""
 
+from __future__ import annotations
+
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from appimage_updater.config.manager import AppConfigs
 from appimage_updater.config.models import Config
@@ -12,7 +13,7 @@ class TestAppConfigsDirectUsage:
     """Test direct usage of AppConfigs for configuration loading."""
 
     @patch("appimage_updater.config.manager.AppConfigs._load_config")
-    def test_direct_appconfigs_usage(self, mock_load_config) -> None:
+    def test_direct_appconfigs_usage(self, mock_load_config: Mock) -> None:
         """Test direct AppConfigs usage with path resolution."""
         config_path = Path("/test/config.json")
         mock_config = Config()

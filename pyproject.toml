@@ -204,7 +204,10 @@ exclude_lines = [
 
 [dependency-groups]
 dev = [
+    "autotyping>=24.9.0",
     "deadcode>=2.4.0",
+    "infer-types>=1.0.0",
+    "isort>=6.0.1",
     "mkdocs>=1.6.1",
     "mkdocs-gen-files>=0.5.0",
     "mkdocs-git-revision-date-localized-plugin>=1.4.7",

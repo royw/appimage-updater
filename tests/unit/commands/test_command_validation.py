@@ -1,22 +1,20 @@
-# type: ignore
 """Comprehensive command validation tests."""
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from appimage_updater.commands.factory import CommandFactory
-from appimage_updater.commands.parameters import (
-    AddParams,
-)
+from appimage_updater.commands.parameters import AddParams
 
 
 class TestCommandValidation:
     """Test command validation across all command types."""
 
-    def test_add_command_validation_success(self):
+    def test_add_command_validation_success(self) -> None:
         """Test AddCommand validation success scenarios."""
         # Valid with name and URL
         command = CommandFactory.create_add_command(name="TestApp", url="https://github.com/test/repo")
@@ -30,7 +28,7 @@ class TestCommandValidation:
         command = CommandFactory.create_add_command(examples=True)
         assert command.validate() == []
 
-    def test_add_command_validation_failures(self):
+    def test_add_command_validation_failures(self) -> None:
         """Test AddCommand validation failure scenarios."""
         # Missing name
         command = CommandFactory.create_add_command(url="https://github.com/test/repo")
@@ -48,7 +46,7 @@ class TestCommandValidation:
         assert "NAME is required" in errors
         assert "URL is required" in errors
 
-    def test_check_command_validation_success(self):
+    def test_check_command_validation_success(self) -> None:
         """Test CheckCommand validation success scenarios."""
         # No required parameters for check command
         command = CommandFactory.create_check_command_with_instrumentation()
@@ -59,10 +57,12 @@ class TestCommandValidation:
         assert command.validate() == []
 
         # With various flags
-        command = CommandFactory.create_check_command_with_instrumentation(app_names=["TestApp"], dry_run=True, yes=True, verbose=True)
+        command = CommandFactory.create_check_command_with_instrumentation(
+            app_names=["TestApp"], dry_run=True, yes=True, verbose=True
+        )
         assert command.validate() == []
 
-    def test_edit_command_validation_success(self):
+    def test_edit_command_validation_success(self) -> None:
         """Test EditCommand validation success scenarios."""
         # Valid with app names
         command = CommandFactory.create_edit_command(app_names=["TestApp"])
@@ -72,7 +72,7 @@ class TestCommandValidation:
         command = CommandFactory.create_edit_command(app_names=["TestApp", "AnotherApp"])
         assert command.validate() == []
 
-    def test_edit_command_validation_failures(self):
+    def test_edit_command_validation_failures(self) -> None:
         """Test EditCommand validation failure scenarios."""
         # Missing app names
         command = CommandFactory.create_edit_command()
@@ -84,7 +84,7 @@ class TestCommandValidation:
         errors = command.validate()
         assert "At least one application name is required" in errors
 
-    def test_list_command_validation_success(self):
+    def test_list_command_validation_success(self) -> None:
         """Test ListCommand validation success scenarios."""
         # No required parameters for list command
         command = CommandFactory.create_list_command()
@@ -98,7 +98,7 @@ class TestCommandValidation:
         command = CommandFactory.create_list_command(debug=True)
         assert command.validate() == []
 
-    def test_remove_command_validation_success(self):
+    def test_remove_command_validation_success(self) -> None:
         """Test RemoveCommand validation success scenarios."""
         # Valid with app names
         command = CommandFactory.create_remove_command(app_names=["TestApp"])
@@ -108,7 +108,7 @@ class TestCommandValidation:
         command = CommandFactory.create_remove_command(app_names=["TestApp", "AnotherApp"])
         assert command.validate() == []
 
-    def test_remove_command_validation_failures(self):
+    def test_remove_command_validation_failures(self) -> None:
         """Test RemoveCommand validation failure scenarios."""
         # Missing app names
         command = CommandFactory.create_remove_command()
@@ -120,7 +120,7 @@ class TestCommandValidation:
         errors = command.validate()
         assert "At least one application name is required" in errors
 
-    def test_show_command_validation_success(self):
+    def test_show_command_validation_success(self) -> None:
         """Test ShowCommand validation success scenarios."""
         # Valid with app names
         command = CommandFactory.create_show_command(app_names=["TestApp"])
@@ -130,7 +130,7 @@ class TestCommandValidation:
         command = CommandFactory.create_show_command(app_names=["TestApp", "AnotherApp"])
         assert command.validate() == []
 
-    def test_show_command_validation_success_with_no_app_names(self):
+    def test_show_command_validation_success_with_no_app_names(self) -> None:
         """Test ShowCommand validation success scenarios with no app names (shows all)."""
         # Missing app names - now valid (shows all apps)
         command = CommandFactory.create_show_command()
@@ -142,7 +142,7 @@ class TestCommandValidation:
         errors = command.validate()
         assert errors == []
 
-    def test_config_command_validation_success(self):
+    def test_config_command_validation_success(self) -> None:
         """Test ConfigCommand validation success scenarios."""
         # Valid show action
         command = CommandFactory.create_config_command(action="show")
@@ -164,7 +164,7 @@ class TestCommandValidation:
         command = CommandFactory.create_config_command(action="list")
         assert command.validate() == []
 
-    def test_config_command_validation_failures(self):
+    def test_config_command_validation_failures(self) -> None:
         """Test ConfigCommand validation failure scenarios."""
         # Invalid action
         command = CommandFactory.create_config_command(action="invalid")
@@ -186,7 +186,7 @@ class TestCommandValidation:
         errors = command.validate()
         assert "'show-effective' action requires --app parameter" in errors
 
-    def test_repository_command_validation_success(self):
+    def test_repository_command_validation_success(self) -> None:
         """Test RepositoryCommand validation success scenarios."""
         # Valid with app names
         command = CommandFactory.create_repository_command_with_instrumentation(app_names=["TestApp"])
@@ -196,7 +196,7 @@ class TestCommandValidation:
         command = CommandFactory.create_repository_command_with_instrumentation(app_names=["TestApp", "AnotherApp"])
         assert command.validate() == []
 
-    def test_repository_command_validation_failures(self):
+    def test_repository_command_validation_failures(self) -> None:
         """Test RepositoryCommand validation failure scenarios."""
         # Missing app names
         command = CommandFactory.create_repository_command_with_instrumentation()
@@ -208,15 +208,12 @@ class TestCommandValidation:
         errors = command.validate()
         assert "At least one application name is required" in errors
 
-    def test_parameter_validation_edge_cases(self):
+    def test_parameter_validation_edge_cases(self) -> None:
         """Test parameter validation edge cases."""
         # Test with None values
         params = AddParams(name=None, url=None)
-        assert (
-            "NAME is required" in params.__class__(name=None, url="test").validate()
-            if hasattr(params.__class__, "validate")
-            else True
-        )
+        # Note: AddParams doesn't have a validate method - validation happens in command
+        assert params.name is None
 
         # Test with empty strings
         params = AddParams(name="", url="")
@@ -226,7 +223,7 @@ class TestCommandValidation:
         params = AddParams(name="   ", url="   ")
         # Note: Whitespace handling depends on implementation
 
-    def test_config_file_path_validation(self):
+    def test_config_file_path_validation(self) -> None:
         """Test config file path validation across commands."""
         # Valid absolute paths
         config_file = Path("/absolute/path/config.json")
@@ -249,7 +246,7 @@ class TestCommandValidation:
             config_related_errors = [e for e in errors if "config" in e.lower()]
             assert len(config_related_errors) == 0
 
-    def test_config_dir_path_validation(self):
+    def test_config_dir_path_validation(self) -> None:
         """Test config directory path validation across commands."""
         # Valid absolute directory paths
         config_dir = Path("/absolute/path/config")
@@ -272,7 +269,7 @@ class TestCommandValidation:
             config_related_errors = [e for e in errors if "config" in e.lower()]
             assert len(config_related_errors) == 0
 
-    def test_debug_flag_validation(self):
+    def test_debug_flag_validation(self) -> None:
         """Test debug flag validation across commands."""
         commands = [
             CommandFactory.create_add_command(name="Test", url="https://test.com", debug=True),
@@ -291,10 +288,10 @@ class TestCommandValidation:
             debug_related_errors = [e for e in errors if "debug" in e.lower()]
             assert len(debug_related_errors) == 0
 
-    def test_app_names_validation_consistency(self):
+    def test_app_names_validation_consistency(self) -> None:
         """Test app names validation consistency across commands that require them."""
         # Commands that require app names (show command no longer requires them)
-        commands_requiring_app_names = [
+        commands_requiring_app_names: list[tuple[Any, dict[str, Any]]] = [
             (CommandFactory.create_edit_command, {}),
             (CommandFactory.create_remove_command, {}),
             (CommandFactory.create_repository_command_with_instrumentation, {}),
@@ -317,7 +314,7 @@ class TestCommandValidation:
             app_name_errors = [e for e in errors if "application name" in e.lower()]
             assert len(app_name_errors) == 0
 
-    def test_optional_app_names_validation(self):
+    def test_optional_app_names_validation(self) -> None:
         """Test app names validation for commands where they're optional."""
         # Commands where app names are optional
         optional_commands = [
@@ -343,7 +340,7 @@ class TestCommandValidation:
             app_name_errors = [e for e in errors if "application name" in e.lower()]
             assert len(app_name_errors) == 0
 
-    def test_no_required_params_validation(self):
+    def test_no_required_params_validation(self) -> None:
         """Test validation for commands with no required parameters."""
         # Commands with no required parameters
         no_required_params_commands = [
@@ -353,11 +350,11 @@ class TestCommandValidation:
 
         for factory_func in no_required_params_commands:
             # Test with no parameters
-            command = factory_func()
+            command = factory_func()  # type: ignore[operator]
             errors = command.validate()
             assert len(errors) == 0
 
-    def test_validation_error_message_consistency(self):
+    def test_validation_error_message_consistency(self) -> None:
         """Test that validation error messages are consistent across commands."""
         # Test app name requirement messages (show command no longer requires app names)
         edit_command = CommandFactory.create_edit_command()
@@ -374,7 +371,7 @@ class TestCommandValidation:
         assert expected_message in remove_errors
         assert expected_message in repo_errors
 
-    def test_complex_validation_scenarios(self):
+    def test_complex_validation_scenarios(self) -> None:
         """Test complex validation scenarios with multiple parameters."""
         # AddCommand with complex parameter combinations
         command = CommandFactory.create_add_command(
@@ -395,13 +392,13 @@ class TestCommandValidation:
         assert len(validation_errors) == 0
 
         # ConfigCommand with complex scenarios
-        command = CommandFactory.create_config_command(
+        config_command: Any = CommandFactory.create_config_command(
             action="set", setting="test_setting", value="test_value", config_file=Path("/test/config.json"), debug=True
         )
-        errors = command.validate()
+        errors = config_command.validate()
         assert len(errors) == 0
 
-    def test_parameter_type_validation(self):
+    def test_parameter_type_validation(self) -> None:
         """Test parameter type validation."""
         # Test that Path objects are accepted for config paths
         config_file = Path("/test/config.json")
@@ -424,7 +421,7 @@ class TestCommandValidation:
             except Exception as e:
                 pytest.fail(f"Validation raised unexpected exception: {e}")
 
-    def test_boolean_parameter_validation(self):
+    def test_boolean_parameter_validation(self) -> None:
         """Test boolean parameter validation."""
         # Test various boolean combinations
         command = CommandFactory.create_add_command(

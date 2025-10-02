@@ -1,9 +1,9 @@
-# type: ignore
 """Tests for ShowCommand execution."""
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -16,7 +16,7 @@ from appimage_updater.config.loader import ConfigLoadError
 class TestShowCommand:
     """Test ShowCommand execution functionality."""
 
-    def test_init(self):
+    def test_init(self) -> None:
         """Test ShowCommand initialization."""
         params = ShowParams(app_names=["TestApp"], config_file=Path("/test/config.json"), debug=True)
         command = ShowCommand(params)
@@ -24,7 +24,7 @@ class TestShowCommand:
         assert command.params == params
         assert command.console is not None
 
-    def test_validate_success_with_app_names(self):
+    def test_validate_success_with_app_names(self) -> None:
         """Test successful validation with app names provided."""
         params = ShowParams(app_names=["TestApp", "AnotherApp"])
         command = ShowCommand(params)
@@ -32,7 +32,7 @@ class TestShowCommand:
         validation_errors = command.validate()
         assert validation_errors == []
 
-    def test_validate_missing_app_names(self):
+    def test_validate_missing_app_names(self) -> None:
         """Test validation success when app names are missing (shows all apps)."""
         params = ShowParams(app_names=None)
         command = ShowCommand(params)
@@ -40,7 +40,7 @@ class TestShowCommand:
         validation_errors = command.validate()
         assert validation_errors == []
 
-    def test_validate_empty_app_names(self):
+    def test_validate_empty_app_names(self) -> None:
         """Test validation success when app names list is empty (shows all apps)."""
         params = ShowParams(app_names=[])
         command = ShowCommand(params)
@@ -50,7 +50,7 @@ class TestShowCommand:
 
     @patch("appimage_updater.commands.show_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_success_with_formatter(self, mock_configure_logging):
+    async def test_execute_success_with_formatter(self, mock_configure_logging: Mock) -> None:
         """Test successful execution with output formatter."""
         params = ShowParams(app_names=["TestApp"], debug=True)
         command = ShowCommand(params)
@@ -72,7 +72,7 @@ class TestShowCommand:
 
     @patch("appimage_updater.commands.show_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_success_without_formatter(self, mock_configure_logging):
+    async def test_execute_success_without_formatter(self, mock_configure_logging: Mock) -> None:
         """Test successful execution without output formatter."""
         params = ShowParams(app_names=["TestApp"], debug=False)
         command = ShowCommand(params)
@@ -92,7 +92,7 @@ class TestShowCommand:
 
     @patch("appimage_updater.commands.show_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_with_none_app_names_shows_all(self, mock_configure_logging):
+    async def test_execute_with_none_app_names_shows_all(self, mock_configure_logging: Mock) -> None:
         """Test execution with None app_names shows all applications."""
         params = ShowParams(app_names=None)  # None means show all apps
         command = ShowCommand(params)
@@ -109,7 +109,7 @@ class TestShowCommand:
 
     @patch("appimage_updater.commands.show_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_applications_not_found(self, mock_configure_logging):
+    async def test_execute_applications_not_found(self, mock_configure_logging: Mock) -> None:
         """Test execution when applications are not found."""
         params = ShowParams(app_names=["NonExistentApp"])
         command = ShowCommand(params)
@@ -128,7 +128,7 @@ class TestShowCommand:
     @patch("appimage_updater.commands.show_command.configure_logging")
     @patch("appimage_updater.commands.show_command.logger")
     @pytest.mark.anyio
-    async def test_execute_unexpected_exception(self, mock_logger, mock_configure_logging):
+    async def test_execute_unexpected_exception(self, mock_logger: Mock, mock_configure_logging: Mock) -> None:
         """Test execution with unexpected exception."""
         params = ShowParams(app_names=["TestApp"])
         command = ShowCommand(params)
@@ -147,7 +147,7 @@ class TestShowCommand:
         assert result.exit_code == 1
 
     @pytest.mark.anyio
-    async def test_execute_show_operation_success(self):
+    async def test_execute_show_operation_success(self) -> None:
         """Test successful show operation execution."""
         params = ShowParams(app_names=["TestApp"])
         command = ShowCommand(params)
@@ -161,7 +161,7 @@ class TestShowCommand:
         assert result is True
 
     @pytest.mark.anyio
-    async def test_execute_show_operation_config_load_error(self):
+    async def test_execute_show_operation_config_load_error(self) -> None:
         """Test show operation with config load error."""
         params = ShowParams(app_names=["TestApp"])
         command = ShowCommand(params)
@@ -176,7 +176,7 @@ class TestShowCommand:
 
     @patch("appimage_updater.commands.show_command.logger")
     @pytest.mark.anyio
-    async def test_execute_show_operation_unexpected_exception(self, mock_logger):
+    async def test_execute_show_operation_unexpected_exception(self, mock_logger: Mock) -> None:
         """Test show operation with unexpected exception."""
         params = ShowParams(app_names=["TestApp"])
         command = ShowCommand(params)
@@ -192,7 +192,7 @@ class TestShowCommand:
         assert exc_info.value == test_exception
 
     @patch("appimage_updater.commands.show_command.AppConfigs")
-    def test_load_primary_config_with_config_file(self, mock_app_configs_class):
+    def test_load_primary_config_with_config_file(self, mock_app_configs_class: Mock) -> None:
         """Test primary config loading with config file."""
         params = ShowParams(app_names=["TestApp"], config_file=Path("/test/config.json"))
         command = ShowCommand(params)
@@ -209,7 +209,7 @@ class TestShowCommand:
         assert result == mock_config
 
     @patch("appimage_updater.commands.show_command.AppConfigs")
-    def test_load_primary_config_with_config_dir(self, mock_app_configs_class):
+    def test_load_primary_config_with_config_dir(self, mock_app_configs_class: Mock) -> None:
         """Test primary config loading with config directory."""
         params = ShowParams(app_names=["TestApp"], config_dir=Path("/test/config"))
         command = ShowCommand(params)
@@ -226,7 +226,7 @@ class TestShowCommand:
         assert result == mock_config
 
     @patch("appimage_updater.commands.show_command.AppConfigs")
-    def test_load_primary_config_with_neither(self, mock_app_configs_class):
+    def test_load_primary_config_with_neither(self, mock_app_configs_class: Mock) -> None:
         """Test primary config loading with neither file nor directory."""
         params = ShowParams(app_names=["TestApp"])
         command = ShowCommand(params)
@@ -242,7 +242,7 @@ class TestShowCommand:
         mock_app_configs_class.assert_called_once_with(config_path=None)
         assert result == mock_config
 
-    def test_process_and_display_apps_success(self):
+    def test_process_and_display_apps_success(self) -> None:
         """Test successful app processing and display."""
         params = ShowParams(app_names=["TestApp"])
         command = ShowCommand(params)
@@ -257,7 +257,7 @@ class TestShowCommand:
         mock_display.assert_called_once_with(mock_found_apps)
         assert result is True
 
-    def test_process_and_display_apps_no_apps_found(self):
+    def test_process_and_display_apps_no_apps_found(self) -> None:
         """Test app processing when no apps are found."""
         params = ShowParams(app_names=["NonExistentApp"])
         command = ShowCommand(params)
@@ -270,7 +270,7 @@ class TestShowCommand:
         assert result is False
 
     @patch("appimage_updater.commands.show_command.Config")
-    def test_handle_config_load_error_graceful_handling(self, mock_config_class):
+    def test_handle_config_load_error_graceful_handling(self, mock_config_class: Mock) -> None:
         """Test graceful handling of config load error when no explicit file."""
         params = ShowParams(app_names=["TestApp"])  # No config_file specified
         command = ShowCommand(params)
@@ -286,7 +286,7 @@ class TestShowCommand:
         mock_process.assert_called_once_with(mock_config)
         assert result is True
 
-    def test_handle_config_load_error_with_explicit_config_file(self):
+    def test_handle_config_load_error_with_explicit_config_file(self) -> None:
         """Test config load error handling with explicit config file."""
         params = ShowParams(app_names=["TestApp"], config_file=Path("/test/config.json"))
         command = ShowCommand(params)
@@ -302,7 +302,7 @@ class TestShowCommand:
 
         assert exc_info.value == error
 
-    def test_handle_config_load_error_other_error(self):
+    def test_handle_config_load_error_other_error(self) -> None:
         """Test config load error handling for non-'not found' errors."""
         params = ShowParams(app_names=["TestApp"])
         command = ShowCommand(params)
@@ -319,7 +319,7 @@ class TestShowCommand:
         assert exc_info.value == error
 
     @patch("appimage_updater.commands.show_command.ApplicationService.filter_apps_by_names")
-    def test_filter_applications(self, mock_filter):
+    def test_filter_applications(self, mock_filter: Mock) -> None:
         """Test application filtering."""
         params = ShowParams(app_names=["TestApp", "AnotherApp"])
         command = ShowCommand(params)
@@ -335,14 +335,14 @@ class TestShowCommand:
         assert result == mock_filtered_apps
 
     @patch("appimage_updater.commands.show_command.ApplicationService.filter_apps_by_names")
-    def test_filter_applications_with_none_app_names(self, mock_filter):
+    def test_filter_applications_with_none_app_names(self, mock_filter: Mock) -> None:
         """Test application filtering with None app names."""
         params = ShowParams(app_names=None)
         command = ShowCommand(params)
 
         mock_config = Mock()
         mock_config.applications = [Mock()]
-        mock_filtered_apps = []
+        mock_filtered_apps: list[Any] = []
         mock_filter.return_value = mock_filtered_apps
 
         result = command._filter_applications(mock_config)
@@ -351,7 +351,7 @@ class TestShowCommand:
         assert result == mock_filtered_apps
 
     @patch("appimage_updater.commands.show_command.display_application_details")
-    def test_display_applications_single_app(self, mock_display):
+    def test_display_applications_single_app(self, mock_display: Mock) -> None:
         """Test displaying single application."""
         params = ShowParams(app_names=["TestApp"])
         command = ShowCommand(params)
@@ -367,7 +367,7 @@ class TestShowCommand:
         mock_display.assert_called_once_with(mock_app, {"type": "file", "path": "/test/config.json"})
 
     @patch("appimage_updater.commands.show_command.display_application_details")
-    def test_display_applications_multiple_apps(self, mock_display):
+    def test_display_applications_multiple_apps(self, mock_display: Mock) -> None:
         """Test displaying multiple applications with spacing."""
         params = ShowParams(app_names=["TestApp", "AnotherApp"])
         command = ShowCommand(params)
@@ -390,7 +390,7 @@ class TestShowCommand:
         # Verify spacing was added between apps
         mock_console_print.assert_called_once()
 
-    def test_get_config_source_info_with_config_file(self):
+    def test_get_config_source_info_with_config_file(self) -> None:
         """Test config source info with config file."""
         params = ShowParams(app_names=["TestApp"], config_file=Path("/test/config.json"))
         command = ShowCommand(params)
@@ -400,7 +400,7 @@ class TestShowCommand:
         assert result == {"type": "file", "path": "/test/config.json"}
 
     @patch("appimage_updater.commands.show_command.GlobalConfigManager.get_default_config_dir")
-    def test_get_config_source_info_with_existing_config_dir(self, mock_get_default_dir):
+    def test_get_config_source_info_with_existing_config_dir(self, mock_get_default_dir: Mock) -> None:
         """Test config source info with existing config directory."""
         params = ShowParams(app_names=["TestApp"], config_dir=Path("/test/config"))
         command = ShowCommand(params)
@@ -415,7 +415,9 @@ class TestShowCommand:
 
     @patch("appimage_updater.commands.show_command.GlobalConfigManager.get_default_config_dir")
     @patch("appimage_updater.commands.show_command.GlobalConfigManager.get_default_config_path")
-    def test_get_config_source_info_with_nonexistent_config_dir(self, mock_get_default_path, mock_get_default_dir):
+    def test_get_config_source_info_with_nonexistent_config_dir(
+        self, mock_get_default_path: Mock, mock_get_default_dir: Mock
+    ) -> None:
         """Test config source info with non-existent config directory."""
         params = ShowParams(app_names=["TestApp"], config_dir=Path("/test/config"))
         command = ShowCommand(params)
@@ -433,7 +435,9 @@ class TestShowCommand:
 
     @patch("appimage_updater.commands.show_command.GlobalConfigManager.get_default_config_dir")
     @patch("appimage_updater.commands.show_command.GlobalConfigManager.get_default_config_path")
-    def test_get_config_source_info_fallback_to_default(self, mock_get_default_path, mock_get_default_dir):
+    def test_get_config_source_info_fallback_to_default(
+        self, mock_get_default_path: Mock, mock_get_default_dir: Mock
+    ) -> None:
         """Test config source info fallback to default file."""
         params = ShowParams(app_names=["TestApp"])  # No config_file or config_dir
         command = ShowCommand(params)

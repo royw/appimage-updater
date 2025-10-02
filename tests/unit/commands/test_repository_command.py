@@ -1,4 +1,3 @@
-# type: ignore
 """Tests for RepositoryCommand execution."""
 
 from __future__ import annotations
@@ -16,7 +15,7 @@ from appimage_updater.commands.repository_command import RepositoryCommand
 class TestRepositoryCommand:
     """Test RepositoryCommand execution functionality."""
 
-    def test_init(self):
+    def test_init(self) -> None:
         """Test RepositoryCommand initialization."""
         params = RepositoryParams(
             app_names=["TestApp"], config_file=Path("/test/config.json"), debug=True, assets=True, limit=20
@@ -26,7 +25,7 @@ class TestRepositoryCommand:
         assert command.params == params
         assert command.console is not None
 
-    def test_validate_success_with_app_names(self):
+    def test_validate_success_with_app_names(self) -> None:
         """Test successful validation with app names provided."""
         params = RepositoryParams(app_names=["TestApp", "AnotherApp"])
         command = RepositoryCommand(params)
@@ -34,7 +33,7 @@ class TestRepositoryCommand:
         validation_errors = command.validate()
         assert validation_errors == []
 
-    def test_validate_missing_app_names(self):
+    def test_validate_missing_app_names(self) -> None:
         """Test validation error when app names are missing."""
         params = RepositoryParams(app_names=None)
         command = RepositoryCommand(params)
@@ -42,7 +41,7 @@ class TestRepositoryCommand:
         validation_errors = command.validate()
         assert "At least one application name is required" in validation_errors
 
-    def test_validate_empty_app_names(self):
+    def test_validate_empty_app_names(self) -> None:
         """Test validation error when app names list is empty."""
         params = RepositoryParams(app_names=[])
         command = RepositoryCommand(params)
@@ -52,7 +51,7 @@ class TestRepositoryCommand:
 
     @patch("appimage_updater.commands.repository_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_success_with_formatter(self, mock_configure_logging):
+    async def test_execute_success_with_formatter(self, mock_configure_logging: Mock) -> None:
         """Test successful execution with output formatter."""
         params = RepositoryParams(app_names=["TestApp"], debug=True)
         command = RepositoryCommand(params)
@@ -74,7 +73,7 @@ class TestRepositoryCommand:
 
     @patch("appimage_updater.commands.repository_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_success_without_formatter(self, mock_configure_logging):
+    async def test_execute_success_without_formatter(self, mock_configure_logging: Mock) -> None:
         """Test successful execution without output formatter."""
         params = RepositoryParams(app_names=["TestApp"], debug=False)
         command = RepositoryCommand(params)
@@ -95,7 +94,7 @@ class TestRepositoryCommand:
     @patch("appimage_updater.commands.repository_command.configure_logging")
     @patch("appimage_updater.commands.repository_command.logger")
     @pytest.mark.anyio
-    async def test_execute_unexpected_exception(self, mock_logger, mock_configure_logging):
+    async def test_execute_unexpected_exception(self, mock_logger: Mock, mock_configure_logging: Mock) -> None:
         """Test execution with unexpected exception."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
@@ -110,7 +109,7 @@ class TestRepositoryCommand:
         assert result.exit_code == 1
 
     @pytest.mark.anyio
-    async def test_execute_main_repository_workflow_with_formatter(self):
+    async def test_execute_main_repository_workflow_with_formatter(self) -> None:
         """Test main workflow execution with formatter."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
@@ -125,7 +124,7 @@ class TestRepositoryCommand:
         assert result.success is True
 
     @pytest.mark.anyio
-    async def test_execute_main_repository_workflow_without_formatter(self):
+    async def test_execute_main_repository_workflow_without_formatter(self) -> None:
         """Test main workflow execution without formatter."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
@@ -139,7 +138,7 @@ class TestRepositoryCommand:
         assert result.success is True
 
     @pytest.mark.anyio
-    async def test_execute_with_formatter_context_success(self):
+    async def test_execute_with_formatter_context_success(self) -> None:
         """Test execution with formatter context - success path."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
@@ -156,7 +155,7 @@ class TestRepositoryCommand:
         assert result.success is True
 
     @pytest.mark.anyio
-    async def test_execute_with_formatter_context_validation_error(self):
+    async def test_execute_with_formatter_context_validation_error(self) -> None:
         """Test execution with formatter context - validation error."""
         params = RepositoryParams(app_names=[])  # Empty app names
         command = RepositoryCommand(params)
@@ -170,7 +169,7 @@ class TestRepositoryCommand:
         assert result.message == "Validation failed"
 
     @pytest.mark.anyio
-    async def test_execute_without_formatter_success(self):
+    async def test_execute_without_formatter_success(self) -> None:
         """Test execution without formatter - success path."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
@@ -185,7 +184,7 @@ class TestRepositoryCommand:
         mock_create.assert_called_once_with(True)
         assert result.success is True
 
-    def test_validate_with_formatter_error_display_success(self):
+    def test_validate_with_formatter_error_display_success(self) -> None:
         """Test validation with formatter - success."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
@@ -195,7 +194,7 @@ class TestRepositoryCommand:
 
         assert result is None
 
-    def test_validate_with_console_error_display_success(self):
+    def test_validate_with_console_error_display_success(self) -> None:
         """Test validation with console - success."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
@@ -205,7 +204,7 @@ class TestRepositoryCommand:
 
         assert result is None
 
-    def test_validate_with_console_error_display_errors(self):
+    def test_validate_with_console_error_display_errors(self) -> None:
         """Test validation with console - errors."""
         params = RepositoryParams(app_names=[])
         command = RepositoryCommand(params)
@@ -220,7 +219,7 @@ class TestRepositoryCommand:
         assert result is not None
         assert result.success is False
 
-    def test_create_repository_result_success(self):
+    def test_create_repository_result_success(self) -> None:
         """Test repository result creation - success."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
@@ -231,7 +230,7 @@ class TestRepositoryCommand:
         assert result.message == "Repository examination completed successfully"
         assert result.exit_code == 0
 
-    def test_create_repository_result_failure(self):
+    def test_create_repository_result_failure(self) -> None:
         """Test repository result creation - failure."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
@@ -243,7 +242,7 @@ class TestRepositoryCommand:
         assert result.exit_code == 1
 
     @patch("appimage_updater.commands.repository_command.logger")
-    def test_handle_repository_execution_error(self, mock_logger):
+    def test_handle_repository_execution_error(self, mock_logger: Mock) -> None:
         """Test repository execution error handling."""
         params = RepositoryParams(app_names=["TestApp"])
         command = RepositoryCommand(params)
@@ -260,7 +259,7 @@ class TestRepositoryCommand:
 
     @patch("appimage_updater.commands.repository_command._examine_repositories")
     @pytest.mark.anyio
-    async def test_execute_repository_operation_success(self, mock_examine):
+    async def test_execute_repository_operation_success(self, mock_examine: Mock) -> None:
         """Test successful repository operation execution."""
         params = RepositoryParams(
             app_names=["TestApp", "AnotherApp"],
@@ -289,7 +288,7 @@ class TestRepositoryCommand:
 
     @patch("appimage_updater.commands.repository_command._examine_repositories")
     @pytest.mark.anyio
-    async def test_execute_repository_operation_failure(self, mock_examine):
+    async def test_execute_repository_operation_failure(self, mock_examine: Mock) -> None:
         """Test failed repository operation execution."""
         params = RepositoryParams(app_names=["NonExistentApp"])
         command = RepositoryCommand(params)
@@ -311,7 +310,7 @@ class TestRepositoryCommand:
 
     @patch("appimage_updater.commands.repository_command._examine_repositories")
     @pytest.mark.anyio
-    async def test_execute_repository_operation_with_none_app_names(self, mock_examine):
+    async def test_execute_repository_operation_with_none_app_names(self, mock_examine: Mock) -> None:
         """Test repository operation execution with None app names."""
         params = RepositoryParams(app_names=None)
         command = RepositoryCommand(params)
@@ -334,7 +333,7 @@ class TestRepositoryCommand:
 
     @patch("appimage_updater.commands.repository_command._examine_repositories")
     @pytest.mark.anyio
-    async def test_execute_repository_operation_with_all_defaults(self, mock_examine):
+    async def test_execute_repository_operation_with_all_defaults(self, mock_examine: Mock) -> None:
         """Test repository operation execution with all default parameters."""
         params = RepositoryParams(app_names=["TestApp"])  # Only app_names specified
         command = RepositoryCommand(params)
@@ -352,7 +351,7 @@ class TestRepositoryCommand:
 
     @patch("appimage_updater.commands.repository_command._examine_repositories")
     @pytest.mark.anyio
-    async def test_execute_repository_operation_with_custom_parameters(self, mock_examine):
+    async def test_execute_repository_operation_with_custom_parameters(self, mock_examine: Mock) -> None:
         """Test repository operation execution with custom parameters."""
         params = RepositoryParams(
             app_names=["TestApp"],

@@ -1,5 +1,6 @@
-# type: ignore
 """Unit tests for dist_selector.asset_parsing module."""
+
+from __future__ import annotations
 
 from datetime import datetime
 from unittest.mock import Mock, patch

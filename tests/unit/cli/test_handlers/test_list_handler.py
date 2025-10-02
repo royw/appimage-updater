@@ -1,4 +1,3 @@
-# type: ignore
 """Tests for ListCommandHandler."""
 
 from __future__ import annotations
@@ -17,12 +16,12 @@ from appimage_updater.ui.output.interface import OutputFormat
 class TestListCommandHandler:
     """Test ListCommandHandler functionality."""
 
-    def test_get_command_name(self):
+    def test_get_command_name(self) -> None:
         """Test that handler returns correct command name."""
         handler = ListCommandHandler()
         assert handler.get_command_name() == "list"
 
-    def test_register_command(self):
+    def test_register_command(self) -> None:
         """Test that handler registers command with Typer app."""
         handler = ListCommandHandler()
         app = typer.Typer()
@@ -43,7 +42,7 @@ class TestListCommandHandler:
         assert list_command is not None
         assert list_command.name == "list"
 
-    def test_version_callback_prints_version_and_exits(self):
+    def test_version_callback_prints_version_and_exits(self) -> None:
         """Test that version callback prints version and exits."""
         handler = ListCommandHandler()
 
@@ -62,7 +61,7 @@ class TestListCommandHandler:
             call_args = mock_console.print.call_args[0][0]
             assert "AppImage Updater" in call_args
 
-    def test_version_callback_no_exit_when_false(self):
+    def test_version_callback_no_exit_when_false(self) -> None:
         """Test that version callback does nothing when value is False."""
         handler = ListCommandHandler()
 
@@ -72,7 +71,9 @@ class TestListCommandHandler:
     @patch("appimage_updater.cli.handlers.list_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command")
-    def test_execute_list_command_success(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
+    def test_execute_list_command_success(
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test successful execution of list command."""
         handler = ListCommandHandler()
 
@@ -113,8 +114,8 @@ class TestListCommandHandler:
     @patch("appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command")
     def test_execute_list_command_with_json_format_calls_finalize(
-        self, mock_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that JSON format calls finalize on formatter."""
         handler = ListCommandHandler()
 
@@ -139,8 +140,8 @@ class TestListCommandHandler:
     @patch("appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command")
     def test_execute_list_command_with_html_format_calls_finalize(
-        self, mock_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that HTML format calls finalize on formatter."""
         handler = ListCommandHandler()
 
@@ -164,7 +165,9 @@ class TestListCommandHandler:
     @patch("appimage_updater.cli.handlers.list_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command")
-    def test_execute_list_command_rich_format_no_finalize(self, mock_factory, mock_formatter_factory, mock_asyncio_run):
+    def test_execute_list_command_rich_format_no_finalize(
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that RICH format does not call finalize on formatter."""
         handler = ListCommandHandler()
 
@@ -189,8 +192,8 @@ class TestListCommandHandler:
     @patch("appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.list_handler.CommandFactory.create_list_command")
     def test_execute_list_command_failure_raises_typer_exit(
-        self, mock_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that command failure raises typer.Exit with correct code."""
         handler = ListCommandHandler()
 
@@ -215,7 +218,7 @@ class TestListCommandHandler:
         # Verify exit code matches command result
         assert exc_info.value.exit_code == 1
 
-    def test_execute_list_command_default_parameters(self):
+    def test_execute_list_command_default_parameters(self) -> None:
         """Test execute command with default/None parameters."""
         handler = ListCommandHandler()
 

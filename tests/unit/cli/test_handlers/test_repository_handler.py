@@ -1,4 +1,3 @@
-# type: ignore
 """Tests for RepositoryCommandHandler."""
 
 from __future__ import annotations
@@ -17,7 +16,7 @@ from appimage_updater.ui.output.interface import OutputFormat
 class TestRepositoryCommandHandler:
     """Test RepositoryCommandHandler functionality."""
 
-    def test_init_creates_console(self):
+    def test_init_creates_console(self) -> None:
         """Test that handler initializes with console."""
         with patch("appimage_updater.cli.handlers.repository_handler.Console") as mock_console_class:
             mock_console = Mock()
@@ -28,12 +27,12 @@ class TestRepositoryCommandHandler:
             mock_console_class.assert_called_once()
             assert handler.console == mock_console
 
-    def test_get_command_name(self):
+    def test_get_command_name(self) -> None:
         """Test that handler returns correct command name."""
         handler = RepositoryCommandHandler()
         assert handler.get_command_name() == "repository"
 
-    def test_register_command(self):
+    def test_register_command(self) -> None:
         """Test that handler registers command with Typer app."""
         handler = RepositoryCommandHandler()
         app = typer.Typer()
@@ -51,7 +50,7 @@ class TestRepositoryCommandHandler:
         command_info = app.registered_commands[0]
         assert hasattr(command_info, "name")
 
-    def test_version_callback_prints_version_and_exits(self):
+    def test_version_callback_prints_version_and_exits(self) -> None:
         """Test that version callback prints version and exits."""
         with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
@@ -60,13 +59,13 @@ class TestRepositoryCommandHandler:
                 handler._version_callback(True)
 
             # Verify console print was called
-            handler.console.print.assert_called_once()
+            handler.console.print.assert_called_once()  # type: ignore[attr-defined]
 
             # Check that version string was printed
-            call_args = handler.console.print.call_args[0][0]
+            call_args = handler.console.print.call_args[0][0]  # type: ignore[attr-defined]
             assert "AppImage Updater" in call_args
 
-    def test_version_callback_no_exit_when_false(self):
+    def test_version_callback_no_exit_when_false(self) -> None:
         """Test that version callback does nothing when value is False."""
         with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
@@ -75,15 +74,17 @@ class TestRepositoryCommandHandler:
             handler._version_callback(False)
 
             # Console print should not be called
-            handler.console.print.assert_not_called()
+            handler.console.print.assert_not_called()  # type: ignore[attr-defined]
 
     @patch("appimage_updater.cli.handlers.repository_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params")
-    @patch("appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command_with_instrumentation")
+    @patch(
+        "appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command_with_instrumentation"
+    )
     def test_execute_repository_command_success(
-        self, mock_factory, mock_http_tracker_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_http_tracker_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test successful execution of repository command."""
         with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
@@ -132,10 +133,12 @@ class TestRepositoryCommandHandler:
     @patch("appimage_updater.cli.handlers.repository_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params")
-    @patch("appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command_with_instrumentation")
+    @patch(
+        "appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command_with_instrumentation"
+    )
     def test_execute_repository_command_with_json_format_calls_finalize(
-        self, mock_factory, mock_http_tracker_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_http_tracker_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that JSON format calls finalize on formatter."""
         with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
@@ -178,10 +181,12 @@ class TestRepositoryCommandHandler:
     @patch("appimage_updater.cli.handlers.repository_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params")
-    @patch("appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command_with_instrumentation")
+    @patch(
+        "appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command_with_instrumentation"
+    )
     def test_execute_repository_command_with_html_format_calls_finalize(
-        self, mock_factory, mock_http_tracker_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_http_tracker_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that HTML format calls finalize on formatter."""
         with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
@@ -224,10 +229,12 @@ class TestRepositoryCommandHandler:
     @patch("appimage_updater.cli.handlers.repository_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params")
-    @patch("appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command_with_instrumentation")
+    @patch(
+        "appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command_with_instrumentation"
+    )
     def test_execute_repository_command_rich_format_no_finalize(
-        self, mock_factory, mock_http_tracker_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_http_tracker_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that RICH format does not call finalize on formatter."""
         with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
@@ -270,10 +277,12 @@ class TestRepositoryCommandHandler:
     @patch("appimage_updater.cli.handlers.repository_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.repository_handler.create_output_formatter_from_params")
     @patch("appimage_updater.cli.handlers.repository_handler.create_http_tracker_from_params")
-    @patch("appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command_with_instrumentation")
+    @patch(
+        "appimage_updater.cli.handlers.repository_handler.CommandFactory.create_repository_command_with_instrumentation"
+    )
     def test_execute_repository_command_failure_raises_typer_exit(
-        self, mock_factory, mock_http_tracker_factory, mock_formatter_factory, mock_asyncio_run
-    ):
+        self, mock_factory: Mock, mock_http_tracker_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
+    ) -> None:
         """Test that command failure raises typer.Exit with correct code."""
         with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()
@@ -315,7 +324,7 @@ class TestRepositoryCommandHandler:
             # Verify exit code matches command result
             assert exc_info.value.exit_code == 1
 
-    def test_execute_repository_command_with_default_parameters(self):
+    def test_execute_repository_command_with_default_parameters(self) -> None:
         """Test execute command with default parameters."""
         with patch("appimage_updater.cli.handlers.repository_handler.Console"):
             handler = RepositoryCommandHandler()

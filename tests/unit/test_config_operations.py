@@ -1,22 +1,18 @@
-# type: ignore
 """Unit tests for config operations functions, including --force functionality."""
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from appimage_updater.config.operations import (
-    collect_edit_updates,
-    validate_url_update,
-)
+from appimage_updater.config.operations import collect_edit_updates, validate_url_update
 
 
 class TestCollectEditUpdates:
     """Test the collect_edit_updates function."""
 
-    def test_collect_edit_updates_passes_force_to_basic(self):
+    def test_collect_edit_updates_passes_force_to_basic(self) -> None:
         """Test that collect_edit_updates passes force parameter to basic updates."""
         updates = collect_edit_updates(
             url="https://example.com/app.AppImage",
@@ -39,7 +35,7 @@ class TestCollectEditUpdates:
         assert "force" in updates
         assert updates["force"] is True
 
-    def test_collect_edit_updates_force_default_false(self):
+    def test_collect_edit_updates_force_default_false(self) -> None:
         """Test that force defaults to False in collect_edit_updates."""
         updates = collect_edit_updates(
             url="https://github.com/test/repo",
@@ -67,7 +63,7 @@ class TestValidateUrlUpdate:
 
     @patch("appimage_updater.config.operations.console")
     @patch("appimage_updater.config.operations.logger")
-    def test_validate_url_update_with_force_skips_validation(self, mock_logger, mock_console):
+    def test_validate_url_update_with_force_skips_validation(self, mock_logger: Mock, mock_console: Mock) -> None:
         """Test that validate_url_update skips validation when force=True."""
         updates = {
             "url": "https://direct-download.com/app.AppImage",
@@ -92,7 +88,7 @@ class TestValidateUrlUpdate:
         assert updates["url"] == "https://direct-download.com/app.AppImage"
 
     @patch("appimage_updater.config.operations.get_repository_client")
-    def test_validate_url_update_without_force_performs_validation(self, mock_get_client):
+    def test_validate_url_update_without_force_performs_validation(self, mock_get_client: Mock) -> None:
         """Test that validate_url_update performs normal validation when force=False."""
         mock_client = MagicMock()
         mock_client.normalize_repo_url.return_value = ("https://github.com/owner/repo", True)
@@ -113,7 +109,7 @@ class TestValidateUrlUpdate:
         # URL should be normalized
         assert updates["url"] == "https://github.com/owner/repo"
 
-    def test_validate_url_update_no_url_returns_early(self):
+    def test_validate_url_update_no_url_returns_early(self) -> None:
         """Test that validate_url_update returns early when no URL is provided."""
         updates = {"download_dir": "/tmp/test"}
 
@@ -125,7 +121,7 @@ class TestValidateUrlUpdate:
 
     @patch("appimage_updater.config.operations.console")
     @patch("appimage_updater.config.operations.logger")
-    def test_validate_url_update_force_removes_flag_from_updates(self, mock_logger, mock_console):
+    def test_validate_url_update_force_removes_flag_from_updates(self, mock_logger: Mock, mock_console: Mock) -> None:
         """Test that force flag is removed from updates after processing."""
         updates = {
             "url": "https://example.com/app.AppImage",
@@ -142,7 +138,7 @@ class TestValidateUrlUpdate:
         assert updates["other_field"] == "value"
 
     @patch("appimage_updater.config.operations.get_repository_client")
-    def test_validate_url_update_without_force_flag_performs_validation(self, mock_get_client):
+    def test_validate_url_update_without_force_flag_performs_validation(self, mock_get_client: Mock) -> None:
         """Test validation when force flag is not present (defaults to False)."""
         mock_client = MagicMock()
         mock_client.normalize_repo_url.return_value = ("https://github.com/test/repo", False)
@@ -159,7 +155,7 @@ class TestValidateUrlUpdate:
         mock_client.normalize_repo_url.assert_called_once()
 
     @patch("appimage_updater.config.operations.get_repository_client")
-    def test_validate_url_update_validation_error_propagates(self, mock_get_client):
+    def test_validate_url_update_validation_error_propagates(self, mock_get_client: Mock) -> None:
         """Test that validation errors are properly propagated when not using force."""
         mock_client = MagicMock()
         mock_client.normalize_repo_url.side_effect = ValueError("Invalid URL")
@@ -175,7 +171,7 @@ class TestValidateUrlUpdate:
 
     @patch("appimage_updater.config.operations.console")
     @patch("appimage_updater.config.operations.logger")
-    def test_validate_url_update_force_bypasses_validation_errors(self, mock_logger, mock_console):
+    def test_validate_url_update_force_bypasses_validation_errors(self, mock_logger: Mock, mock_console: Mock) -> None:
         """Test that force flag bypasses validation errors completely."""
         updates = {
             "url": "https://completely-invalid-url-that-would-fail-validation",

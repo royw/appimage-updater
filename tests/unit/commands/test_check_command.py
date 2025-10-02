@@ -1,4 +1,3 @@
-# type: ignore
 """Tests for CheckCommand execution."""
 
 from __future__ import annotations
@@ -15,7 +14,7 @@ from appimage_updater.commands.parameters import CheckParams
 class TestCheckCommand:
     """Test CheckCommand execution functionality."""
 
-    def test_init(self):
+    def test_init(self) -> None:
         """Test CheckCommand initialization."""
         params = CheckParams(config_file=Path("/test/config.json"), debug=True, app_names=["TestApp"], dry_run=True)
         command = CheckCommand(params)
@@ -23,7 +22,7 @@ class TestCheckCommand:
         assert command.params == params
         assert command.console is not None
 
-    def test_validate_returns_empty_list(self):
+    def test_validate_returns_empty_list(self) -> None:
         """Test that validate returns empty list (no required parameters)."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -33,7 +32,7 @@ class TestCheckCommand:
 
     @patch("appimage_updater.commands.check_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_success_with_trackers(self, mock_configure_logging):
+    async def test_execute_success_with_trackers(self, mock_configure_logging: Mock) -> None:
         """Test successful execution with HTTP tracker and output formatter."""
         params = CheckParams(debug=True, app_names=["TestApp"])
         command = CheckCommand(params)
@@ -67,7 +66,7 @@ class TestCheckCommand:
 
     @patch("appimage_updater.commands.check_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_success_without_trackers(self, mock_configure_logging):
+    async def test_execute_success_without_trackers(self, mock_configure_logging: Mock) -> None:
         """Test successful execution without HTTP tracker or output formatter."""
         params = CheckParams(debug=False)
         command = CheckCommand(params)
@@ -87,7 +86,7 @@ class TestCheckCommand:
 
     @patch("appimage_updater.commands.check_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_applications_not_found(self, mock_configure_logging):
+    async def test_execute_applications_not_found(self, mock_configure_logging: Mock) -> None:
         """Test execution when applications are not found."""
         params = CheckParams(app_names=["NonExistentApp"])
         command = CheckCommand(params)
@@ -106,7 +105,7 @@ class TestCheckCommand:
     @patch("appimage_updater.commands.check_command.configure_logging")
     @patch("appimage_updater.commands.check_command.logger")
     @pytest.mark.anyio
-    async def test_execute_unexpected_exception(self, mock_logger, mock_configure_logging):
+    async def test_execute_unexpected_exception(self, mock_logger: Mock, mock_configure_logging: Mock) -> None:
         """Test execution with unexpected exception."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -131,7 +130,7 @@ class TestCheckCommand:
         assert result.message == "Test error"
         assert result.exit_code == 1
 
-    def test_start_http_tracking_with_tracker(self):
+    def test_start_http_tracking_with_tracker(self) -> None:
         """Test HTTP tracking start with tracker provided."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -141,7 +140,7 @@ class TestCheckCommand:
 
         mock_tracker.start_tracking.assert_called_once()
 
-    def test_start_http_tracking_without_tracker(self):
+    def test_start_http_tracking_without_tracker(self) -> None:
         """Test HTTP tracking start without tracker."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -149,7 +148,7 @@ class TestCheckCommand:
         # Should not raise any exceptions
         command._start_http_tracking(None)
 
-    def test_stop_http_tracking_with_tracker(self):
+    def test_stop_http_tracking_with_tracker(self) -> None:
         """Test HTTP tracking stop with tracker provided."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -159,7 +158,7 @@ class TestCheckCommand:
 
         mock_tracker.stop_tracking.assert_called_once()
 
-    def test_stop_http_tracking_without_tracker(self):
+    def test_stop_http_tracking_without_tracker(self) -> None:
         """Test HTTP tracking stop without tracker."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -167,7 +166,7 @@ class TestCheckCommand:
         # Should not raise any exceptions
         command._stop_http_tracking(None)
 
-    def test_should_display_tracking_summary_both_provided(self):
+    def test_should_display_tracking_summary_both_provided(self) -> None:
         """Test tracking summary display check with both tracker and formatter."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -178,7 +177,7 @@ class TestCheckCommand:
         result = command._should_display_tracking_summary(mock_tracker, mock_formatter)
         assert result is True
 
-    def test_should_display_tracking_summary_tracker_only(self):
+    def test_should_display_tracking_summary_tracker_only(self) -> None:
         """Test tracking summary display check with tracker only."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -188,7 +187,7 @@ class TestCheckCommand:
         result = command._should_display_tracking_summary(mock_tracker, None)
         assert result is False
 
-    def test_should_display_tracking_summary_formatter_only(self):
+    def test_should_display_tracking_summary_formatter_only(self) -> None:
         """Test tracking summary display check with formatter only."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -198,7 +197,7 @@ class TestCheckCommand:
         result = command._should_display_tracking_summary(None, mock_formatter)
         assert result is False
 
-    def test_should_display_tracking_summary_neither_provided(self):
+    def test_should_display_tracking_summary_neither_provided(self) -> None:
         """Test tracking summary display check with neither provided."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -206,7 +205,7 @@ class TestCheckCommand:
         result = command._should_display_tracking_summary(None, None)
         assert result is False
 
-    def test_display_http_tracking_summary_should_display(self):
+    def test_display_http_tracking_summary_should_display(self) -> None:
         """Test HTTP tracking summary display when conditions are met."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -222,7 +221,7 @@ class TestCheckCommand:
         mock_tracker.stop_tracking.assert_called_once()
         mock_display_section.assert_called_once_with(mock_tracker, mock_formatter)
 
-    def test_display_http_tracking_summary_should_not_display(self):
+    def test_display_http_tracking_summary_should_not_display(self) -> None:
         """Test HTTP tracking summary display when conditions are not met."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -238,7 +237,7 @@ class TestCheckCommand:
         mock_tracker.stop_tracking.assert_not_called()
         mock_display_section.assert_not_called()
 
-    def test_display_tracking_section(self):
+    def test_display_tracking_section(self) -> None:
         """Test HTTP tracking section display."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -256,7 +255,7 @@ class TestCheckCommand:
         mock_details.assert_called_once_with(mock_tracker, mock_formatter)
         mock_formatter.end_section.assert_called_once()
 
-    def test_display_request_count(self):
+    def test_display_request_count(self) -> None:
         """Test request count display."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -269,7 +268,7 @@ class TestCheckCommand:
 
         mock_formatter.print_message.assert_called_once_with("Total requests: 3")
 
-    def test_display_request_details_few_requests(self):
+    def test_display_request_details_few_requests(self) -> None:
         """Test request details display with few requests."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -301,7 +300,7 @@ class TestCheckCommand:
         mock_formatter.print_message.assert_has_calls(expected_calls)
         mock_remaining.assert_called_once_with(mock_tracker, mock_formatter)
 
-    def test_display_request_details_many_requests(self):
+    def test_display_request_details_many_requests(self) -> None:
         """Test request details display with many requests (>5)."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -327,7 +326,7 @@ class TestCheckCommand:
         assert mock_formatter.print_message.call_count == 5
         mock_remaining.assert_called_once_with(mock_tracker, mock_formatter)
 
-    def test_display_remaining_count_with_remaining(self):
+    def test_display_remaining_count_with_remaining(self) -> None:
         """Test remaining count display when there are more than 5 requests."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -340,7 +339,7 @@ class TestCheckCommand:
 
         mock_formatter.print_message.assert_called_once_with("  ... and 3 more requests")
 
-    def test_display_remaining_count_no_remaining(self):
+    def test_display_remaining_count_no_remaining(self) -> None:
         """Test remaining count display when there are 5 or fewer requests."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -353,7 +352,7 @@ class TestCheckCommand:
 
         mock_formatter.print_message.assert_not_called()
 
-    def test_create_result_success(self):
+    def test_create_result_success(self) -> None:
         """Test result creation for success case."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -364,7 +363,7 @@ class TestCheckCommand:
         assert result.message == "Check completed successfully"
         assert result.exit_code == 0
 
-    def test_create_result_failure(self):
+    def test_create_result_failure(self) -> None:
         """Test result creation for failure case."""
         params = CheckParams()
         command = CheckCommand(params)
@@ -377,7 +376,7 @@ class TestCheckCommand:
 
     @patch("appimage_updater.commands.check_command._check_updates")
     @pytest.mark.anyio
-    async def test_execute_check_operation_success(self, mock_check_updates):
+    async def test_execute_check_operation_success(self, mock_check_updates: Mock) -> None:
         """Test successful check operation execution."""
         params = CheckParams(
             config_file=Path("/test/config.json"),
@@ -415,7 +414,7 @@ class TestCheckCommand:
 
     @patch("appimage_updater.commands.check_command._check_updates")
     @pytest.mark.anyio
-    async def test_execute_check_operation_failure(self, mock_check_updates):
+    async def test_execute_check_operation_failure(self, mock_check_updates: Mock) -> None:
         """Test failed check operation execution."""
         params = CheckParams(app_names=None)
         command = CheckCommand(params)
@@ -442,7 +441,7 @@ class TestCheckCommand:
 
     @patch("appimage_updater.commands.check_command._check_updates")
     @pytest.mark.anyio
-    async def test_execute_check_operation_with_all_defaults(self, mock_check_updates):
+    async def test_execute_check_operation_with_all_defaults(self, mock_check_updates: Mock) -> None:
         """Test check operation execution with all default parameters."""
         params = CheckParams()  # All defaults
         command = CheckCommand(params)

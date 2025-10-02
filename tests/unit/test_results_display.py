@@ -1,5 +1,6 @@
-# type: ignore
 """Unit tests for ui.display_utils.results_display module."""
+
+from __future__ import annotations
 
 from unittest.mock import Mock, patch
 

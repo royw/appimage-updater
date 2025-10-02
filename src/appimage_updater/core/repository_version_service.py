@@ -17,7 +17,7 @@ from appimage_updater.repositories.factory import get_repository_client_async
 
 if TYPE_CHECKING:
     from appimage_updater.config.models import ApplicationConfig
-    from appimage_updater.repositories.models import Asset, Release  # type: ignore[import-untyped]
+    from appimage_updater.core.models import Asset, Release
 
 
 class RepositoryVersionService:

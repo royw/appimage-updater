@@ -1,4 +1,3 @@
-# type: ignore
 """Tests for ListCommand execution."""
 
 from __future__ import annotations
@@ -16,7 +15,7 @@ from appimage_updater.config.loader import ConfigLoadError
 class TestListCommand:
     """Test ListCommand execution functionality."""
 
-    def test_init(self):
+    def test_init(self) -> None:
         """Test ListCommand initialization."""
         params = ListParams(config_file=Path("/test/config.json"), debug=True)
         command = ListCommand(params)
@@ -24,7 +23,7 @@ class TestListCommand:
         assert command.params == params
         assert command.console is not None
 
-    def test_validate_returns_empty_list(self):
+    def test_validate_returns_empty_list(self) -> None:
         """Test that validate returns empty list (no required parameters)."""
         params = ListParams()
         command = ListCommand(params)
@@ -34,7 +33,7 @@ class TestListCommand:
 
     @patch("appimage_updater.commands.list_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_success_with_output_formatter(self, mock_configure_logging):
+    async def test_execute_success_with_output_formatter(self, mock_configure_logging: Mock) -> None:
         """Test successful execution with output formatter."""
         params = ListParams(debug=True)
         command = ListCommand(params)
@@ -56,7 +55,7 @@ class TestListCommand:
 
     @patch("appimage_updater.commands.list_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_success_without_output_formatter(self, mock_configure_logging):
+    async def test_execute_success_without_output_formatter(self, mock_configure_logging: Mock) -> None:
         """Test successful execution without output formatter."""
         params = ListParams(debug=False)
         command = ListCommand(params)
@@ -76,7 +75,7 @@ class TestListCommand:
 
     @patch("appimage_updater.commands.list_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_configuration_error(self, mock_configure_logging):
+    async def test_execute_configuration_error(self, mock_configure_logging: Mock) -> None:
         """Test execution with configuration error."""
         params = ListParams()
         command = ListCommand(params)
@@ -95,7 +94,7 @@ class TestListCommand:
     @patch("appimage_updater.commands.list_command.configure_logging")
     @patch("appimage_updater.commands.list_command.logger")
     @pytest.mark.anyio
-    async def test_execute_unexpected_exception(self, mock_logger, mock_configure_logging):
+    async def test_execute_unexpected_exception(self, mock_logger: Mock, mock_configure_logging: Mock) -> None:
         """Test execution with unexpected exception."""
         params = ListParams()
         command = ListCommand(params)
@@ -114,7 +113,7 @@ class TestListCommand:
         assert result.exit_code == 1
 
     @pytest.mark.anyio
-    async def test_execute_list_operation_success_with_applications(self):
+    async def test_execute_list_operation_success_with_applications(self) -> None:
         """Test successful list operation with applications."""
         params = ListParams()
         command = ListCommand(params)
@@ -133,7 +132,7 @@ class TestListCommand:
         assert result is True
 
     @pytest.mark.anyio
-    async def test_execute_list_operation_no_applications(self):
+    async def test_execute_list_operation_no_applications(self) -> None:
         """Test list operation with no applications configured."""
         params = ListParams()
         command = ListCommand(params)
@@ -145,7 +144,7 @@ class TestListCommand:
         assert result is True
 
     @pytest.mark.anyio
-    async def test_execute_list_operation_config_error(self):
+    async def test_execute_list_operation_config_error(self) -> None:
         """Test list operation with configuration error."""
         params = ListParams()
         command = ListCommand(params)
@@ -158,7 +157,7 @@ class TestListCommand:
 
     @patch("appimage_updater.commands.list_command.logger")
     @pytest.mark.anyio
-    async def test_execute_list_operation_unexpected_exception(self, mock_logger):
+    async def test_execute_list_operation_unexpected_exception(self, mock_logger: Mock) -> None:
         """Test list operation with unexpected exception."""
         params = ListParams()
         command = ListCommand(params)
@@ -173,7 +172,7 @@ class TestListCommand:
         mock_logger.exception.assert_called_once_with("Full exception details")
         assert exc_info.value == test_exception
 
-    def test_load_and_validate_config_success(self):
+    def test_load_and_validate_config_success(self) -> None:
         """Test successful config loading and validation."""
         params = ListParams(config_file=Path("/test/config.json"))
         command = ListCommand(params)
@@ -186,7 +185,7 @@ class TestListCommand:
 
         assert result == mock_config
 
-    def test_load_and_validate_config_no_applications(self):
+    def test_load_and_validate_config_no_applications(self) -> None:
         """Test config loading with no applications."""
         params = ListParams()
         command = ListCommand(params)
@@ -204,7 +203,7 @@ class TestListCommand:
         # Verify False return (no applications is success case)
         assert result is False
 
-    def test_load_and_validate_config_exception(self):
+    def test_load_and_validate_config_exception(self) -> None:
         """Test config loading with exception."""
         params = ListParams()
         command = ListCommand(params)
@@ -220,7 +219,7 @@ class TestListCommand:
         assert result is None
 
     @patch("appimage_updater.commands.list_command.AppConfigs")
-    def test_load_config(self, mock_app_configs_class):
+    def test_load_config(self, mock_app_configs_class: Mock) -> None:
         """Test config loading."""
         params = ListParams(config_file=Path("/test/config.json"))
         command = ListCommand(params)
@@ -239,7 +238,7 @@ class TestListCommand:
         assert result == mock_config
 
     @patch("appimage_updater.commands.list_command.AppConfigs")
-    def test_load_config_with_config_dir(self, mock_app_configs_class):
+    def test_load_config_with_config_dir(self, mock_app_configs_class: Mock) -> None:
         """Test config loading with config_dir."""
         params = ListParams(config_dir=Path("/test/config"))
         command = ListCommand(params)
@@ -258,7 +257,7 @@ class TestListCommand:
         assert result == mock_config
 
     @patch("appimage_updater.commands.list_command.get_output_formatter")
-    def test_display_message_with_formatter_info(self, mock_get_formatter):
+    def test_display_message_with_formatter_info(self, mock_get_formatter: Mock) -> None:
         """Test message display with formatter (info message)."""
         params = ListParams()
         command = ListCommand(params)
@@ -273,7 +272,7 @@ class TestListCommand:
         mock_formatter.print_error.assert_not_called()
 
     @patch("appimage_updater.commands.list_command.get_output_formatter")
-    def test_display_message_with_formatter_error(self, mock_get_formatter):
+    def test_display_message_with_formatter_error(self, mock_get_formatter: Mock) -> None:
         """Test message display with formatter (error message)."""
         params = ListParams()
         command = ListCommand(params)
@@ -288,7 +287,7 @@ class TestListCommand:
         mock_formatter.print_info.assert_not_called()
 
     @patch("appimage_updater.commands.list_command.get_output_formatter")
-    def test_display_message_without_formatter(self, mock_get_formatter):
+    def test_display_message_without_formatter(self, mock_get_formatter: Mock) -> None:
         """Test message display without formatter (fallback to console)."""
         params = ListParams()
         command = ListCommand(params)
@@ -303,7 +302,9 @@ class TestListCommand:
 
     @patch("appimage_updater.commands.list_command.display_applications_list")
     @patch("appimage_updater.commands.list_command.get_output_formatter")
-    def test_display_applications_and_summary_with_formatter(self, mock_get_formatter, mock_display_list):
+    def test_display_applications_and_summary_with_formatter(
+        self, mock_get_formatter: Mock, mock_display_list: Mock
+    ) -> None:
         """Test applications and summary display with formatter."""
         params = ListParams()
         command = ListCommand(params)
@@ -326,7 +327,9 @@ class TestListCommand:
 
     @patch("appimage_updater.commands.list_command.display_applications_list")
     @patch("appimage_updater.commands.list_command.get_output_formatter")
-    def test_display_applications_and_summary_without_formatter(self, mock_get_formatter, mock_display_list):
+    def test_display_applications_and_summary_without_formatter(
+        self, mock_get_formatter: Mock, mock_display_list: Mock
+    ) -> None:
         """Test applications and summary display without formatter."""
         params = ListParams()
         command = ListCommand(params)
@@ -347,7 +350,7 @@ class TestListCommand:
         expected_summary = "Total: 3 applications (0 enabled, 3 disabled)"
         mock_console_print.assert_called_once_with(expected_summary)
 
-    def test_display_applications_and_summary_empty_list(self):
+    def test_display_applications_and_summary_empty_list(self) -> None:
         """Test applications and summary display with empty application list."""
         params = ListParams()
         command = ListCommand(params)

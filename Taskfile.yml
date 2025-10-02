@@ -3,6 +3,7 @@ version: '3'
 vars:
   SRC: src/
   TESTS: tests/
+  TESTS_CORE: tests/unit/ tests/functional/ tests/integration/
   SCRIPTS: scripts/
   PYTHON_VERSIONS:
     sh: cat .python-versions | grep -v '^$' | tr '\n' ' ' | sed 's/[[:space:]]*$//'
@@ -179,6 +180,12 @@ tasks:
       - task: lint:markdown
       - task: lint:emoji
       - task: lint:deadcode
+
+  lint:tests:
+    desc: Run linting with ruff
+    cmds:
+      - uv run ruff check --fix --select I {{.CLI_ARGS | default .TESTS_CORE}}
+      - uv run mypy {{.CLI_ARGS | default .TESTS_CORE}}
 
   lint:ruff:
     desc: Run linting with ruff

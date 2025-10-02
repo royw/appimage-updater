@@ -1,5 +1,6 @@
-# type: ignore
 """Tests for distribution detection utilities."""
+
+from __future__ import annotations
 
 from unittest.mock import Mock, patch
 

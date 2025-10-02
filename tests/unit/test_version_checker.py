@@ -1,5 +1,6 @@
-# type: ignore
 """Unit tests for VersionChecker class."""
+
+from __future__ import annotations
 
 from appimage_updater.core.version_checker import VersionChecker
 

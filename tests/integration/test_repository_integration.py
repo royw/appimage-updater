@@ -18,7 +18,7 @@ from appimage_updater.repositories.github.repository import GitHubRepository
 class TestRepositoryFactory:
     """Test repository factory functionality."""
 
-    def test_get_repository_client_with_explicit_github_type(self):
+    def test_get_repository_client_with_explicit_github_type(self) -> None:
         """Test repository client creation with explicit GitHub type."""
         url = "https://github.com/user/repo"
         client = get_repository_client(url, source_type="github")
@@ -27,7 +27,7 @@ class TestRepositoryFactory:
         assert client.timeout == 30
         assert client.user_agent is not None
 
-    def test_get_repository_client_with_explicit_direct_download_type(self):
+    def test_get_repository_client_with_explicit_direct_download_type(self) -> None:
         """Test repository client creation with explicit direct download type."""
         url = "https://example.com/download"
         client = get_repository_client(url, source_type="direct_download")
@@ -36,7 +36,7 @@ class TestRepositoryFactory:
         assert client.timeout == 30
         assert client.user_agent is not None
 
-    def test_get_repository_client_with_explicit_dynamic_download_type(self):
+    def test_get_repository_client_with_explicit_dynamic_download_type(self) -> None:
         """Test repository client creation with explicit dynamic download type."""
         url = "https://example.com/releases"
         client = get_repository_client(url, source_type="dynamic_download")
@@ -45,7 +45,7 @@ class TestRepositoryFactory:
         assert client.timeout == 30
         assert client.user_agent is not None
 
-    def test_get_repository_client_with_direct_alias(self):
+    def test_get_repository_client_with_direct_alias(self) -> None:
         """Test repository client creation with 'direct' alias."""
         url = "https://example.com/download"
         client = get_repository_client(url, source_type="direct")
@@ -54,7 +54,7 @@ class TestRepositoryFactory:
         assert client.timeout == 30
         assert client.user_agent is not None
 
-    def test_get_repository_client_with_custom_timeout(self):
+    def test_get_repository_client_with_custom_timeout(self) -> None:
         """Test repository client creation with custom timeout."""
         url = "https://github.com/user/repo"
         client = get_repository_client(url, source_type="github", timeout=60)
@@ -62,7 +62,7 @@ class TestRepositoryFactory:
         assert isinstance(client, GitHubRepository)
         assert client.timeout == 60
 
-    def test_get_repository_client_with_custom_user_agent(self):
+    def test_get_repository_client_with_custom_user_agent(self) -> None:
         """Test repository client creation with custom user agent."""
         url = "https://github.com/user/repo"
         custom_agent = "CustomAgent/1.0"
@@ -71,14 +71,14 @@ class TestRepositoryFactory:
         assert isinstance(client, GitHubRepository)
         assert client.user_agent == custom_agent
 
-    def test_get_repository_client_with_unsupported_type(self):
+    def test_get_repository_client_with_unsupported_type(self) -> None:
         """Test repository client creation with unsupported type."""
         url = "https://example.com"
 
         with pytest.raises(RepositoryError, match="Unsupported source type: invalid"):
             get_repository_client(url, source_type="invalid")
 
-    def test_get_repository_client_url_detection_github(self):
+    def test_get_repository_client_url_detection_github(self) -> None:
         """Test repository client creation with GitHub URL detection."""
         url = "https://github.com/user/repo"
 
@@ -87,7 +87,7 @@ class TestRepositoryFactory:
 
         assert isinstance(client, GitHubRepository)
 
-    def test_get_repository_client_url_detection_dynamic(self):
+    def test_get_repository_client_url_detection_dynamic(self) -> None:
         """Test repository client creation with dynamic download URL detection."""
         url = "https://example.com/releases"
 
@@ -97,7 +97,7 @@ class TestRepositoryFactory:
 
         assert isinstance(client, DynamicDownloadRepository)
 
-    def test_get_repository_client_url_detection_direct(self):
+    def test_get_repository_client_url_detection_direct(self) -> None:
         """Test repository client creation with direct download URL detection."""
         url = "https://example.com/download.appimage"
 
@@ -108,7 +108,7 @@ class TestRepositoryFactory:
 
         assert isinstance(client, DirectDownloadRepository)
 
-    def test_get_repository_client_no_suitable_client(self):
+    def test_get_repository_client_no_suitable_client(self) -> None:
         """Test repository client creation when no suitable client is found falls back to dynamic download."""
         url = "https://unsupported.example.com"
 
@@ -120,7 +120,7 @@ class TestRepositoryFactory:
                     # Should fallback to DynamicDownloadRepository after probing fails
                     assert isinstance(client, DynamicDownloadRepository)
 
-    def test_detect_repository_type_github(self):
+    def test_detect_repository_type_github(self) -> None:
         """Test repository type detection for GitHub."""
         url = "https://github.com/user/repo"
 
@@ -129,7 +129,7 @@ class TestRepositoryFactory:
 
         assert repo_type == "github"
 
-    def test_detect_repository_type_dynamic(self):
+    def test_detect_repository_type_dynamic(self) -> None:
         """Test repository type detection for dynamic download."""
         url = "https://example.com/releases"
 
@@ -139,7 +139,7 @@ class TestRepositoryFactory:
 
         assert repo_type == "dynamic_download"
 
-    def test_detect_repository_type_direct(self):
+    def test_detect_repository_type_direct(self) -> None:
         """Test repository type detection for direct download."""
         url = "https://example.com/download.appimage"
 
@@ -150,7 +150,7 @@ class TestRepositoryFactory:
 
         assert repo_type == "direct_download"
 
-    def test_detect_repository_type_fallback_to_github(self):
+    def test_detect_repository_type_fallback_to_github(self) -> None:
         """Test repository type detection fallback to GitHub."""
         url = "https://unknown.example.com"
 
@@ -175,7 +175,7 @@ class TestRepositoryFactory:
         # Should fallback to github for backward compatibility
         assert repo_type == "github"
 
-    def test_repository_client_order_preference(self):
+    def test_repository_client_order_preference(self) -> None:
         """Test that repository clients are tried in correct order."""
         url = "https://github.com/test/repo"  # Use GitHub URL to ensure GitHub handler is selected
 
@@ -185,7 +185,7 @@ class TestRepositoryFactory:
         # Should get GitHub client first (highest priority for GitHub URLs)
         assert isinstance(client, GitHubRepository)
 
-    def test_repository_client_kwargs_passing(self):
+    def test_repository_client_kwargs_passing(self) -> None:
         """Test that kwargs are passed to repository clients."""
         url = "https://github.com/user/repo"
         custom_kwargs = {"custom_param": "test_value"}
@@ -204,18 +204,18 @@ class TestRepositoryFactory:
 class TestRepositoryClientBase:
     """Test repository client base functionality."""
 
-    def test_repository_error_creation(self):
+    def test_repository_error_creation(self) -> None:
         """Test RepositoryError creation."""
         error = RepositoryError("Test error message")
         assert str(error) == "Test error message"
         assert isinstance(error, Exception)
 
-    def test_repository_client_abstract_methods(self):
+    def test_repository_client_abstract_methods(self) -> None:
         """Test that RepositoryClient cannot be instantiated directly."""
         with pytest.raises(TypeError):
             RepositoryClient()
 
-    def test_repository_client_initialization_defaults(self):
+    def test_repository_client_initialization_defaults(self) -> None:
         """Test repository client initialization with defaults."""
 
         # Create a concrete implementation for testing
@@ -252,7 +252,7 @@ class TestRepositoryClientBase:
         assert client.user_agent is not None
         assert "AppImage" in client.user_agent
 
-    def test_repository_client_initialization_custom(self):
+    def test_repository_client_initialization_custom(self) -> None:
         """Test repository client initialization with custom values."""
 
         class TestRepositoryClient(RepositoryClient):
@@ -292,7 +292,7 @@ class TestRepositoryClientBase:
 class TestRepositoryIntegration:
     """Test repository integration scenarios."""
 
-    def test_repository_factory_integration_with_github(self):
+    def test_repository_factory_integration_with_github(self) -> None:
         """Test repository factory integration with GitHub repository."""
         url = "https://github.com/user/repo"
 
@@ -306,7 +306,7 @@ class TestRepositoryIntegration:
         assert hasattr(client, "detect_repository_type")
         # repository_type property was removed
 
-    def test_repository_factory_integration_with_direct_download(self):
+    def test_repository_factory_integration_with_direct_download(self) -> None:
         """Test repository factory integration with direct download repository."""
         url = "https://example.com/download.appimage"
 
@@ -320,7 +320,7 @@ class TestRepositoryIntegration:
         assert hasattr(client, "detect_repository_type")
         # repository_type property was removed
 
-    def test_repository_factory_integration_with_dynamic_download(self):
+    def test_repository_factory_integration_with_dynamic_download(self) -> None:
         """Test repository factory integration with dynamic download repository."""
         url = "https://example.com/releases"
 
@@ -334,7 +334,7 @@ class TestRepositoryIntegration:
         assert hasattr(client, "detect_repository_type")
         # repository_type property was removed
 
-    def test_repository_client_interface_consistency(self):
+    def test_repository_client_interface_consistency(self) -> None:
         """Test that all repository clients have consistent interfaces."""
         clients = [
             get_repository_client("https://github.com/user/repo", source_type="github"),
@@ -353,7 +353,7 @@ class TestRepositoryIntegration:
             assert callable(client.get_releases)
             assert callable(client.detect_repository_type)
 
-    def test_repository_error_handling_integration(self):
+    def test_repository_error_handling_integration(self) -> None:
         """Test repository error handling integration."""
         # Test that RepositoryError is properly raised and handled
         with pytest.raises(RepositoryError):
@@ -366,7 +366,7 @@ class TestRepositoryIntegration:
             assert isinstance(e, RepositoryError)
             assert "Unsupported source type" in str(e)
 
-    def test_repository_configuration_propagation(self):
+    def test_repository_configuration_propagation(self) -> None:
         """Test that configuration is properly propagated to repository clients."""
         timeout = 120
         user_agent = "TestAgent/2.0"
@@ -387,7 +387,7 @@ class TestRepositoryIntegration:
             assert client.timeout == timeout
             assert client.user_agent == user_agent
 
-    def test_repository_type_detection_integration(self):
+    def test_repository_type_detection_integration(self) -> None:
         """Test repository type detection integration."""
         test_cases = [
             ("https://github.com/user/repo", "github"),

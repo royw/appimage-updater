@@ -259,7 +259,9 @@ class DistributionSelector:
 
     def _has_valid_version_info(self, info: AssetInfo) -> bool:
         """Check if version information is valid for scoring."""
-        return bool(info.version_numeric and self.current_dist.version_numeric > 0)
+        return bool(
+            info.version_numeric and self.current_dist.version_numeric and self.current_dist.version_numeric > 0
+        )
 
     # noinspection PyMethodMayBeStatic
     def _score_backward_compatible_version(self, version_diff: float) -> float:

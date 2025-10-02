@@ -1,4 +1,3 @@
-# type: ignore
 """Tests for EditCommand execution."""
 
 from __future__ import annotations
@@ -17,7 +16,7 @@ from appimage_updater.commands.parameters import EditParams
 class TestEditCommand:
     """Test EditCommand execution functionality."""
 
-    def test_init(self):
+    def test_init(self) -> None:
         """Test EditCommand initialization."""
         params = EditParams(
             app_names=["TestApp"], url="https://github.com/test/repo", config_file=Path("/test/config.json"), debug=True
@@ -27,7 +26,7 @@ class TestEditCommand:
         assert command.params == params
         assert command.console is not None
 
-    def test_validate_success_with_app_names(self):
+    def test_validate_success_with_app_names(self) -> None:
         """Test successful validation with app names provided."""
         params = EditParams(app_names=["TestApp", "AnotherApp"])
         command = EditCommand(params)
@@ -35,7 +34,7 @@ class TestEditCommand:
         validation_errors = command.validate()
         assert validation_errors == []
 
-    def test_validate_missing_app_names(self):
+    def test_validate_missing_app_names(self) -> None:
         """Test validation error when app names are missing."""
         params = EditParams(app_names=None)
         command = EditCommand(params)
@@ -43,7 +42,7 @@ class TestEditCommand:
         validation_errors = command.validate()
         assert "At least one application name is required" in validation_errors
 
-    def test_validate_empty_app_names(self):
+    def test_validate_empty_app_names(self) -> None:
         """Test validation error when app names list is empty."""
         params = EditParams(app_names=[])
         command = EditCommand(params)
@@ -53,7 +52,7 @@ class TestEditCommand:
 
     @patch("appimage_updater.commands.edit_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_success_with_formatter(self, mock_configure_logging):
+    async def test_execute_success_with_formatter(self, mock_configure_logging: Mock) -> None:
         """Test successful execution with output formatter."""
         params = EditParams(app_names=["TestApp"], debug=True)
         command = EditCommand(params)
@@ -76,7 +75,7 @@ class TestEditCommand:
 
     @patch("appimage_updater.commands.edit_command.configure_logging")
     @pytest.mark.anyio
-    async def test_execute_typer_exit_propagation(self, mock_configure_logging):
+    async def test_execute_typer_exit_propagation(self, mock_configure_logging: Mock) -> None:
         """Test that typer.Exit exceptions are propagated."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -88,7 +87,7 @@ class TestEditCommand:
     @patch("appimage_updater.commands.edit_command.configure_logging")
     @patch("appimage_updater.commands.edit_command.logger")
     @pytest.mark.anyio
-    async def test_execute_unexpected_exception(self, mock_logger, mock_configure_logging):
+    async def test_execute_unexpected_exception(self, mock_logger: Mock, mock_configure_logging: Mock) -> None:
         """Test execution with unexpected exception."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -107,7 +106,7 @@ class TestEditCommand:
         assert result.exit_code == 1
 
     @pytest.mark.anyio
-    async def test_execute_main_edit_workflow_with_formatter(self):
+    async def test_execute_main_edit_workflow_with_formatter(self) -> None:
         """Test main workflow execution with formatter."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -122,7 +121,7 @@ class TestEditCommand:
         assert result.success is True
 
     @pytest.mark.anyio
-    async def test_execute_main_edit_workflow_without_formatter(self):
+    async def test_execute_main_edit_workflow_without_formatter(self) -> None:
         """Test main workflow execution without formatter."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -136,7 +135,7 @@ class TestEditCommand:
         assert result.success is True
 
     @pytest.mark.anyio
-    async def test_execute_with_formatter_context_success(self):
+    async def test_execute_with_formatter_context_success(self) -> None:
         """Test execution with formatter context - success path."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -153,7 +152,7 @@ class TestEditCommand:
         assert result.success is True
 
     @pytest.mark.anyio
-    async def test_execute_with_formatter_context_validation_error(self):
+    async def test_execute_with_formatter_context_validation_error(self) -> None:
         """Test execution with formatter context - validation error."""
         params = EditParams(app_names=[])  # Empty app names
         command = EditCommand(params)
@@ -166,7 +165,7 @@ class TestEditCommand:
         assert result.success is False
         assert result.message == "Validation failed"
 
-    def test_validate_with_formatter_error_display_success(self):
+    def test_validate_with_formatter_error_display_success(self) -> None:
         """Test validation with formatter - success."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -176,7 +175,7 @@ class TestEditCommand:
 
         assert result is None
 
-    def test_validate_with_console_error_display_success(self):
+    def test_validate_with_console_error_display_success(self) -> None:
         """Test validation with console - success."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -186,7 +185,7 @@ class TestEditCommand:
 
         assert result is None
 
-    def test_validate_with_console_error_display_errors(self):
+    def test_validate_with_console_error_display_errors(self) -> None:
         """Test validation with console - errors."""
         params = EditParams(app_names=[])
         command = EditCommand(params)
@@ -202,7 +201,7 @@ class TestEditCommand:
         assert result.success is False
         assert result.exit_code == 1
 
-    def test_process_edit_result_with_result(self):
+    def test_process_edit_result_with_result(self) -> None:
         """Test edit result processing with result provided."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -212,7 +211,7 @@ class TestEditCommand:
 
         assert result == input_result
 
-    def test_process_edit_result_without_result(self):
+    def test_process_edit_result_without_result(self) -> None:
         """Test edit result processing without result (success case)."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -224,7 +223,7 @@ class TestEditCommand:
         assert result.exit_code == 0
 
     @patch("appimage_updater.commands.edit_command.AppConfigs")
-    def test_load_config_safely_success(self, mock_app_configs_class):
+    def test_load_config_safely_success(self, mock_app_configs_class: Mock) -> None:
         """Test successful config loading."""
         params = EditParams(app_names=["TestApp"], config_file=Path("/test/config.json"))
         command = EditCommand(params)
@@ -240,7 +239,7 @@ class TestEditCommand:
         assert result == mock_config
 
     @patch("appimage_updater.commands.edit_command.AppConfigs")
-    def test_load_config_safely_no_config_found(self, mock_app_configs_class):
+    def test_load_config_safely_no_config_found(self, mock_app_configs_class: Mock) -> None:
         """Test config loading with no config found error."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -258,7 +257,7 @@ class TestEditCommand:
         assert result.success is False
         assert result.message == "Configuration error"
 
-    def test_create_error_result(self):
+    def test_create_error_result(self) -> None:
         """Test error result creation."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -269,7 +268,7 @@ class TestEditCommand:
         assert result.message == "Test error message"
         assert result.exit_code == 1
 
-    def test_validate_app_names_provided_success(self):
+    def test_validate_app_names_provided_success(self) -> None:
         """Test app names validation - success."""
         params = EditParams(app_names=["TestApp", "AnotherApp"])
         command = EditCommand(params)
@@ -278,7 +277,7 @@ class TestEditCommand:
 
         assert result == ["TestApp", "AnotherApp"]
 
-    def test_validate_app_names_provided_none(self):
+    def test_validate_app_names_provided_none(self) -> None:
         """Test app names validation - None."""
         params = EditParams(app_names=None)
         command = EditCommand(params)
@@ -292,7 +291,7 @@ class TestEditCommand:
         assert result is None
 
     @patch("appimage_updater.commands.edit_command.ApplicationService.filter_apps_by_names")
-    def test_find_matching_applications_success(self, mock_filter):
+    def test_find_matching_applications_success(self, mock_filter: Mock) -> None:
         """Test finding matching applications - success."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -308,7 +307,7 @@ class TestEditCommand:
         assert result == mock_found_apps
 
     @patch("appimage_updater.commands.edit_command.ApplicationService.filter_apps_by_names")
-    def test_find_matching_applications_no_matches(self, mock_filter):
+    def test_find_matching_applications_no_matches(self, mock_filter: Mock) -> None:
         """Test finding matching applications - no matches."""
         params = EditParams(app_names=["NonExistentApp"])
         command = EditCommand(params)
@@ -323,7 +322,7 @@ class TestEditCommand:
         assert result is None
 
     @patch("appimage_updater.commands.edit_command.collect_edit_updates")
-    def test_collect_updates_from_parameters(self, mock_collect):
+    def test_collect_updates_from_parameters(self, mock_collect: Mock) -> None:
         """Test collecting updates from parameters."""
         params = EditParams(
             app_names=["TestApp"],
@@ -371,7 +370,7 @@ class TestEditCommand:
         )
         assert result == mock_updates
 
-    def test_show_validation_hints_rotation_error(self):
+    def test_show_validation_hints_rotation_error(self) -> None:
         """Test validation hints for rotation error."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -383,7 +382,7 @@ class TestEditCommand:
         hint_message = mock_console_print.call_args[0][0]
         assert "Either disable rotation or specify a symlink path" in hint_message
 
-    def test_show_validation_hints_invalid_characters_error(self):
+    def test_show_validation_hints_invalid_characters_error(self) -> None:
         """Test validation hints for invalid characters error."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -395,7 +394,7 @@ class TestEditCommand:
         hint_message = mock_console_print.call_args[0][0]
         assert "cannot contain newlines" in hint_message
 
-    def test_show_validation_hints_appimage_extension_error(self):
+    def test_show_validation_hints_appimage_extension_error(self) -> None:
         """Test validation hints for AppImage extension error."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)
@@ -407,7 +406,7 @@ class TestEditCommand:
         hint_message = mock_console_print.call_args[0][0]
         assert "should end with .AppImage extension" in hint_message
 
-    def test_show_validation_hints_checksum_algorithm_error(self):
+    def test_show_validation_hints_checksum_algorithm_error(self) -> None:
         """Test validation hints for checksum algorithm error."""
         params = EditParams(app_names=["TestApp"])
         command = EditCommand(params)

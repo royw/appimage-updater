@@ -1,5 +1,6 @@
-# type: ignore
 """Tests for refactored interactive UI module."""
+
+from __future__ import annotations
 
 from typing import Any
 from unittest.mock import Mock, patch
@@ -13,49 +14,52 @@ from appimage_updater.ui.interactive import InteractiveAddHandler
 class MockPrompt:
     """Mock prompt class for testing."""
 
-    def __init__(self) -> None:
-        self.responses: list[str] = []
-        self.call_count = 0
+    responses: list[str] = []
+    call_count: int = 0
 
-    def ask(self, prompt: str, **kwargs: Any) -> str:
+    @staticmethod
+    def ask(prompt: str, **kwargs: Any) -> str:
         """Mock ask method."""
-        if self.call_count < len(self.responses):
-            response = self.responses[self.call_count]
-            self.call_count += 1
+        if MockPrompt.call_count < len(MockPrompt.responses):
+            response = MockPrompt.responses[MockPrompt.call_count]
+            MockPrompt.call_count += 1
             return response
-        return kwargs.get("default", "")
+        default = kwargs.get("default", "")
+        return str(default) if default is not None else ""
 
 
 class MockConfirm:
     """Mock confirm class for testing."""
 
-    def __init__(self) -> None:
-        self.responses: list[bool] = []
-        self.call_count = 0
+    responses: list[bool] = []
+    call_count: int = 0
 
-    def ask(self, prompt: str, **kwargs: Any) -> bool:
+    @staticmethod
+    def ask(prompt: str, **kwargs: Any) -> bool:
         """Mock ask method."""
-        if self.call_count < len(self.responses):
-            response = self.responses[self.call_count]
-            self.call_count += 1
+        if MockConfirm.call_count < len(MockConfirm.responses):
+            response = MockConfirm.responses[MockConfirm.call_count]
+            MockConfirm.call_count += 1
             return response
-        return kwargs.get("default", True)
+        default = kwargs.get("default", True)
+        return bool(default)
 
 
 class MockIntPrompt:
     """Mock integer prompt class for testing."""
 
-    def __init__(self) -> None:
-        self.responses: list[int] = []
-        self.call_count = 0
+    responses: list[int] = []
+    call_count: int = 0
 
-    def ask(self, prompt: str, **kwargs: Any) -> int:
+    @staticmethod
+    def ask(prompt: str, **kwargs: Any) -> int:
         """Mock ask method."""
-        if self.call_count < len(self.responses):
-            response = self.responses[self.call_count]
-            self.call_count += 1
+        if MockIntPrompt.call_count < len(MockIntPrompt.responses):
+            response = MockIntPrompt.responses[MockIntPrompt.call_count]
+            MockIntPrompt.call_count += 1
             return response
-        return kwargs.get("default", 3)
+        default = kwargs.get("default", 3)
+        return int(default)
 
 
 class TestInteractiveAddHandler:
@@ -90,14 +94,19 @@ class TestInteractiveAddHandler:
     @patch("appimage_updater.ui.interactive.get_repository_client")
     def test_interactive_add_command_success(self, mock_get_repo_client: Mock) -> None:
         """Test successful interactive add command flow."""
+        # Reset class-level state
+        MockPrompt.responses = []
+        MockPrompt.call_count = 0
+        MockConfirm.responses = []
+        MockConfirm.call_count = 0
+        MockIntPrompt.responses = []
+        MockIntPrompt.call_count = 0
+
         # Setup mocks
         mock_console = Mock()
-        mock_prompt = MockPrompt()
-        mock_confirm = MockConfirm()
-        mock_int_prompt = MockIntPrompt()
 
         # Setup responses
-        mock_prompt.responses = [
+        MockPrompt.responses = [
             "TestApp",  # name
             "https://github.com/user/repo",  # url
             "/home/user/Downloads",  # download_dir
@@ -106,7 +115,7 @@ class TestInteractiveAddHandler:
             "/home/user/bin/TestApp",  # symlink_path
         ]
 
-        mock_confirm.responses = [
+        MockConfirm.responses = [
             True,  # create_dir
             True,  # rotation
             True,  # symlink
@@ -118,7 +127,7 @@ class TestInteractiveAddHandler:
             True,  # final confirmation
         ]
 
-        mock_int_prompt.responses = [3]  # retain count
+        MockIntPrompt.responses = [3]  # retain count
 
         # Setup repository client mock
         mock_repo_client = Mock()
@@ -128,7 +137,7 @@ class TestInteractiveAddHandler:
 
         # Create handler with mocks
         handler = InteractiveAddHandler(
-            console=mock_console, prompt=mock_prompt, confirm=mock_confirm, int_prompt=mock_int_prompt
+            console=mock_console, prompt=MockPrompt, confirm=MockConfirm, int_prompt=MockIntPrompt
         )
 
         # Execute
@@ -202,13 +211,17 @@ class TestInteractiveAddHandler:
     @patch("appimage_updater.ui.interactive.get_repository_client")
     def test_collect_basic_add_settings(self, mock_get_repo_client: Mock) -> None:
         """Test basic settings collection."""
+        # Reset class-level state
+        MockPrompt.responses = []
+        MockPrompt.call_count = 0
+        MockConfirm.responses = []
+        MockConfirm.call_count = 0
+
         mock_console = Mock()
-        mock_prompt = MockPrompt()
-        mock_confirm = MockConfirm()
 
         # Setup responses
-        mock_prompt.responses = ["TestApp", "https://github.com/user/repo", "/test/dir"]
-        mock_confirm.responses = [True]  # create_dir
+        MockPrompt.responses = ["TestApp", "https://github.com/user/repo", "/test/dir"]
+        MockConfirm.responses = [True]  # create_dir
 
         # Setup repository client mock
         mock_repo_client = Mock()
@@ -216,7 +229,7 @@ class TestInteractiveAddHandler:
         mock_repo_client.parse_repo_url.return_value = None
         mock_get_repo_client.return_value = mock_repo_client
 
-        handler = InteractiveAddHandler(console=mock_console, prompt=mock_prompt, confirm=mock_confirm)
+        handler = InteractiveAddHandler(console=mock_console, prompt=MockPrompt, confirm=MockConfirm)
 
         result = handler._collect_basic_add_settings()
 
@@ -230,18 +243,23 @@ class TestInteractiveAddHandler:
 
     def test_collect_rotation_add_settings_enabled(self) -> None:
         """Test rotation settings collection when enabled."""
+        # Reset class-level state
+        MockPrompt.responses = []
+        MockPrompt.call_count = 0
+        MockConfirm.responses = []
+        MockConfirm.call_count = 0
+        MockIntPrompt.responses = []
+        MockIntPrompt.call_count = 0
+
         mock_console = Mock()
-        mock_prompt = MockPrompt()
-        mock_confirm = MockConfirm()
-        mock_int_prompt = MockIntPrompt()
 
         # Setup responses
-        mock_confirm.responses = [True, True]  # rotation enabled, symlink enabled
-        mock_int_prompt.responses = [5]  # retain count
-        mock_prompt.responses = ["/home/user/bin/testapp"]  # symlink path
+        MockConfirm.responses = [True, True]  # rotation enabled, symlink enabled
+        MockIntPrompt.responses = [5]  # retain count
+        MockPrompt.responses = ["/home/user/bin/testapp"]  # symlink path
 
         handler = InteractiveAddHandler(
-            console=mock_console, prompt=mock_prompt, confirm=mock_confirm, int_prompt=mock_int_prompt
+            console=mock_console, prompt=MockPrompt, confirm=MockConfirm, int_prompt=MockIntPrompt
         )
 
         result = handler._collect_rotation_add_settings("testapp")
@@ -253,13 +271,16 @@ class TestInteractiveAddHandler:
 
     def test_collect_rotation_add_settings_disabled(self) -> None:
         """Test rotation settings collection when disabled."""
+        # Reset class-level state
+        MockConfirm.responses = []
+        MockConfirm.call_count = 0
+
         mock_console = Mock()
-        mock_confirm = MockConfirm()
 
         # Setup responses
-        mock_confirm.responses = [False]  # rotation disabled
+        MockConfirm.responses = [False]  # rotation disabled
 
-        handler = InteractiveAddHandler(console=mock_console, confirm=mock_confirm)
+        handler = InteractiveAddHandler(console=mock_console, confirm=MockConfirm)
 
         result = handler._collect_rotation_add_settings("testapp")
 
@@ -270,15 +291,19 @@ class TestInteractiveAddHandler:
 
     def test_collect_checksum_add_settings_enabled(self) -> None:
         """Test checksum settings collection when enabled."""
+        # Reset class-level state
+        MockPrompt.responses = []
+        MockPrompt.call_count = 0
+        MockConfirm.responses = []
+        MockConfirm.call_count = 0
+
         mock_console = Mock()
-        mock_prompt = MockPrompt()
-        mock_confirm = MockConfirm()
 
         # Setup responses
-        mock_confirm.responses = [True, True]  # checksum enabled, required
-        mock_prompt.responses = ["md5", "{filename}.md5"]  # algorithm, pattern
+        MockConfirm.responses = [True, True]  # checksum enabled, required
+        MockPrompt.responses = ["md5", "{filename}.md5"]  # algorithm, pattern
 
-        handler = InteractiveAddHandler(console=mock_console, prompt=mock_prompt, confirm=mock_confirm)
+        handler = InteractiveAddHandler(console=mock_console, prompt=MockPrompt, confirm=MockConfirm)
 
         result = handler._collect_checksum_add_settings()
 
@@ -290,13 +315,16 @@ class TestInteractiveAddHandler:
 
     def test_collect_checksum_add_settings_disabled(self) -> None:
         """Test checksum settings collection when disabled."""
+        # Reset class-level state
+        MockConfirm.responses = []
+        MockConfirm.call_count = 0
+
         mock_console = Mock()
-        mock_confirm = MockConfirm()
 
         # Setup responses
-        mock_confirm.responses = [False]  # checksum disabled
+        MockConfirm.responses = [False]  # checksum disabled
 
-        handler = InteractiveAddHandler(console=mock_console, confirm=mock_confirm)
+        handler = InteractiveAddHandler(console=mock_console, confirm=MockConfirm)
 
         result = handler._collect_checksum_add_settings()
 
@@ -308,13 +336,16 @@ class TestInteractiveAddHandler:
 
     def test_collect_advanced_add_settings_github_url(self) -> None:
         """Test advanced settings collection with GitHub URL."""
+        # Reset class-level state
+        MockConfirm.responses = []
+        MockConfirm.call_count = 0
+
         mock_console = Mock()
-        mock_confirm = MockConfirm()
 
         # Setup responses
-        mock_confirm.responses = [True, True]  # prerelease, auto_subdir
+        MockConfirm.responses = [True, True]  # prerelease, auto_subdir
 
-        handler = InteractiveAddHandler(console=mock_console, confirm=mock_confirm)
+        handler = InteractiveAddHandler(console=mock_console, confirm=MockConfirm)
 
         result = handler._collect_advanced_add_settings("https://github.com/user/repo")
 
@@ -325,13 +356,16 @@ class TestInteractiveAddHandler:
 
     def test_collect_advanced_add_settings_non_github_url(self) -> None:
         """Test advanced settings collection with non-GitHub URL."""
+        # Reset class-level state
+        MockConfirm.responses = []
+        MockConfirm.call_count = 0
+
         mock_console = Mock()
-        mock_confirm = MockConfirm()
 
         # Setup responses
-        mock_confirm.responses = [False, True, False]  # prerelease, direct, auto_subdir
+        MockConfirm.responses = [False, True, False]  # prerelease, direct, auto_subdir
 
-        handler = InteractiveAddHandler(console=mock_console, confirm=mock_confirm)
+        handler = InteractiveAddHandler(console=mock_console, confirm=MockConfirm)
 
         result = handler._collect_advanced_add_settings("https://example.com/app.AppImage")
 
@@ -398,10 +432,13 @@ class TestInteractiveAddHandler:
 
     def test_prompt_with_validation_success(self) -> None:
         """Test prompt with validation - successful case."""
-        mock_prompt = MockPrompt()
-        mock_prompt.responses = ["valid_input"]
+        # Reset class-level state
+        MockPrompt.responses = []
+        MockPrompt.call_count = 0
 
-        handler = InteractiveAddHandler(prompt=mock_prompt)
+        MockPrompt.responses = ["valid_input"]
+
+        handler = InteractiveAddHandler(prompt=MockPrompt)
 
         validator = lambda x: x == "valid_input"
         result = handler._prompt_with_validation("Test prompt", validator, "Error message")
@@ -410,11 +447,14 @@ class TestInteractiveAddHandler:
 
     def test_prompt_with_validation_retry(self) -> None:
         """Test prompt with validation - retry on invalid input."""
-        mock_console = Mock()
-        mock_prompt = MockPrompt()
-        mock_prompt.responses = ["invalid", "valid_input"]
+        # Reset class-level state
+        MockPrompt.responses = []
+        MockPrompt.call_count = 0
 
-        handler = InteractiveAddHandler(console=mock_console, prompt=mock_prompt)
+        mock_console = Mock()
+        MockPrompt.responses = ["invalid", "valid_input"]
+
+        handler = InteractiveAddHandler(console=mock_console, prompt=MockPrompt)
 
         validator = lambda x: x == "valid_input"
         result = handler._prompt_with_validation("Test prompt", validator, "Error message")

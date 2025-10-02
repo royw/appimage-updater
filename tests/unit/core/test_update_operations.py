@@ -1,10 +1,10 @@
-# type: ignore
 """Comprehensive unit tests for core update operations."""
 
 from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
@@ -75,13 +75,13 @@ from appimage_updater.repositories.base import RepositoryError
 
 
 @pytest.fixture
-def mock_app_config():
+def mock_app_config() -> ApplicationConfig:
     """Create a mock application configuration."""
     return ApplicationConfig(
         name="TestApp",
         source_type="github",
         url="https://github.com/test/repo",
-        download_dir="/tmp/test",
+        download_dir=Path("/tmp/test"),
         pattern=r".*\.AppImage$",
         enabled=True,
         rotation_enabled=False,
@@ -91,8 +91,11 @@ def mock_app_config():
     )
 
 
+from appimage_updater.config.models import Config
+
+
 @pytest.fixture
-def mock_config(mock_app_config):
+def mock_config(mock_app_config: ApplicationConfig) -> Config:
     """Create a mock configuration."""
     config = Config()
     config.applications = [mock_app_config]
@@ -100,7 +103,7 @@ def mock_config(mock_app_config):
 
 
 @pytest.fixture
-def mock_check_result():
+def mock_check_result() -> CheckResult:
     """Create a mock check result."""
     return CheckResult(
         app_name="TestApp",
@@ -113,7 +116,7 @@ def mock_check_result():
 
 
 @pytest.fixture
-def mock_update_candidate(mock_app_config):
+def mock_update_candidate(mock_app_config: ApplicationConfig) -> UpdateCandidate:
     """Create a mock update candidate."""
     asset = Asset(
         name="TestApp-1.1.0.AppImage",
@@ -135,22 +138,22 @@ def mock_update_candidate(mock_app_config):
 class TestNormalizeAppNames:
     """Tests for _normalize_app_names function."""
 
-    def test_normalize_single_string(self):
+    def test_normalize_single_string(self) -> None:
         """Test normalizing a single string to list."""
         result = _normalize_app_names("TestApp")
         assert result == ["TestApp"]
 
-    def test_normalize_none(self):
+    def test_normalize_none(self) -> None:
         """Test normalizing None to empty list."""
         result = _normalize_app_names(None)
         assert result == []
 
-    def test_normalize_list(self):
+    def test_normalize_list(self) -> None:
         """Test normalizing list returns same list."""
         result = _normalize_app_names(["App1", "App2"])
         assert result == ["App1", "App2"]
 
-    def test_normalize_empty_list(self):
+    def test_normalize_empty_list(self) -> None:
         """Test normalizing empty list returns empty list."""
         result = _normalize_app_names([])
         assert result == []
@@ -160,7 +163,7 @@ class TestLoadConfigWithFallback:
     """Tests for _load_config_with_fallback function."""
 
     @patch("appimage_updater.core.update_operations.AppConfigs")
-    def test_load_config_success(self, mock_app_configs):
+    def test_load_config_success(self, mock_app_configs: Mock) -> None:
         """Test successful config loading."""
         mock_config = Config()
         mock_app_configs.return_value._config = mock_config
@@ -171,7 +174,7 @@ class TestLoadConfigWithFallback:
         mock_app_configs.assert_called_once_with(config_path=Path("/tmp/config"))
 
     @patch("appimage_updater.core.update_operations.AppConfigs")
-    def test_load_config_with_file(self, mock_app_configs):
+    def test_load_config_with_file(self, mock_app_configs: Mock) -> None:
         """Test loading config with explicit file."""
         mock_config = Config()
         mock_app_configs.return_value._config = mock_config
@@ -183,7 +186,7 @@ class TestLoadConfigWithFallback:
         mock_app_configs.assert_called_once_with(config_path=config_file)
 
     @patch("appimage_updater.core.update_operations.AppConfigs")
-    def test_load_config_not_found_no_explicit_file(self, mock_app_configs):
+    def test_load_config_not_found_no_explicit_file(self, mock_app_configs: Mock) -> None:
         """Test loading config when not found and no explicit file."""
         mock_app_configs.side_effect = ConfigLoadError("Config not found")
 
@@ -193,7 +196,7 @@ class TestLoadConfigWithFallback:
         assert len(result.applications) == 0
 
     @patch("appimage_updater.core.update_operations.AppConfigs")
-    def test_load_config_not_found_with_explicit_file(self, mock_app_configs):
+    def test_load_config_not_found_with_explicit_file(self, mock_app_configs: Mock) -> None:
         """Test loading config when not found with explicit file raises."""
         mock_app_configs.side_effect = ConfigLoadError("Config not found")
         config_file = Path("/tmp/config.json")
@@ -202,7 +205,7 @@ class TestLoadConfigWithFallback:
             _load_config_with_fallback(config_file, None)
 
     @patch("appimage_updater.core.update_operations.AppConfigs")
-    def test_load_config_other_error_raises(self, mock_app_configs):
+    def test_load_config_other_error_raises(self, mock_app_configs: Mock) -> None:
         """Test loading config with other error raises."""
         mock_app_configs.side_effect = ConfigLoadError("Permission denied")
 
@@ -213,7 +216,7 @@ class TestLoadConfigWithFallback:
 class TestGetAllAppsForCheck:
     """Tests for _get_all_apps_for_check function."""
 
-    def test_get_all_apps_no_filter(self, mock_config):
+    def test_get_all_apps_no_filter(self, mock_config: Mock) -> None:
         """Test getting all apps without filter."""
         result = _get_all_apps_for_check(mock_config, None)
 
@@ -222,13 +225,13 @@ class TestGetAllAppsForCheck:
         assert len(enabled) == 1
         assert len(disabled) == 0
 
-    def test_get_all_apps_with_disabled(self, mock_config):
+    def test_get_all_apps_with_disabled(self, mock_config: Mock) -> None:
         """Test getting all apps with disabled apps."""
         disabled_app = ApplicationConfig(
             name="DisabledApp",
             source_type="github",
             url="https://github.com/test/disabled",
-            download_dir="/tmp/disabled",
+            download_dir=Path("/tmp/disabled"),
             pattern=r".*\.AppImage$",
             enabled=False,
         )
@@ -243,7 +246,7 @@ class TestGetAllAppsForCheck:
         assert disabled[0].name == "DisabledApp"
 
     @patch("appimage_updater.core.update_operations.ApplicationService.filter_apps_by_names")
-    def test_get_all_apps_with_filter(self, mock_filter, mock_config):
+    def test_get_all_apps_with_filter(self, mock_filter: Mock, mock_config: Mock) -> None:
         """Test getting apps with name filter."""
         mock_filter.return_value = [mock_config.applications[0]]
 
@@ -255,7 +258,7 @@ class TestGetAllAppsForCheck:
         mock_filter.assert_called_once()
 
     @patch("appimage_updater.core.update_operations.ApplicationService.filter_apps_by_names")
-    def test_get_all_apps_filter_not_found(self, mock_filter, mock_config):
+    def test_get_all_apps_filter_not_found(self, mock_filter: Mock, mock_config: Mock) -> None:
         """Test getting apps when filter finds nothing."""
         mock_filter.return_value = None
 
@@ -267,12 +270,12 @@ class TestGetAllAppsForCheck:
 class TestCreateDisabledResults:
     """Tests for _create_disabled_results function."""
 
-    def test_create_disabled_results_empty(self):
+    def test_create_disabled_results_empty(self) -> None:
         """Test creating disabled results with empty list."""
         result = _create_disabled_results([])
         assert result == []
 
-    def test_create_disabled_results_single_app(self, mock_app_config):
+    def test_create_disabled_results_single_app(self, mock_app_config: Mock) -> None:
         """Test creating disabled result for single app."""
         mock_app_config.enabled = False
         result = _create_disabled_results([mock_app_config])
@@ -283,14 +286,14 @@ class TestCreateDisabledResults:
         assert result[0].error_message == "Disabled"
         assert result[0].download_url == mock_app_config.url
 
-    def test_create_disabled_results_multiple_apps(self):
+    def test_create_disabled_results_multiple_apps(self) -> None:
         """Test creating disabled results for multiple apps."""
         apps = [
             ApplicationConfig(
                 name=f"App{i}",
                 source_type="github",
                 url=f"https://github.com/test/app{i}",
-                download_dir=f"/tmp/app{i}",
+                download_dir=Path(f"/tmp/app{i}"),
                 pattern=r".*\.AppImage$",
                 enabled=False,
             )
@@ -308,7 +311,7 @@ class TestCreateDisabledResults:
 class TestFilterUpdateCandidates:
     """Tests for _filter_update_candidates function."""
 
-    def test_filter_no_candidates(self):
+    def test_filter_no_candidates(self) -> None:
         """Test filtering with no update candidates."""
         results = [
             CheckResult(
@@ -323,7 +326,7 @@ class TestFilterUpdateCandidates:
         candidates = _filter_update_candidates(results)
         assert candidates == []
 
-    def test_filter_with_candidates(self, mock_update_candidate):
+    def test_filter_with_candidates(self, mock_update_candidate: Mock) -> None:
         """Test filtering with update candidates."""
         results = [
             CheckResult(
@@ -337,7 +340,7 @@ class TestFilterUpdateCandidates:
         assert len(candidates) == 1
         assert candidates[0] == mock_update_candidate
 
-    def test_filter_mixed_results(self, mock_update_candidate):
+    def test_filter_mixed_results(self, mock_update_candidate: Mock) -> None:
         """Test filtering with mixed success/failure results."""
         results = [
             CheckResult(
@@ -366,65 +369,65 @@ class TestFilterUpdateCandidates:
 class TestExtractResultData:
     """Tests for result data extraction functions."""
 
-    def test_extract_application_name(self):
+    def test_extract_application_name(self) -> None:
         """Test extracting application name."""
         result = CheckResult(app_name="TestApp", success=True)
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
 
         _extract_application_name(result, result_dict)
 
         assert result_dict["Application"] == "TestApp"
 
-    def test_extract_application_name_with_whitespace(self):
+    def test_extract_application_name_with_whitespace(self) -> None:
         """Test extracting application name with whitespace."""
         result = CheckResult(app_name="  TestApp  ", success=True)
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
 
         _extract_application_name(result, result_dict)
 
         assert result_dict["Application"] == "TestApp"
 
-    def test_extract_application_name_empty(self):
+    def test_extract_application_name_empty(self) -> None:
         """Test extracting empty application name."""
         result = CheckResult(app_name="", success=True)
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
 
         _extract_application_name(result, result_dict)
 
         assert result_dict["Application"] == "Unknown App"
 
-    def test_extract_status_success(self):
+    def test_extract_status_success(self) -> None:
         """Test extracting success status."""
         result = CheckResult(app_name="TestApp", success=True)
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
 
         _extract_status(result, result_dict)
 
         assert result_dict["Status"] == "Success"
 
-    def test_extract_status_error(self):
+    def test_extract_status_error(self) -> None:
         """Test extracting error status."""
         result = CheckResult(app_name="TestApp", success=False)
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
 
         _extract_status(result, result_dict)
 
         assert result_dict["Status"] == "Error"
 
-    def test_extract_error_message(self):
+    def test_extract_error_message(self) -> None:
         """Test extracting error message."""
         result = CheckResult(
             app_name="TestApp",
             success=False,
             error_message="Connection failed",
         )
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
 
         _extract_error_message(result, result_dict)
 
         assert result_dict["Update Available"] == "Connection failed"
 
-    def test_extract_direct_version_info(self):
+    def test_extract_direct_version_info(self) -> None:
         """Test extracting version info from direct fields."""
         result = CheckResult(
             app_name="TestApp",
@@ -432,14 +435,14 @@ class TestExtractResultData:
             current_version="1.0.0",
             available_version="1.1.0",
         )
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
 
         _extract_direct_version_info(result, result_dict)
 
         assert result_dict["Current Version"] == "1.0.0"
         assert result_dict["Latest Version"] == "1.1.0"
 
-    def test_extract_direct_version_info_none(self):
+    def test_extract_direct_version_info_none(self) -> None:
         """Test extracting None version info."""
         result = CheckResult(
             app_name="TestApp",
@@ -447,59 +450,59 @@ class TestExtractResultData:
             current_version=None,
             available_version=None,
         )
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
 
         _extract_direct_version_info(result, result_dict)
 
         assert result_dict["Current Version"] == "N/A"
         assert result_dict["Latest Version"] == "N/A"
 
-    def test_extract_direct_update_status(self):
+    def test_extract_direct_update_status(self) -> None:
         """Test extracting update status from direct fields."""
         result = CheckResult(
             app_name="TestApp",
             success=True,
             update_available=True,
         )
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
 
         _extract_direct_update_status(result, result_dict)
 
         assert result_dict["Update Available"] == "Yes"
 
-    def test_extract_direct_download_url(self):
+    def test_extract_direct_download_url(self) -> None:
         """Test extracting download URL from direct fields."""
         result = CheckResult(
             app_name="TestApp",
             success=True,
             download_url="https://example.com/app.AppImage",
         )
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
 
         _extract_direct_download_url(result, result_dict)
 
         assert result_dict["Download URL"] == "https://example.com/app.AppImage"
 
-    def test_extract_candidate_version_info(self, mock_update_candidate):
+    def test_extract_candidate_version_info(self, mock_update_candidate: Mock) -> None:
         """Test extracting version info from candidate."""
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
 
         _extract_candidate_version_info(mock_update_candidate, result_dict)
 
         assert result_dict["Current Version"] == "1.0.0"
         assert result_dict["Latest Version"] == "1.1.0"
 
-    def test_extract_candidate_update_status(self, mock_update_candidate):
+    def test_extract_candidate_update_status(self, mock_update_candidate: Mock) -> None:
         """Test extracting update status from candidate."""
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
 
         _extract_candidate_update_status(mock_update_candidate, result_dict)
 
         assert result_dict["Update Available"] == "Yes"
 
-    def test_extract_candidate_download_url(self, mock_update_candidate):
+    def test_extract_candidate_download_url(self, mock_update_candidate: Mock) -> None:
         """Test extracting download URL from candidate."""
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
 
         _extract_candidate_download_url(mock_update_candidate, result_dict)
 
@@ -512,7 +515,7 @@ class TestCreateDryRunResult:
     """Tests for _create_dry_run_result function."""
 
     @patch("appimage_updater.core.update_operations.VersionChecker")
-    def test_create_dry_run_result_success(self, mock_version_checker_class, mock_app_config):
+    def test_create_dry_run_result_success(self, mock_version_checker_class: Mock, mock_app_config: Mock) -> None:
         """Test creating dry run result successfully."""
         mock_checker = Mock()
         mock_checker._get_current_version.return_value = "1.0.0"
@@ -528,7 +531,7 @@ class TestCreateDryRunResult:
         assert result.download_url == mock_app_config.url
 
     @patch("appimage_updater.core.update_operations.VersionChecker")
-    def test_create_dry_run_result_error(self, mock_version_checker_class, mock_app_config):
+    def test_create_dry_run_result_error(self, mock_version_checker_class: Mock, mock_app_config: Mock) -> None:
         """Test creating dry run result with error."""
         mock_checker = Mock()
         mock_checker._get_current_version.side_effect = OSError("File not found")
@@ -548,7 +551,7 @@ class TestPromptForDownloadConfirmation:
 
     @patch("appimage_updater.core.update_operations.typer.confirm")
     @patch("appimage_updater.core.update_operations.console")
-    def test_prompt_user_confirms(self, mock_console, mock_confirm):
+    def test_prompt_user_confirms(self, mock_console: Mock, mock_confirm: Mock) -> None:
         """Test user confirms download."""
         mock_confirm.return_value = True
 
@@ -560,7 +563,7 @@ class TestPromptForDownloadConfirmation:
 
     @patch("appimage_updater.core.update_operations.typer.confirm")
     @patch("appimage_updater.core.update_operations.console")
-    def test_prompt_user_cancels(self, mock_console, mock_confirm):
+    def test_prompt_user_cancels(self, mock_console: Mock, mock_confirm: Mock) -> None:
         """Test user cancels download."""
         mock_confirm.return_value = False
 
@@ -572,7 +575,7 @@ class TestPromptForDownloadConfirmation:
 
     @patch("appimage_updater.core.update_operations.typer.confirm")
     @patch("appimage_updater.core.update_operations.console")
-    def test_prompt_non_interactive(self, mock_console, mock_confirm):
+    def test_prompt_non_interactive(self, mock_console: Mock, mock_confirm: Mock) -> None:
         """Test non-interactive mode."""
         mock_confirm.side_effect = EOFError()
 
@@ -584,7 +587,7 @@ class TestPromptForDownloadConfirmation:
 
     @patch("appimage_updater.core.update_operations.typer.confirm")
     @patch("appimage_updater.core.update_operations.console")
-    def test_prompt_keyboard_interrupt(self, mock_console, mock_confirm):
+    def test_prompt_keyboard_interrupt(self, mock_console: Mock, mock_confirm: Mock) -> None:
         """Test keyboard interrupt."""
         mock_confirm.side_effect = KeyboardInterrupt()
 
@@ -598,7 +601,7 @@ class TestCreateDownloader:
     """Tests for _create_downloader function."""
 
     @patch("appimage_updater.core.update_operations.Downloader")
-    def test_create_downloader(self, mock_downloader_class, mock_config):
+    def test_create_downloader(self, mock_downloader_class: Mock, mock_config: Mock) -> None:
         """Test creating downloader with config."""
         mock_config.global_config.timeout_seconds = 30
         mock_config.global_config.user_agent = "TestAgent"
@@ -616,7 +619,7 @@ class TestCreateDownloader:
 class TestRotationHelpers:
     """Tests for rotation helper functions."""
 
-    def test_should_skip_rotation_setup_no_rotation(self, mock_app_config):
+    def test_should_skip_rotation_setup_no_rotation(self, mock_app_config: Mock) -> None:
         """Test skipping rotation when not enabled."""
         mock_app_config.rotation_enabled = False
         mock_app_config.symlink_path = Path("/tmp/link")
@@ -625,7 +628,7 @@ class TestRotationHelpers:
 
         assert result is True
 
-    def test_should_skip_rotation_setup_no_symlink(self, mock_app_config):
+    def test_should_skip_rotation_setup_no_symlink(self, mock_app_config: Mock) -> None:
         """Test skipping rotation when no symlink."""
         mock_app_config.rotation_enabled = True
         mock_app_config.symlink_path = None
@@ -634,7 +637,7 @@ class TestRotationHelpers:
 
         assert result is True
 
-    def test_should_skip_rotation_setup_valid(self, mock_app_config):
+    def test_should_skip_rotation_setup_valid(self, mock_app_config: Mock) -> None:
         """Test not skipping rotation when valid."""
         mock_app_config.rotation_enabled = True
         mock_app_config.symlink_path = Path("/tmp/link")
@@ -643,7 +646,7 @@ class TestRotationHelpers:
 
         assert result is False
 
-    def test_should_skip_download_dir_not_exists(self, tmp_path):
+    def test_should_skip_download_dir_not_exists(self, tmp_path: Path) -> None:
         """Test skipping when download dir doesn't exist."""
         non_existent = tmp_path / "nonexistent"
 
@@ -651,13 +654,13 @@ class TestRotationHelpers:
 
         assert result is True
 
-    def test_should_skip_download_dir_exists(self, tmp_path):
+    def test_should_skip_download_dir_exists(self, tmp_path: Path) -> None:
         """Test not skipping when download dir exists."""
         result = _should_skip_download_dir(tmp_path)
 
         assert result is False
 
-    def test_is_unrotated_appimage_valid(self, tmp_path):
+    def test_is_unrotated_appimage_valid(self, tmp_path: Path) -> None:
         """Test identifying unrotated AppImage."""
         appimage = tmp_path / "test.AppImage"
         appimage.touch()
@@ -666,7 +669,7 @@ class TestRotationHelpers:
 
         assert result is True
 
-    def test_is_unrotated_appimage_with_rotation_suffix(self, tmp_path):
+    def test_is_unrotated_appimage_with_rotation_suffix(self, tmp_path: Path) -> None:
         """Test identifying rotated AppImage."""
         appimage = tmp_path / "test.AppImage.current"
         appimage.touch()
@@ -675,7 +678,7 @@ class TestRotationHelpers:
 
         assert result is False
 
-    def test_is_unrotated_appimage_wrong_extension(self, tmp_path):
+    def test_is_unrotated_appimage_wrong_extension(self, tmp_path: Path) -> None:
         """Test non-AppImage file."""
         other_file = tmp_path / "test.zip"
         other_file.touch()
@@ -684,7 +687,7 @@ class TestRotationHelpers:
 
         assert result is False
 
-    def test_is_unrotated_appimage_directory(self, tmp_path):
+    def test_is_unrotated_appimage_directory(self, tmp_path: Path) -> None:
         """Test directory is not AppImage."""
         directory = tmp_path / "test.AppImage"
         directory.mkdir()
@@ -693,7 +696,7 @@ class TestRotationHelpers:
 
         assert result is False
 
-    def test_find_unrotated_appimages(self, tmp_path):
+    def test_find_unrotated_appimages(self, tmp_path: Path) -> None:
         """Test finding unrotated AppImages."""
         # Create test files
         (tmp_path / "app1.AppImage").touch()
@@ -708,13 +711,13 @@ class TestRotationHelpers:
         assert "app1.AppImage" in names
         assert "app2.AppImage" in names
 
-    def test_get_latest_appimage_file_empty(self, tmp_path):
+    def test_get_latest_appimage_file_empty(self, tmp_path: Path) -> None:
         """Test getting latest AppImage from empty directory."""
         result = _get_latest_appimage_file(tmp_path)
 
         assert result is None
 
-    def test_get_latest_appimage_file_single(self, tmp_path):
+    def test_get_latest_appimage_file_single(self, tmp_path: Path) -> None:
         """Test getting latest AppImage with single file."""
         appimage = tmp_path / "test.AppImage"
         appimage.touch()
@@ -723,7 +726,7 @@ class TestRotationHelpers:
 
         assert result == appimage
 
-    def test_get_latest_appimage_file_multiple(self, tmp_path):
+    def test_get_latest_appimage_file_multiple(self, tmp_path: Path) -> None:
         """Test getting latest AppImage with multiple files."""
         import time
 
@@ -737,7 +740,7 @@ class TestRotationHelpers:
 
         assert result == new_file
 
-    def test_is_symlink_valid_not_symlink(self, tmp_path):
+    def test_is_symlink_valid_not_symlink(self, tmp_path: Path) -> None:
         """Test symlink validation with regular file."""
         regular_file = tmp_path / "file"
         regular_file.touch()
@@ -746,7 +749,7 @@ class TestRotationHelpers:
 
         assert result is False
 
-    def test_is_symlink_valid_not_exists(self, tmp_path):
+    def test_is_symlink_valid_not_exists(self, tmp_path: Path) -> None:
         """Test symlink validation with non-existent path."""
         non_existent = tmp_path / "nonexistent"
 
@@ -754,7 +757,7 @@ class TestRotationHelpers:
 
         assert result is False
 
-    def test_is_symlink_valid_broken_symlink(self, tmp_path):
+    def test_is_symlink_valid_broken_symlink(self, tmp_path: Path) -> None:
         """Test symlink validation with broken symlink."""
         symlink = tmp_path / "link"
         target = tmp_path / "nonexistent"
@@ -764,7 +767,7 @@ class TestRotationHelpers:
 
         assert result is False
 
-    def test_is_symlink_valid_valid_symlink(self, tmp_path):
+    def test_is_symlink_valid_valid_symlink(self, tmp_path: Path) -> None:
         """Test symlink validation with valid symlink."""
         target = tmp_path / "target"
         target.touch()
@@ -775,7 +778,7 @@ class TestRotationHelpers:
 
         assert result is True
 
-    def test_is_symlink_valid_wrong_directory(self, tmp_path):
+    def test_is_symlink_valid_wrong_directory(self, tmp_path: Path) -> None:
         """Test symlink validation with target in wrong directory."""
         other_dir = tmp_path / "other"
         other_dir.mkdir()
@@ -794,7 +797,7 @@ class TestHandleCheckErrors:
 
     @patch("appimage_updater.core.update_operations.get_output_formatter")
     @patch("appimage_updater.core.update_operations.console")
-    def test_handle_config_load_error(self, mock_console, mock_get_formatter):
+    def test_handle_config_load_error(self, mock_console: Mock, mock_get_formatter: Mock) -> None:
         """Test handling ConfigLoadError."""
         mock_get_formatter.return_value = None
         error = ConfigLoadError("Config not found")
@@ -805,7 +808,7 @@ class TestHandleCheckErrors:
         mock_console.print.assert_called_once()
 
     @patch("appimage_updater.core.update_operations.get_output_formatter")
-    def test_handle_config_load_error_with_formatter(self, mock_get_formatter):
+    def test_handle_config_load_error_with_formatter(self, mock_get_formatter: Mock) -> None:
         """Test handling ConfigLoadError with formatter."""
         mock_formatter = Mock()
         mock_get_formatter.return_value = mock_formatter
@@ -818,7 +821,7 @@ class TestHandleCheckErrors:
 
     @patch("appimage_updater.core.update_operations.get_output_formatter")
     @patch("appimage_updater.core.update_operations.console")
-    def test_handle_repository_error(self, mock_console, mock_get_formatter):
+    def test_handle_repository_error(self, mock_console: Mock, mock_get_formatter: Mock) -> None:
         """Test handling RepositoryError."""
         mock_get_formatter.return_value = None
         error = RepositoryError("Repository not found")
@@ -832,7 +835,7 @@ class TestHandleCheckErrors:
 class TestShouldSuppressConsoleOutput:
     """Tests for _should_suppress_console_output function."""
 
-    def test_suppress_json_formatter(self):
+    def test_suppress_json_formatter(self) -> None:
         """Test suppressing JSON formatter output."""
         mock_formatter = Mock()
         mock_formatter.__class__.__name__ = "JSONOutputFormatter"
@@ -841,7 +844,7 @@ class TestShouldSuppressConsoleOutput:
 
         assert result is True
 
-    def test_suppress_html_formatter(self):
+    def test_suppress_html_formatter(self) -> None:
         """Test suppressing HTML formatter output."""
         mock_formatter = Mock()
         mock_formatter.__class__.__name__ = "HTMLOutputFormatter"
@@ -850,7 +853,7 @@ class TestShouldSuppressConsoleOutput:
 
         assert result is True
 
-    def test_not_suppress_rich_formatter(self):
+    def test_not_suppress_rich_formatter(self) -> None:
         """Test not suppressing Rich formatter output."""
         mock_formatter = Mock()
         mock_formatter.__class__.__name__ = "RichOutputFormatter"
@@ -859,7 +862,7 @@ class TestShouldSuppressConsoleOutput:
 
         assert result is False
 
-    def test_not_suppress_none_formatter(self):
+    def test_not_suppress_none_formatter(self) -> None:
         """Test not suppressing when no formatter."""
         result = _should_suppress_console_output(None)
 
@@ -871,34 +874,34 @@ class TestLogFunctions:
     """Tests for logging functions."""
 
     @patch("appimage_updater.core.update_operations.logger")
-    def test_log_check_start(self, mock_logger):
+    def test_log_check_start(self, mock_logger: Mock) -> None:
         """Test logging check start."""
         _log_check_start(None, Path("/tmp/config"), False, ["App1", "App2"])
 
         assert mock_logger.debug.call_count >= 2
 
     @patch("appimage_updater.core.update_operations.logger")
-    def test_log_app_summary(self, mock_logger, mock_config):
+    def test_log_app_summary(self, mock_logger: Mock, mock_config: Mock) -> None:
         """Test logging app summary."""
         _log_app_summary(mock_config, mock_config.applications, None)
 
         mock_logger.debug.assert_called_once()
 
     @patch("appimage_updater.core.update_operations.logger")
-    def test_log_check_statistics(self, mock_logger):
+    def test_log_check_statistics(self, mock_logger: Mock) -> None:
         """Test logging check statistics."""
         results = [
             CheckResult(app_name="App1", success=True),
             CheckResult(app_name="App2", success=False),
         ]
-        candidates = []
+        candidates: list[Any] = []
 
         _log_check_statistics(results, candidates)
 
         mock_logger.debug.assert_called_once()
 
     @patch("appimage_updater.core.update_operations.logger")
-    def test_log_download_summary(self, mock_logger):
+    def test_log_download_summary(self, mock_logger: Mock) -> None:
         """Test logging download summary."""
         from appimage_updater.core.models import DownloadResult
 
@@ -912,7 +915,7 @@ class TestLogFunctions:
         mock_logger.debug.assert_called_once()
 
     @patch("appimage_updater.core.update_operations.logger")
-    def test_log_processing_method_single(self, mock_logger):
+    def test_log_processing_method_single(self, mock_logger: Mock) -> None:
         """Test logging processing method for single app."""
         _log_processing_method([Mock()])
 
@@ -920,7 +923,7 @@ class TestLogFunctions:
         assert "sequential" in mock_logger.debug.call_args[0][0]
 
     @patch("appimage_updater.core.update_operations.logger")
-    def test_log_processing_method_multiple(self, mock_logger):
+    def test_log_processing_method_multiple(self, mock_logger: Mock) -> None:
         """Test logging processing method for multiple apps."""
         _log_processing_method([Mock(), Mock()])
 
@@ -932,7 +935,7 @@ class TestDisplayFunctions:
     """Tests for display functions."""
 
     @patch("appimage_updater.core.update_operations.console")
-    def test_display_check_verbose_info(self, mock_console):
+    def test_display_check_verbose_info(self, mock_console: Mock) -> None:
         """Test displaying verbose check info."""
         _display_check_verbose_info(["App1", "App2"], True, False, False, False, 2)
 
@@ -940,7 +943,7 @@ class TestDisplayFunctions:
 
     @patch("appimage_updater.core.update_operations.get_output_formatter")
     @patch("appimage_updater.core.update_operations.console")
-    def test_display_update_summary_single(self, mock_console, mock_get_formatter):
+    def test_display_update_summary_single(self, mock_console: Mock, mock_get_formatter: Mock) -> None:
         """Test displaying update summary for single update."""
         mock_get_formatter.return_value = None
         candidates = [Mock()]
@@ -952,7 +955,7 @@ class TestDisplayFunctions:
 
     @patch("appimage_updater.core.update_operations.get_output_formatter")
     @patch("appimage_updater.core.update_operations.console")
-    def test_display_update_summary_multiple(self, mock_console, mock_get_formatter):
+    def test_display_update_summary_multiple(self, mock_console: Mock, mock_get_formatter: Mock) -> None:
         """Test displaying update summary for multiple updates."""
         mock_get_formatter.return_value = None
         candidates = [Mock(), Mock()]
@@ -964,7 +967,7 @@ class TestDisplayFunctions:
 
     @patch("appimage_updater.core.update_operations.get_output_formatter")
     @patch("appimage_updater.core.update_operations.console")
-    def test_display_check_start_message(self, mock_console, mock_get_formatter):
+    def test_display_check_start_message(self, mock_console: Mock, mock_get_formatter: Mock) -> None:
         """Test displaying check start message."""
         mock_get_formatter.return_value = None
         apps = [Mock(), Mock()]
@@ -976,7 +979,7 @@ class TestDisplayFunctions:
 
     @patch("appimage_updater.core.update_operations.get_output_formatter")
     @patch("appimage_updater.core.update_operations.console")
-    def test_display_check_start_message_suppressed(self, mock_console, mock_get_formatter):
+    def test_display_check_start_message_suppressed(self, mock_console: Mock, mock_get_formatter: Mock) -> None:
         """Test suppressing check start message for JSON formatter."""
         mock_formatter = Mock()
         mock_formatter.__class__.__name__ = "JSONOutputFormatter"
@@ -988,7 +991,7 @@ class TestDisplayFunctions:
         mock_console.print.assert_not_called()
 
     @patch("appimage_updater.core.update_operations.get_output_formatter")
-    def test_handle_no_enabled_apps_with_formatter(self, mock_get_formatter):
+    def test_handle_no_enabled_apps_with_formatter(self, mock_get_formatter: Mock) -> None:
         """Test handling no enabled apps with formatter."""
         mock_formatter = Mock()
         mock_get_formatter.return_value = mock_formatter
@@ -999,7 +1002,7 @@ class TestDisplayFunctions:
 
     @patch("appimage_updater.core.update_operations.get_output_formatter")
     @patch("appimage_updater.core.update_operations.console")
-    def test_handle_no_enabled_apps_without_formatter(self, mock_console, mock_get_formatter):
+    def test_handle_no_enabled_apps_without_formatter(self, mock_console: Mock, mock_get_formatter: Mock) -> None:
         """Test handling no enabled apps without formatter."""
         mock_get_formatter.return_value = None
 
@@ -1012,21 +1015,21 @@ class TestHandleVerboseDisplay:
     """Tests for _handle_verbose_display function."""
 
     @patch("appimage_updater.core.update_operations._display_check_verbose_info")
-    def test_handle_verbose_display_enabled(self, mock_display):
+    def test_handle_verbose_display_enabled(self, mock_display: Mock) -> None:
         """Test verbose display when enabled."""
         _handle_verbose_display(True, ["App1"], False, False, False, False, 1)
 
         mock_display.assert_called_once()
 
     @patch("appimage_updater.core.update_operations._display_check_verbose_info")
-    def test_handle_verbose_display_disabled(self, mock_display):
+    def test_handle_verbose_display_disabled(self, mock_display: Mock) -> None:
         """Test verbose display when disabled."""
         _handle_verbose_display(False, ["App1"], False, False, False, False, 1)
 
         mock_display.assert_not_called()
 
     @patch("appimage_updater.core.update_operations._display_check_verbose_info")
-    def test_handle_verbose_display_no_names(self, mock_display):
+    def test_handle_verbose_display_no_names(self, mock_display: Mock) -> None:
         """Test verbose display with no app names."""
         _handle_verbose_display(True, None, False, False, False, False, 1)
 
@@ -1036,13 +1039,13 @@ class TestHandleVerboseDisplay:
 class TestConvertCheckResultsToDict:
     """Tests for _convert_check_results_to_dict function."""
 
-    def test_convert_empty_results(self):
+    def test_convert_empty_results(self) -> None:
         """Test converting empty results."""
         result = _convert_check_results_to_dict([])
 
         assert result == []
 
-    def test_convert_single_result(self):
+    def test_convert_single_result(self) -> None:
         """Test converting single result."""
         check_result = CheckResult(
             app_name="TestApp",
@@ -1058,12 +1061,9 @@ class TestConvertCheckResultsToDict:
         assert result[0]["Application"] == "TestApp"
         assert result[0]["Status"] == "Success"
 
-    def test_convert_multiple_results(self):
+    def test_convert_multiple_results(self) -> None:
         """Test converting multiple results."""
-        results = [
-            CheckResult(app_name=f"App{i}", success=True)
-            for i in range(3)
-        ]
+        results = [CheckResult(app_name=f"App{i}", success=True) for i in range(3)]
 
         result = _convert_check_results_to_dict(results)
 
@@ -1076,7 +1076,7 @@ class TestAsyncFunctions:
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._execute_check_workflow")
     @patch("appimage_updater.core.update_operations._log_check_start")
-    async def test_check_updates_success(self, mock_log, mock_execute):
+    async def test_check_updates_success(self, mock_log: Mock, mock_execute: Mock) -> None:
         """Test successful check updates."""
         mock_execute.return_value = True
 
@@ -1089,7 +1089,7 @@ class TestAsyncFunctions:
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._execute_check_workflow")
     @patch("appimage_updater.core.update_operations._log_check_start")
-    async def test_check_updates_with_output_formatter(self, mock_log, mock_execute):
+    async def test_check_updates_with_output_formatter(self, mock_log: Mock, mock_execute: Mock) -> None:
         """Test check updates with output formatter."""
         mock_execute.return_value = True
         mock_formatter = Mock()
@@ -1102,7 +1102,9 @@ class TestAsyncFunctions:
     @patch("appimage_updater.core.update_operations._execute_check_workflow")
     @patch("appimage_updater.core.update_operations._handle_check_errors")
     @patch("appimage_updater.core.update_operations._log_check_start")
-    async def test_check_updates_config_error(self, mock_log, mock_handle_error, mock_execute):
+    async def test_check_updates_config_error(
+        self, mock_log: Mock, mock_handle_error: Mock, mock_execute: Mock
+    ) -> None:
         """Test check updates with config error."""
         mock_execute.side_effect = ConfigLoadError("Config not found")
         mock_handle_error.return_value = None
@@ -1115,7 +1117,7 @@ class TestAsyncFunctions:
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._prepare_check_environment")
     @patch("appimage_updater.core.update_operations._execute_info_update_workflow")
-    async def test_execute_check_workflow_info_mode(self, mock_info, mock_prepare):
+    async def test_execute_check_workflow_info_mode(self, mock_info: Mock, mock_prepare: Mock) -> None:
         """Test execute check workflow in info mode."""
         mock_prepare.return_value = (Mock(), [Mock()], [])
 
@@ -1127,7 +1129,7 @@ class TestAsyncFunctions:
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._prepare_check_environment")
     @patch("appimage_updater.core.update_operations._execute_update_workflow")
-    async def test_execute_check_workflow_update_mode(self, mock_update, mock_prepare):
+    async def test_execute_check_workflow_update_mode(self, mock_update: Mock, mock_prepare: Mock) -> None:
         """Test execute check workflow in update mode."""
         mock_prepare.return_value = (Mock(), [Mock()], [])
 
@@ -1140,7 +1142,7 @@ class TestAsyncFunctions:
     @patch("appimage_updater.core.update_operations._load_and_filter_config")
     @patch("appimage_updater.core.update_operations._handle_verbose_display")
     @patch("appimage_updater.core.update_operations._log_app_summary")
-    async def test_prepare_check_environment_success(self, mock_log, mock_verbose, mock_load):
+    async def test_prepare_check_environment_success(self, mock_log: Mock, mock_verbose: Mock, mock_load: Mock) -> None:
         """Test preparing check environment successfully."""
         mock_config = Mock()
         mock_load.return_value = (mock_config, [Mock()], [])
@@ -1150,13 +1152,13 @@ class TestAsyncFunctions:
         )
 
         assert config == mock_config
-        assert len(enabled) == 1
-        assert len(disabled) == 0
+        assert len(enabled or []) == 1
+        assert len(disabled or []) == 0
 
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._load_and_filter_config")
     @patch("appimage_updater.core.update_operations._handle_no_enabled_apps")
-    async def test_prepare_check_environment_no_apps(self, mock_handle, mock_load):
+    async def test_prepare_check_environment_no_apps(self, mock_handle: Mock, mock_load: Mock) -> None:
         """Test preparing check environment with no apps."""
         mock_load.return_value = (Mock(), [], [])
 
@@ -1172,7 +1174,9 @@ class TestAsyncFunctions:
     @patch("appimage_updater.core.update_operations._perform_update_checks")
     @patch("appimage_updater.core.update_operations._display_check_results")
     @patch("appimage_updater.core.update_operations._handle_no_updates_scenario")
-    async def test_execute_update_workflow_no_updates(self, mock_no_updates, mock_display, mock_checks):
+    async def test_execute_update_workflow_no_updates(
+        self, mock_no_updates: Mock, mock_display: Mock, mock_checks: Mock
+    ) -> None:
         """Test execute update workflow with no updates."""
         mock_checks.return_value = []
 
@@ -1185,7 +1189,9 @@ class TestAsyncFunctions:
     @patch("appimage_updater.core.update_operations._display_check_results")
     @patch("appimage_updater.core.update_operations._filter_update_candidates")
     @patch("appimage_updater.core.update_operations._handle_downloads")
-    async def test_execute_update_workflow_with_updates(self, mock_downloads, mock_filter, mock_display, mock_checks):
+    async def test_execute_update_workflow_with_updates(
+        self, mock_downloads: Mock, mock_filter: Mock, mock_display: Mock, mock_checks: Mock
+    ) -> None:
         """Test execute update workflow with updates."""
         mock_checks.return_value = [Mock()]
         mock_filter.return_value = [Mock()]
@@ -1196,7 +1202,7 @@ class TestAsyncFunctions:
 
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._perform_dry_run_checks")
-    async def test_perform_update_checks_dry_run(self, mock_dry_run):
+    async def test_perform_update_checks_dry_run(self, mock_dry_run: Mock) -> None:
         """Test performing update checks in dry run mode."""
         mock_dry_run.return_value = []
 
@@ -1207,7 +1213,7 @@ class TestAsyncFunctions:
 
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._perform_real_update_checks")
-    async def test_perform_update_checks_real(self, mock_real):
+    async def test_perform_update_checks_real(self, mock_real: Mock) -> None:
         """Test performing real update checks."""
         mock_real.return_value = []
 
@@ -1220,18 +1226,20 @@ class TestAsyncFunctions:
     @patch("appimage_updater.core.update_operations.VersionChecker")
     @patch("appimage_updater.core.update_operations.get_output_formatter")
     @patch("appimage_updater.core.update_operations.console")
-    async def test_perform_dry_run_checks(self, mock_console, mock_formatter, mock_checker_class):
+    async def test_perform_dry_run_checks(
+        self, mock_console: Mock, mock_formatter: Mock, mock_checker_class: Mock
+    ) -> None:
         """Test performing dry run checks."""
         mock_formatter.return_value = None
         mock_checker = Mock()
         mock_checker._get_current_version.return_value = "1.0.0"
         mock_checker_class.return_value = mock_checker
-        
+
         app_config = ApplicationConfig(
             name="TestApp",
             source_type="github",
             url="https://github.com/test/repo",
-            download_dir="/tmp/test",
+            download_dir=Path("/tmp/test"),
             pattern=r".*\.AppImage$",
         )
 
@@ -1243,7 +1251,7 @@ class TestAsyncFunctions:
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations.VersionChecker")
     @patch("appimage_updater.core.update_operations.ConcurrentProcessor")
-    async def test_perform_real_update_checks(self, mock_processor_class, mock_checker_class):
+    async def test_perform_real_update_checks(self, mock_processor_class: Mock, mock_checker_class: Mock) -> None:
         """Test performing real update checks."""
         mock_processor = Mock()
         mock_processor.process_items_async = AsyncMock(return_value=[])
@@ -1259,7 +1267,9 @@ class TestAsyncFunctions:
     @patch("appimage_updater.core.update_operations._create_downloader")
     @patch("appimage_updater.core.update_operations.display_download_results")
     @patch("appimage_updater.core.update_operations.console")
-    async def test_handle_downloads_with_confirmation(self, mock_console, mock_display, mock_create, mock_prompt):
+    async def test_handle_downloads_with_confirmation(
+        self, mock_console: Mock, mock_display: Mock, mock_create: Mock, mock_prompt: Mock
+    ) -> None:
         """Test handling downloads with user confirmation."""
         mock_prompt.return_value = InteractiveResult.success_result()
         mock_downloader = Mock()
@@ -1275,7 +1285,9 @@ class TestAsyncFunctions:
     @patch("appimage_updater.core.update_operations._create_downloader")
     @patch("appimage_updater.core.update_operations.display_download_results")
     @patch("appimage_updater.core.update_operations.console")
-    async def test_handle_downloads_with_yes_flag(self, mock_console, mock_display, mock_create):
+    async def test_handle_downloads_with_yes_flag(
+        self, mock_console: Mock, mock_display: Mock, mock_create: Mock
+    ) -> None:
         """Test handling downloads with --yes flag."""
         mock_downloader = Mock()
         mock_downloader.download_updates = AsyncMock(return_value=[])
@@ -1287,7 +1299,7 @@ class TestAsyncFunctions:
 
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._prompt_for_download_confirmation")
-    async def test_handle_downloads_cancelled(self, mock_prompt):
+    async def test_handle_downloads_cancelled(self, mock_prompt: Mock) -> None:
         """Test handling downloads when user cancels."""
         mock_prompt.return_value = InteractiveResult.cancelled_result("user_cancelled")
 
@@ -1299,7 +1311,9 @@ class TestAsyncFunctions:
     @patch("appimage_updater.core.update_operations._setup_existing_files_rotation")
     @patch("appimage_updater.core.update_operations.get_output_formatter")
     @patch("appimage_updater.core.update_operations.console")
-    async def test_handle_no_updates_scenario(self, mock_console, mock_formatter, mock_rotation):
+    async def test_handle_no_updates_scenario(
+        self, mock_console: Mock, mock_formatter: Mock, mock_rotation: Mock
+    ) -> None:
         """Test handling no updates scenario."""
         mock_formatter.return_value = None
 
@@ -1310,18 +1324,18 @@ class TestAsyncFunctions:
 
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._process_app_rotation_setup")
-    async def test_setup_existing_files_rotation(self, mock_process):
+    async def test_setup_existing_files_rotation(self, mock_process: Mock) -> None:
         """Test setting up existing files rotation."""
         apps = [Mock(), Mock()]
 
-        await _setup_existing_files_rotation(Mock(), apps)
+        await _setup_existing_files_rotation(Mock(), apps)  # type: ignore[arg-type]
 
         assert mock_process.call_count == 2
 
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._should_skip_rotation_setup")
     @patch("appimage_updater.core.update_operations._setup_rotation_safely")
-    async def test_process_app_rotation_setup_skip(self, mock_setup, mock_skip):
+    async def test_process_app_rotation_setup_skip(self, mock_setup: Mock, mock_skip: Mock) -> None:
         """Test processing app rotation setup when should skip."""
         mock_skip.return_value = True
 
@@ -1331,7 +1345,9 @@ class TestAsyncFunctions:
 
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations.Downloader")
-    async def test_setup_rotation_for_file(self, mock_downloader_class, tmp_path, mock_app_config):
+    async def test_setup_rotation_for_file(
+        self, mock_downloader_class: Mock, tmp_path: Path, mock_app_config: ApplicationConfig
+    ) -> None:
         """Test setting up rotation for file."""
         mock_downloader = Mock()
         mock_downloader._handle_rotation = AsyncMock()
@@ -1347,7 +1363,7 @@ class TestAsyncFunctions:
 
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._setup_rotation_for_file")
-    async def test_setup_rotation_safely_success(self, mock_setup):
+    async def test_setup_rotation_safely_success(self, mock_setup: Mock) -> None:
         """Test setting up rotation safely with success."""
         await _setup_rotation_safely(Mock(), Path("/tmp/test"), Mock())
 
@@ -1356,7 +1372,7 @@ class TestAsyncFunctions:
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._setup_rotation_for_file")
     @patch("appimage_updater.core.update_operations.logger")
-    async def test_setup_rotation_safely_error(self, mock_logger, mock_setup):
+    async def test_setup_rotation_safely_error(self, mock_logger: Mock, mock_setup: Mock) -> None:
         """Test setting up rotation safely with error."""
         mock_setup.side_effect = OSError("Permission denied")
 
@@ -1370,7 +1386,7 @@ class TestDisplayCheckResults:
 
     @patch("appimage_updater.core.update_operations.get_output_formatter")
     @patch("appimage_updater.core.update_operations.display_check_results")
-    def test_display_check_results_no_formatter(self, mock_display, mock_get_formatter):
+    def test_display_check_results_no_formatter(self, mock_display: Mock, mock_get_formatter: Mock) -> None:
         """Test displaying check results without formatter."""
         mock_get_formatter.return_value = None
         results = [CheckResult(app_name="TestApp", success=True)]
@@ -1380,7 +1396,7 @@ class TestDisplayCheckResults:
         mock_display.assert_called_once()
 
     @patch("appimage_updater.core.update_operations.get_output_formatter")
-    def test_display_check_results_with_formatter(self, mock_get_formatter):
+    def test_display_check_results_with_formatter(self, mock_get_formatter: Mock) -> None:
         """Test displaying check results with formatter."""
         mock_formatter = Mock()
         mock_get_formatter.return_value = mock_formatter
@@ -1391,7 +1407,7 @@ class TestDisplayCheckResults:
         mock_formatter.print_check_results.assert_called_once()
 
     @patch("appimage_updater.core.update_operations.get_output_formatter")
-    def test_display_check_results_sorts_by_name(self, mock_get_formatter):
+    def test_display_check_results_sorts_by_name(self, mock_get_formatter: Mock) -> None:
         """Test that check results are sorted by app name."""
         mock_formatter = Mock()
         mock_get_formatter.return_value = mock_formatter
@@ -1416,7 +1432,7 @@ class TestLoadAndFilterConfig:
     @patch("appimage_updater.core.update_operations._load_config_with_fallback")
     @patch("appimage_updater.core.update_operations._get_all_apps_for_check")
     @patch("appimage_updater.core.update_operations._log_app_summary")
-    async def test_load_and_filter_config_success(self, mock_log, mock_get_apps, mock_load):
+    async def test_load_and_filter_config_success(self, mock_log: Mock, mock_get_apps: Mock, mock_load: Mock) -> None:
         """Test loading and filtering config successfully."""
         mock_config = Mock()
         mock_load.return_value = mock_config
@@ -1425,13 +1441,13 @@ class TestLoadAndFilterConfig:
         config, enabled, disabled = await _load_and_filter_config(None, None, None)
 
         assert config == mock_config
-        assert len(enabled) == 1
-        assert len(disabled) == 0
+        assert len(enabled or []) == 1
+        assert len(disabled or []) == 0
 
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._load_config_with_fallback")
     @patch("appimage_updater.core.update_operations._get_all_apps_for_check")
-    async def test_load_and_filter_config_apps_not_found(self, mock_get_apps, mock_load):
+    async def test_load_and_filter_config_apps_not_found(self, mock_get_apps: Mock, mock_load: Mock) -> None:
         """Test loading and filtering config when apps not found."""
         mock_load.return_value = Mock()
         mock_get_apps.return_value = None

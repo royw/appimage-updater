@@ -1,8 +1,10 @@
-# type: ignore
 """Unit tests for ui.display_utils.table_formatting module."""
+
+from __future__ import annotations
 
 from unittest.mock import Mock, patch
 
+from appimage_updater.core.models import CheckResult
 from appimage_updater.ui.display import (
     _add_url_if_requested,
     _create_error_row,
@@ -207,7 +209,7 @@ class TestDisplayCheckResults:
         mock_table.return_value = Mock()
         mock_row.return_value = ["TestApp", "Up to date", "1.0.0", "1.0.0", "Up to date"]
 
-        results = [Mock()]
+        results: list[CheckResult] = [Mock()]
         display_check_results(results, False)
 
         mock_table.assert_called_once_with(False)

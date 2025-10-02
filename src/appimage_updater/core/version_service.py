@@ -20,7 +20,7 @@ from appimage_updater.core.version_parser import VersionParser
 
 if TYPE_CHECKING:
     from appimage_updater.config.models import ApplicationConfig
-    from appimage_updater.repositories.models import Asset  # type: ignore[import-untyped]
+    from appimage_updater.core.models import Asset
 
 
 class VersionService:

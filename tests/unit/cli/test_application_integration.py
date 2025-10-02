@@ -1,4 +1,3 @@
-# type: ignore
 """CLI Application integration tests."""
 
 from __future__ import annotations
@@ -15,7 +14,7 @@ from appimage_updater.cli.application import AppImageUpdaterCLI, GlobalState
 class TestAppImageUpdaterCLI:
     """Test CLI application integration functionality."""
 
-    def test_init(self):
+    def test_init(self) -> None:
         """Test CLI application initialization."""
         cli = AppImageUpdaterCLI()
 
@@ -27,12 +26,12 @@ class TestAppImageUpdaterCLI:
         assert isinstance(cli.global_state, GlobalState)
         assert cli.console is not None
 
-    def test_global_state_initialization(self):
+    def test_global_state_initialization(self) -> None:
         """Test global state initialization."""
         state = GlobalState()
         assert state.debug is False
 
-    def test_register_handlers(self):
+    def test_register_handlers(self) -> None:
         """Test command handler registration."""
         cli = AppImageUpdaterCLI()
 
@@ -42,7 +41,7 @@ class TestAppImageUpdaterCLI:
         # Verify we have the expected number of commands (8 handlers)
         assert len(cli.app.registered_commands) >= 8
 
-    def test_register_handlers_with_exception(self):
+    def test_register_handlers_with_exception(self) -> None:
         """Test handler registration with exception handling."""
         with patch("appimage_updater.cli.application.CheckCommandHandler") as mock_handler_class:
             mock_handler = Mock()
@@ -53,7 +52,7 @@ class TestAppImageUpdaterCLI:
             with pytest.raises(Exception, match="Registration failed"):
                 AppImageUpdaterCLI()
 
-    def test_debug_state_management(self):
+    def test_debug_state_management(self) -> None:
         """Test debug state management."""
         cli = AppImageUpdaterCLI()
 
@@ -68,7 +67,7 @@ class TestAppImageUpdaterCLI:
         cli.global_state.debug = False
         assert cli.global_state.debug is False
 
-    def test_run_initialization(self):
+    def test_run_initialization(self) -> None:
         """Test CLI application run initialization."""
         cli = AppImageUpdaterCLI()
 
@@ -76,7 +75,7 @@ class TestAppImageUpdaterCLI:
         assert hasattr(cli, "run")
         assert callable(cli.run)
 
-    def test_exception_handling_setup(self):
+    def test_exception_handling_setup(self) -> None:
         """Test that exception handling is properly set up."""
         cli = AppImageUpdaterCLI()
 
@@ -89,7 +88,7 @@ class TestAppImageUpdaterCLI:
         assert "KeyboardInterrupt" in source
         assert "SystemExit" in source
 
-    def test_typer_app_configuration(self):
+    def test_typer_app_configuration(self) -> None:
         """Test Typer application configuration."""
         cli = AppImageUpdaterCLI()
 
@@ -98,7 +97,7 @@ class TestAppImageUpdaterCLI:
         assert cli.app.info.help == "AppImage update manager"
         assert cli.app.pretty_exceptions_enable is False
 
-    def test_console_initialization(self):
+    def test_console_initialization(self) -> None:
         """Test console initialization."""
         cli = AppImageUpdaterCLI()
 
@@ -107,7 +106,7 @@ class TestAppImageUpdaterCLI:
         # Console should be a Rich Console instance
         assert hasattr(cli.console, "print")
 
-    def test_handler_error_logging(self):
+    def test_handler_error_logging(self) -> None:
         """Test handler registration error logging."""
         with patch("appimage_updater.cli.application.logger") as mock_logger:
             with patch("appimage_updater.cli.application.CheckCommandHandler") as mock_handler_class:
@@ -124,7 +123,7 @@ class TestAppImageUpdaterCLI:
                 error_call = mock_logger.error.call_args[0][0]
                 assert "Failed to register command handler test_command" in error_call
 
-    def test_handler_success_logging(self):
+    def test_handler_success_logging(self) -> None:
         """Test successful handler registration logging."""
         with patch("appimage_updater.cli.application.logger") as mock_logger:
             AppImageUpdaterCLI()
