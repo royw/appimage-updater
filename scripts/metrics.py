@@ -89,7 +89,7 @@ class CoverageMetrics:
 class RiskMetrics:
     """Risk analysis metrics."""
 
-    high_risk_files: list[tuple[str, int, float, float]] = field(default_factory=list)
+    high_risk_files: list[tuple[str, int, float, float, int]] = field(default_factory=list)
 
 
 @dataclass
@@ -405,17 +405,20 @@ def gather_risk_metrics(complexity: ComplexityMetrics) -> RiskMetrics:
         with open("coverage.json") as f:
             data = json.load(f)
 
-        # Build file coverage map from JSON
+        # Build file coverage and SLOC map from JSON
         file_coverage = {}
+        file_sloc = {}
         files = data.get("files", {})
         for filepath, file_data in files.items():
             if "__pycache__" in filepath:
                 continue
             summary = file_data.get("summary", {})
             percent_covered = summary.get("percent_covered", 0)
+            num_statements = summary.get("num_statements", 0)
             # Normalize path for comparison
             normalized = filepath.replace("\\", "/")
             file_coverage[normalized] = percent_covered
+            file_sloc[normalized] = num_statements
 
         # Calculate risk scores
         ratios = []
@@ -425,8 +428,9 @@ def gather_risk_metrics(complexity: ComplexityMetrics) -> RiskMetrics:
                 normalized = f"src/appimage_updater/{normalized}"
 
             coverage = file_coverage.get(normalized, 0)
+            sloc = file_sloc.get(normalized, 0)
             risk_score = comp * (100 - coverage) / 100
-            ratios.append((normalized, comp, coverage, risk_score))
+            ratios.append((normalized, comp, coverage, risk_score, sloc))
 
         ratios.sort(key=lambda x: x[3], reverse=True)
         metrics.high_risk_files = ratios[:5]
@@ -516,8 +520,11 @@ def report_risk_metrics(metrics: RiskMetrics) -> None:
     """Display risk analysis metrics."""
     output("  Top 5 highest risk files (high complexity + low coverage):")
     if metrics.high_risk_files:
-        for filepath, complexity, coverage, risk_score in metrics.high_risk_files:
-            output(f"    {filepath:60s} (complexity: {complexity}, coverage: {coverage:.1f}%, risk: {risk_score:.1f})")
+        for filepath, complexity, coverage, risk_score, sloc in metrics.high_risk_files:
+            output(
+                f"    {filepath:60s} "
+                f"(complexity: {complexity}, coverage: {coverage:.1f}%, risk: {risk_score:.1f}, SLOC: {sloc})"
+            )
     else:
         output(f"    {Colors.YELLOW}N/A (requires coverage.xml and radon){Colors.NC}")
 
