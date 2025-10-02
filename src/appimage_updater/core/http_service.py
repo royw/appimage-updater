@@ -119,21 +119,27 @@ class GlobalHTTPClientImpl:
         """Synchronous cleanup for atexit."""
         if self._client:
             try:
-                # Try to close gracefully
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    # If loop is running, schedule cleanup
-                    loop.create_task(self.close())
-                else:
-                    # If no loop, run cleanup
-                    asyncio.run(self.close())
+                self._attempt_graceful_close()
             except Exception:
-                # Fallback: force close without async (best effort)
-                if hasattr(self._client, "_transport") and self._client._transport:
-                    with contextlib.suppress(Exception):
-                        # Only try sync close method to avoid runtime warnings
-                        if hasattr(self._client._transport, "close"):
-                            self._client._transport.close()
+                self._force_close_transport()
+
+    def _attempt_graceful_close(self) -> None:
+        """Attempt graceful async close."""
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # If loop is running, schedule cleanup
+            loop.create_task(self.close())
+        else:
+            # If no loop, run cleanup
+            asyncio.run(self.close())
+
+    def _force_close_transport(self) -> None:
+        """Force close transport without async (best effort fallback)."""
+        if hasattr(self._client, "_transport") and self._client._transport:
+            with contextlib.suppress(Exception):
+                # Only try sync close method to avoid runtime warnings
+                if hasattr(self._client._transport, "close"):
+                    self._client._transport.close()
 
 
 class AsyncClient:
