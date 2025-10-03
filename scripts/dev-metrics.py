@@ -46,6 +46,9 @@ class MetricsConfig:
     scripts_path: Path = Path("scripts")
     radon_path: str = "radon"
     pylint_path: str = "pylint"
+    test_pattern: str = "test_*.py"
+    test_type: str | None = None  # Optional subdirectory filter (e.g., "unit", "functional")
+    package: str = ""  # Top-level package name (auto-detected if empty)
 
 
 @dataclass
@@ -143,6 +146,33 @@ def split_command_path(command_path: str) -> list[str]:
         "uv run radon" -> ["uv", "run", "radon"]
     """
     return command_path.split()
+
+
+def detect_package_name(src_path: Path) -> str:
+    """Auto-detect package name from src directory or pyproject.toml.
+
+    Strategy:
+    1. If exactly one package directory (containing __init__.py) exists in src_path, use it
+    2. Otherwise, use snake_case of project.name from pyproject.toml
+    3. Fallback to "appimage_updater"
+    """
+    # Look for package directories (containing __init__.py) in src_path
+    if src_path.exists():
+        packages = [d.name for d in src_path.iterdir() if d.is_dir() and (d / "__init__.py").exists()]
+
+        # If exactly one package, use it
+        if len(packages) == 1:
+            return packages[0]
+
+    # Otherwise, use snake_case of project name from pyproject.toml
+    try:
+        with open("pyproject.toml", "rb") as f:
+            data = tomllib.load(f)
+            project_name = data.get("project", {}).get("name", "")
+            # Convert to snake_case
+            return project_name.replace("-", "_")
+    except Exception:
+        return "appimage_updater"  # fallback
 
 
 def load_complexity_exclusions() -> list[str]:
@@ -267,8 +297,16 @@ def gather_test_metrics(config: MetricsConfig) -> TestMetrics:
     test_paths = [Path(p.strip()) for p in str(config.tests_path).split()]
     test_files = []
     for test_path in test_paths:
-        if test_path.exists():
-            test_files.extend(test_path.rglob("test_*.py"))
+        # Apply test_type filter if specified
+        if config.test_type:
+            # If test_path already ends with the test_type, use it as-is; otherwise append
+            search_path = test_path if test_path.name == config.test_type else test_path / config.test_type
+        else:
+            search_path = test_path
+
+        if search_path.exists():
+            # Use configured test pattern
+            test_files.extend(search_path.rglob(config.test_pattern))
     metrics.total_test_files = len(test_files)
 
     # Test SLOC
@@ -277,15 +315,15 @@ def gather_test_metrics(config: MetricsConfig) -> TestMetrics:
         metrics.total_sloc += sum(1 for line in lines if line.strip() and not line.strip().startswith("#"))
 
     # Count test functions by type
-    _count_test_functions_by_type(metrics)
+    _count_test_functions_by_type(metrics, config)
 
     # Find untested files
-    _find_untested_files(metrics)
+    _find_untested_files(metrics, config)
 
     return metrics
 
 
-def _count_test_functions_by_type(metrics: TestMetrics) -> None:
+def _count_test_functions_by_type(metrics: TestMetrics, config: MetricsConfig) -> None:
     """Count test functions by test type."""
     for test_type, attr_name in [
         ("unit", "unit_tests"),
@@ -294,19 +332,21 @@ def _count_test_functions_by_type(metrics: TestMetrics) -> None:
         ("e2e", "e2e_tests"),
         ("regression", "regression_tests"),
     ]:
-        test_dir = Path("tests") / test_type
+        # Use first test path from config
+        test_paths = [Path(p.strip()) for p in str(config.tests_path).split()]
+        test_dir = test_paths[0] / test_type if test_paths else Path("tests") / test_type
         if test_dir.exists():
             count = 0
-            for f in test_dir.rglob("test_*.py"):
+            for f in test_dir.rglob(config.test_pattern):
                 content = f.read_text()
                 count += sum(1 for line in content.splitlines() if line.strip().startswith("def test_"))
             setattr(metrics, attr_name, count)
 
 
-def _find_untested_files(metrics: TestMetrics) -> None:
+def _find_untested_files(metrics: TestMetrics, config: MetricsConfig) -> None:
     """Find source files without corresponding tests."""
     src_files_with_sloc: dict[str, int] = {}
-    for src_file in Path("src").rglob("*.py"):
+    for src_file in config.src_path.rglob("*.py"):
         if "__pycache__" in str(src_file):
             continue
         lines = src_file.read_text().splitlines()
@@ -315,13 +355,18 @@ def _find_untested_files(metrics: TestMetrics) -> None:
             src_files_with_sloc[str(src_file)] = sloc
 
     tested_modules = set()
-    for test_file in Path("tests").rglob("test_*.py"):
-        content = test_file.read_text()
-        imports = re.findall(r"from appimage_updater\.(\S+) import", content)
-        imports += re.findall(r"import appimage_updater\.(\S+)", content)
-        for imp in imports:
-            module_path = imp.replace(".", "/")
-            tested_modules.add(f"src/appimage_updater/{module_path}.py")
+    test_paths = [Path(p.strip()) for p in str(config.tests_path).split()]
+    for test_path in test_paths:
+        if not test_path.exists():
+            continue
+        for test_file in test_path.rglob(config.test_pattern):
+            content = test_file.read_text()
+            # Use config.package for import matching
+            imports = re.findall(rf"from {config.package}\.(\S+) import", content)
+            imports += re.findall(rf"import {config.package}\.(\S+)", content)
+            for imp in imports:
+                module_path = imp.replace(".", "/")
+                tested_modules.add(f"{config.src_path}/{config.package}/{module_path}.py")
 
     untested: list[tuple[str, int]] = []
     excluded_files: list[str] = ["__init__.py", "__main__.py", "_version.py"]
@@ -682,19 +727,43 @@ def parse_arguments() -> MetricsConfig:
         type=str,
         help="Path to pylint executable (default: pylint or from pyproject.toml)",
     )
+    parser.add_argument(
+        "--test-pattern",
+        type=str,
+        help="Glob pattern for test files (default: test_*.py or from pyproject.toml)",
+    )
+    parser.add_argument(
+        "--test-type",
+        type=str,
+        help="Test type subdirectory filter (e.g., unit, functional, integration, e2e)",
+    )
+    parser.add_argument(
+        "--package",
+        type=str,
+        help="Top-level package name (auto-detected if not specified)",
+    )
 
     args = parser.parse_args()
 
     # Load config from pyproject.toml
     pyproject_config = load_config_from_pyproject()
 
+    # Detect package name if not provided
+    src_path = args.src or Path(pyproject_config.get("src-path", "src"))
+    package_name = args.package or pyproject_config.get("package", "")
+    if not package_name:
+        package_name = detect_package_name(src_path)
+
     # Build config with priority: CLI args > pyproject.toml > defaults
     config = MetricsConfig(
-        src_path=args.src or Path(pyproject_config.get("src-path", "src")),
+        src_path=src_path,
         tests_path=args.tests or Path(pyproject_config.get("tests-path", "tests")),
         scripts_path=args.scripts or Path(pyproject_config.get("scripts-path", "scripts")),
         radon_path=args.radon or pyproject_config.get("radon-path", "radon"),
         pylint_path=args.pylint or pyproject_config.get("pylint-path", "pylint"),
+        test_pattern=args.test_pattern or pyproject_config.get("test-pattern", "test_*.py"),
+        test_type=args.test_type or pyproject_config.get("test-type"),
+        package=package_name,
     )
 
     return config
