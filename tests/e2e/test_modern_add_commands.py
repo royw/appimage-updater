@@ -2,6 +2,7 @@
 """Modern E2E tests for add command with async HTTP architecture."""
 
 import json
+import os
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
@@ -45,8 +46,12 @@ class TestModernAddCommand:
         """Create async prerelease check mock."""
         return AsyncMock(return_value=False)
 
-    @pytest.mark.xfail(reason="Test isolation issue when running full suite with coverage - passes in e2e suite")
+    @pytest.mark.xfail(
+        reason="Test isolation issue when running with full test suite - passes when run individually or as e2e suite"
+    )
     @patch("httpx.AsyncClient")
+    @patch("appimage_updater.ui.cli.error_handling.get_repository_client")
+    @patch("appimage_updater.repositories.factory.get_repository_client_async")
     @patch("appimage_updater.repositories.factory.get_repository_client_with_probing_sync")
     @patch("appimage_updater.core.pattern_generator.generate_appimage_pattern_async")
     @patch("appimage_updater.core.pattern_generator.should_enable_prerelease")
@@ -55,6 +60,8 @@ class TestModernAddCommand:
         mock_prerelease,
         mock_pattern_gen,
         mock_repo_factory,
+        mock_repo_factory_async,
+        mock_error_handling_repo,
         mock_httpx_client,
         mock_async_repo_client,
         mock_async_pattern_gen,
@@ -94,7 +101,15 @@ class TestModernAddCommand:
         mock_repo.should_enable_prerelease.return_value = False
         mock_repo_factory.return_value = mock_repo
 
+        # Async factory needs to return an awaitable
+        async def async_repo_factory(*args, **kwargs):
+            return mock_repo
+        mock_repo_factory_async.side_effect = async_repo_factory
+
+        mock_error_handling_repo.return_value = mock_repo
+
         test_download_dir = tmp_path / "test-downloads"
+        test_download_dir.mkdir(parents=True, exist_ok=True)
 
         result = runner.invoke(
             app,
@@ -271,8 +286,12 @@ class TestModernAddCommand:
             or "Network connection error" in result.stderr
         )
 
-    @pytest.mark.xfail(reason="Test isolation issue when running full suite with coverage - passes in e2e suite")
+    @pytest.mark.xfail(
+        reason="Test isolation issue when running with full test suite - passes when run individually or as e2e suite"
+    )
     @patch("httpx.AsyncClient")
+    @patch("appimage_updater.ui.cli.error_handling.get_repository_client")
+    @patch("appimage_updater.repositories.factory.get_repository_client_async")
     @patch("appimage_updater.repositories.factory.get_repository_client_with_probing_sync")
     @patch("appimage_updater.core.pattern_generator.generate_appimage_pattern_async")
     @patch("appimage_updater.core.pattern_generator.should_enable_prerelease")
@@ -281,6 +300,8 @@ class TestModernAddCommand:
         mock_prerelease,
         mock_pattern_gen,
         mock_repo_factory,
+        mock_repo_factory_async,
+        mock_error_handling_repo,
         mock_httpx_client,
         mock_async_repo_client,
         mock_async_pattern_gen,
@@ -318,6 +339,17 @@ class TestModernAddCommand:
         mock_repo.repository_type = "github"
         mock_repo.should_enable_prerelease.return_value = False
         mock_repo_factory.return_value = mock_repo
+
+        # Async factory needs to return an awaitable
+        async def async_repo_factory(*args, **kwargs):
+            return mock_repo
+        mock_repo_factory_async.side_effect = async_repo_factory
+
+        mock_error_handling_repo.return_value = mock_repo
+
+        # Create the home Applications directory
+        home_apps_dir = Path(os.path.expanduser("~/Applications/HomeApp"))
+        home_apps_dir.mkdir(parents=True, exist_ok=True)
 
         result = runner.invoke(
             app,

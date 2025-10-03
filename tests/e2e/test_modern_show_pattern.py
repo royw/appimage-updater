@@ -105,9 +105,12 @@ class TestModernShowCommand:
 class TestModernPatternMatching:
     """Modern E2E tests for pattern matching functionality."""
 
-    @pytest.mark.xfail(reason="Test isolation issue when running full suite with coverage - passes in e2e suite")
+    @pytest.mark.xfail(
+        reason="Test isolation issue when running with full test suite - passes when run individually or as e2e suite"
+    )
     @patch("appimage_updater.repositories.github.client.httpx.AsyncClient")
     @patch("httpx.AsyncClient")
+    @patch("appimage_updater.repositories.factory.get_repository_client_async")
     @patch("appimage_updater.repositories.factory.get_repository_client_with_probing_sync")
     @patch("appimage_updater.core.pattern_generator.generate_appimage_pattern_async")
     @patch("appimage_updater.core.pattern_generator.should_enable_prerelease")
@@ -116,7 +119,9 @@ class TestModernPatternMatching:
         mock_prerelease: MagicMock,
         mock_pattern_gen: MagicMock,
         mock_repo_factory: MagicMock,
+        mock_repo_factory_async: MagicMock,
         mock_httpx_client: MagicMock,
+        mock_github_httpx_client: MagicMock,
         runner: CliRunner,
         temp_config_dir: Path,
         tmp_path: Path,
@@ -127,6 +132,11 @@ class TestModernPatternMatching:
         mock_httpx_client.return_value = mock_client_instance
         mock_httpx_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
         mock_httpx_client.return_value.__aexit__ = AsyncMock(return_value=None)
+
+        # Setup github-specific httpx mock
+        mock_github_httpx_client.return_value = mock_client_instance
+        mock_github_httpx_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
+        mock_github_httpx_client.return_value.__aexit__ = AsyncMock(return_value=None)
 
         # Setup async mocks properly
         mock_prerelease.return_value = False
@@ -148,7 +158,13 @@ class TestModernPatternMatching:
         mock_repo_client.should_enable_prerelease.return_value = False
         mock_repo_factory.return_value = mock_repo_client
 
+        # Async factory needs to return an awaitable
+        async def async_repo_factory(*args, **kwargs):
+            return mock_repo_client
+        mock_repo_factory_async.side_effect = async_repo_factory
+
         test_download_dir = tmp_path / "suffix-test"
+        test_download_dir.mkdir(parents=True, exist_ok=True)
 
         result = runner.invoke(
             app,
