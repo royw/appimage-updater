@@ -106,7 +106,7 @@ class TestModernPatternMatching:
     """Modern E2E tests for pattern matching functionality."""
 
     @pytest.mark.xfail(
-        reason="Test isolation issue when running with full test suite - passes when run individually or as e2e suite"
+        reason="Test uses @patch decorators which don't work with HTTP dependency injection. Needs rewrite."
     )
     @patch("appimage_updater.repositories.github.client.httpx.AsyncClient")
     @patch("httpx.AsyncClient")

@@ -49,7 +49,7 @@ class TestModernAddCommand:
         return AsyncMock(return_value=False)
 
     @pytest.mark.xfail(
-        reason="Test isolation issue when running with full test suite - passes when run individually or as e2e suite"
+        reason="Test uses @patch decorators which don't work with HTTP dependency injection. Needs rewrite."
     )
     @patch("httpx.AsyncClient")
     @patch("appimage_updater.ui.cli.error_handling.get_repository_client")
@@ -287,10 +287,14 @@ class TestModernAddCommand:
             or "already exists" in result.stderr
             or "Network connection error" in result.stdout
             or "Network connection error" in result.stderr
+            or "HTTP GET" in result.stdout  # New mock HTTP client error format
+            or "HTTP GET" in result.stderr
+            or "blocked in e2e tests" in result.stdout
+            or "blocked in e2e tests" in result.stderr
         )
 
     @pytest.mark.xfail(
-        reason="Test isolation issue when running with full test suite - passes when run individually or as e2e suite"
+        reason="Test uses @patch decorators which don't work with HTTP dependency injection. Needs rewrite."
     )
     @patch("httpx.AsyncClient")
     @patch("appimage_updater.ui.cli.error_handling.get_repository_client")
