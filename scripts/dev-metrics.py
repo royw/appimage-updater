@@ -735,7 +735,7 @@ def generate_report(metrics: ProjectMetrics) -> None:
 # ============================================================================
 
 
-def load_config_from_pyproject() -> dict[str, Any]:
+def load_config_from_pyproject() -> dict[str, str | list[str]]:
     """Load dev-metrics configuration from pyproject.toml."""
     try:
         with open("pyproject.toml", "rb") as f:
@@ -751,32 +751,32 @@ def parse_arguments() -> MetricsConfig:
     parser.add_argument(
         "--src",
         type=Path,
-        help="Path to source code directory (default: src or from pyproject.toml)",
+        help="Path(s) to source code directories (default: src or from pyproject.toml tool.dev-metrics.src-path)",
     )
     parser.add_argument(
         "--tests",
         type=Path,
-        help="Path to tests directory (default: tests or from pyproject.toml)",
+        help="Paths to tests directories (default: tests or from pyproject.toml tool.dev-metrics.tests-path)",
     )
     parser.add_argument(
         "--scripts",
         type=Path,
-        help="Path to scripts directory (default: scripts or from pyproject.toml)",
+        help="Path to scripts directory (default: scripts or from pyproject.toml tool.dev-metrics.scripts-path)",
     )
     parser.add_argument(
         "--radon",
         type=str,
-        help="Path to radon executable (default: radon or from pyproject.toml)",
+        help="Path to radon executable (default: radon or from pyproject.toml tool.dev-metrics.radon-path)",
     )
     parser.add_argument(
         "--pylint",
         type=str,
-        help="Path to pylint executable (default: pylint or from pyproject.toml)",
+        help="Path to pylint executable (default: pylint or from pyproject.toml tool.dev-metrics.pylint-path)",
     )
     parser.add_argument(
         "--pytest",
         type=str,
-        help="Path to pytest executable (default: pytest or from pyproject.toml)",
+        help="Path to pytest executable (default: pytest or from pyproject.toml tool.dev-metrics.pytest-path)",
     )
     parser.add_argument(
         "--test-pattern",
