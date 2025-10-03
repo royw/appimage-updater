@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import shutil
 import socket
+import sys
 import tempfile
 import threading
 
@@ -23,12 +24,16 @@ def pytest_configure(config: pytest.Config) -> None:
     """
     # Restore original httpx.AsyncClient for E2E tests that use @patch decorators
     try:
-        import httpx
 
-        if hasattr(httpx, "_original_AsyncClient"):
-            # Restore the original NOW so @patch decorators work when modules are imported
-            httpx.AsyncClient = httpx._original_AsyncClient
-    except ImportError:
+        # Get the cached httpx module from sys.modules (not a fresh import)
+        if "httpx" in sys.modules:
+            httpx = sys.modules["httpx"]
+
+            if hasattr(httpx, "_original_AsyncClient"):
+                # Restore the original NOW so @patch decorators work when modules are imported
+                httpx.AsyncClient = httpx._original_AsyncClient
+                print(f"[E2E conftest] Restored httpx.AsyncClient to: {httpx.AsyncClient}")  # noqa: T201
+    except (ImportError, KeyError):
         pass
 
 
@@ -317,15 +322,21 @@ def e2e_environment_with_mock_support(isolated_filesystem, request):
         env_type = "ci" if (is_ci or is_github_actions) else "local"
 
         # Temporarily restore original httpx.AsyncClient so @patch decorators can work
-        import httpx
+        import sys
 
-        # Don't restore the mock - keep the original for all E2E tests with mock support
-        if hasattr(httpx, "_original_AsyncClient") and not hasattr(httpx, "_e2e_restored"):
-            httpx.AsyncClient = httpx._original_AsyncClient
-            httpx._e2e_restored = True  # Mark that we've restored it
-            print(f"  Restored original httpx.AsyncClient: {httpx.AsyncClient}")  # noqa: T201
-        elif hasattr(httpx, "_e2e_restored"):
-            print("  httpx.AsyncClient already restored for E2E tests")  # noqa: T201
+        # Get the cached httpx module from sys.modules (not a fresh import)
+        if "httpx" in sys.modules:
+            httpx = sys.modules["httpx"]
+
+            # Don't restore the mock - keep the original for all E2E tests with mock support
+            if hasattr(httpx, "_original_AsyncClient") and not hasattr(httpx, "_e2e_restored"):
+                httpx.AsyncClient = httpx._original_AsyncClient
+                httpx._e2e_restored = True  # Mark that we've restored it
+                print(f"  Restored original httpx.AsyncClient: {httpx.AsyncClient}")  # noqa: T201
+            elif hasattr(httpx, "_e2e_restored"):
+                print("  httpx.AsyncClient already restored for E2E tests")  # noqa: T201
+            else:
+                print("  No _original_AsyncClient found to restore")  # noqa: T201
         else:
             print("  No global mock found, using original httpx.AsyncClient")  # noqa: T201
 
