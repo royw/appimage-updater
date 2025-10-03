@@ -13,7 +13,6 @@ Architecture:
 
 from __future__ import annotations
 
-import argparse
 from collections import defaultdict
 from dataclasses import dataclass, field
 import json
@@ -22,6 +21,8 @@ import re
 import subprocess
 import tomllib
 from typing import Any
+
+from custom_argparse import CustomArgumentParser
 
 
 # ANSI color codes
@@ -822,75 +823,124 @@ def as_paths(value: str | list[str]) -> list[Path]:
     return [Path(p) for p in value]
 
 
-def parse_arguments() -> MetricsConfig:
-    """Parse command line arguments and load configuration."""
-    parser = argparse.ArgumentParser(description="Generate project metrics summary")
+def parse_arguments() -> tuple[MetricsConfig, bool]:
+    """Parse command line arguments and load configuration.
+
+    Returns:
+        Tuple of (config, show_config_only)
+    """
+    parser = CustomArgumentParser(
+        description="Generate project metrics summary.\n\n"
+        "Provides a concise overview of project statistics including:\n"
+        "- Source code metrics (files, SLOC, complexity)\n"
+        "- Test code metrics (coverage, test counts)\n"
+        "- Code quality metrics (duplication, risk analysis)",
+        epilog="Examples:\n"
+        "  # Run with defaults from pyproject.toml:\n"
+        "  dev-metrics.py\n\n"
+        "  # Show resolved configuration without running:\n"
+        "  dev-metrics.py --show\n\n"
+        "  # Override source paths:\n"
+        "  dev-metrics.py --src src lib --tests tests\n\n"
+        "  # Specify custom test pattern:\n"
+        "  dev-metrics.py --test-pattern 'test_*.py' --test-type unit integration",
+        add_help=False,
+        allow_abbrev=False,
+    )
+    paths_group = parser.add_argument_group("Paths options", "Configure source and test directory locations")
+    tool_group = parser.add_argument_group("Tool options", "Specify paths to external analysis tools")
+    test_group = parser.add_argument_group("Test selection options", "Configure test discovery and filtering")
+    package_group = parser.add_argument_group("Package options", "Configure package detection and file exclusions")
+
     parser.add_argument(
+        "--show",
+        action="store_true",
+        help="Display resolved configuration from CLI args and pyproject.toml, then exit",
+    )
+    parser.add_argument("-h", "--help", action="help", help="Display this help message")
+    paths_group.add_argument(
         "--src",
         dest="src_paths",
         action="extend",
         nargs="+",
-        type=list,
-        help='Path(s) to source code directories (default: "src" or from pyproject.toml tool.dev-metrics.src-paths)',
+        metavar="DIR1[ DIR2 ...]",
+        default=["src"],
+        pyproject_key="tool.dev-metrics.src-paths",
+        help="Path(s) to source code directories",
     )
-    parser.add_argument(
+    paths_group.add_argument(
         "--tests",
         dest="tests_paths",
         action="extend",
         nargs="+",
-        type=list,
-        help='Paths to tests directories (default: "tests" or from pyproject.toml tool.dev-metrics.tests-paths)',
+        metavar="DIR1[ DIR2 ...]",
+        default=["tests"],
+        pyproject_key="tool.dev-metrics.tests-paths",
+        help="Path(s) to test directories",
     )
-    parser.add_argument(
+    tool_group.add_argument(
         "--radon",
         dest="radon_list",
         nargs="+",
-        type=list[str],
-        help='Path to radon executable (default: "radon" or from pyproject.toml tool.dev-metrics.radon-path)',
+        metavar="PATH1[ PATH2 ...]",
+        default=["radon"],
+        pyproject_key="tool.dev-metrics.radon-path",
+        help="Path to radon executable (for complexity analysis) - can specify multiple",
     )
-    parser.add_argument(
+    tool_group.add_argument(
         "--pylint",
         dest="pylint_list",
         nargs="+",
-        type=list[str],
-        help='Path to pylint executable (default: "pylint" or from pyproject.toml tool.dev-metrics.pylint-path)',
+        metavar="PATH1[ PATH2 ...]",
+        default=["pylint"],
+        pyproject_key="tool.dev-metrics.pylint-path",
+        help="Path to pylint executable (for code quality checks) - can specify multiple",
     )
-    parser.add_argument(
+    tool_group.add_argument(
         "--pytest",
         dest="pytest_list",
         nargs="+",
-        type=list[str],
-        help='Path to pytest executable (default: "pytest" or from pyproject.toml tool.dev-metrics.pytest-path)',
+        metavar="PATH1[ PATH2 ...]",
+        default=["pytest"],
+        pyproject_key="tool.dev-metrics.pytest-path",
+        help="Path to pytest executable (for test execution)",
     )
-    parser.add_argument(
+    test_group.add_argument(
         "--test-pattern",
         dest="test_pattern",
         type=str,
-        help='Glob pattern for test files (default: "test_*.py" or from pyproject.toml tool.dev-metrics.test-pattern)',
+        metavar="PATTERN",
+        default="test_*.py",
+        pyproject_key="tool.dev-metrics.test-pattern",
+        help="Glob pattern for discovering test files",
     )
-    parser.add_argument(
+    test_group.add_argument(
         "--test-type",
         dest="test_types",
         action="extend",
         nargs="+",
-        type=list[str],
-        help='Test type subdirectory filters (default: \"unit functional integration e2e\" '
-            'or from pyproject.toml tool.dev-metrics.test-type)',
+        metavar="TYPE1[ TYPE2 ...]",
+        default=["unit", "functional", "integration", "e2e"],
+        pyproject_key="tool.dev-metrics.test-type",
+        help="Test type subdirectory names to include",
     )
-    parser.add_argument(
+    package_group.add_argument(
         "--package",
-        type=str,
-        help="Top-level package name  from pyproject.toml tool.dev-metrics.package or auto-detected "
-            "or from pyproject.toml snake-case project.name",
+        dest="package",
+        metavar="NAME",
+        default="",
+        pyproject_key="tool.dev-metrics.package",
+        help="Top-level package name (auto-detected from pyproject.toml if not specified)",
     )
-    parser.add_argument(
+    package_group.add_argument(
         "--excluded-files",
         dest="excluded_files",
         action="extend",
         nargs="+",
-        type=list[str],
-        help="Comma-separated list of file basenames to exclude from untested files report "
-        "(default: __init__.py,__main__.py,_version.py or from pyproject.toml) tool.dev-metrics.excluded-files",
+        metavar="FILE1[ FILE2 ...]",
+        default=["__init__.py", "__main__.py", "_version.py"],
+        pyproject_key="tool.dev-metrics.excluded-files",
+        help="File basenames to exclude from untested files report",
     )
 
     args = parser.parse_args()
@@ -899,7 +949,11 @@ def parse_arguments() -> MetricsConfig:
     pyproject_config = load_config_from_pyproject()
 
     # Detect package name if not provided
-    src_paths = args.src_paths or as_paths(pyproject_config.get("src-paths", "src"))
+    if args.src_paths:
+        src_paths = [Path(p) for p in args.src_paths]
+    else:
+        src_paths = as_paths(pyproject_config.get("src-paths", "src"))
+
     package_name = args.package or as_str(pyproject_config.get("package", ""))
     if not package_name:
         package_name = detect_package_name(src_paths)
@@ -907,32 +961,93 @@ def parse_arguments() -> MetricsConfig:
     # Parse excluded files (comma-separated string to list)
     excluded_files = None
     if args.excluded_files:
-        excluded_files = as_list(args.excluded_files.split(","))
+        excluded_files = as_list(args.excluded_files)
     elif "excluded-files" in pyproject_config:
         excluded_files = as_list(pyproject_config.get("excluded-files", ""))
     if excluded_files is None:
         excluded_files = ["__init__.py", "__main__.py", "_version.py"]
 
     # Build config with priority: CLI args > pyproject.toml > defaults
+    if args.tests_paths:
+        tests_paths = [Path(p) for p in args.tests_paths]
+    else:
+        tests_paths = as_paths(pyproject_config.get("tests-paths", ["tests"]))
+
+    # Tool paths: CLI args > pyproject.toml > defaults
+    # Check if CLI arg was explicitly provided (not just the default)
+    if args.radon_list != ["radon"]:
+        radon_list = args.radon_list
+    elif "radon-path" in pyproject_config:
+        radon_list = as_list(pyproject_config.get("radon-path"))
+    else:
+        radon_list = ["radon"]
+
+    if args.pylint_list != ["pylint"]:
+        pylint_list = args.pylint_list
+    elif "pylint-path" in pyproject_config:
+        pylint_list = as_list(pyproject_config.get("pylint-path"))
+    else:
+        pylint_list = ["pylint"]
+
+    if args.pytest_list != ["pytest"]:
+        pytest_list = args.pytest_list
+    elif "pytest-path" in pyproject_config:
+        pytest_list = as_list(pyproject_config.get("pytest-path"))
+    else:
+        pytest_list = ["pytest"]
+
     config = MetricsConfig(
         src_paths=src_paths,
-        tests_paths=args.tests_paths or as_paths(pyproject_config.get("tests-paths", ["tests"])),
-        radon_list=args.radon_list or as_list(pyproject_config.get("radon-path", "radon")),
-        pylint_list=args.pylint_list or as_list(pyproject_config.get("pylint-path", "pylint")),
-        pytest_list=args.pytest_list or as_list(pyproject_config.get("pytest-path", "pytest")),
+        tests_paths=tests_paths,
+        radon_list=radon_list,
+        pylint_list=pylint_list,
+        pytest_list=pytest_list,
         test_pattern=args.test_pattern or as_str(pyproject_config.get("test-pattern", "test_*.py")),
         test_types=args.test_types or as_list(pyproject_config.get("test-type", [])),
         package=package_name,
         excluded_files=excluded_files,
     )
 
-    return config
+    return config, args.show
+
+
+def show_config(config: MetricsConfig) -> None:
+    """Display the resolved configuration."""
+    output_section_header("=== Resolved Configuration ===")
+
+    output(f"{Colors.BOLD}Source Paths:{Colors.NC}")
+    for path in config.src_paths:
+        output(f"  - {path}")
+
+    output(f"\n{Colors.BOLD}Test Paths:{Colors.NC}")
+    for path in config.tests_paths:
+        output(f"  - {path}")
+
+    output(f"\n{Colors.BOLD}Tool Commands:{Colors.NC}")
+    output(f"  Radon:  {' '.join(config.radon_list)}")
+    output(f"  Pylint: {' '.join(config.pylint_list)}")
+    output(f"  Pytest: {' '.join(config.pytest_list)}")
+
+    output(f"\n{Colors.BOLD}Test Configuration:{Colors.NC}")
+    output(f"  Pattern:    {config.test_pattern}")
+    output(f"  Test Types: {', '.join(config.test_types) if config.test_types else 'All'}")
+
+    output(f"\n{Colors.BOLD}Package Configuration:{Colors.NC}")
+    output(f"  Package Name:    {config.package}")
+    output(f"  Excluded Files:  {', '.join(config.excluded_files)}")
+
+    output("")
 
 
 def main() -> None:
     """Main entry point for metrics script."""
     # Load configuration
-    config = parse_arguments()
+    config, show_only = parse_arguments()
+
+    # If --show flag is set, display config and exit
+    if show_only:
+        show_config(config)
+        return
 
     # Phase 1: Gather all data
     metrics = gather_all_metrics(config)
