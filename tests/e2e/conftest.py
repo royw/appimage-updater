@@ -14,6 +14,7 @@ import threading
 import pytest
 from typer.testing import CliRunner
 
+from appimage_updater.core.http_service import reset_http_client_factory, set_http_client_factory
 from appimage_updater.core.models import Asset, Release
 
 
@@ -577,3 +578,63 @@ def print_test_info(request):
         print("fixture: e2e_environment_with_mock_support")
 
     yield
+
+
+class MockHTTPClient:
+    """Mock HTTP client for testing that blocks network calls."""
+
+    def __init__(self, **kwargs):
+        """Initialize mock client."""
+        self.kwargs = kwargs
+        self._responses = {}
+
+    async def __aenter__(self):
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit."""
+        pass
+
+    async def get(self, url: str, **kwargs):
+        """Mock GET request."""
+        raise RuntimeError(
+            f"HTTP GET to {url} blocked in e2e tests. "
+            "Use proper mocks with @patch decorators or configure mock responses."
+        )
+
+    async def post(self, url: str, **kwargs):
+        """Mock POST request."""
+        raise RuntimeError(
+            f"HTTP POST to {url} blocked in e2e tests. "
+            "Use proper mocks with @patch decorators or configure mock responses."
+        )
+
+    async def put(self, url: str, **kwargs):
+        """Mock PUT request."""
+        raise RuntimeError(
+            f"HTTP PUT to {url} blocked in e2e tests. "
+            "Use proper mocks with @patch decorators or configure mock responses."
+        )
+
+    async def delete(self, url: str, **kwargs):
+        """Mock DELETE request."""
+        raise RuntimeError(
+            f"HTTP DELETE to {url} blocked in e2e tests. "
+            "Use proper mocks with @patch decorators or configure mock responses."
+        )
+
+
+@pytest.fixture(autouse=True, scope="function")
+def mock_http_client():
+    """Automatically inject mock HTTP client for all e2e tests."""
+    def mock_factory(**kwargs):
+        return MockHTTPClient(**kwargs)
+
+    # Inject the mock factory
+    set_http_client_factory(mock_factory)
+
+    yield
+
+    # Reset to production behavior
+    reset_http_client_factory()

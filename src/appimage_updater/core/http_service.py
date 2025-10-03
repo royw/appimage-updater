@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import atexit
+from collections.abc import Callable
 import contextlib
 from functools import lru_cache
 import time
@@ -12,6 +13,9 @@ from typing import Any
 import httpx
 
 from .http_trace import getHTTPTrace
+
+# Global HTTP client factory for dependency injection
+_http_client_factory: Callable[..., Any] | None = None
 
 
 class TracingAsyncClient:
@@ -198,4 +202,25 @@ def get_http_client(**kwargs: Any) -> AsyncClient:
     Returns:
         AsyncClient instance that uses the global client with connection pooling
     """
+    # Use injected factory if available (for testing)
+    if _http_client_factory is not None:
+        return _http_client_factory(**kwargs)
+
+    # Otherwise use the real AsyncClient
     return AsyncClient(**kwargs)
+
+
+def set_http_client_factory(factory: Callable[..., Any] | None) -> None:
+    """Set custom HTTP client factory (mainly for testing).
+
+    Args:
+        factory: A callable that returns an HTTP client, or None to reset to default
+    """
+    global _http_client_factory
+    _http_client_factory = factory
+
+
+def reset_http_client_factory() -> None:
+    """Reset HTTP client factory to default (production) behavior."""
+    global _http_client_factory
+    _http_client_factory = None
