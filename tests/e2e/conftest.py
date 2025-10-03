@@ -17,6 +17,9 @@ from typer.testing import CliRunner
 from appimage_updater.core.http_service import reset_http_client_factory, set_http_client_factory
 from appimage_updater.core.models import Asset, Release
 
+# Export MockHTTPResponse for use in tests
+__all__ = ["MockHTTPResponse", "MockHTTPClient"]
+
 
 def pytest_configure(config: pytest.Config) -> None:
     """Configure E2E tests to restore original httpx.AsyncClient.
@@ -580,6 +583,25 @@ def print_test_info(request):
     yield
 
 
+class MockHTTPResponse:
+    """Mock HTTP response."""
+
+    def __init__(self, status_code: int = 200, json_data=None, text: str = ""):
+        """Initialize mock response."""
+        self.status_code = status_code
+        self._json_data = json_data or []
+        self.text = text
+
+    async def json(self):
+        """Return JSON data."""
+        return self._json_data
+
+    async def raise_for_status(self):
+        """Raise for HTTP errors."""
+        if self.status_code >= 400:
+            raise RuntimeError(f"HTTP {self.status_code}")
+
+
 class MockHTTPClient:
     """Mock HTTP client for testing that blocks network calls."""
 
@@ -587,6 +609,36 @@ class MockHTTPClient:
         """Initialize mock client."""
         self.kwargs = kwargs
         self._responses = {}
+        self._default_response = None
+
+    def configure_response(self, url_pattern: str, response: MockHTTPResponse):
+        """Configure a response for a URL pattern."""
+        self._responses[url_pattern] = response
+
+    def set_default_response(self, response: MockHTTPResponse):
+        """Set default response for unconfigured URLs."""
+        self._default_response = response
+
+    def _get_response(self, url: str) -> MockHTTPResponse:
+        """Get configured response for URL."""
+        # Check for exact match first
+        if url in self._responses:
+            return self._responses[url]
+
+        # Check for pattern matches
+        for pattern, response in self._responses.items():
+            if pattern in url:
+                return response
+
+        # Use default if configured
+        if self._default_response:
+            return self._default_response
+
+        # Otherwise block the call
+        raise RuntimeError(
+            f"HTTP request to {url} blocked in e2e tests. "
+            "Configure mock responses using MockHTTPClient.configure_response()"
+        )
 
     async def __aenter__(self):
         """Async context manager entry."""
@@ -598,43 +650,36 @@ class MockHTTPClient:
 
     async def get(self, url: str, **kwargs):
         """Mock GET request."""
-        raise RuntimeError(
-            f"HTTP GET to {url} blocked in e2e tests. "
-            "Use proper mocks with @patch decorators or configure mock responses."
-        )
+        return self._get_response(url)
 
     async def post(self, url: str, **kwargs):
         """Mock POST request."""
-        raise RuntimeError(
-            f"HTTP POST to {url} blocked in e2e tests. "
-            "Use proper mocks with @patch decorators or configure mock responses."
-        )
+        return self._get_response(url)
 
     async def put(self, url: str, **kwargs):
         """Mock PUT request."""
-        raise RuntimeError(
-            f"HTTP PUT to {url} blocked in e2e tests. "
-            "Use proper mocks with @patch decorators or configure mock responses."
-        )
+        return self._get_response(url)
 
     async def delete(self, url: str, **kwargs):
         """Mock DELETE request."""
-        raise RuntimeError(
-            f"HTTP DELETE to {url} blocked in e2e tests. "
-            "Use proper mocks with @patch decorators or configure mock responses."
-        )
+        return self._get_response(url)
 
 
 @pytest.fixture(autouse=True, scope="function")
 def mock_http_client():
     """Automatically inject mock HTTP client for all e2e tests."""
+    # Create a shared mock client instance that tests can configure
+    shared_mock = MockHTTPClient()
+
     def mock_factory(**kwargs):
-        return MockHTTPClient(**kwargs)
+        # Return the same instance so tests can configure it
+        return shared_mock
 
     # Inject the mock factory
     set_http_client_factory(mock_factory)
 
-    yield
+    # Yield the mock so tests can configure it
+    yield shared_mock
 
     # Reset to production behavior
     reset_http_client_factory()

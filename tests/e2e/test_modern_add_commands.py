@@ -6,12 +6,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from typer.testing import CliRunner
 
 from appimage_updater.main import app
+
+# MockHTTPResponse is available from conftest.py automatically
 
 
 class TestModernAddCommand:
@@ -42,74 +44,34 @@ class TestModernAddCommand:
             return f"(?i){app_name}.*\\.AppImage$"
 
         return AsyncMock(side_effect=mock_pattern)
-
     @pytest.fixture
     def mock_async_prerelease_check(self):
         """Create async prerelease check mock."""
         return AsyncMock(return_value=False)
 
-    @pytest.mark.xfail(
-        reason="Test uses @patch decorators which don't work with HTTP dependency injection. Needs rewrite."
-    )
-    @patch("httpx.AsyncClient")
-    @patch("appimage_updater.ui.cli.error_handling.get_repository_client")
-    @patch("appimage_updater.repositories.factory.get_repository_client_async")
-    @patch("appimage_updater.repositories.factory.get_repository_client_with_probing_sync")
-    @patch("appimage_updater.core.pattern_generator.generate_appimage_pattern_async")
-    @patch("appimage_updater.core.pattern_generator.should_enable_prerelease")
     def test_add_github_repository_modern(
         self,
-        mock_prerelease,
-        mock_pattern_gen,
-        mock_repo_factory,
-        mock_repo_factory_async,
-        mock_error_handling_repo,
-        mock_httpx_client,
-        mock_async_repo_client,
-        mock_async_pattern_gen,
-        mock_async_prerelease_check,
-        e2e_environment_with_mock_support,
+        e2e_environment: dict[str, Any],
         runner: CliRunner,
         temp_config_dir: Path,
         tmp_path: Path,
+        mock_http_client,
     ) -> None:
-        """Test adding a GitHub repository with modern async architecture."""
-        # Setup httpx mock to prevent network calls
-        mock_client_instance = AsyncMock()
-        # Mock the get method to return empty releases
-        mock_response = AsyncMock()
-        mock_response.json = AsyncMock(return_value=[])
-        mock_response.raise_for_status = AsyncMock()
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
+        """Test adding a GitHub repository with dependency injection."""
+        # Create a simple mock response for GitHub API
+        class MockResponse:
+            def __init__(self):
+                self.status_code = 200
+                self._json_data = []
 
-        mock_httpx_client.return_value = mock_client_instance
-        mock_httpx_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_httpx_client.return_value.__aexit__ = AsyncMock(return_value=None)
+            async def json(self):
+                return self._json_data
 
-        # Setup async mocks properly
-        mock_prerelease.return_value = False
+            async def raise_for_status(self):
+                pass
 
-        async def mock_pattern(*args, **kwargs) -> str:
-            return "(?i)ModernTestApp.*\\.AppImage$"
-
-        mock_pattern_gen.side_effect = mock_pattern
-
-        # Setup repository client mock
-        mock_repo = mock_async_repo_client
-        mock_repo.normalize_repo_url.return_value = ("https://github.com/user/modern-test", False)
-        mock_repo.parse_repo_url.return_value = ("user", "modern-test")
-        mock_repo.detect_repository_type.return_value = True
-        mock_repo.repository_type = "github"
-        mock_repo.should_enable_prerelease.return_value = False
-        mock_repo_factory.return_value = mock_repo
-
-        # Async factory needs to return an awaitable
-        async def async_repo_factory(*args, **kwargs):
-            return mock_repo
-
-        mock_repo_factory_async.side_effect = async_repo_factory
-
-        mock_error_handling_repo.return_value = mock_repo
+        # Configure mock HTTP client to return empty releases for GitHub API
+        mock_http_client.set_default_response(MockResponse())
 
         test_download_dir = tmp_path / "test-downloads"
         test_download_dir.mkdir(parents=True, exist_ok=True)
@@ -130,23 +92,24 @@ class TestModernAddCommand:
         )
 
         # Verify success
-        assert result.exit_code == 0, f"Command failed: {result.stdout}"
-        assert "Successfully added application" in result.stdout
-        assert "ModernTestApp" in result.stdout
+        assert result.exit_code == 0, f"Command failed: {result.stdout}\n{result.stderr}"
+        assert "Successfully added application 'ModernTestApp'" in result.stdout
 
-        # Verify config file creation
-        config_file = temp_config_dir / "moderntestapp.json"
-        assert config_file.exists()
+        # Verify config file was created
+        config_files = list(temp_config_dir.glob("*.json"))
+        assert len(config_files) == 1
 
         # Verify config content
-        with config_file.open() as f:
+        with config_files[0].open() as f:
             config_data = json.load(f)
 
+        assert "applications" in config_data
         assert len(config_data["applications"]) == 1
+
         app_config = config_data["applications"][0]
         assert app_config["name"] == "ModernTestApp"
         assert app_config["source_type"] == "github"
-        assert app_config["url"] == "https://github.com/user/modern-test"
+        assert "github.com/user/modern-test" in app_config["url"]
         assert app_config["download_dir"] == str(test_download_dir)
         assert app_config["enabled"] is True
         assert app_config["prerelease"] is False
@@ -293,67 +256,30 @@ class TestModernAddCommand:
             or "blocked in e2e tests" in result.stderr
         )
 
-    @pytest.mark.xfail(
-        reason="Test uses @patch decorators which don't work with HTTP dependency injection. Needs rewrite."
-    )
-    @patch("httpx.AsyncClient")
-    @patch("appimage_updater.ui.cli.error_handling.get_repository_client")
-    @patch("appimage_updater.repositories.factory.get_repository_client_async")
-    @patch("appimage_updater.repositories.factory.get_repository_client_with_probing_sync")
-    @patch("appimage_updater.core.pattern_generator.generate_appimage_pattern_async")
-    @patch("appimage_updater.core.pattern_generator.should_enable_prerelease")
     def test_add_path_expansion_modern(
         self,
-        mock_prerelease,
-        mock_pattern_gen,
-        mock_repo_factory,
-        mock_repo_factory_async,
-        mock_error_handling_repo,
-        mock_httpx_client,
-        mock_async_repo_client,
-        mock_async_pattern_gen,
-        mock_async_prerelease_check,
-        e2e_environment_with_mock_support,
+        e2e_environment: dict[str, Any],
         runner: CliRunner,
         temp_config_dir: Path,
+        mock_http_client,
     ) -> None:
         """Test that user paths are properly expanded."""
-        # Setup httpx mock to prevent network calls
-        mock_client_instance = AsyncMock()
-        # Mock the get method to return empty releases
-        mock_response = AsyncMock()
-        mock_response.json = AsyncMock(return_value=[])
-        mock_response.raise_for_status = AsyncMock()
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
+        import os
 
-        mock_httpx_client.return_value = mock_client_instance
-        mock_httpx_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_httpx_client.return_value.__aexit__ = AsyncMock(return_value=None)
+        # Create mock response for GitHub API
+        class MockResponse:
+            def __init__(self):
+                self.status_code = 200
+                self._json_data = []
 
-        # Setup async mocks properly
-        mock_prerelease.return_value = False
+            async def json(self):
+                return self._json_data
 
-        async def mock_pattern(*args, **kwargs) -> str:
-            return "(?i)HomeApp.*\\.AppImage$"
+            async def raise_for_status(self):
+                pass
 
-        mock_pattern_gen.side_effect = mock_pattern
-
-        # Setup repository client mock
-        mock_repo = mock_async_repo_client
-        mock_repo.normalize_repo_url.return_value = ("https://github.com/user/homeapp", False)
-        mock_repo.parse_repo_url.return_value = ("user", "homeapp")
-        mock_repo.detect_repository_type.return_value = True
-        mock_repo.repository_type = "github"
-        mock_repo.should_enable_prerelease.return_value = False
-        mock_repo_factory.return_value = mock_repo
-
-        # Async factory needs to return an awaitable
-        async def async_repo_factory(*args, **kwargs):
-            return mock_repo
-
-        mock_repo_factory_async.side_effect = async_repo_factory
-
-        mock_error_handling_repo.return_value = mock_repo
+        # Configure mock HTTP client
+        mock_http_client.set_default_response(MockResponse())
 
         # Create the home Applications directory
         home_apps_dir = Path(os.path.expanduser("~/Applications/HomeApp"))

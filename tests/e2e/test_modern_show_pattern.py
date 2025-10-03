@@ -105,64 +105,29 @@ class TestModernShowCommand:
 class TestModernPatternMatching:
     """Modern E2E tests for pattern matching functionality."""
 
-    @pytest.mark.xfail(
-        reason="Test uses @patch decorators which don't work with HTTP dependency injection. Needs rewrite."
-    )
-    @patch("appimage_updater.repositories.github.client.httpx.AsyncClient")
-    @patch("httpx.AsyncClient")
-    @patch("appimage_updater.repositories.factory.get_repository_client_async")
-    @patch("appimage_updater.repositories.factory.get_repository_client_with_probing_sync")
-    @patch("appimage_updater.core.pattern_generator.generate_appimage_pattern_async")
-    @patch("appimage_updater.core.pattern_generator.should_enable_prerelease")
     def test_pattern_matching_with_suffixes(
         self,
-        e2e_environment, mock_prerelease: MagicMock,
-        mock_pattern_gen: MagicMock,
-        mock_repo_factory: MagicMock,
-        mock_repo_factory_async: MagicMock,
-        mock_httpx_client: MagicMock,
-        mock_github_httpx_client: MagicMock,
+        e2e_environment,
         runner: CliRunner,
         temp_config_dir: Path,
         tmp_path: Path,
+        mock_http_client,
     ) -> None:
         """Test pattern matching handles various AppImage suffixes correctly."""
-        # Setup httpx mock to prevent network calls
-        mock_client_instance = AsyncMock()
-        mock_httpx_client.return_value = mock_client_instance
-        mock_httpx_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_httpx_client.return_value.__aexit__ = AsyncMock(return_value=None)
+        # Create mock response for GitHub API
+        class MockResponse:
+            def __init__(self):
+                self.status_code = 200
+                self._json_data = []
 
-        # Setup github-specific httpx mock
-        mock_github_httpx_client.return_value = mock_client_instance
-        mock_github_httpx_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_github_httpx_client.return_value.__aexit__ = AsyncMock(return_value=None)
+            async def json(self):
+                return self._json_data
 
-        # Setup async mocks properly
-        mock_prerelease.return_value = False
+            async def raise_for_status(self):
+                pass
 
-        # Mock pattern generation to include suffix handling
-        async def mock_pattern_with_suffixes(*args: Any) -> str:
-            app_name = args[0] if args else "SuffixApp"
-            # Pattern includes suffix handling for .current and .old files
-            return f"(?i)^{app_name}.*\\.AppImage(\\.(current|old))?$"
-
-        mock_pattern_gen.side_effect = mock_pattern_with_suffixes
-
-        # Setup repository client mock
-        mock_repo_client = AsyncMock()
-        mock_repo_client.normalize_repo_url.return_value = ("https://github.com/user/suffixapp", False)
-        mock_repo_client.parse_repo_url.return_value = ("user", "suffixapp")
-        mock_repo_client.detect_repository_type.return_value = True
-        mock_repo_client.repository_type = "github"
-        mock_repo_client.should_enable_prerelease.return_value = False
-        mock_repo_factory.return_value = mock_repo_client
-
-        # Async factory needs to return an awaitable
-        async def async_repo_factory(*args, **kwargs):
-            return mock_repo_client
-
-        mock_repo_factory_async.side_effect = async_repo_factory
+        # Configure mock HTTP client
+        mock_http_client.set_default_response(MockResponse())
 
         test_download_dir = tmp_path / "suffix-test"
         test_download_dir.mkdir(parents=True, exist_ok=True)
