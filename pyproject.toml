@@ -228,3 +228,62 @@ dev = [
     "trio>=0.30.0",
     "version-bumper>=0.1.2",
 ]
+
+[tool.deadcode]
+# Functions/methods to ignore - used in testing infrastructure or by decorators
+ignore-names = [
+    # CLI commands (decorated with @app.command)
+    "main",
+    "main_callback",
+    "check",
+    "edit",
+    "list_apps",
+    "show",
+    "repository",
+    "add",
+    "remove",
+    "config",
+    # Pydantic validators (decorated with @field_validator)
+    "validate_pattern",
+    "validate_download_dir",
+    "validate_symlink_path",
+    "model_post_init",
+    "validate_paths",
+    "apply_global_defaults_to_config",
+    # Pydantic model fields
+    "checked_at",
+    "expected",
+    "actual",
+    "duration_seconds",
+    "message",
+    "timestamp",
+    "codename",
+    "distribution_family",
+    # Output formatter protocol methods
+    "print_progress",
+    "print_success",
+    "print_error",
+    "print_warning",
+    "print_info",
+    "print_config_settings",
+    # Internal utility functions
+    "generate_pattern_from_releases",
+    "_try_parse_last_modified_header",
+    "_try_parse_date_header",
+    "_extract_version_from_filename",
+    "excepthook",
+    "_print_troubleshooting_tips",
+    "_handle_edit_preview_modes",
+    "_apply_edit_updates_to_apps",
+    "supported_domains",
+    # Testing infrastructure (used in tests/e2e/conftest.py)
+    "set_http_client_factory",
+    "reset_http_client_factory",
+]
+
+# Decorators that indicate a function is used
+ignore-if-decorated-with = [
+    "@app.command",
+    "@app.callback",
+    "@field_validator",
+]
