@@ -415,12 +415,8 @@ def e2e_environment(isolated_filesystem, request):  # noqa: T201
             "tmp_dir": os.getenv("TMPDIR"),
         }
 
-        # Validate sequential execution
-        if env_info["pytest_xdist_worker"]:
-            pytest.fail(
-                f"E2E test {test_id} is running in parallel worker {env_info['pytest_xdist_worker']}. "
-                "E2E tests must run sequentially. Use --dist=no flag."
-            )
+        # Note: E2E tests can now run in parallel thanks to HTTP dependency injection
+        # No global state pollution, each test gets its own mock HTTP client
 
         # Log environment for debugging
         print(f"\nVERSION E2E Test {test_id} Environment:")  # noqa: T201
