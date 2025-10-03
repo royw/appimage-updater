@@ -197,8 +197,7 @@ def create_nightly_version(asset: Asset) -> str:
     Returns:
         Date-based version string for nightly builds
     """
-    date_str = asset.created_at.strftime("%Y-%m-%d")
-    return date_str
+    return asset.created_at.strftime("%Y-%m-%d")
 
 
 def extract_version_from_filename(filename: str, app_name: str) -> str | None:
