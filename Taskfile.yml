@@ -171,6 +171,35 @@ tasks:
         silent: true
 
   # === Linting ===
+  _check_tmp:
+    desc: Internal task to check for hardcoded /tmp/ paths
+    cmds:
+      - cmd: |
+          echo "Checking for hardcoded /tmp/ paths..."
+          TMP_FOUND=0
+          TMP_COUNT=0
+          SEARCH_PATH="{{.SEARCH_PATH}}"
+          
+          # Search for "/tmp/" in all Python files and count occurrences
+          # grep returns exit code 1 if no matches found, so we use || true to prevent script failure
+          TMP_RESULTS=$(grep -rn --include="*.py" '"/tmp/' $SEARCH_PATH 2>/dev/null || true)
+          if [ -n "$TMP_RESULTS" ]; then
+            echo "$TMP_RESULTS"
+            TMP_COUNT=$(echo "$TMP_RESULTS" | wc -l)
+            echo "FAIL Hardcoded /tmp/ paths found - use tmp_path fixture instead"
+            TMP_FOUND=1
+          fi
+          
+          if [ $TMP_FOUND -eq 0 ]; then
+            echo "PASS No hardcoded /tmp/ paths found"
+            exit 0
+          else
+            echo "FAIL Lint failed - $TMP_COUNT hardcoded /tmp/ paths found"
+            echo "Fix: Replace hardcoded /tmp/ paths with pytest's tmp_path fixture"
+            exit 1
+          fi
+        silent: true
+
   lint:
     desc: Run all linting tasks
     cmds:
@@ -180,12 +209,18 @@ tasks:
       - task: lint:markdown
       - task: lint:emoji
       - task: lint:deadcode
+      - task: _check_tmp
+        vars:
+          SEARCH_PATH: "{{.SRC}}"
 
   lint:tests:
-    desc: Run linting with ruff
+    desc: Run linting with ruff and check for hardcoded /tmp/ paths
     cmds:
       - uv run ruff check --fix --select I {{.CLI_ARGS | default .TESTS_CORE}}
       - uv run mypy {{.CLI_ARGS | default .TESTS_CORE}}
+      - task: _check_tmp
+        vars:
+          SEARCH_PATH: "{{.TESTS}}"
 
   lint:ruff:
     desc: Run linting with ruff
@@ -208,10 +243,13 @@ tasks:
       - uv run ruff check --fix --select I {{.CLI_ARGS | default .TESTS}}
 
   lint:scripts:
-    desc: Run linting with ruff
+    desc: Run linting with ruff and check for hardcoded /tmp/ paths
     cmds:
       - uv run ruff check --fix --select I {{.CLI_ARGS | default .SCRIPTS}}
       - uv run mypy {{.CLI_ARGS | default .SCRIPTS}}
+      - task: _check_tmp
+        vars:
+          SEARCH_PATH: "{{.SCRIPTS}}"
   
   lint:markdown:
     desc: Lint markdown files with pymarkdownlnt
