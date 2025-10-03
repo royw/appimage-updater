@@ -40,7 +40,7 @@ _e2e_test_counter = 0
 class NetworkBlockingSocket:
     """Socket replacement that blocks external network access but allows internal operations."""
 
-    def __init__(self, family=socket.AF_INET, type=socket.SOCK_STREAM, proto=0, fileno=None):
+    def __init__(self, family=socket.AF_INET, type=socket.SOCK_STREAM, proto: int = 0, fileno=None) -> None:
         """Initialize socket with selective blocking."""
         import inspect
         from unittest.mock import AsyncMock, MagicMock, Mock
@@ -113,7 +113,7 @@ class NetworkBlockingSocket:
                 # Block external network sockets in non-mocked contexts
                 raise OSError("External network access blocked in E2E tests for complete isolation")
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str):
         """Delegate to real socket for allowed operations."""
         if hasattr(self, "_real_socket"):
             return getattr(self._real_socket, name)
@@ -153,7 +153,7 @@ def _block_network_access():
     return original_socket, original_create_connection, original_socketpair
 
 
-def _restore_network_access(original_socket, original_create_connection, original_socketpair):
+def _restore_network_access(original_socket, original_create_connection, original_socketpair) -> None:
     """Restore original network access."""
     socket.socket = original_socket
     socket.create_connection = original_create_connection

@@ -77,7 +77,7 @@ def assert_no_stack_trace_in_output(stdout: str, stderr: str, command: str) -> N
 class TestConfigCommandStackTraces:
     """Test config command for stack traces in error scenarios."""
 
-    def test_invalid_setting_name_e2e(self):
+    def test_invalid_setting_name_e2e(self) -> None:
         """Test that invalid config setting shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["config", "set", "invalid-setting", "value"])
 
@@ -85,7 +85,7 @@ class TestConfigCommandStackTraces:
         assert_no_stack_trace_in_output(stdout, stderr, "config set invalid-setting value")
         assert "Unknown setting: invalid-setting" in stdout
 
-    def test_invalid_numeric_value_e2e(self):
+    def test_invalid_numeric_value_e2e(self) -> None:
         """Test that invalid numeric value shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["config", "set", "retain-count", "invalid-number"])
 
@@ -94,7 +94,7 @@ class TestConfigCommandStackTraces:
         # Should show some kind of validation error
         assert any(word in stdout.lower() for word in ["invalid", "error", "must", "range"])
 
-    def test_out_of_range_numeric_value_e2e(self):
+    def test_out_of_range_numeric_value_e2e(self) -> None:
         """Test that out-of-range numeric value shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["config", "set", "retain-count", "99"])
 
@@ -106,7 +106,7 @@ class TestConfigCommandStackTraces:
 class TestShowCommandStackTraces:
     """Test show command for stack traces in error scenarios."""
 
-    def test_nonexistent_application_e2e(self):
+    def test_nonexistent_application_e2e(self) -> None:
         """Test that showing nonexistent app shows clean error in real CLI."""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_home = Path(temp_dir)
@@ -116,7 +116,7 @@ class TestShowCommandStackTraces:
             assert_no_stack_trace_in_output(stdout, stderr, "show NonExistentApp")
             assert any(phrase in stdout for phrase in ["not found", "No applications found"])
 
-    def test_multiple_nonexistent_applications_e2e(self):
+    def test_multiple_nonexistent_applications_e2e(self) -> None:
         """Test that showing multiple nonexistent apps shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["show", "App1", "App2", "App3"])
 
@@ -128,7 +128,7 @@ class TestShowCommandStackTraces:
 class TestEditCommandStackTraces:
     """Test edit command for stack traces in error scenarios."""
 
-    def test_nonexistent_application_e2e(self):
+    def test_nonexistent_application_e2e(self) -> None:
         """Test that editing nonexistent app shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["edit", "NonExistentApp", "--rotation"])
 
@@ -140,7 +140,7 @@ class TestEditCommandStackTraces:
 class TestRemoveCommandStackTraces:
     """Test remove command for stack traces in error scenarios."""
 
-    def test_nonexistent_application_e2e(self):
+    def test_nonexistent_application_e2e(self) -> None:
         """Test that removing nonexistent app shows clean error in real CLI."""
         # Create a temporary directory to isolate from user config
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -155,7 +155,7 @@ class TestRemoveCommandStackTraces:
 class TestAddCommandStackTraces:
     """Test add command for stack traces in error scenarios."""
 
-    def test_invalid_url_format_e2e(self):
+    def test_invalid_url_format_e2e(self) -> None:
         """Test that invalid URL format shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["add", "TestApp", "invalid-url"])
 
@@ -167,7 +167,7 @@ class TestAddCommandStackTraces:
 class TestCheckCommandStackTraces:
     """Test check command for stack traces in error scenarios."""
 
-    def test_nonexistent_application_e2e(self):
+    def test_nonexistent_application_e2e(self) -> None:
         """Test that checking nonexistent app shows clean error in real CLI."""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_home = Path(temp_dir)
@@ -181,7 +181,7 @@ class TestCheckCommandStackTraces:
 class TestRepositoryCommandStackTraces:
     """Test repository command for stack traces in error scenarios."""
 
-    def test_nonexistent_application_e2e(self):
+    def test_nonexistent_application_e2e(self) -> None:
         """Test that repository info for nonexistent app shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["repository", "NonExistentApp"])
 
@@ -193,7 +193,7 @@ class TestRepositoryCommandStackTraces:
 class TestGeneralStackTraces:
     """Test general scenarios for stack traces."""
 
-    def test_help_commands_no_stack_traces_e2e(self):
+    def test_help_commands_no_stack_traces_e2e(self) -> None:
         """Test that help commands never show stack traces in real CLI."""
         help_commands = [
             ["--help"],
@@ -212,7 +212,7 @@ class TestGeneralStackTraces:
             assert exit_code == 0, f"Help command failed: {cmd}"
             assert_no_stack_trace_in_output(stdout, stderr, f"help command: {' '.join(cmd)}")
 
-    def test_version_commands_no_stack_traces_e2e(self):
+    def test_version_commands_no_stack_traces_e2e(self) -> None:
         """Test that version commands never show stack traces in real CLI."""
         version_commands = [
             ["--version"],
@@ -224,7 +224,7 @@ class TestGeneralStackTraces:
             assert exit_code == 0, f"Version command failed: {cmd}"
             assert_no_stack_trace_in_output(stdout, stderr, f"version command: {' '.join(cmd)}")
 
-    def test_invalid_config_file_path_e2e(self):
+    def test_invalid_config_file_path_e2e(self) -> None:
         """Test that invalid config file path shows clean error in real CLI."""
         exit_code, stdout, stderr = run_cli_command(["list", "--config", "/nonexistent/path/config.json"])
 
@@ -236,7 +236,7 @@ class TestGeneralStackTraces:
 class TestSpecificStackTraceScenarios:
     """Test specific scenarios that were observed to show stack traces."""
 
-    def test_config_set_invalid_setting_manual_case(self):
+    def test_config_set_invalid_setting_manual_case(self) -> None:
         """Test the specific case that showed stack traces in manual testing."""
         exit_code, stdout, stderr = run_cli_command(["config", "set", "invalid-setting", "value"])
 
@@ -247,7 +247,7 @@ class TestSpecificStackTraceScenarios:
         assert "Unknown setting: invalid-setting" in stdout
         assert "Available settings:" in stdout
 
-    def test_show_nonexistent_app_manual_case(self):
+    def test_show_nonexistent_app_manual_case(self) -> None:
         """Test the specific case that showed stack traces in manual testing."""
         exit_code, stdout, stderr = run_cli_command(["show", "NonExistentApp"])
 
@@ -262,7 +262,7 @@ class TestSpecificStackTraceScenarios:
 class TestExtensiveStackTraceScenarios:
     """Extensive testing of edge cases that might produce stack traces."""
 
-    def test_config_edge_cases(self):
+    def test_config_edge_cases(self) -> None:
         """Test various config command edge cases."""
         test_cases = [
             (["config", "set"], "Missing arguments"),
@@ -278,7 +278,7 @@ class TestExtensiveStackTraceScenarios:
             # Don't assert specific exit codes as behavior may vary
             assert_no_stack_trace_in_output(stdout, stderr, f"{description}: {' '.join(cmd)}")
 
-    def test_command_edge_cases(self):
+    def test_command_edge_cases(self) -> None:
         """Test various command edge cases."""
         test_cases = [
             (["show"], "Show without args"),
@@ -294,7 +294,7 @@ class TestExtensiveStackTraceScenarios:
             assert_no_stack_trace_in_output(stdout, stderr, f"{description}: {' '.join(cmd)}")
 
 
-def test_stack_trace_detection_works():
+def test_stack_trace_detection_works() -> None:
     """Meta-test to ensure our stack trace detection actually works."""
     # This should NOT trigger our detection (normal output)
     normal_output = "Usage: appimage-updater config [OPTIONS]"

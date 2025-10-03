@@ -52,14 +52,14 @@ class TestVersionServicesIntegration:
         # This test is kept for backward compatibility but doesn't test the removed method
         assert True  # Placeholder test
 
-    def test_info_file_operations(self) -> None:
+    def test_info_file_operations(self, tmp_path: Path) -> None:
         """Test info file service operations."""
         # Create a mock config
         config = ApplicationConfig(
             name="TestApp",
             source_type="github",
             url="https://github.com/test/repo",
-            download_dir=Path("/tmp/test"),
+            download_dir=tmp_path / "test",
             pattern="(?i)^TestApp.*\\.AppImage$",
             prerelease=False,
         )

@@ -4,7 +4,7 @@ from pathlib import Path
 from appimage_updater.main import app
 
 
-def test_integration_smoke_test(runner):
+def test_integration_smoke_test(runner) -> None:
     """Smoke test to ensure basic CLI functionality works."""
     # Test that the app can be invoked without crashing
     result = runner.invoke(app, ["--help"])
@@ -31,7 +31,7 @@ def test_integration_smoke_test(runner):
     assert "Add a new application to the configuration" in result.stdout
 
 
-def test_version_option(runner):
+def test_version_option(runner) -> None:
     """Test the --version option displays version and exits."""
     import re
     import tomllib

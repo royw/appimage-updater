@@ -149,11 +149,11 @@ class TestPathSettings:
         assert mock_config.global_config.defaults.symlink_dir is None
         mock_console.print.assert_called_once()
 
-    def test_handle_path_setting(self, mock_config: Config, mock_console: MagicMock) -> None:
+    def test_handle_path_setting(self, mock_config: Config, mock_console: MagicMock, tmp_path: Path) -> None:
         """Test path setting handler."""
-        result = _handle_path_setting(mock_config, "download-dir", "/tmp/apps")
+        result = _handle_path_setting(mock_config, "download-dir", str(tmp_path / "apps"))
         assert result is True
-        assert mock_config.global_config.defaults.download_dir == Path("/tmp/apps")
+        assert mock_config.global_config.defaults.download_dir == tmp_path / "apps"
 
 
 class TestStringSettings:
@@ -481,11 +481,11 @@ class TestSettingHandlers:
 class TestApplySettingChange:
     """Tests for the main apply_setting_change function."""
 
-    def test_apply_setting_change_path(self, mock_config: Config, mock_console: MagicMock) -> None:
+    def test_apply_setting_change_path(self, mock_config: Config, mock_console: MagicMock, tmp_path: Path) -> None:
         """Test applying path setting through main function."""
-        result = _apply_setting_change(mock_config, "download-dir", "/tmp/apps")
+        result = _apply_setting_change(mock_config, "download-dir", str(tmp_path / "apps"))
         assert result is True
-        assert mock_config.global_config.defaults.download_dir == Path("/tmp/apps")
+        assert mock_config.global_config.defaults.download_dir == tmp_path / "apps"
 
     def test_apply_setting_change_string(self, mock_config: Config, mock_console: MagicMock) -> None:
         """Test applying string setting through main function."""

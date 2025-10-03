@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -202,7 +203,7 @@ class TestAddCommandHandler:
             mock_asyncio_run.return_value = success_result
 
             # Execute command with HTML format
-            kwargs = {
+            kwargs: dict[str, Any] = {
                 "name": "TestApp",
                 "url": "https://github.com/user/repo",
                 "yes": False,
@@ -322,47 +323,49 @@ class TestAddCommandHandler:
         with patch("appimage_updater.cli.handlers.add_handler.Console"):
             handler = AddCommandHandler()
 
-            with patch("appimage_updater.cli.handlers.add_handler.CommandFactory.create_add_command") as mock_factory:
-                with patch("appimage_updater.cli.handlers.add_handler.create_output_formatter_from_params"):
-                    with patch("appimage_updater.cli.handlers.add_handler.asyncio.run") as mock_run:
-                        mock_command = Mock()
-                        mock_factory.return_value = mock_command
-                        mock_command.params = Mock()
+            with (
+                patch("appimage_updater.cli.handlers.add_handler.CommandFactory.create_add_command") as mock_factory,
+                patch("appimage_updater.cli.handlers.add_handler.create_output_formatter_from_params"),
+                patch("appimage_updater.cli.handlers.add_handler.asyncio.run") as mock_run,
+            ):
+                mock_command = Mock()
+                mock_factory.return_value = mock_command
+                mock_command.params = Mock()
 
-                        success_result = CommandResult(success=True)
-                        mock_run.return_value = success_result
+                success_result = CommandResult(success=True)
+                mock_run.return_value = success_result
 
-                        # Execute with comprehensive parameters
-                        kwargs = {
-                            "name": "TestApp",
-                            "url": "https://github.com/user/repo",
-                            "download_dir": "/test/dir",
-                            "create_dir": True,
-                            "yes": False,
-                            "no": False,
-                            "config_file": Path("/test/config.json"),
-                            "config_dir": Path("/test/config"),
-                            "rotation": True,
-                            "retain": 3,
-                            "symlink": "test-symlink",
-                            "prerelease": False,
-                            "basename": "test-basename",
-                            "checksum": True,
-                            "checksum_algorithm": "sha256",
-                            "checksum_pattern": "*.sha256",
-                            "checksum_required": True,
-                            "pattern": "*.AppImage",
-                            "direct": False,
-                            "auto_subdir": True,
-                            "verbose": True,
-                            "dry_run": False,
-                            "interactive": False,
-                            "examples": False,
-                            "debug": True,
-                            "output_format": OutputFormat.RICH,
-                        }
+                # Execute with comprehensive parameters
+                kwargs = {
+                    "name": "TestApp",
+                    "url": "https://github.com/user/repo",
+                    "download_dir": "/test/dir",
+                    "create_dir": True,
+                    "yes": False,
+                    "no": False,
+                    "config_file": Path("/test/config.json"),
+                    "config_dir": Path("/test/config"),
+                    "rotation": True,
+                    "retain": 3,
+                    "symlink": "test-symlink",
+                    "prerelease": False,
+                    "basename": "test-basename",
+                    "checksum": True,
+                    "checksum_algorithm": "sha256",
+                    "checksum_pattern": "*.sha256",
+                    "checksum_required": True,
+                    "pattern": "*.AppImage",
+                    "direct": False,
+                    "auto_subdir": True,
+                    "verbose": True,
+                    "dry_run": False,
+                    "interactive": False,
+                    "examples": False,
+                    "debug": True,
+                    "output_format": OutputFormat.RICH,
+                }
 
-                        handler._execute_add_command(**kwargs)
+                handler._execute_add_command(**kwargs)
 
-                        # Verify factory called with all parameters
-                        mock_factory.assert_called_once_with(**kwargs)
+                # Verify factory called with all parameters
+                mock_factory.assert_called_once_with(**kwargs)

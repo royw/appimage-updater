@@ -5,8 +5,6 @@ from __future__ import annotations
 from datetime import datetime
 from unittest.mock import Mock
 
-import pytest
-
 from appimage_updater.utils.version_utils import (
     create_nightly_version,
     extract_version_from_filename,

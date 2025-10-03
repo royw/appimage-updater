@@ -35,7 +35,7 @@ class NetworkBlockingSocket(socket.socket):
 
     def __init__(
         self, family: int = socket.AF_INET, _type: int = socket.SOCK_STREAM, proto: int = 0, fileno: Any = None
-    ):
+    ) -> None:
         # Allow local socket families and file descriptors
         if _is_allowed_socket_family(family) or fileno is not None:
             super().__init__(family, _type, proto, fileno)
@@ -109,7 +109,7 @@ def blocked_httpx_request(*args: Any, **kwargs: Any) -> None:
 class MockAsyncClient:
     """Mock httpx.AsyncClient that blocks network calls."""
 
-    def __init__(self, *args: Any, **kwargs: Any):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         pass
 
     async def __aenter__(self) -> "MockAsyncClient":

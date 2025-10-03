@@ -25,7 +25,7 @@ from test_stack_trace_detection import run_cli_command
 class TestEditPersistenceBug:
     """Test edit command persistence when using default config paths."""
 
-    def test_edit_prerelease_persistence_with_default_config_path(self):
+    def test_edit_prerelease_persistence_with_default_config_path(self) -> None:
         """Test that edit changes are persisted when using default config paths.
 
         This reproduces the exact BambuStudio bug where:
@@ -99,7 +99,7 @@ class TestEditPersistenceBug:
                 else:
                     os.environ.pop("HOME", None)
 
-    def test_edit_multiple_changes_persistence_with_default_config_path(self):
+    def test_edit_multiple_changes_persistence_with_default_config_path(self) -> None:
         """Test that multiple edit changes are persisted when using default config paths."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Set up fake home directory

@@ -144,7 +144,7 @@ class TestRepositoryFactoryIntegration:
     def test_legacy_configuration_without_source_type(self) -> None:
         """Test legacy configuration without explicit source_type field."""
         # Simulate old configuration that relies on URL detection
-        config: dict[str, str |bool] = {
+        config: dict[str, str | bool] = {
             "name": "LegacyApp",
             "url": "https://github.com/user/legacy",
             "download_dir": "/home/user/downloads/legacy",

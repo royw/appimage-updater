@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 import re
 from unittest.mock import Mock, patch
 
@@ -351,10 +352,10 @@ class TestGetSymlinksInfo:
 
     @patch("appimage_updater.ui.display.find_appimage_symlinks")
     @patch("appimage_updater.ui.display.Path")
-    def test_no_symlink_configured(self, mock_path: Mock, mock_find_symlinks: Mock) -> None:
+    def test_no_symlink_configured(self, mock_path: Mock, mock_find_symlinks: Mock, tmp_path: Path) -> None:
         """Test app with no symlink configured."""
         app = Mock()
-        app.download_dir = "/tmp/test"
+        app.download_dir = tmp_path / "test"
 
         # Mock Path to return an object that exists
         mock_path_instance = Mock()
@@ -368,10 +369,10 @@ class TestGetSymlinksInfo:
 
     @patch("appimage_updater.ui.display.find_appimage_symlinks")
     @patch("appimage_updater.ui.display.Path")
-    def test_none_symlink_path(self, mock_path: Mock, mock_find_symlinks: Mock) -> None:
+    def test_none_symlink_path(self, mock_path: Mock, mock_find_symlinks: Mock, tmp_path: Path) -> None:
         """Test app with None symlink path."""
         app = Mock()
-        app.download_dir = "/tmp/test"
+        app.download_dir = tmp_path / "test"
         app.symlink_path = None
 
         # Mock Path to return an object that exists
@@ -401,10 +402,10 @@ class TestGetSymlinksInfo:
     @patch("appimage_updater.ui.display.format_symlink_info")
     @patch("appimage_updater.ui.display.find_appimage_symlinks")
     @patch("appimage_updater.ui.display.Path")
-    def test_path_not_symlink(self, mock_path: Mock, mock_find_symlinks: Mock, mock_format: Mock) -> None:
+    def test_path_not_symlink(self, mock_path: Mock, mock_find_symlinks: Mock, mock_format: Mock, tmp_path: Path) -> None:
         """Test path with found symlinks."""
         app = Mock()
-        app.download_dir = "/tmp/test"
+        app.download_dir = tmp_path / "test"
         app.symlink_path = "/home/user/bin/app"
 
         # Mock Path to return an object that exists

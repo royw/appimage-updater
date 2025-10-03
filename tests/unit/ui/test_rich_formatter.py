@@ -27,7 +27,7 @@ def rich_formatter(mock_console: Mock) -> RichOutputFormatter:
 
 
 @pytest.fixture
-def mock_update_candidate() -> UpdateCandidate:
+def mock_update_candidate(tmp_path: Path) -> UpdateCandidate:
     """Create a mock update candidate."""
     asset = Asset(
         name="TestApp-1.1.0.AppImage",
@@ -40,7 +40,7 @@ def mock_update_candidate() -> UpdateCandidate:
         current_version="1.0.0",
         latest_version="1.1.0",
         asset=asset,
-        download_path=Path("/tmp/test/TestApp-1.1.0.AppImage"),
+        download_path=tmp_path / "test" / "TestApp-1.1.0.AppImage",
         is_newer=True,
     )
 
@@ -408,15 +408,15 @@ class TestPrintApplicationList:
 
     @patch("appimage_updater.ui.output.rich_formatter.TableFactory")
     def test_print_application_list(
-        self, mock_table_factory: Mock, rich_formatter: RichOutputFormatter, mock_console: Mock
+        self, mock_table_factory: Mock, rich_formatter: RichOutputFormatter, mock_console: Mock, tmp_path: Path
     ) -> None:
         """Test printing application list."""
         mock_table = Mock(spec=Table)
         mock_table_factory.create_applications_table.return_value = mock_table
 
         apps = [
-            {"name": "App1", "enabled": True, "url": "https://example.com", "download_dir": "/tmp/app1"},
-            {"name": "App2", "enabled": False, "url": "https://example.com", "download_dir": "/tmp/app2"},
+            {"name": "App1", "enabled": True, "url": "https://example.com", "download_dir": str(tmp_path / "app1")},
+            {"name": "App2", "enabled": False, "url": "https://example.com", "download_dir": str(tmp_path / "app2")},
         ]
 
         rich_formatter.print_application_list(apps)
@@ -613,7 +613,7 @@ class TestCheckResultsTable:
         call_args = table.add_row.call_args[0]
         assert call_args[0] == "TestApp"
 
-    def test_add_success_row_up_to_date(self, rich_formatter: RichOutputFormatter) -> None:
+    def test_add_success_row_up_to_date(self, rich_formatter: RichOutputFormatter, tmp_path: Path) -> None:
         """Test adding success row when up to date."""
         # Create a candidate with matching versions (no update needed)
         asset = Asset(
@@ -627,7 +627,7 @@ class TestCheckResultsTable:
             current_version="1.0.0",
             latest_version="1.0.0",  # Same version = no update
             asset=asset,
-            download_path=Path("/tmp/test/TestApp-1.0.0.AppImage"),
+            download_path=tmp_path / "test" / "TestApp-1.0.0.AppImage",
             is_newer=False,
         )
         table = Mock(spec=Table)

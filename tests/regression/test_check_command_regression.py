@@ -9,7 +9,7 @@ from pathlib import Path
 import subprocess
 
 
-def test_check_command_finds_candidates():
+def test_check_command_finds_candidates() -> None:
     """Test that check command actually finds update candidates for real apps.
 
     This is a regression test for the issue where:
@@ -61,7 +61,7 @@ def test_check_command_finds_candidates():
     )
 
 
-def test_check_command_with_debug_shows_asset_selection():
+def test_check_command_with_debug_shows_asset_selection() -> None:
     """Test that debug output shows assets are being selected correctly.
 
     This test verifies that the backend logic is working (assets selected, candidates created)

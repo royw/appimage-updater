@@ -77,7 +77,7 @@ class TestRotationVaryingFilenames:
     @pytest.mark.anyio
     async def test_rotation_with_varying_filenames_bambu_scenario(
         self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir
-    ):
+    ) -> None:
         """Test rotation handles different filenames correctly (BambuStudio scenario)."""
         # Create scenario: existing .current file with different filename
         # This simulates the exact issue reported
@@ -138,7 +138,7 @@ class TestRotationVaryingFilenames:
     @pytest.mark.anyio
     async def test_rotation_with_multiple_varying_current_files(
         self, downloader, rotation_app_config, sample_asset, temp_download_dir, temp_symlink_dir
-    ):
+    ) -> None:
         """Test rotation handles multiple .current files with different base names."""
         # Create multiple existing .current files (simulate scenario with multiple versions)
         existing_files = [
@@ -189,7 +189,7 @@ class TestRotationVaryingFilenames:
             assert not (temp_download_dir / filename).exists(), f"Original {filename} should have been rotated"
 
     @pytest.mark.anyio
-    async def test_find_current_files_by_pattern(self, downloader, temp_download_dir):
+    async def test_find_current_files_by_pattern(self, downloader, temp_download_dir) -> None:
         """Test the helper method that finds .current files."""
         # Create test files
         test_files = [
@@ -217,7 +217,7 @@ class TestRotationVaryingFilenames:
         for expected_file in expected_current_files:
             assert expected_file in current_files
 
-    def test_extract_base_name_from_current(self, downloader, temp_download_dir):
+    def test_extract_base_name_from_current(self, downloader, temp_download_dir) -> None:
         """Test the helper method that extracts base names from .current files."""
         test_cases = [
             (

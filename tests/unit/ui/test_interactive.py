@@ -136,6 +136,7 @@ class TestInteractiveAddHandler:
         mock_get_repo_client.return_value = mock_repo_client
 
         # Create handler with mocks
+        # noinspection PyTypeChecker
         handler = InteractiveAddHandler(
             console=mock_console, prompt=MockPrompt, confirm=MockConfirm, int_prompt=MockIntPrompt
         )
@@ -229,6 +230,7 @@ class TestInteractiveAddHandler:
         mock_repo_client.parse_repo_url.return_value = None
         mock_get_repo_client.return_value = mock_repo_client
 
+        # noinspection PyTypeChecker
         handler = InteractiveAddHandler(console=mock_console, prompt=MockPrompt, confirm=MockConfirm)
 
         result = handler._collect_basic_add_settings()
@@ -258,6 +260,7 @@ class TestInteractiveAddHandler:
         MockIntPrompt.responses = [5]  # retain count
         MockPrompt.responses = ["/home/user/bin/testapp"]  # symlink path
 
+        # noinspection PyTypeChecker
         handler = InteractiveAddHandler(
             console=mock_console, prompt=MockPrompt, confirm=MockConfirm, int_prompt=MockIntPrompt
         )
@@ -280,6 +283,7 @@ class TestInteractiveAddHandler:
         # Setup responses
         MockConfirm.responses = [False]  # rotation disabled
 
+        # noinspection PyTypeChecker
         handler = InteractiveAddHandler(console=mock_console, confirm=MockConfirm)
 
         result = handler._collect_rotation_add_settings("testapp")
@@ -303,6 +307,7 @@ class TestInteractiveAddHandler:
         MockConfirm.responses = [True, True]  # checksum enabled, required
         MockPrompt.responses = ["md5", "{filename}.md5"]  # algorithm, pattern
 
+        # noinspection PyTypeChecker
         handler = InteractiveAddHandler(console=mock_console, prompt=MockPrompt, confirm=MockConfirm)
 
         result = handler._collect_checksum_add_settings()
@@ -324,6 +329,7 @@ class TestInteractiveAddHandler:
         # Setup responses
         MockConfirm.responses = [False]  # checksum disabled
 
+        # noinspection PyTypeChecker
         handler = InteractiveAddHandler(console=mock_console, confirm=MockConfirm)
 
         result = handler._collect_checksum_add_settings()
@@ -345,6 +351,7 @@ class TestInteractiveAddHandler:
         # Setup responses
         MockConfirm.responses = [True, True]  # prerelease, auto_subdir
 
+        # noinspection PyTypeChecker
         handler = InteractiveAddHandler(console=mock_console, confirm=MockConfirm)
 
         result = handler._collect_advanced_add_settings("https://github.com/user/repo")
@@ -365,6 +372,7 @@ class TestInteractiveAddHandler:
         # Setup responses
         MockConfirm.responses = [False, True, False]  # prerelease, direct, auto_subdir
 
+        # noinspection PyTypeChecker
         handler = InteractiveAddHandler(console=mock_console, confirm=MockConfirm)
 
         result = handler._collect_advanced_add_settings("https://example.com/app.AppImage")
@@ -438,6 +446,7 @@ class TestInteractiveAddHandler:
 
         MockPrompt.responses = ["valid_input"]
 
+        # noinspection PyTypeChecker
         handler = InteractiveAddHandler(prompt=MockPrompt)
 
         validator = lambda x: x == "valid_input"
@@ -454,6 +463,7 @@ class TestInteractiveAddHandler:
         mock_console = Mock()
         MockPrompt.responses = ["invalid", "valid_input"]
 
+        # noinspection PyTypeChecker
         handler = InteractiveAddHandler(console=mock_console, prompt=MockPrompt)
 
         validator = lambda x: x == "valid_input"

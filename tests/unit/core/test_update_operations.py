@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 import typer
@@ -26,18 +26,14 @@ from appimage_updater.core.update_operations import (
     _execute_check_workflow,
     _execute_update_workflow,
     _extract_application_name,
-    _extract_candidate_data,
     _extract_candidate_download_url,
     _extract_candidate_update_status,
     _extract_candidate_version_info,
     _extract_direct_download_url,
-    _extract_direct_result_data,
     _extract_direct_update_status,
     _extract_direct_version_info,
     _extract_error_message,
-    _extract_result_data,
     _extract_status,
-    _extract_version_data,
     _filter_update_candidates,
     _find_unrotated_appimages,
     _get_all_apps_for_check,
@@ -67,7 +63,6 @@ from appimage_updater.core.update_operations import (
     _setup_rotation_for_file,
     _setup_rotation_safely,
     _should_skip_download_dir,
-    _should_skip_existing_symlink,
     _should_skip_rotation_setup,
     _should_suppress_console_output,
 )
@@ -75,13 +70,13 @@ from appimage_updater.repositories.base import RepositoryError
 
 
 @pytest.fixture
-def mock_app_config() -> ApplicationConfig:
+def mock_app_config(tmp_path: Path) -> ApplicationConfig:
     """Create a mock application configuration."""
     return ApplicationConfig(
         name="TestApp",
         source_type="github",
         url="https://github.com/test/repo",
-        download_dir=Path("/tmp/test"),
+        download_dir=tmp_path / "test",
         pattern=r".*\.AppImage$",
         enabled=True,
         rotation_enabled=False,
@@ -89,9 +84,6 @@ def mock_app_config() -> ApplicationConfig:
         symlink_path=None,
         checksum=ChecksumConfig(enabled=True, algorithm="sha256"),
     )
-
-
-from appimage_updater.config.models import Config
 
 
 @pytest.fixture
@@ -116,7 +108,7 @@ def mock_check_result() -> CheckResult:
 
 
 @pytest.fixture
-def mock_update_candidate(mock_app_config: ApplicationConfig) -> UpdateCandidate:
+def mock_update_candidate(mock_app_config: ApplicationConfig, tmp_path: Path) -> UpdateCandidate:
     """Create a mock update candidate."""
     asset = Asset(
         name="TestApp-1.1.0.AppImage",
@@ -129,7 +121,7 @@ def mock_update_candidate(mock_app_config: ApplicationConfig) -> UpdateCandidate
         current_version="1.0.0",
         latest_version="1.1.0",
         asset=asset,
-        download_path=Path("/tmp/test/TestApp-1.1.0.AppImage"),
+        download_path=tmp_path / "test" / "TestApp-1.1.0.AppImage",
         is_newer=True,
         app_config=mock_app_config,
     )
@@ -163,22 +155,23 @@ class TestLoadConfigWithFallback:
     """Tests for _load_config_with_fallback function."""
 
     @patch("appimage_updater.core.update_operations.AppConfigs")
-    def test_load_config_success(self, mock_app_configs: Mock) -> None:
+    def test_load_config_success(self, mock_app_configs: Mock, tmp_path: Path) -> None:
         """Test successful config loading."""
         mock_config = Config()
         mock_app_configs.return_value._config = mock_config
+        config_dir = tmp_path / "config"
 
-        result = _load_config_with_fallback(None, Path("/tmp/config"))
+        result = _load_config_with_fallback(None, config_dir)
 
         assert result == mock_config
-        mock_app_configs.assert_called_once_with(config_path=Path("/tmp/config"))
+        mock_app_configs.assert_called_once_with(config_path=config_dir)
 
     @patch("appimage_updater.core.update_operations.AppConfigs")
-    def test_load_config_with_file(self, mock_app_configs: Mock) -> None:
+    def test_load_config_with_file(self, mock_app_configs: Mock, tmp_path: Path) -> None:
         """Test loading config with explicit file."""
         mock_config = Config()
         mock_app_configs.return_value._config = mock_config
-        config_file = Path("/tmp/config.json")
+        config_file = tmp_path / "config.json"
 
         result = _load_config_with_fallback(config_file, None)
 
@@ -186,31 +179,33 @@ class TestLoadConfigWithFallback:
         mock_app_configs.assert_called_once_with(config_path=config_file)
 
     @patch("appimage_updater.core.update_operations.AppConfigs")
-    def test_load_config_not_found_no_explicit_file(self, mock_app_configs: Mock) -> None:
+    def test_load_config_not_found_no_explicit_file(self, mock_app_configs: Mock, tmp_path: Path) -> None:
         """Test loading config when not found and no explicit file."""
         mock_app_configs.side_effect = ConfigLoadError("Config not found")
+        config_dir = tmp_path / "config"
 
-        result = _load_config_with_fallback(None, Path("/tmp/config"))
+        result = _load_config_with_fallback(None, config_dir)
 
         assert isinstance(result, Config)
         assert len(result.applications) == 0
 
     @patch("appimage_updater.core.update_operations.AppConfigs")
-    def test_load_config_not_found_with_explicit_file(self, mock_app_configs: Mock) -> None:
+    def test_load_config_not_found_with_explicit_file(self, mock_app_configs: Mock, tmp_path: Path) -> None:
         """Test loading config when not found with explicit file raises."""
         mock_app_configs.side_effect = ConfigLoadError("Config not found")
-        config_file = Path("/tmp/config.json")
+        config_file = tmp_path / "config.json"
 
         with pytest.raises(ConfigLoadError):
             _load_config_with_fallback(config_file, None)
 
     @patch("appimage_updater.core.update_operations.AppConfigs")
-    def test_load_config_other_error_raises(self, mock_app_configs: Mock) -> None:
+    def test_load_config_other_error_raises(self, mock_app_configs: Mock, tmp_path: Path) -> None:
         """Test loading config with other error raises."""
         mock_app_configs.side_effect = ConfigLoadError("Permission denied")
+        config_dir = tmp_path / "config"
 
         with pytest.raises(ConfigLoadError):
-            _load_config_with_fallback(None, Path("/tmp/config"))
+            _load_config_with_fallback(None, config_dir)
 
 
 class TestGetAllAppsForCheck:
@@ -225,13 +220,13 @@ class TestGetAllAppsForCheck:
         assert len(enabled) == 1
         assert len(disabled) == 0
 
-    def test_get_all_apps_with_disabled(self, mock_config: Mock) -> None:
+    def test_get_all_apps_with_disabled(self, mock_config: Mock, tmp_path: Path) -> None:
         """Test getting all apps with disabled apps."""
         disabled_app = ApplicationConfig(
             name="DisabledApp",
             source_type="github",
             url="https://github.com/test/disabled",
-            download_dir=Path("/tmp/disabled"),
+            download_dir=tmp_path / "disabled",
             pattern=r".*\.AppImage$",
             enabled=False,
         )
@@ -286,14 +281,14 @@ class TestCreateDisabledResults:
         assert result[0].error_message == "Disabled"
         assert result[0].download_url == mock_app_config.url
 
-    def test_create_disabled_results_multiple_apps(self) -> None:
+    def test_create_disabled_results_multiple_apps(self, tmp_path: Path) -> None:
         """Test creating disabled results for multiple apps."""
         apps = [
             ApplicationConfig(
                 name=f"App{i}",
                 source_type="github",
                 url=f"https://github.com/test/app{i}",
-                download_dir=Path(f"/tmp/app{i}"),
+                download_dir=tmp_path / f"app{i}",
                 pattern=r".*\.AppImage$",
                 enabled=False,
             )
@@ -619,10 +614,10 @@ class TestCreateDownloader:
 class TestRotationHelpers:
     """Tests for rotation helper functions."""
 
-    def test_should_skip_rotation_setup_no_rotation(self, mock_app_config: Mock) -> None:
+    def test_should_skip_rotation_setup_no_rotation(self, mock_app_config: Mock, tmp_path: Path) -> None:
         """Test skipping rotation when not enabled."""
         mock_app_config.rotation_enabled = False
-        mock_app_config.symlink_path = Path("/tmp/link")
+        mock_app_config.symlink_path = tmp_path / "link"
 
         result = _should_skip_rotation_setup(mock_app_config)
 
@@ -637,10 +632,10 @@ class TestRotationHelpers:
 
         assert result is True
 
-    def test_should_skip_rotation_setup_valid(self, mock_app_config: Mock) -> None:
+    def test_should_skip_rotation_setup_valid(self, mock_app_config: Mock, tmp_path: Path) -> None:
         """Test not skipping rotation when valid."""
         mock_app_config.rotation_enabled = True
-        mock_app_config.symlink_path = Path("/tmp/link")
+        mock_app_config.symlink_path = tmp_path / "link"
 
         result = _should_skip_rotation_setup(mock_app_config)
 
@@ -874,9 +869,9 @@ class TestLogFunctions:
     """Tests for logging functions."""
 
     @patch("appimage_updater.core.update_operations.logger")
-    def test_log_check_start(self, mock_logger: Mock) -> None:
+    def test_log_check_start(self, mock_logger: Mock, tmp_path: Path) -> None:
         """Test logging check start."""
-        _log_check_start(None, Path("/tmp/config"), False, ["App1", "App2"])
+        _log_check_start(None, tmp_path / "config", False, ["App1", "App2"])
 
         assert mock_logger.debug.call_count >= 2
 
@@ -1227,7 +1222,7 @@ class TestAsyncFunctions:
     @patch("appimage_updater.core.update_operations.get_output_formatter")
     @patch("appimage_updater.core.update_operations.console")
     async def test_perform_dry_run_checks(
-        self, mock_console: Mock, mock_formatter: Mock, mock_checker_class: Mock
+        self, mock_console: Mock, mock_formatter: Mock, mock_checker_class: Mock, tmp_path: Path
     ) -> None:
         """Test performing dry run checks."""
         mock_formatter.return_value = None
@@ -1239,7 +1234,7 @@ class TestAsyncFunctions:
             name="TestApp",
             source_type="github",
             url="https://github.com/test/repo",
-            download_dir=Path("/tmp/test"),
+            download_dir=tmp_path / "test",
             pattern=r".*\.AppImage$",
         )
 
@@ -1363,20 +1358,20 @@ class TestAsyncFunctions:
 
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._setup_rotation_for_file")
-    async def test_setup_rotation_safely_success(self, mock_setup: Mock) -> None:
+    async def test_setup_rotation_safely_success(self, mock_setup: Mock, tmp_path: Path) -> None:
         """Test setting up rotation safely with success."""
-        await _setup_rotation_safely(Mock(), Path("/tmp/test"), Mock())
+        await _setup_rotation_safely(Mock(), tmp_path / "test", Mock())
 
         mock_setup.assert_called_once()
 
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations._setup_rotation_for_file")
     @patch("appimage_updater.core.update_operations.logger")
-    async def test_setup_rotation_safely_error(self, mock_logger: Mock, mock_setup: Mock) -> None:
+    async def test_setup_rotation_safely_error(self, mock_logger: Mock, mock_setup: Mock, tmp_path: Path) -> None:
         """Test setting up rotation safely with error."""
         mock_setup.side_effect = OSError("Permission denied")
 
-        await _setup_rotation_safely(Mock(name="TestApp"), Path("/tmp/test"), Mock())
+        await _setup_rotation_safely(Mock(name="TestApp"), tmp_path / "test", Mock())
 
         mock_logger.warning.assert_called_once()
 

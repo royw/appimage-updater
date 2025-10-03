@@ -114,6 +114,7 @@ class TestConfigurableHTTPLogger:
     def test_initialization_defaults(self) -> None:
         """Test initialization with default log levels."""
         base_logger = Mock()
+        # noinspection PyTypeChecker
         logger_instance = ConfigurableHTTPLogger(base_logger)
 
         assert logger_instance._base_logger == base_logger
@@ -124,6 +125,7 @@ class TestConfigurableHTTPLogger:
     def test_initialization_custom_levels(self) -> None:
         """Test initialization with custom log levels."""
         base_logger = Mock()
+        # noinspection PyTypeChecker
         logger_instance = ConfigurableHTTPLogger(
             base_logger, tracking_level="info", request_level="warning", error_level="error"
         )
@@ -135,6 +137,7 @@ class TestConfigurableHTTPLogger:
     def test_log_tracking_start(self) -> None:
         """Test logging tracking start message."""
         base_logger = Mock()
+        # noinspection PyTypeChecker
         logger_instance = ConfigurableHTTPLogger(base_logger, tracking_level="info")
 
         logger_instance.log_tracking_start("Starting tracking", key="value")
@@ -144,6 +147,7 @@ class TestConfigurableHTTPLogger:
     def test_log_tracking_stop(self) -> None:
         """Test logging tracking stop message."""
         base_logger = Mock()
+        # noinspection PyTypeChecker
         logger_instance = ConfigurableHTTPLogger(base_logger, tracking_level="info")
 
         logger_instance.log_tracking_stop("Stopping tracking", key="value")
@@ -153,6 +157,7 @@ class TestConfigurableHTTPLogger:
     def test_log_request(self) -> None:
         """Test logging request message."""
         base_logger = Mock()
+        # noinspection PyTypeChecker
         logger_instance = ConfigurableHTTPLogger(base_logger, request_level="debug")
 
         logger_instance.log_request("HTTP request", method="GET", url="https://example.com")
@@ -162,6 +167,7 @@ class TestConfigurableHTTPLogger:
     def test_log_error(self) -> None:
         """Test logging error message."""
         base_logger = Mock()
+        # noinspection PyTypeChecker
         logger_instance = ConfigurableHTTPLogger(base_logger, error_level="error")
 
         logger_instance.log_error("HTTP error", status=500)
@@ -171,6 +177,7 @@ class TestConfigurableHTTPLogger:
     def test_warning(self) -> None:
         """Test logging warning message."""
         base_logger = Mock()
+        # noinspection PyTypeChecker
         logger_instance = ConfigurableHTTPLogger(base_logger)
 
         logger_instance.warning("Warning message", key="value")
@@ -180,6 +187,7 @@ class TestConfigurableHTTPLogger:
     def test_different_log_levels(self) -> None:
         """Test that different methods use configured levels."""
         base_logger = Mock()
+        # noinspection PyTypeChecker
         logger_instance = ConfigurableHTTPLogger(
             base_logger, tracking_level="info", request_level="debug", error_level="warning"
         )

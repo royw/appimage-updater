@@ -186,7 +186,7 @@ class TestGetLatestRelease:
         mock_response.json.return_value = mock_release_data
         mock_response.raise_for_status = Mock()
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(return_value=mock_response)):
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(return_value=mock_response)):
             result = await gitlab_client.get_latest_release("owner", "repo")
 
             assert result == mock_release_data
@@ -201,7 +201,7 @@ class TestGetLatestRelease:
         mock_response.json.return_value = mock_release_data
         mock_response.raise_for_status = Mock()
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(return_value=mock_response)) as mock_get:
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(return_value=mock_response)) as mock_get:
             result = await gitlab_client.get_latest_release("owner", "repo", base_url="https://git.company.com")
 
             assert result == mock_release_data
@@ -216,7 +216,7 @@ class TestGetLatestRelease:
         mock_response.status_code = 404
         error = httpx.HTTPStatusError("Not found", request=Mock(), response=mock_response)
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(side_effect=error)):
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(side_effect=error)):
             with pytest.raises(GitLabClientError, match="No releases found"):
                 await gitlab_client.get_latest_release("owner", "repo")
 
@@ -227,7 +227,7 @@ class TestGetLatestRelease:
         mock_response.status_code = 401
         error = httpx.HTTPStatusError("Unauthorized", request=Mock(), response=mock_response)
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(side_effect=error)):
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(side_effect=error)):
             with pytest.raises(GitLabClientError, match="authentication failed"):
                 await gitlab_client.get_latest_release("owner", "repo")
 
@@ -238,7 +238,7 @@ class TestGetLatestRelease:
         mock_response.status_code = 403
         error = httpx.HTTPStatusError("Forbidden", request=Mock(), response=mock_response)
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(side_effect=error)):
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(side_effect=error)):
             with pytest.raises(GitLabClientError, match="access forbidden"):
                 await gitlab_client.get_latest_release("owner", "repo")
 
@@ -250,14 +250,16 @@ class TestGetLatestRelease:
         mock_response.text = "Internal Server Error"
         error = httpx.HTTPStatusError("Server error", request=Mock(), response=mock_response)
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(side_effect=error)):
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(side_effect=error)):
             with pytest.raises(GitLabClientError, match="GitLab API error: 500"):
                 await gitlab_client.get_latest_release("owner", "repo")
 
     @pytest.mark.anyio
     async def test_get_latest_release_request_error(self, gitlab_client: GitLabClient) -> None:
         """Test getting latest release with request error."""
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(side_effect=httpx.RequestError("Connection failed"))):
+        with patch.object(
+            gitlab_client._client, "get", new=AsyncMock(side_effect=httpx.RequestError("Connection failed"))
+        ):
             with pytest.raises(GitLabClientError, match="request failed"):
                 await gitlab_client.get_latest_release("owner", "repo")
 
@@ -275,7 +277,7 @@ class TestGetReleases:
         mock_response.json.return_value = releases
         mock_response.raise_for_status = Mock()
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(return_value=mock_response)):
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(return_value=mock_response)):
             result = await gitlab_client.get_releases("owner", "repo")
 
             assert len(result) == 2
@@ -291,7 +293,7 @@ class TestGetReleases:
         mock_response.json.return_value = releases
         mock_response.raise_for_status = Mock()
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(return_value=mock_response)):
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(return_value=mock_response)):
             result = await gitlab_client.get_releases("owner", "repo", limit=3)
 
             assert len(result) == 3
@@ -305,7 +307,7 @@ class TestGetReleases:
         mock_response.json.return_value = [mock_release_data]
         mock_response.raise_for_status = Mock()
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(return_value=mock_response)) as mock_get:
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(return_value=mock_response)) as mock_get:
             result = await gitlab_client.get_releases("owner", "repo", base_url="https://git.company.com")
 
             assert len(result) == 1
@@ -319,7 +321,7 @@ class TestGetReleases:
         mock_response.status_code = 404
         error = httpx.HTTPStatusError("Not found", request=Mock(), response=mock_response)
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(side_effect=error)):
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(side_effect=error)):
             result = await gitlab_client.get_releases("owner", "repo")
 
             assert result == []
@@ -331,7 +333,7 @@ class TestGetReleases:
         mock_response.status_code = 401
         error = httpx.HTTPStatusError("Unauthorized", request=Mock(), response=mock_response)
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(side_effect=error)):
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(side_effect=error)):
             with pytest.raises(GitLabClientError, match="authentication failed"):
                 await gitlab_client.get_releases("owner", "repo")
 
@@ -342,14 +344,16 @@ class TestGetReleases:
         mock_response.status_code = 403
         error = httpx.HTTPStatusError("Forbidden", request=Mock(), response=mock_response)
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(side_effect=error)):
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(side_effect=error)):
             with pytest.raises(GitLabClientError, match="access forbidden"):
                 await gitlab_client.get_releases("owner", "repo")
 
     @pytest.mark.anyio
     async def test_get_releases_request_error(self, gitlab_client: GitLabClient) -> None:
         """Test getting releases with request error."""
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(side_effect=httpx.RequestError("Connection failed"))):
+        with patch.object(
+            gitlab_client._client, "get", new=AsyncMock(side_effect=httpx.RequestError("Connection failed"))
+        ):
             with pytest.raises(GitLabClientError, match="request failed"):
                 await gitlab_client.get_releases("owner", "repo")
 
@@ -392,7 +396,7 @@ class TestShouldEnablePrerelease:
         mock_response.json.return_value = releases
         mock_response.raise_for_status = Mock()
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(return_value=mock_response)):
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(return_value=mock_response)):
             result = await gitlab_client.should_enable_prerelease("owner", "repo")
 
             assert result is True
@@ -408,7 +412,7 @@ class TestShouldEnablePrerelease:
         mock_response.json.return_value = releases
         mock_response.raise_for_status = Mock()
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(return_value=mock_response)):
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(return_value=mock_response)):
             result = await gitlab_client.should_enable_prerelease("owner", "repo")
 
             assert result is False
@@ -424,7 +428,7 @@ class TestShouldEnablePrerelease:
         mock_response.json.return_value = releases
         mock_response.raise_for_status = Mock()
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(return_value=mock_response)):
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(return_value=mock_response)):
             result = await gitlab_client.should_enable_prerelease("owner", "repo")
 
             assert result is False
@@ -436,7 +440,7 @@ class TestShouldEnablePrerelease:
         mock_response.json.return_value = []
         mock_response.raise_for_status = Mock()
 
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(return_value=mock_response)):
+        with patch.object(gitlab_client._client, "get", new=AsyncMock(return_value=mock_response)):
             result = await gitlab_client.should_enable_prerelease("owner", "repo")
 
             assert result is False
@@ -444,7 +448,9 @@ class TestShouldEnablePrerelease:
     @pytest.mark.anyio
     async def test_should_enable_prerelease_api_error(self, gitlab_client: GitLabClient) -> None:
         """Test prerelease detection with API error."""
-        with patch.object(gitlab_client._client, 'get', new=AsyncMock(side_effect=httpx.RequestError("Connection failed"))):
+        with patch.object(
+            gitlab_client._client, "get", new=AsyncMock(side_effect=httpx.RequestError("Connection failed"))
+        ):
             result = await gitlab_client.should_enable_prerelease("owner", "repo")
 
             assert result is False

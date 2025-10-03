@@ -20,7 +20,7 @@ def mock_candidate() -> UpdateCandidate:
         name="test-app.zip",
         url="https://example.com/test-app.zip",
         size=1000000,
-        created_at="2023-01-01T00:00:00Z",
+        created_at="2023-01-01T00:00:00Z",  # type: ignore
     )
 
     candidate = UpdateCandidate(

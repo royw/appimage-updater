@@ -25,7 +25,7 @@ def temp_config_dir():
 
 
 @pytest.fixture
-def multi_app_config():
+def multi_app_config(tmp_path: Path):
     """Create a configuration with multiple applications."""
     return {
         "applications": [
@@ -33,7 +33,7 @@ def multi_app_config():
                 "name": "App1",
                 "source_type": "github",
                 "url": "https://github.com/user/app1",
-                "download_dir": "/tmp/app1",
+                "download_dir": str(tmp_path / "app1"),
                 "enabled": True,
                 "pattern": ".*\\.AppImage$",
                 "checksum": {
@@ -48,7 +48,7 @@ def multi_app_config():
                 "name": "App2",
                 "source_type": "github",
                 "url": "https://github.com/user/app2",
-                "download_dir": "/tmp/app2",
+                "download_dir": str(tmp_path / "app2"),
                 "enabled": True,
                 "pattern": ".*\\.AppImage$",
                 "checksum": {
@@ -63,7 +63,7 @@ def multi_app_config():
                 "name": "App3",
                 "source_type": "github",
                 "url": "https://github.com/user/app3",
-                "download_dir": "/tmp/app3",
+                "download_dir": str(tmp_path / "app3"),
                 "enabled": False,
                 "pattern": ".*\\.AppImage$",
                 "checksum": {
@@ -81,7 +81,7 @@ def multi_app_config():
 class TestMultiAppShow:
     """Test multi-app show command functionality."""
 
-    def test_show_single_app(self, runner, temp_config_dir, multi_app_config):
+    def test_show_single_app(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test show command with single app name."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -93,7 +93,7 @@ class TestMultiAppShow:
         assert "App1" in result.stdout
         assert "https://github.com/user/app1" in result.stdout
 
-    def test_show_multiple_apps(self, runner, temp_config_dir, multi_app_config):
+    def test_show_multiple_apps(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test show command with multiple app names."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -107,7 +107,7 @@ class TestMultiAppShow:
         assert "https://github.com/user/app1" in result.stdout
         assert "https://github.com/user/app2" in result.stdout
 
-    def test_show_mixed_existing_nonexisting(self, runner, temp_config_dir, multi_app_config):
+    def test_show_mixed_existing_nonexisting(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test show command with mix of existing and non-existing apps."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -119,7 +119,7 @@ class TestMultiAppShow:
         assert "Applications not found: NonExistent" in result.stdout
         assert "Available applications: App1, App2, App3" in result.stdout
 
-    def test_show_case_insensitive_multiple(self, runner, temp_config_dir, multi_app_config):
+    def test_show_case_insensitive_multiple(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test show command with case-insensitive multiple app names."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -135,7 +135,7 @@ class TestMultiAppShow:
 class TestMultiAppRemove:
     """Test multi-app remove command functionality."""
 
-    def test_remove_single_app(self, runner, temp_config_dir, multi_app_config):
+    def test_remove_single_app(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test remove command with single app name."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -148,7 +148,7 @@ class TestMultiAppRemove:
         assert "App1" in result.stdout
         assert "Successfully removed application 'App1'" in result.stdout
 
-    def test_remove_multiple_apps(self, runner, temp_config_dir, multi_app_config):
+    def test_remove_multiple_apps(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test remove command with multiple app names."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -163,7 +163,7 @@ class TestMultiAppRemove:
         assert "Successfully removed application 'App1'" in result.stdout
         assert "Successfully removed application 'App2'" in result.stdout
 
-    def test_remove_with_confirmation_no(self, runner, temp_config_dir, multi_app_config):
+    def test_remove_with_confirmation_no(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test remove command with user declining confirmation."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -175,7 +175,7 @@ class TestMultiAppRemove:
         assert "Found 2 application(s) to remove:" in result.stdout
         assert "Removal cancelled." in result.stdout
 
-    def test_remove_force_multiple(self, runner, temp_config_dir, multi_app_config):
+    def test_remove_force_multiple(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test remove command with --yes flag for multiple apps."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -187,7 +187,7 @@ class TestMultiAppRemove:
         assert "Successfully removed application 'App1'" in result.stdout
         assert "Successfully removed application 'App2'" in result.stdout
 
-    def test_remove_nonexistent_apps(self, runner, temp_config_dir, multi_app_config):
+    def test_remove_nonexistent_apps(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test remove command with non-existent app names."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -202,7 +202,7 @@ class TestMultiAppRemove:
 class TestMultiAppEdit:
     """Test multi-app edit command functionality."""
 
-    def test_edit_multiple_apps_url(self, runner, temp_config_dir, multi_app_config):
+    def test_edit_multiple_apps_url(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test edit command updating URL for multiple apps."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -215,7 +215,7 @@ class TestMultiAppEdit:
         assert "Successfully updated configuration for 'App1'" in result.stdout
         assert "Successfully updated configuration for 'App2'" in result.stdout
 
-    def test_edit_multiple_apps_enabled(self, runner, temp_config_dir, multi_app_config):
+    def test_edit_multiple_apps_enabled(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test edit command updating enabled status for multiple apps."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -227,7 +227,7 @@ class TestMultiAppEdit:
         assert "Successfully updated configuration for 'App1'" in result.stdout
         assert "Successfully updated configuration for 'App2'" in result.stdout
 
-    def test_edit_nonexistent_apps(self, runner, temp_config_dir, multi_app_config):
+    def test_edit_nonexistent_apps(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test edit command with non-existent app names."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -238,7 +238,7 @@ class TestMultiAppEdit:
         assert result.exit_code == 1
         assert "Applications not found: NonExistent1, NonExistent2" in result.stdout
 
-    def test_edit_mixed_existing_nonexisting(self, runner, temp_config_dir, multi_app_config):
+    def test_edit_mixed_existing_nonexisting(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test edit command with mix of existing and non-existing apps."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -253,7 +253,7 @@ class TestMultiAppEdit:
 class TestMultiAppCheck:
     """Test multi-app check command functionality."""
 
-    def test_check_specific_apps(self, runner, temp_config_dir, multi_app_config):
+    def test_check_specific_apps(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test check command with specific app names."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -265,7 +265,7 @@ class TestMultiAppCheck:
         # The command should parse arguments correctly even if it fails later
         assert "App1" in result.stdout or "App2" in result.stdout or "Checking" in result.stdout
 
-    def test_check_nonexistent_apps(self, runner, temp_config_dir, multi_app_config):
+    def test_check_nonexistent_apps(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test check command with non-existent app names."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -279,7 +279,7 @@ class TestMultiAppCheck:
 class TestMultiAppGlobPatterns:
     """Test multi-app commands with glob patterns."""
 
-    def test_show_with_glob_pattern(self, runner, temp_config_dir, multi_app_config):
+    def test_show_with_glob_pattern(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test show command with glob pattern matching multiple apps."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:
@@ -292,7 +292,7 @@ class TestMultiAppGlobPatterns:
         assert "App2" in result.stdout
         assert "App3" in result.stdout
 
-    def test_remove_with_glob_pattern(self, runner, temp_config_dir, multi_app_config):
+    def test_remove_with_glob_pattern(self, runner, temp_config_dir, multi_app_config) -> None:
         """Test remove command with glob pattern."""
         config_file = temp_config_dir / "config.json"
         with config_file.open("w") as f:

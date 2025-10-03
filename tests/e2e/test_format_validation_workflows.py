@@ -31,7 +31,7 @@ class TestFormatValidationWorkflows:
         with tempfile.TemporaryDirectory() as tmp_dir:
             yield Path(tmp_dir)
 
-    def test_invalid_format_option_shows_error(self, runner, temp_config_dir):
+    def test_invalid_format_option_shows_error(self, runner, temp_config_dir) -> None:
         """Test that invalid --format option shows appropriate error."""
         result = runner.invoke(app, ["list", "--format", "invalid", "--config-dir", str(temp_config_dir)])
 
@@ -40,7 +40,7 @@ class TestFormatValidationWorkflows:
         error_output = result.stderr or result.stdout
         assert "Invalid value for '--format'" in error_output or "invalid" in error_output.lower()
 
-    def test_format_option_validation_all_commands(self, runner, temp_config_dir):
+    def test_format_option_validation_all_commands(self, runner, temp_config_dir) -> None:
         """Test that --format option validation works for all commands."""
         commands_to_test = [
             ["list"],
@@ -64,7 +64,7 @@ class TestFormatValidationWorkflows:
                     assert "Invalid value for '--format'" not in result.stdout
                     assert f"'{format_type}'" not in result.stdout or "invalid" not in result.stdout.lower()
 
-    def test_json_format_produces_valid_json(self, runner, temp_config_dir):
+    def test_json_format_produces_valid_json(self, runner, temp_config_dir) -> None:
         """Test that --format json produces valid JSON output."""
         result = runner.invoke(app, ["list", "--format", "json", "--config-dir", str(temp_config_dir)])
 
@@ -75,7 +75,7 @@ class TestFormatValidationWorkflows:
             except json.JSONDecodeError as e:
                 pytest.fail(f"JSON format produced invalid JSON: {e}. Output: {result.stdout[:500]}")
 
-    def test_html_format_produces_valid_html(self, runner, temp_config_dir):
+    def test_html_format_produces_valid_html(self, runner, temp_config_dir) -> None:
         """Test that --format html produces valid HTML output."""
         result = runner.invoke(app, ["list", "--format", "html", "--config-dir", str(temp_config_dir)])
 
@@ -87,7 +87,7 @@ class TestFormatValidationWorkflows:
             for indicator in html_indicators:
                 assert indicator in output, f"HTML format missing {indicator}"
 
-    def test_plain_format_produces_readable_output(self, runner, temp_config_dir):
+    def test_plain_format_produces_readable_output(self, runner, temp_config_dir) -> None:
         """Test that --format plain produces readable plain text output."""
         result = runner.invoke(app, ["list", "--format", "plain", "--config-dir", str(temp_config_dir)])
 
@@ -102,7 +102,7 @@ class TestFormatValidationWorkflows:
                 # Should contain some structure (headers, separators, etc.)
                 assert any(char in output for char in ["|", "-", ":", "\n"])
 
-    def test_rich_format_contains_styling(self, runner, temp_config_dir):
+    def test_rich_format_contains_styling(self, runner, temp_config_dir) -> None:
         """Test that --format rich contains rich styling elements."""
         # Create a sample config with an application to ensure table formatting
         sample_config = {

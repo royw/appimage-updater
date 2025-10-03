@@ -34,7 +34,7 @@ class TestModernAddCommand:
     def mock_async_pattern_gen(self):
         """Create async pattern generation mock."""
 
-        async def mock_pattern(*args, **kwargs):
+        async def mock_pattern(*args, **kwargs) -> str:
             app_name = args[0] if args else "TestApp"
             return f"(?i){app_name}.*\\.AppImage$"
 
@@ -63,7 +63,7 @@ class TestModernAddCommand:
         runner: CliRunner,
         temp_config_dir: Path,
         tmp_path: Path,
-    ):
+    ) -> None:
         """Test adding a GitHub repository with modern async architecture."""
         # Setup httpx mock to prevent network calls
         mock_client_instance = AsyncMock()
@@ -80,7 +80,7 @@ class TestModernAddCommand:
         # Setup async mocks properly
         mock_prerelease.return_value = False
 
-        async def mock_pattern(*args, **kwargs):
+        async def mock_pattern(*args, **kwargs) -> str:
             return "(?i)ModernTestApp.*\\.AppImage$"
 
         mock_pattern_gen.side_effect = mock_pattern
@@ -148,12 +148,12 @@ class TestModernAddCommand:
         runner: CliRunner,
         temp_config_dir: Path,
         tmp_path: Path,
-    ):
+    ) -> None:
         """Test adding with --direct flag using modern async architecture."""
         # Setup async mocks properly
         mock_prerelease.return_value = False
 
-        async def mock_pattern(*args, **kwargs):
+        async def mock_pattern(*args, **kwargs) -> str:
             return "(?i)DirectApp.*\\.AppImage$"
 
         mock_pattern_gen.side_effect = mock_pattern
@@ -206,7 +206,7 @@ class TestModernAddCommand:
 
     def test_add_duplicate_name_error_modern(
         self, e2e_environment, runner: CliRunner, temp_config_dir: Path, tmp_path: Path
-    ):
+    ) -> None:
         """Test that duplicate app names are properly rejected.
 
         Note: This test demonstrates that the add command currently validates URLs
@@ -305,7 +305,7 @@ class TestModernAddCommand:
         # Setup async mocks properly
         mock_prerelease.return_value = False
 
-        async def mock_pattern(*args, **kwargs):
+        async def mock_pattern(*args, **kwargs) -> str:
             return "(?i)HomeApp.*\\.AppImage$"
 
         mock_pattern_gen.side_effect = mock_pattern
@@ -351,7 +351,7 @@ class TestModernAddCommand:
 
     def test_add_rotation_requires_symlink_modern(
         self, e2e_environment, runner: CliRunner, temp_config_dir: Path, tmp_path: Path
-    ):
+    ) -> None:
         """Test that --rotation requires a symlink path."""
         test_download_dir = tmp_path / "test-download"
 

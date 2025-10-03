@@ -104,7 +104,7 @@ def config_directory(tmp_path):
     return config_dir
 
 
-def test_edit_multiple_fields(runner, single_config_file):
+def test_edit_multiple_fields(runner, single_config_file) -> None:
     """Test editing multiple fields at once."""
     result = runner.invoke(
         app,
@@ -138,7 +138,7 @@ def test_edit_multiple_fields(runner, single_config_file):
     assert app_config["enabled"] is False
 
 
-def test_edit_url_with_normalization(runner, single_config_file):
+def test_edit_url_with_normalization(runner, single_config_file) -> None:
     """Test editing URL with automatic normalization."""
     download_url = "https://github.com/newowner/newrepo/releases/download/v1.0/app.AppImage"
 
@@ -158,7 +158,7 @@ def test_edit_url_with_normalization(runner, single_config_file):
     assert app_config["url"] == "https://github.com/newowner/newrepo"
 
 
-def test_edit_download_directory_with_creation(runner, single_config_file, tmp_path, monkeypatch):
+def test_edit_download_directory_with_creation(runner, single_config_file, tmp_path, monkeypatch) -> None:
     """Test editing download directory with automatic creation."""
     new_dir = tmp_path / "new_download_location"
 
@@ -189,7 +189,7 @@ def test_edit_download_directory_with_creation(runner, single_config_file, tmp_p
     assert app_config["download_dir"] == str(new_dir)
 
 
-def test_edit_pattern_validation(runner, single_config_file):
+def test_edit_pattern_validation(runner, single_config_file) -> None:
     """Test pattern validation for invalid regex."""
     invalid_pattern = "TestApp.*[unclosed"  # Invalid regex - unclosed bracket
 
@@ -199,7 +199,7 @@ def test_edit_pattern_validation(runner, single_config_file):
     assert "Invalid regex pattern" in result.stdout
 
 
-def test_edit_rotation_requires_symlink(runner, single_config_file):
+def test_edit_rotation_requires_symlink(runner, single_config_file) -> None:
     """Test that enabling rotation without symlink path fails."""
     result = runner.invoke(app, ["edit", "TestApp", "--rotation", "--config", str(single_config_file)])
 
@@ -207,7 +207,7 @@ def test_edit_rotation_requires_symlink(runner, single_config_file):
     assert "File rotation requires a symlink path" in result.stdout
 
 
-def test_edit_rotation_with_symlink(runner, single_config_file, tmp_path):
+def test_edit_rotation_with_symlink(runner, single_config_file, tmp_path) -> None:
     """Test enabling rotation with symlink path."""
     symlink_path = tmp_path / "bin" / "testapp.AppImage"
 
@@ -244,7 +244,7 @@ def test_edit_rotation_with_symlink(runner, single_config_file, tmp_path):
     assert app_config["retain_count"] == 7
 
 
-def test_edit_directory_based_config(runner, config_directory):
+def test_edit_directory_based_config(runner, config_directory) -> None:
     """Test editing in directory-based configuration."""
     result = runner.invoke(
         app, ["edit", "DirectoryApp", "--no-prerelease", "--checksum", "--config-dir", str(config_directory)]
@@ -264,7 +264,7 @@ def test_edit_directory_based_config(runner, config_directory):
     assert app_config["checksum"]["enabled"] is True
 
 
-def test_edit_case_insensitive_app_name(runner, single_config_file):
+def test_edit_case_insensitive_app_name(runner, single_config_file) -> None:
     """Test that app names are case-insensitive."""
     result = runner.invoke(
         app,
@@ -283,7 +283,7 @@ def test_edit_case_insensitive_app_name(runner, single_config_file):
     assert app_config["prerelease"] is True
 
 
-def test_edit_nonexistent_app(runner, single_config_file):
+def test_edit_nonexistent_app(runner, single_config_file) -> None:
     """Test editing a non-existent application."""
     result = runner.invoke(app, ["edit", "NonExistentApp", "--prerelease", "--config", str(single_config_file)])
 
@@ -292,7 +292,7 @@ def test_edit_nonexistent_app(runner, single_config_file):
     assert "Available applications: TestApp" in result.stdout
 
 
-def test_edit_no_changes_specified(runner, single_config_file):
+def test_edit_no_changes_specified(runner, single_config_file) -> None:
     """Test edit command with no changes specified."""
     result = runner.invoke(app, ["edit", "TestApp", "--config", str(single_config_file)])
 
@@ -301,7 +301,7 @@ def test_edit_no_changes_specified(runner, single_config_file):
     assert "Use --help to see available options" in result.stdout
 
 
-def test_edit_invalid_checksum_algorithm(runner, single_config_file):
+def test_edit_invalid_checksum_algorithm(runner, single_config_file) -> None:
     """Test invalid checksum algorithm validation."""
     result = runner.invoke(
         app, ["edit", "TestApp", "--checksum-algorithm", "invalid", "--config", str(single_config_file)]
@@ -314,7 +314,7 @@ def test_edit_invalid_checksum_algorithm(runner, single_config_file):
     assert "md5" in result.stdout
 
 
-def test_edit_path_expansion(runner, single_config_file):
+def test_edit_path_expansion(runner, single_config_file) -> None:
     """Test that paths with ~ are properly expanded."""
     result = runner.invoke(
         app,
@@ -339,7 +339,7 @@ def test_edit_path_expansion(runner, single_config_file):
     assert app_config["download_dir"] == str(expected_path)
 
 
-def test_edit_checksum_pattern_update(runner, single_config_file):
+def test_edit_checksum_pattern_update(runner, single_config_file) -> None:
     """Test updating checksum pattern."""
     new_pattern = "{filename}.hash"
 
@@ -358,7 +358,7 @@ def test_edit_checksum_pattern_update(runner, single_config_file):
     assert app_config["checksum"]["pattern"] == new_pattern
 
 
-def test_edit_disable_rotation(runner, config_directory):
+def test_edit_disable_rotation(runner, config_directory) -> None:
     """Test disabling rotation that was previously enabled."""
     result = runner.invoke(app, ["edit", "DirectoryApp", "--no-rotation", "--config-dir", str(config_directory)])
 
@@ -374,7 +374,7 @@ def test_edit_disable_rotation(runner, config_directory):
     assert app_config["rotation_enabled"] is False
 
 
-def test_edit_preserve_unmodified_fields(runner, single_config_file):
+def test_edit_preserve_unmodified_fields(runner, single_config_file) -> None:
     """Test that unmodified fields are preserved during edit."""
     # Get original values
     with single_config_file.open() as f:
@@ -399,7 +399,7 @@ def test_edit_preserve_unmodified_fields(runner, single_config_file):
     assert updated_app["checksum"] == original_app["checksum"]  # Preserved
 
 
-def test_edit_url_with_force_bypasses_validation(runner, single_config_file):
+def test_edit_url_with_force_bypasses_validation(runner, single_config_file) -> None:
     """Test that --force bypasses URL validation and normalization."""
     direct_download_url = "https://direct-download-example.com/app.AppImage"
 
@@ -423,7 +423,7 @@ def test_edit_url_with_force_bypasses_validation(runner, single_config_file):
     assert app_config["url"] == direct_download_url
 
 
-def test_edit_url_with_force_preserves_invalid_urls(runner, single_config_file):
+def test_edit_url_with_force_preserves_invalid_urls(runner, single_config_file) -> None:
     """Test that --force preserves even invalid URLs without validation."""
     invalid_url = "https://example.com/some/path/file.AppImage"
 
@@ -446,7 +446,7 @@ def test_edit_url_with_force_preserves_invalid_urls(runner, single_config_file):
     assert app_config["url"] == invalid_url
 
 
-def test_edit_url_with_force_and_github_download_url(runner, single_config_file):
+def test_edit_url_with_force_and_github_download_url(runner, single_config_file) -> None:
     """Test --force with GitHub download URL that would normally be normalized."""
     github_download_url = "https://github.com/owner/repo/releases/download/v1.0/app.AppImage"
 
@@ -470,7 +470,7 @@ def test_edit_url_with_force_and_github_download_url(runner, single_config_file)
     assert app_config["url"] == github_download_url
 
 
-def test_edit_url_without_force_still_normalizes(runner, single_config_file):
+def test_edit_url_without_force_still_normalizes(runner, single_config_file) -> None:
     """Test that URL normalization still works when --force is not used."""
     github_download_url = "https://github.com/owner/repo/releases/download/v1.0/app.AppImage"
     expected_normalized_url = "https://github.com/owner/repo"
@@ -490,7 +490,7 @@ def test_edit_url_without_force_still_normalizes(runner, single_config_file):
     assert app_config["url"] == expected_normalized_url
 
 
-def test_edit_force_with_other_options(runner, single_config_file):
+def test_edit_force_with_other_options(runner, single_config_file) -> None:
     """Test that --force works correctly when combined with other edit options."""
     direct_url = "https://nightly-builds.example.com/app-nightly.AppImage"
 
@@ -528,7 +528,7 @@ def test_edit_force_with_other_options(runner, single_config_file):
     assert app_config["checksum"]["required"] is True
 
 
-def test_edit_force_flag_only_affects_url_validation(runner, single_config_file):
+def test_edit_force_flag_only_affects_url_validation(runner, single_config_file) -> None:
     """Test that --force only affects URL validation, not other validations."""
     invalid_pattern = "TestApp.*[unclosed"  # Invalid regex
     direct_url = "https://example.com/app.AppImage"
@@ -555,7 +555,7 @@ def test_edit_force_flag_only_affects_url_validation(runner, single_config_file)
     assert "Using --force: Skipping URL validation and normalization" in result.stdout
 
 
-def test_edit_force_without_url_change_has_no_effect(runner, single_config_file):
+def test_edit_force_without_url_change_has_no_effect(runner, single_config_file) -> None:
     """Test that --force has no effect when URL is not being changed."""
     result = runner.invoke(app, ["edit", "TestApp", "--prerelease", "--force", "--config", str(single_config_file)])
 
@@ -572,7 +572,7 @@ def test_edit_force_without_url_change_has_no_effect(runner, single_config_file)
     assert app_config["url"] == "https://github.com/test/testapp"  # Original URL preserved
 
 
-def test_edit_direct_flag_sets_source_type(runner, single_config_file):
+def test_edit_direct_flag_sets_source_type(runner, single_config_file) -> None:
     """Test that --direct flag sets source_type to 'direct'."""
     result = runner.invoke(app, ["edit", "TestApp", "--direct", "--config", str(single_config_file)])
 
@@ -587,7 +587,7 @@ def test_edit_direct_flag_sets_source_type(runner, single_config_file):
     assert app_config["source_type"] == "direct"
 
 
-def test_edit_no_direct_flag_sets_source_type_github(runner, single_config_file):
+def test_edit_no_direct_flag_sets_source_type_github(runner, single_config_file) -> None:
     """Test that --no-direct flag sets source_type to 'github'."""
     # First set it to direct
     with single_config_file.open() as f:
@@ -609,7 +609,7 @@ def test_edit_no_direct_flag_sets_source_type_github(runner, single_config_file)
     assert app_config["source_type"] == "github"
 
 
-def test_edit_direct_flag_with_url_change(runner, single_config_file):
+def test_edit_direct_flag_with_url_change(runner, single_config_file) -> None:
     """Test --direct flag with URL change to direct download URL."""
     direct_url = "https://nightly.example.com/app.AppImage"
 
@@ -632,7 +632,7 @@ def test_edit_direct_flag_with_url_change(runner, single_config_file):
     assert app_config["url"] == direct_url
 
 
-def test_edit_direct_flag_with_directory_config(runner, config_directory):
+def test_edit_direct_flag_with_directory_config(runner, config_directory) -> None:
     """Test --direct flag works with directory-based configuration."""
     result = runner.invoke(app, ["edit", "DirectoryApp", "--direct", "--config-dir", str(config_directory)])
 
@@ -648,7 +648,7 @@ def test_edit_direct_flag_with_directory_config(runner, config_directory):
     assert app_config["source_type"] == "direct"
 
 
-def test_edit_direct_flag_no_change_when_already_direct(runner, single_config_file):
+def test_edit_direct_flag_no_change_when_already_direct(runner, single_config_file) -> None:
     """Test --direct flag shows no change when source_type is already 'direct'."""
     # First set it to direct
     with single_config_file.open() as f:
@@ -671,7 +671,7 @@ def test_edit_direct_flag_no_change_when_already_direct(runner, single_config_fi
     assert app_config["source_type"] == "direct"
 
 
-def test_edit_prerelease_change_persists_to_file(runner, single_config_file):
+def test_edit_prerelease_change_persists_to_file(runner, single_config_file) -> None:
     """Test that prerelease changes are actually persisted to the configuration file.
 
     This test captures a bug where the edit command claims to change prerelease
@@ -710,7 +710,7 @@ def test_edit_prerelease_change_persists_to_file(runner, single_config_file):
     assert final_app["prerelease"] is False, "BUG: Prerelease disable was not persisted to config file"
 
 
-def test_edit_prerelease_change_persists_directory_config(runner, config_directory):
+def test_edit_prerelease_change_persists_directory_config(runner, config_directory) -> None:
     """Test that prerelease changes persist in directory-based configuration.
 
     This test specifically targets the BambuStudio scenario where the bug was observed.

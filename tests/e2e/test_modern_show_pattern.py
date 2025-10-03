@@ -2,7 +2,8 @@
 
 import json
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -13,15 +14,20 @@ from appimage_updater.main import app
 class TestModernShowCommand:
     """Modern E2E tests for show command functionality."""
 
-    def create_test_config_with_symlink(self, config_dir: Path, app_name: str) -> Path:
+    def create_test_config_with_symlink(
+        self, config_dir: Path, app_name: str, download_dir: Path | None = None
+    ) -> Path:
         """Create a test configuration file with symlink configuration."""
+        if download_dir is None:
+            download_dir = config_dir / "downloads" / app_name.lower()
+
         config_data = {
             "applications": [
                 {
                     "name": app_name,
                     "source_type": "github",
                     "url": "https://github.com/user/testapp",
-                    "download_dir": f"/tmp/test/{app_name.lower()}",
+                    "download_dir": str(download_dir),
                     "pattern": f"(?i){app_name}.*\\.AppImage$",
                     "enabled": True,
                     "prerelease": False,
@@ -38,7 +44,9 @@ class TestModernShowCommand:
 
         return config_file
 
-    def test_show_command_with_configured_symlink_path(self, e2e_environment, runner: CliRunner, temp_config_dir: Path):
+    def test_show_command_with_configured_symlink_path(
+        self, runner: CliRunner, temp_config_dir: Path
+    ) -> None:
         """Test show command displays symlink path correctly."""
         # Create test config with symlink
         config_file = self.create_test_config_with_symlink(temp_config_dir, "SymlinkApp")
@@ -54,27 +62,28 @@ class TestModernShowCommand:
         # Check that rotation is mentioned (the config has rotation_enabled: True)
         assert "true" in result.stdout.lower() or "enabled" in result.stdout.lower()
 
-    def test_show_nonexistent_application(self, e2e_environment, runner: CliRunner, temp_config_dir: Path):
+    def test_show_nonexistent_application(self, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test show command with non-existent application."""
         result = runner.invoke(
             app, ["show", "NonExistentApp", "--config-dir", str(temp_config_dir), "--format", "plain"]
         )
 
         assert result.exit_code == 1
-        # Error message might be in stdout or stderr depending on implementation
         error_output = result.stderr or result.stdout
         assert "No applications found" in error_output or "not found" in error_output
 
-    def test_show_disabled_application(self, e2e_environment, runner: CliRunner, temp_config_dir: Path):
+    def test_show_disabled_application(self, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test show command with disabled application."""
-        # Create disabled app config
+        # Create config with disabled app
+        download_dir = temp_config_dir / "downloads" / "disabled"
+
         config_data = {
             "applications": [
                 {
                     "name": "DisabledApp",
                     "source_type": "github",
                     "url": "https://github.com/user/disabled",
-                    "download_dir": "/tmp/test/disabled",
+                    "download_dir": str(download_dir),
                     "pattern": "(?i)DisabledApp.*\\.AppImage$",
                     "enabled": False,  # Disabled
                     "prerelease": False,
@@ -104,17 +113,15 @@ class TestModernPatternMatching:
     @patch("appimage_updater.repositories.factory.get_repository_client_with_probing_sync")
     @patch("appimage_updater.core.pattern_generator.generate_appimage_pattern_async")
     @patch("appimage_updater.core.pattern_generator.should_enable_prerelease")
-    def test_pattern_matching_with_suffixes(
-        self,
-        mock_prerelease,
-        mock_pattern_gen,
-        mock_repo_factory,
-        mock_httpx_client,
-        e2e_environment_with_mock_support,
+    def test_pattern_matching_with_suffixes(self,
+        mock_prerelease: MagicMock,
+        mock_pattern_gen: MagicMock,
+        mock_repo_factory: MagicMock,
+        mock_httpx_client: MagicMock,
         runner: CliRunner,
         temp_config_dir: Path,
         tmp_path: Path,
-    ):
+    ) -> None:
         """Test pattern matching handles various AppImage suffixes correctly."""
         # Setup httpx mock to prevent network calls
         mock_client_instance = AsyncMock()
@@ -126,7 +133,7 @@ class TestModernPatternMatching:
         mock_prerelease.return_value = False
 
         # Mock pattern generation to include suffix handling
-        async def mock_pattern_with_suffixes(*args, **kwargs):
+        async def mock_pattern_with_suffixes(*args: Any) -> str:
             app_name = args[0] if args else "SuffixApp"
             # Pattern includes suffix handling for .current and .old files
             return f"(?i)^{app_name}.*\\.AppImage(\\.(current|old))?$"
@@ -181,16 +188,18 @@ class TestModernPatternMatching:
         # Verify it's a valid regex pattern
         assert pattern.startswith("(?i)") or "(?i)" in pattern
 
-    def test_pattern_validation_in_config(self, e2e_environment, runner: CliRunner, temp_config_dir: Path):
+    def test_pattern_validation_in_config(self, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test that pattern validation works correctly in configuration."""
         # Create config with custom pattern
+        download_dir = temp_config_dir / "downloads" / "pattern"
+
         config_data = {
             "applications": [
                 {
                     "name": "PatternApp",
                     "source_type": "github",
                     "url": "https://github.com/user/patternapp",
-                    "download_dir": "/tmp/test/pattern",
+                    "download_dir": str(download_dir),
                     "pattern": "(?i)PatternApp-v[0-9]+\\.[0-9]+\\.[0-9]+.*\\.AppImage$",
                     "enabled": True,
                     "prerelease": False,

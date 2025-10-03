@@ -25,7 +25,7 @@ class TestDefaultsRegression:
             yield config_dir
 
     @pytest.mark.anyio
-    async def test_freecad_defaults_regression(self, temp_config_dir):
+    async def test_freecad_defaults_regression(self, temp_config_dir) -> None:
         """Test that FreeCAD can be added using minimal command line with appropriate defaults."""
         # Set global defaults to match expected FreeCAD configuration
         test_apps_dir = temp_config_dir / "test-apps"
@@ -95,7 +95,7 @@ class TestDefaultsRegression:
         assert "AppImage" in app_config["pattern"]
 
     @pytest.mark.anyio
-    async def test_freecad_weekly_defaults_regression(self, temp_config_dir):
+    async def test_freecad_weekly_defaults_regression(self, temp_config_dir) -> None:
         """Test that FreeCAD_weekly can be added using minimal command line with appropriate defaults."""
         # Set global defaults to match expected FreeCAD_weekly configuration
         test_apps_dir = temp_config_dir / "test-apps"
@@ -174,7 +174,7 @@ class TestDefaultsRegression:
         assert "AppImage" in app_config["pattern"]
 
     @pytest.mark.anyio
-    async def test_minimal_add_command_with_defaults(self, temp_config_dir):
+    async def test_minimal_add_command_with_defaults(self, temp_config_dir) -> None:
         """Test that the minimal add command works with global defaults."""
         # Set basic defaults
         test_apps_dir = temp_config_dir / "test-apps"
@@ -222,7 +222,7 @@ class TestDefaultsRegression:
         assert app_config["checksum"]["enabled"] is True
 
     @pytest.mark.anyio
-    async def test_defaults_override_with_explicit_parameters(self, temp_config_dir):
+    async def test_defaults_override_with_explicit_parameters(self, temp_config_dir) -> None:
         """Test that explicit parameters override global defaults."""
         # Set defaults
         set_global_config_value("checksum", "true", None, temp_config_dir)

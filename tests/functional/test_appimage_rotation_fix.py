@@ -14,17 +14,17 @@ from appimage_updater.core.models import Asset, UpdateCandidate
 
 
 @pytest.fixture
-def rotation_app_config():
+def rotation_app_config(tmp_path: Path):
     """Create an ApplicationConfig with rotation enabled for testing."""
     return ApplicationConfig(
         name="TestApp",
         source_type="github",
         url="https://github.com/test/testapp",
-        download_dir=Path("/tmp/test"),
+        download_dir=tmp_path / "test",
         pattern=r"TestApp.*\.AppImage$",
         enabled=True,
         rotation_enabled=True,
-        symlink_path=Path("/tmp/testapp.AppImage"),
+        symlink_path=tmp_path / "testapp.AppImage",
         retain_count=3,
         checksum=ChecksumConfig(enabled=False),
     )
@@ -48,7 +48,7 @@ def downloader():
 
 
 @pytest.mark.anyio
-async def test_appimage_rotation_naming_correct(downloader, rotation_app_config, sample_asset):
+async def test_appimage_rotation_naming_correct(downloader, rotation_app_config, sample_asset) -> None:
     """Test that AppImage files are rotated with correct naming: filename.AppImage.current"""
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
@@ -88,7 +88,7 @@ async def test_appimage_rotation_naming_correct(downloader, rotation_app_config,
 
 
 @pytest.mark.anyio
-async def test_appimage_rotation_with_metadata_files(downloader, rotation_app_config, sample_asset):
+async def test_appimage_rotation_with_metadata_files(downloader, rotation_app_config, sample_asset) -> None:
     """Test that AppImage rotation also moves metadata files correctly."""
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
@@ -135,7 +135,7 @@ async def test_appimage_rotation_with_metadata_files(downloader, rotation_app_co
 
 
 @pytest.mark.anyio
-async def test_appimage_rotation_sequence(downloader, rotation_app_config, sample_asset):
+async def test_appimage_rotation_sequence(downloader, rotation_app_config, sample_asset) -> None:
     """Test full rotation sequence with AppImage files."""
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
@@ -189,7 +189,7 @@ async def test_appimage_rotation_sequence(downloader, rotation_app_config, sampl
 
 
 @pytest.mark.anyio
-async def test_non_appimage_rotation_unchanged(downloader, rotation_app_config, sample_asset):
+async def test_non_appimage_rotation_unchanged(downloader, rotation_app_config, sample_asset) -> None:
     """Test that non-AppImage files still use original rotation logic."""
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)

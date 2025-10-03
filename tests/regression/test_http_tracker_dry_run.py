@@ -96,7 +96,7 @@ class TestHTTPTrackerDryRun:
 
         return None
 
-    def test_check_dry_run_no_http_requests(self):
+    def test_check_dry_run_no_http_requests(self) -> None:
         """Test that check --dry-run makes no HTTP requests even with HTTP tracking."""
         # Test that dry-run completes quickly and shows appropriate messages
         exit_code, stdout, stderr = self.run_command(
@@ -117,7 +117,7 @@ class TestHTTPTrackerDryRun:
             or "no applications" in output.lower()
         ), f"Should show dry-run or no-apps behavior: {output}"
 
-    def test_repository_dry_run_no_http_requests(self):
+    def test_repository_dry_run_no_http_requests(self) -> None:
         """Test that repository --dry-run makes no HTTP requests."""
         exit_code, stdout, stderr = self.run_command(
             ["uv", "run", "python", "-m", "appimage_updater", "repository", "TestApp", "--dry-run", "--instrument-http"]
@@ -135,7 +135,7 @@ class TestHTTPTrackerDryRun:
             or "not found" in output.lower()
         )
 
-    def test_check_without_dry_run_allows_http(self):
+    def test_check_without_dry_run_allows_http(self) -> None:
         """Test that check without --dry-run shows normal behavior (not dry-run behavior)."""
         # This test verifies the command doesn't show dry-run behavior when not in dry-run mode
         # We use a non-existent app to avoid real HTTP calls while testing the behavior
@@ -159,7 +159,7 @@ class TestHTTPTrackerDryRun:
             or "applications not found" in output.lower()
         ), f"Should show app not found error: {output}"
 
-    def test_http_tracker_parameters_in_source(self):
+    def test_http_tracker_parameters_in_source(self) -> None:
         """Test that appropriate commands have instrument_http parameter in source code."""
         commands_with_params = self.get_commands_from_source()
 
@@ -174,7 +174,7 @@ class TestHTTPTrackerDryRun:
                     f"Found params: {params}"
                 )
 
-    def test_dry_run_parameters_in_source(self):
+    def test_dry_run_parameters_in_source(self) -> None:
         """Test that appropriate commands have dry_run parameter in source code."""
         commands_with_params = self.get_commands_from_source()
 
@@ -188,7 +188,7 @@ class TestHTTPTrackerDryRun:
                     f"Command {command} missing 'dry_run' parameter in function signature. Found params: {params}"
                 )
 
-    def test_format_and_dry_run_combination(self):
+    def test_format_and_dry_run_combination(self) -> None:
         """Test that --format and --dry-run work together."""
         formats = ["rich", "plain", "json", "html"]
 
@@ -209,7 +209,7 @@ class TestHTTPTrackerDryRun:
                 or "no enabled applications" in output.lower()
             )
 
-    def test_http_tracking_with_format_options(self):
+    def test_http_tracking_with_format_options(self) -> None:
         """Test that HTTP tracking works with different format options."""
         formats = ["rich", "plain", "json", "html"]
 
@@ -231,7 +231,7 @@ class TestHTTPTrackerDryRun:
             # Should succeed or fail gracefully
             assert exit_code in [0, 1], f"Check with HTTP tracking and {format_type} format failed: {stderr}"
 
-    def test_verbose_dry_run_output(self):
+    def test_verbose_dry_run_output(self) -> None:
         """Test that verbose mode shows detailed dry-run information."""
         exit_code, stdout, stderr = self.run_command(
             ["uv", "run", "python", "-m", "appimage_updater", "check", "--dry-run", "--verbose"]
@@ -244,7 +244,7 @@ class TestHTTPTrackerDryRun:
         output = stdout + stderr
         assert len(output) > 0, "Verbose dry-run should produce output"
 
-    def test_repository_dry_run_shows_urls(self):
+    def test_repository_dry_run_shows_urls(self) -> None:
         """Test that repository --dry-run shows URLs that would be examined."""
         exit_code, stdout, stderr = self.run_command(
             ["uv", "run", "python", "-m", "appimage_updater", "repository", "TestApp", "--dry-run"]
@@ -259,7 +259,7 @@ class TestHTTPTrackerDryRun:
             or "not found" in output.lower()
         )
 
-    def test_edit_dry_run_preview(self):
+    def test_edit_dry_run_preview(self) -> None:
         """Test that edit --dry-run shows preview without making changes."""
         exit_code, stdout, stderr = self.run_command(
             [

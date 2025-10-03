@@ -22,7 +22,7 @@ class TestE2EFunctionality:
         temp_config_dir,
         sample_config,
         temp_download_dir,
-    ):
+    ) -> None:
         """Test check command with dry-run when no updates are needed."""
         # Create config file
         config_file = temp_config_dir / "test.json"
@@ -71,7 +71,7 @@ class TestE2EFunctionality:
         temp_config_dir,
         sample_config,
         temp_download_dir,
-    ):
+    ) -> None:
         """Test check command with dry-run when updates are available."""
         # Create config file
         config_file = temp_config_dir / "test.json"
@@ -121,7 +121,7 @@ class TestE2EFunctionality:
         temp_config_dir,
         sample_config,
         temp_download_dir,
-    ):
+    ) -> None:
         """Test check command with specific app filtering."""
         # Create config with multiple apps
         multi_app_config = {
@@ -165,16 +165,16 @@ class TestE2EFunctionality:
         # Should only check TestApp1, not TestApp2
         mock_version_checker.check_for_updates.assert_called_once()
 
-    def test_check_command_with_nonexistent_config(self, runner):
+    def test_check_command_with_nonexistent_config(self, runner, tmp_path) -> None:
         """Test check command with non-existent configuration file."""
-        nonexistent_config = Path("/tmp/nonexistent_config.json")
+        nonexistent_config = tmp_path / "nonexistent_config.json"
 
         result = runner.invoke(app, ["check", "--config", str(nonexistent_config), "--dry-run"])
 
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
 
-    def test_check_command_with_invalid_json_config(self, runner, temp_config_dir):
+    def test_check_command_with_invalid_json_config(self, runner, temp_config_dir) -> None:
         """Test check command with invalid JSON configuration."""
         config_file = temp_config_dir / "invalid.json"
         with config_file.open("w") as f:
@@ -189,7 +189,7 @@ class TestE2EFunctionality:
     @patch("appimage_updater.core.update_operations.VersionChecker")
     def test_check_command_with_failed_version_check(
         self, mock_version_checker_class, mock_repo_client_factory, runner, temp_config_dir, sample_config
-    ):
+    ) -> None:
         """Test check command when version check fails."""
         # Create config file
         config_file = temp_config_dir / "test.json"
@@ -209,7 +209,7 @@ class TestE2EFunctionality:
         assert result.exit_code == 0  # Should not fail, just report the error
         assert "Error" in result.stdout or "failed" in result.stdout.lower()
 
-    def test_debug_flag_enables_verbose_output(self, runner, temp_config_dir, sample_config):
+    def test_debug_flag_enables_verbose_output(self, runner, temp_config_dir, sample_config) -> None:
         """Test that debug flag enables verbose logging output."""
         # Create config file
         config_file = temp_config_dir / "test.json"
@@ -229,7 +229,7 @@ class TestE2EFunctionality:
             # Debug mode should not cause failure and should include debug info
             assert result.exit_code == 0
 
-    def test_list_command_with_single_application(self, runner, temp_config_dir, sample_config):
+    def test_list_command_with_single_application(self, runner, temp_config_dir, sample_config) -> None:
         """Test list command with a single configured application."""
         # Create config file
         config_file = temp_config_dir / "test.json"
@@ -247,7 +247,7 @@ class TestE2EFunctionality:
         assert "github.com" in result.stdout or "https://github" in result.stdout
         assert "Total: 1 applications (1 enabled, 0 disabled)" in result.stdout
 
-    def test_list_command_with_multiple_applications(self, runner, temp_config_dir, temp_download_dir):
+    def test_list_command_with_multiple_applications(self, runner, temp_config_dir, temp_download_dir) -> None:
         """Test list command with multiple applications (enabled and disabled)."""
         # Create config with multiple apps
         multi_app_config = {
@@ -285,7 +285,7 @@ class TestE2EFunctionality:
         assert "Disabled" in result.stdout
         assert "Total: 2 applications (1 enabled, 1 disabled)" in result.stdout
 
-    def test_list_command_with_no_applications(self, runner, temp_config_dir):
+    def test_list_command_with_no_applications(self, runner, temp_config_dir) -> None:
         """Test list command with empty configuration."""
         # Create empty config
         empty_config = {"applications": []}
@@ -299,7 +299,7 @@ class TestE2EFunctionality:
         assert result.exit_code == 0
         assert "No applications configured" in result.stdout
 
-    def test_list_command_with_config_directory(self, runner, temp_config_dir, temp_download_dir):
+    def test_list_command_with_config_directory(self, runner, temp_config_dir, temp_download_dir) -> None:
         """Test list command with directory-based configuration."""
         # Create multiple config files in directory
         app1_config = {
@@ -345,16 +345,16 @@ class TestE2EFunctionality:
         assert "App2" in result.stdout
         assert "Total: 2 applications (2 enabled, 0 disabled)" in result.stdout
 
-    def test_list_command_with_nonexistent_config(self, runner):
+    def test_list_command_with_nonexistent_config(self, runner, tmp_path) -> None:
         """Test list command with non-existent configuration file."""
-        nonexistent_config = Path("/tmp/nonexistent_list_config.json")
+        nonexistent_config = tmp_path / "nonexistent_list_config.json"
 
         result = runner.invoke(app, ["list", "--config", str(nonexistent_config)])
 
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
 
-    def test_list_command_with_invalid_json_config(self, runner, temp_config_dir):
+    def test_list_command_with_invalid_json_config(self, runner, temp_config_dir) -> None:
         """Test list command with invalid JSON configuration."""
         config_file = temp_config_dir / "invalid_list.json"
         with config_file.open("w") as f:
@@ -365,7 +365,7 @@ class TestE2EFunctionality:
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
 
-    def test_list_command_truncates_long_paths(self, runner, temp_config_dir):
+    def test_list_command_truncates_long_paths(self, runner, temp_config_dir) -> None:
         """Test that list command properly truncates very long download paths."""
         # Create config with very long path
         long_path = "/very/long/path/that/exceeds/forty/characters/and/should/be/truncated/download/dir"
@@ -399,7 +399,7 @@ class TestE2EFunctionality:
                 # No single line should contain the full long path
                 assert len(line) < 200  # Reasonable line length check
 
-    def test_show_command_with_valid_application(self, runner, temp_config_dir, temp_download_dir):
+    def test_show_command_with_valid_application(self, runner, temp_config_dir, temp_download_dir) -> None:
         """Test show command with a valid application."""
         # Create config with detailed application
         detailed_config = {
@@ -457,7 +457,7 @@ class TestE2EFunctionality:
         # Check symlinks section
         assert "Symlinks" in result.stdout
 
-    def test_show_command_with_nonexistent_application(self, runner, temp_config_dir, sample_config):
+    def test_show_command_with_nonexistent_application(self, runner, temp_config_dir, sample_config) -> None:
         """Test show command with non-existent application."""
         config_file = temp_config_dir / "test.json"
         with config_file.open("w") as f:
@@ -469,7 +469,7 @@ class TestE2EFunctionality:
         assert "Applications not found: NonExistentApp" in result.stdout
         assert "Available applications: TestApp" in result.stdout
 
-    def test_show_command_case_insensitive(self, runner, temp_config_dir, sample_config):
+    def test_show_command_case_insensitive(self, runner, temp_config_dir, sample_config) -> None:
         """Test show command with case-insensitive application name matching."""
         config_file = temp_config_dir / "test.json"
         with config_file.open("w") as f:
@@ -481,7 +481,7 @@ class TestE2EFunctionality:
         assert "Application: TestApp" in result.stdout
         assert "Configuration" in result.stdout
 
-    def test_show_command_with_missing_download_directory(self, runner, temp_config_dir):
+    def test_show_command_with_missing_download_directory(self, runner, temp_config_dir) -> None:
         """Test show command when download directory doesn't exist."""
         config_with_missing_dir = {
             "applications": [
@@ -505,7 +505,7 @@ class TestE2EFunctionality:
         assert result.exit_code == 0
         assert "Download directory does not exist" in result.stdout
 
-    def test_show_command_with_disabled_application(self, runner, temp_config_dir, temp_download_dir):
+    def test_show_command_with_disabled_application(self, runner, temp_config_dir, temp_download_dir) -> None:
         """Test show command with a disabled application."""
         disabled_config = {
             "applications": [
@@ -531,7 +531,7 @@ class TestE2EFunctionality:
         assert "Status: Disabled" in result.stdout
         assert "Checksum Verification: Disabled" in result.stdout
 
-    def test_show_command_with_no_matching_files(self, runner, temp_config_dir, temp_download_dir):
+    def test_show_command_with_no_matching_files(self, runner, temp_config_dir, temp_download_dir) -> None:
         """Test show command when no files match the pattern."""
         no_files_config = {
             "applications": [
@@ -558,7 +558,7 @@ class TestE2EFunctionality:
         assert result.exit_code == 0
         assert "No AppImage files found matching the pattern" in result.stdout
 
-    def test_show_command_with_symlinks(self, runner, temp_config_dir, temp_download_dir):
+    def test_show_command_with_symlinks(self, runner, temp_config_dir, temp_download_dir) -> None:
         """Test show command with symlinks present."""
         symlink_config = {
             "applications": [

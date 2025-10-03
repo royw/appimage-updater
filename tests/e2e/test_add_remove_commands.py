@@ -32,7 +32,7 @@ class TestAddCommand:
         mock_httpx_client.return_value.__aexit__ = AsyncMock(return_value=None)
 
         # Mock async functions
-        async def mock_pattern(*args, **kwargs):
+        async def mock_pattern(*args, **kwargs) -> str:
             return "(?i)InvalidTestApp.*\\.AppImage$"
 
         mock_pattern_gen.side_effect = mock_pattern
@@ -111,7 +111,7 @@ class TestAddCommand:
         mock_repo_client.return_value = mock_repo
 
         # Mock async functions
-        async def mock_pattern(*args, **kwargs):
+        async def mock_pattern(*args, **kwargs) -> str:
             return "(?i)DirectApp.*\\.AppImage$"
 
         mock_pattern_gen.side_effect = mock_pattern

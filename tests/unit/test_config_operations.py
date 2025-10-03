@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -109,15 +110,15 @@ class TestValidateUrlUpdate:
         # URL should be normalized
         assert updates["url"] == "https://github.com/owner/repo"
 
-    def test_validate_url_update_no_url_returns_early(self) -> None:
+    def test_validate_url_update_no_url_returns_early(self, tmp_path: Path) -> None:
         """Test that validate_url_update returns early when no URL is provided."""
-        updates = {"download_dir": "/tmp/test"}
+        updates = {"download_dir": str(tmp_path / "test")}
 
         # Should not raise any exception
         validate_url_update(updates)
 
         # Updates should remain unchanged
-        assert updates == {"download_dir": "/tmp/test"}
+        assert updates == {"download_dir": str(tmp_path / "test")}
 
     @patch("appimage_updater.config.operations.console")
     @patch("appimage_updater.config.operations.logger")

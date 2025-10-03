@@ -54,7 +54,7 @@ def setup_github_mocks(
     mock_repo.repository_type = "github"
 
     # Add async method for prerelease detection
-    async def mock_should_enable_prerelease(*args, **kwargs):
+    async def mock_should_enable_prerelease(*args, **kwargs) -> bool:
         return False
 
     mock_repo.should_enable_prerelease = AsyncMock(side_effect=mock_should_enable_prerelease)
@@ -81,7 +81,7 @@ def setup_github_mocks(
 class TestPatternMatching:
     """Test pattern matching functionality specifically."""
 
-    def create_test_files(self, directory: Path, filenames: list[str]):
+    def create_test_files(self, directory: Path, filenames: list[str]) -> None:
         """Helper to create test files."""
         for filename in filenames:
             (directory / filename).touch()
@@ -118,7 +118,7 @@ class TestPatternMatching:
         assert "TestApp" in result.stdout
 
 
-def test_version_extraction_patterns():
+def test_version_extraction_patterns() -> None:
     """Test version extraction from various filename formats."""
     checker = VersionChecker()
 
