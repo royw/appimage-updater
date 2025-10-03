@@ -135,6 +135,16 @@ def run_command(cmd: list[str], message: str = "") -> subprocess.CompletedProces
 # ============================================================================
 
 
+def split_command_path(command_path: str) -> list[str]:
+    """Split a command path that may contain spaces into a list of tokens.
+
+    Examples:
+        "radon" -> ["radon"]
+        "uv run radon" -> ["uv", "run", "radon"]
+    """
+    return command_path.split()
+
+
 def load_complexity_exclusions() -> list[str]:
     """Load complexity exclusion list from pyproject.toml."""
     try:
@@ -152,12 +162,13 @@ def load_complexity_exclusions() -> list[str]:
         return []
 
 
-def gather_complexity_metrics() -> ComplexityMetrics:
+def gather_complexity_metrics(config: MetricsConfig) -> ComplexityMetrics:
     """Gather complexity metrics using radon."""
     metrics = ComplexityMetrics()
 
     try:
-        result = run_command(["uv", "run", "radon", "cc", "src/", "-a", "-j"])
+        radon_cmd = split_command_path(config.radon_path)
+        result = run_command(radon_cmd + ["cc", str(config.src_path) + "/", "-a", "-j"])
         if result.returncode != 0:
             return metrics
 
@@ -183,7 +194,7 @@ def gather_complexity_metrics() -> ComplexityMetrics:
         avg_paths_per_file = total_code_paths / len(file_code_paths) if file_code_paths else 0
         max_paths_in_file = max(file_code_paths) if file_code_paths else 0
 
-        result_high = run_command(["uv", "run", "radon", "cc", "src/", "-n", "B", "-s"])
+        result_high = run_command(radon_cmd + ["cc", str(config.src_path) + "/", "-n", "B", "-s"])
         files_high_cc = len([line for line in result_high.stdout.split("\n") if line and not line.startswith(" ")])
 
         metrics.top5_complex = file_complexities[:5]
@@ -199,14 +210,14 @@ def gather_complexity_metrics() -> ComplexityMetrics:
     return metrics
 
 
-def gather_source_metrics(complexity: ComplexityMetrics) -> SourceMetrics:
+def gather_source_metrics(complexity: ComplexityMetrics, config: MetricsConfig) -> SourceMetrics:
     """Gather source code metrics."""
     metrics = SourceMetrics()
 
     # Load complexity exclusions
     metrics.complexity_exclusions = load_complexity_exclusions()
 
-    py_files = list(Path("src").rglob("*.py"))
+    py_files = list(config.src_path.rglob("*.py"))
     metrics.total_files = len(py_files)
 
     # Lines per file statistics
@@ -226,7 +237,8 @@ def gather_source_metrics(complexity: ComplexityMetrics) -> SourceMetrics:
     # Duplication score
     # noinspection PyBroadException
     try:
-        result = run_command(["uv", "run", "pylint", "--disable=all", "--enable=duplicate-code", "src/"])
+        pylint_cmd = split_command_path(config.pylint_path)
+        result = run_command(pylint_cmd + ["--disable=all", "--enable=duplicate-code", str(config.src_path) + "/"])
         for line in result.stdout.split("\n"):
             if "Your code has been rated at" in line:
                 metrics.duplication_score = line.split("Your code has been rated at")[1].split("/")[0].strip() + "/10"
@@ -247,11 +259,16 @@ def gather_source_metrics(complexity: ComplexityMetrics) -> SourceMetrics:
     return metrics
 
 
-def gather_test_metrics() -> TestMetrics:
+def gather_test_metrics(config: MetricsConfig) -> TestMetrics:
     """Gather test code metrics."""
     metrics = TestMetrics()
 
-    test_files = list(Path("tests").rglob("test_*.py"))
+    # tests_path can be space-separated list of paths
+    test_paths = [Path(p.strip()) for p in str(config.tests_path).split()]
+    test_files = []
+    for test_path in test_paths:
+        if test_path.exists():
+            test_files.extend(test_path.rglob("test_*.py"))
     metrics.total_test_files = len(test_files)
 
     # Test SLOC
@@ -317,15 +334,18 @@ def _find_untested_files(metrics: TestMetrics) -> None:
     metrics.untested_files = untested[:10]
 
 
-def gather_coverage_metrics() -> CoverageMetrics:
+def gather_coverage_metrics(config: MetricsConfig) -> CoverageMetrics:
     """Gather coverage metrics by running pytest."""
     metrics = CoverageMetrics()
+
+    # Build test paths from config
+    test_paths = [p.strip() for p in str(config.tests_path).split()]
 
     result = run_command([
         "uv", "run", "pytest",
         "--timeout", "30",
-        "tests/unit", "tests/functional", "tests/integration", "tests/e2e",
-        "--cov=src/appimage_updater",
+        *test_paths,
+        f"--cov={config.src_path}/appimage_updater",
         "--cov-report=json:coverage.json",
         "--cov-report=html:htmlcov",
         "--quiet", "--no-header", "--tb=no",
@@ -412,7 +432,7 @@ def _get_coverage_range(coverage_pct: int) -> str:
     return "0-9%"
 
 
-def gather_risk_metrics(complexity: ComplexityMetrics) -> RiskMetrics:
+def gather_risk_metrics(complexity: ComplexityMetrics, config: MetricsConfig) -> RiskMetrics:
     """Gather risk analysis metrics."""
     metrics = RiskMetrics()
 
@@ -460,19 +480,15 @@ def gather_risk_metrics(complexity: ComplexityMetrics) -> RiskMetrics:
 
 
 def gather_all_metrics(config: MetricsConfig) -> ProjectMetrics:
-    """Gather all project metrics.
-
-    Note: Config parameter is prepared for future use.
-    Currently uses hardcoded paths - will be refactored incrementally.
-    """
+    """Gather all project metrics using configuration."""
     metrics = ProjectMetrics()
 
     # Order matters - complexity needed for other metrics
-    metrics.complexity = gather_complexity_metrics()
-    metrics.source = gather_source_metrics(metrics.complexity)
-    metrics.tests = gather_test_metrics()
-    metrics.coverage = gather_coverage_metrics()
-    metrics.risk = gather_risk_metrics(metrics.complexity)
+    metrics.complexity = gather_complexity_metrics(config)
+    metrics.source = gather_source_metrics(metrics.complexity, config)
+    metrics.tests = gather_test_metrics(config)
+    metrics.coverage = gather_coverage_metrics(config)
+    metrics.risk = gather_risk_metrics(metrics.complexity, config)
 
     return metrics
 

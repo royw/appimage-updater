@@ -291,8 +291,8 @@ ignore-if-decorated-with = [
 [tool.dev-metrics]
 # Paths for metrics calculation
 src-path = "src"
-tests-path = "tests"
+tests-path = "tests/unit tests/functional tests/integration tests/e2e"
 scripts-path = "scripts"
 # Tool paths (can be overridden for custom installations)
-radon-path = "radon"
-pylint-path = "pylint"
+radon-path = "uv run radon"
+pylint-path = "uv run pylint"
