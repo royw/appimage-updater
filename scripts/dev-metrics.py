@@ -49,6 +49,12 @@ class MetricsConfig:
     test_pattern: str = "test_*.py"
     test_type: str | None = None  # Optional subdirectory filter (e.g., "unit", "functional")
     package: str = ""  # Top-level package name (auto-detected if empty)
+    excluded_files: list[str] = None  # Files to exclude from untested files report
+
+    def __post_init__(self):
+        """Initialize default excluded files if not provided."""
+        if self.excluded_files is None:
+            self.excluded_files = ["__init__.py", "__main__.py", "_version.py"]
 
 
 @dataclass
@@ -406,10 +412,9 @@ def _find_untested_files(metrics: TestMetrics, config: MetricsConfig) -> None:
                 tested_modules.add(f"{config.src_path}/{config.package}/{module_path}.py")
 
     untested: list[tuple[str, int]] = []
-    excluded_files: list[str] = ["__init__.py", "__main__.py", "_version.py"]
     for source_file, sloc in src_files_with_sloc.items():
         normalized: str = str(source_file).replace("\\", "/")
-        if normalized not in tested_modules and not any(x in normalized for x in excluded_files):
+        if normalized not in tested_modules and not any(x in normalized for x in config.excluded_files):
             untested.append((normalized, sloc))
 
     untested.sort(key=lambda x: x[1], reverse=True)
@@ -779,6 +784,12 @@ def parse_arguments() -> MetricsConfig:
         type=str,
         help="Top-level package name (auto-detected if not specified)",
     )
+    parser.add_argument(
+        "--excluded-files",
+        type=str,
+        help="Comma-separated list of file basenames to exclude from untested files report "
+             "(default: __init__.py,__main__.py,_version.py or from pyproject.toml)",
+    )
 
     args = parser.parse_args()
 
@@ -791,6 +802,14 @@ def parse_arguments() -> MetricsConfig:
     if not package_name:
         package_name = detect_package_name(src_path)
 
+    # Parse excluded files (comma-separated string to list)
+    excluded_files = None
+    if args.excluded_files:
+        excluded_files = [f.strip() for f in args.excluded_files.split(",")]
+    elif "excluded-files" in pyproject_config:
+        excluded_files_str = pyproject_config.get("excluded-files", "")
+        excluded_files = [f.strip() for f in excluded_files_str.split(",") if f.strip()]
+
     # Build config with priority: CLI args > pyproject.toml > defaults
     config = MetricsConfig(
         src_path=src_path,
@@ -801,6 +820,7 @@ def parse_arguments() -> MetricsConfig:
         test_pattern=args.test_pattern or pyproject_config.get("test-pattern", "test_*.py"),
         test_type=args.test_type or pyproject_config.get("test-type"),
         package=package_name,
+        excluded_files=excluded_files,
     )
 
     return config

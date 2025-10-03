@@ -300,3 +300,4 @@ pylint-path = "uv run pylint"
 test-pattern = "test_*.py"
 # test-type = "unit"  # Optional: filter to specific test type subdirectory
 # package = "appimage_updater"  # Optional: auto-detected from src/ directory or project name
+# excluded-files = "__init__.py,__main__.py,_version.py"  # Optional: files to exclude from untested report
