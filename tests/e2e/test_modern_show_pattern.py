@@ -44,9 +44,7 @@ class TestModernShowCommand:
 
         return config_file
 
-    def test_show_command_with_configured_symlink_path(
-        self, runner: CliRunner, temp_config_dir: Path
-    ) -> None:
+    def test_show_command_with_configured_symlink_path(self, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test show command displays symlink path correctly."""
         # Create test config with symlink
         config_file = self.create_test_config_with_symlink(temp_config_dir, "SymlinkApp")
@@ -113,7 +111,8 @@ class TestModernPatternMatching:
     @patch("appimage_updater.repositories.factory.get_repository_client_with_probing_sync")
     @patch("appimage_updater.core.pattern_generator.generate_appimage_pattern_async")
     @patch("appimage_updater.core.pattern_generator.should_enable_prerelease")
-    def test_pattern_matching_with_suffixes(self,
+    def test_pattern_matching_with_suffixes(
+        self,
         mock_prerelease: MagicMock,
         mock_pattern_gen: MagicMock,
         mock_repo_factory: MagicMock,

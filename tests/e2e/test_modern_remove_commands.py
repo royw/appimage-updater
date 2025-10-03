@@ -37,9 +37,7 @@ class TestModernRemoveCommand:
 
         return config_file
 
-    def test_remove_existing_app_with_confirmation_yes(
-        self, runner: CliRunner, temp_config_dir: Path
-    ) -> None:
+    def test_remove_existing_app_with_confirmation_yes(self, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test removing an existing application with 'yes' confirmation."""
         # Create test config
         config_file = self.create_test_config(temp_config_dir, "TestRemoveApp", "https://github.com/user/testapp")
@@ -56,9 +54,7 @@ class TestModernRemoveCommand:
         # Verify config file was deleted
         assert not config_file.exists()
 
-    def test_remove_existing_app_with_confirmation_no(
-        self, runner: CliRunner, temp_config_dir: Path
-    ) -> None:
+    def test_remove_existing_app_with_confirmation_no(self, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test removing an existing application with 'no' confirmation."""
         # Create test config
         config_file = self.create_test_config(temp_config_dir, "TestKeepApp", "https://github.com/user/keepapp")

@@ -402,7 +402,9 @@ class TestGetSymlinksInfo:
     @patch("appimage_updater.ui.display.format_symlink_info")
     @patch("appimage_updater.ui.display.find_appimage_symlinks")
     @patch("appimage_updater.ui.display.Path")
-    def test_path_not_symlink(self, mock_path: Mock, mock_find_symlinks: Mock, mock_format: Mock, tmp_path: Path) -> None:
+    def test_path_not_symlink(
+        self, mock_path: Mock, mock_find_symlinks: Mock, mock_format: Mock, tmp_path: Path
+    ) -> None:
         """Test path with found symlinks."""
         app = Mock()
         app.download_dir = tmp_path / "test"
