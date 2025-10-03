@@ -20,7 +20,6 @@ import json
 from pathlib import Path
 import re
 import subprocess
-import sys
 import tomllib
 from typing import Any
 
@@ -41,21 +40,15 @@ class Colors:
 class MetricsConfig:
     """Configuration for metrics script."""
 
-    src_path: Path = Path("src")
-    tests_path: Path = Path("tests")
-    scripts_path: Path = Path("scripts")
-    radon_path: str = "radon"
-    pylint_path: str = "pylint"
-    pytest_path: str = "pytest"
+    src_paths: list[Path] = field(default_factory=list)  # [Path("src")]
+    tests_paths: list[Path] = field(default_factory=list)  # [Path("tests")]
+    radon_list: list[str] = field(default_factory=list)  # ["radon"]
+    pylint_list: list[str] = field(default_factory=list)  # ["pylint"]
+    pytest_list: list[str] = field(default_factory=list)  # ["pytest"]
     test_pattern: str = "test_*.py"
-    test_type: str | None = None  # Optional subdirectory filter (e.g., "unit", "functional")
+    test_types: list[str] = field(default_factory=list)  # List of subdirectory filters (e.g., "unit", "functional")
     package: str = ""  # Top-level package name (auto-detected if empty)
-    excluded_files: list[str] = None  # Files to exclude from untested files report
-
-    def __post_init__(self):
-        """Initialize default excluded files if not provided."""
-        if self.excluded_files is None:
-            self.excluded_files = ["__init__.py", "__main__.py", "_version.py"]
+    excluded_files: list[str] = field(default_factory=list)  # List of files to exclude from untested files report
 
 
 @dataclass
@@ -131,6 +124,12 @@ def output(message: str) -> None:
     print(message)  # noqa: T201
 
 
+def error(message: str, exception: Exception | None = None) -> None:
+    print(f"{Colors.RED}{message}{Colors.NC}")  # noqa: T201
+    if exception:
+        print(f"{Colors.RED}{exception}{Colors.NC}")  # noqa: T201
+
+
 def run_command(cmd: list[str], message: str = "") -> subprocess.CompletedProcess[str]:
     """Run a shell command and return the result."""
     if message:
@@ -145,17 +144,7 @@ def run_command(cmd: list[str], message: str = "") -> subprocess.CompletedProces
 # ============================================================================
 
 
-def split_command_path(command_path: str) -> list[str]:
-    """Split a command path that may contain spaces into a list of tokens.
-
-    Examples:
-        "radon" -> ["radon"]
-        "uv run radon" -> ["uv", "run", "radon"]
-    """
-    return command_path.split()
-
-
-def detect_package_name(src_path: Path) -> str:
+def detect_package_name(src_paths: list[Path]) -> str:
     """Auto-detect package name from src directory or pyproject.toml.
 
     Strategy:
@@ -164,22 +153,25 @@ def detect_package_name(src_path: Path) -> str:
     3. Fallback to "appimage_updater"
     """
     # Look for package directories (containing __init__.py) in src_path
-    if src_path.exists():
-        packages = [d.name for d in src_path.iterdir() if d.is_dir() and (d / "__init__.py").exists()]
+    packages = []
+    for src_path in src_paths:
+        if src_path.exists():
+            packages.extend([d.name for d in src_path.iterdir() if d.is_dir() and (d / "__init__.py").exists()])
 
-        # If exactly one package, use it
-        if len(packages) == 1:
-            return packages[0]
+    # If exactly one package, use it
+    if len(packages) == 1:
+        return packages[0]
 
     # Otherwise, use snake_case of project name from pyproject.toml
     try:
         with open("pyproject.toml", "rb") as f:
             data = tomllib.load(f)
-            project_name = data.get("project", {}).get("name", "")
+            project_name: str = data.get("project", {}).get("name", "")
             # Convert to snake_case
             return project_name.replace("-", "_")
-    except Exception:
-        return "appimage_updater"  # fallback
+    except Exception as ex:
+        error("unable to detect project name from pyproject.toml", ex)
+    return "unknown_project"  # fallback
 
 
 def load_complexity_exclusions() -> list[str]:
@@ -199,13 +191,20 @@ def load_complexity_exclusions() -> list[str]:
         return []
 
 
+def _path_list_to_str_parts(path_list: list[Path]) -> list[str]:
+    return [str(p) for p in path_list]
+
+
+def _path_list_to_str(path_list: list[Path]) -> str:
+    return " ".join(_path_list_to_str_parts(path_list))
+
+
 def gather_complexity_metrics(config: MetricsConfig) -> ComplexityMetrics:
     """Gather complexity metrics using radon."""
     metrics = ComplexityMetrics()
 
     try:
-        radon_cmd = split_command_path(config.radon_path)
-        result = run_command(radon_cmd + ["cc", str(config.src_path) + "/", "-a", "-j"])
+        result = run_command(config.radon_list + ["cc", *_path_list_to_str_parts(config.src_paths), "-a", "-j"])
         if result.returncode != 0:
             return metrics
 
@@ -231,7 +230,9 @@ def gather_complexity_metrics(config: MetricsConfig) -> ComplexityMetrics:
         avg_paths_per_file = total_code_paths / len(file_code_paths) if file_code_paths else 0
         max_paths_in_file = max(file_code_paths) if file_code_paths else 0
 
-        result_high = run_command(radon_cmd + ["cc", str(config.src_path) + "/", "-n", "B", "-s"])
+        result_high = run_command(
+            config.radon_list + ["cc", *_path_list_to_str_parts(config.src_paths), "-n", "B", "-s"]
+        )
         files_high_cc = len([line for line in result_high.stdout.split("\n") if line and not line.startswith(" ")])
 
         metrics.top5_complex = file_complexities[:5]
@@ -254,7 +255,9 @@ def gather_source_metrics(complexity: ComplexityMetrics, config: MetricsConfig) 
     # Load complexity exclusions
     metrics.complexity_exclusions = load_complexity_exclusions()
 
-    py_files = list(config.src_path.rglob("*.py"))
+    py_files = []
+    for src_path in config.src_paths:
+        py_files.extend(list(src_path.rglob("*.py")))
     metrics.total_files = len(py_files)
 
     # Lines per file statistics
@@ -274,8 +277,10 @@ def gather_source_metrics(complexity: ComplexityMetrics, config: MetricsConfig) 
     # Duplication score
     # noinspection PyBroadException
     try:
-        pylint_cmd = split_command_path(config.pylint_path)
-        result = run_command(pylint_cmd + ["--disable=all", "--enable=duplicate-code", str(config.src_path) + "/"])
+        result = run_command(
+            config.pylint_list
+            + ["--disable=all", "--enable=duplicate-code", *_path_list_to_str_parts(config.src_paths)]
+        )
         for line in result.stdout.split("\n"):
             if "Your code has been rated at" in line:
                 metrics.duplication_score = line.split("Your code has been rated at")[1].split("/")[0].strip() + "/10"
@@ -301,23 +306,24 @@ def gather_test_metrics(config: MetricsConfig) -> TestMetrics:
     metrics = TestMetrics()
 
     # tests_path can be space-separated list of paths
-    test_paths = [Path(p.strip()) for p in str(config.tests_path).split()]
-    test_files = []
-    for test_path in test_paths:
+    tests_files: list[Path] = []
+    for tests_path in config.tests_paths:
         # Apply test_type filter if specified
-        if config.test_type:
-            # If test_path already ends with the test_type, use it as-is; otherwise append
-            search_path = test_path if test_path.name == config.test_type else test_path / config.test_type
-        else:
-            search_path = test_path
+        for test_type in config.test_types:
+            if tests_path.name == test_type:
+                # If test_path already ends with the test_type, use it as-is; otherwise append
+                search_path = tests_path if tests_path.name == test_type else tests_path / test_type
+            else:
+                search_path = tests_path
 
-        if search_path.exists():
-            # Use configured test pattern
-            test_files.extend(search_path.rglob(config.test_pattern))
-    metrics.total_test_files = len(test_files)
+            if search_path.exists():
+                # Use configured test pattern
+                tests_files.extend(search_path.rglob(config.test_pattern))
+
+    metrics.total_test_files = len(tests_files)
 
     # Test SLOC
-    for f in test_files:
+    for f in tests_files:
         lines = f.read_text().splitlines()
         metrics.total_sloc += sum(1 for line in lines if line.strip() and not line.strip().startswith("#"))
 
@@ -330,27 +336,24 @@ def gather_test_metrics(config: MetricsConfig) -> TestMetrics:
     return metrics
 
 
-def _count_test_functions_by_type(metrics: TestMetrics, config: MetricsConfig) -> None:
-    """Count test functions by test type."""
-    # Get base test paths from config
-    test_paths = [Path(p.strip()) for p in str(config.tests_path).split()]
-    if not test_paths:
-        return
-
-    # Find the base test directory (parent of test type subdirectories)
-    # If paths are like "tests/unit tests/e2e", use "tests"
-    # If path is just "tests", use it directly
-    base_test_path = test_paths[0]
+def _get_base_test_path(config: MetricsConfig) -> Path:
+    """Get the base test directory path."""
+    base_test_path = config.tests_paths[0]
     if base_test_path.parent.name == "tests" or base_test_path.name != "tests":
         # We have specific subdirectories, use parent
         base_test_path = base_test_path.parent if base_test_path.parent.name == "tests" else Path("tests")
+    return base_test_path
 
-    # Generate test type mapping from test paths or subdirectories
+
+def _generate_test_type_mapping(config: MetricsConfig, base_test_path: Path) -> list[tuple[str, str]]:
+    """Generate test type mapping from test paths or subdirectories."""
     test_type_mapping = []
+
     # If we have multiple specific test paths, use them
-    known_test_types = ["unit", "functional", "integration", "e2e", "regression"]
-    if len(test_paths) > 1 or (len(test_paths) == 1 and test_paths[0].name in known_test_types):
-        for test_path in test_paths:
+    if len(config.tests_paths) > 1 or (
+        len(config.tests_paths) == 1 and config.tests_paths[0].name in config.test_types
+    ):
+        for test_path in config.tests_paths:
             test_type = test_path.name
             attr_name = f"{test_type}_tests"
             test_type_mapping.append((test_type, attr_name))
@@ -358,7 +361,6 @@ def _count_test_functions_by_type(metrics: TestMetrics, config: MetricsConfig) -
     elif base_test_path.exists():
         for subdir in base_test_path.iterdir():
             if subdir.is_dir() and not subdir.name.startswith(("_", ".")):
-                # Convert directory name to attribute name (e.g., "e2e" -> "e2e_tests")
                 attr_name = f"{subdir.name}_tests"
                 test_type_mapping.append((subdir.name, attr_name))
 
@@ -372,75 +374,111 @@ def _count_test_functions_by_type(metrics: TestMetrics, config: MetricsConfig) -
             ("regression", "regression_tests"),
         ]
 
-    # Extract function pattern from test_pattern (e.g., "test_*.py" -> "def test_")
-    # Assume pattern starts with the function prefix
+    return test_type_mapping
+
+
+def _get_test_function_pattern(config: MetricsConfig) -> str:
+    """Extract function pattern from test_pattern (e.g., 'test_*.py' -> 'def test_')."""
     func_prefix = config.test_pattern.split("_")[0] if "_" in config.test_pattern else "test"
-    func_pattern = f"def {func_prefix}_"
+    return f"def {func_prefix}_"
+
+
+def _count_test_functions_in_dir(test_dir: Path, test_pattern: str, func_pattern: str) -> int:
+    """Count test functions in a directory."""
+    count = 0
+    for f in test_dir.rglob(test_pattern):
+        content = f.read_text()
+        count += sum(1 for line in content.splitlines() if line.strip().startswith(func_pattern))
+    return count
+
+
+def _count_test_functions_by_type(metrics: TestMetrics, config: MetricsConfig) -> None:
+    """Count test functions by test type."""
+    if not config.tests_paths:
+        return
+
+    base_test_path = _get_base_test_path(config)
+    test_type_mapping = _generate_test_type_mapping(config, base_test_path)
+    func_pattern = _get_test_function_pattern(config)
 
     for test_type, attr_name in test_type_mapping:
         test_dir = base_test_path / test_type
         if test_dir.exists():
-            count = 0
-            for f in test_dir.rglob(config.test_pattern):
-                content = f.read_text()
-                count += sum(1 for line in content.splitlines() if line.strip().startswith(func_pattern))
+            count = _count_test_functions_in_dir(test_dir, config.test_pattern, func_pattern)
             setattr(metrics, attr_name, count)
 
 
-def _find_untested_files(metrics: TestMetrics, config: MetricsConfig) -> None:
-    """Find source files without corresponding tests."""
+def _collect_source_files_with_sloc(config: MetricsConfig) -> dict[str, int]:
+    """Collect source files with their SLOC counts (only files with SLOC > 20)."""
     src_files_with_sloc: dict[str, int] = {}
-    for src_file in config.src_path.rglob("*.py"):
-        if "__pycache__" in str(src_file):
-            continue
-        lines = src_file.read_text().splitlines()
-        sloc = sum(1 for line in lines if line.strip() and not line.strip().startswith("#"))
-        if sloc > 20:
-            src_files_with_sloc[str(src_file)] = sloc
+    for src_path in config.src_paths:
+        for src_file in src_path.rglob("*.py"):
+            if "__pycache__" in str(src_file):
+                continue
+            lines = src_file.read_text().splitlines()
+            sloc = sum(1 for line in lines if line.strip() and not line.strip().startswith("#"))
+            if sloc > 20:
+                src_files_with_sloc[str(Path(*src_file.parts[2:]))] = sloc
+    return src_files_with_sloc
 
+
+def _extract_tested_modules(config: MetricsConfig) -> set[str]:
+    """Extract module paths that are imported in test files."""
     tested_modules = set()
-    test_paths = [Path(p.strip()) for p in str(config.tests_path).split()]
-    for test_path in test_paths:
-        if not test_path.exists():
+    for tests_path in config.tests_paths:
+        if not tests_path.exists():
             continue
-        for test_file in test_path.rglob(config.test_pattern):
-            content = test_file.read_text()
+        for tests_file in tests_path.rglob(config.test_pattern):
+            content = tests_file.read_text()
             # Use config.package for import matching
             imports = re.findall(rf"from {config.package}\.(\S+) import", content)
             imports += re.findall(rf"import {config.package}\.(\S+)", content)
             for imp in imports:
                 module_path = imp.replace(".", "/")
-                tested_modules.add(f"{config.src_path}/{config.package}/{module_path}.py")
+                tested_modules.add(f"{config.package}/{module_path}.py")
+    return tested_modules
 
+
+def _filter_untested_files(
+    src_files_with_sloc: dict[str, int], tested_modules: set[str], excluded_files: list[str]
+) -> list[tuple[str, int]]:
+    """Filter source files to find untested ones."""
     untested: list[tuple[str, int]] = []
     for source_file, sloc in src_files_with_sloc.items():
         normalized: str = str(source_file).replace("\\", "/")
-        if normalized not in tested_modules and not any(x in normalized for x in config.excluded_files):
+        if normalized not in tested_modules and not any(x in normalized for x in excluded_files):
             untested.append((normalized, sloc))
-
     untested.sort(key=lambda x: x[1], reverse=True)
-    metrics.untested_files = untested[:10]
+    return untested[:10]
+
+
+def _find_untested_files(metrics: TestMetrics, config: MetricsConfig) -> None:
+    """Find source files without corresponding tests."""
+    src_files_with_sloc = _collect_source_files_with_sloc(config)
+    tested_modules = _extract_tested_modules(config)
+    metrics.untested_files = _filter_untested_files(src_files_with_sloc, tested_modules, config.excluded_files)
 
 
 def gather_coverage_metrics(config: MetricsConfig) -> CoverageMetrics:
     """Gather coverage metrics by running pytest."""
     metrics = CoverageMetrics()
 
-    # Build test paths from config
-    test_paths = [p.strip() for p in str(config.tests_path).split()]
+    cov_list = [f"--cov={p}/{config.package}" for p in config.src_paths]
 
-    # Split pytest command (may be multi-word like "uv run pytest")
-    pytest_cmd = split_command_path(config.pytest_path)
-
-    result = run_command([
-        *pytest_cmd,
-        "--timeout", "30",
-        *test_paths,
-        f"--cov={config.src_path}/{config.package}",
-        "--cov-report=json:coverage.json",
-        "--cov-report=html:htmlcov",
-        "--quiet", "--no-header", "--tb=no",
-    ])
+    result = run_command(
+        [
+            *config.pytest_list,
+            "--timeout",
+            "30",
+            *_path_list_to_str_parts(config.tests_paths),
+            *cov_list,
+            "--cov-report=json:coverage.json",
+            "--cov-report=html:htmlcov",
+            "--quiet",
+            "--no-header",
+            "--tb=no",
+        ]
+    )
 
     # Extract test results
     _extract_test_results(result, metrics)
@@ -553,8 +591,14 @@ def gather_risk_metrics(complexity: ComplexityMetrics, config: MetricsConfig) ->
         ratios = []
         for filepath, comp in complexity.all_complexities.items():
             normalized = filepath.replace("\\", "/")
-            if not normalized.startswith(str(config.src_path)):
-                normalized = f"{config.src_path}/{config.package}/{normalized}"
+            # Check if path starts with any of the src_paths
+            if not any(normalized.startswith(str(src_path)) for src_path in config.src_paths):
+                # Try prepending each src_path with package name
+                for src_path in config.src_paths:
+                    candidate = f"{src_path}/{config.package}/{normalized}"
+                    if candidate in file_coverage:
+                        normalized = candidate
+                        break
 
             coverage = file_coverage.get(normalized, 0)
             sloc = file_sloc.get(normalized, 0)
@@ -680,8 +724,19 @@ def report_coverage_metrics(metrics: CoverageMetrics) -> None:
 
     if metrics.coverage_distribution:
         output("  Coverage distribution:")
-        order = ["100%", "90-99%", "80-89%", "70-79%", "60-69%", "50-59%",
-                 "40-49%", "30-39%", "20-29%", "10-19%", "0-9%"]
+        order = [
+            "100%",
+            "90-99%",
+            "80-89%",
+            "70-79%",
+            "60-69%",
+            "50-59%",
+            "40-49%",
+            "30-39%",
+            "20-29%",
+            "10-19%",
+            "0-9%",
+        ]
         for range_key in order:
             if range_key in metrics.coverage_distribution:
                 count = metrics.coverage_distribution[range_key]
@@ -694,22 +749,26 @@ def report_summary(metrics: ProjectMetrics) -> None:
     output_section_header("=== Summary ===")
 
     total_tests = (
-        metrics.tests.unit_tests +
-        metrics.tests.functional_tests +
-        metrics.tests.integration_tests +
-        metrics.tests.e2e_tests +
-        metrics.tests.regression_tests
+        metrics.tests.unit_tests
+        + metrics.tests.functional_tests
+        + metrics.tests.integration_tests
+        + metrics.tests.e2e_tests
+        + metrics.tests.regression_tests
     )
 
-    output(f"  Source files: {metrics.source.total_files} | "
-          f"Test files: {metrics.tests.total_test_files} | "
-          f"Tests: {total_tests}")
+    output(
+        f"  Source files: {metrics.source.total_files} | "
+        f"Test files: {metrics.tests.total_test_files} | "
+        f"Tests: {total_tests}"
+    )
 
     if metrics.complexity.total_paths:
         test_path_ratio = total_tests / metrics.complexity.total_paths
         output(f"  Code paths: {metrics.complexity.total_paths}")
-        output(f"  Test/Path ratio: {test_path_ratio:.2f} "
-              f"({total_tests} tests / {metrics.complexity.total_paths} code paths)")
+        output(
+            f"  Test/Path ratio: {test_path_ratio:.2f} "
+            f"({total_tests} tests / {metrics.complexity.total_paths} code paths)"
+        )
 
     if metrics.coverage.overall_coverage != "N/A":
         output(f"  Coverage: {metrics.coverage.overall_coverage}")
@@ -739,10 +798,28 @@ def load_config_from_pyproject() -> dict[str, str | list[str]]:
     """Load dev-metrics configuration from pyproject.toml."""
     try:
         with open("pyproject.toml", "rb") as f:
-            data = tomllib.load(f)
-            return data.get("tool", {}).get("dev-metrics", {})
+            data: dict[str, str | list[str]] = tomllib.load(f).get("tool", {}).get("dev-metrics", {})
+            return data
     except FileNotFoundError:
         return {}
+
+
+def as_list(value: str | list[str]) -> list[str]:
+    if isinstance(value, str):
+        return value.split(" ")
+    return value
+
+
+def as_str(value: str | list[str]) -> str:
+    if isinstance(value, list):
+        return " ".join(value)
+    return value
+
+
+def as_paths(value: str | list[str]) -> list[Path]:
+    if isinstance(value, str):
+        return [Path(p) for p in value.split(",")]
+    return [Path(p) for p in value]
 
 
 def parse_arguments() -> MetricsConfig:
@@ -750,54 +827,70 @@ def parse_arguments() -> MetricsConfig:
     parser = argparse.ArgumentParser(description="Generate project metrics summary")
     parser.add_argument(
         "--src",
-        type=Path,
-        help="Path(s) to source code directories (default: src or from pyproject.toml tool.dev-metrics.src-path)",
+        dest="src_paths",
+        action="extend",
+        nargs="+",
+        type=list,
+        help='Path(s) to source code directories (default: "src" or from pyproject.toml tool.dev-metrics.src-paths)',
     )
     parser.add_argument(
         "--tests",
-        type=Path,
-        help="Paths to tests directories (default: tests or from pyproject.toml tool.dev-metrics.tests-path)",
-    )
-    parser.add_argument(
-        "--scripts",
-        type=Path,
-        help="Path to scripts directory (default: scripts or from pyproject.toml tool.dev-metrics.scripts-path)",
+        dest="tests_paths",
+        action="extend",
+        nargs="+",
+        type=list,
+        help='Paths to tests directories (default: "tests" or from pyproject.toml tool.dev-metrics.tests-paths)',
     )
     parser.add_argument(
         "--radon",
-        type=str,
-        help="Path to radon executable (default: radon or from pyproject.toml tool.dev-metrics.radon-path)",
+        dest="radon_list",
+        nargs="+",
+        type=list[str],
+        help='Path to radon executable (default: "radon" or from pyproject.toml tool.dev-metrics.radon-path)',
     )
     parser.add_argument(
         "--pylint",
-        type=str,
-        help="Path to pylint executable (default: pylint or from pyproject.toml tool.dev-metrics.pylint-path)",
+        dest="pylint_list",
+        nargs="+",
+        type=list[str],
+        help='Path to pylint executable (default: "pylint" or from pyproject.toml tool.dev-metrics.pylint-path)',
     )
     parser.add_argument(
         "--pytest",
-        type=str,
-        help="Path to pytest executable (default: pytest or from pyproject.toml tool.dev-metrics.pytest-path)",
+        dest="pytest_list",
+        nargs="+",
+        type=list[str],
+        help='Path to pytest executable (default: "pytest" or from pyproject.toml tool.dev-metrics.pytest-path)',
     )
     parser.add_argument(
         "--test-pattern",
+        dest="test_pattern",
         type=str,
-        help="Glob pattern for test files (default: test_*.py or from pyproject.toml)",
+        help='Glob pattern for test files (default: "test_*.py" or from pyproject.toml tool.dev-metrics.test-pattern)',
     )
     parser.add_argument(
         "--test-type",
-        type=str,
-        help="Test type subdirectory filter (e.g., unit, functional, integration, e2e)",
+        dest="test_types",
+        action="extend",
+        nargs="+",
+        type=list[str],
+        help='Test type subdirectory filters (default: \"unit functional integration e2e\" '
+            'or from pyproject.toml tool.dev-metrics.test-type)',
     )
     parser.add_argument(
         "--package",
         type=str,
-        help="Top-level package name (auto-detected if not specified)",
+        help="Top-level package name  from pyproject.toml tool.dev-metrics.package or auto-detected "
+            "or from pyproject.toml snake-case project.name",
     )
     parser.add_argument(
         "--excluded-files",
-        type=str,
+        dest="excluded_files",
+        action="extend",
+        nargs="+",
+        type=list[str],
         help="Comma-separated list of file basenames to exclude from untested files report "
-             "(default: __init__.py,__main__.py,_version.py or from pyproject.toml)",
+        "(default: __init__.py,__main__.py,_version.py or from pyproject.toml) tool.dev-metrics.excluded-files",
     )
 
     args = parser.parse_args()
@@ -806,29 +899,29 @@ def parse_arguments() -> MetricsConfig:
     pyproject_config = load_config_from_pyproject()
 
     # Detect package name if not provided
-    src_path = args.src or Path(pyproject_config.get("src-path", "src"))
-    package_name = args.package or pyproject_config.get("package", "")
+    src_paths = args.src_paths or as_paths(pyproject_config.get("src-paths", "src"))
+    package_name = args.package or as_str(pyproject_config.get("package", ""))
     if not package_name:
-        package_name = detect_package_name(src_path)
+        package_name = detect_package_name(src_paths)
 
     # Parse excluded files (comma-separated string to list)
     excluded_files = None
     if args.excluded_files:
-        excluded_files = [f.strip() for f in args.excluded_files.split(",")]
+        excluded_files = as_list(args.excluded_files.split(","))
     elif "excluded-files" in pyproject_config:
-        excluded_files_str = pyproject_config.get("excluded-files", "")
-        excluded_files = [f.strip() for f in excluded_files_str.split(",") if f.strip()]
+        excluded_files = as_list(pyproject_config.get("excluded-files", ""))
+    if excluded_files is None:
+        excluded_files = ["__init__.py", "__main__.py", "_version.py"]
 
     # Build config with priority: CLI args > pyproject.toml > defaults
     config = MetricsConfig(
-        src_path=src_path,
-        tests_path=args.tests or Path(pyproject_config.get("tests-path", "tests")),
-        scripts_path=args.scripts or Path(pyproject_config.get("scripts-path", "scripts")),
-        radon_path=args.radon or pyproject_config.get("radon-path", "radon"),
-        pylint_path=args.pylint or pyproject_config.get("pylint-path", "pylint"),
-        pytest_path=args.pytest or pyproject_config.get("pytest-path", "pytest"),
-        test_pattern=args.test_pattern or pyproject_config.get("test-pattern", "test_*.py"),
-        test_type=args.test_type or pyproject_config.get("test-type"),
+        src_paths=src_paths,
+        tests_paths=args.tests_paths or as_paths(pyproject_config.get("tests-paths", ["tests"])),
+        radon_list=args.radon_list or as_list(pyproject_config.get("radon-path", "radon")),
+        pylint_list=args.pylint_list or as_list(pyproject_config.get("pylint-path", "pylint")),
+        pytest_list=args.pytest_list or as_list(pyproject_config.get("pytest-path", "pytest")),
+        test_pattern=args.test_pattern or as_str(pyproject_config.get("test-pattern", "test_*.py")),
+        test_types=args.test_types or as_list(pyproject_config.get("test-type", [])),
         package=package_name,
         excluded_files=excluded_files,
     )
