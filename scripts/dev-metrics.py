@@ -325,21 +325,58 @@ def gather_test_metrics(config: MetricsConfig) -> TestMetrics:
 
 def _count_test_functions_by_type(metrics: TestMetrics, config: MetricsConfig) -> None:
     """Count test functions by test type."""
-    for test_type, attr_name in [
-        ("unit", "unit_tests"),
-        ("functional", "functional_tests"),
-        ("integration", "integration_tests"),
-        ("e2e", "e2e_tests"),
-        ("regression", "regression_tests"),
-    ]:
-        # Use first test path from config
-        test_paths = [Path(p.strip()) for p in str(config.tests_path).split()]
-        test_dir = test_paths[0] / test_type if test_paths else Path("tests") / test_type
+    # Get base test paths from config
+    test_paths = [Path(p.strip()) for p in str(config.tests_path).split()]
+    if not test_paths:
+        return
+
+    # Find the base test directory (parent of test type subdirectories)
+    # If paths are like "tests/unit tests/e2e", use "tests"
+    # If path is just "tests", use it directly
+    base_test_path = test_paths[0]
+    if base_test_path.parent.name == "tests" or base_test_path.name != "tests":
+        # We have specific subdirectories, use parent
+        base_test_path = base_test_path.parent if base_test_path.parent.name == "tests" else Path("tests")
+
+    # Generate test type mapping from test paths or subdirectories
+    test_type_mapping = []
+    # If we have multiple specific test paths, use them
+    known_test_types = ["unit", "functional", "integration", "e2e", "regression"]
+    if len(test_paths) > 1 or (len(test_paths) == 1 and test_paths[0].name in known_test_types):
+        for test_path in test_paths:
+            test_type = test_path.name
+            attr_name = f"{test_type}_tests"
+            test_type_mapping.append((test_type, attr_name))
+    # Otherwise, discover from base directory
+    elif base_test_path.exists():
+        for subdir in base_test_path.iterdir():
+            if subdir.is_dir() and not subdir.name.startswith(("_", ".")):
+                # Convert directory name to attribute name (e.g., "e2e" -> "e2e_tests")
+                attr_name = f"{subdir.name}_tests"
+                test_type_mapping.append((subdir.name, attr_name))
+
+    # Fallback to common test types if no subdirectories found
+    if not test_type_mapping:
+        test_type_mapping = [
+            ("unit", "unit_tests"),
+            ("functional", "functional_tests"),
+            ("integration", "integration_tests"),
+            ("e2e", "e2e_tests"),
+            ("regression", "regression_tests"),
+        ]
+
+    # Extract function pattern from test_pattern (e.g., "test_*.py" -> "def test_")
+    # Assume pattern starts with the function prefix
+    func_prefix = config.test_pattern.split("_")[0] if "_" in config.test_pattern else "test"
+    func_pattern = f"def {func_prefix}_"
+
+    for test_type, attr_name in test_type_mapping:
+        test_dir = base_test_path / test_type
         if test_dir.exists():
             count = 0
             for f in test_dir.rglob(config.test_pattern):
                 content = f.read_text()
-                count += sum(1 for line in content.splitlines() if line.strip().startswith("def test_"))
+                count += sum(1 for line in content.splitlines() if line.strip().startswith(func_pattern))
             setattr(metrics, attr_name, count)
 
 
