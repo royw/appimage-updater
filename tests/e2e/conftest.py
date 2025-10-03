@@ -24,7 +24,6 @@ def pytest_configure(config: pytest.Config) -> None:
     """
     # Restore original httpx.AsyncClient for E2E tests that use @patch decorators
     try:
-
         # Get the cached httpx module from sys.modules (not a fresh import)
         if "httpx" in sys.modules:
             httpx = sys.modules["httpx"]

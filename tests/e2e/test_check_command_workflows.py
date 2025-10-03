@@ -62,7 +62,7 @@ class TestCheckCommandWorkflows:
 
             yield config_dir
 
-    def test_check_command_dry_run_shows_correct_output(self, runner, temp_config_with_app) -> None:
+    def test_check_command_dry_run_shows_correct_output(self, e2e_environment, runner, temp_config_with_app) -> None:
         """Test that check --dry-run shows proper application data and status."""
         # This test verifies the fix for empty field values issue
         result = runner.invoke(app, ["check", "TestApp", "--dry-run", "--config-dir", str(temp_config_with_app)])
@@ -83,7 +83,7 @@ class TestCheckCommandWorkflows:
         assert "No candidate" not in result.stdout
         assert "Unknown error" not in result.stdout
 
-    def test_check_command_with_format_options(self, runner, temp_config_with_app) -> None:
+    def test_check_command_with_format_options(self, e2e_environment, runner, temp_config_with_app) -> None:
         """Test that check command works with different format options."""
         formats = ["rich", "plain", "json", "html"]
 
@@ -100,7 +100,7 @@ class TestCheckCommandWorkflows:
             if format_type != "json":
                 assert "TestApp" in result.stdout, f"Format {format_type} missing app name"
 
-    def test_check_command_handles_nonexistent_app(self, runner, temp_config_with_app) -> None:
+    def test_check_command_handles_nonexistent_app(self, e2e_environment, runner, temp_config_with_app) -> None:
         """Test that check command handles non-existent applications gracefully."""
         result = runner.invoke(app, ["check", "NonExistentApp123", "--config-dir", str(temp_config_with_app)])
 

@@ -21,6 +21,7 @@ class TestAddCommand:
         mock_pattern_gen: Mock,
         mock_prerelease: Mock,
         mock_httpx_client: Mock,
+        e2e_environment,
         runner: CliRunner,
         temp_config_dir: Path,
         tmp_path: Path,
@@ -62,7 +63,7 @@ class TestAddCommand:
         assert len(config_files) == 1
 
     def test_add_command_rotation_requires_symlink(
-        self, runner: CliRunner, temp_config_dir: Path, tmp_path: Path
+        self, e2e_environment, runner: CliRunner, temp_config_dir: Path, tmp_path: Path
     ) -> None:
         """Test add command validates that --rotation requires a symlink path."""
         test_download_dir = tmp_path / "test-download"
@@ -97,6 +98,7 @@ class TestAddCommand:
         mock_pattern_gen: Mock,
         mock_prerelease: Mock,
         mock_httpx_client: Mock,
+        e2e_environment,
         runner: CliRunner,
         temp_config_dir: Path,
     ) -> None:
@@ -153,7 +155,7 @@ class TestAddCommand:
 class TestRemoveCommand:
     """Test the remove command functionality."""
 
-    def test_remove_command_from_config_file(self, runner: CliRunner, temp_config_dir: Path, tmp_path: Path) -> None:
+    def test_remove_command_from_config_file(self, e2e_environment, runner: CliRunner, temp_config_dir: Path, tmp_path: Path) -> None:
         """Test remove command with single config file (not directory-based)."""
         app1_dir = tmp_path / "app1"
         app2_dir = tmp_path / "app2"
@@ -196,7 +198,7 @@ class TestRemoveCommand:
         assert len(config_data["applications"]) == 1
         assert config_data["applications"][0]["name"] == "App2"
 
-    def test_remove_command_empty_config(self, runner: CliRunner, temp_config_dir: Path) -> None:
+    def test_remove_command_empty_config(self, e2e_environment, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test remove command with empty configuration."""
         # Create empty config directory
         result = runner.invoke(app, ["remove", "AnyApp", "--config-dir", str(temp_config_dir)])

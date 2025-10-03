@@ -118,7 +118,7 @@ class TestPatternMatching:
         assert "TestApp" in result.stdout
 
 
-def test_version_extraction_patterns() -> None:
+def test_version_extraction_patterns(e2e_environment) -> None:
     """Test version extraction from various filename formats."""
     checker = VersionChecker()
 

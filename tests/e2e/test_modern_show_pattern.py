@@ -44,7 +44,7 @@ class TestModernShowCommand:
 
         return config_file
 
-    def test_show_command_with_configured_symlink_path(self, runner: CliRunner, temp_config_dir: Path) -> None:
+    def test_show_command_with_configured_symlink_path(self, e2e_environment, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test show command displays symlink path correctly."""
         # Create test config with symlink
         config_file = self.create_test_config_with_symlink(temp_config_dir, "SymlinkApp")
@@ -60,7 +60,7 @@ class TestModernShowCommand:
         # Check that rotation is mentioned (the config has rotation_enabled: True)
         assert "true" in result.stdout.lower() or "enabled" in result.stdout.lower()
 
-    def test_show_nonexistent_application(self, runner: CliRunner, temp_config_dir: Path) -> None:
+    def test_show_nonexistent_application(self, e2e_environment, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test show command with non-existent application."""
         result = runner.invoke(
             app, ["show", "NonExistentApp", "--config-dir", str(temp_config_dir), "--format", "plain"]
@@ -70,7 +70,7 @@ class TestModernShowCommand:
         error_output = result.stderr or result.stdout
         assert "No applications found" in error_output or "not found" in error_output
 
-    def test_show_disabled_application(self, runner: CliRunner, temp_config_dir: Path) -> None:
+    def test_show_disabled_application(self, e2e_environment, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test show command with disabled application."""
         # Create config with disabled app
         download_dir = temp_config_dir / "downloads" / "disabled"
@@ -116,7 +116,7 @@ class TestModernPatternMatching:
     @patch("appimage_updater.core.pattern_generator.should_enable_prerelease")
     def test_pattern_matching_with_suffixes(
         self,
-        mock_prerelease: MagicMock,
+        e2e_environment, mock_prerelease: MagicMock,
         mock_pattern_gen: MagicMock,
         mock_repo_factory: MagicMock,
         mock_repo_factory_async: MagicMock,
@@ -161,6 +161,7 @@ class TestModernPatternMatching:
         # Async factory needs to return an awaitable
         async def async_repo_factory(*args, **kwargs):
             return mock_repo_client
+
         mock_repo_factory_async.side_effect = async_repo_factory
 
         test_download_dir = tmp_path / "suffix-test"
@@ -203,7 +204,7 @@ class TestModernPatternMatching:
         # Verify it's a valid regex pattern
         assert pattern.startswith("(?i)") or "(?i)" in pattern
 
-    def test_pattern_validation_in_config(self, runner: CliRunner, temp_config_dir: Path) -> None:
+    def test_pattern_validation_in_config(self, e2e_environment, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test that pattern validation works correctly in configuration."""
         # Create config with custom pattern
         download_dir = temp_config_dir / "downloads" / "pattern"

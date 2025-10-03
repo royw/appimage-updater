@@ -37,7 +37,7 @@ class TestModernRemoveCommand:
 
         return config_file
 
-    def test_remove_existing_app_with_confirmation_yes(self, runner: CliRunner, temp_config_dir: Path) -> None:
+    def test_remove_existing_app_with_confirmation_yes(self, e2e_environment, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test removing an existing application with 'yes' confirmation."""
         # Create test config
         config_file = self.create_test_config(temp_config_dir, "TestRemoveApp", "https://github.com/user/testapp")
@@ -54,7 +54,7 @@ class TestModernRemoveCommand:
         # Verify config file was deleted
         assert not config_file.exists()
 
-    def test_remove_existing_app_with_confirmation_no(self, runner: CliRunner, temp_config_dir: Path) -> None:
+    def test_remove_existing_app_with_confirmation_no(self, e2e_environment, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test removing an existing application with 'no' confirmation."""
         # Create test config
         config_file = self.create_test_config(temp_config_dir, "TestKeepApp", "https://github.com/user/keepapp")
@@ -71,7 +71,7 @@ class TestModernRemoveCommand:
         # Verify config file still exists
         assert config_file.exists()
 
-    def test_remove_nonexistent_app(self, runner: CliRunner, temp_config_dir: Path) -> None:
+    def test_remove_nonexistent_app(self, e2e_environment, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test removing a non-existent application."""
         result = runner.invoke(
             app, ["remove", "NonExistentApp", "--config-dir", str(temp_config_dir), "--format", "plain"]
@@ -82,7 +82,7 @@ class TestModernRemoveCommand:
         error_output = result.stderr or result.stdout
         assert "No applications found" in error_output or "not found" in error_output
 
-    def test_remove_case_insensitive(self, runner: CliRunner, temp_config_dir: Path) -> None:
+    def test_remove_case_insensitive(self, e2e_environment, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test that remove command is case insensitive."""
         # Create test config with mixed case name
         config_file = self.create_test_config(temp_config_dir, "CaseSensitiveApp", "https://github.com/user/caseapp")
@@ -99,7 +99,7 @@ class TestModernRemoveCommand:
         # Verify config file was deleted
         assert not config_file.exists()
 
-    def test_remove_non_interactive(self, runner: CliRunner, temp_config_dir: Path) -> None:
+    def test_remove_non_interactive(self, e2e_environment, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test removing an application in non-interactive mode."""
         # Create test config
         config_file = self.create_test_config(
@@ -127,7 +127,7 @@ class TestModernRemoveCommand:
         # Verify config file was deleted
         assert not config_file.exists()
 
-    def test_remove_from_multi_app_config(self, runner: CliRunner, temp_config_dir: Path) -> None:
+    def test_remove_from_multi_app_config(self, e2e_environment, runner: CliRunner, temp_config_dir: Path) -> None:
         """Test removing one app from a config file with multiple apps."""
         # Create config with multiple apps
         download_dir_1 = temp_config_dir / "downloads" / "app1"

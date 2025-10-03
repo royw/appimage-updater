@@ -1,6 +1,7 @@
 # type: ignore
 """Modern E2E tests for add command with async HTTP architecture."""
 
+import inspect
 import json
 import os
 from pathlib import Path
@@ -72,6 +73,9 @@ class TestModernAddCommand:
         tmp_path: Path,
     ) -> None:
         """Test adding a GitHub repository with modern async architecture."""
+        print(f"\n=== TEST: {self.__class__.__name__}.{inspect.currentframe().f_code.co_name} ===")  # noqa: T201
+        print(f"e2e_environment_with_mock_support: {e2e_environment_with_mock_support}")  # noqa: T201
+
         # Setup httpx mock to prevent network calls
         mock_client_instance = AsyncMock()
         # Mock the get method to return empty releases
@@ -104,6 +108,7 @@ class TestModernAddCommand:
         # Async factory needs to return an awaitable
         async def async_repo_factory(*args, **kwargs):
             return mock_repo
+
         mock_repo_factory_async.side_effect = async_repo_factory
 
         mock_error_handling_repo.return_value = mock_repo
@@ -165,6 +170,9 @@ class TestModernAddCommand:
         tmp_path: Path,
     ) -> None:
         """Test adding with --direct flag using modern async architecture."""
+        print(f"\n=== TEST: {self.__class__.__name__}.{inspect.currentframe().f_code.co_name} ===")  # noqa: T201
+        print(f"e2e_environment: {e2e_environment}")  # noqa: T201
+
         # Setup async mocks properly
         mock_prerelease.return_value = False
 
@@ -228,6 +236,9 @@ class TestModernAddCommand:
         before checking for duplicates. Ideally, duplicate checking should happen first
         to avoid unnecessary network calls.
         """
+        print(f"\n=== TEST: {self.__class__.__name__}.{inspect.currentframe().f_code.co_name} ===")  # noqa: T201
+        print(f"e2e_environment: {e2e_environment}")  # noqa: T201
+
         # Create an existing config file manually to test duplicate detection
         app_dir = tmp_path / "existing-app"
         app_dir.mkdir(parents=True, exist_ok=True)
@@ -311,6 +322,9 @@ class TestModernAddCommand:
         temp_config_dir: Path,
     ) -> None:
         """Test that user paths are properly expanded."""
+        print(f"\n=== TEST: {self.__class__.__name__}.{inspect.currentframe().f_code.co_name} ===")  # noqa: T201
+        print(f"e2e_environment_with_mock_support: {e2e_environment_with_mock_support}")  # noqa: T201
+
         # Setup httpx mock to prevent network calls
         mock_client_instance = AsyncMock()
         # Mock the get method to return empty releases
@@ -343,6 +357,7 @@ class TestModernAddCommand:
         # Async factory needs to return an awaitable
         async def async_repo_factory(*args, **kwargs):
             return mock_repo
+
         mock_repo_factory_async.side_effect = async_repo_factory
 
         mock_error_handling_repo.return_value = mock_repo
@@ -385,6 +400,9 @@ class TestModernAddCommand:
         self, e2e_environment, runner: CliRunner, temp_config_dir: Path, tmp_path: Path
     ) -> None:
         """Test that --rotation requires a symlink path."""
+        print(f"\n=== TEST: {self.__class__.__name__}.{inspect.currentframe().f_code.co_name} ===")  # noqa: T201
+        print(f"e2e_environment: {e2e_environment}")  # noqa: T201
+
         test_download_dir = tmp_path / "test-download"
 
         result = runner.invoke(
