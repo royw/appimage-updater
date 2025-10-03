@@ -327,6 +327,7 @@ tasks:
         "generate_pattern_from_releases" "_try_parse_last_modified_header" "_try_parse_date_header"
         "_extract_version_from_filename" "excepthook" "_print_troubleshooting_tips"
         "_handle_edit_preview_modes" "_apply_edit_updates_to_apps" "supported_domains"
+        "set_http_client_factory" "reset_http_client_factory"
     silent: true
 
   lint:duplication:
