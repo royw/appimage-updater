@@ -329,9 +329,9 @@ tasks:
 
   # === Metrics ===
   metrics:
-    desc: Display comprehensive project metrics summary
+    desc: Display comprehensive project metrics summary (config in pyproject.toml)
     cmds:
-      - uv run python scripts/metrics.py
+      - uv run python scripts/dev-metrics.py
 
   complexity:
     desc: Analyze code complexity with radon

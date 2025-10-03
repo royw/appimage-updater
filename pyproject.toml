@@ -287,3 +287,12 @@ ignore-if-decorated-with = [
     "@app.callback",
     "@field_validator",
 ]
+
+[tool.dev-metrics]
+# Paths for metrics calculation
+src-path = "src"
+tests-path = "tests"
+scripts-path = "scripts"
+# Tool paths (can be overridden for custom installations)
+radon-path = "radon"
+pylint-path = "pylint"

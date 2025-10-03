@@ -13,12 +13,14 @@ Architecture:
 
 from __future__ import annotations
 
+import argparse
 from collections import defaultdict
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tomllib
 from typing import Any
 
@@ -33,6 +35,17 @@ class Colors:
     YELLOW = "\033[0;33m"
     RED = "\033[0;31m"
     NC = "\033[0m"  # No Color
+
+
+@dataclass
+class MetricsConfig:
+    """Configuration for metrics script."""
+
+    src_path: Path = Path("src")
+    tests_path: Path = Path("tests")
+    scripts_path: Path = Path("scripts")
+    radon_path: str = "radon"
+    pylint_path: str = "pylint"
 
 
 @dataclass
@@ -446,8 +459,12 @@ def gather_risk_metrics(complexity: ComplexityMetrics) -> RiskMetrics:
     return metrics
 
 
-def gather_all_metrics() -> ProjectMetrics:
-    """Gather all project metrics."""
+def gather_all_metrics(config: MetricsConfig) -> ProjectMetrics:
+    """Gather all project metrics.
+
+    Note: Config parameter is prepared for future use.
+    Currently uses hardcoded paths - will be refactored incrementally.
+    """
     metrics = ProjectMetrics()
 
     # Order matters - complexity needed for other metrics
@@ -611,10 +628,69 @@ def generate_report(metrics: ProjectMetrics) -> None:
 # ============================================================================
 
 
+def load_config_from_pyproject() -> dict[str, Any]:
+    """Load dev-metrics configuration from pyproject.toml."""
+    try:
+        with open("pyproject.toml", "rb") as f:
+            data = tomllib.load(f)
+            return data.get("tool", {}).get("dev-metrics", {})
+    except FileNotFoundError:
+        return {}
+
+
+def parse_arguments() -> MetricsConfig:
+    """Parse command line arguments and load configuration."""
+    parser = argparse.ArgumentParser(description="Generate project metrics summary")
+    parser.add_argument(
+        "--src",
+        type=Path,
+        help="Path to source code directory (default: src or from pyproject.toml)",
+    )
+    parser.add_argument(
+        "--tests",
+        type=Path,
+        help="Path to tests directory (default: tests or from pyproject.toml)",
+    )
+    parser.add_argument(
+        "--scripts",
+        type=Path,
+        help="Path to scripts directory (default: scripts or from pyproject.toml)",
+    )
+    parser.add_argument(
+        "--radon",
+        type=str,
+        help="Path to radon executable (default: radon or from pyproject.toml)",
+    )
+    parser.add_argument(
+        "--pylint",
+        type=str,
+        help="Path to pylint executable (default: pylint or from pyproject.toml)",
+    )
+
+    args = parser.parse_args()
+
+    # Load config from pyproject.toml
+    pyproject_config = load_config_from_pyproject()
+
+    # Build config with priority: CLI args > pyproject.toml > defaults
+    config = MetricsConfig(
+        src_path=args.src or Path(pyproject_config.get("src-path", "src")),
+        tests_path=args.tests or Path(pyproject_config.get("tests-path", "tests")),
+        scripts_path=args.scripts or Path(pyproject_config.get("scripts-path", "scripts")),
+        radon_path=args.radon or pyproject_config.get("radon-path", "radon"),
+        pylint_path=args.pylint or pyproject_config.get("pylint-path", "pylint"),
+    )
+
+    return config
+
+
 def main() -> None:
     """Main entry point for metrics script."""
+    # Load configuration
+    config = parse_arguments()
+
     # Phase 1: Gather all data
-    metrics = gather_all_metrics()
+    metrics = gather_all_metrics(config)
 
     # Phase 2: Generate report
     generate_report(metrics)
