@@ -1,6 +1,7 @@
 # type: ignore
 """Shared fixtures for e2e tests."""
 
+import contextlib
 from datetime import datetime
 import os
 from pathlib import Path
@@ -321,7 +322,6 @@ def e2e_environment_with_mock_support(isolated_filesystem, request):
         env_type = "ci" if (is_ci or is_github_actions) else "local"
 
         # Temporarily restore original httpx.AsyncClient so @patch decorators can work
-        import sys
 
         # Get the cached httpx module from sys.modules (not a fresh import)
         if "httpx" in sys.modules:
@@ -438,9 +438,8 @@ def e2e_environment(isolated_filesystem, request):  # noqa: T201
 
         # Test network blocking
         if fs_info.get("network_blocked"):
+            test_socket = None
             try:
-                import socket
-
                 test_socket = socket.socket()
                 print("  FAIL Network blocking failed - socket creation succeeded")  # noqa: T201
             except OSError as e:
@@ -448,6 +447,9 @@ def e2e_environment(isolated_filesystem, request):  # noqa: T201
                     print("  PASS Network access successfully blocked")  # noqa: T201
                 else:
                     print(f"  WARNING  Network blocked with different error: {e}")  # noqa: T201
+            finally:
+                if test_socket is not None:
+                    test_socket.close()
 
         # Validate test isolation
         if env_info["test_config_dir"]:
@@ -558,3 +560,20 @@ def mock_release():
         is_prerelease=False,
         is_draft=False,
     )
+
+
+@pytest.fixture(autouse=True)
+def print_test_info(request):
+    """Print test name and environment info at the start of each E2E test."""
+    # Get test class and method name
+    test_class = request.cls.__name__ if request.cls else "NoClass"
+    test_method = request.node.name
+
+    # Get e2e_environment if available
+    env_info = None
+    if "e2e_environment" in request.fixturenames:
+        print("fixture: e2e_environment")
+    elif "e2e_environment_with_mock_support" in request.fixturenames:
+        print("fixture: e2e_environment_with_mock_support")
+
+    yield

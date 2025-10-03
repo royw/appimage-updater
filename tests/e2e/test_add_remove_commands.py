@@ -1,15 +1,16 @@
-"""Clean E2E tests for add and remove commands with remaining functionality."""
+"""Clean E2E tests for add and remove commands."""
+
+from __future__ import annotations
 
 import json
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
 from typer.testing import CliRunner
 
 from appimage_updater.main import app
-
-
 class TestAddCommand:
     """Test the add command functionality."""
 
@@ -21,7 +22,7 @@ class TestAddCommand:
         mock_pattern_gen: Mock,
         mock_prerelease: Mock,
         mock_httpx_client: Mock,
-        e2e_environment,
+        e2e_environment: dict[str, Any],
         runner: CliRunner,
         temp_config_dir: Path,
         tmp_path: Path,
@@ -63,7 +64,7 @@ class TestAddCommand:
         assert len(config_files) == 1
 
     def test_add_command_rotation_requires_symlink(
-        self, e2e_environment, runner: CliRunner, temp_config_dir: Path, tmp_path: Path
+        self, e2e_environment: dict[str, Any], runner: CliRunner, temp_config_dir: Path, tmp_path: Path
     ) -> None:
         """Test add command validates that --rotation requires a symlink path."""
         test_download_dir = tmp_path / "test-download"
@@ -98,7 +99,7 @@ class TestAddCommand:
         mock_pattern_gen: Mock,
         mock_prerelease: Mock,
         mock_httpx_client: Mock,
-        e2e_environment,
+        e2e_environment: dict[str, Any],
         runner: CliRunner,
         temp_config_dir: Path,
     ) -> None:
@@ -155,7 +156,7 @@ class TestAddCommand:
 class TestRemoveCommand:
     """Test the remove command functionality."""
 
-    def test_remove_command_from_config_file(self, e2e_environment, runner: CliRunner, temp_config_dir: Path, tmp_path: Path) -> None:
+    def test_remove_command_from_config_file(self, e2e_environment: dict[str, Any], runner: CliRunner, temp_config_dir: Path, tmp_path: Path) -> None:
         """Test remove command with single config file (not directory-based)."""
         app1_dir = tmp_path / "app1"
         app2_dir = tmp_path / "app2"
