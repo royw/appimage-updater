@@ -395,8 +395,7 @@ tasks:
   test:parallel:
     desc: Run tests with pytest - unit/functional/integration in parallel, E2E serially - excludes regression tests - summary coverage reporting
     cmds:
-      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration -n auto {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
-      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e -n auto {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
 
   test:unit:
     desc: Run unit tests only - summary coverage reporting

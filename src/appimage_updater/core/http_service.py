@@ -14,6 +14,7 @@ import httpx
 
 from .http_trace import getHTTPTrace
 
+
 # Global HTTP client factory for dependency injection
 _http_client_factory: Callable[..., Any] | None = None
 
@@ -193,14 +194,14 @@ def disable_global_trace() -> None:
     global_client.set_tracer(None)
 
 
-def get_http_client(**kwargs: Any) -> AsyncClient:
+def get_http_client(**kwargs: Any) -> Any:
     """Get HTTP client with global tracing configuration.
 
     Args:
         **kwargs: HTTP client parameters (timeout, follow_redirects, etc.)
 
     Returns:
-        AsyncClient instance that uses the global client with connection pooling
+        AsyncClient instance (or mock client for testing) that uses the global client with connection pooling
     """
     # Use injected factory if available (for testing)
     if _http_client_factory is not None:
