@@ -296,6 +296,7 @@ scripts-path = "scripts"
 # Tool paths (can be overridden for custom installations)
 radon-path = "uv run radon"
 pylint-path = "uv run pylint"
+pytest-path = "uv run pytest"
 # Test file configuration
 test-pattern = "test_*.py"
 # test-type = "unit"  # Optional: filter to specific test type subdirectory

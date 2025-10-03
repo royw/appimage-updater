@@ -46,6 +46,7 @@ class MetricsConfig:
     scripts_path: Path = Path("scripts")
     radon_path: str = "radon"
     pylint_path: str = "pylint"
+    pytest_path: str = "pytest"
     test_pattern: str = "test_*.py"
     test_type: str | None = None  # Optional subdirectory filter (e.g., "unit", "functional")
     package: str = ""  # Top-level package name (auto-detected if empty)
@@ -428,11 +429,14 @@ def gather_coverage_metrics(config: MetricsConfig) -> CoverageMetrics:
     # Build test paths from config
     test_paths = [p.strip() for p in str(config.tests_path).split()]
 
+    # Split pytest command (may be multi-word like "uv run pytest")
+    pytest_cmd = split_command_path(config.pytest_path)
+
     result = run_command([
-        "uv", "run", "pytest",
+        *pytest_cmd,
         "--timeout", "30",
         *test_paths,
-        f"--cov={config.src_path}/appimage_updater",
+        f"--cov={config.src_path}/{config.package}",
         "--cov-report=json:coverage.json",
         "--cov-report=html:htmlcov",
         "--quiet", "--no-header", "--tb=no",
@@ -549,8 +553,8 @@ def gather_risk_metrics(complexity: ComplexityMetrics, config: MetricsConfig) ->
         ratios = []
         for filepath, comp in complexity.all_complexities.items():
             normalized = filepath.replace("\\", "/")
-            if not normalized.startswith("src/"):
-                normalized = f"src/appimage_updater/{normalized}"
+            if not normalized.startswith(str(config.src_path)):
+                normalized = f"{config.src_path}/{config.package}/{normalized}"
 
             coverage = file_coverage.get(normalized, 0)
             sloc = file_sloc.get(normalized, 0)
@@ -770,6 +774,11 @@ def parse_arguments() -> MetricsConfig:
         help="Path to pylint executable (default: pylint or from pyproject.toml)",
     )
     parser.add_argument(
+        "--pytest",
+        type=str,
+        help="Path to pytest executable (default: pytest or from pyproject.toml)",
+    )
+    parser.add_argument(
         "--test-pattern",
         type=str,
         help="Glob pattern for test files (default: test_*.py or from pyproject.toml)",
@@ -817,6 +826,7 @@ def parse_arguments() -> MetricsConfig:
         scripts_path=args.scripts or Path(pyproject_config.get("scripts-path", "scripts")),
         radon_path=args.radon or pyproject_config.get("radon-path", "radon"),
         pylint_path=args.pylint or pyproject_config.get("pylint-path", "pylint"),
+        pytest_path=args.pytest or pyproject_config.get("pytest-path", "pytest"),
         test_pattern=args.test_pattern or pyproject_config.get("test-pattern", "test_*.py"),
         test_type=args.test_type or pyproject_config.get("test-type"),
         package=package_name,
