@@ -403,11 +403,17 @@ def _count_test_functions_by_type(metrics: TestMetrics, config: MetricsConfig) -
     test_type_mapping = _generate_test_type_mapping(config, base_test_path)
     func_pattern = _get_test_function_pattern(config)
 
+    # Filter test types based on config.test_types if specified
+    filtered_test_paths = _filter_test_paths_by_types(config.tests_paths, config.test_types)
+    filtered_test_type_names = {path.name for path in filtered_test_paths}
+
     for test_type, attr_name in test_type_mapping:
-        test_dir = base_test_path / test_type
-        if test_dir.exists():
-            count = _count_test_functions_in_dir(test_dir, config.test_pattern, func_pattern)
-            setattr(metrics, attr_name, count)
+        # Only count if this test type is in the filtered list (or no filter applied)
+        if not config.test_types or test_type in filtered_test_type_names:
+            test_dir = base_test_path / test_type
+            if test_dir.exists():
+                count = _count_test_functions_in_dir(test_dir, config.test_pattern, func_pattern)
+                setattr(metrics, attr_name, count)
 
 
 def _collect_source_files_with_sloc(config: MetricsConfig, sloc_map: dict[str, int] | None = None) -> dict[str, int]:
@@ -420,7 +426,7 @@ def _collect_source_files_with_sloc(config: MetricsConfig, sloc_map: dict[str, i
             # Use radon SLOC if available, otherwise fall back to simple counting
             sloc = _calculate_file_sloc(str(src_file), sloc_map)
             if sloc > 20:
-                src_files_with_sloc[str(Path(*src_file.parts[2:]))] = sloc
+                src_files_with_sloc[str(Path(*src_file.parts[1:]))] = sloc
     return src_files_with_sloc
 
 
@@ -752,11 +758,17 @@ def report_test_metrics(metrics: TestMetrics) -> None:
     output(f"  Total test files: {metrics.total_test_files}")
     output(f"  Total SLOC: {metrics.total_sloc}")
     output("  Test breakdown:")
-    output(f"    Unit: {metrics.unit_tests}")
-    output(f"    Functional: {metrics.functional_tests}")
-    output(f"    Integration: {metrics.integration_tests}")
-    output(f"    E2E: {metrics.e2e_tests}")
-    output(f"    Regression: {metrics.regression_tests}")
+    # Only show test types that have counts > 0
+    if metrics.unit_tests > 0:
+        output(f"    Unit: {metrics.unit_tests}")
+    if metrics.functional_tests > 0:
+        output(f"    Functional: {metrics.functional_tests}")
+    if metrics.integration_tests > 0:
+        output(f"    Integration: {metrics.integration_tests}")
+    if metrics.e2e_tests > 0:
+        output(f"    E2E: {metrics.e2e_tests}")
+    if metrics.regression_tests > 0:
+        output(f"    Regression: {metrics.regression_tests}")
     output("  Source files (SLOC > 20) without tests:")
     if metrics.untested_files:
         for filepath, sloc in metrics.untested_files:
