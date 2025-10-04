@@ -895,23 +895,28 @@ def load_config_from_pyproject() -> dict[str, str | list[str]]:
 def save_config_to_pyproject(config: MetricsConfig) -> None:
     """Save resolved configuration to pyproject.toml [tool.dev-metrics] section.
     
-    Only creates the section if it doesn't exist. Does not overwrite existing values.
+    Creates or replaces the [tool.dev-metrics] section with current configuration.
     """
     try:
         # Read existing pyproject.toml
         with open("pyproject.toml", encoding="utf-8") as f:
             content = f.read()
         
+        new_section = _build_dev_metrics_section(config)
+        
         # Check if [tool.dev-metrics] section exists
-        if "[tool.dev-metrics]" not in content:
-            # Section doesn't exist, append it with resolved configuration
-            new_section = _build_dev_metrics_section(config)
-            # Add before the final newlines
+        if "[tool.dev-metrics]" in content:
+            # Section exists, replace it
+            # Match from [tool.dev-metrics] to the next section or end of file
+            pattern = r'\[tool\.dev-metrics\].*?(?=\n\[|\Z)'
+            content = re.sub(pattern, new_section.rstrip(), content, flags=re.DOTALL)
+        else:
+            # Section doesn't exist, append it
             content = content.rstrip() + "\n\n" + new_section
-            
-            # Write back to pyproject.toml
-            with open("pyproject.toml", "w", encoding="utf-8") as f:
-                f.write(content)
+        
+        # Write back to pyproject.toml
+        with open("pyproject.toml", "w", encoding="utf-8") as f:
+            f.write(content)
     except Exception as e:
         # Don't fail the entire script if we can't save config
         print(f"Warning: Could not save configuration to pyproject.toml: {e}", file=sys.stderr)

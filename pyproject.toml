@@ -299,7 +299,12 @@ pytest-path = "pytest"
 # Test file configuration
 test-pattern = "test_*.py"
 # Filter to specific test type subdirectory
-test-type = ["unit", "functional"]
+test-type = [
+    "unit",
+    "functional",
+    "integration",
+    "e2e"
+]
 package = "appimage_updater"  # Optional: auto-detected from src/ directory or project name
 # Optional: files to exclude from untested report
 excluded-files = ["__init__.py", "__main__.py", "_version.py"]
