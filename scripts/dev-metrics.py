@@ -488,7 +488,7 @@ def _filter_test_paths_by_types(test_paths: list[Path], test_types: list[str]) -
     return filtered_paths
 
 
-def gather_coverage_metrics(config: MetricsConfig) -> CoverageMetrics:
+def gather_coverage_metrics(config: MetricsConfig, sloc_map: dict[str, int] | None = None) -> CoverageMetrics:
     """Gather coverage metrics by running pytest."""
     metrics = CoverageMetrics()
 
@@ -518,7 +518,7 @@ def gather_coverage_metrics(config: MetricsConfig) -> CoverageMetrics:
     if not Path("coverage.json").exists():
         return metrics
 
-    _parse_coverage_json(metrics)
+    _parse_coverage_json(metrics, sloc_map)
 
     return metrics
 
@@ -531,30 +531,32 @@ def _extract_test_results(result: subprocess.CompletedProcess[str], metrics: Cov
             break
 
 
-def _parse_coverage_json(metrics: CoverageMetrics) -> None:
+def _parse_coverage_json(metrics: CoverageMetrics, sloc_map: dict[str, int] | None = None) -> None:
     """Parse coverage.json file for coverage metrics."""
     try:
         with open("coverage.json") as f:
             data = json.load(f)
 
-        # Overall coverage
         totals = data.get("totals", {})
         percent_covered = totals.get("percent_covered", 0)
         metrics.overall_coverage = f"{percent_covered:.1f}%"
 
         # Coverage distribution
-        _calculate_coverage_distribution_from_json(data, metrics)
+        _calculate_coverage_distribution_from_json(data, metrics, sloc_map)
 
+    except FileNotFoundError:
+        output(f"{Colors.YELLOW}Error: coverage.json not found{Colors.NC}")
     except Exception as e:
         output(f"{Colors.YELLOW}Error parsing coverage: {e}{Colors.NC}")
 
 
-def _calculate_coverage_distribution_from_json(data: dict[str, Any], metrics: CoverageMetrics) -> None:
+def _calculate_coverage_distribution_from_json(
+    data: dict[str, Any], metrics: CoverageMetrics, sloc_map: dict[str, int] | None = None
+) -> None:
     """Calculate coverage distribution across files from JSON data."""
     ranges: dict[str, int] = defaultdict(int)
     sloc_ranges: dict[str, int] = defaultdict(int)
     files = data.get("files", {})
-
     for filepath, file_data in files.items():
         if "__pycache__" in filepath:
             continue
@@ -566,15 +568,41 @@ def _calculate_coverage_distribution_from_json(data: dict[str, Any], metrics: Co
         ranges[range_key] += 1
 
         # Add actual SLOC for this file to the range
-        sloc = _calculate_file_sloc(filepath)
+        sloc = _calculate_file_sloc(filepath, sloc_map)
         sloc_ranges[range_key] += sloc
 
     metrics.coverage_distribution = dict(ranges)
     metrics.coverage_sloc_distribution = dict(sloc_ranges)
 
 
-def _calculate_file_sloc(filepath: str) -> int:
-    """Calculate actual SLOC for a file (non-empty, non-comment lines)."""
+def _get_sloc_from_radon(config: MetricsConfig) -> dict[str, int]:
+    """Get SLOC counts for all files using radon raw."""
+    sloc_map = {}
+    try:
+        result = run_command(
+            [*config.radon_list, "raw", *_path_list_to_str_parts(config.src_paths), "--json"]
+        )
+        if result.returncode == 0:
+            data = json.loads(result.stdout)
+            for filepath, metrics in data.items():
+                # Normalize path for comparison
+                normalized = filepath.replace("\\", "/")
+                sloc_map[normalized] = metrics.get("sloc", 0)
+    except Exception:
+        pass
+    return sloc_map
+
+
+def _calculate_file_sloc(filepath: str, sloc_map: dict[str, int] | None = None) -> int:
+    """Calculate actual SLOC for a file.
+    
+    If sloc_map is provided (from radon), use that. Otherwise fall back to simple counting.
+    """
+    if sloc_map:
+        normalized = filepath.replace("\\", "/")
+        return sloc_map.get(normalized, 0)
+    
+    # Fallback: simple counting (less accurate, includes docstrings)
     try:
         with open(filepath, encoding="utf-8") as f:
             lines = f.readlines()
@@ -603,7 +631,9 @@ def _get_coverage_range(coverage_pct: int) -> str:
     return "0-9%"
 
 
-def gather_risk_metrics(complexity: ComplexityMetrics, config: MetricsConfig) -> RiskMetrics:
+def gather_risk_metrics(
+    complexity: ComplexityMetrics, config: MetricsConfig, sloc_map: dict[str, int] | None = None
+) -> RiskMetrics:
     """Gather risk analysis metrics."""
     metrics = RiskMetrics()
 
@@ -623,8 +653,8 @@ def gather_risk_metrics(complexity: ComplexityMetrics, config: MetricsConfig) ->
                 continue
             summary = file_data.get("summary", {})
             percent_covered = summary.get("percent_covered", 0)
-            # Calculate actual SLOC instead of using num_statements
-            sloc = _calculate_file_sloc(filepath)
+            # Calculate actual SLOC using radon data if available
+            sloc = _calculate_file_sloc(filepath, sloc_map)
             # Normalize path for comparison
             normalized = filepath.replace("\\", "/")
             file_coverage[normalized] = percent_covered
@@ -661,12 +691,15 @@ def gather_all_metrics(config: MetricsConfig) -> ProjectMetrics:
     """Gather all project metrics using configuration."""
     metrics = ProjectMetrics()
 
+    # Get SLOC map from radon once for all functions to use
+    sloc_map = _get_sloc_from_radon(config)
+
     # Order matters - complexity needed for other metrics
     metrics.complexity = gather_complexity_metrics(config)
     metrics.source = gather_source_metrics(metrics.complexity, config)
     metrics.tests = gather_test_metrics(config)
-    metrics.coverage = gather_coverage_metrics(config)
-    metrics.risk = gather_risk_metrics(metrics.complexity, config)
+    metrics.coverage = gather_coverage_metrics(config, sloc_map)
+    metrics.risk = gather_risk_metrics(metrics.complexity, config, sloc_map)
 
     return metrics
 
