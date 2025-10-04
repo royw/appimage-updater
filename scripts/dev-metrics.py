@@ -19,6 +19,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tomllib
 from typing import Any
 
@@ -534,12 +535,22 @@ def _calculate_coverage_distribution_from_json(data: dict[str, Any], metrics: Co
         range_key = _get_coverage_range(coverage_pct)
         ranges[range_key] += 1
 
-        # Add SLOC for this file to the range
-        num_statements = summary.get("num_statements", 0)
-        sloc_ranges[range_key] += num_statements
+        # Add actual SLOC for this file to the range
+        sloc = _calculate_file_sloc(filepath)
+        sloc_ranges[range_key] += sloc
 
     metrics.coverage_distribution = dict(ranges)
     metrics.coverage_sloc_distribution = dict(sloc_ranges)
+
+
+def _calculate_file_sloc(filepath: str) -> int:
+    """Calculate actual SLOC for a file (non-empty, non-comment lines)."""
+    try:
+        with open(filepath, encoding="utf-8") as f:
+            lines = f.readlines()
+        return sum(1 for line in lines if line.strip() and not line.strip().startswith("#"))
+    except Exception:
+        return 0
 
 
 def _get_coverage_range(coverage_pct: int) -> str:
@@ -582,11 +593,12 @@ def gather_risk_metrics(complexity: ComplexityMetrics, config: MetricsConfig) ->
                 continue
             summary = file_data.get("summary", {})
             percent_covered = summary.get("percent_covered", 0)
-            num_statements = summary.get("num_statements", 0)
+            # Calculate actual SLOC instead of using num_statements
+            sloc = _calculate_file_sloc(filepath)
             # Normalize path for comparison
             normalized = filepath.replace("\\", "/")
             file_coverage[normalized] = percent_covered
-            file_sloc[normalized] = num_statements
+            file_sloc[normalized] = sloc
 
         # Calculate risk scores
         ratios = []
@@ -803,6 +815,75 @@ def load_config_from_pyproject() -> dict[str, str | list[str]]:
             return data
     except FileNotFoundError:
         return {}
+
+
+def save_config_to_pyproject(config: MetricsConfig) -> None:
+    """Save resolved configuration to pyproject.toml [tool.dev-metrics] section.
+    
+    Only creates the section if it doesn't exist. Does not overwrite existing values.
+    """
+    try:
+        # Read existing pyproject.toml
+        with open("pyproject.toml", encoding="utf-8") as f:
+            content = f.read()
+        
+        # Check if [tool.dev-metrics] section exists
+        if "[tool.dev-metrics]" not in content:
+            # Section doesn't exist, append it with resolved configuration
+            new_section = _build_dev_metrics_section(config)
+            # Add before the final newlines
+            content = content.rstrip() + "\n\n" + new_section
+            
+            # Write back to pyproject.toml
+            with open("pyproject.toml", "w", encoding="utf-8") as f:
+                f.write(content)
+    except Exception as e:
+        # Don't fail the entire script if we can't save config
+        print(f"Warning: Could not save configuration to pyproject.toml: {e}", file=sys.stderr)
+
+
+def _build_dev_metrics_section(config: MetricsConfig) -> str:
+    """Build the [tool.dev-metrics] section content."""
+    lines = ["[tool.dev-metrics]"]
+    lines.append("# Paths for metrics calculation")
+    lines.append(f'src-paths = {_format_toml_value([str(p) for p in config.src_paths])}')
+    lines.append(f'tests-paths = {_format_toml_value([str(p) for p in config.tests_paths])}')
+    lines.append("# Tool paths (can be overridden for custom installations)")
+    lines.append(f'radon-path = {_format_toml_value(config.radon_list)}')
+    lines.append(f'pylint-path = {_format_toml_value(config.pylint_list)}')
+    lines.append(f'pytest-path = {_format_toml_value(config.pytest_list)}')
+    lines.append("# Test file configuration")
+    lines.append(f'test-pattern = "{config.test_pattern}"')
+    lines.append("# Filter to specific test type subdirectory")
+    lines.append(f'test-type = {_format_toml_value(config.test_types)}')
+    lines.append(f'package = "{config.package}"  # Optional: auto-detected from src/ directory or project name')
+    lines.append("# Optional: files to exclude from untested report")
+    lines.append(f'excluded-files = {_format_toml_value(config.excluded_files)}')
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _format_toml_value(value: list[str]) -> str:
+    """Format a list of strings as TOML array or string."""
+    if len(value) == 1:
+        # Single item - check if it has spaces
+        item = value[0]
+        if " " in item:
+            # Has spaces, keep as list for clarity
+            return f'["{item}"]'
+        else:
+            # No spaces, can be a simple string
+            return f'"{item}"'
+    else:
+        # Multiple items, format as array
+        formatted_items = [f'"{item}"' for item in value]
+        if len(formatted_items) <= 3:
+            # Short list, single line
+            return f'[{", ".join(formatted_items)}]'
+        else:
+            # Long list, multi-line
+            items_str = ",\n    ".join(formatted_items)
+            return f'[\n    {items_str}\n]'
 
 
 def as_list(value: str | list[str]) -> list[str]:
@@ -1043,6 +1124,9 @@ def main() -> None:
     """Main entry point for metrics script."""
     # Load configuration
     config, show_only = parse_arguments()
+
+    # Save resolved configuration to pyproject.toml
+    save_config_to_pyproject(config)
 
     # If --show flag is set, display config and exit
     if show_only:

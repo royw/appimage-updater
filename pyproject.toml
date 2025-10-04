@@ -290,12 +290,12 @@ ignore-if-decorated-with = [
 
 [tool.dev-metrics]
 # Paths for metrics calculation
-src-paths = ["src"]
-tests-paths = ["tests/unit", "tests/functional", "tests/integration", "tests/e2e"]
+src-paths = "src"
+tests-paths = "tests"
 # Tool paths (can be overridden for custom installations)
-radon-path = "uv run radon"
-pylint-path = "uv run pylint"
-pytest-path = "uv run pytest"
+radon-path = "radon"
+pylint-path = "pylint"
+pytest-path = "pytest"
 # Test file configuration
 test-pattern = "test_*.py"
 # Filter to specific test type subdirectory
@@ -304,13 +304,7 @@ test-type = [
     "functional",
     "integration",
     "e2e"
-]  
-package = "appimage_updater"  # Optional: auto-detected from src/ directory or project name
-
- # Optional: files to exclude from untested report
- excluded-files = [
-    "__init__.py",
-    "__main__.py",
-    "_version.py"
 ]
-
+package = "appimage_updater"  # Optional: auto-detected from src/ directory or project name
+# Optional: files to exclude from untested report
+excluded-files = ["__init__.py", "__main__.py", "_version.py"]
