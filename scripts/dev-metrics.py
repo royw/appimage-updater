@@ -1013,6 +1013,11 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
         action="store_true",
         help="Display resolved configuration from CLI args and pyproject.toml, then exit",
     )
+    parser.add_argument(
+        "--persist",
+        action="store_true",
+        help="Save the resolved configuration to pyproject.toml [tool.dev-metrics] section",
+    )
     parser.add_argument("-h", "--help", action="help", help="Display this help message")
     paths_group.add_argument(
         "--src",
@@ -1173,7 +1178,7 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
         excluded_files=excluded_files,
     )
 
-    return config, args.show
+    return config, args.show, args.persist
 
 
 def show_config(config: MetricsConfig) -> None:
@@ -1207,10 +1212,12 @@ def show_config(config: MetricsConfig) -> None:
 def main() -> None:
     """Main entry point for metrics script."""
     # Load configuration
-    config, show_only = parse_arguments()
+    config, show_only, persist = parse_arguments()
 
-    # Save resolved configuration to pyproject.toml
-    save_config_to_pyproject(config)
+    # If --persist flag is set, save resolved configuration to pyproject.toml
+    if persist:
+        save_config_to_pyproject(config)
+        output(f"{Colors.GREEN}Configuration saved to pyproject.toml [tool.dev-metrics]{Colors.NC}")
 
     # If --show flag is set, display config and exit
     if show_only:
