@@ -461,18 +461,48 @@ def _find_untested_files(metrics: TestMetrics, config: MetricsConfig) -> None:
     metrics.untested_files = _filter_untested_files(src_files_with_sloc, tested_modules, config.excluded_files)
 
 
+def _filter_test_paths_by_types(test_paths: list[Path], test_types: list[str]) -> list[Path]:
+    """Build test paths by combining base paths with test type subdirectories.
+    
+    If test_types is empty, return all test_paths as-is.
+    Otherwise, for each base test path, append each test type subdirectory
+    that actually exists.
+    
+    Example:
+        test_paths = [Path("tests")]
+        test_types = ["unit", "functional"]
+        Returns: [Path("tests/unit"), Path("tests/functional")]
+    """
+    if not test_types:
+        return test_paths
+    
+    filtered_paths = []
+    for base_path in test_paths:
+        for test_type in test_types:
+            # Combine base path with test type subdirectory
+            full_path = base_path / test_type
+            # Only include if the directory exists
+            if full_path.exists() and full_path.is_dir():
+                filtered_paths.append(full_path)
+    
+    return filtered_paths
+
+
 def gather_coverage_metrics(config: MetricsConfig) -> CoverageMetrics:
     """Gather coverage metrics by running pytest."""
     metrics = CoverageMetrics()
 
     cov_list = [f"--cov={p}/{config.package}" for p in config.src_paths]
 
+    # Filter test paths by test_types if specified
+    test_paths = _filter_test_paths_by_types(config.tests_paths, config.test_types)
+
     result = run_command(
         [
             *config.pytest_list,
             "--timeout",
             "30",
-            *_path_list_to_str_parts(config.tests_paths),
+            *_path_list_to_str_parts(test_paths),
             *cov_list,
             "--cov-report=json:coverage.json",
             "--cov-report=html:htmlcov",
@@ -998,7 +1028,6 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
     test_group.add_argument(
         "--test-type",
         dest="test_types",
-        action="extend",
         nargs="+",
         metavar="TYPE1[ TYPE2 ...]",
         default=["unit", "functional", "integration", "e2e"],
@@ -1049,10 +1078,12 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
         excluded_files = ["__init__.py", "__main__.py", "_version.py"]
 
     # Build config with priority: CLI args > pyproject.toml > defaults
-    if args.tests_paths:
+    if args.tests_paths != ["tests"]:
         tests_paths = [Path(p) for p in args.tests_paths]
+    elif "tests-paths" in pyproject_config:
+        tests_paths = as_paths(pyproject_config.get("tests-paths"))
     else:
-        tests_paths = as_paths(pyproject_config.get("tests-paths", ["tests"]))
+        tests_paths = [Path("tests")]
 
     # Tool paths: CLI args > pyproject.toml > defaults
     # Check if CLI arg was explicitly provided (not just the default)
@@ -1077,6 +1108,14 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
     else:
         pytest_list = ["pytest"]
 
+    # Test types: CLI args > pyproject.toml > defaults
+    if args.test_types != ["unit", "functional", "integration", "e2e"]:
+        test_types = args.test_types
+    elif "test-type" in pyproject_config:
+        test_types = as_list(pyproject_config.get("test-type"))
+    else:
+        test_types = ["unit", "functional", "integration", "e2e"]
+
     config = MetricsConfig(
         src_paths=src_paths,
         tests_paths=tests_paths,
@@ -1084,7 +1123,7 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
         pylint_list=pylint_list,
         pytest_list=pytest_list,
         test_pattern=args.test_pattern or as_str(pyproject_config.get("test-pattern", "test_*.py")),
-        test_types=args.test_types or as_list(pyproject_config.get("test-type", [])),
+        test_types=test_types,
         package=package_name,
         excluded_files=excluded_files,
     )
