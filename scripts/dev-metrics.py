@@ -232,10 +232,9 @@ def gather_complexity_metrics(config: MetricsConfig) -> ComplexityMetrics:
         avg_paths_per_file = total_code_paths / len(file_code_paths) if file_code_paths else 0
         max_paths_in_file = max(file_code_paths) if file_code_paths else 0
 
-        result_high = run_command(
-            config.radon_list + ["cc", *_path_list_to_str_parts(config.src_paths), "-n", "B", "-s"]
-        )
-        files_high_cc = len([line for line in result_high.stdout.split("\n") if line and not line.startswith(" ")])
+        # Count files with complexity > 5 (grade B or worse)
+        # Radon grades: A=1-5, B=6-10, C=11-20, D=21-50, E=51-100, F=100+
+        files_high_cc = sum(1 for _, complexity in file_complexities if complexity > 5)
 
         metrics.top5_complex = file_complexities[:5]
         metrics.total_paths = total_code_paths
