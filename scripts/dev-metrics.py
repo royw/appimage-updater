@@ -1025,64 +1025,62 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
         action="extend",
         nargs="+",
         metavar="DIR1[ DIR2 ...]",
-        default=["src"],
+        default=None,
         pyproject_key="tool.dev-metrics.src-paths",
-        help="Path(s) to source code directories",
+        help="Path(s) to source code directories (default: src)",
     )
     paths_group.add_argument(
         "--tests",
         dest="tests_paths",
-        action="extend",
         nargs="+",
         metavar="DIR1[ DIR2 ...]",
-        default=["tests"],
+        default=None,
         pyproject_key="tool.dev-metrics.tests-paths",
-        help="Path(s) to test directories",
+        help="Path(s) to test directories (default: tests)",
     )
     tool_group.add_argument(
         "--radon",
         dest="radon_list",
         nargs="+",
-        metavar="PATH1[ PATH2 ...]",
-        default=["radon"],
+        default=None,
         pyproject_key="tool.dev-metrics.radon-path",
-        help="Path to radon executable (for complexity analysis) - can specify multiple",
+        help="Path to radon executable (for complexity analysis) - can specify multiple (default: radon)",
     )
     tool_group.add_argument(
         "--pylint",
         dest="pylint_list",
         nargs="+",
         metavar="PATH1[ PATH2 ...]",
-        default=["pylint"],
+        default=None,
         pyproject_key="tool.dev-metrics.pylint-path",
-        help="Path to pylint executable (for code quality checks) - can specify multiple",
+        help="Path to pylint executable (for code quality checks) - can specify multiple (default: pylint)",
     )
     tool_group.add_argument(
         "--pytest",
         dest="pytest_list",
         nargs="+",
         metavar="PATH1[ PATH2 ...]",
-        default=["pytest"],
+        default=None,
         pyproject_key="tool.dev-metrics.pytest-path",
-        help="Path to pytest executable (for test execution)",
+        help="Path to pytest executable (for test execution) (default: pytest)",
     )
     test_group.add_argument(
         "--test-pattern",
         dest="test_pattern",
         type=str,
         metavar="PATTERN",
-        default="test_*.py",
+        default=None,
         pyproject_key="tool.dev-metrics.test-pattern",
-        help="Glob pattern for discovering test files",
+        help="Glob pattern for discovering test files (default: test_*.py)",
     )
     test_group.add_argument(
         "--test-type",
         dest="test_types",
         nargs="+",
         metavar="TYPE1[ TYPE2 ...]",
-        default=["unit", "functional", "integration", "e2e"],
+        default=None,
         pyproject_key="tool.dev-metrics.test-type",
-        help="Test type subdirectory names to include",
+        help="Test type subdirectory names to include (default: unit functional integration e2e)",
     )
     package_group.add_argument(
         "--package",
@@ -1098,9 +1096,9 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
         action="extend",
         nargs="+",
         metavar="FILE1[ FILE2 ...]",
-        default=["__init__.py", "__main__.py", "_version.py"],
+        default=None,
         pyproject_key="tool.dev-metrics.excluded-files",
-        help="File basenames to exclude from untested files report",
+        help="Files to exclude from untested files report (default: __init__.py __main__.py _version.py)",
     )
 
     args = parser.parse_args()
@@ -1108,63 +1106,66 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
     # Load config from pyproject.toml
     pyproject_config = load_config_from_pyproject()
 
-    # Detect package name if not provided
-    if args.src_paths:
-        src_paths = [Path(p) for p in args.src_paths]
-    else:
-        src_paths = as_paths(pyproject_config.get("src-paths", "src"))
-
-    package_name = args.package or as_str(pyproject_config.get("package", ""))
-    if not package_name:
-        package_name = detect_package_name(src_paths)
-
-    # Parse excluded files (comma-separated string to list)
-    excluded_files = None
-    if args.excluded_files:
-        excluded_files = as_list(args.excluded_files)
-    elif "excluded-files" in pyproject_config:
-        excluded_files = as_list(pyproject_config.get("excluded-files", ""))
-    if excluded_files is None:
-        excluded_files = ["__init__.py", "__main__.py", "_version.py"]
-
-    # Build config with priority: CLI args > pyproject.toml > defaults
-    if args.tests_paths != ["tests"]:
-        tests_paths = [Path(p) for p in args.tests_paths]
-    elif "tests-paths" in pyproject_config:
-        tests_paths = as_paths(pyproject_config.get("tests-paths"))
-    else:
-        tests_paths = [Path("tests")]
-
-    # Tool paths: CLI args > pyproject.toml > defaults
-    # Check if CLI arg was explicitly provided (not just the default)
-    if args.radon_list != ["radon"]:
-        radon_list = args.radon_list
-    elif "radon-path" in pyproject_config:
-        radon_list = as_list(pyproject_config.get("radon-path"))
-    else:
-        radon_list = ["radon"]
-
-    if args.pylint_list != ["pylint"]:
-        pylint_list = args.pylint_list
-    elif "pylint-path" in pyproject_config:
-        pylint_list = as_list(pyproject_config.get("pylint-path"))
-    else:
-        pylint_list = ["pylint"]
-
-    if args.pytest_list != ["pytest"]:
-        pytest_list = args.pytest_list
-    elif "pytest-path" in pyproject_config:
-        pytest_list = as_list(pyproject_config.get("pytest-path"))
-    else:
-        pytest_list = ["pytest"]
-
-    # Test types: CLI args > pyproject.toml > defaults
-    if args.test_types != ["unit", "functional", "integration", "e2e"]:
-        test_types = args.test_types
-    elif "test-type" in pyproject_config:
-        test_types = as_list(pyproject_config.get("test-type"))
-    else:
-        test_types = ["unit", "functional", "integration", "e2e"]
+    # Apply configuration priority: CLI args > pyproject.toml > defaults
+    
+    # Source paths
+    src_paths = (
+        [Path(p) for p in args.src_paths] if args.src_paths
+        else as_paths(pyproject_config.get("src-paths")) if "src-paths" in pyproject_config
+        else [Path("src")]
+    )
+    
+    # Test paths
+    tests_paths = (
+        [Path(p) for p in args.tests_paths] if args.tests_paths
+        else as_paths(pyproject_config.get("tests-paths")) if "tests-paths" in pyproject_config
+        else [Path("tests")]
+    )
+    
+    # Tool paths
+    radon_list = (
+        args.radon_list if args.radon_list
+        else as_list(pyproject_config.get("radon-path")) if "radon-path" in pyproject_config
+        else ["radon"]
+    )
+    
+    pylint_list = (
+        args.pylint_list if args.pylint_list
+        else as_list(pyproject_config.get("pylint-path")) if "pylint-path" in pyproject_config
+        else ["pylint"]
+    )
+    
+    pytest_list = (
+        args.pytest_list if args.pytest_list
+        else as_list(pyproject_config.get("pytest-path")) if "pytest-path" in pyproject_config
+        else ["pytest"]
+    )
+    
+    # Test configuration
+    test_pattern = (
+        args.test_pattern if args.test_pattern
+        else as_str(pyproject_config.get("test-pattern")) if "test-pattern" in pyproject_config
+        else "test_*.py"
+    )
+    
+    test_types = (
+        args.test_types if args.test_types
+        else as_list(pyproject_config.get("test-type")) if "test-type" in pyproject_config
+        else ["unit", "functional", "integration", "e2e"]
+    )
+    
+    # Package configuration
+    package_name = (
+        args.package if args.package
+        else as_str(pyproject_config.get("package")) if "package" in pyproject_config
+        else detect_package_name(src_paths)
+    )
+    
+    excluded_files = (
+        args.excluded_files if args.excluded_files
+        else as_list(pyproject_config.get("excluded-files")) if "excluded-files" in pyproject_config
+        else ["__init__.py", "__main__.py", "_version.py"]
+    )
 
     config = MetricsConfig(
         src_paths=src_paths,
@@ -1172,7 +1173,7 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
         radon_list=radon_list,
         pylint_list=pylint_list,
         pytest_list=pytest_list,
-        test_pattern=args.test_pattern or as_str(pyproject_config.get("test-pattern", "test_*.py")),
+        test_pattern=test_pattern,
         test_types=test_types,
         package=package_name,
         excluded_files=excluded_files,
