@@ -303,7 +303,7 @@ def gather_source_metrics(complexity: ComplexityMetrics, config: MetricsConfig) 
     return metrics
 
 
-def gather_test_metrics(config: MetricsConfig) -> TestMetrics:
+def gather_test_metrics(config: MetricsConfig, sloc_map: dict[str, int] | None = None) -> TestMetrics:
     """Gather test code metrics."""
     metrics = TestMetrics()
 
@@ -333,7 +333,7 @@ def gather_test_metrics(config: MetricsConfig) -> TestMetrics:
     _count_test_functions_by_type(metrics, config)
 
     # Find untested files
-    _find_untested_files(metrics, config)
+    _find_untested_files(metrics, config, sloc_map)
 
     return metrics
 
@@ -410,15 +410,15 @@ def _count_test_functions_by_type(metrics: TestMetrics, config: MetricsConfig) -
             setattr(metrics, attr_name, count)
 
 
-def _collect_source_files_with_sloc(config: MetricsConfig) -> dict[str, int]:
+def _collect_source_files_with_sloc(config: MetricsConfig, sloc_map: dict[str, int] | None = None) -> dict[str, int]:
     """Collect source files with their SLOC counts (only files with SLOC > 20)."""
     src_files_with_sloc: dict[str, int] = {}
     for src_path in config.src_paths:
         for src_file in src_path.rglob("*.py"):
             if "__pycache__" in str(src_file):
                 continue
-            lines = src_file.read_text().splitlines()
-            sloc = sum(1 for line in lines if line.strip() and not line.strip().startswith("#"))
+            # Use radon SLOC if available, otherwise fall back to simple counting
+            sloc = _calculate_file_sloc(str(src_file), sloc_map)
             if sloc > 20:
                 src_files_with_sloc[str(Path(*src_file.parts[2:]))] = sloc
     return src_files_with_sloc
@@ -454,9 +454,9 @@ def _filter_untested_files(
     return untested[:10]
 
 
-def _find_untested_files(metrics: TestMetrics, config: MetricsConfig) -> None:
+def _find_untested_files(metrics: TestMetrics, config: MetricsConfig, sloc_map: dict[str, int] | None = None) -> None:
     """Find source files without corresponding tests."""
-    src_files_with_sloc = _collect_source_files_with_sloc(config)
+    src_files_with_sloc = _collect_source_files_with_sloc(config, sloc_map)
     tested_modules = _extract_tested_modules(config)
     metrics.untested_files = _filter_untested_files(src_files_with_sloc, tested_modules, config.excluded_files)
 
@@ -697,7 +697,7 @@ def gather_all_metrics(config: MetricsConfig) -> ProjectMetrics:
     # Order matters - complexity needed for other metrics
     metrics.complexity = gather_complexity_metrics(config)
     metrics.source = gather_source_metrics(metrics.complexity, config)
-    metrics.tests = gather_test_metrics(config)
+    metrics.tests = gather_test_metrics(config, sloc_map)
     metrics.coverage = gather_coverage_metrics(config, sloc_map)
     metrics.risk = gather_risk_metrics(metrics.complexity, config, sloc_map)
 
