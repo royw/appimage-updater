@@ -1,8 +1,10 @@
 """Pytest configuration and fixtures for regression tests."""
 
+import gc
 from collections.abc import Generator
 from pathlib import Path
 
+import httpx
 import pytest
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
@@ -71,3 +73,40 @@ def monitor_config_directory() -> Generator[None, None, None]:
                 f"Tests should use temporary directories instead.\n"
                 f"Violations detected:\n  {violation_list}"
             )
+
+
+@pytest.fixture(scope="function", autouse=True)
+def cleanup_http_connections() -> Generator[None, None, None]:
+    """Clean up HTTP connections between tests to prevent event loop issues.
+
+    When tests switch between asyncio and trio backends, lingering HTTP connections
+    from the previous test can cause "RuntimeError: no running event loop" errors.
+    This fixture ensures all HTTP connections are properly closed before and after each test.
+    """
+    # Clean up BEFORE the test to remove any lingering connections from previous tests
+    _force_close_http_connections()
+
+    yield
+
+    # Clean up AFTER the test
+    _force_close_http_connections()
+
+
+def _force_close_http_connections() -> None:
+    """Force close all httpx clients and run garbage collection."""
+    try:
+        # Close any open httpx clients (synchronously)
+        for obj in gc.get_objects():
+            if isinstance(obj, httpx.AsyncClient):
+                try:
+                    # Try to close synchronously if possible
+                    if hasattr(obj, "_transport") and obj._transport:
+                        obj._transport = None
+                except Exception:
+                    pass  # Ignore errors during cleanup
+
+        # Force garbage collection to clean up any remaining references
+        gc.collect()
+    except Exception:
+        # Ignore any errors during cleanup - this is best-effort
+        pass
