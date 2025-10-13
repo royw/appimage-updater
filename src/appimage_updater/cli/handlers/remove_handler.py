@@ -33,7 +33,8 @@ class RemoveCommandHandler(CommandHandler):
 
         @app.command()
         def remove(
-            app_names: list[str] | None = CLIOptions.REMOVE_APP_NAME_ARGUMENT_OPTIONAL,            config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
+            app_names: list[str] | None = CLIOptions.REMOVE_APP_NAME_ARGUMENT_OPTIONAL,
+            config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
             yes: bool = CLIOptions.REMOVE_YES_OPTION,
             no: bool = CLIOptions.REMOVE_NO_OPTION,
             debug: bool = CLIOptions.debug_option(),
@@ -46,7 +47,8 @@ class RemoveCommandHandler(CommandHandler):
                 raise typer.Exit(0)
 
             self._execute_remove_command(
-                app_names=app_names,                config_dir=config_dir,
+                app_names=app_names,
+                config_dir=config_dir,
                 yes=yes,
                 no=no,
                 debug=debug,
@@ -77,7 +79,8 @@ class RemoveCommandHandler(CommandHandler):
 
     def _execute_remove_command(
         self,
-        app_names: list[str],        config_dir: Path | None,
+        app_names: list[str],
+        config_dir: Path | None,
         yes: bool,
         no: bool,
         debug: bool,
@@ -87,7 +90,8 @@ class RemoveCommandHandler(CommandHandler):
         self.validate_options(yes=yes, no=no)
 
         command = CommandFactory.create_remove_command(
-            app_names=app_names,            config_dir=config_dir,
+            app_names=app_names,
+            config_dir=config_dir,
             yes=yes,
             no=no,
             debug=debug,

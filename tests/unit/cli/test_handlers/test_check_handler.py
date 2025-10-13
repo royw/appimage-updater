@@ -126,7 +126,6 @@ class TestCheckCommandHandler:
             # Execute command
             handler._execute_check_command(
                 app_names=["TestApp"],
-                config_file=Path("/test/config.json"),
                 config_dir=Path("/test/config"),
                 dry_run=False,
                 yes=False,
@@ -177,7 +176,6 @@ class TestCheckCommandHandler:
             # Execute command with JSON format
             handler._execute_check_command(
                 app_names=[],
-                config_file=None,
                 config_dir=None,
                 dry_run=False,
                 yes=False,
@@ -220,7 +218,6 @@ class TestCheckCommandHandler:
             # Execute command with HTML format
             handler._execute_check_command(
                 app_names=[],
-                config_file=None,
                 config_dir=None,
                 dry_run=False,
                 yes=False,
@@ -263,7 +260,6 @@ class TestCheckCommandHandler:
             # Execute command with RICH format
             handler._execute_check_command(
                 app_names=[],
-                config_file=None,
                 config_dir=None,
                 dry_run=False,
                 yes=False,
@@ -308,7 +304,6 @@ class TestCheckCommandHandler:
             with pytest.raises(typer.Exit) as exc_info:
                 handler._execute_check_command(
                     app_names=[],
-                    config_file=None,
                     config_dir=None,
                     dry_run=False,
                     yes=True,
@@ -341,7 +336,6 @@ class TestCheckCommandHandler:
             with pytest.raises(typer.Exit) as exc_info:
                 handler._execute_check_command(
                     app_names=[],
-                    config_file=None,
                     config_dir=None,
                     dry_run=False,
                     yes=True,
@@ -390,7 +384,6 @@ class TestCheckCommandHandler:
                 # Execute with comprehensive parameters
                 handler._execute_check_command(
                     app_names=["App1", "App2"],
-                    config_file=Path("/test/config.json"),
                     config_dir=Path("/test/config"),
                     dry_run=True,
                     yes=True,

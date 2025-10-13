@@ -34,7 +34,8 @@ class RepositoryCommandHandler(CommandHandler):
 
         @app.command()
         def repository(
-            app_names: list[str] = CLIOptions.REPOSITORY_APP_NAME_ARGUMENT,            config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
+            app_names: list[str] = CLIOptions.REPOSITORY_APP_NAME_ARGUMENT,
+            config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
             limit: int = CLIOptions.REPOSITORY_LIMIT_OPTION,
             assets: bool = CLIOptions.REPOSITORY_ASSETS_OPTION,
             dry_run: bool = CLIOptions.REPOSITORY_DRY_RUN_OPTION,
@@ -48,7 +49,8 @@ class RepositoryCommandHandler(CommandHandler):
         ) -> None:
             """Examine repository information for configured applications."""
             self._execute_repository_command(
-                app_names=app_names,                config_dir=config_dir,
+                app_names=app_names,
+                config_dir=config_dir,
                 limit=limit,
                 assets=assets,
                 dry_run=dry_run,
@@ -69,7 +71,8 @@ class RepositoryCommandHandler(CommandHandler):
     # noinspection PyMethodMayBeStatic
     def _execute_repository_command(
         self,
-        app_names: list[str],        config_dir: Path | None,
+        app_names: list[str],
+        config_dir: Path | None,
         limit: int,
         assets: bool,
         dry_run: bool,
@@ -92,7 +95,8 @@ class RepositoryCommandHandler(CommandHandler):
 
         # Create command via factory using convenience method
         command = CommandFactory.create_repository_command_with_instrumentation(
-            app_names=app_names,            config_dir=config_dir,
+            app_names=app_names,
+            config_dir=config_dir,
             assets=assets,
             limit=limit,
             dry_run=dry_run,

@@ -31,7 +31,8 @@ class ShowCommandHandler(CommandHandler):
             app_names: list[str] | None = CLIOptions.SHOW_APP_NAME_ARGUMENT_OPTIONAL,
             add_command: bool = typer.Option(
                 False, "--add-command", help="Output the add command needed to recreate each application configuration"
-            ),            config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
+            ),
+            config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
             debug: bool = CLIOptions.debug_option(),
             output_format: OutputFormat = CLIOptions.FORMAT_OPTION,
             _version: bool = CLIOptions.version_option(self._version_callback),
@@ -48,7 +49,8 @@ class ShowCommandHandler(CommandHandler):
             """
             self._execute_show_command(
                 app_names=app_names,
-                add_command=add_command,                config_dir=config_dir,
+                add_command=add_command,
+                config_dir=config_dir,
                 debug=debug,
                 output_format=output_format,
             )
@@ -64,7 +66,8 @@ class ShowCommandHandler(CommandHandler):
     def _execute_show_command(
         self,
         app_names: list[str] | None,
-        add_command: bool,        config_dir: Path | None,
+        add_command: bool,
+        config_dir: Path | None,
         debug: bool,
         output_format: OutputFormat,
     ) -> None:
@@ -74,7 +77,8 @@ class ShowCommandHandler(CommandHandler):
         # Create command via factory (existing pattern)
         command = CommandFactory.create_show_command(
             app_names=app_names,
-            add_command=add_command,            config_dir=config_dir,
+            add_command=add_command,
+            config_dir=config_dir,
             debug=debug,
             output_format=output_format,
         )

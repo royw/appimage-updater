@@ -108,7 +108,6 @@ class TestRepositoryCommandHandler:
             # Execute command
             handler._execute_repository_command(
                 app_names=["TestApp"],
-                config_file=Path("/test/config.json"),
                 config_dir=Path("/test/config"),
                 limit=10,
                 assets=True,
@@ -162,7 +161,6 @@ class TestRepositoryCommandHandler:
             # Execute command with JSON format
             handler._execute_repository_command(
                 app_names=["TestApp"],
-                config_file=None,
                 config_dir=None,
                 limit=5,
                 assets=False,
@@ -210,7 +208,6 @@ class TestRepositoryCommandHandler:
             # Execute command with HTML format
             handler._execute_repository_command(
                 app_names=["TestApp"],
-                config_file=None,
                 config_dir=None,
                 limit=5,
                 assets=False,
@@ -258,7 +255,6 @@ class TestRepositoryCommandHandler:
             # Execute command with RICH format
             handler._execute_repository_command(
                 app_names=["TestApp"],
-                config_file=None,
                 config_dir=None,
                 limit=5,
                 assets=False,
@@ -308,7 +304,6 @@ class TestRepositoryCommandHandler:
             with pytest.raises(typer.Exit) as exc_info:
                 handler._execute_repository_command(
                     app_names=["TestApp"],
-                    config_file=None,
                     config_dir=None,
                     limit=5,
                     assets=False,
@@ -352,7 +347,6 @@ class TestRepositoryCommandHandler:
                             # Execute with default values
                             handler._execute_repository_command(
                                 app_names=["TestApp"],
-                                config_file=None,
                                 config_dir=None,
                                 limit=5,
                                 assets=False,

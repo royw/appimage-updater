@@ -90,7 +90,6 @@ class TestListCommandHandler:
 
         # Execute command
         handler._execute_list_command(
-            config_file=Path("/test/config.json"),
             config_dir=Path("/test/config"),
             debug=True,
             output_format=OutputFormat.RICH,
@@ -98,7 +97,6 @@ class TestListCommandHandler:
 
         # Verify factory was called with correct parameters
         mock_factory.assert_called_once_with(
-            config_file=Path("/test/config.json"),
             config_dir=Path("/test/config"),
             debug=True,
             output_format=OutputFormat.RICH,
@@ -131,7 +129,11 @@ class TestListCommandHandler:
         mock_asyncio_run.return_value = success_result
 
         # Execute command with JSON format
-        handler._execute_list_command(config_file=None, config_dir=None, debug=False, output_format=OutputFormat.JSON)
+        handler._execute_list_command(
+            config_dir=None,
+            debug=False,
+            output_format=OutputFormat.JSON,
+        )
 
         # Verify finalize was called for JSON format
         mock_formatter.finalize.assert_called_once()
@@ -157,7 +159,11 @@ class TestListCommandHandler:
         mock_asyncio_run.return_value = success_result
 
         # Execute command with HTML format
-        handler._execute_list_command(config_file=None, config_dir=None, debug=False, output_format=OutputFormat.HTML)
+        handler._execute_list_command(
+            config_dir=None,
+            debug=False,
+            output_format=OutputFormat.HTML,
+        )
 
         # Verify finalize was called for HTML format
         mock_formatter.finalize.assert_called_once()
@@ -183,7 +189,6 @@ class TestListCommandHandler:
         mock_asyncio_run.return_value = success_result
 
         # Execute command with RICH format
-        handler._execute_list_command(config_file=None, config_dir=None, debug=False, output_format=OutputFormat.RICH)
 
         # Verify finalize was NOT called for RICH format
         mock_formatter.finalize.assert_not_called()
@@ -212,7 +217,9 @@ class TestListCommandHandler:
         # Execute command and expect typer.Exit
         with pytest.raises(typer.Exit) as exc_info:
             handler._execute_list_command(
-                config_file=None, config_dir=None, debug=False, output_format=OutputFormat.RICH
+                config_dir=None,
+                debug=False,
+                output_format=OutputFormat.RICH,
             )
 
         # Verify exit code matches command result
@@ -232,12 +239,16 @@ class TestListCommandHandler:
                     success_result = CommandResult(success=True)
                     mock_run.return_value = success_result
 
-                    # Execute with None values
+                    # Execute with None/default values
                     handler._execute_list_command(
-                        config_file=None, config_dir=None, debug=False, output_format=OutputFormat.RICH
+                        config_dir=None,
+                        debug=False,
+                        output_format=OutputFormat.RICH,
                     )
 
-                    # Verify factory called with None values
+                    # Verify factory called with None/default values
                     mock_factory.assert_called_once_with(
-                        config_file=None, config_dir=None, debug=False, output_format=OutputFormat.RICH
+                        config_dir=None,
+                        debug=False,
+                        output_format=OutputFormat.RICH,
                     )

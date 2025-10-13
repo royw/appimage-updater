@@ -96,7 +96,8 @@ class CheckCommandHandler(CommandHandler):
 
     def _execute_check_command(
         self,
-        app_names: list[str],        config_dir: Path | None,
+        app_names: list[str],
+        config_dir: Path | None,
         dry_run: bool,
         yes: bool,
         no: bool,
@@ -126,7 +127,6 @@ class CheckCommandHandler(CommandHandler):
         # Create command via factory using convenience method
         command = CommandFactory.create_check_command_with_instrumentation(
             app_names=app_names,
-            config_file=config_file,
             config_dir=config_dir,
             dry_run=dry_run,
             yes=yes,

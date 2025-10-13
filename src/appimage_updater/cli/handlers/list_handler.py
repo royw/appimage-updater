@@ -53,14 +53,14 @@ class ListCommandHandler(CommandHandler):
 
     # noinspection PyMethodMayBeStatic
     def _execute_list_command(
-        self,        config_dir: Path | None,
+        self,
+        config_dir: Path | None,
         debug: bool,
         output_format: OutputFormat,
     ) -> None:
         """Execute the list command logic."""
         # Create command via factory (existing pattern)
         command = CommandFactory.create_list_command(
-            config_file=config_file,
             config_dir=config_dir,
             debug=debug,
             output_format=output_format,

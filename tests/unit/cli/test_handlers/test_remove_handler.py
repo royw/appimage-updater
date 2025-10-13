@@ -143,7 +143,6 @@ class TestRemoveCommandHandler:
             # Execute command
             handler._execute_remove_command(
                 app_names=["TestApp"],
-                config_file=Path("/test/config.json"),
                 config_dir=Path("/test/config"),
                 yes=False,
                 no=False,
@@ -154,7 +153,6 @@ class TestRemoveCommandHandler:
             # Verify factory was called with correct parameters
             mock_factory.assert_called_once_with(
                 app_names=["TestApp"],
-                config_file=Path("/test/config.json"),
                 config_dir=Path("/test/config"),
                 yes=False,
                 no=False,
@@ -192,7 +190,6 @@ class TestRemoveCommandHandler:
             # Execute command with JSON format
             handler._execute_remove_command(
                 app_names=["TestApp"],
-                config_file=None,
                 config_dir=None,
                 yes=False,
                 no=False,
@@ -227,7 +224,6 @@ class TestRemoveCommandHandler:
             # Execute command with HTML format
             handler._execute_remove_command(
                 app_names=["TestApp"],
-                config_file=None,
                 config_dir=None,
                 yes=False,
                 no=False,
@@ -262,7 +258,6 @@ class TestRemoveCommandHandler:
             # Execute command with RICH format
             handler._execute_remove_command(
                 app_names=["TestApp"],
-                config_file=None,
                 config_dir=None,
                 yes=False,
                 no=False,
@@ -299,7 +294,6 @@ class TestRemoveCommandHandler:
             with pytest.raises(typer.Exit) as exc_info:
                 handler._execute_remove_command(
                     app_names=["TestApp"],
-                    config_file=None,
                     config_dir=None,
                     yes=False,
                     no=False,
@@ -347,7 +341,6 @@ class TestRemoveCommandHandler:
                         # Execute with default values
                         handler._execute_remove_command(
                             app_names=["TestApp"],
-                            config_file=None,
                             config_dir=None,
                             yes=False,
                             no=False,
@@ -358,7 +351,6 @@ class TestRemoveCommandHandler:
                         # Verify factory called with None values
                         mock_factory.assert_called_once_with(
                             app_names=["TestApp"],
-                            config_file=None,
                             config_dir=None,
                             yes=False,
                             no=False,
