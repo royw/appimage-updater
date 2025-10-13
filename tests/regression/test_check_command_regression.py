@@ -49,7 +49,7 @@ def test_check_command_finds_candidates() -> None:
     expected_indicators = [
         "appimaged",  # Should show the app name
         "continuous",  # Should show current version info
-        "Success",  # Should show success status
+        "Up to date",  # Should show status (not "Success" - that was old format)
     ]
 
     for indicator in expected_indicators:
