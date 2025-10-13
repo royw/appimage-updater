@@ -15,29 +15,21 @@ class TestManager:
     """Test Manager base class."""
 
     def test_load_config_method(self) -> None:
-        """Test that Manager.load_config method works."""
+        """Test that Manager.load_config method works with directory-based config."""
         manager = Manager()
 
-        with patch.object(manager, "_load_config_from_file") as mock_load_file:
+        with patch.object(manager, "_load_config_from_directory") as mock_load_dir:
             mock_config = Config()
-            mock_load_file.return_value = mock_config
+            mock_load_dir.return_value = mock_config
 
-            config_path = Path("/test/config.json")
+            config_path = Path("/test/apps")
             result = manager.load_config(config_path)
 
             assert result == mock_config
-            mock_load_file.assert_called_once_with(config_path)
+            mock_load_dir.assert_called_once_with(config_path)
 
-    def test_save_config_method(self) -> None:
-        """Test that Manager.save_config method works."""
-        manager = Manager()
-        config = Config()
-        config_path = Path("/test/config.json")
-
-        m = mock_open()
-        with patch("pathlib.Path.open", m), patch("json.dump"), patch("pathlib.Path.mkdir"):
-            manager.save_config(config, config_path)
-            # Test passes if no exception is raised
+    # test_save_config_method removed - single-file config format no longer supported
+    # Use AppConfigs.save() or GlobalConfigManager.save_global_config_only() instead
 
 
 class TestGlobalConfigManager:

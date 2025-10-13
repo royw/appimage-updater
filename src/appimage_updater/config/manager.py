@@ -77,114 +77,30 @@ class Manager:
                 applications.append(ApplicationConfig(**app_data))
         return applications
 
-    def _load_config_from_file(self, config_path: Path) -> Config:
-        """Load configuration from a single JSON file."""
-        # Validate file existence and load JSON data
-        self._validate_config_file_exists(config_path, ConfigLoadError)
-        data = self._load_json_data_from_file(config_path, json, ConfigLoadError)
-        self._validate_json_data_format(data, ConfigLoadError)
-
-        # Parse and return configuration
-        return self._parse_config_data(data, config_path, ConfigLoadError)
-
-    # noinspection PyMethodMayBeStatic
-    def _validate_config_file_exists(self, config_path: Path, config_load_error_class: Any) -> None:
-        """Validate that the configuration file exists."""
-        if not config_path.exists():
-            raise config_load_error_class(f"Configuration file not found: {config_path}")
-
-    # noinspection PyMethodMayBeStatic
-    def _load_json_data_from_file(
-        self, config_path: Path, json_module: Any, config_load_error_class: Any
-    ) -> dict[str, Any]:
-        """Load and parse JSON data from file."""
-        try:
-            with config_path.open(encoding="utf-8") as f:
-                return cast(dict[str, Any], json_module.load(f))
-        except json_module.JSONDecodeError as e:
-            raise config_load_error_class(f"Invalid JSON in {config_path}: {e}") from e
-
-    # noinspection PyMethodMayBeStatic
-    def _validate_json_data_format(self, data: Any, config_load_error_class: Any) -> None:
-        """Validate that JSON data is in the correct format."""
-        if not isinstance(data, dict):
-            raise config_load_error_class(f"Configuration must be a JSON object, got {type(data).__name__}")
-
-    def _parse_config_data(self, data: dict[str, Any], config_path: Path, config_load_error_class: Any) -> Config:
-        """Parse configuration data into Config object."""
-        try:
-            if "applications" in data:
-                return self._create_config_with_applications(data)
-            else:
-                return self._create_config_single_application(data)
-        except (TypeError, ValueError) as e:
-            raise config_load_error_class(f"Invalid application configuration in {config_path}: {e}") from e
-
-    # noinspection PyMethodMayBeStatic
-    def _create_config_with_applications(self, data: dict[str, Any]) -> Config:
-        """Create config object from data with applications array."""
-        applications = [ApplicationConfig(**app_data) for app_data in data.get("applications", [])]
-        global_config_data = data.get("global_config", {})
-        global_config = GlobalConfig(**global_config_data) if global_config_data else GlobalConfig()
-        return Config(applications=applications, global_config=global_config)
-
-    # noinspection PyMethodMayBeStatic
-    def _create_config_single_application(self, data: dict[str, Any]) -> Config:
-        """Create config object from single application data."""
-        return Config(applications=[ApplicationConfig(**data)])
+    # Single-file config format has been removed - we only support directory-based config now
 
     def load_config(self, config_path: Path | None = None) -> Config:
-        """Load configuration from file or directory."""
+        """Load configuration from directory (apps/*.json + ../config.json).
+        
+        Args:
+            config_path: Path to apps directory or None for default
+            
+        Returns:
+            Config object with applications and global_config
+        """
         if config_path is None:
-            config_path = GlobalConfigManager.get_default_config_path()
-            # Check if directory-based config exists
-            config_dir = config_path.parent / "apps"
-            if config_dir.exists() and config_dir.is_dir():
-                return self._load_config_from_directory(config_dir)
+            # Use default apps directory
+            config_path = GlobalConfigManager.get_default_config_dir()
+        
+        # config_path should be the apps directory
+        if not config_path.is_dir():
+            # If it's not a directory, assume it's pointing to the parent and use apps/
+            config_path = config_path.parent / "apps" if config_path.name != "apps" else config_path
+        
+        return self._load_config_from_directory(config_path)
 
-        if config_path.is_dir():
-            return self._load_config_from_directory(config_path)
-        else:
-            return self._load_config_from_file(config_path)
-
-    # noinspection PyMethodMayBeStatic
-    def save_config(self, config: Config, config_path: Path | None = None) -> None:
-        """Save configuration to file."""
-        if config_path is None:
-            config_path = GlobalConfigManager.get_default_config_path()
-
-        # Ensure parent directory exists
-        config_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Convert to dict and save as JSON
-        config_dict = {
-            "global_config": config.global_config.model_dump(),
-            "applications": [app.model_dump() for app in config.applications],
-        }
-
-        with config_path.open("w") as f:
-            json.dump(config_dict, f, indent=2, default=str)
-
-    # Single File Operations
-    # noinspection PyMethodMayBeStatic
-    def save_single_file_config(self, config: Config, config_path: Path | None = None) -> None:
-        """Save entire config to a single JSON file."""
-        if config_path is None:
-            config_path = GlobalConfigManager.get_default_config_path()
-
-        # Ensure parent directory exists
-        config_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Convert to dict and save as JSON
-        config_dict = {
-            "global_config": config.global_config.model_dump(),
-            "applications": [app.model_dump() for app in config.applications],
-        }
-
-        with config_path.open("w") as f:
-            json.dump(config_dict, f, indent=2, default=str)
-
-        logger.info(f"Saved configuration to: {config_path}")
+    # save_config() and save_single_file_config() have been removed
+    # Use save_global_config_only() or AppConfigs.save() for directory-based saving
 
     # noinspection PyMethodMayBeStatic
     def preserve_applications_in_config_file(
@@ -388,8 +304,12 @@ class GlobalConfigManager(Manager):
         return Config(global_config=global_config, applications=[])
 
     def save(self) -> None:
-        """Save configuration to file."""
-        self.save_config(self._config, self._config_path)
+        """Save global configuration to config.json.
+        
+        Note: This saves only the global_config section. Applications are
+        saved separately in apps/*.json files via AppConfigs.save().
+        """
+        self.save_global_config_only(self._config_path)
         logger.info("Global configuration saved")
 
     # Global settings properties
@@ -582,21 +502,24 @@ class AppConfigs(Manager):
                 json.dump(app_config_dict, f, indent=2, default=str)
 
     def save(self) -> None:
-        """Save configuration to file."""
-        # Determine the correct save path using the same logic as load_config
+        """Save configuration to directory (apps/*.json files).
+        
+        Only directory-based config is supported. Each application is saved
+        to its own JSON file in the apps/ directory.
+        """
+        # Determine the apps directory path
         save_path = self._config_path
         if save_path is None:
-            default_config_path = GlobalConfigManager.get_default_config_path()
-            # Check if directory-based config exists, use it for consistency
-            config_dir = default_config_path.parent / "apps"
-            save_path = config_dir if config_dir.exists() and config_dir.is_dir() else default_config_path
-        if save_path.is_dir():
-            # For directory-based configs, save individual application files
-            self._config_path = save_path  # Update for _save_directory_based_config
-            self._save_directory_based_config()
-        else:
-            # For file-based configs, save to single file
-            self.save_config(self._config, save_path)
+            save_path = GlobalConfigManager.get_default_config_dir()
+        
+        # Ensure it's a directory (apps directory)
+        if not save_path.is_dir():
+            # If it's not a directory, assume it's pointing to parent and use apps/
+            save_path = save_path.parent / "apps" if save_path.name != "apps" else save_path
+        
+        # Save to directory-based config
+        self._config_path = save_path  # Update for _save_directory_based_config
+        self._save_directory_based_config()
         logger.info("Application configurations saved")
 
     def __iter__(self) -> Iterator[ApplicationConfig]:
