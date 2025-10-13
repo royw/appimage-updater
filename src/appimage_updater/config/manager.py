@@ -25,13 +25,29 @@ class Manager:
     """Base configuration manager class with common functionality."""
 
     def _load_config_from_directory(self, config_path: Path) -> Config:
-        """Load configuration from directory of JSON files."""
+        """Load configuration from directory of JSON files.
+
+        Loads applications from *.json files in the directory, and global_config
+        from ../config.json if it exists.
+        """
         applications = []
         json_files = list(config_path.glob("*.json"))
 
         for json_file in json_files:
             file_applications = self._load_applications_from_json_file(json_file, json, ConfigLoadError)
             applications.extend(file_applications)
+
+        # Load global config from parent directory's config.json if it exists
+        global_config_file = config_path.parent / "config.json"
+        if global_config_file.exists():
+            try:
+                with global_config_file.open(encoding="utf-8") as f:
+                    config_data = json.load(f)
+                    if "global_config" in config_data:
+                        global_config = GlobalConfig(**config_data["global_config"])
+                        return Config(global_config=global_config, applications=applications)
+            except (json.JSONDecodeError, OSError, TypeError, ValueError) as e:
+                logger.warning(f"Failed to load global config from {global_config_file}: {e}, using defaults")
 
         return Config(applications=applications)
 
