@@ -668,7 +668,7 @@ appimage-updater --debug add MyApp https://github.com/user/repo ~/Apps/MyApp
   - **DISPLAYS**: Configuration settings (source, URL, download directory, patterns, frequency, checksum settings)
   - **SHOWS**: File information (size, modification time, executable status) for matching AppImage files
   - **DETECTS**: Symlinks pointing to AppImage files with status validation
-  - **SUPPORTS**: Same configuration options as other commands (`--config`, `--config-dir`)
+  - **SUPPORTS**: Same configuration options as other commands (`--config-dir`)
   - **INCLUDES**: Rich formatted output with color-coded panels and status indicators
   - **HANDLES**: Missing directories, permission errors, and broken symlinks gracefully
   - **EXAMPLE**: `appimage-updater show --app FreeCAD --config-dir ~/.config/appimage-updater/`
@@ -834,7 +834,7 @@ ______________________________________________________________________
 
   - **ADDED**: `appimage-updater list` command to display all configured applications
   - **DISPLAYS**: Application name, enabled/disabled status, source repository, download directory, and update frequency
-  - **SUPPORTS**: Same configuration options as other commands (`--config`, `--config-dir`)
+  - **SUPPORTS**: Same configuration options as other commands (`--config-dir`)
   - **SHOWS**: Summary with total applications and enabled/disabled counts
   - **EXAMPLE**: `appimage-updater list --config-dir ~/.config/appimage-updater/apps`
 

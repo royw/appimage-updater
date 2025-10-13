@@ -305,7 +305,7 @@ def test_edit_prerelease_single_file(runner, single_config_file):
     result = runner.invoke(
         app,
         ["edit", "TestApp", "--prerelease",
-         "--config", str(single_config_file)]
+         "--config-dir", str(config_apps_dir)]
     )
 
     assert result.exit_code == 0
@@ -327,7 +327,7 @@ def test_empty_symlink_path_validation(runner, test_config_file):
     """Test validation of empty symlink paths."""
     result = runner.invoke(
         app,
-        ["edit", "TestApp", "--symlink-path", "", "--config", str(test_config_file)]
+        ["edit", "TestApp", "--symlink-path", "", "--config-dir", str(test_config_dir)]
     )
 
     assert result.exit_code == 1

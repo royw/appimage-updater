@@ -250,8 +250,7 @@ uv run python -m appimage_updater list --config-dir /path/to/config/dir
 uv run python -m appimage_updater show FreeCAD
 uv run python -m appimage_updater show FreeCAD --config-dir /path/to/config/dir
 
-# Check for updates with specific config
-uv run python -m appimage_updater check --config /path/to/config.json
+# Check for updates with specific config directory
 uv run python -m appimage_updater check --config-dir /path/to/config/dir
 
 # Dry run (check only, no downloads)

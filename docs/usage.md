@@ -128,7 +128,7 @@ appimage-updater check [OPTIONS] [APP_NAMES...]
 
 **Options:**
 
-- `--config, -c PATH`: Use specific configuration file
+- \`--config-dir, -d PATH: Use specific configuration directory
 - `--config-dir, -d PATH`: Use specific configuration directory
 - `--dry-run`: Check for updates without downloading
 - `--verbose`: Show detailed parameter information
@@ -153,7 +153,7 @@ appimage-updater check FreeCAD VSCode OrcaSlicer
 appimage-updater check "Orca*" "Free*"
 
 # Check with custom config file
-appimage-updater check --config /path/to/config.json
+appimage-updater check --config-dir /path/to/config/apps
 
 # Check with debug logging
 appimage-updater --debug check FreeCAD --dry-run
@@ -243,7 +243,7 @@ appimage-updater add [OPTIONS] NAME URL [DOWNLOAD_DIR]
 
 **Options:**
 
-- `--config, -c PATH`: Configuration file path
+- \`--config-dir, -d PATH: Configuration directory path
 - `--config-dir, -d PATH`: Configuration directory path
 - `--create-dir`: Automatically create download directory
 - `--yes, -y`: Auto-confirm prompts (non-interactive mode)
@@ -289,7 +289,7 @@ appimage-updater list [OPTIONS]
 
 **Options:**
 
-- `--config, -c PATH`: Configuration file path
+- \`--config-dir, -d PATH: Configuration directory path
 - `--config-dir, -d PATH`: Configuration directory path
 - `--verbose`: Show configuration file paths and additional details
 
@@ -300,7 +300,7 @@ appimage-updater list [OPTIONS]
 appimage-updater list
 
 # List with custom config
-appimage-updater list --config /path/to/config.json
+appimage-updater list --config-dir /path/to/config/apps
 
 # List with verbose output showing config paths
 appimage-updater list --verbose
@@ -320,7 +320,7 @@ appimage-updater show [OPTIONS] APP_NAMES...
 
 **Options:**
 
-- `--config, -c PATH`: Configuration file path
+- \`--config-dir, -d PATH: Configuration directory path
 - `--config-dir, -d PATH`: Configuration directory path
 
 **Examples:**
@@ -336,7 +336,7 @@ appimage-updater show FreeCAD VSCode OrcaSlicer
 appimage-updater show "Orca*" "Free*"
 
 # Show with custom config
-appimage-updater show MyApp --config /path/to/config.json
+appimage-updater show MyApp --config-dir /path/to/config/apps
 ```
 
 ### `edit`
@@ -353,7 +353,7 @@ appimage-updater edit [OPTIONS] APP_NAMES...
 
 **Options:**
 
-- `--config, -c PATH`: Configuration file path
+- \`--config-dir, -d PATH: Configuration directory path
 - `--config-dir, -d PATH`: Configuration directory path
 - `--url TEXT`: Update repository URL
 - `--download-dir TEXT`: Update download directory
@@ -479,7 +479,7 @@ appimage-updater remove [OPTIONS] APP_NAMES...
 
 **Options:**
 
-- `--config, -c PATH`: Configuration file path
+- \`--config-dir, -d PATH: Configuration directory path
 - `--config-dir, -d PATH`: Configuration directory path
 - `--force, -f`: Force operation without confirmation prompts (use with caution)
 
@@ -519,7 +519,7 @@ appimage-updater config [OPTIONS] ACTION [SETTING] [VALUE]
 
 **Options:**
 
-- `--config, -c PATH`: Configuration file path
+- \`--config-dir, -d PATH: Configuration directory path
 - `--config-dir, -d PATH`: Configuration directory path
 - `--app TEXT`: Application name (required for show-effective action)
 
@@ -617,7 +617,7 @@ appimage-updater repository [OPTIONS] APP_NAMES...
 
 **Options:**
 
-- `--config, -c PATH`: Configuration file path
+- \`--config-dir, -d PATH: Configuration directory path
 - `--config-dir, -d PATH`: Configuration directory path
 - `--limit, -l INTEGER`: Maximum number of releases to display (1-50, default: 10)
 - `--assets, -a`: Show detailed asset information for each release
@@ -645,7 +645,7 @@ appimage-updater repository "Orca*" --limit 3 --assets --dry-run
 appimage-updater repository "Orca*" "Free*"
 
 # Examine with custom config and show assets
-appimage-updater repository MyApp --config /path/to/config.json --assets
+appimage-updater repository MyApp --config-dir /path/to/config/apps --assets
 
 # Show detailed repository information for troubleshooting
 appimage-updater repository ProblematicApp --limit 20 --assets

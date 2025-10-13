@@ -145,10 +145,11 @@ The setting names in parentheses (e.g., `(download-dir)`) are what you use with 
 
 AppImage Updater looks for configuration in the following order:
 
-1. File specified with `--config` option
 1. Directory specified with `--config-dir` option
-1. `~/.config/appimage-updater/apps/` (directory of JSON files)
-1. `~/.config/appimage-updater/config.json` (single file)
+1. `~/.config/appimage-updater/apps/` (default directory-based configuration)
+
+**Note**: Single-file configuration format (`config.json` with embedded applications)
+is no longer supported. Only directory-based configuration is supported.
 
 ## GitHub Authentication
 
