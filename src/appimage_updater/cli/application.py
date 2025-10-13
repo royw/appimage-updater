@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 from pathlib import Path
+import sys
 from typing import Any
 
-import typer
 from loguru import logger
 from rich.console import Console
+import typer
 
 from .._version import __version__
 from ..utils.logging_config import configure_logging
@@ -53,32 +53,36 @@ def _ensure_config_directory_exists() -> None:
         logger.debug(f"Created apps directory: {apps_dir}")
 
     # Create default config.json if it doesn't exist
+    # NOTE: config.json should ONLY contain global_config, NOT applications
+    # Applications are stored in separate files in the apps/ directory
     config_file = config_dir / "config.json"
     if not config_file.exists():
         default_config = {
-            "concurrent_downloads": 3,
-            "timeout_seconds": 30,
-            "user_agent": f"AppImage-Updater/{__version__}",
-            "defaults": {
-                "download_dir": None,
-                "rotation_enabled": False,
-                "retain_count": 3,
-                "symlink_enabled": False,
-                "symlink_dir": None,
-                "symlink_pattern": "{appname}.AppImage",
-                "auto_subdir": False,
-                "checksum_enabled": True,
-                "checksum_algorithm": "sha256",
-                "checksum_pattern": "{filename}-SHA256.txt",
-                "checksum_required": False,
-                "prerelease": False,
-            },
-            "domain_knowledge": {
-                "github_domains": ["github.com"],
-                "gitlab_domains": ["gitlab.com"],
-                "direct_domains": [],
-                "dynamic_domains": [],
-            },
+            "global_config": {
+                "concurrent_downloads": 3,
+                "timeout_seconds": 30,
+                "user_agent": f"AppImage-Updater/{__version__}",
+                "defaults": {
+                    "download_dir": None,
+                    "rotation_enabled": False,
+                    "retain_count": 3,
+                    "symlink_enabled": False,
+                    "symlink_dir": None,
+                    "symlink_pattern": "{appname}.AppImage",
+                    "auto_subdir": False,
+                    "checksum_enabled": True,
+                    "checksum_algorithm": "sha256",
+                    "checksum_pattern": "{filename}-SHA256.txt",
+                    "checksum_required": False,
+                    "prerelease": False,
+                },
+                "domain_knowledge": {
+                    "github_domains": ["github.com"],
+                    "gitlab_domains": ["gitlab.com"],
+                    "direct_domains": [],
+                    "dynamic_domains": [],
+                },
+            }
         }
 
         with config_file.open("w") as f:

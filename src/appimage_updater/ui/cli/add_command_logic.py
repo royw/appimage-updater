@@ -126,7 +126,7 @@ def _execute_add_operation(
 
         # Use unified API to add and save
         config_path = config_file or config_dir
-        
+
         # Load existing configurations (this may fail if config doesn't exist)
         try:
             app_configs = AppConfigs(config_path=config_path)
