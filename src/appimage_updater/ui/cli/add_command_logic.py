@@ -126,18 +126,35 @@ def _execute_add_operation(
 
         # Use unified API to add and save
         config_path = config_file or config_dir
-        app_configs = AppConfigs(config_path=config_path)
+        
+        # Load existing configurations (this may fail if config doesn't exist)
+        try:
+            app_configs = AppConfigs(config_path=config_path)
+        except Exception as load_error:
+            logger.error(f"Failed to load existing configuration: {load_error}")
+            logger.exception("Full exception details")
+            return False
 
         # Check for duplicate names
         if app_config.name in app_configs:
             raise ValueError(f"Configuration already exists for application '{app_config.name}'")
 
+        # Add new application and save
         app_configs.add(app_config)
-        app_configs.save()
+        try:
+            app_configs.save()
+        except Exception as save_error:
+            logger.error(f"Failed to save configuration: {save_error}")
+            logger.exception("Full exception details")
+            return False
 
         return True
+    except ValueError as e:
+        # Handle duplicate name error
+        logger.error(f"Configuration error: {e}")
+        return False
     except Exception as e:
-        logger.error(f"Failed to save configuration: {e}")
+        logger.error(f"Failed to add application configuration: {e}")
         logger.exception("Full exception details")
         return False
 

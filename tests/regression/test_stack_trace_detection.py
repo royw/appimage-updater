@@ -6,15 +6,19 @@ that might not appear in unit test environments.
 """
 
 import os
-from pathlib import Path
 import subprocess
 import tempfile
+from pathlib import Path
 
 import pytest
 
 
 def run_cli_command(args: list[str], temp_home: Path | None = None) -> tuple[int, str, str]:
-    """Run CLI command as subprocess and return exit code, stdout, stderr."""
+    """Run CLI command as subprocess and return exit code, stdout, stderr.
+
+    The application will automatically create the config directory structure
+    on first run, so we don't need to initialize it here.
+    """
     # Run with uv to match user environment
     cmd = ["uv", "run", "python", "-m", "appimage_updater"] + args
 

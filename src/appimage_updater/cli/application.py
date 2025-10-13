@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import json
+import os
 import sys
+from pathlib import Path
 from typing import Any
 
+import typer
 from loguru import logger
 from rich.console import Console
-import typer
 
 from .._version import __version__
 from ..utils.logging_config import configure_logging
@@ -20,6 +23,67 @@ from .handlers.list_handler import ListCommandHandler
 from .handlers.remove_handler import RemoveCommandHandler
 from .handlers.repository_handler import RepositoryCommandHandler
 from .handlers.show_handler import ShowCommandHandler
+
+
+def _ensure_config_directory_exists() -> None:
+    """Ensure configuration directory and default config.json exist.
+
+    This function is called before any command is executed to ensure the
+    configuration directory structure exists. If it doesn't exist, it creates:
+    - ~/.config/appimage-updater/ directory
+    - ~/.config/appimage-updater/apps/ directory
+    - ~/.config/appimage-updater/config.json with default settings
+
+    This allows the application to work out of the box without requiring
+    manual initialization.
+    """
+    # Determine config directory
+    xdg_config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    config_dir = xdg_config_home / "appimage-updater"
+
+    # Create directory structure if it doesn't exist
+    if not config_dir.exists():
+        config_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Created configuration directory: {config_dir}")
+
+    # Create apps directory
+    apps_dir = config_dir / "apps"
+    if not apps_dir.exists():
+        apps_dir.mkdir(exist_ok=True)
+        logger.debug(f"Created apps directory: {apps_dir}")
+
+    # Create default config.json if it doesn't exist
+    config_file = config_dir / "config.json"
+    if not config_file.exists():
+        default_config = {
+            "concurrent_downloads": 3,
+            "timeout_seconds": 30,
+            "user_agent": f"AppImage-Updater/{__version__}",
+            "defaults": {
+                "download_dir": None,
+                "rotation_enabled": False,
+                "retain_count": 3,
+                "symlink_enabled": False,
+                "symlink_dir": None,
+                "symlink_pattern": "{appname}.AppImage",
+                "auto_subdir": False,
+                "checksum_enabled": True,
+                "checksum_algorithm": "sha256",
+                "checksum_pattern": "{filename}-SHA256.txt",
+                "checksum_required": False,
+                "prerelease": False,
+            },
+            "domain_knowledge": {
+                "github_domains": ["github.com"],
+                "gitlab_domains": ["gitlab.com"],
+                "direct_domains": [],
+                "dynamic_domains": [],
+            },
+        }
+
+        with config_file.open("w") as f:
+            json.dump(default_config, f, indent=2)
+        logger.info(f"Created default configuration file: {config_file}")
 
 
 class GlobalState:
@@ -108,6 +172,12 @@ class AppImageUpdaterCLI:
             # Store global state
             self.global_state.debug = debug
             configure_logging(debug=debug)
+
+            # Ensure config directory exists before any command runs
+            # This is done after --help and --version are handled (they use is_eager=True)
+            # but before any actual command is executed
+            if ctx.invoked_subcommand is not None:
+                _ensure_config_directory_exists()
 
             # If no command was provided, show help message
             if ctx.invoked_subcommand is None:
