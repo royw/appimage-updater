@@ -157,11 +157,13 @@ class TestAddCommandStackTraces:
 
     def test_invalid_url_format_e2e(self) -> None:
         """Test that invalid URL format shows clean error in real CLI."""
-        exit_code, stdout, stderr = run_cli_command(["add", "TestApp", "invalid-url"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            exit_code, stdout, stderr = run_cli_command(["add", "TestApp", "invalid-url"], temp_home)
 
-        # May succeed with URL normalization or fail with clean error
-        if exit_code != 0:
-            assert_no_stack_trace_in_output(stdout, stderr, "add TestApp invalid-url")
+            # May succeed with URL normalization or fail with clean error
+            if exit_code != 0:
+                assert_no_stack_trace_in_output(stdout, stderr, "add TestApp invalid-url")
 
 
 class TestCheckCommandStackTraces:
