@@ -79,28 +79,34 @@ class TestConfigCommandStackTraces:
 
     def test_invalid_setting_name_e2e(self) -> None:
         """Test that invalid config setting shows clean error in real CLI."""
-        exit_code, stdout, stderr = run_cli_command(["config", "set", "invalid-setting", "value"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            exit_code, stdout, stderr = run_cli_command(["config", "set", "invalid-setting", "value"], temp_home)
 
-        assert exit_code == 1
-        assert_no_stack_trace_in_output(stdout, stderr, "config set invalid-setting value")
-        assert "Unknown setting: invalid-setting" in stdout
+            assert exit_code == 1
+            assert_no_stack_trace_in_output(stdout, stderr, "config set invalid-setting value")
+            assert "Unknown setting: invalid-setting" in stdout
 
     def test_invalid_numeric_value_e2e(self) -> None:
         """Test that invalid numeric value shows clean error in real CLI."""
-        exit_code, stdout, stderr = run_cli_command(["config", "set", "retain-count", "invalid-number"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            exit_code, stdout, stderr = run_cli_command(["config", "set", "retain-count", "invalid-number"], temp_home)
 
-        assert exit_code == 1
-        assert_no_stack_trace_in_output(stdout, stderr, "config set retain-count invalid-number")
-        # Should show some kind of validation error
-        assert any(word in stdout.lower() for word in ["invalid", "error", "must", "range"])
+            assert exit_code == 1
+            assert_no_stack_trace_in_output(stdout, stderr, "config set retain-count invalid-number")
+            # Should show some kind of validation error
+            assert any(word in stdout.lower() for word in ["invalid", "error", "must", "range"])
 
     def test_out_of_range_numeric_value_e2e(self) -> None:
         """Test that out-of-range numeric value shows clean error in real CLI."""
-        exit_code, stdout, stderr = run_cli_command(["config", "set", "retain-count", "99"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            exit_code, stdout, stderr = run_cli_command(["config", "set", "retain-count", "99"], temp_home)
 
-        assert exit_code == 1
-        assert_no_stack_trace_in_output(stdout, stderr, "config set retain-count 99")
-        assert any(word in stdout.lower() for word in ["range", "between", "invalid"])
+            assert exit_code == 1
+            assert_no_stack_trace_in_output(stdout, stderr, "config set retain-count 99")
+            assert any(word in stdout.lower() for word in ["range", "between", "invalid"])
 
 
 class TestShowCommandStackTraces:
@@ -118,11 +124,13 @@ class TestShowCommandStackTraces:
 
     def test_multiple_nonexistent_applications_e2e(self) -> None:
         """Test that showing multiple nonexistent apps shows clean error in real CLI."""
-        exit_code, stdout, stderr = run_cli_command(["show", "App1", "App2", "App3"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            exit_code, stdout, stderr = run_cli_command(["show", "App1", "App2", "App3"], temp_home)
 
-        assert exit_code == 1
-        assert_no_stack_trace_in_output(stdout, stderr, "show App1 App2 App3")
-        assert any(phrase in stdout for phrase in ["not found", "No applications found"])
+            assert exit_code == 1
+            assert_no_stack_trace_in_output(stdout, stderr, "show App1 App2 App3")
+            assert any(phrase in stdout for phrase in ["not found", "No applications found"])
 
 
 class TestEditCommandStackTraces:
@@ -130,11 +138,13 @@ class TestEditCommandStackTraces:
 
     def test_nonexistent_application_e2e(self) -> None:
         """Test that editing nonexistent app shows clean error in real CLI."""
-        exit_code, stdout, stderr = run_cli_command(["edit", "NonExistentApp", "--rotation"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            exit_code, stdout, stderr = run_cli_command(["edit", "NonExistentApp", "--rotation"], temp_home)
 
-        assert exit_code == 1
-        assert_no_stack_trace_in_output(stdout, stderr, "edit NonExistentApp --rotation")
-        assert any(phrase in stdout for phrase in ["not found", "No applications found"])
+            assert exit_code == 1
+            assert_no_stack_trace_in_output(stdout, stderr, "edit NonExistentApp --rotation")
+            assert any(phrase in stdout for phrase in ["not found", "No applications found"])
 
 
 class TestRemoveCommandStackTraces:
@@ -185,11 +195,13 @@ class TestRepositoryCommandStackTraces:
 
     def test_nonexistent_application_e2e(self) -> None:
         """Test that repository info for nonexistent app shows clean error in real CLI."""
-        exit_code, stdout, stderr = run_cli_command(["repository", "NonExistentApp"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            exit_code, stdout, stderr = run_cli_command(["repository", "NonExistentApp"], temp_home)
 
-        assert exit_code == 1
-        assert_no_stack_trace_in_output(stdout, stderr, "repository NonExistentApp")
-        assert any(phrase in stdout for phrase in ["not found", "No applications found"])
+            assert exit_code == 1
+            assert_no_stack_trace_in_output(stdout, stderr, "repository NonExistentApp")
+            assert any(phrase in stdout for phrase in ["not found", "No applications found"])
 
 
 class TestGeneralStackTraces:
@@ -209,10 +221,12 @@ class TestGeneralStackTraces:
             ["list", "--help"],
         ]
 
-        for cmd in help_commands:
-            exit_code, stdout, stderr = run_cli_command(cmd)
-            assert exit_code == 0, f"Help command failed: {cmd}"
-            assert_no_stack_trace_in_output(stdout, stderr, f"help command: {' '.join(cmd)}")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            for cmd in help_commands:
+                exit_code, stdout, stderr = run_cli_command(cmd, temp_home)
+                assert exit_code == 0, f"Help command failed: {cmd}"
+                assert_no_stack_trace_in_output(stdout, stderr, f"help command: {' '.join(cmd)}")
 
     def test_version_commands_no_stack_traces_e2e(self) -> None:
         """Test that version commands never show stack traces in real CLI."""
@@ -221,18 +235,24 @@ class TestGeneralStackTraces:
             ["-V"],
         ]
 
-        for cmd in version_commands:
-            exit_code, stdout, stderr = run_cli_command(cmd)
-            assert exit_code == 0, f"Version command failed: {cmd}"
-            assert_no_stack_trace_in_output(stdout, stderr, f"version command: {' '.join(cmd)}")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            for cmd in version_commands:
+                exit_code, stdout, stderr = run_cli_command(cmd, temp_home)
+                assert exit_code == 0, f"Version command failed: {cmd}"
+                assert_no_stack_trace_in_output(stdout, stderr, f"version command: {' '.join(cmd)}")
 
     def test_invalid_config_file_path_e2e(self) -> None:
         """Test that invalid config file path shows clean error in real CLI."""
-        exit_code, stdout, stderr = run_cli_command(["list", "--config", "/nonexistent/path/config.json"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            exit_code, stdout, stderr = run_cli_command(
+                ["list", "--config", "/nonexistent/path/config.json"], temp_home
+            )
 
-        # Should either work (create config) or show clean error
-        if exit_code != 0:
-            assert_no_stack_trace_in_output(stdout, stderr, "list --config /nonexistent/path/config.json")
+            # Should either work (create config) or show clean error
+            if exit_code != 0:
+                assert_no_stack_trace_in_output(stdout, stderr, "list --config /nonexistent/path/config.json")
 
 
 class TestSpecificStackTraceScenarios:
@@ -240,24 +260,28 @@ class TestSpecificStackTraceScenarios:
 
     def test_config_set_invalid_setting_manual_case(self) -> None:
         """Test the specific case that showed stack traces in manual testing."""
-        exit_code, stdout, stderr = run_cli_command(["config", "set", "invalid-setting", "value"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            exit_code, stdout, stderr = run_cli_command(["config", "set", "invalid-setting", "value"], temp_home)
 
-        assert exit_code == 1
-        assert_no_stack_trace_in_output(stdout, stderr, "config set invalid-setting value")
+            assert exit_code == 1
+            assert_no_stack_trace_in_output(stdout, stderr, "config set invalid-setting value")
 
-        # Should show clean error message
-        assert "Unknown setting: invalid-setting" in stdout
-        assert "Available settings:" in stdout
+            # Should show clean error message
+            assert "Unknown setting: invalid-setting" in stdout
+            assert "Available settings:" in stdout
 
     def test_show_nonexistent_app_manual_case(self) -> None:
         """Test the specific case that showed stack traces in manual testing."""
-        exit_code, stdout, stderr = run_cli_command(["show", "NonExistentApp"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            exit_code, stdout, stderr = run_cli_command(["show", "NonExistentApp"], temp_home)
 
-        assert exit_code == 1
-        assert_no_stack_trace_in_output(stdout, stderr, "show NonExistentApp")
+            assert exit_code == 1
+            assert_no_stack_trace_in_output(stdout, stderr, "show NonExistentApp")
 
-        # Should show clean error message
-        assert any(phrase in stdout for phrase in ["not found", "No applications found", "No applications match"])
+            # Should show clean error message
+            assert any(phrase in stdout for phrase in ["not found", "No applications found", "No applications match"])
 
 
 @pytest.mark.slow
