@@ -56,7 +56,7 @@ class TestE2EFunctionality:
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
 
-        result = runner.invoke(app, ["check", "--config", str(config_file), "--dry-run"])
+        result = runner.invoke(app, ["check", "--config-dir", str(config_file), "--dry-run"])
 
         assert result.exit_code == 0
         assert "Up to date" in result.stdout or "All applications are up to date" in result.stdout
@@ -106,7 +106,7 @@ class TestE2EFunctionality:
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
 
-        result = runner.invoke(app, ["check", "--config", str(config_file)])
+        result = runner.invoke(app, ["check", "--config-dir", str(config_file)])
 
         assert result.exit_code == 0
         assert "update available" in result.stdout
@@ -159,7 +159,7 @@ class TestE2EFunctionality:
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
 
-        result = runner.invoke(app, ["check", "TestApp1", "--config", str(config_file)])
+        result = runner.invoke(app, ["check", "TestApp1", "--config-dir", str(config_file)])
 
         assert result.exit_code == 0
         # Should only check TestApp1, not TestApp2
@@ -169,7 +169,7 @@ class TestE2EFunctionality:
         """Test check command with non-existent configuration file."""
         nonexistent_config = tmp_path / "nonexistent_config.json"
 
-        result = runner.invoke(app, ["check", "--config", str(nonexistent_config), "--dry-run"])
+        result = runner.invoke(app, ["check", "--config-dir", str(nonexistent_config), "--dry-run"])
 
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
@@ -180,7 +180,7 @@ class TestE2EFunctionality:
         with config_file.open("w") as f:
             f.write("{ invalid json content")
 
-        result = runner.invoke(app, ["check", "--config", str(config_file), "--dry-run"])
+        result = runner.invoke(app, ["check", "--config-dir", str(config_file), "--dry-run"])
 
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
@@ -204,7 +204,7 @@ class TestE2EFunctionality:
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
 
-        result = runner.invoke(app, ["check", "--config", str(config_file)])
+        result = runner.invoke(app, ["check", "--config-dir", str(config_file)])
 
         assert result.exit_code == 0  # Should not fail, just report the error
         assert "Error" in result.stdout or "failed" in result.stdout.lower()
@@ -224,7 +224,7 @@ class TestE2EFunctionality:
             mock_check_result = CheckResult(app_name="TestApp", success=True, candidate=None)
             mock_vc.return_value.check_for_updates = AsyncMock(return_value=mock_check_result)
 
-            result = runner.invoke(app, ["--debug", "check", "--config", str(config_file), "--dry-run"])
+            result = runner.invoke(app, ["--debug", "check", "--config-dir", str(config_file), "--dry-run"])
 
             # Debug mode should not cause failure and should include debug info
             assert result.exit_code == 0
@@ -236,7 +236,7 @@ class TestE2EFunctionality:
         with config_file.open("w") as f:
             json.dump(sample_config, f)
 
-        result = runner.invoke(app, ["list", "--config", str(config_file)])
+        result = runner.invoke(app, ["list", "--config-dir", str(config_file)])
 
         assert result.exit_code == 0
         assert "Configured Applications" in result.stdout
@@ -275,7 +275,7 @@ class TestE2EFunctionality:
         with config_file.open("w") as f:
             json.dump(multi_app_config, f)
 
-        result = runner.invoke(app, ["list", "--config", str(config_file)])
+        result = runner.invoke(app, ["list", "--config-dir", str(config_file)])
 
         assert result.exit_code == 0
         assert "Configured Applications" in result.stdout
@@ -294,7 +294,7 @@ class TestE2EFunctionality:
         with config_file.open("w") as f:
             json.dump(empty_config, f)
 
-        result = runner.invoke(app, ["list", "--config", str(config_file)])
+        result = runner.invoke(app, ["list", "--config-dir", str(config_file)])
 
         assert result.exit_code == 0
         assert "No applications configured" in result.stdout
@@ -337,7 +337,7 @@ class TestE2EFunctionality:
         with app2_file.open("w") as f:
             json.dump(app2_config, f)
 
-        result = runner.invoke(app, ["list", "--config-dir", str(temp_config_dir)])
+        result = runner.invoke(app, ["list", "--config-dir-dir", str(temp_config_dir)])
 
         assert result.exit_code == 0
         assert "Configured Applications" in result.stdout
@@ -349,7 +349,7 @@ class TestE2EFunctionality:
         """Test list command with non-existent configuration file."""
         nonexistent_config = tmp_path / "nonexistent_list_config.json"
 
-        result = runner.invoke(app, ["list", "--config", str(nonexistent_config)])
+        result = runner.invoke(app, ["list", "--config-dir", str(nonexistent_config)])
 
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
@@ -360,7 +360,7 @@ class TestE2EFunctionality:
         with config_file.open("w") as f:
             f.write("{ invalid json for list test")
 
-        result = runner.invoke(app, ["list", "--config", str(config_file)])
+        result = runner.invoke(app, ["list", "--config-dir", str(config_file)])
 
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
@@ -386,7 +386,7 @@ class TestE2EFunctionality:
         with config_file.open("w") as f:
             json.dump(long_path_config, f)
 
-        result = runner.invoke(app, ["list", "--config", str(config_file)])
+        result = runner.invoke(app, ["list", "--config-dir", str(config_file)])
 
         assert result.exit_code == 0
         assert "LongPathApp" in result.stdout
@@ -433,7 +433,7 @@ class TestE2EFunctionality:
         app_file2.touch()
         app_file1.chmod(0o755)  # Make executable
 
-        result = runner.invoke(app, ["show", "DetailedApp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "DetailedApp", "--config-dir", str(config_file)])
 
         assert result.exit_code == 0
         # Check configuration section
@@ -463,7 +463,7 @@ class TestE2EFunctionality:
         with config_file.open("w") as f:
             json.dump(sample_config, f)
 
-        result = runner.invoke(app, ["show", "NonExistentApp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "NonExistentApp", "--config-dir", str(config_file)])
 
         assert result.exit_code == 1
         assert "Applications not found: NonExistentApp" in result.stdout
@@ -475,7 +475,7 @@ class TestE2EFunctionality:
         with config_file.open("w") as f:
             json.dump(sample_config, f)
 
-        result = runner.invoke(app, ["show", "testapp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "testapp", "--config-dir", str(config_file)])
 
         assert result.exit_code == 0
         assert "Application: TestApp" in result.stdout
@@ -500,7 +500,7 @@ class TestE2EFunctionality:
         with config_file.open("w") as f:
             json.dump(config_with_missing_dir, f)
 
-        result = runner.invoke(app, ["show", "MissingDirApp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "MissingDirApp", "--config-dir", str(config_file)])
 
         assert result.exit_code == 0
         assert "Download directory does not exist" in result.stdout
@@ -525,7 +525,7 @@ class TestE2EFunctionality:
         with config_file.open("w") as f:
             json.dump(disabled_config, f)
 
-        result = runner.invoke(app, ["show", "DisabledApp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "DisabledApp", "--config-dir", str(config_file)])
 
         assert result.exit_code == 0
         assert "Status: Disabled" in result.stdout
@@ -553,7 +553,7 @@ class TestE2EFunctionality:
         # Create a file that won't match the pattern
         (temp_download_dir / "OtherApp-1.0.0.AppImage").touch()
 
-        result = runner.invoke(app, ["show", "NoFilesApp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "NoFilesApp", "--config-dir", str(config_file)])
 
         assert result.exit_code == 0
         assert "No AppImage files found matching the pattern" in result.stdout
@@ -585,7 +585,7 @@ class TestE2EFunctionality:
         app_file.chmod(0o755)
         symlink_file.symlink_to(app_file.name)  # Relative symlink
 
-        result = runner.invoke(app, ["show", "SymlinkApp", "--config", str(config_file)])
+        result = runner.invoke(app, ["show", "SymlinkApp", "--config-dir", str(config_file)])
 
         assert result.exit_code == 0
         assert "SymlinkApp-1.0.0-Linux.AppImage.current" in result.stdout

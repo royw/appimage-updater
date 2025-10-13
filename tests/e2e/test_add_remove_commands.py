@@ -156,13 +156,16 @@ class TestAddCommand:
 class TestRemoveCommand:
     """Test the remove command functionality."""
 
-    def test_remove_command_from_config_file(self, e2e_environment: dict[str, Any], runner: CliRunner, temp_config_dir: Path, tmp_path: Path) -> None:
-        """Test remove command with single config file (not directory-based)."""
-        app1_dir = tmp_path / "app1"
-        app2_dir = tmp_path / "app2"
-        # Create a single config file with multiple apps
-        config_file = temp_config_dir / "config.json"
-        initial_config = {
+    def test_remove_command_from_config_file(self, e2e_environment, runner: CliRunner, temp_config_dir: Path) -> None:
+        """Test remove command removes app from directory-based config."""
+        # Create directory-based config with two apps
+        apps_dir = temp_config_dir / "apps"
+        apps_dir.mkdir(parents=True)
+        app1_dir = temp_config_dir / "downloads" / "App1"
+        app2_dir = temp_config_dir / "downloads" / "App2"
+
+        # Create App1 config
+        app1_config = {
             "applications": [
                 {
                     "name": "App1",
@@ -171,7 +174,15 @@ class TestRemoveCommand:
                     "download_dir": str(app1_dir),
                     "pattern": "App1.*",
                     "enabled": True,
-                },
+                }
+            ]
+        }
+        with (apps_dir / "app1.json").open("w") as f:
+            json.dump(app1_config, f)
+
+        # Create App2 config
+        app2_config = {
+            "applications": [
                 {
                     "name": "App2",
                     "source_type": "github",
@@ -179,23 +190,24 @@ class TestRemoveCommand:
                     "download_dir": str(app2_dir),
                     "pattern": "App2.*",
                     "enabled": True,
-                },
+                }
             ]
         }
+        with (apps_dir / "app2.json").open("w") as f:
+            json.dump(app2_config, f)
 
-        with config_file.open("w") as f:
-            json.dump(initial_config, f)
-
-        # Remove one app from the config file
-        result = runner.invoke(app, ["remove", "App1", "--config", str(config_file)], input="y\n")
+        # Remove one app from the config
+        result = runner.invoke(app, ["remove", "App1", "--config-dir", str(apps_dir)], input="y\n")
 
         assert result.exit_code == 0
         assert "Successfully removed application 'App1' from configuration" in result.stdout
 
         # Verify only App2 remains
-        with config_file.open() as f:
+        assert not (apps_dir / "app1.json").exists()
+        assert (apps_dir / "app2.json").exists()
+        
+        with (apps_dir / "app2.json").open() as f:
             config_data = json.load(f)
-
         assert len(config_data["applications"]) == 1
         assert config_data["applications"][0]["name"] == "App2"
 
