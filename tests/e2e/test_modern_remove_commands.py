@@ -158,19 +158,28 @@ class TestModernRemoveCommand:
             ]
         }
 
-        config_file = temp_config_dir / "multi_apps.json"
-        with config_file.open("w") as f:
-            json.dump(config_data, f, indent=2)
+        # Create directory-based config
+        apps_dir = temp_config_dir / "apps"
+        apps_dir.mkdir(parents=True)
+        
+        # Create individual app files
+        for app_data in config_data["applications"]:
+            app_name = app_data["name"]
+            app_file = apps_dir / f"{app_name.lower()}.json"
+            with app_file.open("w") as f:
+                json.dump({"applications": [app_data]}, f, indent=2)
 
         # Remove one app
-        result = runner.invoke(app, ["remove", "App1", "--config", str(config_file), "--format", "plain"], input="y\n")
+        result = runner.invoke(app, ["remove", "App1", "--config-dir", str(apps_dir), "--format", "plain"], input="y\n")
 
         assert result.exit_code == 0
         assert "Successfully removed application 'App1'" in result.stdout
 
-        # Verify config file still exists but only has App2
-        assert config_file.exists()
-        with config_file.open() as f:
+        # Verify App1 file is deleted but App2 file still exists
+        assert not (apps_dir / "app1.json").exists()
+        assert (apps_dir / "app2.json").exists()
+        
+        with (apps_dir / "app2.json").open() as f:
             remaining_config = json.load(f)
 
         assert len(remaining_config["applications"]) == 1

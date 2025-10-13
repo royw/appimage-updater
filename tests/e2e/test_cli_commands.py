@@ -7,6 +7,29 @@ from appimage_updater.core.models import Asset, CheckResult, UpdateCandidate
 from appimage_updater.main import app
 
 
+def create_directory_config(temp_dir: Path, config_data: dict) -> Path:
+    """Helper to create directory-based config from config dict.
+    
+    Args:
+        temp_dir: Temporary directory to create config in
+        config_data: Config dict with 'applications' key
+        
+    Returns:
+        Path to apps directory
+    """
+    apps_dir = temp_dir / "apps"
+    apps_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Create individual app config files
+    for app_data in config_data.get("applications", []):
+        app_name = app_data["name"]
+        app_file = apps_dir / f"{app_name.lower()}.json"
+        with app_file.open("w") as f:
+            json.dump({"applications": [app_data]}, f, indent=2)
+    
+    return apps_dir
+
+
 class TestE2EFunctionality:
     """Test end-to-end functionality."""
 
@@ -25,9 +48,7 @@ class TestE2EFunctionality:
     ) -> None:
         """Test check command with dry-run when no updates are needed."""
         # Create config file
-        config_file = temp_config_dir / "test.json"
-        with config_file.open("w") as f:
-            json.dump(sample_config, f)
+        apps_dir = create_directory_config(temp_config_dir, sample_config)
 
         # Create existing AppImage file
         existing_file = temp_download_dir / "TestApp-1.0.1-Linux-x86_64.AppImage.current"
@@ -56,7 +77,7 @@ class TestE2EFunctionality:
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
 
-        result = runner.invoke(app, ["check", "--config-dir", str(config_file), "--dry-run"])
+        result = runner.invoke(app, ["check", "--config-dir", str(apps_dir), "--dry-run"])
 
         assert result.exit_code == 0
         assert "Up to date" in result.stdout or "All applications are up to date" in result.stdout
@@ -74,9 +95,7 @@ class TestE2EFunctionality:
     ) -> None:
         """Test check command with dry-run when updates are available."""
         # Create config file
-        config_file = temp_config_dir / "test.json"
-        with config_file.open("w") as f:
-            json.dump(sample_config, f)
+        apps_dir = create_directory_config(temp_config_dir, sample_config)
 
         # Create existing AppImage file (older version)
         existing_file = temp_download_dir / "TestApp-1.0.0-Linux-x86_64.AppImage.current"
@@ -106,7 +125,7 @@ class TestE2EFunctionality:
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
 
-        result = runner.invoke(app, ["check", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["check", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 0
         assert "update available" in result.stdout
@@ -145,9 +164,7 @@ class TestE2EFunctionality:
             ]
         }
 
-        config_file = temp_config_dir / "multi_app.json"
-        with config_file.open("w") as f:
-            json.dump(multi_app_config, f)
+        apps_dir = create_directory_config(temp_config_dir, multi_app_config)
 
         # Mock version checker
         mock_version_checker = Mock()
@@ -159,28 +176,34 @@ class TestE2EFunctionality:
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
 
-        result = runner.invoke(app, ["check", "TestApp1", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["check", "TestApp1", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 0
         # Should only check TestApp1, not TestApp2
         mock_version_checker.check_for_updates.assert_called_once()
 
     def test_check_command_with_nonexistent_config(self, e2e_environment, runner, tmp_path) -> None:
-        """Test check command with non-existent configuration file."""
-        nonexistent_config = tmp_path / "nonexistent_config.json"
+        """Test check command with non-existent configuration directory."""
+        # With auto-creation, nonexistent config dir will be created automatically
+        # So this test now verifies that it works with an empty config
+        nonexistent_dir = tmp_path / "nonexistent_apps"
 
-        result = runner.invoke(app, ["check", "--config-dir", str(nonexistent_config), "--dry-run"])
+        result = runner.invoke(app, ["check", "--config-dir", str(nonexistent_dir), "--dry-run"])
 
-        assert result.exit_code == 1
-        assert "Configuration error" in result.stdout
+        # Should succeed with empty config (no apps to check)
+        assert result.exit_code == 0
+        assert "No" in result.stdout and "applications" in result.stdout
 
     def test_check_command_with_invalid_json_config(self, e2e_environment, runner, temp_config_dir) -> None:
         """Test check command with invalid JSON configuration."""
-        config_file = temp_config_dir / "invalid.json"
-        with config_file.open("w") as f:
+        # Create apps directory with invalid JSON file
+        apps_dir = temp_config_dir / "apps"
+        apps_dir.mkdir(parents=True)
+        invalid_file = apps_dir / "invalid.json"
+        with invalid_file.open("w") as f:
             f.write("{ invalid json content")
 
-        result = runner.invoke(app, ["check", "--config-dir", str(config_file), "--dry-run"])
+        result = runner.invoke(app, ["check", "--config-dir", str(apps_dir), "--dry-run"])
 
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
@@ -192,9 +215,7 @@ class TestE2EFunctionality:
     ) -> None:
         """Test check command when version check fails."""
         # Create config file
-        config_file = temp_config_dir / "test.json"
-        with config_file.open("w") as f:
-            json.dump(sample_config, f)
+        apps_dir = create_directory_config(temp_config_dir, sample_config)
 
         # Mock version checker to return failed check
         mock_version_checker = Mock()
@@ -204,7 +225,7 @@ class TestE2EFunctionality:
         mock_version_checker.check_for_updates = AsyncMock(return_value=mock_check_result)
         mock_version_checker_class.return_value = mock_version_checker
 
-        result = runner.invoke(app, ["check", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["check", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 0  # Should not fail, just report the error
         assert "Error" in result.stdout or "failed" in result.stdout.lower()
@@ -212,9 +233,7 @@ class TestE2EFunctionality:
     def test_debug_flag_enables_verbose_output(self, e2e_environment, runner, temp_config_dir, sample_config) -> None:
         """Test that debug flag enables verbose logging output."""
         # Create config file
-        config_file = temp_config_dir / "test.json"
-        with config_file.open("w") as f:
-            json.dump(sample_config, f)
+        apps_dir = create_directory_config(temp_config_dir, sample_config)
 
         # Mock to prevent actual network calls
         with (
@@ -224,7 +243,7 @@ class TestE2EFunctionality:
             mock_check_result = CheckResult(app_name="TestApp", success=True, candidate=None)
             mock_vc.return_value.check_for_updates = AsyncMock(return_value=mock_check_result)
 
-            result = runner.invoke(app, ["--debug", "check", "--config-dir", str(config_file), "--dry-run"])
+            result = runner.invoke(app, ["--debug", "check", "--config-dir", str(apps_dir), "--dry-run"])
 
             # Debug mode should not cause failure and should include debug info
             assert result.exit_code == 0
@@ -232,11 +251,9 @@ class TestE2EFunctionality:
     def test_list_command_with_single_application(self, e2e_environment, runner, temp_config_dir, sample_config) -> None:
         """Test list command with a single configured application."""
         # Create config file
-        config_file = temp_config_dir / "test.json"
-        with config_file.open("w") as f:
-            json.dump(sample_config, f)
+        apps_dir = create_directory_config(temp_config_dir, sample_config)
 
-        result = runner.invoke(app, ["list", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["list", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 0
         assert "Configured Applications" in result.stdout
@@ -271,11 +288,9 @@ class TestE2EFunctionality:
             ]
         }
 
-        config_file = temp_config_dir / "multi_app.json"
-        with config_file.open("w") as f:
-            json.dump(multi_app_config, f)
+        apps_dir = create_directory_config(temp_config_dir, multi_app_config)
 
-        result = runner.invoke(app, ["list", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["list", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 0
         assert "Configured Applications" in result.stdout
@@ -290,11 +305,9 @@ class TestE2EFunctionality:
         # Create empty config
         empty_config = {"applications": []}
 
-        config_file = temp_config_dir / "empty.json"
-        with config_file.open("w") as f:
-            json.dump(empty_config, f)
+        apps_dir = create_directory_config(temp_config_dir, empty_config)
 
-        result = runner.invoke(app, ["list", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["list", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 0
         assert "No applications configured" in result.stdout
@@ -337,7 +350,7 @@ class TestE2EFunctionality:
         with app2_file.open("w") as f:
             json.dump(app2_config, f)
 
-        result = runner.invoke(app, ["list", "--config-dir-dir", str(temp_config_dir)])
+        result = runner.invoke(app, ["list", "--config-dir", str(temp_config_dir)])
 
         assert result.exit_code == 0
         assert "Configured Applications" in result.stdout
@@ -346,21 +359,27 @@ class TestE2EFunctionality:
         assert "Total: 2 applications (2 enabled, 0 disabled)" in result.stdout
 
     def test_list_command_with_nonexistent_config(self, e2e_environment, runner, tmp_path) -> None:
-        """Test list command with non-existent configuration file."""
-        nonexistent_config = tmp_path / "nonexistent_list_config.json"
+        """Test list command with non-existent configuration directory."""
+        # With auto-creation, nonexistent config dir will be created automatically
+        # So this test now verifies that it works with an empty config
+        nonexistent_dir = tmp_path / "nonexistent_list_apps"
 
-        result = runner.invoke(app, ["list", "--config-dir", str(nonexistent_config)])
+        result = runner.invoke(app, ["list", "--config-dir", str(nonexistent_dir)])
 
-        assert result.exit_code == 1
-        assert "Configuration error" in result.stdout
+        # Should succeed with empty config
+        assert result.exit_code == 0
+        assert "No applications configured" in result.stdout
 
     def test_list_command_with_invalid_json_config(self, e2e_environment, runner, temp_config_dir) -> None:
         """Test list command with invalid JSON configuration."""
-        config_file = temp_config_dir / "invalid_list.json"
-        with config_file.open("w") as f:
+        # Create apps directory with invalid JSON file
+        apps_dir = temp_config_dir / "apps"
+        apps_dir.mkdir(parents=True)
+        invalid_file = apps_dir / "invalid_list.json"
+        with invalid_file.open("w") as f:
             f.write("{ invalid json for list test")
 
-        result = runner.invoke(app, ["list", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["list", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 1
         assert "Configuration error" in result.stdout
@@ -382,11 +401,9 @@ class TestE2EFunctionality:
             ]
         }
 
-        config_file = temp_config_dir / "longpath.json"
-        with config_file.open("w") as f:
-            json.dump(long_path_config, f)
+        apps_dir = create_directory_config(temp_config_dir, long_path_config)
 
-        result = runner.invoke(app, ["list", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["list", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 0
         assert "LongPathApp" in result.stdout
@@ -422,9 +439,7 @@ class TestE2EFunctionality:
             ]
         }
 
-        config_file = temp_config_dir / "detailed.json"
-        with config_file.open("w") as f:
-            json.dump(detailed_config, f)
+        apps_dir = create_directory_config(temp_config_dir, detailed_config)
 
         # Create some AppImage files
         app_file1 = temp_download_dir / "DetailedApp-1.0.0-Linux.AppImage.current"
@@ -433,7 +448,7 @@ class TestE2EFunctionality:
         app_file2.touch()
         app_file1.chmod(0o755)  # Make executable
 
-        result = runner.invoke(app, ["show", "DetailedApp", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["show", "DetailedApp", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 0
         # Check configuration section
@@ -459,11 +474,9 @@ class TestE2EFunctionality:
 
     def test_show_command_with_nonexistent_application(self, e2e_environment, runner, temp_config_dir, sample_config) -> None:
         """Test show command with non-existent application."""
-        config_file = temp_config_dir / "test.json"
-        with config_file.open("w") as f:
-            json.dump(sample_config, f)
+        apps_dir = create_directory_config(temp_config_dir, sample_config)
 
-        result = runner.invoke(app, ["show", "NonExistentApp", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["show", "NonExistentApp", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 1
         assert "Applications not found: NonExistentApp" in result.stdout
@@ -471,11 +484,9 @@ class TestE2EFunctionality:
 
     def test_show_command_case_insensitive(self, e2e_environment, runner, temp_config_dir, sample_config) -> None:
         """Test show command with case-insensitive application name matching."""
-        config_file = temp_config_dir / "test.json"
-        with config_file.open("w") as f:
-            json.dump(sample_config, f)
+        apps_dir = create_directory_config(temp_config_dir, sample_config)
 
-        result = runner.invoke(app, ["show", "testapp", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["show", "testapp", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 0
         assert "Application: TestApp" in result.stdout
@@ -496,11 +507,9 @@ class TestE2EFunctionality:
             ]
         }
 
-        config_file = temp_config_dir / "missing_dir.json"
-        with config_file.open("w") as f:
-            json.dump(config_with_missing_dir, f)
+        apps_dir = create_directory_config(temp_config_dir, config_with_missing_dir)
 
-        result = runner.invoke(app, ["show", "MissingDirApp", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["show", "MissingDirApp", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 0
         assert "Download directory does not exist" in result.stdout
@@ -521,11 +530,9 @@ class TestE2EFunctionality:
             ]
         }
 
-        config_file = temp_config_dir / "disabled.json"
-        with config_file.open("w") as f:
-            json.dump(disabled_config, f)
+        apps_dir = create_directory_config(temp_config_dir, disabled_config)
 
-        result = runner.invoke(app, ["show", "DisabledApp", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["show", "DisabledApp", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 0
         assert "Status: Disabled" in result.stdout
@@ -546,14 +553,12 @@ class TestE2EFunctionality:
             ]
         }
 
-        config_file = temp_config_dir / "no_files.json"
-        with config_file.open("w") as f:
-            json.dump(no_files_config, f)
+        apps_dir = create_directory_config(temp_config_dir, no_files_config)
 
         # Create a file that won't match the pattern
         (temp_download_dir / "OtherApp-1.0.0.AppImage").touch()
 
-        result = runner.invoke(app, ["show", "NoFilesApp", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["show", "NoFilesApp", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 0
         assert "No AppImage files found matching the pattern" in result.stdout
@@ -573,9 +578,7 @@ class TestE2EFunctionality:
             ]
         }
 
-        config_file = temp_config_dir / "symlink.json"
-        with config_file.open("w") as f:
-            json.dump(symlink_config, f)
+        apps_dir = create_directory_config(temp_config_dir, symlink_config)
 
         # Create AppImage file and symlink
         app_file = temp_download_dir / "SymlinkApp-1.0.0-Linux.AppImage.current"
@@ -585,7 +588,7 @@ class TestE2EFunctionality:
         app_file.chmod(0o755)
         symlink_file.symlink_to(app_file.name)  # Relative symlink
 
-        result = runner.invoke(app, ["show", "SymlinkApp", "--config-dir", str(config_file)])
+        result = runner.invoke(app, ["show", "SymlinkApp", "--config-dir", str(apps_dir)])
 
         assert result.exit_code == 0
         assert "SymlinkApp-1.0.0-Linux.AppImage.current" in result.stdout
