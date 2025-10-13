@@ -76,18 +76,7 @@ class TestGlobalOptions:
 class TestCommonOptions:
     """Tests for common CLI options."""
 
-    def test_config_file_option_is_typer_option(self) -> None:
-        """Test config file option is a Typer Option."""
-        assert isinstance(CLIOptions.CONFIG_FILE_OPTION, typer.models.OptionInfo)
-
-    def test_config_file_option_default_none(self) -> None:
-        """Test config file option defaults to None."""
-        assert CLIOptions.CONFIG_FILE_OPTION.default is None
-
-    def test_config_file_option_has_flags(self) -> None:
-        """Test config file option has --config and -c flags."""
-        assert "--config" in CLIOptions.CONFIG_FILE_OPTION.param_decls
-        assert "-c" in CLIOptions.CONFIG_FILE_OPTION.param_decls
+    # CONFIG_FILE_OPTION tests removed - single-file config format no longer supported
 
     def test_config_dir_option_is_typer_option(self) -> None:
         """Test config dir option is a Typer Option."""
@@ -619,7 +608,6 @@ class TestOptionConsistency:
         """Test all options have help text."""
         # Sample a variety of options
         options_to_check = [
-            CLIOptions.CONFIG_FILE_OPTION,
             CLIOptions.VERBOSE_OPTION,
             CLIOptions.FORMAT_OPTION,
             CLIOptions.DRY_RUN_OPTION,
@@ -635,7 +623,6 @@ class TestOptionConsistency:
     def test_short_flags_are_single_character(self) -> None:
         """Test short flags are single characters."""
         options_with_short_flags = [
-            (CLIOptions.CONFIG_FILE_OPTION, "-c"),
             (CLIOptions.CONFIG_DIR_OPTION, "-d"),
             (CLIOptions.VERBOSE_OPTION, "-v"),
             (CLIOptions.FORMAT_OPTION, "-f"),
@@ -739,7 +726,6 @@ class TestOptionDefaults:
     def test_none_defaults_for_optional_parameters(self) -> None:
         """Test None defaults for optional parameters."""
         optional_options = [
-            CLIOptions.CONFIG_FILE_OPTION,
             CLIOptions.CONFIG_DIR_OPTION,
             CLIOptions.ADD_ROTATION_OPTION,
             CLIOptions.ADD_SYMLINK_OPTION,

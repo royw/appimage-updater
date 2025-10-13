@@ -28,7 +28,6 @@ class ListCommandHandler(CommandHandler):
 
         @app.command(name="list")
         def list_apps(
-            config_file: Path | None = CLIOptions.CONFIG_FILE_OPTION,
             config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
             debug: bool = CLIOptions.debug_option(),
             output_format: OutputFormat = CLIOptions.FORMAT_OPTION,
@@ -39,7 +38,6 @@ class ListCommandHandler(CommandHandler):
             Shows a summary of all applications in the configuration with their current status.
             """
             self._execute_list_command(
-                config_file=config_file,
                 config_dir=config_dir,
                 debug=debug,
                 output_format=output_format,
@@ -55,9 +53,7 @@ class ListCommandHandler(CommandHandler):
 
     # noinspection PyMethodMayBeStatic
     def _execute_list_command(
-        self,
-        config_file: Path | None,
-        config_dir: Path | None,
+        self,        config_dir: Path | None,
         debug: bool,
         output_format: OutputFormat,
     ) -> None:

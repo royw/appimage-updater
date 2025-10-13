@@ -37,7 +37,6 @@ class CheckCommandHandler(CommandHandler):
         @app.command()
         def check(
             app_names: list[str] = CLIOptions.CHECK_APP_NAME_ARGUMENT,
-            config_file: Path | None = CLIOptions.CONFIG_FILE_OPTION,
             config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
             yes: bool = CLIOptions.YES_OPTION,
             no: bool = CLIOptions.NO_OPTION,
@@ -65,7 +64,6 @@ class CheckCommandHandler(CommandHandler):
             """
             self._execute_check_command(
                 app_names=app_names,
-                config_file=config_file,
                 config_dir=config_dir,
                 dry_run=dry_run,
                 yes=yes,
@@ -98,9 +96,7 @@ class CheckCommandHandler(CommandHandler):
 
     def _execute_check_command(
         self,
-        app_names: list[str],
-        config_file: Path | None,
-        config_dir: Path | None,
+        app_names: list[str],        config_dir: Path | None,
         dry_run: bool,
         yes: bool,
         no: bool,

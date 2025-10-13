@@ -44,13 +44,8 @@ class CLIOptions:
     # ============================================================================
     # COMMON OPTIONS (used by multiple commands)
     # ============================================================================
-
-    CONFIG_FILE_OPTION = typer.Option(
-        None,
-        "--config",
-        "-c",
-        help="Configuration file path",
-    )
+    # CONFIG_FILE_OPTION removed - single-file config format no longer supported
+    # Only directory-based config is supported now (use CONFIG_DIR_OPTION)
 
     CONFIG_DIR_OPTION = typer.Option(
         None,

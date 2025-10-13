@@ -33,9 +33,7 @@ class EditCommandHandler(CommandHandler):
 
         @app.command()
         def edit(
-            app_names: list[str] | None = CLIOptions.EDIT_APP_NAME_ARGUMENT_OPTIONAL,
-            config_file: Path | None = CLIOptions.CONFIG_FILE_OPTION,
-            config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
+            app_names: list[str] | None = CLIOptions.EDIT_APP_NAME_ARGUMENT_OPTIONAL,            config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
             url: str | None = CLIOptions.EDIT_URL_OPTION,
             download_dir: str | None = CLIOptions.EDIT_DOWNLOAD_DIR_OPTION,
             basename: str | None = CLIOptions.EDIT_BASENAME_OPTION,
@@ -68,9 +66,7 @@ class EditCommandHandler(CommandHandler):
                 raise typer.Exit(0)
 
             self._execute_edit_command(
-                app_names=app_names,
-                config_file=config_file,
-                config_dir=config_dir,
+                app_names=app_names,                config_dir=config_dir,
                 url=url,
                 download_dir=download_dir,
                 basename=basename,

@@ -246,17 +246,17 @@ class TestGeneralStackTraces:
                 assert exit_code == 0, f"Version command failed: {cmd}"
                 assert_no_stack_trace_in_output(stdout, stderr, f"version command: {' '.join(cmd)}")
 
-    def test_invalid_config_file_path_e2e(self) -> None:
-        """Test that invalid config file path shows clean error in real CLI."""
+    def test_invalid_config_dir_path_no_stack_trace(self) -> None:
+        """Test that invalid config dir path shows clean error in real CLI."""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_home = Path(temp_dir)
             exit_code, stdout, stderr = run_cli_command(
-                ["list", "--config", "/nonexistent/path/config.json"], temp_home
+                ["list", "--config-dir", "/nonexistent/path/apps"], temp_home
             )
 
             # Should either work (create config) or show clean error
             if exit_code != 0:
-                assert_no_stack_trace_in_output(stdout, stderr, "list --config /nonexistent/path/config.json")
+                assert_no_stack_trace_in_output(stdout, stderr, "list --config-dir /nonexistent/path/apps")
 
 
 class TestSpecificStackTraceScenarios:

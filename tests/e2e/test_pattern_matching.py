@@ -110,7 +110,7 @@ class TestPatternMatching:
         mock_version_checker.check_for_updates = AsyncMock(side_effect=mock_check_for_updates)
         mock_version_checker_class.return_value = mock_version_checker
 
-        result = runner.invoke(app, ["check", "--config", str(config_file)])
+        result = runner.invoke(app, ["check", "--config-dir", str(config_file.parent)])
 
         assert result.exit_code == 0
         # The test should pass even if no releases are found (which is expected with our mock)
