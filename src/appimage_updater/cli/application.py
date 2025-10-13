@@ -44,7 +44,7 @@ def _ensure_config_directory_exists() -> None:
     # Create directory structure if it doesn't exist
     if not config_dir.exists():
         config_dir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Created configuration directory: {config_dir}")
+        logger.debug(f"Created configuration directory: {config_dir}")
 
     # Create apps directory
     apps_dir = config_dir / "apps"
@@ -87,7 +87,7 @@ def _ensure_config_directory_exists() -> None:
 
         with config_file.open("w") as f:
             json.dump(default_config, f, indent=2)
-        logger.info(f"Created default configuration file: {config_file}")
+        logger.debug(f"Created default configuration file: {config_file}")
 
 
 class GlobalState:
