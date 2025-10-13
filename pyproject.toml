@@ -52,6 +52,7 @@ dev = [
     "ruff>=0.12.11",
     "trio>=0.30.0",
     "version-bumper>=0.1.2",
+    "watchdog>=6.0.0",
 ]
 
 [project.scripts]
@@ -227,6 +228,7 @@ dev = [
     "ruff>=0.12.11",
     "trio>=0.30.0",
     "version-bumper>=0.1.2",
+    "watchdog>=6.0.0",
 ]
 
 [tool.deadcode]

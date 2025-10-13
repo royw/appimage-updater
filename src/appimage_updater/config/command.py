@@ -793,6 +793,6 @@ def _save_config(config: Config, config_file: Path | None, config_dir: Path | No
     """Save configuration to file or directory."""
 
     # Use GlobalConfigManager to save global config only, preserving applications
-    global_manager = GlobalConfigManager()
+    global_manager = GlobalConfigManager(config_file or config_dir)
     global_manager._config = config  # Set the config to save
     global_manager.save_global_config_only(config_file, config_dir)
