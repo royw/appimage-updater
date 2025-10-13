@@ -275,10 +275,12 @@ class TestExtensiveStackTraceScenarios:
             (["config", "set", "timeout-seconds", "999"], "Too large value"),
         ]
 
-        for cmd, description in test_cases:
-            exit_code, stdout, stderr = run_cli_command(cmd)
-            # Don't assert specific exit codes as behavior may vary
-            assert_no_stack_trace_in_output(stdout, stderr, f"{description}: {' '.join(cmd)}")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            for cmd, description in test_cases:
+                exit_code, stdout, stderr = run_cli_command(cmd, temp_home)
+                # Don't assert specific exit codes as behavior may vary
+                assert_no_stack_trace_in_output(stdout, stderr, f"{description}: {' '.join(cmd)}")
 
     def test_command_edge_cases(self) -> None:
         """Test various command edge cases."""
@@ -290,10 +292,12 @@ class TestExtensiveStackTraceScenarios:
             (["check", "--invalid-flag"], "Invalid flag"),
         ]
 
-        for cmd, description in test_cases:
-            exit_code, stdout, stderr = run_cli_command(cmd)
-            # Don't assert specific exit codes as behavior may vary
-            assert_no_stack_trace_in_output(stdout, stderr, f"{description}: {' '.join(cmd)}")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_home = Path(temp_dir)
+            for cmd, description in test_cases:
+                exit_code, stdout, stderr = run_cli_command(cmd, temp_home)
+                # Don't assert specific exit codes as behavior may vary
+                assert_no_stack_trace_in_output(stdout, stderr, f"{description}: {' '.join(cmd)}")
 
 
 def test_stack_trace_detection_works() -> None:
