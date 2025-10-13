@@ -33,6 +33,11 @@ def normalize_text(text: str) -> str:
     return "\n".join(lines)
 
 
+def get_app_config_file(apps_dir: Path, app_name: str = "TestApp") -> Path:
+    """Get the config file path for an app in the apps directory."""
+    return apps_dir / f"{app_name.lower()}.json"
+
+
 @pytest.fixture
 def runner():
     """Create a CLI runner for testing."""
@@ -41,9 +46,14 @@ def runner():
 
 @pytest.fixture
 def single_config_file(tmp_path):
-    """Create a single config file for testing."""
-    config_file = tmp_path / "config.json"
-    config_data = {
+    """Create a directory-based config for testing (apps/ directory structure)."""
+    # Create config directory structure
+    config_dir = tmp_path / "config"
+    apps_dir = config_dir / "apps"
+    apps_dir.mkdir(parents=True)
+
+    # Create app config in apps/ directory
+    app_config = {
         "applications": [
             {
                 "name": "TestApp",
@@ -62,9 +72,13 @@ def single_config_file(tmp_path):
             }
         ]
     }
-    with config_file.open("w") as f:
-        json.dump(config_data, f, indent=2)
-    return config_file
+
+    app_file = apps_dir / "testapp.json"
+    with app_file.open("w") as f:
+        json.dump(app_config, f, indent=2)
+
+    # Return the apps directory (this is what --config-dir expects)
+    return apps_dir
 
 
 @pytest.fixture
@@ -116,7 +130,7 @@ def test_edit_multiple_fields(runner, single_config_file) -> None:
             "--checksum-algorithm",
             "sha1",
             "--disable",
-            "--config",
+            "--config-dir",
             str(single_config_file),
         ],
     )
@@ -128,7 +142,7 @@ def test_edit_multiple_fields(runner, single_config_file) -> None:
     assert "Status: Enabled → Disabled" in result.stdout
 
     # Verify all changes were saved
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -142,7 +156,7 @@ def test_edit_url_with_normalization(runner, single_config_file) -> None:
     """Test editing URL with automatic normalization."""
     download_url = "https://github.com/newowner/newrepo/releases/download/v1.0/app.AppImage"
 
-    result = runner.invoke(app, ["edit", "TestApp", "--url", download_url, "--config", str(single_config_file)])
+    result = runner.invoke(app, ["edit", "TestApp", "--url", download_url, "--config-dir", str(single_config_file)])
 
     assert result.exit_code == 0
     assert "Detected download URL, using repository URL instead" in result.stdout
@@ -151,7 +165,7 @@ def test_edit_url_with_normalization(runner, single_config_file) -> None:
     assert "URL: https://github.com/test/testapp → https://github.com/newowner/newrepo" in result.stdout
 
     # Verify the normalized URL was saved
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -166,7 +180,7 @@ def test_edit_download_directory_with_creation(runner, single_config_file, tmp_p
     monkeypatch.setattr("typer.confirm", lambda x: True)
 
     result = runner.invoke(
-        app, ["edit", "TestApp", "--download-dir", str(new_dir), "--config", str(single_config_file)]
+        app, ["edit", "TestApp", "--download-dir", str(new_dir), "--config-dir", str(single_config_file)]
     )
 
     assert result.exit_code == 0
@@ -182,7 +196,7 @@ def test_edit_download_directory_with_creation(runner, single_config_file, tmp_p
     assert new_dir.exists()
 
     # Verify the change was saved
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -193,7 +207,7 @@ def test_edit_pattern_validation(runner, single_config_file) -> None:
     """Test pattern validation for invalid regex."""
     invalid_pattern = "TestApp.*[unclosed"  # Invalid regex - unclosed bracket
 
-    result = runner.invoke(app, ["edit", "TestApp", "--pattern", invalid_pattern, "--config", str(single_config_file)])
+    result = runner.invoke(app, ["edit", "TestApp", "--pattern", invalid_pattern, "--config-dir", str(single_config_file)])
 
     assert result.exit_code == 1
     assert "Invalid regex pattern" in result.stdout
@@ -201,7 +215,7 @@ def test_edit_pattern_validation(runner, single_config_file) -> None:
 
 def test_edit_rotation_requires_symlink(runner, single_config_file) -> None:
     """Test that enabling rotation without symlink path fails."""
-    result = runner.invoke(app, ["edit", "TestApp", "--rotation", "--config", str(single_config_file)])
+    result = runner.invoke(app, ["edit", "TestApp", "--rotation", "--config-dir", str(single_config_file)])
 
     assert result.exit_code == 1
     assert "File rotation requires a symlink path" in result.stdout
@@ -221,7 +235,7 @@ def test_edit_rotation_with_symlink(runner, single_config_file, tmp_path) -> Non
             str(symlink_path),
             "--retain-count",
             "7",
-            "--config",
+            "--config-dir",
             str(single_config_file),
         ],
     )
@@ -235,7 +249,7 @@ def test_edit_rotation_with_symlink(runner, single_config_file, tmp_path) -> Non
     assert "Retain Count: 3 → 7" in result.stdout
 
     # Verify the changes were saved
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -268,14 +282,14 @@ def test_edit_case_insensitive_app_name(runner, single_config_file) -> None:
     """Test that app names are case-insensitive."""
     result = runner.invoke(
         app,
-        ["edit", "testapp", "--prerelease", "--config", str(single_config_file)],  # lowercase
+        ["edit", "testapp", "--prerelease", "--config-dir", str(single_config_file)],  # lowercase
     )
 
     assert result.exit_code == 0
     assert "Prerelease: No → Yes" in result.stdout
 
     # Verify the change was applied to the correct app
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -285,7 +299,7 @@ def test_edit_case_insensitive_app_name(runner, single_config_file) -> None:
 
 def test_edit_nonexistent_app(runner, single_config_file) -> None:
     """Test editing a non-existent application."""
-    result = runner.invoke(app, ["edit", "NonExistentApp", "--prerelease", "--config", str(single_config_file)])
+    result = runner.invoke(app, ["edit", "NonExistentApp", "--prerelease", "--config-dir", str(single_config_file)])
 
     assert result.exit_code == 1
     assert "Applications not found: NonExistentApp" in result.stdout
@@ -294,7 +308,7 @@ def test_edit_nonexistent_app(runner, single_config_file) -> None:
 
 def test_edit_no_changes_specified(runner, single_config_file) -> None:
     """Test edit command with no changes specified."""
-    result = runner.invoke(app, ["edit", "TestApp", "--config", str(single_config_file)])
+    result = runner.invoke(app, ["edit", "TestApp", "--config-dir", str(single_config_file)])
 
     assert result.exit_code == 0
     assert "No changes specified" in result.stdout
@@ -304,7 +318,7 @@ def test_edit_no_changes_specified(runner, single_config_file) -> None:
 def test_edit_invalid_checksum_algorithm(runner, single_config_file) -> None:
     """Test invalid checksum algorithm validation."""
     result = runner.invoke(
-        app, ["edit", "TestApp", "--checksum-algorithm", "invalid", "--config", str(single_config_file)]
+        app, ["edit", "TestApp", "--checksum-algorithm", "invalid", "--config-dir", str(single_config_file)]
     )
 
     assert result.exit_code == 1
@@ -318,7 +332,7 @@ def test_edit_path_expansion(runner, single_config_file) -> None:
     """Test that paths with ~ are properly expanded."""
     result = runner.invoke(
         app,
-        ["edit", "TestApp", "--download-dir", "~/TestExpansion", "--create-dir", "--config", str(single_config_file)],
+        ["edit", "TestApp", "--download-dir", "~/TestExpansion", "--create-dir", "--config-dir", str(single_config_file)],
     )
 
     assert result.exit_code == 0
@@ -332,7 +346,7 @@ def test_edit_path_expansion(runner, single_config_file) -> None:
     assert str(expected_path) in clean_output
 
     # Verify the expanded path was saved
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -344,14 +358,14 @@ def test_edit_checksum_pattern_update(runner, single_config_file) -> None:
     new_pattern = "{filename}.hash"
 
     result = runner.invoke(
-        app, ["edit", "TestApp", "--checksum-pattern", new_pattern, "--config", str(single_config_file)]
+        app, ["edit", "TestApp", "--checksum-pattern", new_pattern, "--config-dir", str(single_config_file)]
     )
 
     assert result.exit_code == 0
     assert f"Checksum Pattern: {{filename}}-SHA256.txt → {new_pattern}" in result.stdout
 
     # Verify the change was saved
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -377,17 +391,17 @@ def test_edit_disable_rotation(runner, config_directory) -> None:
 def test_edit_preserve_unmodified_fields(runner, single_config_file) -> None:
     """Test that unmodified fields are preserved during edit."""
     # Get original values
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         original_config = json.load(f)
     original_app = original_config["applications"][0]
 
     # Change only one field
-    result = runner.invoke(app, ["edit", "TestApp", "--prerelease", "--config", str(single_config_file)])
+    result = runner.invoke(app, ["edit", "TestApp", "--prerelease", "--config-dir", str(single_config_file)])
 
     assert result.exit_code == 0
 
     # Verify only the prerelease changed, everything else preserved
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         updated_config = json.load(f)
     updated_app = updated_config["applications"][0]
 
@@ -404,7 +418,7 @@ def test_edit_url_with_force_bypasses_validation(runner, single_config_file) -> 
     direct_download_url = "https://direct-download-example.com/app.AppImage"
 
     result = runner.invoke(
-        app, ["edit", "TestApp", "--url", direct_download_url, "--force", "--config", str(single_config_file)]
+        app, ["edit", "TestApp", "--url", direct_download_url, "--force", "--config-dir", str(single_config_file)]
     )
 
     assert result.exit_code == 0
@@ -416,7 +430,7 @@ def test_edit_url_with_force_bypasses_validation(runner, single_config_file) -> 
     assert expected_url_change in clean_output
 
     # Verify the exact URL was saved without normalization
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -428,7 +442,7 @@ def test_edit_url_with_force_preserves_invalid_urls(runner, single_config_file) 
     invalid_url = "https://example.com/some/path/file.AppImage"
 
     result = runner.invoke(
-        app, ["edit", "TestApp", "--url", invalid_url, "--force", "--config", str(single_config_file)]
+        app, ["edit", "TestApp", "--url", invalid_url, "--force", "--config-dir", str(single_config_file)]
     )
 
     assert result.exit_code == 0
@@ -439,7 +453,7 @@ def test_edit_url_with_force_preserves_invalid_urls(runner, single_config_file) 
     assert expected_url_change in clean_output
 
     # Verify the exact URL was saved
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -451,7 +465,7 @@ def test_edit_url_with_force_and_github_download_url(runner, single_config_file)
     github_download_url = "https://github.com/owner/repo/releases/download/v1.0/app.AppImage"
 
     result = runner.invoke(
-        app, ["edit", "TestApp", "--url", github_download_url, "--force", "--config", str(single_config_file)]
+        app, ["edit", "TestApp", "--url", github_download_url, "--force", "--config-dir", str(single_config_file)]
     )
 
     assert result.exit_code == 0
@@ -463,7 +477,7 @@ def test_edit_url_with_force_and_github_download_url(runner, single_config_file)
     assert expected_url_change in clean_output
 
     # Verify the download URL was preserved exactly
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -475,7 +489,7 @@ def test_edit_url_without_force_still_normalizes(runner, single_config_file) -> 
     github_download_url = "https://github.com/owner/repo/releases/download/v1.0/app.AppImage"
     expected_normalized_url = "https://github.com/owner/repo"
 
-    result = runner.invoke(app, ["edit", "TestApp", "--url", github_download_url, "--config", str(single_config_file)])
+    result = runner.invoke(app, ["edit", "TestApp", "--url", github_download_url, "--config-dir", str(single_config_file)])
 
     assert result.exit_code == 0
     assert "Detected download URL, using repository URL instead" in result.stdout
@@ -483,7 +497,7 @@ def test_edit_url_without_force_still_normalizes(runner, single_config_file) -> 
     assert expected_normalized_url in result.stdout
 
     # Verify the normalized URL was saved
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -504,7 +518,7 @@ def test_edit_force_with_other_options(runner, single_config_file) -> None:
             "--force",
             "--prerelease",
             "--checksum-required",
-            "--config",
+            "--config-dir",
             str(single_config_file),
         ],
     )
@@ -519,7 +533,7 @@ def test_edit_force_with_other_options(runner, single_config_file) -> None:
     assert expected_url_change in clean_output
 
     # Verify all changes were saved
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -543,7 +557,7 @@ def test_edit_force_flag_only_affects_url_validation(runner, single_config_file)
             "--pattern",
             invalid_pattern,
             "--force",
-            "--config",
+            "--config-dir",
             str(single_config_file),
         ],
     )
@@ -557,14 +571,14 @@ def test_edit_force_flag_only_affects_url_validation(runner, single_config_file)
 
 def test_edit_force_without_url_change_has_no_effect(runner, single_config_file) -> None:
     """Test that --force has no effect when URL is not being changed."""
-    result = runner.invoke(app, ["edit", "TestApp", "--prerelease", "--force", "--config", str(single_config_file)])
+    result = runner.invoke(app, ["edit", "TestApp", "--prerelease", "--force", "--config-dir", str(single_config_file)])
 
     assert result.exit_code == 0
     assert "Using --force: Skipping URL validation and normalization" not in result.stdout
     assert "Prerelease: No → Yes" in result.stdout
 
     # Verify prerelease was changed but URL remained the same
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -574,13 +588,13 @@ def test_edit_force_without_url_change_has_no_effect(runner, single_config_file)
 
 def test_edit_direct_flag_sets_source_type(runner, single_config_file) -> None:
     """Test that --direct flag sets source_type to 'direct'."""
-    result = runner.invoke(app, ["edit", "TestApp", "--direct", "--config", str(single_config_file)])
+    result = runner.invoke(app, ["edit", "TestApp", "--direct", "--config-dir", str(single_config_file)])
 
     assert result.exit_code == 0
     assert "Source Type: github → direct" in result.stdout
 
     # Verify source_type was changed to 'direct'
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -590,19 +604,19 @@ def test_edit_direct_flag_sets_source_type(runner, single_config_file) -> None:
 def test_edit_no_direct_flag_sets_source_type_github(runner, single_config_file) -> None:
     """Test that --no-direct flag sets source_type to 'github'."""
     # First set it to direct
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
     config_data["applications"][0]["source_type"] = "direct"
-    with single_config_file.open("w") as f:
+    with get_app_config_file(single_config_file).open("w") as f:
         json.dump(config_data, f, indent=2)
 
-    result = runner.invoke(app, ["edit", "TestApp", "--no-direct", "--config", str(single_config_file)])
+    result = runner.invoke(app, ["edit", "TestApp", "--no-direct", "--config-dir", str(single_config_file)])
 
     assert result.exit_code == 0
     assert "Source Type: direct → github" in result.stdout
 
     # Verify source_type was changed back to 'github'
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -614,7 +628,7 @@ def test_edit_direct_flag_with_url_change(runner, single_config_file) -> None:
     direct_url = "https://nightly.example.com/app.AppImage"
 
     result = runner.invoke(
-        app, ["edit", "TestApp", "--direct", "--url", direct_url, "--config", str(single_config_file)]
+        app, ["edit", "TestApp", "--direct", "--url", direct_url, "--config-dir", str(single_config_file)]
     )
 
     assert result.exit_code == 0
@@ -624,7 +638,7 @@ def test_edit_direct_flag_with_url_change(runner, single_config_file) -> None:
     assert direct_url in result.stdout
 
     # Verify both source_type and URL were changed
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -651,20 +665,20 @@ def test_edit_direct_flag_with_directory_config(runner, config_directory) -> Non
 def test_edit_direct_flag_no_change_when_already_direct(runner, single_config_file) -> None:
     """Test --direct flag shows no change when source_type is already 'direct'."""
     # First set it to direct
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
     config_data["applications"][0]["source_type"] = "direct"
-    with single_config_file.open("w") as f:
+    with get_app_config_file(single_config_file).open("w") as f:
         json.dump(config_data, f, indent=2)
 
-    result = runner.invoke(app, ["edit", "TestApp", "--direct", "--config", str(single_config_file)])
+    result = runner.invoke(app, ["edit", "TestApp", "--direct", "--config-dir", str(single_config_file)])
 
     assert result.exit_code == 0
     # Should show no changes specified since source_type is already 'direct'
     assert "No changes specified" in result.stdout
 
     # Verify source_type remains 'direct'
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         config_data = json.load(f)
 
     app_config = config_data["applications"][0]
@@ -678,33 +692,33 @@ def test_edit_prerelease_change_persists_to_file(runner, single_config_file) -> 
     settings but doesn't actually save the changes to the file.
     """
     # Verify initial state - prerelease should be False
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         initial_config = json.load(f)
     initial_app = initial_config["applications"][0]
     assert initial_app["prerelease"] is False, "Test setup error: prerelease should start as False"
 
     # Run edit command to enable prerelease
-    result = runner.invoke(app, ["edit", "TestApp", "--prerelease", "--config", str(single_config_file)])
+    result = runner.invoke(app, ["edit", "TestApp", "--prerelease", "--config-dir", str(single_config_file)])
 
     # Command should succeed and claim to make the change
     assert result.exit_code == 0
     assert "Prerelease: No → Yes" in result.stdout
 
     # CRITICAL: Verify the change was actually persisted to the file
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         updated_config = json.load(f)
     updated_app = updated_config["applications"][0]
     assert updated_app["prerelease"] is True, "BUG: Prerelease change was not persisted to config file"
 
     # Now test the reverse - disable prerelease
-    result = runner.invoke(app, ["edit", "TestApp", "--no-prerelease", "--config", str(single_config_file)])
+    result = runner.invoke(app, ["edit", "TestApp", "--no-prerelease", "--config-dir", str(single_config_file)])
 
     # Command should succeed and claim to make the change
     assert result.exit_code == 0
     assert "Prerelease: Yes → No" in result.stdout
 
     # CRITICAL: Verify the reverse change was also persisted
-    with single_config_file.open() as f:
+    with get_app_config_file(single_config_file).open() as f:
         final_config = json.load(f)
     final_app = final_config["applications"][0]
     assert final_app["prerelease"] is False, "BUG: Prerelease disable was not persisted to config file"

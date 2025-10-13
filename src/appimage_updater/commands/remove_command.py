@@ -189,14 +189,7 @@ class RemoveCommand(BaseCommand, FormatterContextMixin, Command):
             self.console.print(f"Files in {display_dir} were not deleted")
         return config
 
-    def _save_single_file_config(self, config: Config) -> None:
-        """Save configuration to a single JSON file."""
-        if not self.params.config_file:
-            raise ValueError("Config file path is required for single file save")
-
-        # Use manager method for config file operations
-        manager = Manager()
-        manager.save_single_file_config(config, self.params.config_file)
+    # _save_single_file_config removed - single-file config format no longer supported
 
     # noinspection PyMethodMayBeStatic
     def _delete_removed_app_files(self, config_dir: Path, removed_apps: list[ApplicationConfig]) -> None:
@@ -221,10 +214,7 @@ class RemoveCommand(BaseCommand, FormatterContextMixin, Command):
         self._update_global_config_file(config_dir, config)
 
     def _save_config(self, config: Config, removed_apps: list[ApplicationConfig]) -> None:
-        """Save the updated configuration."""
-        if self.params.config_file:
-            self._save_single_file_config(config)
-        else:
-            # Use default config directory if none specified (same logic as load_config)
-            config_dir = self.params.config_dir or GlobalConfigManager.get_default_config_dir()
-            self._save_directory_based_config_with_path(config, removed_apps, config_dir)
+        """Save the updated configuration to directory-based config."""
+        # Use default config directory if none specified (same logic as load_config)
+        config_dir = self.params.config_dir or GlobalConfigManager.get_default_config_dir()
+        self._save_directory_based_config_with_path(config, removed_apps, config_dir)

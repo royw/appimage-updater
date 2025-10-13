@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 from loguru import logger
@@ -240,22 +239,12 @@ class EditCommand(BaseCommand, FormatterContextMixin, Command):
                 raise
 
     def _save_config(self, config: Config) -> None:
-        """Save the updated configuration."""
+        """Save the updated configuration to directory-based config."""
         manager = Manager()
 
-        if self.params.config_file:
-            # Save to single file using manager
-            manager.save_single_file_config(config, self.params.config_file)
-        elif self.params.config_dir:
-            # Directory-based config - save using manager
-            config_dir = Path(self.params.config_dir)
-            manager.save_directory_config(config, config_dir)
-        else:
-            # Handle default configuration save mechanism
-            # When neither config_file nor config_dir is specified, use the default location
-            # This matches the behavior of AppConfigs when loading from default paths
-            config_dir = self.params.config_dir or GlobalConfigManager.get_default_config_dir()
-            manager.save_directory_config(config, config_dir)
+        # Use directory-based config (apps/ directory)
+        config_dir = self.params.config_dir or GlobalConfigManager.get_default_config_dir()
+        manager.save_directory_config(config, config_dir)
 
     def _show_validation_hints(self, error_message: str) -> None:
         """Show helpful hints based on validation error."""

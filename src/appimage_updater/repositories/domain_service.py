@@ -107,7 +107,7 @@ class DomainKnowledgeService:
             updated = self._add_domain_to_knowledge(knowledge, handler_name, domain)
 
             if updated:
-                self.config_manager.save_config(config)
+                self.config_manager.save()
                 logger.info(f"Learned domain: {domain} -> {handler_name}")
 
         except Exception as e:
@@ -135,7 +135,7 @@ class DomainKnowledgeService:
             updated = self._remove_domain_from_knowledge(knowledge, failed_handler_name, domain)
 
             if updated:
-                self.config_manager.save_config(config)
+                self.config_manager.save()
                 logger.warning(f"Forgot domain: {domain} (failed as {failed_handler_name})")
 
         except Exception as e:

@@ -81,22 +81,22 @@ class Manager:
 
     def load_config(self, config_path: Path | None = None) -> Config:
         """Load configuration from directory (apps/*.json + ../config.json).
-        
+
         Args:
             config_path: Path to apps directory or None for default
-            
+
         Returns:
             Config object with applications and global_config
         """
         if config_path is None:
             # Use default apps directory
             config_path = GlobalConfigManager.get_default_config_dir()
-        
+
         # config_path should be the apps directory
         if not config_path.is_dir():
             # If it's not a directory, assume it's pointing to the parent and use apps/
             config_path = config_path.parent / "apps" if config_path.name != "apps" else config_path
-        
+
         return self._load_config_from_directory(config_path)
 
     # save_config() and save_single_file_config() have been removed
@@ -305,7 +305,7 @@ class GlobalConfigManager(Manager):
 
     def save(self) -> None:
         """Save global configuration to config.json.
-        
+
         Note: This saves only the global_config section. Applications are
         saved separately in apps/*.json files via AppConfigs.save().
         """
@@ -503,7 +503,7 @@ class AppConfigs(Manager):
 
     def save(self) -> None:
         """Save configuration to directory (apps/*.json files).
-        
+
         Only directory-based config is supported. Each application is saved
         to its own JSON file in the apps/ directory.
         """
@@ -511,12 +511,12 @@ class AppConfigs(Manager):
         save_path = self._config_path
         if save_path is None:
             save_path = GlobalConfigManager.get_default_config_dir()
-        
+
         # Ensure it's a directory (apps directory)
         if not save_path.is_dir():
             # If it's not a directory, assume it's pointing to parent and use apps/
             save_path = save_path.parent / "apps" if save_path.name != "apps" else save_path
-        
+
         # Save to directory-based config
         self._config_path = save_path  # Update for _save_directory_based_config
         self._save_directory_based_config()
