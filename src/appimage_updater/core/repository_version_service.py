@@ -39,21 +39,22 @@ class RepositoryVersionService:
         try:
             repository_client = await get_repository_client_async(app_config.url, timeout=30, enable_probing=True)
 
-            releases = await repository_client.get_releases(app_config.url, limit=20)
-            if not releases:
-                logger.debug(f"No releases found for {app_config.url}")
-                return None
+            async with repository_client:
+                releases = await repository_client.get_releases(app_config.url, limit=20)
+                if not releases:
+                    logger.debug(f"No releases found for {app_config.url}")
+                    return None
 
-            # Filter releases based on prerelease preference
-            filtered_releases = self._filter_releases_by_prerelease(releases, app_config.prerelease)
-            if not filtered_releases:
-                logger.debug(f"No compatible releases found for {app_config.url}")
-                return None
+                # Filter releases based on prerelease preference
+                filtered_releases = self._filter_releases_by_prerelease(releases, app_config.prerelease)
+                if not filtered_releases:
+                    logger.debug(f"No compatible releases found for {app_config.url}")
+                    return None
 
-            # Return the latest version
-            latest_release = filtered_releases[0]  # Releases are sorted by date descending
-            version_str: str = latest_release.version
-            return version_str
+                # Return the latest version
+                latest_release = filtered_releases[0]  # Releases are sorted by date descending
+                version_str: str = latest_release.version
+                return version_str
 
         except Exception as e:
             logger.debug(f"Failed to get latest version from {app_config.url}: {e}")
@@ -71,16 +72,17 @@ class RepositoryVersionService:
         try:
             repository_client = await get_repository_client_async(app_config.url, timeout=30, enable_probing=True)
 
-            releases = await repository_client.get_releases(app_config.url, limit=20)
-            if not releases:
-                return None
+            async with repository_client:
+                releases = await repository_client.get_releases(app_config.url, limit=20)
+                if not releases:
+                    return None
 
-            # Filter releases based on prerelease preference
-            filtered_releases = self._filter_releases_by_prerelease(releases, app_config.prerelease)
-            if not filtered_releases:
-                return None
+                # Filter releases based on prerelease preference
+                filtered_releases = self._filter_releases_by_prerelease(releases, app_config.prerelease)
+                if not filtered_releases:
+                    return None
 
-            return self._find_first_matching_asset(filtered_releases, app_config.pattern)
+                return self._find_first_matching_asset(filtered_releases, app_config.pattern)
 
         except Exception as e:
             logger.debug(f"Failed to get latest asset from {app_config.url}: {e}")
@@ -114,16 +116,17 @@ class RepositoryVersionService:
         try:
             repository_client = await get_repository_client_async(app_config.url, timeout=30, enable_probing=True)
 
-            releases = await repository_client.get_releases(app_config.url, limit=20)
-            if not releases:
-                return None
+            async with repository_client:
+                releases = await repository_client.get_releases(app_config.url, limit=20)
+                if not releases:
+                    return None
 
-            appimage_files = self._collect_appimage_files_from_releases(releases)
-            if not appimage_files:
-                return None
+                appimage_files = self._collect_appimage_files_from_releases(releases)
+                if not appimage_files:
+                    return None
 
-            # Generate pattern from the first AppImage file found
-            return self.version_parser.generate_flexible_pattern_from_filename(appimage_files[0])
+                # Generate pattern from the first AppImage file found
+                return self.version_parser.generate_flexible_pattern_from_filename(appimage_files[0])
 
         except Exception as e:
             logger.debug(f"Failed to generate pattern from {app_config.url}: {e}")

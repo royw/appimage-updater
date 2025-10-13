@@ -219,8 +219,16 @@ async def generate_default_config(
     if pattern is not None:
         final_pattern = pattern
     else:
-        generated_pattern = await generate_appimage_pattern_async(name, url)
-        final_pattern = generated_pattern if generated_pattern is not None else f"(?i)^{name}.*\\.AppImage$"
+        try:
+            generated_pattern = await generate_appimage_pattern_async(name, url)
+            final_pattern = generated_pattern if generated_pattern is not None else f"(?i)^{name}.*\\.AppImage$"
+        except RuntimeError as e:
+            # Handle Python 3.13 event loop closure during pattern generation
+            if "Event loop is closed" in str(e):
+                logger.warning(f"Event loop closed during pattern generation for {name}, using fallback pattern")
+                final_pattern = f"(?i)^{name}.*\\.AppImage$"
+            else:
+                raise
 
     config = {
         "name": name,
@@ -319,6 +327,12 @@ async def _detect_prerelease_requirement(url: str) -> bool:
     try:
         repo_client = get_repository_client(url)
         return await repo_client.should_enable_prerelease(url)
+    except RuntimeError as e:
+        # Handle Python 3.13 event loop closure during prerelease detection
+        if "Event loop is closed" in str(e):
+            logger.warning(f"Event loop closed during prerelease detection for {url}, defaulting to False")
+            return False
+        raise
     except (RepositoryError, ValueError, AttributeError):
         # If we can't detect, default to False
         return False

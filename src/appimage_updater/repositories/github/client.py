@@ -65,6 +65,15 @@ class GitHubClient:
         """Get the authentication provider for this client."""
         return self.github_auth
 
+    async def __aenter__(self) -> GitHubClient:
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, exc_type: type | None, exc_val: Exception | None, exc_tb: Any) -> None:
+        """Async context manager exit - cleanup resources."""
+        # No persistent HTTP client to close, but this allows proper async context management
+        pass
+
     async def get_latest_release(self, repo_url: str) -> Release:
         """Get the latest release for a repository."""
         owner, repo = self._parse_repo_url(repo_url)

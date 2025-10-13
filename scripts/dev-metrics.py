@@ -20,10 +20,11 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+from textwrap import dedent
 import tomllib
 from typing import Any
 
-from custom_argparse import CustomArgumentParser
+from custom_argparse import CustomArgumentParser as ArgumentParser
 
 
 # ANSI color codes
@@ -468,11 +469,11 @@ def _find_untested_files(metrics: TestMetrics, config: MetricsConfig, sloc_map: 
 
 def _filter_test_paths_by_types(test_paths: list[Path], test_types: list[str]) -> list[Path]:
     """Build test paths by combining base paths with test type subdirectories.
-    
+
     If test_types is empty, return all test_paths as-is.
     Otherwise, for each base test path, append each test type subdirectory
     that actually exists.
-    
+
     Example:
         test_paths = [Path("tests")]
         test_types = ["unit", "functional"]
@@ -480,7 +481,7 @@ def _filter_test_paths_by_types(test_paths: list[Path], test_types: list[str]) -
     """
     if not test_types:
         return test_paths
-    
+
     filtered_paths = []
     for base_path in test_paths:
         for test_type in test_types:
@@ -489,7 +490,7 @@ def _filter_test_paths_by_types(test_paths: list[Path], test_types: list[str]) -
             # Only include if the directory exists
             if full_path.exists() and full_path.is_dir():
                 filtered_paths.append(full_path)
-    
+
     return filtered_paths
 
 
@@ -584,9 +585,7 @@ def _get_sloc_from_radon(config: MetricsConfig) -> dict[str, int]:
     """Get SLOC counts for all files using radon raw."""
     sloc_map = {}
     try:
-        result = run_command(
-            [*config.radon_list, "raw", *_path_list_to_str_parts(config.src_paths), "--json"]
-        )
+        result = run_command([*config.radon_list, "raw", *_path_list_to_str_parts(config.src_paths), "--json"])
         if result.returncode == 0:
             data = json.loads(result.stdout)
             for filepath, metrics in data.items():
@@ -600,13 +599,13 @@ def _get_sloc_from_radon(config: MetricsConfig) -> dict[str, int]:
 
 def _calculate_file_sloc(filepath: str, sloc_map: dict[str, int] | None = None) -> int:
     """Calculate actual SLOC for a file.
-    
+
     If sloc_map is provided (from radon), use that. Otherwise fall back to simple counting.
     """
     if sloc_map:
         normalized = filepath.replace("\\", "/")
         return sloc_map.get(normalized, 0)
-    
+
     # Fallback: simple counting (less accurate, includes docstrings)
     try:
         with open(filepath, encoding="utf-8") as f:
@@ -893,26 +892,26 @@ def load_config_from_pyproject() -> dict[str, str | list[str]]:
 
 def save_config_to_pyproject(config: MetricsConfig) -> None:
     """Save resolved configuration to pyproject.toml [tool.dev-metrics] section.
-    
+
     Creates or replaces the [tool.dev-metrics] section with current configuration.
     """
     try:
         # Read existing pyproject.toml
         with open("pyproject.toml", encoding="utf-8") as f:
             content = f.read()
-        
+
         new_section = _build_dev_metrics_section(config)
-        
+
         # Check if [tool.dev-metrics] section exists
         if "[tool.dev-metrics]" in content:
             # Section exists, replace it
             # Match from [tool.dev-metrics] to the next section or end of file
-            pattern = r'\[tool\.dev-metrics\].*?(?=\n\[|\Z)'
+            pattern = r"\[tool\.dev-metrics\].*?(?=\n\[|\Z)"
             content = re.sub(pattern, new_section.rstrip(), content, flags=re.DOTALL)
         else:
             # Section doesn't exist, append it
             content = content.rstrip() + "\n\n" + new_section
-        
+
         # Write back to pyproject.toml
         with open("pyproject.toml", "w", encoding="utf-8") as f:
             f.write(content)
@@ -925,19 +924,19 @@ def _build_dev_metrics_section(config: MetricsConfig) -> str:
     """Build the [tool.dev-metrics] section content."""
     lines = ["[tool.dev-metrics]"]
     lines.append("# Paths for metrics calculation")
-    lines.append(f'src-paths = {_format_toml_value([str(p) for p in config.src_paths])}')
-    lines.append(f'tests-paths = {_format_toml_value([str(p) for p in config.tests_paths])}')
+    lines.append(f"src-paths = {_format_toml_value([str(p) for p in config.src_paths])}")
+    lines.append(f"tests-paths = {_format_toml_value([str(p) for p in config.tests_paths])}")
     lines.append("# Tool paths (can be overridden for custom installations)")
-    lines.append(f'radon-path = {_format_toml_value(config.radon_list)}')
-    lines.append(f'pylint-path = {_format_toml_value(config.pylint_list)}')
-    lines.append(f'pytest-path = {_format_toml_value(config.pytest_list)}')
+    lines.append(f"radon-path = {_format_toml_value(config.radon_list)}")
+    lines.append(f"pylint-path = {_format_toml_value(config.pylint_list)}")
+    lines.append(f"pytest-path = {_format_toml_value(config.pytest_list)}")
     lines.append("# Test file configuration")
     lines.append(f'test-pattern = "{config.test_pattern}"')
     lines.append("# Filter to specific test type subdirectory")
-    lines.append(f'test-type = {_format_toml_value(config.test_types)}')
+    lines.append(f"test-type = {_format_toml_value(config.test_types)}")
     lines.append(f'package = "{config.package}"  # Optional: auto-detected from src/ directory or project name')
     lines.append("# Optional: files to exclude from untested report")
-    lines.append(f'excluded-files = {_format_toml_value(config.excluded_files)}')
+    lines.append(f"excluded-files = {_format_toml_value(config.excluded_files)}")
     lines.append("")
     return "\n".join(lines)
 
@@ -958,11 +957,11 @@ def _format_toml_value(value: list[str]) -> str:
         formatted_items = [f'"{item}"' for item in value]
         if len(formatted_items) <= 3:
             # Short list, single line
-            return f'[{", ".join(formatted_items)}]'
+            return f"[{', '.join(formatted_items)}]"
         else:
             # Long list, multi-line
             items_str = ",\n    ".join(formatted_items)
-            return f'[\n    {items_str}\n]'
+            return f"[\n    {items_str}\n]"
 
 
 def as_list(value: str | list[str]) -> list[str]:
@@ -989,21 +988,49 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
     Returns:
         Tuple of (config, show_config_only)
     """
-    parser = CustomArgumentParser(
+    mapping_str = "\n".join(
+        [
+            "{:<17s} => {}".format(*args)
+            for args in (
+                ("--src", "tool.dev-metrics.src-paths"),
+                ("--tests", "tool.dev-metrics.tests-paths"),
+                ("--radon", "tool.dev-metrics.radon-path"),
+                ("--pylint", "tool.dev-metrics.pylint-path"),
+                ("--pytest", "tool.dev-metrics.pytest-path"),
+                ("--test-pattern", "tool.dev-metrics.test-pattern"),
+                ("--test-type", "tool.dev-metrics.test-type"),
+                ("--package", "tool.dev-metrics.package"),
+                ("--excluded-files", "tool.dev-metrics.excluded-files"),
+            )
+        ]
+    )
+    parser = ArgumentParser(
         description="Generate project metrics summary.\n\n"
         "Provides a concise overview of project statistics including:\n"
         "- Source code metrics (files, SLOC, complexity)\n"
         "- Test code metrics (coverage, test counts)\n"
         "- Code quality metrics (duplication, risk analysis)",
-        epilog="Examples:\n"
-        "  # Run with defaults from pyproject.toml:\n"
-        "  dev-metrics.py\n\n"
-        "  # Show resolved configuration without running:\n"
-        "  dev-metrics.py --show\n\n"
-        "  # Override source paths:\n"
-        "  dev-metrics.py --src src lib --tests tests\n\n"
-        "  # Specify custom test pattern:\n"
-        "  dev-metrics.py --test-pattern 'test_*.py' --test-type unit integration",
+        epilog=dedent(""" \
+            pyproject.toml mapping:
+
+            """)
+        + mapping_str
+        + dedent("""
+
+            Examples:
+            
+            # Run with defaults from pyproject.toml:
+            dev-metrics.py
+
+            # Show resolved configuration without running:
+            dev-metrics.py --show
+            
+            # Override source paths:
+            dev-metrics.py --src src lib --tests tests
+            
+            # Specify custom test pattern:
+            dev-metrics.py --test-pattern 'test_*.py' --test-type unit integration
+         """),
         add_help=False,
         allow_abbrev=False,
     )
@@ -1029,8 +1056,6 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
         action="extend",
         nargs="+",
         metavar="DIR1[ DIR2 ...]",
-        default=None,
-        pyproject_key="tool.dev-metrics.src-paths",
         help="Path(s) to source code directories (default: src)",
     )
     paths_group.add_argument(
@@ -1038,16 +1063,12 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
         dest="tests_paths",
         nargs="+",
         metavar="DIR1[ DIR2 ...]",
-        default=None,
-        pyproject_key="tool.dev-metrics.tests-paths",
         help="Path(s) to test directories (default: tests)",
     )
     tool_group.add_argument(
         "--radon",
         dest="radon_list",
         nargs="+",
-        default=None,
-        pyproject_key="tool.dev-metrics.radon-path",
         help="Path to radon executable (for complexity analysis) - can specify multiple (default: radon)",
     )
     tool_group.add_argument(
@@ -1055,8 +1076,6 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
         dest="pylint_list",
         nargs="+",
         metavar="PATH1[ PATH2 ...]",
-        default=None,
-        pyproject_key="tool.dev-metrics.pylint-path",
         help="Path to pylint executable (for code quality checks) - can specify multiple (default: pylint)",
     )
     tool_group.add_argument(
@@ -1064,8 +1083,6 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
         dest="pytest_list",
         nargs="+",
         metavar="PATH1[ PATH2 ...]",
-        default=None,
-        pyproject_key="tool.dev-metrics.pytest-path",
         help="Path to pytest executable (for test execution) (default: pytest)",
     )
     test_group.add_argument(
@@ -1073,8 +1090,6 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
         dest="test_pattern",
         type=str,
         metavar="PATTERN",
-        default=None,
-        pyproject_key="tool.dev-metrics.test-pattern",
         help="Glob pattern for discovering test files (default: test_*.py)",
     )
     test_group.add_argument(
@@ -1082,16 +1097,12 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
         dest="test_types",
         nargs="+",
         metavar="TYPE1[ TYPE2 ...]",
-        default=None,
-        pyproject_key="tool.dev-metrics.test-type",
         help="Test type subdirectory names to include (default: unit functional integration e2e)",
     )
     package_group.add_argument(
         "--package",
         dest="package",
         metavar="NAME",
-        default="",
-        pyproject_key="tool.dev-metrics.package",
         help="Top-level package name (auto-detected from pyproject.toml if not specified)",
     )
     package_group.add_argument(
@@ -1100,8 +1111,6 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
         action="extend",
         nargs="+",
         metavar="FILE1[ FILE2 ...]",
-        default=None,
-        pyproject_key="tool.dev-metrics.excluded-files",
         help="Files to exclude from untested files report (default: __init__.py __main__.py _version.py)",
     )
 
@@ -1111,63 +1120,81 @@ def parse_arguments() -> tuple[MetricsConfig, bool]:
     pyproject_config = load_config_from_pyproject()
 
     # Apply configuration priority: CLI args > pyproject.toml > defaults
-    
+
     # Source paths
     src_paths = (
-        [Path(p) for p in args.src_paths] if args.src_paths
-        else as_paths(pyproject_config.get("src-paths")) if "src-paths" in pyproject_config
+        [Path(p) for p in args.src_paths]
+        if args.src_paths
+        else as_paths(pyproject_config.get("src-paths"))
+        if "src-paths" in pyproject_config
         else [Path("src")]
     )
-    
+
     # Test paths
     tests_paths = (
-        [Path(p) for p in args.tests_paths] if args.tests_paths
-        else as_paths(pyproject_config.get("tests-paths")) if "tests-paths" in pyproject_config
+        [Path(p) for p in args.tests_paths]
+        if args.tests_paths
+        else as_paths(pyproject_config.get("tests-paths"))
+        if "tests-paths" in pyproject_config
         else [Path("tests")]
     )
-    
+
     # Tool paths
     radon_list = (
-        args.radon_list if args.radon_list
-        else as_list(pyproject_config.get("radon-path")) if "radon-path" in pyproject_config
+        args.radon_list
+        if args.radon_list
+        else as_list(pyproject_config.get("radon-path"))
+        if "radon-path" in pyproject_config
         else ["radon"]
     )
-    
+
     pylint_list = (
-        args.pylint_list if args.pylint_list
-        else as_list(pyproject_config.get("pylint-path")) if "pylint-path" in pyproject_config
+        args.pylint_list
+        if args.pylint_list
+        else as_list(pyproject_config.get("pylint-path"))
+        if "pylint-path" in pyproject_config
         else ["pylint"]
     )
-    
+
     pytest_list = (
-        args.pytest_list if args.pytest_list
-        else as_list(pyproject_config.get("pytest-path")) if "pytest-path" in pyproject_config
+        args.pytest_list
+        if args.pytest_list
+        else as_list(pyproject_config.get("pytest-path"))
+        if "pytest-path" in pyproject_config
         else ["pytest"]
     )
-    
+
     # Test configuration
     test_pattern = (
-        args.test_pattern if args.test_pattern
-        else as_str(pyproject_config.get("test-pattern")) if "test-pattern" in pyproject_config
+        args.test_pattern
+        if args.test_pattern
+        else as_str(pyproject_config.get("test-pattern"))
+        if "test-pattern" in pyproject_config
         else "test_*.py"
     )
-    
+
     test_types = (
-        args.test_types if args.test_types
-        else as_list(pyproject_config.get("test-type")) if "test-type" in pyproject_config
+        args.test_types
+        if args.test_types
+        else as_list(pyproject_config.get("test-type"))
+        if "test-type" in pyproject_config
         else ["unit", "functional", "integration", "e2e"]
     )
-    
+
     # Package configuration
     package_name = (
-        args.package if args.package
-        else as_str(pyproject_config.get("package")) if "package" in pyproject_config
+        args.package
+        if args.package
+        else as_str(pyproject_config.get("package"))
+        if "package" in pyproject_config
         else detect_package_name(src_paths)
     )
-    
+
     excluded_files = (
-        args.excluded_files if args.excluded_files
-        else as_list(pyproject_config.get("excluded-files")) if "excluded-files" in pyproject_config
+        args.excluded_files
+        if args.excluded_files
+        else as_list(pyproject_config.get("excluded-files"))
+        if "excluded-files" in pyproject_config
         else ["__init__.py", "__main__.py", "_version.py"]
     )
 

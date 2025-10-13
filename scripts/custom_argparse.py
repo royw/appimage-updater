@@ -26,43 +26,6 @@ if TYPE_CHECKING:
 SUPPRESS = argparse.SUPPRESS
 
 
-# Custom argument group that handles pyproject_key
-class _ArgumentGroup(argparse._ArgumentGroup):
-    """Custom argument group that extracts pyproject_key before passing to parent."""
-
-    def __init__(self, container: Any, *args: Any, **kwargs: Any) -> None:
-        super().__init__(container, *args, **kwargs)
-        # Store reference to the parser for later use
-        self._parser = container
-
-    def add_argument(self, *args: Any, **kwargs: Any) -> argparse.Action:
-        # Extract custom parameters that argparse doesn't recognize
-        pyproject_key = kwargs.pop("pyproject_key", None)
-
-        action = super().add_argument(*args, **kwargs)
-
-        # Build argument dict for our tracking
-        argument: dict[str, Any] = {key: kwargs[key] for key in kwargs}
-        if pyproject_key is not None:
-            argument["pyproject_key"] = pyproject_key
-
-        # Get the parser (stored during __init__)
-        parser = self._parser
-
-        # Positional: argument with only one name not starting with '-'
-        if len(args) == 0 or (len(args) == 1 and isinstance(args[0], str) and not args[0].startswith("-")):
-            argument["name"] = args[0] if (len(args) > 0) else argument.get("dest", "")
-            if hasattr(parser, "positionals"):
-                parser.positionals.append(argument)
-        else:
-            # Option: argument with flags starting with '-'
-            argument["flags"] = list(args)
-            if hasattr(parser, "options"):
-                parser.options.append(argument)
-
-        return action
-
-
 # ArgumentParser class providing custom help/usage output
 class CustomArgumentParser(argparse.ArgumentParser):
     # Expose argparse.SUPPRESS as a class attribute for convenience
@@ -79,22 +42,35 @@ class CustomArgumentParser(argparse.ArgumentParser):
         self.width: int = shutil.get_terminal_size().columns or 80
         super().__init__(*args, **kwargs)
 
-    def add_argument_group(self, *args: Any, **kwargs: Any) -> _ArgumentGroup:
-        """Override to return our custom argument group that handles pyproject_key."""
-        group = _ArgumentGroup(self, *args, **kwargs)
-        self._action_groups.append(group)
+    def add_argument_group(self, *args: Any, **kwargs: Any) -> argparse._ArgumentGroup:
+        """Override to return a group that tracks arguments in our lists."""
+        group = super().add_argument_group(*args, **kwargs)
+        # Wrap the group's add_argument method to track arguments
+        original_add_argument = group.add_argument
+
+        def wrapped_add_argument(*arg_args: Any, **arg_kwargs: Any) -> argparse.Action:
+            action = original_add_argument(*arg_args, **arg_kwargs)
+            argument: dict[str, Any] = {key: arg_kwargs[key] for key in arg_kwargs}
+
+            # Positional: argument with only one name not starting with '-'
+            if len(arg_args) == 0 or (
+                len(arg_args) == 1 and isinstance(arg_args[0], str) and not arg_args[0].startswith("-")
+            ):
+                argument["name"] = arg_args[0] if (len(arg_args) > 0) else argument.get("dest", "")
+                self.positionals.append(argument)
+            else:
+                # Option: argument with flags starting with '-'
+                argument["flags"] = list(arg_args)
+                self.options.append(argument)
+
+            return action
+
+        group.add_argument = wrapped_add_argument  # type: ignore[method-assign]
         return group
 
     def add_argument(self, *args: Any, **kwargs: Any) -> argparse.Action:
-        # Extract custom parameters that argparse doesn't recognize
-        pyproject_key = kwargs.pop("pyproject_key", None)
-
         action = super().add_argument(*args, **kwargs)
         argument: dict[str, Any] = {key: kwargs[key] for key in kwargs}
-
-        # Add back custom parameters to our argument dict
-        if pyproject_key is not None:
-            argument["pyproject_key"] = pyproject_key
 
         # Positional: argument with only one name not starting with '-' provided as
         # positional argument to method -or- no name and only a 'dest=' argument
@@ -184,14 +160,89 @@ class CustomArgumentParser(argparse.ArgumentParser):
         # Return output as single string
         return str.join("\n", output)
 
+    def _format_argument_left(self, argument: dict[str, Any]) -> str:
+        """Format the left side (flags/name) of an argument."""
+        if "flags" in argument:  # Option
+            if "action" in argument and (argument["action"] == "store_true" or argument["action"] == "store_false"):
+                return str.join(", ", argument["flags"])
+            return str.join(
+                ", ",
+                [
+                    f"{item} {argument['metavar']}"
+                    if ("metavar" in argument)
+                    else f"{item} {argument['dest'].upper()}"
+                    if ("dest" in argument)
+                    else item
+                    for item in argument["flags"]
+                ],
+            )
+        # Positional
+        return argument["metavar"] if ("metavar" in argument) else argument["name"]
+
+    def _format_argument_right(self, argument: dict[str, Any]) -> str:
+        """Format the right side (help text) of an argument."""
+        right = ""
+        if "help" in argument and argument["help"] != "" and not str.isspace(argument["help"]):
+            right += argument["help"]
+        else:
+            right += "No help available"
+        if "choices" in argument and len(argument["choices"]) > 0:
+            right += " (choices: {})".format(
+                str.join(", ", (f"'{item}'" if isinstance(item, str) else str(item) for item in argument["choices"]))
+            )
+        if "default" in argument and argument["default"] != argparse.SUPPRESS:
+            default_value = (
+                f"'{argument['default']}'" if isinstance(argument["default"], str) else str(argument["default"])
+            )
+            right += f" (default: {default_value})"
+        return right
+
+    def _prepare_arguments_for_display(self) -> tuple[int, int]:
+        """Prepare all arguments with left/right formatting and return max lengths."""
+        lmaxlen = 0
+        rmaxlen = 0
+        for argument in self.positionals + self.options:
+            argument["left"] = self._format_argument_left(argument)
+            argument["right"] = self._format_argument_right(argument)
+            lmaxlen = max(lmaxlen, len(argument["left"]))
+            rmaxlen = max(rmaxlen, len(argument["right"]))
+        return lmaxlen, rmaxlen
+
+    def _wrap_arguments(self, lwidth: int, rwidth: int) -> None:
+        """Wrap argument text to fit within specified widths."""
+        lwrapper = textwrap.TextWrapper(width=lwidth)
+        rwrapper = textwrap.TextWrapper(width=rwidth)
+        for argument in self.positionals + self.options:
+            argument["left"] = lwrapper.wrap(argument["left"])
+            right_lines: list[str] = []
+            for line in argument["right"].split("\n"):
+                if line:
+                    right_lines.extend(rwrapper.wrap(line))
+                else:
+                    right_lines.append("")
+            argument["right"] = right_lines
+
+    def _add_arguments_to_output(
+        self, output: list[str], arguments: list[dict[str, Any]], title: str, outtmp: str
+    ) -> None:
+        """Add formatted arguments to output list."""
+        if len(arguments) > 0:
+            output.append("")
+            output.append(title)
+            for argument in arguments:
+                for i in range(0, max(len(argument["left"]), len(argument["right"]))):
+                    left = argument["left"][i] if (i < len(argument["left"])) else ""
+                    right = argument["right"][i] if (i < len(argument["right"])) else ""
+                    output.append(outtmp % (left, right))
+
     def format_help(self) -> str:
         output: list[str] = []
-        dewrapper: textwrap.TextWrapper = textwrap.TextWrapper(width=self.width)
+        dewrapper = textwrap.TextWrapper(width=self.width)
 
-        # Add usage message to output
+        # Add usage message
         output.append(self.format_usage())
 
-        # Add description to output if present
+        # Add description if present
         if (
             "description" in self.program
             and self.program["description"] != ""
@@ -200,110 +251,31 @@ class CustomArgumentParser(argparse.ArgumentParser):
             output.append("")
             output.append(dewrapper.fill(self.program["description"]))
 
-        # Determine what to display left and right for each argument, determine max
-        # string lengths for left and right
-        lmaxlen: int = 0
-        rmaxlen: int = 0
-        for positional in self.positionals:
-            positional["left"] = positional["metavar"] if ("metavar" in positional) else positional["name"]
-        for option in self.options:
-            if "action" in option and (option["action"] == "store_true" or option["action"] == "store_false"):
-                option["left"] = str.join(", ", option["flags"])
-            else:
-                option["left"] = str.join(
-                    ", ",
-                    [
-                        f"{item} {option['metavar']}"
-                        if ("metavar" in option)
-                        else f"{item} {option['dest'].upper()}"
-                        if ("dest" in option)
-                        else item
-                        for item in option["flags"]
-                    ],
-                )
-        for argument in self.positionals + self.options:
-            argument["right"] = ""
-            if "help" in argument and argument["help"] != "" and not str.isspace(argument["help"]):
-                argument["right"] += argument["help"]
-            else:
-                # argument["right"] += "No description available"
-                argument["right"] += "No help available"
-            if "choices" in argument and len(argument["choices"]) > 0:
-                argument["right"] += " (choices: {})".format(
-                    str.join(
-                        ", ", (f"'{item}'" if isinstance(item, str) else str(item) for item in argument["choices"])
-                    )
-                )
-            if "default" in argument and argument["default"] != argparse.SUPPRESS:
-                # Build the info line with optional pyproject_key
-                info_parts = []
-                if "pyproject_key" in argument and argument["pyproject_key"]:
-                    info_parts.append(f"pyproject: {argument['pyproject_key']}")
-                default_value = (
-                    f"'{argument['default']}'" if isinstance(argument["default"], str) else str(argument["default"])
-                )
-                info_parts.append(f"default: {default_value}")
-                argument["right"] += "\n({})".format(", ".join(info_parts))
-            lmaxlen = max(lmaxlen, len(argument["left"]))
-            rmaxlen = max(rmaxlen, len(argument["right"]))
-
-        # Determine width for left and right parts based on maximum string lengths,
-        # define output template. Limit width of left part to a maximum of self.width
-        # / 2. Use max() to prevent negative values. -4: two leading spaces (indent)
-        # + two trailing spaces (spacing between left and right), see template
-        lwidth: int = lmaxlen
-        rwidth: int = max(0, self.width - lwidth - 4)
+        # Prepare arguments and calculate widths
+        lmaxlen, rmaxlen = self._prepare_arguments_for_display()
+        lwidth = lmaxlen
+        rwidth = max(0, self.width - lwidth - 4)
         if lwidth > int(self.width / 2) - 4:
             lwidth = max(0, int(self.width / 2) - 4)
             rwidth = int(self.width / 2)
-        # outtmp = "  %-" + str(lwidth) + "s  %-" + str(rwidth) + "s"
-        outtmp: str = "  %-" + str(lwidth) + "s  %s"
+        outtmp = "  %-" + str(lwidth) + "s  %s"
 
-        # Wrap text for left and right parts, split into separate lines
-        lwrapper: textwrap.TextWrapper = textwrap.TextWrapper(width=lwidth)
-        rwrapper: textwrap.TextWrapper = textwrap.TextWrapper(width=rwidth)
-        for argument in self.positionals + self.options:
-            argument["left"] = lwrapper.wrap(argument["left"])
-            # Handle newlines in right text by splitting first, then wrapping each part
-            right_lines: list[str] = []
-            for line in argument["right"].split("\n"):
-                if line:  # Only wrap non-empty lines
-                    right_lines.extend(rwrapper.wrap(line))
-                else:
-                    right_lines.append("")  # Preserve empty lines
-            argument["right"] = right_lines
+        # Wrap text for display
+        self._wrap_arguments(lwidth, rwidth)
 
-        # Add positional arguments to output
-        if len(self.positionals) > 0:
-            output.append("")
-            output.append("Positionals:")
-            for positional in self.positionals:
-                for i in range(0, max(len(positional["left"]), len(positional["right"]))):
-                    left: str = positional["left"][i] if (i < len(positional["left"])) else ""
-                    right: str = positional["right"][i] if (i < len(positional["right"])) else ""
-                    output.append(outtmp % (left, right))
+        # Add arguments to output
+        self._add_arguments_to_output(output, self.positionals, "Positionals:", outtmp)
+        self._add_arguments_to_output(output, self.options, "Options:", outtmp)
 
-        # Add option arguments to output
-        if len(self.options) > 0:
-            output.append("")
-            output.append("Options:")
-            for option in self.options:
-                for i in range(0, max(len(option["left"]), len(option["right"]))):
-                    left = option["left"][i] if (i < len(option["left"])) else ""
-                    right = option["right"][i] if (i < len(option["right"])) else ""
-                    output.append(outtmp % (left, right))
-
-        # Add epilog to output if present
+        # Add epilog if present
         if "epilog" in self.program and self.program["epilog"] != "" and not str.isspace(self.program["epilog"]):
             output.append("")
-            # Handle newlines in epilog by splitting first, then wrapping each part
             for line in self.program["epilog"].split("\n"):
-                if line:  # Only wrap non-empty lines
+                if line:
                     output.append(dewrapper.fill(line))
                 else:
-                    output.append("")  # Preserve empty lines
+                    output.append("")
 
-        # Return output as single string
         return str.join("\n", output)
 
     # Method redefined as format_usage() does not return a trailing newline like
@@ -312,7 +284,7 @@ class CustomArgumentParser(argparse.ArgumentParser):
         if file is None:
             file = sys.stdout
         file.write(self.format_usage() + "\n")
-        file.flush()
+        # file.flush()
 
     # Method redefined as format_help() does not return a trailing newline like
     # the original does
@@ -320,7 +292,7 @@ class CustomArgumentParser(argparse.ArgumentParser):
         if file is None:
             file = sys.stdout
         file.write(self.format_help() + "\n")
-        file.flush()
+        # file.flush()
 
     def error(self, message: str) -> Never:
         sys.stderr.write(self.format_usage() + "\n")
@@ -361,7 +333,6 @@ if __name__ == "__main__":
         type=str,
         help="SQLite3 database file to read/write",
         default="database.db",
-        pyproject_key="tool.myapp.database.file",
     )
     parser.add_argument(
         "-l",
@@ -470,4 +441,3 @@ if __name__ == "__main__":
 
     # Parse command line
     args = parser.parse_args()
-    print("Command line parsed successfully.")

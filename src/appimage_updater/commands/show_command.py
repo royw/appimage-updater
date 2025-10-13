@@ -212,21 +212,21 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
         if app.retain_count != 3:  # Default is 3
             parts.extend(["--retain", str(app.retain_count)])
         if app.symlink_path:
-            parts.extend(["--symlink", self._to_home_relative_path(app.symlink_path)])
+            parts.extend(["--symlink-path", self._to_home_relative_path(app.symlink_path)])
 
     def _add_checksum_parameters(self, parts: list[str], app: Any) -> None:
         """Add checksum-related value parameters."""
         if app.checksum.enabled and app.checksum.algorithm != "sha256":  # Default is sha256
             parts.extend(["--checksum-algorithm", app.checksum.algorithm])
         if app.checksum.pattern != "{filename}-SHA256.txt":  # Default pattern
-            parts.extend(["--checksum-pattern", f'"{app.checksum.pattern}"'])
+            parts.extend(["--checksum-pattern", app.checksum.pattern])
 
     def _add_pattern_parameters(self, parts: list[str], app: Any) -> None:
         """Add pattern-related parameters."""
         if app.pattern != "*.AppImage":  # Default pattern
-            parts.extend(["--pattern", f'"{app.pattern}"'])
+            parts.extend(["--pattern", app.pattern])
         if app.version_pattern:
-            parts.extend(["--version-pattern", f'"{app.version_pattern}"'])
+            parts.extend(["--version-pattern", app.version_pattern])
 
     def _add_value_parameters(self, parts: list[str], app: Any) -> None:
         """Add value parameters to the command parts."""

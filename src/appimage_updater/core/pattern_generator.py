@@ -9,11 +9,26 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+import sys
 import tempfile
 import urllib.parse
-from warnings import deprecated
 
 from loguru import logger
+
+
+# Python 3.13+ has warnings.deprecated, for older versions use a no-op decorator
+if sys.version_info >= (3, 13):
+    from warnings import deprecated
+else:
+
+    def deprecated(msg: str):  # type: ignore
+        """No-op decorator for Python < 3.13."""
+
+        def decorator(func):  # type: ignore
+            return func
+
+        return decorator
+
 
 from appimage_updater.config.models import ApplicationConfig
 from appimage_updater.core.models import Release
@@ -118,16 +133,17 @@ async def _legacy_fetch_pattern(url: str) -> str | None:
         enable_probing = known_handler is None
 
         client = await get_repository_client_async(url, timeout=30, enable_probing=enable_probing)
-        releases = await client.get_releases(url, limit=20)
-        groups = _collect_release_files(releases)
-        target_files = _select_target_files(groups)
-        if not target_files:
-            logger.debug("No AppImage or ZIP files found in any releases")
-            return None
+        async with client:
+            releases = await client.get_releases(url, limit=20)
+            groups = _collect_release_files(releases)
+            target_files = _select_target_files(groups)
+            if not target_files:
+                logger.debug("No AppImage or ZIP files found in any releases")
+                return None
 
-        if target_files:
-            return version_service.generate_pattern_from_filename(target_files[0])
-        return create_pattern_from_filenames(target_files, include_both_formats=True)
+            if target_files:
+                return version_service.generate_pattern_from_filename(target_files[0])
+            return create_pattern_from_filenames(target_files, include_both_formats=True)
     except (RepositoryError, ValueError, AttributeError) as e:
         logger.debug(f"Error fetching releases: {e}")
         return None
@@ -413,12 +429,13 @@ async def _fetch_releases_for_prerelease_check(url: str) -> list[Release]:
     enable_probing = known_handler is None
 
     client = await get_repository_client_async(url, timeout=10, enable_probing=enable_probing)
-    releases = await client.get_releases(url, limit=10)
+    async with client:
+        releases = await client.get_releases(url, limit=10)
 
-    if not releases:
-        logger.debug(f"No releases found for {url}, not enabling prerelease")
+        if not releases:
+            logger.debug(f"No releases found for {url}, not enabling prerelease")
 
-    return releases
+        return releases
 
 
 def _filter_valid_releases(releases: list[Release], url: str) -> list[Release]:

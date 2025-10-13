@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import anyio
 from loguru import logger
 from rich.console import Console
 
@@ -56,7 +57,13 @@ class AddCommand(Command):
                 return special_result
 
             # Execute main add workflow
-            return await self._execute_main_add_workflow(output_formatter)
+            result = await self._execute_main_add_workflow(output_formatter)
+
+            # Small delay to allow background cleanup tasks to complete
+            # This prevents "Event loop is closed" errors with httpx/httpcore
+            await anyio.sleep(0.1)
+
+            return result
 
         except Exception as e:
             return self._handle_execution_error(e)

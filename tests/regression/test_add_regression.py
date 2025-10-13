@@ -107,14 +107,17 @@ class TestAddRegression:
             for failure in failed_recreations:
                 print(f"    - {failure}")
 
-        # The test passes if we successfully recreated most applications
-        # Allow some failures due to network issues, API changes, etc.
+        # The test requires ALL applications to be successfully recreated
+        # This validates that add command works correctly across all repository types
         success_rate = successful_recreations / total_applications if total_applications > 0 else 0
 
         print(f"  • Success rate: {success_rate:.1%}")
 
-        # Require at least 70% success rate for the test to pass
-        assert success_rate >= 0.7, f"Regression test failed: only {success_rate:.1%} success rate"
+        # Require 100% success - all applications must pass
+        assert successful_recreations == total_applications, (
+            f"Regression test failed: {successful_recreations}/{total_applications} succeeded ({success_rate:.1%}). "
+            f"All applications must pass. Failed: {', '.join(failed_recreations)}"
+        )
         assert total_applications > 0, "No applications found to test"
 
     def test_comprehensive_command_regression(self) -> None:
@@ -210,10 +213,23 @@ class TestAddRegression:
             print(f"    Recreation command: appimage-updater {' '.join(cmd_parts)}")  # noqa: T201
 
             # Step 3: Execute the generated add command
-            recreate_result = runner.invoke(app, cmd_parts)
+            recreate_result = runner.invoke(app, cmd_parts, catch_exceptions=False)
+
+            # Log the temp directory contents for debugging
+            print(f"    Temp directory structure after add command:")  # noqa: T201
+            for item in Path(temp_dir).rglob("*"):
+                if item.is_file():
+                    print(f"      FILE: {item.relative_to(temp_dir)}")  # noqa: T201
+                elif item.is_dir():
+                    print(f"      DIR:  {item.relative_to(temp_dir)}")  # noqa: T201
 
             if recreate_result.exit_code != 0:
-                print(f"    FAILED: Recreation command failed: {recreate_result.stdout}")  # noqa: T201
+                print(f"    FAILED: Recreation command failed with exit code {recreate_result.exit_code}")  # noqa: T201
+                print(f"    STDOUT: {recreate_result.stdout}")  # noqa: T201
+                if recreate_result.stderr:
+                    print(f"    STDERR: {recreate_result.stderr}")  # noqa: T201
+                if recreate_result.exception:
+                    print(f"    EXCEPTION: {recreate_result.exception}")  # noqa: T201
                 return False
 
             # Step 4: Load the recreated configuration

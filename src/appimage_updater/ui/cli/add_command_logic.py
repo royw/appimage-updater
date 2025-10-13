@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import anyio
 from loguru import logger
 
 from ...config.manager import AppConfigs
@@ -226,7 +227,14 @@ async def _add(
         if config_data is None:
             return False
 
-        return _execute_add_workflow(config_data, dry_run, config_file, config_dir)
+        result = _execute_add_workflow(config_data, dry_run, config_file, config_dir)
+
+        # Delay to allow background cleanup tasks to complete
+        # This helps prevent "Event loop is closed" errors with httpx/httpcore
+        # Testing shows 0.3s is a reasonable balance between speed and reliability
+        await anyio.sleep(0.3)
+
+        return result
 
     except Exception as e:
         _handle_add_error(e, name)

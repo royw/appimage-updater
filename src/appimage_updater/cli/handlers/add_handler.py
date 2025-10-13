@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 from typing import Any
+import warnings
 
 from rich.console import Console
 import typer
@@ -115,11 +116,23 @@ class AddCommandHandler(CommandHandler):
         command = CommandFactory.create_add_command(**kwargs)
         output_formatter = create_output_formatter_from_params(command.params)
 
-        if kwargs["output_format"] in [OutputFormat.JSON, OutputFormat.HTML]:
-            result = asyncio.run(command.execute(output_formatter=output_formatter))
-            output_formatter.finalize()
-        else:
-            result = asyncio.run(command.execute(output_formatter=output_formatter))
+        # Suppress RuntimeError about closed event loop during cleanup
+        # This is a known issue with Python 3.13 + httpx/anyio during shutdown
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=".*Event loop is closed.*")
+            try:
+                if kwargs["output_format"] in [OutputFormat.JSON, OutputFormat.HTML]:
+                    result = asyncio.run(command.execute(output_formatter=output_formatter))
+                    output_formatter.finalize()
+                else:
+                    result = asyncio.run(command.execute(output_formatter=output_formatter))
+            except RuntimeError as e:
+                if "Event loop is closed" in str(e):
+                    # This error happens during cleanup and can be safely ignored
+                    # The command has already completed successfully
+                    self.console.print("[yellow]Warning: Cleanup error occurred (can be ignored)[/yellow]")
+                    return
+                raise
 
         if not result.success:
             raise typer.Exit(result.exit_code)

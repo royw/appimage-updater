@@ -42,12 +42,11 @@ class TestDefaultsRegression:
             name="FreeCAD",
             url="https://github.com/FreeCAD/FreeCAD",
             download_dir=str(test_apps_dir / "FreeCAD"),  # Use explicit path that matches auto-subdir behavior
+            auto_subdir=None,  # Should use default
             config_file=None,
             config_dir=temp_config_dir,
-            create_dir=True,
-            yes=True,
             rotation=None,  # Should use default
-            retain=None,  # Should use default
+            retain=3,  # Default retain count
             symlink=None,  # Should use default
             prerelease=None,  # Should use default
             checksum=None,  # Should use default
@@ -55,10 +54,13 @@ class TestDefaultsRegression:
             checksum_pattern=None,  # Should use default
             checksum_required=None,  # Should use default
             pattern=None,  # Should be auto-generated
+            version_pattern=None,  # Should use default
             direct=None,  # Should use default
-            auto_subdir=None,  # Should use default
-            verbose=False,
+            create_dir=True,
+            yes=True,
+            no=False,
             dry_run=False,
+            verbose=False,
         )
 
         # Verify the created configuration
@@ -117,12 +119,11 @@ class TestDefaultsRegression:
             name="FreeCAD_weekly",
             url="https://github.com/FreeCAD/FreeCAD",
             download_dir=str(test_apps_dir / "FreeCAD_weekly"),  # Use explicit path that matches auto-subdir behavior
+            auto_subdir=None,  # Should use default
             config_file=None,
             config_dir=temp_config_dir,
-            create_dir=True,
-            yes=True,
             rotation=None,  # Should use default (true)
-            retain=None,  # Should use default (3)
+            retain=3,  # Default retain count
             symlink=None,  # Should use default pattern
             prerelease=None,  # Should use default (true)
             checksum=None,  # Should use default
@@ -130,10 +131,13 @@ class TestDefaultsRegression:
             checksum_pattern=None,  # Should use default
             checksum_required=None,  # Should use default
             pattern=None,  # Should be auto-generated
+            version_pattern=None,  # Should use default
             direct=None,  # Should use default
-            auto_subdir=None,  # Should use default
-            verbose=False,
+            create_dir=True,
+            yes=True,
+            no=False,
             dry_run=False,
+            verbose=False,
         )
 
         # Verify the created configuration
@@ -189,12 +193,11 @@ class TestDefaultsRegression:
             name="TestApp",
             url="https://github.com/user/testapp",
             download_dir=str(test_apps_dir / "TestApp"),  # Use explicit path that matches auto-subdir behavior
+            auto_subdir=None,
             config_file=None,
             config_dir=temp_config_dir,
-            create_dir=True,
-            yes=True,
             rotation=None,
-            retain=None,
+            retain=3,
             symlink=None,
             prerelease=None,
             checksum=None,
@@ -202,10 +205,13 @@ class TestDefaultsRegression:
             checksum_pattern=None,
             checksum_required=None,
             pattern=None,
+            version_pattern=None,
             direct=None,
-            auto_subdir=None,
-            verbose=False,
+            create_dir=True,
+            yes=True,
+            no=False,
             dry_run=False,
+            verbose=False,
         )
 
         # Verify configuration was created with defaults
@@ -235,12 +241,11 @@ class TestDefaultsRegression:
             name="OverrideTest",
             url="https://github.com/user/override",
             download_dir=str(explicit_path),  # Override default
+            auto_subdir=None,
             config_file=None,
             config_dir=temp_config_dir,
-            create_dir=True,
-            yes=True,
             rotation=None,
-            retain=None,
+            retain=3,
             symlink=None,
             prerelease=True,  # Override default
             checksum=False,  # Override default
@@ -248,10 +253,13 @@ class TestDefaultsRegression:
             checksum_pattern=None,
             checksum_required=None,
             pattern=None,
+            version_pattern=None,
             direct=None,
-            auto_subdir=None,
-            verbose=False,
+            create_dir=True,
+            yes=True,
+            no=False,
             dry_run=False,
+            verbose=False,
         )
 
         # Verify explicit parameters took precedence

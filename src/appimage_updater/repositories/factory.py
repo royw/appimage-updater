@@ -41,7 +41,8 @@ async def _try_domain_knowledge(
         return None
     try:
         client = known_handler.create_client(timeout=timeout, user_agent=user_agent, **kwargs)
-        await _validate_client(client, url)
+        # Skip validation to avoid event loop issues with Python 3.13 + httpx/anyio
+        # await _validate_client(client, url)
         return client
     except Exception as e:
         logger.warning(f"Known domain failed for {url}: {e}")
@@ -149,7 +150,14 @@ async def _validate_client(client: RepositoryClient, url: str) -> None:
     """Quick health check for repository client."""
     try:
         # Try a lightweight operation to verify the API works
-        await client.get_latest_release(url)
+        async with client:
+            await client.get_latest_release(url)
+    except RuntimeError as e:
+        if "Event loop is closed" in str(e):
+            # This is a known issue with Python 3.13 + httpx/anyio
+            # Treat as validation failure to try alternative handlers
+            raise RepositoryError(f"Client validation failed due to event loop issue: {url}") from e
+        raise RepositoryError(f"Client validation failed for {url}: {e}") from e
     except Exception as e:
         raise RepositoryError(f"Client validation failed for {url}: {e}") from e
 

@@ -43,6 +43,18 @@ class RepositoryClient(ABC):
         self.timeout = timeout
         self.user_agent = user_agent or self._get_default_user_agent()
 
+    async def __aenter__(self) -> RepositoryClient:
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, exc_type: type | None, exc_val: Exception | None, exc_tb: Any) -> None:
+        """Async context manager exit - cleanup resources.
+
+        Subclasses can override this to perform cleanup.
+        """
+        # Default implementation - subclasses can override for custom cleanup
+        return None
+
     @abstractmethod
     async def get_latest_release(self, repo_url: str) -> Release:
         """Get the latest stable release for a repository.

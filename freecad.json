@@ -1,0 +1,24 @@
+{
+  "applications": [
+    {
+      "name": "FreeCAD",
+      "source_type": "github",
+      "url": "https://github.com/FreeCAD/FreeCAD",
+      "download_dir": "/home/royw/Applications/FreeCAD",
+      "pattern": "(?i)FreeCAD.*\\.(zip|AppImage)(\\.(|current|old))?$",
+      "version_pattern": null,
+      "basename": null,
+      "enabled": true,
+      "prerelease": false,
+      "checksum": {
+        "enabled": true,
+        "pattern": "{filename}-SHA256.txt",
+        "algorithm": "sha256",
+        "required": false
+      },
+      "rotation_enabled": false,
+      "symlink_path": null,
+      "retain_count": 3
+    }
+  ]
+}
