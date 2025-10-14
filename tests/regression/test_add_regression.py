@@ -52,12 +52,25 @@ class TestAddRegression:
             with config_file.open() as f:
                 config_data = json.load(f)
 
+            # Skip global config files (they have concurrent_downloads, timeout_seconds, etc.)
+            if "concurrent_downloads" in config_data or "domain_knowledge" in config_data:
+                return []
+
             # Handle both single-file and directory-based config formats
             if "applications" in config_data:
-                return config_data["applications"]
+                apps = config_data["applications"]
             else:
                 # Assume the file itself contains a single application
-                return [config_data]
+                apps = [config_data]
+
+            # Filter out configs that don't have required application fields
+            valid_apps = []
+            for app in apps:
+                # Must have at least name and url to be a valid app config
+                if isinstance(app, dict) and "name" in app and "url" in app:
+                    valid_apps.append(app)
+
+            return valid_apps
 
         except (json.JSONDecodeError, KeyError) as e:
             pytest.skip(f"Could not parse config file {config_file}: {e}")
