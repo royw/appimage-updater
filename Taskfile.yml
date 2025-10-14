@@ -529,7 +529,7 @@ tasks:
           MESSAGE: "✅ Build pipeline completed successfully! Ready to push to GitHub 🎉"
 
   version:bump:
-    desc: Bump the patch version, build, and commit changes
+    desc: Bump the patch version, update changelog, build, and commit changes
     cmds:
       - task: _output
         vars:
@@ -544,6 +544,38 @@ tasks:
         fi
       - task: _output
         vars:
+          MESSAGE: "📝 Checking CHANGELOG.md..."
+      - |
+        # Check if there are unreleased changes in CHANGELOG
+        if ! grep -q "## \[Unreleased\]" CHANGELOG.md; then
+          task _output MESSAGE="❌ Error: No [Unreleased] section found in CHANGELOG.md"
+          exit 1
+        fi
+        
+        # Show current unreleased section to user
+        task _output MESSAGE="📋 Current [Unreleased] section:"
+        echo "----------------------------------------"
+        sed -n '/## \[Unreleased\]/,/## \[/p' CHANGELOG.md | head -n -1
+        echo "----------------------------------------"
+        
+        # Check if unreleased section has content
+        if ! grep -A 5 "## \[Unreleased\]" CHANGELOG.md | grep -q "^- \|^### "; then
+          task _output MESSAGE="❌ Error: [Unreleased] section is empty"
+          task _output MESSAGE="💡 Please add release notes to CHANGELOG.md before bumping version"
+          exit 1
+        fi
+        
+        # Always ask user to confirm the changelog is complete
+        echo ""
+        read -p "Is the CHANGELOG.md complete for this release? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+          task _output MESSAGE="❌ Aborted. Please update CHANGELOG.md and try again."
+          exit 1
+        fi
+        task _output MESSAGE="✅ CHANGELOG.md confirmed ready for release"
+      - task: _output
+        vars:
           MESSAGE: "📈 Bumping version..."
       - uv run version_bumper bump patch
       - task: _output
@@ -552,14 +584,27 @@ tasks:
       - task: version
       - task: _output
         vars:
+          MESSAGE: "📝 Updating CHANGELOG.md..."
+      - |
+        NEW_VERSION=$(task version:pyproject)
+        TODAY=$(date +%Y-%m-%d)
+        
+        # Replace [Unreleased] header with new version and add new [Unreleased] section
+        # This preserves all content under [Unreleased] and moves it to the new version
+        sed -i.bak "s/## \[Unreleased\]/## [Unreleased]\n\n## [$NEW_VERSION] - $TODAY/" CHANGELOG.md
+        
+        rm CHANGELOG.md.bak
+        task _output MESSAGE="✅ Updated CHANGELOG.md with version $NEW_VERSION"
+      - task: _output
+        vars:
           MESSAGE: "🏗️  Building package..."
       - task: build
       - task: _output
         vars:
-          MESSAGE: "📝 Committing version bump..."
+          MESSAGE: "📝 Committing version bump and changelog..."
       - |
         NEW_VERSION=$(task version:pyproject)
-        git add pyproject.toml
+        git add pyproject.toml CHANGELOG.md
         git commit -m "chore: bump version to v$NEW_VERSION"
         task _output MESSAGE="✅ Committed version bump to v$NEW_VERSION"
 
