@@ -9,24 +9,24 @@ from appimage_updater.main import app
 
 def create_directory_config(temp_dir: Path, config_data: dict) -> Path:
     """Helper to create directory-based config from config dict.
-    
+
     Args:
         temp_dir: Temporary directory to create config in
         config_data: Config dict with 'applications' key
-        
+
     Returns:
         Path to apps directory
     """
     apps_dir = temp_dir / "apps"
     apps_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Create individual app config files
     for app_data in config_data.get("applications", []):
         app_name = app_data["name"]
         app_file = apps_dir / f"{app_name.lower()}.json"
         with app_file.open("w") as f:
             json.dump({"applications": [app_data]}, f, indent=2)
-    
+
     return apps_dir
 
 

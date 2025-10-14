@@ -205,7 +205,7 @@ class TestRemoveCommand:
         # Verify only App2 remains
         assert not (apps_dir / "app1.json").exists()
         assert (apps_dir / "app2.json").exists()
-        
+
         with (apps_dir / "app2.json").open() as f:
             config_data = json.load(f)
         assert len(config_data["applications"]) == 1

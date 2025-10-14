@@ -161,7 +161,7 @@ class TestModernRemoveCommand:
         # Create directory-based config
         apps_dir = temp_config_dir / "apps"
         apps_dir.mkdir(parents=True)
-        
+
         # Create individual app files
         for app_data in config_data["applications"]:
             app_name = app_data["name"]
@@ -178,7 +178,7 @@ class TestModernRemoveCommand:
         # Verify App1 file is deleted but App2 file still exists
         assert not (apps_dir / "app1.json").exists()
         assert (apps_dir / "app2.json").exists()
-        
+
         with (apps_dir / "app2.json").open() as f:
             remaining_config = json.load(f)
 
