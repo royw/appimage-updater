@@ -606,6 +606,7 @@ tasks:
         git add pyproject.toml CHANGELOG.md
         git commit -m "chore: bump version to v$NEW_VERSION"
         task _output MESSAGE="✅ Committed version bump to v$NEW_VERSION"
+    silent: true
 
   deploy:
     desc: Deploy the built package locally with pipx
