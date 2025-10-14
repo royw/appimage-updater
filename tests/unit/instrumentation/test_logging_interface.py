@@ -76,14 +76,15 @@ class TestLoguruHTTPLogger:
 
     @patch("appimage_updater.instrumentation.logging_interface.logger")
     def test_info_method(self, mock_logger: MagicMock) -> None:
-        """Test info logging method."""
+        """Test info logging method (now logs at debug level)."""
         mock_bound_logger = Mock()
         mock_logger.bind.return_value = mock_bound_logger
 
         logger_instance = LoguruHTTPLogger()
         logger_instance.info("Info message", key="value")
 
-        mock_bound_logger.info.assert_called_once_with("Info message", key="value")
+        # info() method now calls debug() internally
+        mock_bound_logger.debug.assert_called_once_with("Info message", key="value")
 
     @patch("appimage_updater.instrumentation.logging_interface.logger")
     def test_warning_method(self, mock_logger: MagicMock) -> None:
