@@ -140,7 +140,7 @@ class Manager:
             with app_file_path.open("w") as f:
                 json.dump(app_config_dict, f, indent=2, default=str)
 
-        logger.info(f"Saved directory-based configuration to: {config_dir}")
+        logger.debug(f"Saved directory-based configuration to: {config_dir}")
 
     # noinspection PyMethodMayBeStatic
     def update_global_config_in_directory(self, config: Config, config_dir: Path) -> None:
@@ -246,7 +246,7 @@ class GlobalConfigManager(Manager):
         with target_file.open("w") as f:
             json.dump(config_dict, f, indent=2, default=str)
 
-        logger.info(f"Saved global configuration to: {target_file}")
+        logger.debug(f"Saved global configuration to: {target_file}")
 
     def __init__(self, config_path: Path | None = None) -> None:
         """Initialize global configuration.
@@ -310,7 +310,7 @@ class GlobalConfigManager(Manager):
         saved separately in apps/*.json files via AppConfigs.save().
         """
         self.save_global_config_only(self._config_path)
-        logger.info("Global configuration saved")
+        logger.debug("Global configuration saved")
 
     # Global settings properties
     @property
@@ -520,7 +520,7 @@ class AppConfigs(Manager):
         # Save to directory-based config
         self._config_path = save_path  # Update for _save_directory_based_config
         self._save_directory_based_config()
-        logger.info("Application configurations saved")
+        logger.debug("Application configurations saved")
 
     def __iter__(self) -> Iterator[ApplicationConfig]:
         """Iterate over application configurations."""

@@ -108,7 +108,7 @@ class DomainKnowledgeService:
 
             if updated:
                 self.config_manager.save()
-                logger.info(f"Learned domain: {domain} -> {handler_name}")
+                logger.debug(f"Learned domain: {domain} -> {handler_name}")
 
         except Exception as e:
             logger.error(f"Failed to learn domain {domain}: {e}")

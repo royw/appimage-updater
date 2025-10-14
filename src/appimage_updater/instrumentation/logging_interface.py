@@ -54,7 +54,7 @@ class LoguruHTTPLogger(HTTPLogger):
 
     def info(self, message: str, **kwargs: Any) -> None:
         """Log info message."""
-        self._logger.info(message, **kwargs)
+        self._logger.debug(message, **kwargs)
 
     def warning(self, message: str, **kwargs: Any) -> None:
         """Log warning message."""
