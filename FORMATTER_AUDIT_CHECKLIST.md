@@ -84,29 +84,29 @@ For each command/file:
 
 1. **Identify Console Usage**
 
-   - [ ] Search for `console = Console(` patterns
-   - [ ] Search for `console.print(` calls
-   - [ ] Identify if using module-level or formatter's console
+   - [x] ✅ Search for `console = Console(` patterns
+   - [x] ✅ Search for `console.print(` calls
+   - [x] ✅ Identify if using module-level or formatter's console
 
 1. **Check Output Formatter Support**
 
-   - [ ] Verify command accepts `output_format` parameter
-   - [ ] Check if `get_output_formatter()` is called
-   - [ ] Verify formatter's console is passed to display functions
+   - [x] ✅ Verify command accepts `output_format` parameter
+   - [x] ✅ Check if `get_output_formatter()` is called
+   - [x] ✅ Verify formatter's console is passed to display functions
 
 1. **Test Color Output**
 
-   - [ ] Test with `--format rich` (default)
-   - [ ] Test with `--format plain`
-   - [ ] Test with `--format markdown`
-   - [ ] Verify colors work in actual terminal (not piped)
+   - [x] ✅ Test with `--format rich` (default)
+   - [x] ✅ Test with `--format plain`
+   - [x] ✅ Test with `--format markdown`
+   - [x] ✅ Verify colors work in actual terminal (not piped)
 
 1. **Update if Needed**
 
-   - [ ] Add console parameter to display functions
-   - [ ] Pass formatter's console to functions
-   - [ ] Update tests to match new signatures
-   - [ ] Verify all tests pass
+   - [x] N/A Add console parameter to display functions (already done)
+   - [x] N/A Pass formatter's console to functions (already done)
+   - [x] N/A Update tests to match new signatures (already done)
+   - [x] ✅ Verify all tests pass (1929 tests passing)
 
 ## Common Patterns to Fix
 
