@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Enhanced version:bump task** with changelog validation and automation
+  - Validates CHANGELOG.md has [Unreleased] section with content
+  - Displays current unreleased changes for user review
+  - Prompts user to confirm changelog is complete before proceeding
+  - Automatically updates CHANGELOG.md: moves [Unreleased] to new version with date
+  - Commits both pyproject.toml and CHANGELOG.md together
+  - POSIX-compliant shell implementation (works in sh, bash, zsh)
+  - Prevents accidental releases with incomplete or empty changelogs
+
 ### Documentation
 
 - **COMPLETE**: Comprehensive documentation review and updates
