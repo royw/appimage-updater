@@ -2,7 +2,44 @@
 
 All notable changes to AppImage Updater will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ## [Unreleased]
+
+### Documentation
+
+- **COMPLETE**: Comprehensive documentation review and updates
+  - Fixed all configuration examples to use directory-based structure
+  - Updated all version numbers to 0.4.17
+  - Removed references to deleted `init` command
+  - Fixed CLI option documentation (removed duplicates and non-existent options)
+  - Updated automation examples (cron, systemd)
+  - Verified 21 documentation files for accuracy
+
+## [0.4.17] - 2025-01-14
+
+### Breaking Changes
+
+- **REMOVED**: Single-file configuration format support
+  - All configurations must now use directory-based structure: `~/.config/appimage-updater/apps/`
+  - Global config in `~/.config/appimage-updater/config.json`
+  - Each application in separate file: `~/.config/appimage-updater/apps/<appname>.json`
+- **REMOVED**: `--config` CLI option (replaced with `--config-dir` and `--config-file`)
+  - Use `--config-dir` to specify configuration directory
+  - Use `--config-file` for specific application config files
+
+### Added
+
+- **Auto-initialization**: Configuration directory created automatically on first run
+- **Improved error messages**: Better user feedback for missing configurations
+- **Debug logging**: Reduced noise from auto-init messages (INFO → DEBUG)
+
+### Fixed
+
+- **Configuration loading**: Proper `global_config` wrapper in config.json
+- **Global config**: Correctly loads from config.json when using apps/ directory
+- **Stack trace handling**: All tests properly use temp directories
 
 ### New Features
 
