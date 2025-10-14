@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.18] - 2025-10-14
+
 ### Added
 
 - **Enhanced version:bump task** with changelog validation and automation
@@ -215,7 +217,9 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-## [Unreleased] - 2025-09-06
+## [Unreleased]
+
+## [0.4.18] - 2025-10-14 - 2025-09-06
 
 ### MAJOR: GitHub API Authentication & Rate Limit Management
 
