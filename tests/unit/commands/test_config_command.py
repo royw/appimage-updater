@@ -461,18 +461,19 @@ class TestConfigCommand:
 
         mock_show_effective_config.assert_called_once_with("TestApp", Path("/test/config.json"), Path("/test/config"))
 
-    @patch("appimage_updater.commands.config_command.list_available_settings")
-    def test_get_action_handlers_list(self, mock_list_available_settings: Mock) -> None:
+    @patch("appimage_updater.commands.config_command.list_settings")
+    def test_get_action_handlers_list(self, mock_list_settings: Mock) -> None:
         """Test action handlers for list action."""
         params = ConfigParams(action="list")
         command = ConfigCommand(params)
 
+        # Get handlers
         handlers = command._get_action_handlers()
 
         # Execute the list handler
         handlers["list"]()
 
-        mock_list_available_settings.assert_called_once()
+        mock_list_settings.assert_called_once()
 
     def test_get_action_handlers_all_actions_present(self) -> None:
         """Test that all expected actions have handlers."""

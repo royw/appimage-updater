@@ -188,11 +188,15 @@ def _convert_applications_to_dict_format(applications: list[Any]) -> list[dict[s
     apps_data = []
     for app in applications:
         app_dict = {
+            "Application": app.name,
+            "Status": "Enabled" if app.enabled else "Disabled",
+            "Source": app.url,
+            "Download Directory": str(app.download_dir),
+            # Keep old keys for backward compatibility
             "name": app.name,
             "url": app.url,
             "download_dir": str(app.download_dir),
             "enabled": app.enabled,
-            "status": "Enabled" if app.enabled else "Disabled",
             "source_type": app.source_type,
         }
         apps_data.append(app_dict)
@@ -415,7 +419,7 @@ def display_successful_downloads(successful: list[Any]) -> None:
     console.print(f"\n[green]Successfully downloaded {len(successful)} updates:")
     for result in successful:
         size_mb = result.download_size / (1024 * 1024)
-        checksum_status = get_checksum_status(result)
+        checksum_status = _get_checksum_verification_status(result)
         console.print(f"  Downloaded: {result.app_name} ({size_mb:.1f} MB){checksum_status}")
 
 
@@ -429,15 +433,138 @@ def display_failed_downloads(failed: list[Any]) -> None:
         console.print(f"  Failed: {result.app_name}: {result.error_message}")
 
 
-def get_checksum_status(result: Any) -> str:
-    """Get checksum status indicator for a download result."""
-    if not result.checksum_result:
+def _get_checksum_verification_status(candidate: Any) -> str:
+    """Get checksum verification status display string."""
+    if not hasattr(candidate, "checksum_verified"):
         return ""
-
-    if result.checksum_result.verified:
+    if candidate.checksum_verified:
         return " [green]verified[/green]"
     else:
         return " [yellow]unverified[/yellow]"
+
+
+def extract_files_data(app: Any) -> dict[str, Any] | list[dict[str, Any]]:
+    """Extract file information as structured data.
+
+    Args:
+        app: Application object
+
+    Returns:
+        Dictionary with status message or list of file dictionaries
+    """
+    download_dir = Path(app.download_dir)
+
+    if not download_dir.exists():
+        return {"status": "Download directory does not exist"}
+
+    matching_files = find_matching_appimage_files(download_dir, app.pattern)
+    if isinstance(matching_files, str):  # Error message
+        # Strip Rich formatting tags from error message
+        clean_msg = matching_files.replace("[red]", "").replace("[/red]", "")
+        clean_msg = clean_msg.replace("[yellow]", "").replace("[/yellow]", "")
+        return {"status": clean_msg}
+
+    if not matching_files:
+        return {"status": "No AppImage files found matching the pattern"}
+
+    # Sort by modification time (newest first)
+    matching_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+
+    # Convert to structured data
+    files_list = []
+    for file_path in matching_files:
+        stat_info = file_path.stat()
+        size_mb = stat_info.st_size / (1024 * 1024)
+        mtime = os.path.getmtime(file_path)
+        mtime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(mtime))
+
+        is_executable = os.access(file_path, os.X_OK)
+
+        files_list.append(
+            {
+                "name": file_path.name,
+                "size": f"{size_mb:.1f} MB",
+                "modified": mtime_str,
+                "executable": "Yes" if is_executable else "No",
+            }
+        )
+
+    return files_list
+
+
+def extract_symlinks_data(app: Any) -> dict[str, Any] | list[dict[str, Any]]:
+    """Extract symlink information as structured data.
+
+    Args:
+        app: Application object
+
+    Returns:
+        Dictionary with status message or list of symlink dictionaries
+    """
+    download_dir = Path(app.download_dir)
+
+    if not download_dir.exists():
+        return {"status": "Download directory does not exist"}
+
+    # Find symlinks including configured symlink_path
+    found_symlinks = find_appimage_symlinks(download_dir, getattr(app, "symlink_path", None))
+
+    if not found_symlinks:
+        return {"status": "No symlinks found pointing to AppImage files"}
+
+    # Convert to structured data
+    symlinks_list = []
+    for symlink_path, target_path in found_symlinks:
+        symlinks_list.append(
+            {
+                "link": str(symlink_path),
+                "target": target_path.name,
+            }
+        )
+
+    return symlinks_list
+
+
+def extract_checksum_data(app: Any) -> dict[str, Any] | None:
+    """Extract checksum configuration as structured data.
+
+    Args:
+        app: Application object
+
+    Returns:
+        Dictionary with checksum details or None if not configured
+    """
+    if not hasattr(app, "checksum") or not app.checksum:
+        return None
+
+    return {
+        "enabled": app.checksum.enabled,
+        "algorithm": app.checksum.algorithm.upper() if app.checksum.enabled else None,
+        "pattern": app.checksum.pattern if app.checksum.enabled else None,
+        "required": app.checksum.required if app.checksum.enabled else None,
+    }
+
+
+def extract_rotation_data(app: Any) -> dict[str, Any] | None:
+    """Extract file rotation configuration as structured data.
+
+    Args:
+        app: Application object
+
+    Returns:
+        Dictionary with rotation details or None if not configured
+    """
+    if not hasattr(app, "rotation_enabled"):
+        return None
+
+    rotation_data = {
+        "enabled": app.rotation_enabled,
+    }
+
+    if app.rotation_enabled and hasattr(app, "retain_count"):
+        rotation_data["retain_count"] = app.retain_count
+
+    return rotation_data
 
 
 def display_application_details(app: Any, config_source_info: dict[str, str] | None = None) -> None:
@@ -445,8 +572,13 @@ def display_application_details(app: Any, config_source_info: dict[str, str] | N
     output_formatter = get_output_formatter()
 
     if output_formatter and not hasattr(output_formatter, "console"):
-        # Only use structured format for non-Rich formatters (JSON, Plain, HTML)
+        # Only use structured format for non-Rich formatters (JSON, Plain, HTML, Markdown)
         # Rich formatter should use the original Rich panel display
+
+        # Extract file and symlink information
+        files_data = extract_files_data(app)
+        symlinks_data = extract_symlinks_data(app)
+
         app_details = {
             "name": app.name,
             "enabled": getattr(app, "enabled", True),
@@ -455,11 +587,13 @@ def display_application_details(app: Any, config_source_info: dict[str, str] | N
             "source_type": getattr(app, "source_type", ""),
             "pattern": getattr(app, "pattern", ""),
             "config_source": config_source_info or {},
-            "files": {"status": "File information available in Rich format"},
-            "symlinks": {"status": "Symlink information available in Rich format"},
+            "prerelease": getattr(app, "prerelease", False),
+            "symlink_path": str(getattr(app, "symlink_path", "")) if getattr(app, "symlink_path", None) else None,
+            "checksum": extract_checksum_data(app),
+            "rotation": extract_rotation_data(app),
+            "files": files_data,
+            "symlinks": symlinks_data,
         }
-
-        # Add basic file and symlink information
 
         # Use a generic method for application details (we can add this to the interface later)
         if hasattr(output_formatter, "print_application_details"):

@@ -8,6 +8,7 @@ from .interface import (
     OutputFormatter,
 )
 from .json_formatter import JSONOutputFormatter
+from .markdown_formatter import MarkdownOutputFormatter
 from .plain_formatter import PlainOutputFormatter
 from .rich_formatter import RichOutputFormatter
 
@@ -33,6 +34,8 @@ def create_output_formatter(format_type: OutputFormat, **kwargs: Any) -> OutputF
         return JSONOutputFormatter(**kwargs)
     elif format_type == OutputFormat.HTML:
         return HTMLOutputFormatter(**kwargs)
+    elif format_type == OutputFormat.MARKDOWN:
+        return MarkdownOutputFormatter(**kwargs)
     else:
         raise ValueError(f"Unsupported output format: {format_type}")
 

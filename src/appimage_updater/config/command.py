@@ -25,7 +25,8 @@ from .models import (
 
 logger = logging.getLogger(__name__)
 
-console = Console(no_color=bool(os.environ.get("NO_COLOR")))
+# NO_COLOR should only disable colors if it's set to a non-empty value
+console = Console(no_color=bool(os.environ.get("NO_COLOR", "")))
 
 
 def show_global_config(config_file: Path | None = None, config_dir: Path | None = None) -> None:
@@ -35,23 +36,71 @@ def show_global_config(config_file: Path | None = None, config_dir: Path | None 
         config = app_configs._config
         defaults = config.global_config.defaults
 
-        _print_config_header()
-        _print_basic_settings_table(config.global_config)
-        _print_defaults_settings_table(defaults)
+        output_formatter = get_output_formatter()
+
+        if output_formatter and not hasattr(output_formatter, "console"):
+            # Use structured format for non-Rich formatters
+            _print_config_structured(config.global_config, defaults, output_formatter)
+        else:
+            # Use Rich format with formatter's console
+            rich_console = (
+                output_formatter.console if output_formatter and hasattr(output_formatter, "console") else console
+            )
+            _print_config_header(rich_console)
+            _print_basic_settings_table(config.global_config, rich_console)
+            _print_defaults_settings_table(defaults, rich_console)
 
     except ConfigLoadError as e:
         _handle_config_load_error(e)
 
 
-def _print_config_header() -> None:
+def _print_config_structured(global_config: Any, defaults: Any, output_formatter: Any) -> None:
+    """Print configuration using structured formatter (markdown/plain)."""
+    # Collect all settings into a dictionary with format: "Display Name|setting-name"
+    # The formatter will handle the formatting based on its type
+    settings = {}
+
+    # Helper function to format setting key (display_name|setting_name)
+    def format_key(display_name: str, setting_name: str) -> str:
+        return f"{display_name}|{setting_name}"
+
+    # Basic settings
+    settings[format_key("Concurrent Downloads", "concurrent-downloads")] = str(global_config.concurrent_downloads)
+    settings[format_key("Timeout Seconds", "timeout-seconds")] = str(global_config.timeout_seconds)
+    settings[format_key("User Agent", "user-agent")] = global_config.user_agent
+
+    # Default settings for new applications
+    download_dir_value = str(defaults.download_dir) if defaults.download_dir else "None (use current directory)"
+    settings[format_key("Download Directory", "download-dir")] = download_dir_value
+    settings[format_key("Auto Subdirectory", "auto-subdir")] = "Yes" if defaults.auto_subdir else "No"
+    settings[format_key("Rotation Enabled", "rotation")] = "Yes" if defaults.rotation_enabled else "No"
+    settings[format_key("Retain Count", "retain-count")] = str(defaults.retain_count)
+    settings[format_key("Symlink Enabled", "symlink-enabled")] = "Yes" if defaults.symlink_enabled else "No"
+    symlink_dir_value = str(defaults.symlink_dir) if defaults.symlink_dir else "None"
+    settings[format_key("Symlink Directory", "symlink-dir")] = symlink_dir_value
+    settings[format_key("Symlink Pattern", "symlink-pattern")] = defaults.symlink_pattern
+    settings[format_key("Checksum Enabled", "checksum")] = "Yes" if defaults.checksum_enabled else "No"
+    settings[format_key("Checksum Algorithm", "checksum-algorithm")] = defaults.checksum_algorithm.upper()
+    settings[format_key("Checksum Pattern", "checksum-pattern")] = defaults.checksum_pattern
+    settings[format_key("Checksum Required", "checksum-required")] = "Yes" if defaults.checksum_required else "No"
+    settings[format_key("Prerelease", "prerelease")] = "Yes" if defaults.prerelease else "No"
+
+    # Use the formatter's print_config_settings method
+    if hasattr(output_formatter, "print_config_settings"):
+        output_formatter.print_config_settings(settings)
+
+
+def _print_config_header(rich_console: Console | None = None) -> None:
     """Print the configuration header."""
-    console.print("[bold blue]Global Configuration[/bold blue]")
-    console.print()
+    console_to_use = rich_console or console
+    console_to_use.print("[bold blue]Global Configuration[/bold blue]")
+    console_to_use.print()
 
 
-def _print_basic_settings_table(global_config: Any) -> None:
+def _print_basic_settings_table(global_config: Any, rich_console: Console | None = None) -> None:
     """Print the basic settings table."""
-    console.print("[bold]Basic Settings:[/bold]")
+    console_to_use = rich_console or console
+    console_to_use.print("[bold]Basic Settings:[/bold]")
     table = Table(show_header=False, box=None, pad_edge=False)
     table.add_column("Setting", style="cyan", width=25)
     table.add_column("Setting Name", style="dim", width=20)
@@ -60,20 +109,21 @@ def _print_basic_settings_table(global_config: Any) -> None:
     table.add_row("Concurrent Downloads", "[dim](concurrent-downloads)[/dim]", str(global_config.concurrent_downloads))
     table.add_row("Timeout (seconds)", "[dim](timeout-seconds)[/dim]", str(global_config.timeout_seconds))
     table.add_row("User Agent", "", global_config.user_agent)
-    console.print(table)
-    console.print()
+    console_to_use.print(table)
+    console_to_use.print()
 
 
-def _print_defaults_settings_table(defaults: Any) -> None:
+def _print_defaults_settings_table(defaults: Any, rich_console: Console | None = None) -> None:
     """Print the default settings table."""
-    console.print("[bold]Default Settings for New Applications:[/bold]")
+    console_to_use = rich_console or console
+    console_to_use.print("[bold]Default Settings for New Applications:[/bold]")
     defaults_table = Table(show_header=False, box=None, pad_edge=False)
     defaults_table.add_column("Setting", style="cyan", width=25)
     defaults_table.add_column("Setting Name", style="dim", width=20)
     defaults_table.add_column("Value", style="white")
 
     _add_defaults_table_rows(defaults_table, defaults)
-    console.print(defaults_table)
+    console_to_use.print(defaults_table)
 
 
 def _add_defaults_table_rows(defaults_table: Table, defaults: Any) -> None:
@@ -151,9 +201,14 @@ def show_effective_config(app_name: str, config_file: Path | None = None, config
             _handle_app_not_found(app_name)
             return  # Error already handled
 
-        _print_effective_config_header(app_name)
-        _print_main_config_table(effective_config)
-        _print_checksum_config_table(effective_config)
+        output_formatter = get_output_formatter()
+        rich_console = (
+            output_formatter.console if output_formatter and hasattr(output_formatter, "console") else console
+        )
+
+        _print_effective_config_header(app_name, rich_console)
+        _print_main_config_table(effective_config, rich_console)
+        _print_checksum_config_table(effective_config, rich_console)
 
     except ConfigLoadError as e:
         _handle_config_load_error(e)
@@ -169,21 +224,23 @@ def _handle_app_not_found(app_name: str) -> bool:
     return False
 
 
-def _print_effective_config_header(app_name: str) -> None:
+def _print_effective_config_header(app_name: str, rich_console: Console | None = None) -> None:
     """Print the effective configuration header."""
-    console.print(f"[bold blue]Effective Configuration for '{app_name}'[/bold blue]")
-    console.print()
+    console_to_use = rich_console or console
+    console_to_use.print(f"[bold blue]Effective Configuration for '{app_name}'[/bold blue]")
+    console_to_use.print()
 
 
-def _print_main_config_table(effective_config: dict[str, Any]) -> None:
+def _print_main_config_table(effective_config: dict[str, Any], rich_console: Console | None = None) -> None:
     """Print the main configuration table."""
+    console_to_use = rich_console or console
     table = Table(show_header=False, box=None, pad_edge=False)
     table.add_column("Setting", style="cyan", width=20)
     table.add_column("Value", style="white")
 
     _add_main_config_rows(table, effective_config)
-    console.print(table)
-    console.print()
+    console_to_use.print(table)
+    console_to_use.print()
 
 
 def _add_main_config_rows(table: Table, effective_config: dict[str, Any]) -> None:
@@ -217,10 +274,11 @@ def _add_optional_config_rows(table: Table, config: dict[str, Any]) -> None:
         table.add_row("Symlink Path", config["symlink_path"])
 
 
-def _print_checksum_config_table(effective_config: dict[str, Any]) -> None:
+def _print_checksum_config_table(effective_config: dict[str, Any], rich_console: Console | None = None) -> None:
     """Print the checksum configuration table."""
+    console_to_use = rich_console or console
     checksum = effective_config["checksum"]
-    console.print("[bold]Checksum Settings:[/bold]")
+    console_to_use.print("[bold]Checksum Settings:[/bold]")
     checksum_table = Table(show_header=False, box=None, pad_edge=False)
     checksum_table.add_column("Setting", style="cyan", width=20)
     checksum_table.add_column("Value", style="white")
@@ -230,7 +288,7 @@ def _print_checksum_config_table(effective_config: dict[str, Any]) -> None:
     checksum_table.add_row("Pattern", checksum["pattern"])
     checksum_table.add_row("Required", "Yes" if checksum["required"] else "No")
 
-    console.print(checksum_table)
+    console_to_use.print(checksum_table)
 
 
 def set_global_config_value(
@@ -508,17 +566,19 @@ def _show_available_settings(setting: str) -> bool:
     return False
 
 
-def list_available_settings() -> None:
-    """List all available configuration settings with descriptions and examples."""
-    # Check if we have an output formatter (for JSON/HTML output)
+def list_settings(config_file: Path | None = None, config_dir: Path | None = None) -> None:
+    """List all available configuration settings with descriptions."""
     formatter = get_output_formatter()
 
-    if formatter:
-        # For structured formats, provide the data in a structured way
+    if formatter and not hasattr(formatter, "console"):
+        # For structured formats (markdown, plain, json, html)
         _list_settings_structured(formatter)
     else:
-        # For console formats, use the rich formatting
-        _list_settings_console()
+        # For console formats, use the rich formatting with the formatter's console
+        if formatter and hasattr(formatter, "console"):
+            _list_settings_console(formatter.console)
+        else:
+            _list_settings_console(console)
 
 
 def _list_settings_structured(formatter: Any) -> None:
@@ -653,30 +713,59 @@ def _list_settings_structured(formatter: Any) -> None:
     formatter.end_section()
 
 
-def _list_settings_console() -> None:
-    """List settings with rich console formatting."""
-    console.print("[bold blue]Available Configuration Settings[/bold blue]")
-    console.print()
+def _colorize_row(setting: str, description: str, valid_values: str, example: str) -> tuple[str, str, str, str]:
+    """Colorize a table row with Rich markup.
+
+    Args:
+        setting: Setting name
+        description: Setting description
+        valid_values: Valid values
+        example: Example usage
+
+    Returns:
+        Tuple of colorized strings
+    """
+    return (
+        f"[cyan]{setting}[/cyan]",
+        description,
+        f"[dim]{valid_values}[/dim]",
+        f"[green]{example}[/green]",
+    )
+
+
+def _list_settings_console(rich_console: Console | None = None) -> None:
+    """List settings with rich console formatting.
+
+    Args:
+        rich_console: Console instance to use (defaults to module console)
+    """
+    console_to_use = rich_console or console
+    console_to_use.print("[bold blue]Available Configuration Settings[/bold blue]")
+    console_to_use.print()
 
     # Global settings
-    console.print("[bold]Global Settings:[/bold]")
-    global_table = Table(show_header=True, box=None, pad_edge=False)
+    console_to_use.print("[bold]Global Settings:[/bold]")
+    global_table = Table(show_header=True, pad_edge=False)
     global_table.add_column("Setting", style="cyan", width=22)
     global_table.add_column("Description", style="white", width=40)
     global_table.add_column("Valid Values", style="dim", width=25)
     global_table.add_column("Example", style="green", width=20)
 
     global_table.add_row(
-        "concurrent-downloads", "Number of simultaneous downloads", "1-10", "config set concurrent-downloads 3"
+        *_colorize_row(
+            "concurrent-downloads", "Number of simultaneous downloads", "1-10", "config set concurrent-downloads 3"
+        )
     )
-    global_table.add_row("timeout-seconds", "HTTP request timeout", "5-300", "config set timeout-seconds 30")
+    global_table.add_row(
+        *_colorize_row("timeout-seconds", "HTTP request timeout", "5-300", "config set timeout-seconds 30")
+    )
 
-    console.print(global_table)
-    console.print()
+    console_to_use.print(global_table)
+    console_to_use.print()
 
     # Default settings for new applications
-    console.print("[bold]Default Settings for New Applications:[/bold]")
-    defaults_table = Table(show_header=True, box=None, pad_edge=False)
+    console_to_use.print("[bold]Default Settings for New Applications:[/bold]")
+    defaults_table = Table(show_header=True, pad_edge=False)
     defaults_table.add_column("Setting", style="cyan", width=22)
     defaults_table.add_column("Description", style="white", width=40)
     defaults_table.add_column("Valid Values", style="dim", width=25)
@@ -684,86 +773,110 @@ def _list_settings_console() -> None:
 
     # Directory settings
     defaults_table.add_row(
-        "download-dir", "Default download directory", "path or 'none'", "config set download-dir ~/Apps"
-    )
-    defaults_table.add_row("symlink-dir", "Default symlink directory", "path or 'none'", "config set symlink-dir ~/bin")
-    defaults_table.add_row(
-        "symlink-pattern",
-        "Default symlink filename pattern",
-        "string with {name}",
-        "config set symlink-pattern '{name}'",
+        *_colorize_row("download-dir", "Default download directory", "path or 'none'", "config set download-dir ~/Apps")
     )
     defaults_table.add_row(
-        "auto-subdir",
-        "Create app subdirectories automatically",
-        "true/false, yes/no, 1/0",
-        "config set auto-subdir true",
+        *_colorize_row("symlink-dir", "Default symlink directory", "path or 'none'", "config set symlink-dir ~/bin")
+    )
+    defaults_table.add_row(
+        *_colorize_row(
+            "symlink-pattern",
+            "Default symlink filename pattern",
+            "string with {name}",
+            "config set symlink-pattern '{name}'",
+        )
+    )
+    defaults_table.add_row(
+        *_colorize_row(
+            "auto-subdir",
+            "Create app subdirectories automatically",
+            "true/false, yes/no, 1/0",
+            "config set auto-subdir true",
+        )
     )
 
     # Rotation settings
     defaults_table.add_row(
-        "rotation",
-        "Enable file rotation by default",
-        "true/false, yes/no, 1/0",
-        "config set rotation true",
+        *_colorize_row(
+            "rotation", "Enable file rotation by default", "true/false, yes/no, 1/0", "config set rotation true"
+        )
     )
-    defaults_table.add_row("retain-count", "Number of old files to keep", "1-10", "config set retain-count 3")
     defaults_table.add_row(
-        "symlink-enabled", "Create symlinks by default", "true/false, yes/no, 1/0", "config set symlink-enabled true"
+        *_colorize_row("retain-count", "Number of old files to keep", "1-10", "config set retain-count 3")
+    )
+    defaults_table.add_row(
+        *_colorize_row(
+            "symlink-enabled",
+            "Create symlinks by default",
+            "true/false, yes/no, 1/0",
+            "config set symlink-enabled true",
+        )
     )
 
     # Checksum settings
     defaults_table.add_row(
-        "checksum",
-        "Enable checksum verification",
-        "true/false, yes/no, 1/0",
-        "config set checksum true",
+        *_colorize_row(
+            "checksum", "Enable checksum verification", "true/false, yes/no, 1/0", "config set checksum true"
+        )
     )
     defaults_table.add_row(
-        "checksum-algorithm", "Default checksum algorithm", "sha256, sha1, md5", "config set checksum-algorithm sha256"
+        *_colorize_row(
+            "checksum-algorithm",
+            "Default checksum algorithm",
+            "sha256, sha1, md5",
+            "config set checksum-algorithm sha256",
+        )
     )
     defaults_table.add_row(
-        "checksum-pattern",
-        "Checksum file pattern",
-        "string with {filename}",
-        "config set checksum-pattern '{filename}.sha256'",
+        *_colorize_row(
+            "checksum-pattern",
+            "Checksum file pattern",
+            "string with {filename}",
+            "config set checksum-pattern '{filename}.sha256'",
+        )
     )
     defaults_table.add_row(
-        "checksum-required",
-        "Require checksum verification",
-        "true/false, yes/no, 1/0",
-        "config set checksum-required false",
+        *_colorize_row(
+            "checksum-required",
+            "Require checksum verification",
+            "true/false, yes/no, 1/0",
+            "config set checksum-required false",
+        )
     )
 
     # Other settings
     defaults_table.add_row(
-        "prerelease", "Include prerelease versions", "true/false, yes/no, 1/0", "config set prerelease false"
+        *_colorize_row(
+            "prerelease", "Include prerelease versions", "true/false, yes/no, 1/0", "config set prerelease false"
+        )
     )
 
     # Parallelization settings
     defaults_table.add_row(
-        "enable-multiple-processes",
-        "Enable parallel processing",
-        "true/false, yes/no, 1/0",
-        "config set enable-multiple-processes true",
+        *_colorize_row(
+            "enable-multiple-processes",
+            "Enable parallel processing",
+            "true/false, yes/no, 1/0",
+            "config set enable-multiple-processes true",
+        )
     )
     defaults_table.add_row(
-        "process-pool-size", "Number of parallel processes", "1-16", "config set process-pool-size 4"
+        *_colorize_row("process-pool-size", "Number of parallel processes", "1-16", "config set process-pool-size 4")
     )
 
-    console.print(defaults_table)
-    console.print()
+    console_to_use.print(defaults_table)
+    console_to_use.print()
 
     # Usage examples
-    console.print("[bold]Common Usage Examples:[/bold]")
-    console.print("  [cyan]appimage-updater config list[/cyan]                    # Show this help")
-    console.print("  [cyan]appimage-updater config show[/cyan]                    # Show current settings")
-    console.print("  [cyan]appimage-updater config set download-dir ~/Apps[/cyan] # Set download directory")
-    console.print("  [cyan]appimage-updater config set rotation true[/cyan] # Enable rotation")
-    console.print("  [cyan]appimage-updater config reset[/cyan]                   # Reset to defaults")
-    console.print()
+    console_to_use.print("[bold]Common Usage Examples:[/bold]")
+    console_to_use.print("  [cyan]appimage-updater config list[/cyan]                    # Show this help")
+    console_to_use.print("  [cyan]appimage-updater config show[/cyan]                    # Show current settings")
+    console_to_use.print("  [cyan]appimage-updater config set download-dir ~/Apps[/cyan] # Set download directory")
+    console_to_use.print("  [cyan]appimage-updater config set rotation true[/cyan] # Enable rotation")
+    console_to_use.print("  [cyan]appimage-updater config reset[/cyan]                   # Reset to defaults")
+    console_to_use.print()
 
-    console.print("[dim]Tip: Use 'appimage-updater config show' to see current values[/dim]")
+    console_to_use.print("[dim]Tip: Use 'appimage-updater config show' to see current values[/dim]")
 
 
 def reset_global_config(config_file: Path | None = None, config_dir: Path | None = None) -> bool:

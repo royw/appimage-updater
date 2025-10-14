@@ -14,6 +14,7 @@ class OutputFormat(str, Enum):
     PLAIN = "plain"
     JSON = "json"
     HTML = "html"
+    MARKDOWN = "markdown"
 
 
 class OutputFormatter(Protocol):

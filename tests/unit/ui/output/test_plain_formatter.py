@@ -264,8 +264,18 @@ class TestSpecializedMethods:
     def test_print_application_list(self, formatter: PlainOutputFormatter, mock_stdout: MagicMock) -> None:
         """Test printing application list."""
         applications = [
-            {"name": "App1", "url": "https://example.com/app1"},
-            {"name": "App2", "url": "https://example.com/app2"},
+            {
+                "Application": "App1",
+                "Status": "Enabled",
+                "Source": "https://example.com/app1",
+                "Download Directory": "/path1",
+            },
+            {
+                "Application": "App2",
+                "Status": "Disabled",
+                "Source": "https://example.com/app2",
+                "Download Directory": "/path2",
+            },
         ]
         formatter.print_application_list(applications)
 
@@ -432,8 +442,18 @@ class TestIntegrationScenarios:
         formatter.start_section("Configured Applications")
 
         applications = [
-            {"Name": "App1", "URL": "https://github.com/user/app1", "Enabled": "Yes"},
-            {"Name": "App2", "URL": "https://github.com/user/app2", "Enabled": "No"},
+            {
+                "Application": "App1",
+                "Status": "Enabled",
+                "Source": "https://github.com/user/app1",
+                "Download Directory": "/path1",
+            },
+            {
+                "Application": "App2",
+                "Status": "Disabled",
+                "Source": "https://github.com/user/app2",
+                "Download Directory": "/path2",
+            },
         ]
         formatter.print_application_list(applications)
         formatter.end_section()

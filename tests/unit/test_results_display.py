@@ -7,49 +7,53 @@ from unittest.mock import Mock, patch
 from rich.console import Console
 
 from appimage_updater.ui.display import (
+    _get_checksum_verification_status,
     display_download_results,
     display_failed_downloads,
     display_successful_downloads,
-    get_checksum_status,
 )
 
 
 class TestGetChecksumStatus:
-    """Test cases for get_checksum_status function."""
+    """Test cases for _get_checksum_verification_status function."""
 
     def test_get_checksum_status_no_checksum_result(self) -> None:
-        """Test checksum status when no checksum result is available."""
-        result = Mock()
-        result.checksum_result = None
+        """Test checksum status when no checksum verified attribute is available."""
+        result = Mock(spec=[])
 
-        status = get_checksum_status(result)
+        status = _get_checksum_verification_status(result)
         assert status == ""
 
     def test_get_checksum_status_verified(self) -> None:
         """Test checksum status when checksum is verified."""
         result = Mock()
-        result.checksum_result = Mock()
-        result.checksum_result.verified = True
+        result.checksum_verified = True
 
-        status = get_checksum_status(result)
+        status = _get_checksum_verification_status(result)
         assert status == " [green]verified[/green]"
 
     def test_get_checksum_status_not_verified(self) -> None:
         """Test checksum status when checksum is not verified."""
         result = Mock()
-        result.checksum_result = Mock()
-        result.checksum_result.verified = False
+        result.checksum_verified = False
 
-        status = get_checksum_status(result)
+        status = _get_checksum_verification_status(result)
         assert status == " [yellow]unverified[/yellow]"
 
-    def test_get_checksum_status_falsy_checksum_result(self) -> None:
-        """Test checksum status when checksum result is falsy."""
-        result = Mock()
-        result.checksum_result = False
+    def test_get_checksum_status_no_verified_attribute(self) -> None:
+        """Test checksum status when verified attribute is missing."""
+        result = Mock(spec=["other_attr"])
 
-        status = get_checksum_status(result)
+        status = _get_checksum_verification_status(result)
         assert status == ""
+
+    def test_get_checksum_status_falsy_checksum_result(self) -> None:
+        """Test checksum status when checksum verified is None."""
+        result = Mock()
+        result.checksum_verified = None
+
+        status = _get_checksum_verification_status(result)
+        assert status == " [yellow]unverified[/yellow]"
 
 
 class TestDisplaySuccessfulDownloads:
@@ -66,10 +70,9 @@ class TestDisplaySuccessfulDownloads:
     @patch("appimage_updater.ui.display.console")
     def test_display_successful_downloads_single_result(self, mock_console: Mock) -> None:
         """Test displaying single successful download."""
-        result = Mock()
+        result = Mock(spec=["app_name", "download_size"])
         result.app_name = "TestApp"
         result.download_size = 1024 * 1024  # 1 MB
-        result.checksum_result = None
 
         display_successful_downloads([result])
 
@@ -81,16 +84,14 @@ class TestDisplaySuccessfulDownloads:
     @patch("appimage_updater.ui.display.console")
     def test_display_successful_downloads_multiple_results(self, mock_console: Mock) -> None:
         """Test displaying multiple successful downloads."""
-        result1 = Mock()
+        result1 = Mock(spec=["app_name", "download_size"])
         result1.app_name = "App1"
         result1.download_size = 2 * 1024 * 1024  # 2 MB
-        result1.checksum_result = None
 
         result2 = Mock()
         result2.app_name = "App2"
         result2.download_size = 5 * 1024 * 1024  # 5 MB
-        result2.checksum_result = Mock()
-        result2.checksum_result.verified = True
+        result2.checksum_verified = True
 
         display_successful_downloads([result1, result2])
 
@@ -106,8 +107,7 @@ class TestDisplaySuccessfulDownloads:
         result = Mock()
         result.app_name = "TestApp"
         result.download_size = 1536 * 1024  # 1.5 MB
-        result.checksum_result = Mock()
-        result.checksum_result.verified = False
+        result.checksum_verified = False
 
         display_successful_downloads([result])
 

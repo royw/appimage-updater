@@ -9,7 +9,7 @@ from loguru import logger
 from rich.console import Console
 
 from ..config.command import (
-    list_available_settings,
+    list_settings,
     reset_global_config,
     set_global_config_value,
     show_effective_config,
@@ -136,5 +136,5 @@ class ConfigCommand(Command):
             "show-effective": lambda: show_effective_config(
                 self.params.app_name, self.params.config_file, self.params.config_dir
             ),
-            "list": lambda: list_available_settings(),
+            "list": lambda: list_settings(),
         }

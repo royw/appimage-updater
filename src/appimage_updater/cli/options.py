@@ -65,7 +65,7 @@ class CLIOptions:
         OutputFormat.RICH,
         "--format",
         "-f",
-        help="Output format: rich, plain, json, or html",
+        help="Output format: rich, plain, json, html, or markdown",
         case_sensitive=False,
     )
 

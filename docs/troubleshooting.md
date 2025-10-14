@@ -233,7 +233,7 @@ Look for these key indicators in debug output:
    ```bash
    # With authentication (shows limit of 5000/hour)
    curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/rate_limit
-   
+
    # Without authentication (shows limit of 60/hour)
    curl https://api.github.com/rate_limit
    ```

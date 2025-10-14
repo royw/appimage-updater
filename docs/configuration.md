@@ -71,7 +71,7 @@ AppImage Updater uses JSON configuration files to define which applications to m
 - `url`: Repository or download URL
 - `download_dir`: Directory to save AppImage files (supports ~ expansion)
 - `pattern`: Regular expression to match desired AppImage files
-- `version_pattern`: Optional version pattern to filter releases (e.g., 'N.N_' for stable versions only)
+- `version_pattern`: Optional version pattern to filter releases (e.g., 'N.N\_' for stable versions only)
 - `basename`: Optional base name for file matching (defaults to app name if not specified)
 - `enabled`: Whether to check this application for updates (default: true)
 - `prerelease`: Include prerelease versions (default: false)

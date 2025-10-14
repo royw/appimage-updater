@@ -198,64 +198,11 @@ Tip: Use 'appimage-updater show FreeCAD_weekly' to view full configuration
 ➤ appimage-updater show FreeCAD
 ```
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title></title>
-<style type="text/css">
-.ansi2html-content { display: inline; white-space: pre-wrap; word-wrap: break-word; }
-.body_foreground { color: #AAAAAA; }
-.body_background { background-color: #000000; }
-.inv_foreground { color: #000000; }
-.inv_background { background-color: #AAAAAA; }
-.ansi1 { font-weight: bold; }
-.ansi2 { font-weight: lighter; }
-.ansi32 { color: #00aa00; }
-.ansi33 { color: #aa5500; }
-.ansi34 { color: #0000aa; }
-.ansi36 { color: #00aaaa; }
-</style>
-</head>
-<body class="body_foreground body_background" >
-<pre class="ansi2html-content" style="font-size: 70%;" >
+## Application Details: FreeCAD
 
-<span class="ansi1 ansi36">Application: FreeCAD</span>
-=====================
-<span class="ansi34">╭─</span><span class="ansi34">───────────────────────────────────────</span><span class="ansi34"> Configuration </span><span class="ansi34">────────────────────────────────────────</span><span class="ansi34">─╮</span>
-<span class="ansi34">│</span> <span class="ansi1">Name:</span> FreeCAD                                                                                  <span class="ansi34">│</span>
-<span class="ansi34">│</span> <span class="ansi1">Status:</span> <span class="ansi32">Enabled</span>                                                                                <span class="ansi34">│</span>
-<span class="ansi34">│</span> <span class="ansi1">Source:</span> Github                                                                                 <span class="ansi34">│</span>
-<span class="ansi34">│</span> <span class="ansi1">URL:</span> https://github.com/FreeCAD/FreeCAD                                                        <span class="ansi34">│</span>
-<span class="ansi34">│</span> <span class="ansi1">Download Directory:</span> ~/Applications/FreeCAD                                                     <span class="ansi34">│</span>
-<span class="ansi34">│</span> <span class="ansi1">File Pattern:</span> (?i)FreeCAD.*\.(zip|AppImage)(\.(|current|old))?$                                <span class="ansi34">│</span>
-<span class="ansi34">│</span> <span class="ansi1">Config File:</span> ~/.config/appimage-updater/apps/FreeCAD.json                                      <span class="ansi34">│</span>
-<span class="ansi34">│</span> <span class="ansi1">Prerelease:</span> No                                                                                 <span class="ansi34">│</span>
-<span class="ansi34">│</span> <span class="ansi1">Checksum Verification:</span> Enabled                                                                 <span class="ansi34">│</span>
-<span class="ansi34">│</span>   <span class="ansi2">Algorithm:</span> SHA256                                                                            <span class="ansi34">│</span>
-<span class="ansi34">│</span>   <span class="ansi2">Pattern:</span> {filename}-SHA256.txt                                                               <span class="ansi34">│</span>
-<span class="ansi34">│</span>   <span class="ansi2">Required:</span> No                                                                                 <span class="ansi34">│</span>
-<span class="ansi34">│</span> <span class="ansi1">File Rotation:</span> Disabled                                                                        <span class="ansi34">│</span>
-<span class="ansi34">╰────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
-<span class="ansi32">╭─</span><span class="ansi32">───────────────────────────────────────────</span><span class="ansi32"> Files </span><span class="ansi32">────────────────────────────────────────────</span><span class="ansi32">─╮</span>
-<span class="ansi32">│</span> <span class="ansi1">FreeCAD_1.0.2-conda-Linux-x86_64-py311.AppImage</span>                                                <span class="ansi32">│</span>
-<span class="ansi32">│</span>   <span class="ansi2">Size:</span> 759.0 MB                                                                               <span class="ansi32">│</span>
-<span class="ansi32">│</span>   <span class="ansi2">Modified:</span> 2025-09-14 00:25:50                                                                <span class="ansi32">│</span>
-<span class="ansi32">│</span>   <span class="ansi2">Executable:</span> <span class="ansi32">executable</span>                                                                       <span class="ansi32">│</span>
-<span class="ansi32">│</span>                                                                                                <span class="ansi32">│</span>
-<span class="ansi32">│</span> <span class="ansi1">FreeCAD-1.0.0-conda-Linux-x86_64-py311.appimage</span>                                                <span class="ansi32">│</span>
-<span class="ansi32">│</span>   <span class="ansi2">Size:</span> 648.2 MB                                                                               <span class="ansi32">│</span>
-<span class="ansi32">│</span>   <span class="ansi2">Modified:</span> 2024-11-30 15:22:39                                                                <span class="ansi32">│</span>
-<span class="ansi32">│</span>   <span class="ansi2">Executable:</span> <span class="ansi32">executable</span>                                                                       <span class="ansi32">│</span>
-<span class="ansi32">╰────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
-<span class="ansi33">╭─</span><span class="ansi33">──────────────────────────────────────────</span><span class="ansi33"> Symlinks </span><span class="ansi33">──────────────────────────────────────────</span><span class="ansi33">─╮</span>
-<span class="ansi33">│</span> <span class="ansi33">No symlinks found pointing to AppImage files</span>                                                   <span class="ansi33">│</span>
-<span class="ansi33">╰────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
-
-</pre>
-</body>
-
-</html>
+| $$\\color{cyan}{name}$$ | enabled | url | download_dir | source_type | pattern | config_source | files | symlinks |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| $$\\color{cyan}{FreeCAD}$$ | True | https://github.com/FreeCAD/FreeCAD | /home/royw/Applications/FreeCAD | github | (?i)FreeCAD.\*.(zip|AppImage)(.(|current|old))?$ | {'type': 'directory', 'path': '/home/royw/.config/appimage-updater/apps'} | {'status': 'File information available in Rich format'} | {'status': 'Symlink information available in Rich format'} |
 
 To see the two new apps that are being managed:
 
@@ -468,7 +415,7 @@ uv run python -m appimage_updater add BalenaEtcher https://github.com/balena-io/
 # Filters out: ARM64, macOS, Windows versions (non-Linux platforms ignored)
 ```
 
-Note that the module name uses an underscore instead of a hyphen (`uv run python -m appimage_updater`).  This is a python quirk.
+Note that the module name uses an underscore instead of a hyphen (`uv run python -m appimage_updater`). This is a python quirk.
 
 **System Detection:**
 
