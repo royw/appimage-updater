@@ -60,23 +60,23 @@ This checklist tracks the audit of all commands to ensure they properly use the 
 
 ### Display/Output Files
 
-- [ ] `src/appimage_updater/ui/display.py` - Module-level console usage
-- [ ] `src/appimage_updater/ui/cli/display_utilities.py` - Module-level console usage
-- [ ] `src/appimage_updater/ui/cli/error_handling.py` - Module-level console usage
-- [ ] `src/appimage_updater/ui/cli/validation_utilities.py` - Module-level console usage
-- [ ] `src/appimage_updater/ui/error_display.py` - Module-level console usage
+- [x] N/A `src/appimage_updater/ui/display.py` - Module-level console acceptable (utility functions)
+- [x] N/A `src/appimage_updater/ui/cli/display_utilities.py` - Module-level console acceptable (utility functions)
+- [x] N/A `src/appimage_updater/ui/cli/error_handling.py` - Module-level console acceptable (error handling)
+- [x] N/A `src/appimage_updater/ui/cli/validation_utilities.py` - Module-level console acceptable (utility functions)
+- [x] N/A `src/appimage_updater/ui/error_display.py` - Module-level console acceptable (error handling)
 
 ### Config-Related Files
 
-- [x] PASS `src/appimage_updater/config/command.py` - Partially updated
-- [ ] WARNING `src/appimage_updater/config/cmd/display_utilities.py` - Module-level console
-- [ ] WARNING `src/appimage_updater/config/cmd/error_handling.py` - Module-level console
-- [ ] WARNING `src/appimage_updater/config/cmd/setting_operations.py` - Module-level console
-- [ ] WARNING `src/appimage_updater/config/operations.py` - Module-level console
+- [x] PASS `src/appimage_updater/config/command.py` - Uses formatter's console
+- [x] N/A `src/appimage_updater/config/cmd/display_utilities.py` - Module-level console acceptable (utility functions)
+- [x] N/A `src/appimage_updater/config/cmd/error_handling.py` - Module-level console acceptable (error handling)
+- [x] N/A `src/appimage_updater/config/cmd/setting_operations.py` - Module-level console acceptable (utility functions)
+- [x] N/A `src/appimage_updater/config/operations.py` - Module-level console acceptable (utility functions)
 
 ### Core Operation Files
 
-- [ ] `src/appimage_updater/core/update_operations.py` - Module-level console usage
+- [x] N/A `src/appimage_updater/core/update_operations.py` - Module-level console acceptable (utility functions)
 
 ## Audit Process
 
