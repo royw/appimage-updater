@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Colorized config commands** for improved readability
+  - `config list`: Colored output in both Rich and Markdown formats
+    - Setting names displayed in cyan
+    - Valid values displayed in dim/gray
+    - Examples displayed in green
+    - Markdown format uses LaTeX color syntax for GitHub rendering
+  - `config show`: Now uses output formatter's console for consistent colors
+  - `config show-effective`: Now uses output formatter's console for consistent colors
+
+### Changed
+
+- **Improved code maintainability** by reducing function complexity
+  - Extracted helper methods in markdown formatter (5 new methods)
+  - Extracted helper methods in plain formatter (5 new methods)
+  - All functions now pass complexity lint checks (under threshold of 10)
+
+### Fixed
+
+- **Consistent function naming** across codebase
+  - Renamed `list_available_settings` → `list_settings`
+  - Renamed `get_checksum_status` → `_get_checksum_verification_status`
+  - Updated all tests to match new function signatures
+
 ## [0.4.18] - 2025-10-14
 
 ### Added
