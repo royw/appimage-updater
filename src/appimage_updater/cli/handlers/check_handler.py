@@ -157,8 +157,7 @@ class CheckCommandHandler(CommandHandler):
                 disable_global_trace()
 
         # Handle format-specific finalization
-        if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
-            output_formatter.finalize()
+        output_formatter.finalize()
 
         if not result.success:
             raise typer.Exit(result.exit_code)

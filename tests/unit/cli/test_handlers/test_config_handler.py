@@ -218,7 +218,7 @@ class TestConfigCommandHandler:
     def test_execute_config_command_rich_format_no_finalize(
         self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
     ) -> None:
-        """Test that RICH format does not call finalize on formatter."""
+        """Test that RICH format calls finalize on formatter."""
         with patch("appimage_updater.cli.handlers.config_handler.Console"):
             handler = ConfigCommandHandler()
 
@@ -244,8 +244,8 @@ class TestConfigCommandHandler:
                 output_format=OutputFormat.RICH,
             )
 
-            # Verify finalize was NOT called for RICH format
-            mock_formatter.finalize.assert_not_called()
+            # Verify finalize was called for RICH format
+            mock_formatter.finalize.assert_called_once()
 
     @patch("appimage_updater.cli.handlers.config_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.config_handler.create_output_formatter_from_params")

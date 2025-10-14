@@ -112,17 +112,11 @@ class RepositoryCommandHandler(CommandHandler):
         # Use HTTP tracker as context manager if enabled
         if http_tracker:
             with http_tracker:
-                if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
-                    result = asyncio.run(command.execute(output_formatter=output_formatter))
-                    output_formatter.finalize()
-                else:
-                    result = asyncio.run(command.execute(output_formatter=output_formatter))
-        else:
-            if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
                 result = asyncio.run(command.execute(output_formatter=output_formatter))
                 output_formatter.finalize()
-            else:
-                result = asyncio.run(command.execute(output_formatter=output_formatter))
+        else:
+            result = asyncio.run(command.execute(output_formatter=output_formatter))
+            output_formatter.finalize()
 
         if not result.success:
             raise typer.Exit(result.exit_code)

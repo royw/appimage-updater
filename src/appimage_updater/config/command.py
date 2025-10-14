@@ -202,16 +202,61 @@ def show_effective_config(app_name: str, config_file: Path | None = None, config
             return  # Error already handled
 
         output_formatter = get_output_formatter()
-        rich_console = (
-            output_formatter.console if output_formatter and hasattr(output_formatter, "console") else console
-        )
 
-        _print_effective_config_header(app_name, rich_console)
-        _print_main_config_table(effective_config, rich_console)
-        _print_checksum_config_table(effective_config, rich_console)
+        if output_formatter and not hasattr(output_formatter, "console"):
+            # Use structured format for non-Rich formatters
+            _print_effective_config_structured(app_name, effective_config, output_formatter)
+        else:
+            # Use Rich format with formatter's console
+            rich_console = (
+                output_formatter.console if output_formatter and hasattr(output_formatter, "console") else console
+            )
+            _print_effective_config_header(app_name, rich_console)
+            _print_main_config_table(effective_config, rich_console)
+            _print_checksum_config_table(effective_config, rich_console)
 
     except ConfigLoadError as e:
         _handle_config_load_error(e)
+
+
+def _print_effective_config_structured(app_name: str, effective_config: dict[str, Any], output_formatter: Any) -> None:
+    """Print effective configuration using structured formatter (markdown/plain)."""
+    settings = {}
+
+    # Helper function to format setting key
+    def format_key(display_name: str) -> str:
+        return display_name
+
+    # Main configuration
+    settings[format_key("Application")] = app_name
+    settings[format_key("Enabled")] = "Yes" if effective_config.get("enabled") else "No"
+    settings[format_key("URL")] = effective_config.get("url", "")
+    settings[format_key("Download Directory")] = effective_config.get("download_dir", "")
+    settings[format_key("Pattern")] = effective_config.get("pattern", "")
+    settings[format_key("Prerelease")] = "Yes" if effective_config.get("prerelease") else "No"
+    settings[format_key("Auto Subdirectory")] = "Yes" if effective_config.get("auto_subdir") else "No"
+    settings[format_key("Rotation Enabled")] = "Yes" if effective_config.get("rotation_enabled") else "No"
+
+    if effective_config.get("retain_count"):
+        settings[format_key("Retain Count")] = str(effective_config["retain_count"])
+
+    settings[format_key("Symlink Enabled")] = "Yes" if effective_config.get("symlink_enabled") else "No"
+
+    if effective_config.get("symlink_path"):
+        settings[format_key("Symlink Path")] = effective_config["symlink_path"]
+
+    # Checksum settings
+    checksum = effective_config.get("checksum", {})
+    if checksum:
+        settings[format_key("Checksum Enabled")] = "Yes" if checksum.get("enabled") else "No"
+        if checksum.get("enabled"):
+            settings[format_key("Checksum Algorithm")] = checksum.get("algorithm", "").upper()
+            settings[format_key("Checksum Pattern")] = checksum.get("pattern", "")
+            settings[format_key("Checksum Required")] = "Yes" if checksum.get("required") else "No"
+
+    # Use the formatter's print_config_settings method
+    if hasattr(output_formatter, "print_config_settings"):
+        output_formatter.print_config_settings(settings)
 
 
 def _handle_app_not_found(app_name: str) -> bool:

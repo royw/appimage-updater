@@ -112,8 +112,8 @@ class TestShowCommandHandler:
             output_format=OutputFormat.JSON,
         )
 
-        # Verify finalize was called for JSON format
-        mock_formatter.finalize.assert_called_once()
+        # Verify finalize was called for both executions (RICH and JSON)
+        assert mock_formatter.finalize.call_count == 2
 
     @patch("appimage_updater.cli.handlers.show_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.show_handler.create_output_formatter_from_params")
@@ -153,7 +153,7 @@ class TestShowCommandHandler:
     def test_execute_show_command_with_rich_format_no_finalize(
         self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
     ) -> None:
-        """Test that RICH format does not call finalize on formatter."""
+        """Test that RICH format calls finalize on formatter."""
         handler = ShowCommandHandler()
 
         # Setup mocks
@@ -176,8 +176,8 @@ class TestShowCommandHandler:
             output_format=OutputFormat.RICH,
         )
 
-        # Verify finalize was NOT called for RICH format
-        mock_formatter.finalize.assert_not_called()
+        # Verify finalize was called for RICH format
+        mock_formatter.finalize.assert_called_once()
 
     @patch("appimage_updater.cli.handlers.show_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.show_handler.create_output_formatter_from_params")

@@ -100,11 +100,8 @@ class RemoveCommandHandler(CommandHandler):
 
         output_formatter = create_output_formatter_from_params(command.params)
 
-        if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
-            result = asyncio.run(command.execute(output_formatter=output_formatter))
-            output_formatter.finalize()
-        else:
-            result = asyncio.run(command.execute(output_formatter=output_formatter))
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
+        output_formatter.finalize()
 
         if not result.success:
             raise typer.Exit(result.exit_code)

@@ -3,45 +3,52 @@
 This checklist tracks the audit of all commands to ensure they properly use the output formatter's console for consistent color support across Rich, Plain, and Markdown formats.
 
 ## Status Legend
-- ✅ **Done**: Command properly uses output formatter's console
-- ⚠️ **Needs Review**: Command may need updates
-- ❌ **Not Done**: Command needs to be updated
-- 🔍 **In Progress**: Currently being worked on
+
+- PASS **Done**: Command properly uses output formatter's console
+- WARNING **Needs Review**: Command may need updates
+- FAIL **Not Done**: Command needs to be updated
+- SEARCH **In Progress**: Currently being worked on
 - N/A: Command doesn't use console output
 
 ## Commands to Audit
 
 ### Config Commands
-- [x] ✅ `config list` - Uses formatter's console (completed)
-- [x] ✅ `config show` - Uses formatter's console (completed)
-- [x] ✅ `config show-effective` - Uses formatter's console (completed)
-- [ ] ❌ `config set` - Still uses module-level console for success/error messages
-- [ ] ❌ `config reset` - Still uses module-level console for messages
+
+- [x] PASS `config list` - Uses formatter's console (completed)
+- [x] PASS `config show` - Uses formatter's console (completed)
+- [x] PASS `config show-effective` - Uses formatter's console (completed)
+- [ ] FAIL `config set` - Still uses module-level console for success/error messages
+- [ ] FAIL `config reset` - Still uses module-level console for messages
 
 ### Application Management Commands
-- [ ] ❌ `add` - Check if uses output formatter
-- [ ] ❌ `edit` - Check if uses output formatter
-- [ ] ❌ `remove` - Check if uses output formatter
-- [ ] ❌ `enable` - Check if uses output formatter
-- [ ] ❌ `disable` - Check if uses output formatter
+
+- [ ] FAIL `add` - Check if uses output formatter
+- [ ] FAIL `edit` - Check if uses output formatter
+- [ ] FAIL `remove` - Check if uses output formatter
+- [ ] FAIL `enable` - Check if uses output formatter
+- [ ] FAIL `disable` - Check if uses output formatter
 
 ### Query Commands
-- [ ] ❌ `list` - Check if uses output formatter (likely already correct)
-- [ ] ❌ `show` - Check if uses output formatter
-- [ ] ❌ `check` - Check if uses output formatter
-- [ ] ❌ `repository` - Check if uses output formatter
+
+- [ ] FAIL `list` - Check if uses output formatter (likely already correct)
+- [ ] FAIL `show` - Check if uses output formatter
+- [ ] FAIL `check` - Check if uses output formatter
+- [ ] FAIL `repository` - Check if uses output formatter
 
 ### Update Commands
-- [ ] ❌ `update` - Check if uses output formatter
-- [ ] ❌ `download` - Check if uses output formatter
+
+- [ ] FAIL `update` - Check if uses output formatter
+- [ ] FAIL `download` - Check if uses output formatter
 
 ### Utility Commands
-- [ ] ❌ `version` - Check if uses output formatter
+
+- [ ] FAIL `version` - Check if uses output formatter
 - [ ] N/A `help` - Built-in Typer functionality
 
 ## Files to Review
 
 ### Primary Command Files
+
 - [ ] `src/appimage_updater/cli/handlers/add_handler.py`
 - [ ] `src/appimage_updater/cli/handlers/check_handler.py`
 - [ ] `src/appimage_updater/cli/handlers/download_handler.py`
@@ -54,6 +61,7 @@ This checklist tracks the audit of all commands to ensure they properly use the 
 - [ ] `src/appimage_updater/cli/handlers/update_handler.py`
 
 ### Display/Output Files
+
 - [ ] `src/appimage_updater/ui/display.py` - Module-level console usage
 - [ ] `src/appimage_updater/ui/cli/display_utilities.py` - Module-level console usage
 - [ ] `src/appimage_updater/ui/cli/error_handling.py` - Module-level console usage
@@ -61,13 +69,15 @@ This checklist tracks the audit of all commands to ensure they properly use the 
 - [ ] `src/appimage_updater/ui/error_display.py` - Module-level console usage
 
 ### Config-Related Files
-- [x] ✅ `src/appimage_updater/config/command.py` - Partially updated
-- [ ] ⚠️ `src/appimage_updater/config/cmd/display_utilities.py` - Module-level console
-- [ ] ⚠️ `src/appimage_updater/config/cmd/error_handling.py` - Module-level console
-- [ ] ⚠️ `src/appimage_updater/config/cmd/setting_operations.py` - Module-level console
-- [ ] ⚠️ `src/appimage_updater/config/operations.py` - Module-level console
+
+- [x] PASS `src/appimage_updater/config/command.py` - Partially updated
+- [ ] WARNING `src/appimage_updater/config/cmd/display_utilities.py` - Module-level console
+- [ ] WARNING `src/appimage_updater/config/cmd/error_handling.py` - Module-level console
+- [ ] WARNING `src/appimage_updater/config/cmd/setting_operations.py` - Module-level console
+- [ ] WARNING `src/appimage_updater/config/operations.py` - Module-level console
 
 ### Core Operation Files
+
 - [ ] `src/appimage_updater/core/update_operations.py` - Module-level console usage
 
 ## Audit Process
@@ -75,22 +85,26 @@ This checklist tracks the audit of all commands to ensure they properly use the 
 For each command/file:
 
 1. **Identify Console Usage**
+
    - [ ] Search for `console = Console(` patterns
    - [ ] Search for `console.print(` calls
    - [ ] Identify if using module-level or formatter's console
 
-2. **Check Output Formatter Support**
+1. **Check Output Formatter Support**
+
    - [ ] Verify command accepts `output_format` parameter
    - [ ] Check if `get_output_formatter()` is called
    - [ ] Verify formatter's console is passed to display functions
 
-3. **Test Color Output**
+1. **Test Color Output**
+
    - [ ] Test with `--format rich` (default)
    - [ ] Test with `--format plain`
    - [ ] Test with `--format markdown`
    - [ ] Verify colors work in actual terminal (not piped)
 
-4. **Update if Needed**
+1. **Update if Needed**
+
    - [ ] Add console parameter to display functions
    - [ ] Pass formatter's console to functions
    - [ ] Update tests to match new signatures
@@ -99,8 +113,9 @@ For each command/file:
 ## Common Patterns to Fix
 
 ### Pattern 1: Module-Level Console
+
 ```python
-# ❌ Bad - Module-level console
+# FAIL Bad - Module-level console
 console = Console(no_color=bool(os.environ.get("NO_COLOR")))
 
 def some_function():
@@ -108,8 +123,9 @@ def some_function():
 ```
 
 ### Pattern 2: Using Formatter's Console
+
 ```python
-# ✅ Good - Using formatter's console
+# PASS Good - Using formatter's console
 def some_function(rich_console: Console | None = None):
     console_to_use = rich_console or console
     console_to_use.print("[green]Success!")
@@ -123,15 +139,18 @@ some_function(rich_console)
 ## Priority Order
 
 1. **High Priority** - User-facing output commands
+
    - [ ] `list`, `show`, `check` - Most frequently used
    - [ ] `update`, `download` - Critical functionality
    - [ ] `add`, `remove`, `edit` - Configuration management
 
-2. **Medium Priority** - Configuration commands
+1. **Medium Priority** - Configuration commands
+
    - [ ] `config set`, `config reset` - Success/error messages
    - [ ] `enable`, `disable` - Status messages
 
-3. **Low Priority** - Internal utilities
+1. **Low Priority** - Internal utilities
+
    - [ ] Error handling utilities
    - [ ] Validation utilities
    - [ ] Display utilities
@@ -141,16 +160,19 @@ some_function(rich_console)
 After each command is updated:
 
 1. **Unit Tests**
+
    - [ ] Update test mocks to accept console parameter
    - [ ] Verify function signatures match
    - [ ] Run: `uv run pytest tests/unit/ -v`
 
-2. **Integration Tests**
+1. **Integration Tests**
+
    - [ ] Test command with all format options
    - [ ] Verify colors display correctly
    - [ ] Run: `uv run pytest tests/e2e/ -v`
 
-3. **Manual Testing**
+1. **Manual Testing**
+
    - [ ] Run command in actual terminal (konsole, gnome-terminal, etc.)
    - [ ] Verify colors appear correctly
    - [ ] Test with `--format markdown` and view in GitHub

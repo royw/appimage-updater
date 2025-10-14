@@ -119,11 +119,8 @@ class AddCommandHandler(CommandHandler):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", message=".*Event loop is closed.*")
             try:
-                if kwargs["output_format"] in [OutputFormat.JSON, OutputFormat.HTML]:
-                    result = asyncio.run(command.execute(output_formatter=output_formatter))
-                    output_formatter.finalize()
-                else:
-                    result = asyncio.run(command.execute(output_formatter=output_formatter))
+                result = asyncio.run(command.execute(output_formatter=output_formatter))
+                output_formatter.finalize()
             except RuntimeError as e:
                 if "Event loop is closed" in str(e):
                     # This error happens during cleanup and can be safely ignored

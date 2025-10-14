@@ -174,7 +174,7 @@ class TestListCommandHandler:
     def test_execute_list_command_rich_format_no_finalize(
         self, mock_factory: Mock, mock_formatter_factory: Mock, mock_asyncio_run: Mock
     ) -> None:
-        """Test that RICH format does not call finalize on formatter."""
+        """Test that RICH format calls finalize on formatter."""
         handler = ListCommandHandler()
 
         # Setup mocks
@@ -189,9 +189,14 @@ class TestListCommandHandler:
         mock_asyncio_run.return_value = success_result
 
         # Execute command with RICH format
+        handler._execute_list_command(
+            config_dir=None,
+            debug=False,
+            output_format=OutputFormat.RICH,
+        )
 
-        # Verify finalize was NOT called for RICH format
-        mock_formatter.finalize.assert_not_called()
+        # Verify finalize was called for RICH format
+        mock_formatter.finalize.assert_called_once()
 
     @patch("appimage_updater.cli.handlers.list_handler.asyncio.run")
     @patch("appimage_updater.cli.handlers.list_handler.create_output_formatter_from_params")

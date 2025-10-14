@@ -69,12 +69,9 @@ class ListCommandHandler(CommandHandler):
         # Create output formatter and execute with context
         output_formatter = create_output_formatter_from_params(command.params)
 
+        result = asyncio.run(command.execute(output_formatter=output_formatter))
         # Handle format-specific finalization
-        if output_format in [OutputFormat.JSON, OutputFormat.HTML]:
-            result = asyncio.run(command.execute(output_formatter=output_formatter))
-            output_formatter.finalize()
-        else:
-            result = asyncio.run(command.execute(output_formatter=output_formatter))
+        output_formatter.finalize()
 
         if not result.success:
             raise typer.Exit(result.exit_code)
