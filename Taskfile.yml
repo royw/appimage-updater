@@ -555,7 +555,7 @@ tasks:
         # Show current unreleased section to user (limit to first 30 lines)
         task _output MESSAGE="📋 Current [Unreleased] section:"
         echo "----------------------------------------"
-        awk '/## \[Unreleased\]/,/## \[/ {if (/## \[/ && NR>1) exit; print}' CHANGELOG.md | head -30
+        awk '/## \[Unreleased\]/,/^## \[[0-9]/ {if (/^## \[[0-9]/) exit; print}' CHANGELOG.md | head -30
         echo "----------------------------------------"
         
         # Check if unreleased section has content
