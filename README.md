@@ -241,41 +241,41 @@ You can manually run `appimage-updater check` or integrate it into crontab or yo
 
 Checking 17 applications for updates...
 
-Starting concurrent checks: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{0/17}$$] (0.0%)
+Starting concurrent checks: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{0/17}$$] (0.0%)
 
-Completed appimaged: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{1/17}$$] (5.9%)
+Completed appimaged: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{1/17}$$] (5.9%)
 
-Completed appimagetool: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{2/17}$$] (11.8%)
+Completed appimagetool: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{2/17}$$] (11.8%)
 
-Completed YubiKey: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{3/17}$$] (17.6%)
+Completed YubiKey: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{3/17}$$] (17.6%)
 
-Completed Meshlab: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{4/17}$$] (23.5%)
+Completed Meshlab: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{4/17}$$] (23.5%)
 
-Completed BambuStudio: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{5/17}$$] (29.4%)
+Completed BambuStudio: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{5/17}$$] (29.4%)
 
-Completed EdgeTX_Companion: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{6/17}$$] (35.3%)
+Completed EdgeTX_Companion: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{6/17}$$] (35.3%)
 
-Completed OrcaSlicer: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{7/17}$$] (41.2%)
+Completed OrcaSlicer: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{7/17}$$] (41.2%)
 
-Completed GitHubDesktop: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{8/17}$$] (47.1%)
+Completed GitHubDesktop: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{8/17}$$] (47.1%)
 
-Completed OrcaSlicerRC: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{9/17}$$] (52.9%)
+Completed OrcaSlicerRC: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{9/17}$$] (52.9%)
 
-Completed FreeCAD: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{10/17}$$] (58.8%)
+Completed FreeCAD: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{10/17}$$] (58.8%)
 
-Completed OrcaSlicerNightly: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{11/17}$$] (64.7%)
+Completed OrcaSlicerNightly: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{11/17}$$] (64.7%)
 
-Completed UltiMaker-Cura: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{12/17}$$] (70.6%)
+Completed UltiMaker-Cura: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{12/17}$$] (70.6%)
 
-Completed OpenShot: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{13/17}$$] (76.5%)
+Completed OpenShot: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{13/17}$$] (76.5%)
 
-Completed OpenRGB: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{14/17}$$] (82.4%)
+Completed OpenRGB: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{14/17}$$] (82.4%)
 
-Completed FreeCAD_weekly: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{15/17}$$] (88.2%)
+Completed FreeCAD_weekly: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{15/17}$$] (88.2%)
 
-Completed InkScape: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{16/17}$$] (94.1%)
+Completed InkScape: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{16/17}$$] (94.1%)
 
-Completed ScribusDev: $$\color{cyan}{**Progress:**}$$ [$$\color{pink}{17/17}$$] (100.0%)
+Completed ScribusDev: $$\\color{cyan}{**Progress:**}$$ [$$\\color{pink}{17/17}$$] (100.0%)
 
 ## Update Check Results
 
