@@ -552,10 +552,10 @@ tasks:
           exit 1
         fi
         
-        # Show current unreleased section to user
+        # Show current unreleased section to user (limit to first 30 lines)
         task _output MESSAGE="📋 Current [Unreleased] section:"
         echo "----------------------------------------"
-        sed -n '/## \[Unreleased\]/,/## \[/p' CHANGELOG.md | head -n -1
+        awk '/## \[Unreleased\]/,/## \[/ {if (/## \[/ && NR>1) exit; print}' CHANGELOG.md | head -30
         echo "----------------------------------------"
         
         # Check if unreleased section has content
@@ -567,13 +567,12 @@ tasks:
         
         # Always ask user to confirm the changelog is complete
         echo ""
-        read -p "Is the CHANGELOG.md complete for this release? (y/N): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-          task _output MESSAGE="❌ Aborted. Please update CHANGELOG.md and try again."
-          exit 1
-        fi
-        task _output MESSAGE="✅ CHANGELOG.md confirmed ready for release"
+        printf "Is the CHANGELOG.md complete for this release? (y/N): "
+        read REPLY
+        case "$REPLY" in
+          [Yy]* ) task _output MESSAGE="✅ CHANGELOG.md confirmed ready for release";;
+          * ) task _output MESSAGE="❌ Aborted. Please update CHANGELOG.md and try again."; exit 1;;
+        esac
       - task: _output
         vars:
           MESSAGE: "📈 Bumping version..."
