@@ -120,10 +120,10 @@ class TestModernPatternMatching:
                 self.status_code = 200
                 self._json_data = []
 
-            async def json(self):
+            def json(self):
                 return self._json_data
 
-            async def raise_for_status(self):
+            def raise_for_status(self):
                 pass
 
         # Configure mock HTTP client
