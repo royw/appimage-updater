@@ -17,48 +17,46 @@ This checklist tracks the audit of all commands to ensure they properly use the 
 - [x] PASS `config list` - Uses formatter's console (completed)
 - [x] PASS `config show` - Uses formatter's console (completed)
 - [x] PASS `config show-effective` - Uses formatter's console (completed)
-- [ ] FAIL `config set` - Still uses module-level console for success/error messages
-- [ ] FAIL `config reset` - Still uses module-level console for messages
+- [x] PASS `config set` - Uses formatter's console (completed)
+- [x] PASS `config reset` - Uses formatter's console (completed)
 
 ### Application Management Commands
 
-- [ ] FAIL `add` - Check if uses output formatter
-- [ ] FAIL `edit` - Check if uses output formatter
-- [ ] FAIL `remove` - Check if uses output formatter
-- [ ] FAIL `enable` - Check if uses output formatter
-- [ ] FAIL `disable` - Check if uses output formatter
+- [x] PASS `add` - Uses output formatter (completed)
+- [x] PASS `edit` - Uses output formatter (completed, includes enable/disable)
+- [x] PASS `remove` - Uses output formatter (completed)
+- [x] N/A `enable` - Not a separate command (use `edit --enable`)
+- [x] N/A `disable` - Not a separate command (use `edit --enable=false`)
 
 ### Query Commands
 
-- [ ] FAIL `list` - Check if uses output formatter (likely already correct)
-- [ ] FAIL `show` - Check if uses output formatter
-- [ ] FAIL `check` - Check if uses output formatter
-- [ ] FAIL `repository` - Check if uses output formatter
+- [x] PASS `list` - Uses output formatter (completed)
+- [x] PASS `show` - Uses output formatter (completed)
+- [x] PASS `check` - Uses output formatter (completed)
+- [x] PASS `repository` - Uses output formatter (completed)
 
 ### Update Commands
 
-- [ ] FAIL `update` - Check if uses output formatter
-- [ ] FAIL `download` - Check if uses output formatter
+- [x] N/A `update` - Not a separate command (use `check --yes`)
+- [x] N/A `download` - Not a separate command (use `check --yes`)
 
 ### Utility Commands
 
-- [ ] FAIL `version` - Check if uses output formatter
-- [ ] N/A `help` - Built-in Typer functionality
+- [x] N/A `version` - Built-in via --version flag on each command
+- [x] N/A `help` - Built-in Typer functionality
 
 ## Files to Review
 
 ### Primary Command Files
 
-- [ ] `src/appimage_updater/cli/handlers/add_handler.py`
-- [ ] `src/appimage_updater/cli/handlers/check_handler.py`
-- [ ] `src/appimage_updater/cli/handlers/download_handler.py`
-- [ ] `src/appimage_updater/cli/handlers/edit_handler.py`
-- [ ] `src/appimage_updater/cli/handlers/enable_disable_handler.py`
-- [ ] `src/appimage_updater/cli/handlers/list_handler.py`
-- [ ] `src/appimage_updater/cli/handlers/remove_handler.py`
-- [ ] `src/appimage_updater/cli/handlers/repository_handler.py`
-- [ ] `src/appimage_updater/cli/handlers/show_handler.py`
-- [ ] `src/appimage_updater/cli/handlers/update_handler.py`
+- [x] `src/appimage_updater/cli/handlers/add_handler.py`
+- [x] `src/appimage_updater/cli/handlers/check_handler.py`
+- [x] `src/appimage_updater/cli/handlers/config_handler.py`
+- [x] `src/appimage_updater/cli/handlers/edit_handler.py`
+- [x] `src/appimage_updater/cli/handlers/list_handler.py`
+- [x] `src/appimage_updater/cli/handlers/remove_handler.py`
+- [x] `src/appimage_updater/cli/handlers/repository_handler.py`
+- [x] `src/appimage_updater/cli/handlers/show_handler.py`
 
 ### Display/Output Files
 
@@ -186,13 +184,13 @@ After each command is updated:
 
 ## Completion Criteria
 
-- [ ] All high-priority commands audited and updated
-- [ ] All medium-priority commands audited and updated
-- [ ] All tests passing (2126+ tests)
-- [ ] Code coverage maintained (74%+)
-- [ ] All lint checks passing
-- [ ] Documentation updated if needed
-- [ ] CHANGELOG.md updated with changes
+- [x] ✅ All high-priority commands audited and updated
+- [x] ✅ All medium-priority commands audited and updated
+- [x] ✅ All tests passing (2126 tests)
+- [x] ✅ Code coverage maintained (74%)
+- [x] ✅ All lint checks passing
+- [x] ✅ Documentation updated if needed
+- [x] ✅ CHANGELOG.md updated with changes
 
 ## Related Issues
 
@@ -203,7 +201,7 @@ After each command is updated:
 ## Progress Tracking
 
 - **Started**: 2025-10-14
-- **Config commands completed**: 2025-10-14
-- **Estimated completion**: TBD
-- **Commands completed**: 3/15 (20%)
-- **Files reviewed**: 1/15 (7%)
+- **Completed**: 2025-10-14
+- **Commands completed**: 13/13 (100%)
+- **Files reviewed**: 8/8 (100%)
+- **Status**: ✅ **AUDIT COMPLETE** - All commands use output formatter correctly!
