@@ -378,47 +378,70 @@ tasks:
         silent: true
 
   # === Testing ===
+  test:_check:
+    desc: Internal task to check for misplaced config.json in apps directory
+    internal: true
+    cmds:
+      - cmd: |
+          if [ -f ~/.config/appimage-updater/apps/config.json ]; then
+            echo "ERROR: Found config.json in apps/ directory!"
+            echo "This file should be at ~/.config/appimage-updater/config.json, not in apps/"
+            echo "A test is writing to the real config directory instead of using temp directories."
+            echo "Please remove it with: rm ~/.config/appimage-updater/apps/config.json"
+            exit 1
+          fi
+        silent: true
+
   test:
     desc: Run tests with pytest (sequential) - excludes regression tests - full coverage reporting
     cmds:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e {{.CLI_ARGS}}
+      - task: test:_check
 
   test:parallel:
     desc: Run tests with pytest - unit/functional/integration in parallel, E2E serially - excludes regression tests - summary coverage reporting
     cmds:
       - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e -n auto {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+      - task: test:_check
 
   test:unit:
     desc: Run unit tests only - summary coverage reporting
     cmds:
       - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+      - task: test:_check
 
   test:functional:
     desc: Run functional tests only - summary coverage reporting
     cmds:
       - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/functional/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+      - task: test:_check
 
   test:integration:
     desc: Run integration tests only - summary coverage reporting
     cmds:
       - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/integration/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+      - task: test:_check
 
   test:e2e:
     desc: Run end-to-end tests to validate core functionality (serially for test isolation) - summary coverage reporting
     cmds:
       - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/ -v --tb=short --color=yes --no-cov 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+      - task: test:_check
 
   test:pattern-matching:
     desc: Test pattern matching functionality specifically - summary coverage reporting
     cmds:
       - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/test_pattern_matching.py -v 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+      - task: test:_check
       - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/test_intelligent_pattern_generation.py -v 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+      - task: test:_check
 
   test:regression:
     desc: Run regression tests to validate fixed issues (uses network) - full coverage reporting
     cmds:
     # do not use timeout here as it will cause the test to fail
       - uv run pytest tests/regression/ -v --tb=short --color=yes
+      - task: test:_check
       - task: _output
         vars:
           MESSAGE: "✅ Regression tests passed - fixed issues remain resolved!"
@@ -441,6 +464,7 @@ tasks:
     desc: Run all tests with coverage reporting (excludes regression tests) - full coverage reporting
     cmds:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e --cov={{.SRC}}appimage_updater --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
+      - task: test:_check
       - task: _output
         vars:
           MESSAGE: "📊 Coverage report saved to htmlcov/index.html"
