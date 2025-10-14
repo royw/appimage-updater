@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Markdown format uses LaTeX color syntax for GitHub rendering
   - `config show`: Now uses output formatter's console for consistent colors
   - `config show-effective`: Now uses output formatter's console for consistent colors
+- **Test infrastructure improvements**
+  - Added `test:_check` task to detect misplaced config.json in apps/ directory
+  - Runs after all pytest commands to catch tests writing to real config directory
+  - Prevents config pollution with clear error messages and removal instructions
+- **Tree-to-markdown utility script**
+  - Added `scripts/tree-to-github-markdown.sh` for converting tree output to GitHub markdown
+  - Supports colored output using LaTeX syntax
+  - Properly escapes special characters for markdown rendering
 
 ### Changed
 
@@ -31,6 +39,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Renamed `list_available_settings` → `list_settings`
   - Renamed `get_checksum_status` → `_get_checksum_verification_status`
   - Updated all tests to match new function signatures
+- **Test fixes**
+  - Fixed logging interface test after info→debug change
+  - Fixed RuntimeWarnings about unawaited coroutines in mock responses
+  - Fixed whitespace warnings in test files
+
+### Documentation
+
+- **README improvements**
+  - Replaced non-rendering inline HTML with properly formatted markdown
+  - Used LaTeX color syntax for tree output, tables, and status displays
+  - Added colored markdown tables for application lists and check results
+  - Improved readability with structured sections and proper formatting
+  - All output examples now render correctly on GitHub
+- **Formatter audit complete**
+  - Completed comprehensive audit of all CLI commands and display functions
+  - Verified all 13 commands properly use output formatter system
+  - Documented acceptable module-level console usage patterns
+  - All verification steps passed (console usage, formatter support, color output, tests)
 
 ## [0.4.18] - 2025-10-14
 
