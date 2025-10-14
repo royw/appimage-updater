@@ -15,8 +15,8 @@ This checklist tracks the audit of all commands to ensure they properly use the 
 - [x] ✅ `config list` - Uses formatter's console (completed)
 - [x] ✅ `config show` - Uses formatter's console (completed)
 - [x] ✅ `config show-effective` - Uses formatter's console (completed)
-- [ ] ⚠️ `config set` - Uses module-level console for success/error messages
-- [ ] ⚠️ `config reset` - Uses module-level console for messages
+- [ ] ❌ `config set` - Still uses module-level console for success/error messages
+- [ ] ❌ `config reset` - Still uses module-level console for messages
 
 ### Application Management Commands
 - [ ] ❌ `add` - Check if uses output formatter
