@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.19] - 2025-10-14
+
 ### Added
 
 - **Colorized config commands** for improved readability
@@ -269,6 +271,8 @@ ______________________________________________________________________
 ______________________________________________________________________
 
 ## [Unreleased]
+
+## [0.4.19] - 2025-10-14
 
 ## [0.4.18] - 2025-10-14 - 2025-09-06
 
