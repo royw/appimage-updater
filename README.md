@@ -116,53 +116,26 @@ Here is an example of FreeCAD AppImages that appimage-updater is currently manag
 ➤ tree -l -P "[fF]r*" -I "[a-eA-Eg-zG-z]*" -C ~/Applications
 ```
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+$\color{pink}{\sim/Applications}$
+ * $\color{pink}{FreeCAD}$
+   * $\color{lime}{FreeCAD\text{-}1.0.0\text{-}conda\text{-}Linux\text{-}x86\_64\text{-}py311.appimage}$
+   * $\color{lime}{FreeCAD\_1.0.2\text{-}conda\text{-}Linux\text{-}x86\_64\text{-}py311.AppImage}$
+   * $\color{gray}{FreeCAD\_1.0.2\text{-}conda\text{-}Linux\text{-}x86\_64\text{-}py311.AppImage.info}$
+ * $\color{gray}{FreeCAD.readme}$
+ * $\color{pink}{FreeCAD\_weekly}$
+   * $\color{lime}{FreeCAD\_weekly\text{-}2025.09.11\text{-}Linux\text{-}x86\_64\text{-}py311.AppImage.old}$
+   * $\color{gray}{FreeCAD\_weekly\text{-}2025.09.11\text{-}Linux\text{-}x86\_64\text{-}py311.AppImage.old.info}$
+   * $\color{lime}{FreeCAD\_weekly\text{-}2025.09.12\text{-}Linux\text{-}x86\_64\text{-}py311.AppImage.old}$
+   * $\color{gray}{FreeCAD\_weekly\text{-}2025.09.12\text{-}Linux\text{-}x86\_64\text{-}py311.AppImage.old.info}$
+   * $\color{lime}{FreeCAD\_weekly\text{-}2025.09.24\text{-}Linux\text{-}x86\_64\text{-}py311.AppImage.old}$
+   * $\color{gray}{FreeCAD\_weekly\text{-}2025.09.24\text{-}Linux\text{-}x86\_64\text{-}py311.AppImage.old.info}$
+   * $\color{lime}{FreeCAD\_weekly\text{-}2025.10.01\text{-}Linux\text{-}x86\_64\text{-}py311.AppImage.old}$
+   * $\color{gray}{FreeCAD\_weekly\text{-}2025.10.01\text{-}Linux\text{-}x86\_64\text{-}py311.AppImage.old.info}$
+   * $\color{lime}{FreeCAD\_weekly\text{-}2025.10.08\text{-}Linux\text{-}x86\_64\text{-}py311.AppImage.current}$
+   * $\color{gray}{FreeCAD\_weekly\text{-}2025.10.08\text{-}Linux\text{-}x86\_64\text{-}py311.AppImage.current.info}$
+ * $\color{cyan}{FreeCAD\_weekly.AppImage}$ -> $\color{lime}{FreeCAD\_weekly\text{-}2025.10.08\text{-}Linux\text{-}x86\_64\text{-}py311.AppImage.current}$
 
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title></title>
-<style type="text/css">
-.ansi2html-content { display: inline; white-space: pre-wrap; word-wrap: break-word; }
-.body_foreground { color: #AAAAAA; }
-.body_background { background-color: #000000; }
-.inv_foreground { color: #000000; }
-.inv_background { background-color: #AAAAAA; }
-.ansi1 { font-weight: bold; }
-.ansi31 { color: #aa0000; }
-.ansi32 { color: #00aa00; }
-.ansi36 { color: #00aaaa; }
-</style>
-</head>
-<body class="body_foreground body_background">
-<pre class="ansi2html-content"  style="font-size: 70%;" >
-<span class="ansi1 ansi31"></span>
-├── <span class="ansi1 ansi31">FreeCAD</span>
-│   ├── <span class="ansi1 ansi32">FreeCAD-1.0.0-conda-Linux-x86_64-py311.appimage</span>
-│   ├── <span class="ansi1 ansi32">FreeCAD_1.0.2-conda-Linux-x86_64-py311.AppImage</span>
-│   └── FreeCAD_1.0.2-conda-Linux-x86_64-py311.AppImage.info
-├── FreeCAD.readme
-├── <span class="ansi1 ansi31">FreeCAD_weekly</span>
-│   ├── <span class="ansi1 ansi32">FreeCAD_weekly-2025.09.11-Linux-x86_64-py311.AppImage.old</span>
-│   ├── FreeCAD_weekly-2025.09.11-Linux-x86_64-py311.AppImage.old.info
-│   ├── <span class="ansi1 ansi32">FreeCAD_weekly-2025.09.12-Linux-x86_64-py311.AppImage.old</span>
-│   ├── FreeCAD_weekly-2025.09.12-Linux-x86_64-py311.AppImage.old.info
-│   ├── <span class="ansi1 ansi32">FreeCAD_weekly-2025.09.24-Linux-x86_64-py311.AppImage.old</span>
-│   ├── FreeCAD_weekly-2025.09.24-Linux-x86_64-py311.AppImage.old.info
-│   ├── <span class="ansi1 ansi32">FreeCAD_weekly-2025.10.01-Linux-x86_64-py311.AppImage.old</span>
-│   ├── FreeCAD_weekly-2025.10.01-Linux-x86_64-py311.AppImage.old.info
-│   ├── <span class="ansi1 ansi32">FreeCAD_weekly-2025.10.08-Linux-x86_64-py311.AppImage.current</span>
-│   └── FreeCAD_weekly-2025.10.08-Linux-x86_64-py311.AppImage.current.info
-└── <span class="ansi1 ansi36">FreeCAD_weekly.AppImage</span> -&gt; <span class="ansi1 ansi32">/home/royw/Applications/FreeCAD_weekly/FreeCAD_weekly-2025.10.08-Linux-x86_64-py311.AppImage.current</span>
-
-3 directories, 15 files
-
-</pre>
-</body>
-
-</html>
-
-Add FreeCAD official releases:
+To add FreeCAD official releases:
 
 ```bash
 ➤ appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD/releases ~/Applications/FreeCAD
@@ -179,7 +152,7 @@ Tip: Use 'appimage-updater show FreeCAD' to view full configuration
 
 Notice that the URL is corrected from the release directory (could even be the image file itself), to the project directory.
 
-Add FreeCAD weekly releases:
+And to add FreeCAD weekly releases:
 
 ```bash
 ~/Applications $ appimage-updater add FreeCAD_weekly https://github.com/FreeCAD/FreeCAD/releases ~/Applications/FreeCAD_weekly --prerelease --rotation --symlink ~/Applications/FreeCAD_weekly.AppImage
@@ -200,9 +173,34 @@ Tip: Use 'appimage-updater show FreeCAD_weekly' to view full configuration
 
 ## Application Details: FreeCAD
 
-| $$\\color{cyan}{name}$$ | enabled | url | download_dir | source_type | pattern | config_source | files | symlinks |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| $$\\color{cyan}{FreeCAD}$$ | True | https://github.com/FreeCAD/FreeCAD | /home/royw/Applications/FreeCAD | github | (?i)FreeCAD.\*.(zip|AppImage)(.(|current|old))?$ | {'type': 'directory', 'path': '/home/royw/.config/appimage-updater/apps'} | {'status': 'File information available in Rich format'} | {'status': 'Symlink information available in Rich format'} |
+## Application: FreeCAD
+
+### Configuration
+
+- **Name:** FreeCAD
+- **Status:** Enabled
+- **Source:** Github
+- **URL:** <https://github.com/FreeCAD/FreeCAD>
+- **Download Directory:** /home/royw/Applications/FreeCAD
+- **File Pattern:** (?i)FreeCAD.*\.(zip|AppImage)(\.(|current|old))?$
+- **Config File:** /home/royw/.config/appimage-updater/apps/FreeCAD.json
+- **Prerelease:** No
+- **Checksum Verification:** Enabled
+  - Algorithm: SHA256
+  - Pattern: {filename}-SHA256.txt
+  - Required: No
+- **File Rotation:** Disabled
+
+### Files
+
+- **FreeCAD_1.0.2-conda-Linux-x86_64-py311.AppImage**
+  - Size: 759.0 MB
+- **FreeCAD-1.0.0-conda-Linux-x86_64-py311.appimage**
+  - Size: 648.2 MB
+
+### Symlinks
+
+- *No symlinks found pointing to AppImage files*
 
 To see the two new apps that are being managed:
 
@@ -210,58 +208,29 @@ To see the two new apps that are being managed:
 ➤ appimage-updater list
 ```
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+## Configured Applications
 
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title></title>
-<style type="text/css">
-.ansi2html-content { display: inline; white-space: pre-wrap; word-wrap: break-word; }
-.body_foreground { color: #AAAAAA; }
-.body_background { background-color: #000000; }
-.inv_foreground { color: #000000; }
-.inv_background { background-color: #AAAAAA; }
-.ansi1 { font-weight: bold; }
-.ansi3 { font-style: italic; }
-.ansi32 { color: #00aa00; }
-.ansi33 { color: #aa5500; }
-.ansi34 { color: #0000aa; }
-.ansi35 { color: #E850A8; }
-.ansi36 { color: #00aaaa; }
-</style>
-</head>
-<body class="body_foreground body_background">
-<pre class="ansi2html-content" style="font-size: 60%;">
-<span class="ansi3">                                                          Configured Applications                                                          </span>
-┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃<span class="ansi1"> </span><span class="ansi1">Application      </span><span class="ansi1"> </span>┃<span class="ansi1"> </span><span class="ansi1">Status </span><span class="ansi1"> </span>┃<span class="ansi1"> </span><span class="ansi1">Source                                                                </span><span class="ansi1"> </span>┃<span class="ansi1"> </span><span class="ansi1">Download Directory              </span><span class="ansi1"> </span>┃
-┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│<span class="ansi36"> </span><span class="ansi36">appimaged        </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://github.com/probonopd/go-appimage                              </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/appimaged        </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">appimagetool     </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://github.com/AppImage/appimagetool                              </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/appimagetool     </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">BambuStudio      </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://github.com/bambulab/BambuStudio                               </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/BambuStudio      </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">EdgeTX_Companion </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://github.com/EdgeTX/edgetx                                      </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/EdgeTX           </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">FreeCAD          </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://github.com/FreeCAD/FreeCAD                                    </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/FreeCAD          </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">FreeCAD_weekly   </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://github.com/FreeCAD/FreeCAD                                    </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/FreeCAD_weekly   </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">GitHubDesktop    </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://github.com/shiftkey/desktop                                   </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/GitHubDesktop    </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">InkScape         </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://inkscape.org/release/all/gnulinux/appimage/                   </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/InkScape         </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">Meshlab          </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://github.com/cnr-isti-vclab/meshlab                             </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/Meshlab          </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">OpenRGB          </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://codeberg.org/OpenRGB/OpenRGB                                  </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/OpenRGB          </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">OpenShot         </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://github.com/OpenShot/openshot-qt                               </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/OpenShot         </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">OrcaSlicer       </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://github.com/SoftFever/OrcaSlicer                               </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/OrcaSlicer       </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">OrcaSlicerNightly</span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://github.com/SoftFever/OrcaSlicer                               </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/OrcaSlicerNightly</span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">OrcaSlicerRC     </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://github.com/SoftFever/OrcaSlicer                               </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/OrcaSlicerRC     </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">ScribusDev       </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://sourceforge.net/projects/scribus/files/scribus-devel/1.7.0    </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/ScribusDev       </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">UltiMaker-Cura   </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://github.com/Ultimaker/Cura                                     </span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/UltiMaker-Cura   </span><span class="ansi35"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">YubiKey          </span><span class="ansi36"> </span>│<span class="ansi32"> </span><span class="ansi32">Enabled</span><span class="ansi32"> </span>│<span class="ansi33"> </span><span class="ansi33">https://developers.yubico.com/yubikey-manager-qt/Releases/yubikey-mana</span><span class="ansi33"> </span>│<span class="ansi35"> </span><span class="ansi35">~/Applications/YubiKey          </span><span class="ansi35"> </span>│
-│<span class="ansi36">                   </span>│<span class="ansi32">         </span>│<span class="ansi33"> </span><span class="ansi33">ger-qt-latest-linux.AppImage                                          </span><span class="ansi33"> </span>│<span class="ansi35">                                  </span>│
-└───────────────────┴─────────┴────────────────────────────────────────────────────────────────────────┴──────────────────────────────────┘
-<span class="ansi34">Total: </span><span class="ansi1 ansi34">17</span><span class="ansi34"> applications </span><span class="ansi1 ansi34">(</span><span class="ansi1 ansi34">17</span><span class="ansi34"> enabled, </span><span class="ansi1 ansi34">0</span><span class="ansi34"> disabled</span><span class="ansi1 ansi34">)</span>
+| $$\color{cyan}{Application}$$ | $$\color{magenta}{Status}$$ | Source | Download Directory |
+| --- | --- | --- | --- |
+| $$\color{cyan}{appimaged}$$ | $$\color{green}{Enabled}$$ | <https://github.com/probonopd/go-appimage> | /home/royw/Applications/appimaged |
+| $$\color{cyan}{appimagetool}$$ | $$\color{green}{Enabled}$$ | <https://github.com/AppImage/appimagetool> | /home/royw/Applications/appimagetool |
+| $$\color{cyan}{BambuStudio}$$ | $$\color{green}{Enabled}$$ | <https://github.com/bambulab/BambuStudio> | /home/royw/Applications/BambuStudio |
+| $$\color{cyan}{EdgeTX_Companion}$$ | $$\color{green}{Enabled}$$ | <https://github.com/EdgeTX/edgetx> | /home/royw/Applications/EdgeTX |
+| $$\color{cyan}{FreeCAD}$$ | $$\color{green}{Enabled}$$ | <https://github.com/FreeCAD/FreeCAD> | /home/royw/Applications/FreeCAD |
+| $$\color{cyan}{FreeCAD_weekly}$$ | $$\color{green}{Enabled}$$ | <https://github.com/FreeCAD/FreeCAD> | /home/royw/Applications/FreeCAD_weekly |
+| $$\color{cyan}{GitHubDesktop}$$ | $$\color{green}{Enabled}$$ | <https://github.com/shiftkey/desktop> | /home/royw/Applications/GitHubDesktop |
+| $$\color{cyan}{InkScape}$$ | $$\color{green}{Enabled}$$ | <https://inkscape.org/release/all/gnulinux/appimage/> | /home/royw/Applications/InkScape |
+| $$\color{cyan}{Meshlab}$$ | $$\color{green}{Enabled}$$ | <https://github.com/cnr-isti-vclab/meshlab> | /home/royw/Applications/Meshlab |
+| $$\color{cyan}{OpenRGB}$$ | $$\color{green}{Enabled}$$ | <https://codeberg.org/OpenRGB/OpenRGB> | /home/royw/Applications/OpenRGB |
+| $$\color{cyan}{OpenShot}$$ | $$\color{green}{Enabled}$$ | <https://github.com/OpenShot/openshot-qt> | /home/royw/Applications/OpenShot |
+| $$\color{cyan}{OrcaSlicer}$$ | $$\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | /home/royw/Applications/OrcaSlicer |
+| $$\color{cyan}{OrcaSlicerNightly}$$ | $$\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | /home/royw/Applications/OrcaSlicerNightly |
+| $$\color{cyan}{OrcaSlicerRC}$$ | $$\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | /home/royw/Applications/OrcaSlicerRC |
+| $$\color{cyan}{ScribusDev}$$ | $$\color{green}{Enabled}$$ | <https://sourceforge.net/projects/scribus/files/scribus-devel/1.7.0> | /home/royw/Applications/ScribusDev |
+| $$\color{cyan}{UltiMaker-Cura}$$ | $$\color{green}{Enabled}$$ | <https://github.com/Ultimaker/Cura> | /home/royw/Applications/UltiMaker-Cura |
+| $$\color{cyan}{YubiKey}$$ | $$\color{green}{Enabled}$$ | <https://developers.yubico.com/yubikey-manager-qt/Releases/yubikey-manager-qt-latest-linux.AppImage> | /home/royw/Applications/YubiKey |
 
-</pre>
-</body>
-
-</html>
+$$\color{blue}{ℹ INFO: Total: 17 applications (17 enabled, 0 disabled)}$$
 
 You can manually run `appimage-updater check` or integrate it into crontab or your favorite task scheduler.
 
@@ -269,81 +238,47 @@ You can manually run `appimage-updater check` or integrate it into crontab or yo
 ➤ appimage-updater check -y
 ```
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+Checking 17 applications for updates...
+Starting concurrent checks: **Progress:** [0/17] (0.0%)
+Completed appimaged: **Progress:** [1/17] (5.9%)
+Completed appimagetool: **Progress:** [2/17] (11.8%)
+Completed YubiKey: **Progress:** [3/17] (17.6%)
+Completed Meshlab: **Progress:** [4/17] (23.5%)
+Completed BambuStudio: **Progress:** [5/17] (29.4%)
+Completed EdgeTX_Companion: **Progress:** [6/17] (35.3%)
+Completed OrcaSlicer: **Progress:** [7/17] (41.2%)
+Completed GitHubDesktop: **Progress:** [8/17] (47.1%)
+Completed OrcaSlicerRC: **Progress:** [9/17] (52.9%)
+Completed FreeCAD: **Progress:** [10/17] (58.8%)
+Completed OrcaSlicerNightly: **Progress:** [11/17] (64.7%)
+Completed UltiMaker-Cura: **Progress:** [12/17] (70.6%)
+Completed OpenShot: **Progress:** [13/17] (76.5%)
+Completed OpenRGB: **Progress:** [14/17] (82.4%)
+Completed FreeCAD_weekly: **Progress:** [15/17] (88.2%)
+Completed InkScape: **Progress:** [16/17] (94.1%)
+Completed ScribusDev: **Progress:** [17/17] (100.0%)
 
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title></title>
-<style type="text/css">
-.ansi2html-content { display: inline; white-space: pre-wrap; word-wrap: break-word; }
-.body_foreground { color: #AAAAAA; }
-.body_background { background-color: #000000; }
-.inv_foreground { color: #000000; }
-.inv_background { background-color: #AAAAAA; }
-.ansi1 { font-weight: bold; }
-.ansi3 { font-style: italic; }
-.ansi31 { color: #aa0000; }
-.ansi32 { color: #00aa00; }
-.ansi33 { color: #aa5500; }
-.ansi34 { color: #0000aa; }
-.ansi35 { color: #E850A8; }
-.ansi36 { color: #00aaaa; }
-</style>
-</head>
-<body class="body_foreground body_background">
-<pre class="ansi2html-content" style="font-size: 70%;">
-<span class="ansi34">Checking </span><span class="ansi1 ansi34">17</span><span class="ansi34"> applications for updates</span><span class="ansi34">...</span>
-Starting concurrent checks: <span class="ansi1">[</span><span class="ansi1 ansi36">0</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">0.0</span>%<span class="ansi1">)</span>
-Completed appimagetool: <span class="ansi1">[</span><span class="ansi1 ansi36">1</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">5.9</span>%<span class="ansi1">)</span>
-Completed appimaged: <span class="ansi1">[</span><span class="ansi1 ansi36">2</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">11.8</span>%<span class="ansi1">)</span>
-Completed FreeCAD_weekly: <span class="ansi1">[</span><span class="ansi1 ansi36">3</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">17.6</span>%<span class="ansi1">)</span>
-Completed EdgeTX_Companion: <span class="ansi1">[</span><span class="ansi1 ansi36">4</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">23.5</span>%<span class="ansi1">)</span>
-Completed YubiKey: <span class="ansi1">[</span><span class="ansi1 ansi36">5</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">29.4</span>%<span class="ansi1">)</span>
-Completed BambuStudio: <span class="ansi1">[</span><span class="ansi1 ansi36">6</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">35.3</span>%<span class="ansi1">)</span>
-Completed UltiMaker-Cura: <span class="ansi1">[</span><span class="ansi1 ansi36">7</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">41.2</span>%<span class="ansi1">)</span>
-Completed GitHubDesktop: <span class="ansi1">[</span><span class="ansi1 ansi36">8</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">47.1</span>%<span class="ansi1">)</span>
-Completed FreeCAD: <span class="ansi1">[</span><span class="ansi1 ansi36">9</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">52.9</span>%<span class="ansi1">)</span>
-Completed OrcaSlicer: <span class="ansi1">[</span><span class="ansi1 ansi36">10</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">58.8</span>%<span class="ansi1">)</span>
-Completed OrcaSlicerNightly: <span class="ansi1">[</span><span class="ansi1 ansi36">11</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">64.7</span>%<span class="ansi1">)</span>
-Completed OrcaSlicerRC: <span class="ansi1">[</span><span class="ansi1 ansi36">12</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">70.6</span>%<span class="ansi1">)</span>
-Completed Meshlab: <span class="ansi1">[</span><span class="ansi1 ansi36">13</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">76.5</span>%<span class="ansi1">)</span>
-Completed OpenShot: <span class="ansi1">[</span><span class="ansi1 ansi36">14</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">82.4</span>%<span class="ansi1">)</span>
-Completed OpenRGB: <span class="ansi1">[</span><span class="ansi1 ansi36">15</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">88.2</span>%<span class="ansi1">)</span>
-Completed InkScape: <span class="ansi1">[</span><span class="ansi1 ansi36">16</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">94.1</span>%<span class="ansi1">)</span>
-Completed ScribusDev: <span class="ansi1">[</span><span class="ansi1 ansi36">17</span>/<span class="ansi1 ansi36">17</span><span class="ansi1">]</span> <span class="ansi1">(</span><span class="ansi1 ansi36">100.0</span>%<span class="ansi1">)</span>
-<span class="ansi3">                                  Update Check Results                                  </span>
-┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
-┃<span class="ansi1"> </span><span class="ansi1">Application      </span><span class="ansi1"> </span>┃<span class="ansi1"> </span><span class="ansi1">Status    </span><span class="ansi1"> </span>┃<span class="ansi1"> </span><span class="ansi1">Current Version</span><span class="ansi1"> </span>┃<span class="ansi1"> </span><span class="ansi1">Latest Version</span><span class="ansi1"> </span>┃<span class="ansi1"> </span><span class="ansi1">Update Available</span><span class="ansi1"> </span>┃
-┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━┩
-│<span class="ansi36"> </span><span class="ansi36">appimaged        </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">continuous     </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">continuous    </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">appimagetool     </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">continuous     </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">continuous    </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">BambuStudio      </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">02.02.02       </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">02.02.02      </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">EdgeTX_Companion </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">2.11.3         </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">2.11.3        </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">FreeCAD          </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">1.0.2          </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">1.0.2         </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">FreeCAD_weekly   </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">2025.10.08     </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">2025.10.08    </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">GitHubDesktop    </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">3.4.13         </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">3.4.13        </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">InkScape         </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">1.4.2          </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">1.4.2         </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">Meshlab          </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">2025.07        </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">2025.07       </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">OpenRGB          </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">0.9            </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">0.9           </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">OpenShot         </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">3.3.0          </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">3.3.0         </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">OrcaSlicer       </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">2.3.1          </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">2.3.1         </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">OrcaSlicerNightly</span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">2025-10-08     </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">2025-10-13    </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">Yes             </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">OrcaSlicerRC     </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">2.3.1-beta     </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">2.3.1-beta    </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">ScribusDev       </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">1.7.0          </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">1.7.0         </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">UltiMaker-Cura   </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">5.10.2         </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">5.10.2        </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-│<span class="ansi36"> </span><span class="ansi36">YubiKey          </span><span class="ansi36"> </span>│<span class="ansi35"> </span><span class="ansi32">Up to date</span><span class="ansi35"> </span>│<span class="ansi33"> </span><span class="ansi33">2024-04-18     </span><span class="ansi33"> </span>│<span class="ansi32"> </span><span class="ansi32">2024-04-18    </span><span class="ansi32"> </span>│<span class="ansi31"> </span><span class="ansi31">No              </span><span class="ansi31"> </span>│
-└───────────────────┴────────────┴─────────────────┴────────────────┴──────────────────┘
-<span class="ansi32">1 update available</span>
-<span class="ansi32"></span>
-<span class="ansi32">Downloading 1 updates...</span>
-<span class="ansi32">OrcaSlicerNightly ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100.0% • 114.4/114.4 MB • 3.7 MB/s • 0:00:00</span>
-<span class="ansi32"></span>
-<span class="ansi32">Successfully downloaded 1 updates:</span>
-<span class="ansi32">  Downloaded: OrcaSlicerNightly (109.1 MB)</span>
-</pre>
-</body>
-</html>
+## Update Check Results
+
+| $$\color{cyan}{Application}$$ | $$\color{magenta}{Status}$$ | $$\color{gold}{Current Version}$$ | $$\color{green}{Latest Version}$$ | $$\color{red}{Update Available}$$ |
+| --- | --- | --- | --- | --- |
+| $$\color{cyan}{appimaged}$$ | $$\color{green}{Success}$$ | $$\color{gold}{continuous}$$ | $$\color{green}{continuous}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{appimagetool}$$ | $$\color{green}{Success}$$ | $$\color{gold}{continuous}$$ | $$\color{green}{continuous}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{BambuStudio}$$ | $$\color{green}{Success}$$ | $$\color{gold}{02.02.02}$$ | $$\color{green}{02.02.02}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{EdgeTX_Companion}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2.11.3}$$ | $$\color{green}{2.11.3}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{FreeCAD}$$ | $$\color{green}{Success}$$ | $$\color{gold}{1.0.2}$$ | $$\color{green}{1.0.2}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{FreeCAD_weekly}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2025.10.08}$$ | $$\color{green}{2025.10.08}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{GitHubDesktop}$$ | $$\color{green}{Success}$$ | $$\color{gold}{3.4.13}$$ | $$\color{green}{3.4.13}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{InkScape}$$ | $$\color{green}{Success}$$ | $$\color{gold}{1.4.2}$$ | $$\color{green}{1.4.2}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{Meshlab}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2025.07}$$ | $$\color{green}{2025.07}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{OpenRGB}$$ | $$\color{green}{Success}$$ | $$\color{gold}{0.9}$$ | $$\color{green}{0.9}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{OpenShot}$$ | $$\color{green}{Success}$$ | $$\color{gold}{3.3.0}$$ | $$\color{green}{3.3.0}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{OrcaSlicer}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2.3.1}$$ | $$\color{green}{2.3.1}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{OrcaSlicerNightly}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2025-10-13}$$ | $$\color{green}{2025-10-14}$$ | $$\color{red}{Yes}$$ |
+| $$\color{cyan}{OrcaSlicerRC}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2.3.1-beta}$$ | $$\color{green}{2.3.1-beta}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{ScribusDev}$$ | $$\color{green}{Success}$$ | $$\color{gold}{1.7.0}$$ | $$\color{green}{1.7.0}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{UltiMaker-Cura}$$ | $$\color{green}{Success}$$ | $$\color{gold}{5.10.2}$$ | $$\color{green}{5.10.2}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{YubiKey}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2024-04-18}$$ | $$\color{green}{2024-04-18}$$ | $$\color{green}{No}$$ |
 
 ## Usage
 
@@ -441,7 +376,7 @@ uv run python -m appimage_updater add BambuStudio https://github.com/bambulab/Ba
 - Arch/Manjaro family (automatic compatibility)
 - Other distributions (interactive selection)
 
-## Configuration
+## App Configuration
 
 Each monitored application has its own configuration file specifying:
 
