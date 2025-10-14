@@ -241,43 +241,43 @@ You can manually run `appimage-updater check` or integrate it into crontab or yo
 
 Checking 17 applications for updates...
 
-${\text{Starting concurrent checks:}\color{cyan}{[0/17] (0.0\%)}}$
+$\text{Starting concurrent checks:}\color{cyan}{[0/17] (0.0\%)}$
 
-${\text{Completed YubiKey:}\color{cyan}{[1/17] (5.9\%)}}$
+$\text{Completed YubiKey:}\color{cyan}{[1/17] (5.9\%)}$
 
-${\text{Completed appimaged:}\color{cyan}{[2/17] (11.8\%)}}$
+$\text{Completed appimaged:}\color{cyan}{[2/17] (11.8\%)}$
 
-${\text{Completed appimagetool:}\color{cyan}{[3/17] (17.6\%)}}$
+$\text{Completed appimagetool:}\color{cyan}{[3/17] (17.6\%)}$
 
-${\text{Completed BambuStudio:}\color{cyan}{[4/17] (23.5\%)}}$
+$\text{Completed BambuStudio:}\color{cyan}{[4/17] (23.5\%)}$
 
-${\text{Completed FreeCAD:}\color{cyan}{[5/17] (29.4\%)}}$
+$\text{Completed FreeCAD:}\color{cyan}{[5/17] (29.4\%)}$
 
-${\text{Completed GitHubDesktop:}\color{cyan}{[6/17] (35.3\%)}}$
+$\text{Completed GitHubDesktop:}\color{cyan}{[6/17] (35.3\%)}$
 
-${\text{Completed OrcaSlicer:}\color{cyan}{[7/17] (41.2\%)}}$
+$\text{Completed OrcaSlicer:}\color{cyan}{[7/17] (41.2\%)}$
 
-${\text{Completed EdgeTX_Companion:}\color{cyan}{[8/17] (47.1\%)}}$
+$\text{Completed EdgeTX\_Companion:}\color{cyan}{[8/17] (47.1\%)}$
 
-${\text{Completed OrcaSlicerRC:}\color{cyan}{[9/17] (52.9\%)}}$
+$\text{Completed OrcaSlicerRC:}\color{cyan}{[9/17] (52.9\%)}$
 
-${\text{Completed FreeCAD_weekly:}\color{cyan}{[10/17] (58.8\%)}}$
+$\text{Completed FreeCAD\_weekly:}\color{cyan}{[10/17] (58.8\%)}$
 
-${\text{Completed Meshlab:}\color{cyan}{[11/17] (64.7\%)}}$
+$\text{Completed Meshlab:}\color{cyan}{[11/17] (64.7\%)}$
 
-${\text{Completed UltiMaker-Cura:}\color{cyan}{[12/17] (70.6\%)}}$
+$\text{Completed UltiMaker-Cura:}\color{cyan}{[12/17] (70.6\%)}$
 
-${\text{Completed OpenRGB:}\color{cyan}{[13/17] (76.5\%)}}$
+$\text{Completed OpenRGB:}\color{cyan}{[13/17] (76.5\%)}$
 
-${\text{Completed OrcaSlicerNightly:}\color{cyan}{[14/17] (82.4\%)}}$
+$\text{Completed OrcaSlicerNightly:}\color{cyan}{[14/17] (82.4\%)}$
 
-${\text{Completed OpenShot:}\color{cyan}{[15/17] (88.2\%)}}$
+$\text{Completed OpenShot:}\color{cyan}{[15/17] (88.2\%)}$
 
-${\text{Completed ScribusDev:}\color{cyan}{[16/17] (94.1\%)}}$
+$\text{Completed ScribusDev:}\color{cyan}{[16/17] (94.1\%)}$
 
 Failed to get releases for https://inkscape.org/release/all/gnulinux/appimage/: 
 
-${\text{Completed InkScape:}\color{cyan}{[17/17] (100.0\%)}}$
+$\text{Completed InkScape:}\color{cyan}{[17/17] (100.0\%)}$
 
 ## Update Check Results
 
