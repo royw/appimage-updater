@@ -54,8 +54,8 @@ appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Appli
 # Add from GitLab repository
 appimage-updater add Inkscape https://gitlab.com/inkscape/inkscape ~/Applications/Inkscape
 
-# Add from Codeberg (GitHub-compatible forge)
-appimage-updater add OpenRGB https://codeberg.org/OpenRGB/OpenRGB ~/Applications/OpenRGB
+# Add from SourceForge
+appimage-updater add MyApp https://sourceforge.net/projects/myapp ~/Applications/MyApp
 
 # Add direct download URL (nightly builds, CI artifacts)
 appimage-updater add --direct OrcaSlicer-Nightly https://github.com/SoftFever/OrcaSlicer/releases/download/nightly-builds/OrcaSlicer_Linux_V2.2.0_dev.AppImage ~/Applications/OrcaSlicer
@@ -98,8 +98,8 @@ appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
 # GitLab (detected automatically)
 appimage-updater add Inkscape https://gitlab.com/inkscape/inkscape ~/Apps/Inkscape
 
-# Codeberg (GitHub-compatible, detected automatically)
-appimage-updater add OpenRGB https://codeberg.org/OpenRGB/OpenRGB ~/Apps/OpenRGB
+# SourceForge (detected automatically)
+appimage-updater add MyApp https://sourceforge.net/projects/myapp ~/Apps/MyApp
 
 # Self-hosted GitLab (detected via API probing)
 appimage-updater add MyApp https://git.company.com/team/project ~/Apps/MyApp
@@ -232,13 +232,26 @@ appimage-updater -V
 ### List All Applications
 
 ```bash
+# List all applications
 appimage-updater list
+
+# List in different formats
+appimage-updater list --format json   # JSON output for scripting
+appimage-updater list --format plain  # Plain text output
+appimage-updater list --format html   # HTML output
 ```
 
 ### Show Application Details
 
 ```bash
+# Show application details
 appimage-updater show FreeCAD
+
+# Show in JSON format (useful for scripting)
+appimage-updater show FreeCAD --format json
+
+# Show the add command to recreate the configuration
+appimage-updater show FreeCAD --add-command
 ```
 
 This displays comprehensive information including:
@@ -246,7 +259,7 @@ This displays comprehensive information including:
 - Configuration settings
 - Current files in download directory
 - Detected symlinks
-- Update frequency and status
+- Current version information
 
 ### Examine Repository Information
 
@@ -398,6 +411,7 @@ For complete command documentation including all options and examples, see the [
 | `--prerelease` | Include prerelease versions |
 | `--rotation --symlink <path>` | Enable rotation with symlink |
 | `--dry-run` | Preview changes without applying them |
+| `--format <type>` | Output format: rich, plain, json, or html |
 | `--verbose` | Show detailed parameter information |
 | `--yes` | Auto-confirm prompts |
 | `--debug` | Enable debug logging |
@@ -467,8 +481,11 @@ mkdir -p ~/bin
 # Check network connectivity
 curl -I https://github.com/user/repo/releases
 
-# Increase timeout and retries
-appimage-updater edit MyApp --timeout 120 --retry-attempts 5
+# Adjust global timeout setting
+appimage-updater config set timeout-seconds 120
+
+# Try checking again with debug mode
+appimage-updater --debug check MyApp
 ```
 
 **Pattern matching issues:**
@@ -500,54 +517,54 @@ grep ERROR ~/.local/share/appimage-updater/appimage-updater.log
 ### Getting Help
 
 - Use `--help` with any command for detailed options
-- Check the [Commands](commands.md) reference for complete documentation
+- Check the [Usage Guide](usage.md) for complete command documentation
 - Review [Examples](examples.md) for common use cases
 - See [Configuration](configuration.md) for advanced settings
 
 ## Configuration Files
 
-### Single File Configuration
+### Directory-Based Configuration
 
-By default, applications are stored in `~/.config/appimage-updater/config.json`:
+AppImage Updater uses a directory-based configuration structure with separate files for each application:
+
+```text
+~/.config/appimage-updater/
+├── config.json              # Global configuration and defaults
+└── apps/                    # Application configurations
+    ├── freecad.json         # FreeCAD configuration
+    ├── orcaslicer.json      # OrcaSlicer configuration
+    ├── bambustudio.json     # BambuStudio configuration
+    └── ...                  # Other application configs
+```
+
+Each application file contains:
 
 ```json
 {
   "applications": [
     {
-      "name": "FreeCAD_weekly",
+      "name": "FreeCAD",
       "source_type": "github",
       "url": "https://github.com/FreeCAD/FreeCAD",
-      "download_dir": "/home/royw/Applications/FreeCAD_weekly",
+      "download_dir": "/home/user/Applications/FreeCAD",
       "pattern": "(?i)FreeCAD.*\\.(zip|AppImage)(\\.(|current|old))?$",
       "enabled": true,
-      "prerelease": true,
+      "prerelease": false,
       "checksum": {
         "enabled": true,
         "pattern": "{filename}-SHA256.txt",
         "algorithm": "sha256",
         "required": false
       },
-      "rotation_enabled": true,
+      "rotation_enabled": false,
       "retain_count": 3,
-      "symlink_path": "/home/royw/Applications/FreeCAD_weekly.AppImage"
+      "symlink_path": null
     }
   ]
 }
 ```
 
-### Directory-Based Configuration
-
-You can also use separate files for each application in the config directory:
-
-```text
-~/.config/appimage-updater/
-├── config.json (global configuration)
-└── apps/
-    ├── freecad.json
-    ├── orcaslicer.json
-    ├── bambustudio.json
-    └── ... (other app configs)
-```
+**Note**: The old single-file format with all applications in `config.json` is no longer supported.
 
 ## Example Workflows
 
@@ -557,7 +574,7 @@ Set up a cron job to check for updates daily:
 
 ```bash
 # Add to crontab (crontab -e)
-0 9 * * * /usr/local/bin/appimage-updater check
+0 9 * * * appimage-updater check
 ```
 
 ### Weekly Updates with Notifications

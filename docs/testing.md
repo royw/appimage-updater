@@ -114,10 +114,10 @@ task test:smoke
 
 ```bash
 # Run specific test file
-uv run pytest tests/test_edit_command.py
+uv run pytest tests/functional/test_edit_command_functional.py
 
 # Run specific test
-uv run pytest tests/test_edit_command.py::test_edit_frequency_single_file
+uv run pytest tests/functional/test_edit_command_functional.py::test_edit_multiple_fields
 
 # Run with verbose output
 uv run pytest -v
@@ -134,8 +134,8 @@ uv run pytest --timeout=30
 # Run functional tests with format validation
 uv run pytest tests/functional/test_format_options.py
 
-# Run HTTP tracker tests with dry-run validation
-uv run pytest tests/functional/test_http_tracker_dry_run.py
+# Run format validation workflows
+uv run pytest tests/e2e/test_format_validation_workflows.py
 ```
 
 ### Environment Variables for Testing
@@ -242,16 +242,18 @@ task version:tag
 
 The project maintains high test coverage across all functionality:
 
-### Current Coverage: **258 tests, 70%+ coverage**
+### Current Coverage: **450+ tests, 60%+ coverage**
 
 #### Command Testing
 
-- **List Command**: 7+ tests covering application listing, status display, and error handling
+- **List Command**: Tests covering application listing, status display, and error handling
 - **Check Command**: Multiple tests for update detection, dry-run mode, and error scenarios
-- **Init Command**: Tests for configuration directory initialization
-- **Show Command**: 8+ tests covering application details, file discovery, and symlink detection
-- **Edit Command**: 17+ comprehensive tests for all configuration editing scenarios
+- **Show Command**: Tests covering application details, file discovery, and symlink detection
+- **Edit Command**: 30+ comprehensive tests for all configuration editing scenarios
 - **Add Command**: Tests for application addition with intelligent defaults
+- **Remove Command**: Tests for application removal with validation
+- **Config Command**: Tests for global configuration management
+- **Repository Command**: Tests for repository information display
 
 #### Validation Testing (13 tests)
 
@@ -537,8 +539,8 @@ Tests run across:
 class TestEditCommand:
     """Group related tests together."""
 
-    def test_edit_frequency(self):
-        """Test frequency editing functionality."""
+    def test_edit_multiple_fields(self):
+        """Test editing multiple configuration fields."""
         pass
 
     def test_edit_invalid_input(self):
@@ -553,7 +555,7 @@ Always test error conditions:
 ```python
 def test_edit_nonexistent_app(runner, config_file):
     """Test editing a non-existent application."""
-    result = runner.invoke(app, ["edit", "NonExistent", "--frequency", "5"])
+    result = runner.invoke(app, ["edit", "NonExistent", "--prerelease"])
 
     assert result.exit_code == 1
     assert "Application 'NonExistent' not found" in result.stdout
@@ -587,8 +589,8 @@ open htmlcov/index.html
 
 ## Test Quality Metrics
 
-- **Coverage**: 70%+ line coverage (target: >85%)
-- **Test Count**: 258 comprehensive tests
+- **Coverage**: 60%+ line coverage (target: >70%)
+- **Test Count**: 450+ comprehensive tests
 - **Test Speed**:
   - Sequential: ~15-20 seconds
   - Parallel: ~5-8 seconds

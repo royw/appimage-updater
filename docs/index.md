@@ -21,8 +21,8 @@ AppImage Updater is a modern, type-safe Linux CLI application built with a layer
 ### Security & Reliability
 
 - **Checksum Verification** - SHA256, SHA1, and MD5 checksum validation for security
-- **GitHub Authentication** - Token support for increased API rate limits
-- **Retry Logic** - Exponential backoff for robust error handling
+- **GitHub Authentication** - Token support for increased API rate limits (60 → 5000 requests/hour)
+- **Robust Error Handling** - Comprehensive error detection and user-friendly messages
 - **Type Safety** - 100% mypy compliance for runtime reliability
 
 ### Performance & Usability
@@ -39,7 +39,7 @@ AppImage Updater is a modern, type-safe Linux CLI application built with a layer
 - **Professional Architecture** - Layered design with clear separation of concerns
 - **Perfect Complexity Management** - A-grade complexity rating (zero B+ functions)
 - **Zero Dead Code** - Comprehensive cleanup with smart filtering
-- **Comprehensive Testing** - 456 tests with 63% coverage and 100% success rate
+- **Comprehensive Testing** - 450+ tests with 60%+ coverage and 100% success rate
 - **Enterprise Ready** - Robust error handling and professional code standards
 
 ## Requirements
@@ -95,7 +95,7 @@ graph TD
 
 ## Key Components
 
-- **Configuration System** - Flexible JSON-based configuration supporting both single files and directory structures
+- **Configuration System** - Flexible JSON-based directory structure with global and per-application configuration files
 - **GitHub Integration** - Robust GitHub API client with rate limiting and error handling
 - **Distribution Selector** - Intelligent selection of compatible distribution packages with interactive fallback
 - **Version Management** - Sophisticated version detection and comparison using semantic versioning

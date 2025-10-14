@@ -164,6 +164,7 @@ nav:
     - CI Debugging: ci-debugging.md
     - Contributing: contributing.md
   - API Reference: reference/
+  - Repository on GitHub: https://github.com/royw/appimage-updater
 
 watch:
   - src/appimage_updater

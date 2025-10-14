@@ -74,17 +74,38 @@ appimage-updater add --prerelease --rotation \
 
 ## Configuration Examples
 
-### Single File Configuration
+### Directory-Based Configuration
 
-`~/.config/appimage-updater/config.json`:
+AppImage Updater uses a directory-based structure with separate files:
+
+**Global Config** - `~/.config/appimage-updater/config.json`:
 
 ```json
 {
-  "global_config": {
-    "concurrent_downloads": 5,
-    "timeout": 60,
-    "retry_attempts": 3
-  },
+  "concurrent_downloads": 5,
+  "timeout_seconds": 60,
+  "user_agent": "AppImage-Updater/0.4.16",
+  "defaults": {
+    "download_dir": null,
+    "rotation_enabled": false,
+    "retain_count": 3,
+    "symlink_enabled": false,
+    "symlink_dir": null,
+    "symlink_pattern": "{appname}.AppImage",
+    "auto_subdir": false,
+    "checksum_enabled": true,
+    "checksum_algorithm": "sha256",
+    "checksum_pattern": "{filename}-SHA256.txt",
+    "checksum_required": false,
+    "prerelease": false
+  }
+}
+```
+
+**Application Configs** - `~/.config/appimage-updater/apps/freecad_weekly.json`:
+
+```json
+{
   "applications": [
     {
       "name": "FreeCAD_weekly",
@@ -103,7 +124,16 @@ appimage-updater add --prerelease --rotation \
       "rotation_enabled": true,
       "symlink_path": "/home/user/bin/freecad.AppImage",
       "retain_count": 3
-    },
+    }
+  ]
+}
+```
+
+`~/.config/appimage-updater/apps/bambustudio.json`:
+
+```json
+{
+  "applications": [
     {
       "name": "BambuStudio",
       "source_type": "github",
@@ -120,7 +150,16 @@ appimage-updater add --prerelease --rotation \
       "rotation_enabled": true,
       "symlink_path": "/home/user/bin/bambustudio.AppImage",
       "retain_count": 2
-    },
+    }
+  ]
+}
+```
+
+`~/.config/appimage-updater/apps/orcaslicer.json`:
+
+```json
+{
+  "applications": [
     {
       "name": "OrcaSlicer",
       "source_type": "github",
@@ -141,47 +180,7 @@ appimage-updater add --prerelease --rotation \
 }
 ```
 
-### Directory-Based Configuration
-
-`~/.config/appimage-updater/global.json`:
-
-```json
-{
-  "global_config": {
-    "concurrent_downloads": 3,
-    "timeout": 30,
-    "retry_attempts": 3,
-    "log_level": "INFO"
-  }
-}
-```
-
-`~/.config/appimage-updater/graphics.json`:
-
-```json
-{
-  "applications": [
-    {
-      "name": "Krita",
-      "source_type": "github",
-      "url": "https://github.com/KDE/krita",
-      "download_dir": "/home/user/Applications/Krita",
-      "pattern": "krita.*linux.*\\.AppImage(\\\\..*)?$",
-      "enabled": true,
-      "prerelease": false
-    },
-    {
-      "name": "GIMP",
-      "source_type": "github",
-      "url": "https://github.com/GNOME/gimp",
-      "download_dir": "/home/user/Applications/GIMP",
-      "pattern": "GIMP.*linux.*\\.AppImage(\\\\..*)?$",
-      "enabled": true,
-      "prerelease": false
-    }
-  ]
-}
-```
+**Note**: The old single-file format with all applications in one `config.json` is no longer supported. Each application must be in its own file in the `apps/` directory.
 
 ## Automation Examples
 
@@ -192,13 +191,13 @@ appimage-updater add --prerelease --rotation \
 crontab -e
 
 # Add daily check at 9 AM
-0 9 * * * /usr/local/bin/appimage-updater check
+0 9 * * * appimage-updater check
 
 # Add weekly check on Sunday at 10 AM
-0 10 * * 0 /usr/local/bin/appimage-updater check
+0 10 * * 0 appimage-updater check
 
 # Check every 6 hours
-0 */6 * * * /usr/local/bin/appimage-updater check
+0 */6 * * * appimage-updater check
 ```
 
 ### Systemd Timer
@@ -213,7 +212,7 @@ After=network-online.target
 [Service]
 Type=oneshot
 User=%i
-ExecStart=/usr/local/bin/appimage-updater check
+ExecStart=appimage-updater check
 StandardOutput=journal
 StandardError=journal
 ```

@@ -129,8 +129,8 @@ Look for these key indicators in debug output:
 1. **Manually create minimal config** (if automatic creation fails):
 
    ```bash
-   mkdir -p ~/.config/appimage-updater
-   echo '{"applications": []}' > ~/.config/appimage-updater/config.json
+   mkdir -p ~/.config/appimage-updater/apps
+   echo '{"global_config": {"concurrent_downloads": 3, "timeout_seconds": 30}}' > ~/.config/appimage-updater/config.json
    ```
 
 ### Invalid JSON Configuration
@@ -154,11 +154,37 @@ Look for these key indicators in debug output:
 
 1. **Backup and regenerate**:
 
+   **Option A: Simple directory backup**
+
    ```bash
-   cp ~/.config/appimage-updater/config.json ~/.config/appimage-updater/config.json.backup
-   rm ~/.config/appimage-updater/config.json
+   # Backup entire configuration directory
+   cp -r ~/.config/appimage-updater ~/.config/appimage-updater.backup
+
+   # Remove problematic config and let it regenerate
+   rm -rf ~/.config/appimage-updater
    appimage-updater list  # This will recreate the config automatically
    ```
+
+   **Option B: Export configurations as commands (recommended)**
+
+   ```bash
+   # Export all application configurations as add commands
+   appimage-updater show --add-command > app-add-commands.sh
+
+   # Backup global configuration
+   appimage-updater config show --format json > config.json.backup
+
+   # Remove problematic application configs
+   rm ~/.config/appimage-updater/apps/*.json
+
+   # Restore applications by running the exported commands
+   bash ./app-add-commands.sh
+
+   # Restore global config settings manually if needed
+   # (Review config.json.backup and use 'appimage-updater config set' commands)
+   ```
+
+   This approach is safer as it preserves your configuration as executable commands that can be version-controlled.
 
 ### Application Not Found
 
@@ -200,11 +226,19 @@ Look for these key indicators in debug output:
    appimage-updater --debug check --dry-run
    ```
 
-1. **Check current rate limit**:
+1. **Check current rate limit status**:
+
+   This shows how many API requests you have remaining and when the limit resets:
 
    ```bash
+   # With authentication (shows limit of 5000/hour)
    curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/rate_limit
+   
+   # Without authentication (shows limit of 60/hour)
+   curl https://api.github.com/rate_limit
    ```
+
+   Look for `"remaining"` (requests left) and `"reset"` (Unix timestamp when limit resets) in the output.
 
 1. **Wait for rate limit reset** (shown in error message)
 
@@ -216,10 +250,10 @@ Look for these key indicators in debug output:
 
 **Solutions**:
 
-1. **Increase timeout**:
+1. **Increase global timeout**:
 
    ```bash
-   appimage-updater add --timeout 120 MyApp https://github.com/user/app ~/Apps/MyApp
+   appimage-updater config set timeout-seconds 120
    ```
 
 1. **Check network connectivity**:
@@ -235,10 +269,10 @@ Look for these key indicators in debug output:
    export HTTPS_PROXY="http://proxy.example.com:8080"
    ```
 
-1. **Retry with exponential backoff**:
+1. **Check with debug mode for more details**:
 
    ```bash
-   appimage-updater add --retry-attempts 5 MyApp https://github.com/user/app ~/Apps/MyApp
+   appimage-updater --debug check MyApp --dry-run
    ```
 
 ### SSL Certificate Issues
@@ -369,12 +403,6 @@ Look for these key indicators in debug output:
 
 **Solutions**:
 
-1. **Create directory automatically**:
-
-   ```bash
-   appimage-updater add --create-dir MyApp https://github.com/user/app ~/Apps/MyApp
-   ```
-
 1. **Create manually with correct permissions**:
 
    ```bash
@@ -435,7 +463,7 @@ Look for these key indicators in debug output:
 1. **Clean old files** (if rotation enabled):
 
    ```bash
-   appimage-updater edit MyApp --retain 2  # Keep fewer old versions
+   appimage-updater edit MyApp --retain-count 2  # Keep fewer old versions
    ```
 
 1. **Move to different location**:
@@ -493,7 +521,7 @@ Look for these key indicators in debug output:
 1. **Adjust retention count**:
 
    ```bash
-   appimage-updater edit MyApp --retain 3
+   appimage-updater edit MyApp --retain-count 3
    ```
 
 1. **Manual cleanup**:
@@ -555,10 +583,10 @@ Look for these key indicators in debug output:
    appimage-updater check
    ```
 
-1. **Reduce timeout for faster failure**:
+1. **Reduce global timeout for faster failure**:
 
    ```bash
-   appimage-updater edit MyApp --timeout 30
+   appimage-updater config set timeout-seconds 30
    ```
 
 1. **Check specific apps only**:
@@ -593,7 +621,9 @@ pip show appimage-updater
 
 # Configuration
 appimage-updater list
-cat ~/.config/appimage-updater/config.json
+appimage-updater config show
+cat ~/.config/appimage-updater/config.json  # Global config
+ls -la ~/.config/appimage-updater/apps/     # Application configs
 
 # Network connectivity
 curl -I https://api.github.com

@@ -224,7 +224,7 @@ Manages application and global configuration.
 - **Purpose**: Application configuration management
 - **Features**:
   - JSON-based configuration files
-  - Directory-based or single-file storage
+  - Directory-based storage with separate files per application
   - Configuration validation
 
 #### Global Config Manager (`config/manager.py`)
@@ -1204,7 +1204,6 @@ assert silent_tracker.requests[0].url == expected_url
 
 ### Metrics Collection (Planned)
 
-- Update check frequency
 - Download success rates
 - Application popularity
 - Error categorization

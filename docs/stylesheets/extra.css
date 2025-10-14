@@ -41,3 +41,13 @@
     transform: translateX(0.1rem);
     transition: transform 0.2s ease;
 }
+
+/* Increase content width to ~120 characters */
+.md-grid {
+    max-width: 90rem; /* ~120 characters at default font size */
+}
+
+/* Alternative: Use a more specific width if needed */
+/* .md-main__inner {
+    max-width: 90rem;
+} */

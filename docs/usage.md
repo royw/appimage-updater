@@ -128,7 +128,6 @@ appimage-updater check [OPTIONS] [APP_NAMES...]
 
 **Options:**
 
-- \`--config-dir, -d PATH: Use specific configuration directory
 - `--config-dir, -d PATH`: Use specific configuration directory
 - `--dry-run`: Check for updates without downloading
 - `--verbose`: Show detailed parameter information
@@ -243,9 +242,7 @@ appimage-updater add [OPTIONS] NAME URL [DOWNLOAD_DIR]
 
 **Options:**
 
-- \`--config-dir, -d PATH: Configuration directory path
 - `--config-dir, -d PATH`: Configuration directory path
-- `--create-dir`: Automatically create download directory
 - `--yes, -y`: Auto-confirm prompts (non-interactive mode)
 - `--rotation/--no-rotation`: Enable/disable file rotation
 - `--retain INTEGER`: Number of old files to retain (1-10, default: 3)
@@ -289,7 +286,6 @@ appimage-updater list [OPTIONS]
 
 **Options:**
 
-- \`--config-dir, -d PATH: Configuration directory path
 - `--config-dir, -d PATH`: Configuration directory path
 - `--verbose`: Show configuration file paths and additional details
 
@@ -320,7 +316,6 @@ appimage-updater show [OPTIONS] APP_NAMES...
 
 **Options:**
 
-- \`--config-dir, -d PATH: Configuration directory path
 - `--config-dir, -d PATH`: Configuration directory path
 
 **Examples:**
@@ -353,7 +348,6 @@ appimage-updater edit [OPTIONS] APP_NAMES...
 
 **Options:**
 
-- \`--config-dir, -d PATH: Configuration directory path
 - `--config-dir, -d PATH`: Configuration directory path
 - `--url TEXT`: Update repository URL
 - `--download-dir TEXT`: Update download directory
@@ -479,7 +473,6 @@ appimage-updater remove [OPTIONS] APP_NAMES...
 
 **Options:**
 
-- \`--config-dir, -d PATH: Configuration directory path
 - `--config-dir, -d PATH`: Configuration directory path
 - `--force, -f`: Force operation without confirmation prompts (use with caution)
 
@@ -519,7 +512,6 @@ appimage-updater config [OPTIONS] ACTION [SETTING] [VALUE]
 
 **Options:**
 
-- \`--config-dir, -d PATH: Configuration directory path
 - `--config-dir, -d PATH`: Configuration directory path
 - `--app TEXT`: Application name (required for show-effective action)
 
@@ -584,7 +576,7 @@ Global Configuration
 Basic Settings:
 Concurrent Downloads        (concurrent-downloads)    3
 Timeout (seconds)           (timeout-seconds)         30
-User Agent                                            AppImage-Updater/0.2.23
+User Agent                                            AppImage-Updater/0.4.16
 
 Default Settings for New Applications:
 Download Directory          (download-dir)            /home/user/Applications
@@ -617,7 +609,6 @@ appimage-updater repository [OPTIONS] APP_NAMES...
 
 **Options:**
 
-- \`--config-dir, -d PATH: Configuration directory path
 - `--config-dir, -d PATH`: Configuration directory path
 - `--limit, -l INTEGER`: Maximum number of releases to display (1-50, default: 10)
 - `--assets, -a`: Show detailed asset information for each release
@@ -676,7 +667,7 @@ This command is particularly useful for:
 {
   "concurrent_downloads": 3,
   "timeout_seconds": 30,
-  "user_agent": "AppImage-Updater/0.2.26",
+  "user_agent": "AppImage-Updater/0.4.16",
   "defaults": {
     "download_dir": null,
     "rotation_enabled": false,

@@ -13,7 +13,21 @@ AppImage Updater uses JSON configuration files to define which applications to m
   "global_config": {
     "concurrent_downloads": 3,
     "timeout_seconds": 30,
-    "user_agent": "AppImage-Updater/0.1.0"
+    "user_agent": "AppImage-Updater/1.0.0",
+    "defaults": {
+      "download_dir": null,
+      "rotation_enabled": false,
+      "retain_count": 3,
+      "symlink_enabled": false,
+      "symlink_dir": null,
+      "symlink_pattern": "{appname}.AppImage",
+      "auto_subdir": false,
+      "checksum_enabled": true,
+      "checksum_algorithm": "sha256",
+      "checksum_pattern": "{filename}-SHA256.txt",
+      "checksum_required": false,
+      "prerelease": false
+    }
   }
 }
 ```
@@ -21,6 +35,7 @@ AppImage Updater uses JSON configuration files to define which applications to m
 - `concurrent_downloads`: Number of simultaneous downloads (1-10)
 - `timeout_seconds`: HTTP request timeout (5-300 seconds, default: 30)
 - `user_agent`: Custom User-Agent string for HTTP requests
+- `defaults`: Default settings applied to new applications (see Available Settings below)
 
 ### Application Configuration
 
@@ -52,11 +67,13 @@ AppImage Updater uses JSON configuration files to define which applications to m
 #### Fields
 
 - `name`: Human-readable application name
-- `source_type`: "github" or "direct" (currently only GitHub is fully implemented)
-- `url`: GitHub repository URL
+- `source_type`: Repository type - "github", "gitlab", "sourceforge", "direct", "direct_download", or "dynamic_download"
+- `url`: Repository or download URL
 - `download_dir`: Directory to save AppImage files (supports ~ expansion)
 - `pattern`: Regular expression to match desired AppImage files
-- `enabled`: Whether to check this application for updates
+- `version_pattern`: Optional version pattern to filter releases (e.g., 'N.N_' for stable versions only)
+- `basename`: Optional base name for file matching (defaults to app name if not specified)
+- `enabled`: Whether to check this application for updates (default: true)
 - `prerelease`: Include prerelease versions (default: false)
 - `rotation_enabled`: Enable file rotation with .current/.old suffixes (default: false)
 - `symlink_path`: Path for stable symlink (required if rotation_enabled is true)
@@ -143,13 +160,14 @@ The setting names in parentheses (e.g., `(download-dir)`) are what you use with 
 
 ## Configuration Locations
 
-AppImage Updater looks for configuration in the following order:
+AppImage Updater uses a directory-based configuration structure:
 
-1. Directory specified with `--config-dir` option
-1. `~/.config/appimage-updater/apps/` (default directory-based configuration)
+- **Global Config**: `~/.config/appimage-updater/config.json` - Contains global settings and defaults
+- **Application Configs**: `~/.config/appimage-updater/apps/*.json` - One file per application
 
-**Note**: Single-file configuration format (`config.json` with embedded applications)
-is no longer supported. Only directory-based configuration is supported.
+You can override the default location with the `--config-dir` option, which should point to the directory containing the `apps/` subdirectory.
+
+**Note**: The old single-file configuration format (`config.json` with embedded applications) is no longer supported. Each application is now stored in its own JSON file in the `apps/` directory.
 
 ## GitHub Authentication
 
@@ -316,8 +334,7 @@ Download Directory/
   "pattern": "MyApp.*\\.AppImage$",
   "rotation_enabled": true,
   "symlink_path": "~/bin/myapp.AppImage",
-  "retain_count": 3,
-  "frequency": {"value": 1, "unit": "days"}
+  "retain_count": 3
 }
 ```
 
@@ -564,15 +581,27 @@ Common regex patterns for matching files:
 
 ### Limitations
 
-- **OpenRGB**: Uses GitLab instead of GitHub (not currently supported)
 - **Dynamic Applications**: Some applications with JavaScript-generated downloads may not be reliably parseable
+- **OAuth/Login Requirements**: Applications requiring authentication cannot be automatically monitored
+- **CAPTCHA Protection**: Download pages with CAPTCHA verification are not supported
 
 ## Example Configurations
 
-See the `examples/` directory for complete configuration examples:
+Configuration examples are automatically created when you add applications using the CLI:
 
-- `examples/freecad.json` - Single application
-- `examples/comprehensive.json` - Multiple applications with global config
+```bash
+# Add an application - creates configuration automatically
+appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
+
+# View the generated configuration
+appimage-updater show FreeCAD
+
+# View the generated configuration in JSON format
+appimage-updater show FreeCAD --format json
+
+# View the add command needed to recreate the configuration
+appimage-updater show FreeCAD --add-command
+```
 
 ## Automatic Configuration Creation
 
