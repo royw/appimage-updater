@@ -262,14 +262,14 @@ def _build_main_settings(app_name: str, effective_config: dict[str, Any]) -> dic
     """
     settings = {
         "Application": app_name,
-        "Enabled": "Yes" if effective_config.get("enabled") else "No",
+        "Enabled": _format_yes_no(effective_config.get("enabled", False)),
         "URL": effective_config.get("url", ""),
         "Download Directory": effective_config.get("download_dir", ""),
         "Pattern": effective_config.get("pattern", ""),
-        "Prerelease": "Yes" if effective_config.get("prerelease") else "No",
-        "Auto Subdirectory": "Yes" if effective_config.get("auto_subdir") else "No",
-        "Rotation Enabled": "Yes" if effective_config.get("rotation_enabled") else "No",
-        "Symlink Enabled": "Yes" if effective_config.get("symlink_enabled") else "No",
+        "Prerelease": _format_yes_no(effective_config.get("prerelease", False)),
+        "Auto Subdirectory": _format_yes_no(effective_config.get("auto_subdir", False)),
+        "Rotation Enabled": _format_yes_no(effective_config.get("rotation_enabled", False)),
+        "Symlink Enabled": _format_yes_no(effective_config.get("symlink_enabled", False)),
     }
 
     # Optional settings

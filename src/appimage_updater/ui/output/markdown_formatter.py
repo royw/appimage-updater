@@ -220,6 +220,28 @@ class MarkdownOutputFormatter(OutputFormatter):
         print()
         self._output_lines.append("")
 
+    @staticmethod
+    def _get_pattern_based_header_color(header_lower: str) -> str | None:
+        """Get color for header based on pattern matching.
+
+        Args:
+            header_lower: Lowercase header name
+
+        Returns:
+            Color name or None if no pattern matches
+        """
+        patterns = [
+            (("current", "version"), "gold"),
+            (("latest", "version"), "green"),
+            (("update", "available"), "red"),
+        ]
+
+        for words, color in patterns:
+            if all(word in header_lower for word in words):
+                return color
+
+        return None
+
     def _get_header_color(self, header_lower: str) -> str | None:
         """Get color for a header based on its name.
 
@@ -243,14 +265,7 @@ class MarkdownOutputFormatter(OutputFormatter):
             return exact_colors[header_lower]
 
         # Pattern-based colors
-        if "current" in header_lower and "version" in header_lower:
-            return "gold"
-        if "latest" in header_lower and "version" in header_lower:
-            return "green"
-        if "update" in header_lower and "available" in header_lower:
-            return "red"
-
-        return None
+        return self._get_pattern_based_header_color(header_lower)
 
     def _colorize_header(self, header: str) -> str:
         """Apply color to table header based on column name (matching Rich formatter).
