@@ -209,6 +209,7 @@ tasks:
       - task: lint:markdown
       - task: lint:emoji
       - task: lint:deadcode
+      - task: lint:packages
       - task: _check_tmp
         vars:
           SEARCH_PATH: "{{.SRC}}"
@@ -319,6 +320,64 @@ tasks:
         silent: true
       - uv run deadcode {{.CLI_ARGS | default .SRC}}
     silent: true
+
+  lint:packages:
+    desc: Verify that __init__.py files only contain docstrings (no code)
+    cmds:
+      - cmd: |
+          echo "Checking __init__.py files for code violations..."
+          VIOLATIONS=0
+          
+          # Find all __init__.py files in src/
+          while IFS= read -r file; do
+            # Skip if file doesn't exist or is empty
+            if [ ! -f "$file" ] || [ ! -s "$file" ]; then
+              continue
+            fi
+            
+            # Use Python to check if file contains only docstrings and comments
+            if ! python3 << PYTHON_SCRIPT
+          import ast
+          import sys
+          
+          try:
+              with open('$file', 'r') as f:
+                  content = f.read()
+              
+              # Parse the file
+              tree = ast.parse(content)
+              
+              # Check if there are any statements other than docstrings
+              has_code = False
+              for node in tree.body:
+                  # Allow module docstrings (Expr node with a Constant value)
+                  if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant):
+                      continue
+                  # Everything else is considered code
+                  has_code = True
+                  break
+              
+              if has_code:
+                  print(f"FAIL: $file contains code beyond docstrings", file=sys.stderr)
+                  sys.exit(1)
+              
+              sys.exit(0)
+          except SyntaxError as e:
+              print(f"ERROR: $file has syntax error: {e}", file=sys.stderr)
+              sys.exit(1)
+          PYTHON_SCRIPT
+            then
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          done < <(find src -name "__init__.py" -type f)
+          
+          if [ $VIOLATIONS -eq 0 ]; then
+            echo "PASS All __init__.py files are clean (docstrings only)"
+          else
+            echo "FAIL Found $VIOLATIONS __init__.py file(s) with code violations"
+            exit 1
+          fi
+        silent: true
 
   lint:duplication:
     desc: Check for duplicate code using pylint
