@@ -42,10 +42,7 @@ class ListCommand(Command):
 
         try:
             # Use context manager to make output formatter available throughout the execution
-            if output_formatter:
-                with OutputFormatterContext(output_formatter):
-                    success = await self._execute_list_operation()
-            else:
+            with OutputFormatterContext(output_formatter):
                 success = await self._execute_list_operation()
 
             if success:
@@ -102,15 +99,12 @@ class ListCommand(Command):
         return app_configs._config
 
     def _display_message(self, message: str, is_error: bool) -> None:
-        """Display a message using formatter if available, otherwise console."""
+        """Display a message using formatter."""
         formatter = get_output_formatter()
-        if formatter:
-            if is_error:
-                formatter.print_error(message)
-            else:
-                formatter.print_info(message)
+        if is_error:
+            formatter.print_error(message)
         else:
-            self.console.print(message)
+            formatter.print_info(message)
 
     def _display_applications_and_summary(self, config: Any) -> None:
         """Display applications list and summary statistics."""
@@ -124,8 +118,4 @@ class ListCommand(Command):
         # Use output formatter if available, otherwise fallback to console
         formatter = get_output_formatter()
         summary_message = f"Total: {total_count} applications ({enabled_count} enabled, {disabled_count} disabled)"
-
-        if formatter:
-            formatter.print_info(summary_message)
-        else:
-            self.console.print(summary_message)
+        formatter.print_info(summary_message)

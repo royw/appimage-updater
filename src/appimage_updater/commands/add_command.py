@@ -70,13 +70,6 @@ class AddCommand(Command):
 
     async def _execute_main_add_workflow(self, output_formatter: Any) -> CommandResult:
         """Execute the main add command workflow."""
-        if output_formatter:
-            return await self._execute_with_formatter_context(output_formatter)
-        else:
-            return await self._execute_without_formatter()
-
-    async def _execute_with_formatter_context(self, output_formatter: Any) -> CommandResult:
-        """Execute add command with output formatter context."""
         with OutputFormatterContext(output_formatter):
             validation_result = self._validate_parameters()
             if validation_result:
@@ -84,15 +77,6 @@ class AddCommand(Command):
 
             success = await self._execute_add_operation()
             return self._create_execution_result(success)
-
-    async def _execute_without_formatter(self) -> CommandResult:
-        """Execute add command without output formatter."""
-        validation_result = self._validate_parameters()
-        if validation_result:
-            return validation_result
-
-        success = await self._execute_add_operation()
-        return self._create_execution_result(success)
 
     # noinspection PyMethodMayBeStatic
     def _handle_execution_error(self, e: Exception) -> CommandResult:
@@ -139,25 +123,14 @@ class AddCommand(Command):
 
     def _show_validation_help(self, error_msg: str) -> None:
         """Show helpful validation error messages."""
-        # Use output formatter if available, otherwise fallback to console
         formatter = get_output_formatter()
-
-        if formatter:
-            formatter.print_error(error_msg)
-            formatter.print_warning("Try one of these options:")
-            formatter.print_info(
-                "   • Provide both NAME and URL: appimage-updater add MyApp https://github.com/user/repo"
-            )
-            formatter.print_info("   • Use interactive mode: appimage-updater add --interactive")
-            formatter.print_info("   • See examples: appimage-updater add --examples")
-        else:
-            self.console.print(f"[red]Error: {error_msg}[/red]")
-            self.console.print("[yellow]Try one of these options:")
-            self.console.print(
-                "[yellow]   • Provide both NAME and URL: appimage-updater add MyApp https://github.com/user/repo"
-            )
-            self.console.print("[yellow]   • Use interactive mode: appimage-updater add --interactive")
-            self.console.print("[yellow]   • See examples: appimage-updater add --examples")
+        formatter.print_error(error_msg)
+        formatter.print_warning("Try one of these options:")
+        formatter.print_info(
+            "   • Provide both NAME and URL: appimage-updater add MyApp https://github.com/user/repo"
+        )
+        formatter.print_info("   • Use interactive mode: appimage-updater add --interactive")
+        formatter.print_info("   • See examples: appimage-updater add --examples")
 
     def _create_execution_result(self, success: bool) -> CommandResult:
         """Create the final command result."""

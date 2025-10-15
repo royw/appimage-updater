@@ -66,13 +66,6 @@ class EditCommand(BaseCommand, FormatterContextMixin, Command):
 
     async def _execute_main_edit_workflow(self, output_formatter: Any) -> CommandResult:
         """Execute the main edit command workflow."""
-        if output_formatter:
-            return await self._execute_with_formatter_context(output_formatter)
-        else:
-            return await self._execute_without_formatter()
-
-    async def _execute_with_formatter_context(self, output_formatter: Any) -> CommandResult:
-        """Execute edit command with output formatter context."""
         with OutputFormatterContext(output_formatter):
             validation_result = self._validate_with_formatter_error_display()
             if validation_result:
@@ -80,15 +73,6 @@ class EditCommand(BaseCommand, FormatterContextMixin, Command):
 
             result = await self._execute_edit_operation()
             return self._process_edit_result(result)
-
-    async def _execute_without_formatter(self) -> CommandResult:
-        """Execute edit command without output formatter."""
-        validation_result = self._validate_with_console_error_display()
-        if validation_result:
-            return validation_result
-
-        result = await self._execute_edit_operation()
-        return self._process_edit_result(result)
 
     def _validate_with_formatter_error_display(self) -> CommandResult | None:
         """Validate parameters and display errors using formatter."""
