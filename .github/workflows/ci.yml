@@ -85,24 +85,4 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
-          
-  publish-to-pypi:
-    name: Publish to PyPI
-    if: github.event_name == 'release' && github.event.action == 'published'
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: release  # TODO: Create 'release' environment in GitHub Settings → Environments before publishing
-      url: https://pypi.org/p/appimage-updater
-    permissions:
-      id-token: write  # IMPORTANT: mandatory for trusted publishing
-      
-    steps:
-      - name: Download distributions
-        uses: actions/download-artifact@v4
-        with:
-          name: python-package-distributions
-          path: dist/
-          
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+          retention-days: 7
