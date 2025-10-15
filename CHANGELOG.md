@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-01-15
+
+### Release Notes
+
+This is the initial public release of AppImage Updater - a comprehensive tool for managing AppImage applications with automatic updates, file rotation, checksum verification, and multi-repository support.
+
 ## [0.4.20] - 2025-10-15
 
 ### Changed
@@ -369,60 +375,131 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-## [Unreleased]
+## [Previous] - 2025-01-04
 
-## [0.4.20] - 2025-10-15
+### BUILD Code Quality
 
-## [0.4.19] - 2025-10-14
+- **IMPROVED**: Significantly reduced code complexity across the codebase
 
-## [0.4.18] - 2025-10-14 - 2025-09-06
+  - Refactored `_check_updates` function from D complexity (critical) to B complexity
+  - Broke down complex functions into smaller, focused methods
+  - All functions now meet project complexity standards (≤10 cyclomatic complexity)
+  - Enhanced maintainability and readability through better separation of concerns
 
-### MAJOR: GitHub API Authentication & Rate Limit Management
+- **FIXED**: MyPy type checking issues
 
-- **GAME CHANGER**: Complete GitHub Personal Access Token (PAT) authentication system
-  - **PROBLEM SOLVED**: Anonymous GitHub API usage limited to 60 requests/hour causes rate limit failures
-  - **SOLUTION**: Comprehensive token discovery and authentication with 83x higher rate limits (5000/hour)
-  - **ZERO-CONFIG**: Automatic token discovery from multiple secure sources with intelligent priority
-  - **FLEXIBLE**: Supports environment variables, token files, and global config files
-  - **SECURE**: Security-first design with proper priority ordering and no token exposure in logs
-  - **USER-FRIENDLY**: Clear authentication status feedback and helpful setup guidance
+  - Resolved import redefinition errors in `_version.py`
+  - Fixed untyped function call issues in `config.py`
+  - All 11 source files now pass strict type checking
 
-#### **Authentication Sources (Priority Order)**
+### 🧹 Code Structure
 
-1. **`GITHUB_TOKEN`** environment variable (standard GitHub CLI compatible)
-1. **`APPIMAGE_UPDATER_GITHUB_TOKEN`** environment variable (app-specific)
-1. **Token files** in user config directory:
-   - `~/.config/appimage-updater/github-token.json` (JSON format)
-   - `~/.config/appimage-updater/github_token.json` (JSON format)
-   - `~/.appimage-updater-github-token` (plain text)
-1. **Global config files** with GitHub token settings:
-   - `~/.config/appimage-updater/config.json`
-   - `~/.config/appimage-updater/global.json`
+- **REFACTORED**: Main update checking workflow
 
-#### **Technical Implementation**
+  - Extracted `_load_and_filter_config`, `_filter_apps_by_name`, `_perform_update_checks`
+  - Separated update candidate processing and download handling
+  - Clear separation between configuration, checking, and downloading phases
 
-- **NEW**: `GitHubAuth` class for secure token management and validation
-- **NEW**: `get_github_auth()` factory function for easy authentication setup
-- **ENHANCED**: `GitHubClient` with automatic authentication integration
-- **ENHANCED**: All GitHub API calls now include authentication headers
-- **ENHANCED**: Rate limit aware error messages with helpful user guidance
-- **INTEGRATED**: CLI commands show authentication status in debug mode
+- **REFACTORED**: Download system architecture
 
-#### **Rate Limit Benefits**
+  - Split `_download_single` into `_setup_download`, `_perform_download`, `_post_process_download`
+  - Improved error handling and retry logic organization
+  - Better separation of file download and checksum verification
 
-- **Anonymous**: 60 requests/hour (frequently exceeded during normal usage)
-- **Authenticated**: 5,000 requests/hour (sufficient for intensive usage)
-- **Impact**: Eliminates rate limit failures during normal operation
-- **Feedback**: Clear status messages showing current rate limits and authentication method
+- **REFACTORED**: Checksum verification system
 
-#### **Personal Access Token (PAT) Setup Guide**
+  - Extracted `_parse_expected_checksum` and `_calculate_file_hash` methods
+  - Simplified checksum parsing logic with dedicated functions
+  - Enhanced GitHub checksum file association with pattern-based matching
 
-**Required Permissions (Minimal Security)**:
+- **REFACTORED**: User interface components
 
-- **Classic PATs**: Only `public_repo` permission needed
-- **Fine-grained PATs**: Only `Contents: Read` and `Metadata: Read` permissions needed
+  - Separated successful and failed download result displays
+  - Extracted checksum status indicator logic
+  - Improved code organization for better maintainability
+
+### LOCK Security
+
+- **NEW**: Automatic checksum verification for downloaded files
+  - Supports SHA256, SHA1, and MD5 algorithms
+  - Configurable checksum file patterns (e.g., `{filename}-SHA256.txt`)
+  - Intelligent detection of checksum files in GitHub releases
+  - Visual indicators for verification status in download results
+  - Optional or required verification modes per application
+
+### DEPLOY Improvements
+
+- **FIXED**: HTTP redirect handling for GitHub release downloads
+
+  - Downloads now properly follow 302 redirects from GitHub CDN
+  - Resolves previous "Redirect response '302 Found'" errors
+
+- **ENHANCED**: Download robustness and reliability
+
+  - Automatic retry logic with exponential backoff (up to 3 attempts)
+  - Improved timeout configuration (separate connect/read/write timeouts)
+  - Better error handling for network interruptions
+  - Progress tracking with transfer speed and ETA
+
+### COMMIT Configuration
+
+- **NEW**: `list` command for viewing configured applications
+
+  - **ADDED**: `appimage-updater list` command to display all configured applications
+  - **DISPLAYS**: Application name, enabled/disabled status, source repository, download directory, and update frequency
+  - **SUPPORTS**: Same configuration options as other commands (`--config-dir`)
+  - **SHOWS**: Summary with total applications and enabled/disabled counts
+  - **EXAMPLE**: `appimage-updater list --config-dir ~/.config/appimage-updater/apps`
+
+- **NEW**: Checksum configuration block for applications
+
+  ```json
+  "checksum": {
+    "enabled": true,
+    "pattern": "{filename}-SHA256.txt",
+    "algorithm": "sha256",
+    "required": false
+  }
+  ```
+
+- **NEW**: Application filtering with `--app` option
+
+- **IMPROVED**: Debug logging with `--debug` flag for troubleshooting
+
+### TOOLS Developer Experience
+
+- Enhanced logging with checksum verification status
+- Comprehensive debug information for download failures
+- Better error messages and user feedback
+- Updated documentation with security recommendations
+
+### LIST Technical Details
+
+- Checksum files automatically downloaded and verified
+- Support for multiple checksum file formats:
+  - Hash + filename: `abc123... filename.AppImage`
+  - Hash only: `abc123...`
+  - Multiple files: One hash per line
+- Configurable patterns support various naming conventions:
+  - `{filename}-SHA256.txt` (FreeCAD style)
+  - `{filename}_SHA256.txt` (underscore variant)
+  - `{filename}.sha256` (extension-based)
+
+### TEST Tested With
+
+- PASS FreeCAD weekly builds (SHA256 verification)
+- PASS Large file downloads (>800MB) with retry logic
+- PASS GitHub release redirect handling
+- PASS Checksum pattern detection and parsing
+
+______________________________________________________________________
+
+## Contributing
+
+This project follows [Semantic Versioning](https://semver.org/).
 - **Security**: Read-only access to public repositories only - cannot access private data or modify anything
 
+### TEST **Testing & Quality Assurance**
 **Step-by-Step Token Creation**:
 
 1. **Create Classic PAT (Recommended)**:
