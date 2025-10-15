@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Eliminated code smell by removing test-only code from production**
+
+  - Removed `create_silent_http_logger()` factory function (unused trivial wrapper)
+  - Removed `create_verbose_http_tracker()` factory function (never used in codebase)
+  - Moved `SilentHTTPLogger` class from `src/` to `tests/unit/instrumentation/test_helpers.py`
+  - Cleaner separation between production and test code
+  - Simpler API with only actually-used factory functions
+  - Test utilities properly located in test directories
+
+- **Protected README.md LaTeX syntax from mdformat processing**
+
+  - Excluded README.md from `task format:markdown` to preserve `$$\color{}` syntax
+  - Excluded README.md from `task lint:markdown` to avoid linting issues
+  - Created `.mdformat-exclusions.md` documenting exclusion rationale
+  - LaTeX-rendered colored text in tables now preserved during formatting
+
 - **Major output formatter refactoring for improved type safety and code quality**
 
   - `get_output_formatter()` now guarantees a valid formatter or raises `RuntimeError`

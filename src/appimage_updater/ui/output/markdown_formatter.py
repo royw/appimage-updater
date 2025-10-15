@@ -175,6 +175,38 @@ class MarkdownOutputFormatter(OutputFormatter):
         print()
         self._output_lines.append("")
 
+    def _get_header_color(self, header_lower: str) -> str | None:
+        """Get color for a header based on its name.
+
+        Args:
+            header_lower: Lowercase header name
+
+        Returns:
+            Color name or None if no color mapping exists
+        """
+        # Exact match colors
+        exact_colors = {
+            "application": "cyan",
+            "name": "cyan",
+            "status": "magenta",
+            "setting": "cyan",
+            "description": "white",
+            "valid_values": "gray",
+            "example": "green",
+        }
+        if header_lower in exact_colors:
+            return exact_colors[header_lower]
+
+        # Pattern-based colors
+        if "current" in header_lower and "version" in header_lower:
+            return "gold"
+        if "latest" in header_lower and "version" in header_lower:
+            return "green"
+        if "update" in header_lower and "available" in header_lower:
+            return "red"
+
+        return None
+
     def _colorize_header(self, header: str) -> str:
         """Apply color to table header based on column name (matching Rich formatter).
 
@@ -185,30 +217,41 @@ class MarkdownOutputFormatter(OutputFormatter):
             Colored header text
         """
         header_lower = header.lower()
+        color = self._get_header_color(header_lower)
 
-        # Match Rich formatter's column styling
-        escaped_header = self._escape_latex(header)
-        if header_lower in ["application", "name"]:
-            return f"$$\\color{{cyan}}{{{escaped_header}}}$$"
-        elif header_lower == "status":
-            return f"$$\\color{{magenta}}{{{escaped_header}}}$$"
-        elif "current" in header_lower and "version" in header_lower:
-            return f"$$\\color{{gold}}{{{escaped_header}}}$$"
-        elif "latest" in header_lower and "version" in header_lower:
-            return f"$$\\color{{green}}{{{escaped_header}}}$$"
-        elif "update" in header_lower and "available" in header_lower:
-            return f"$$\\color{{red}}{{{escaped_header}}}$$"
-        # Config list columns
-        elif header_lower == "setting":
-            return f"$$\\color{{cyan}}{{{escaped_header}}}$$"
-        elif header_lower == "description":
-            return f"$$\\color{{white}}{{{escaped_header}}}$$"
-        elif header_lower == "valid_values":
-            return f"$$\\color{{gray}}{{{escaped_header}}}$$"
-        elif header_lower == "example":
-            return f"$$\\color{{green}}{{{escaped_header}}}$$"
+        if color:
+            escaped_header = self._escape_latex(header)
+            return f"$$\\color{{{color}}}{{{escaped_header}}}$$"
 
         return header
+
+    def _get_cell_color_for_header(self, header_lower: str) -> str | None:
+        """Get static color for a cell based on header name.
+
+        Args:
+            header_lower: Lowercase header name
+
+        Returns:
+            Color name or None if no static color mapping exists
+        """
+        # Exact match colors
+        exact_colors = {
+            "application": "cyan",
+            "name": "cyan",
+            "setting": "cyan",
+            "example": "green",
+            "valid_values": "gray",
+        }
+        if header_lower in exact_colors:
+            return exact_colors[header_lower]
+
+        # Pattern-based colors
+        if "current" in header_lower and "version" in header_lower:
+            return "gold"
+        if "latest" in header_lower and "version" in header_lower:
+            return "green"
+
+        return None
 
     def _colorize_cell_value(self, header: str, value: str) -> str:
         """Apply color to cell value based on column and content.
@@ -225,38 +268,22 @@ class MarkdownOutputFormatter(OutputFormatter):
 
         header_lower = header.lower()
 
-        # Application/Name column - cyan
-        if header_lower in ["application", "name"]:
-            return f"$$\\color{{cyan}}{{{self._escape_latex(value)}}}$$"
-
         # Status column - color based on value
         if header_lower == "status":
             return self._colorize_status_value(value)
-
-        # Current Version column - yellow/gold
-        if "current" in header_lower and "version" in header_lower:
-            return f"$$\\color{{gold}}{{{self._escape_latex(value)}}}$$"
-
-        # Latest Version column - green
-        if "latest" in header_lower and "version" in header_lower:
-            return f"$$\\color{{green}}{{{self._escape_latex(value)}}}$$"
 
         # Update Available column - color based on value
         if "update" in header_lower and "available" in header_lower:
             return self._colorize_update_available_value(value)
 
-        # Config list columns
-        config_colors = {
-            "setting": "cyan",
-            "example": "green",
-            "valid_values": "gray",
-        }
-        if header_lower in config_colors:
-            return f"$$\\color{{{config_colors[header_lower]}}}{{{self._escape_latex(value)}}}$$"
-
         # Source column or any URL - wrap in angle brackets
         if header_lower == "source" or self._is_url(value):
             return f"<{value}>"
+
+        # Static color based on header
+        color = self._get_cell_color_for_header(header_lower)
+        if color:
+            return f"$$\\color{{{color}}}{{{self._escape_latex(value)}}}$$"
 
         return value
 
