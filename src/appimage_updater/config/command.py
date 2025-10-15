@@ -29,26 +29,43 @@ logger = logging.getLogger(__name__)
 console = Console(no_color=bool(os.environ.get("NO_COLOR", "")))
 
 
+def _print_global_config_structured(global_config: Any, defaults: Any, output_formatter: Any) -> None:
+    """Print global config using structured formatter.
+
+    Args:
+        global_config: Global configuration
+        defaults: Default settings
+        output_formatter: Output formatter
+    """
+    _print_config_structured(global_config, defaults, output_formatter)
+
+
+def _print_global_config_rich(global_config: Any, defaults: Any, output_formatter: Any) -> None:
+    """Print global config using Rich formatter.
+
+    Args:
+        global_config: Global configuration
+        defaults: Default settings
+        output_formatter: Output formatter
+    """
+    rich_console = output_formatter.console if output_formatter and hasattr(output_formatter, "console") else console
+    _print_config_header(rich_console)
+    _print_basic_settings_table(global_config, rich_console)
+    _print_defaults_settings_table(defaults, rich_console)
+
+
 def show_global_config(config_file: Path | None = None, config_dir: Path | None = None) -> None:
     """Show current global configuration."""
     try:
         app_configs = AppConfigs(config_path=config_file or config_dir)
         config = app_configs._config
         defaults = config.global_config.defaults
-
         output_formatter = get_output_formatter()
 
         if output_formatter and not hasattr(output_formatter, "console"):
-            # Use structured format for non-Rich formatters
-            _print_config_structured(config.global_config, defaults, output_formatter)
+            _print_global_config_structured(config.global_config, defaults, output_formatter)
         else:
-            # Use Rich format with formatter's console
-            rich_console = (
-                output_formatter.console if output_formatter and hasattr(output_formatter, "console") else console
-            )
-            _print_config_header(rich_console)
-            _print_basic_settings_table(config.global_config, rich_console)
-            _print_defaults_settings_table(defaults, rich_console)
+            _print_global_config_rich(config.global_config, defaults, output_formatter)
 
     except ConfigLoadError as e:
         _handle_config_load_error(e)

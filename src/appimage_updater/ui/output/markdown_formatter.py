@@ -386,16 +386,21 @@ class MarkdownOutputFormatter(OutputFormatter):
         """
         value_lower = value.lower()
         escaped_value = self._escape_latex(value)
-        if "error" in value_lower:
-            return f"$$\\color{{red}}{{{escaped_value}}}$$"
-        elif "update available" in value_lower:
-            return f"$$\\color{{gold}}{{{escaped_value}}}$$"
-        elif "up to date" in value_lower or "success" in value_lower or "enabled" in value_lower:
-            return f"$$\\color{{green}}{{{escaped_value}}}$$"
-        elif "disabled" in value_lower:
-            return f"$$\\color{{red}}{{{escaped_value}}}$$"
-        else:
-            return f"$$\\color{{magenta}}{{{escaped_value}}}$$"
+
+        # Define status patterns and their colors
+        status_colors = [
+            (["error", "disabled"], "red"),
+            (["update available"], "gold"),
+            (["up to date", "success", "enabled"], "green"),
+        ]
+
+        # Find matching color
+        for keywords, color in status_colors:
+            if any(keyword in value_lower for keyword in keywords):
+                return f"$$\\color{{{color}}}{{{escaped_value}}}$$"
+
+        # Default color
+        return f"$$\\color{{magenta}}{{{escaped_value}}}$$"
 
     def _colorize_update_available_value(self, value: str) -> str:
         """Colorize update available column values.
