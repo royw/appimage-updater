@@ -229,6 +229,16 @@ class PlainOutputFormatter(OutputFormatter):
         if app_details.get("symlink_path"):
             print(f"  Symlink Path: {app_details['symlink_path']}")
 
+    def _print_plain_config_items(self, items: list[tuple[str, Any]]) -> None:
+        """Print configuration items with indentation.
+
+        Args:
+            items: List of (key, value) tuples to print
+        """
+        for key, value in items:
+            if value is not None:
+                print(f"    {key}: {value}")
+
     def _print_plain_checksum_config(self, app_details: dict[str, Any]) -> None:
         """Print checksum configuration for plain format."""
         checksum = app_details.get("checksum")
@@ -237,13 +247,18 @@ class PlainOutputFormatter(OutputFormatter):
 
         status = "Enabled" if checksum.get("enabled") else "Disabled"
         print(f"  Checksum Verification: {status}")
+
         if checksum.get("enabled"):
-            if checksum.get("algorithm"):
-                print(f"    Algorithm: {checksum['algorithm']}")
-            if checksum.get("pattern"):
-                print(f"    Pattern: {checksum['pattern']}")
+            required_value = None
             if checksum.get("required") is not None:
-                print(f"    Required: {'Yes' if checksum['required'] else 'No'}")
+                required_value = "Yes" if checksum.get("required") else "No"
+
+            items = [
+                ("Algorithm", checksum.get("algorithm")),
+                ("Pattern", checksum.get("pattern")),
+                ("Required", required_value),
+            ]
+            self._print_plain_config_items(items)
 
     def _print_plain_rotation_config(self, app_details: dict[str, Any]) -> None:
         """Print rotation configuration for plain format."""

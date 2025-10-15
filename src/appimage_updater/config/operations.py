@@ -185,6 +185,31 @@ def _attempt_directory_creation(download_path: Path) -> None:
         console.print("[yellow]You will need to create the directory manually before downloading updates.")
 
 
+async def _get_effective_pattern(pattern: str | None, name: str, url: str) -> str:
+    """Get effective pattern with fallback generation.
+
+    Args:
+        pattern: Explicit pattern if provided
+        name: Application name
+        url: Application URL
+
+    Returns:
+        Pattern string
+    """
+    if pattern is not None:
+        return pattern
+
+    try:
+        generated_pattern = await generate_appimage_pattern_async(name, url)
+        return generated_pattern if generated_pattern is not None else f"(?i)^{name}.*\\.AppImage$"
+    except RuntimeError as e:
+        # Handle Python 3.13 event loop closure during pattern generation
+        if "Event loop is closed" in str(e):
+            logger.warning(f"Event loop closed during pattern generation for {name}, using fallback pattern")
+            return f"(?i)^{name}.*\\.AppImage$"
+        raise
+
+
 async def generate_default_config(
     name: str,
     url: str,
@@ -216,19 +241,7 @@ async def generate_default_config(
     prerelease_final, prerelease_auto_enabled = await _get_effective_prerelease_config(prerelease, defaults, url)
 
     # Generate pattern with fallback
-    if pattern is not None:
-        final_pattern = pattern
-    else:
-        try:
-            generated_pattern = await generate_appimage_pattern_async(name, url)
-            final_pattern = generated_pattern if generated_pattern is not None else f"(?i)^{name}.*\\.AppImage$"
-        except RuntimeError as e:
-            # Handle Python 3.13 event loop closure during pattern generation
-            if "Event loop is closed" in str(e):
-                logger.warning(f"Event loop closed during pattern generation for {name}, using fallback pattern")
-                final_pattern = f"(?i)^{name}.*\\.AppImage$"
-            else:
-                raise
+    final_pattern = await _get_effective_pattern(pattern, name, url)
 
     config = {
         "name": name,
