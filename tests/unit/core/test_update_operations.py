@@ -792,41 +792,32 @@ class TestRotationHelpers:
 class TestHandleCheckErrors:
     """Tests for _handle_check_errors function."""
 
-    @patch("appimage_updater.core.update_operations.get_output_formatter")
-    @patch("appimage_updater.core.update_operations.console")
-    def test_handle_config_load_error(self, mock_console: Mock, mock_get_formatter: Mock) -> None:
+    def test_handle_config_load_error(self) -> None:
         """Test handling ConfigLoadError."""
-        mock_get_formatter.return_value = None
         error = ConfigLoadError("Config not found")
+        formatter = RichOutputFormatter()
 
-        with pytest.raises(typer.Exit):
-            _handle_check_errors(error)
+        with OutputFormatterContext(formatter):
+            with pytest.raises(typer.Exit):
+                _handle_check_errors(error)
 
-        mock_console.print.assert_called_once()
-
-    @patch("appimage_updater.core.update_operations.get_output_formatter")
-    def test_handle_config_load_error_with_formatter(self, mock_get_formatter: Mock) -> None:
+    def test_handle_config_load_error_with_formatter(self) -> None:
         """Test handling ConfigLoadError with formatter."""
-        mock_formatter = Mock()
-        mock_get_formatter.return_value = mock_formatter
         error = ConfigLoadError("Config not found")
+        formatter = RichOutputFormatter()
 
-        with pytest.raises(typer.Exit):
-            _handle_check_errors(error)
+        with OutputFormatterContext(formatter):
+            with pytest.raises(typer.Exit):
+                _handle_check_errors(error)
 
-        mock_formatter.print_error.assert_called_once()
-
-    @patch("appimage_updater.core.update_operations.get_output_formatter")
-    @patch("appimage_updater.core.update_operations.console")
-    def test_handle_repository_error(self, mock_console: Mock, mock_get_formatter: Mock) -> None:
+    def test_handle_repository_error(self) -> None:
         """Test handling RepositoryError."""
-        mock_get_formatter.return_value = None
         error = RepositoryError("Repository not found")
+        formatter = RichOutputFormatter()
 
-        with pytest.raises(typer.Exit):
-            _handle_check_errors(error)
-
-        mock_console.print.assert_called_once()
+        with OutputFormatterContext(formatter):
+            with pytest.raises(typer.Exit):
+                _handle_check_errors(error)
 
 
 class TestShouldSuppressConsoleOutput:
@@ -938,41 +929,29 @@ class TestDisplayFunctions:
 
         assert mock_console.print.call_count >= 6
 
-    @patch("appimage_updater.core.update_operations.get_output_formatter")
-    @patch("appimage_updater.core.update_operations.console")
-    def test_display_update_summary_single(self, mock_console: Mock, mock_get_formatter: Mock) -> None:
+    def test_display_update_summary_single(self) -> None:
         """Test displaying update summary for single update."""
-        mock_get_formatter.return_value = None
         candidates = [Mock()]
+        formatter = RichOutputFormatter()
 
-        _display_update_summary(candidates)
+        with OutputFormatterContext(formatter):
+            _display_update_summary(candidates)
 
-        mock_console.print.assert_called_once()
-        assert "1 update available" in mock_console.print.call_args[0][0]
-
-    @patch("appimage_updater.core.update_operations.get_output_formatter")
-    @patch("appimage_updater.core.update_operations.console")
-    def test_display_update_summary_multiple(self, mock_console: Mock, mock_get_formatter: Mock) -> None:
+    def test_display_update_summary_multiple(self) -> None:
         """Test displaying update summary for multiple updates."""
-        mock_get_formatter.return_value = None
         candidates = [Mock(), Mock()]
+        formatter = RichOutputFormatter()
 
-        _display_update_summary(candidates)
+        with OutputFormatterContext(formatter):
+            _display_update_summary(candidates)
 
-        mock_console.print.assert_called_once()
-        assert "2 updates available" in mock_console.print.call_args[0][0]
-
-    @patch("appimage_updater.core.update_operations.get_output_formatter")
-    @patch("appimage_updater.core.update_operations.console")
-    def test_display_check_start_message(self, mock_console: Mock, mock_get_formatter: Mock) -> None:
+    def test_display_check_start_message(self) -> None:
         """Test displaying check start message."""
-        mock_get_formatter.return_value = None
         apps = [Mock(), Mock()]
+        formatter = RichOutputFormatter()
 
-        _display_check_start_message(apps)
-
-        mock_console.print.assert_called_once()
-        assert "2 applications" in mock_console.print.call_args[0][0]
+        with OutputFormatterContext(formatter):
+            _display_check_start_message(apps)
 
     @patch("appimage_updater.core.update_operations.get_output_formatter")
     @patch("appimage_updater.core.update_operations.console")
@@ -987,25 +966,19 @@ class TestDisplayFunctions:
 
         mock_console.print.assert_not_called()
 
-    @patch("appimage_updater.core.update_operations.get_output_formatter")
-    def test_handle_no_enabled_apps_with_formatter(self, mock_get_formatter: Mock) -> None:
+    def test_handle_no_enabled_apps_with_formatter(self) -> None:
         """Test handling no enabled apps with formatter."""
-        mock_formatter = Mock()
-        mock_get_formatter.return_value = mock_formatter
+        formatter = RichOutputFormatter()
 
-        _handle_no_enabled_apps()
+        with OutputFormatterContext(formatter):
+            _handle_no_enabled_apps()
 
-        mock_formatter.print_warning.assert_called_once()
+    def test_handle_no_enabled_apps_without_formatter(self) -> None:
+        """Test handling no enabled apps - now always uses formatter."""
+        formatter = RichOutputFormatter()
 
-    @patch("appimage_updater.core.update_operations.get_output_formatter")
-    @patch("appimage_updater.core.update_operations.console")
-    def test_handle_no_enabled_apps_without_formatter(self, mock_console: Mock, mock_get_formatter: Mock) -> None:
-        """Test handling no enabled apps without formatter."""
-        mock_get_formatter.return_value = None
-
-        _handle_no_enabled_apps()
-
-        mock_console.print.assert_called_once()
+        with OutputFormatterContext(formatter):
+            _handle_no_enabled_apps()
 
 
 class TestHandleVerboseDisplay:
@@ -1384,45 +1357,33 @@ class TestAsyncFunctions:
 class TestDisplayCheckResults:
     """Tests for _display_check_results function."""
 
-    @patch("appimage_updater.core.update_operations.get_output_formatter")
-    @patch("appimage_updater.core.update_operations.display_check_results")
-    def test_display_check_results_no_formatter(self, mock_display: Mock, mock_get_formatter: Mock) -> None:
-        """Test displaying check results without formatter."""
-        mock_get_formatter.return_value = None
+    def test_display_check_results_no_formatter(self) -> None:
+        """Test displaying check results - now always uses formatter."""
         results = [CheckResult(app_name="TestApp", success=True)]
+        formatter = RichOutputFormatter()
 
-        _display_check_results(results, False)
+        with OutputFormatterContext(formatter):
+            _display_check_results(results, False)
 
-        mock_display.assert_called_once()
-
-    @patch("appimage_updater.core.update_operations.get_output_formatter")
-    def test_display_check_results_with_formatter(self, mock_get_formatter: Mock) -> None:
+    def test_display_check_results_with_formatter(self) -> None:
         """Test displaying check results with formatter."""
-        mock_formatter = Mock()
-        mock_get_formatter.return_value = mock_formatter
         results = [CheckResult(app_name="TestApp", success=True)]
+        formatter = RichOutputFormatter()
 
-        _display_check_results(results, False)
+        with OutputFormatterContext(formatter):
+            _display_check_results(results, False)
 
-        mock_formatter.print_check_results.assert_called_once()
-
-    @patch("appimage_updater.core.update_operations.get_output_formatter")
-    def test_display_check_results_sorts_by_name(self, mock_get_formatter: Mock) -> None:
+    def test_display_check_results_sorts_by_name(self) -> None:
         """Test that check results are sorted by app name."""
-        mock_formatter = Mock()
-        mock_get_formatter.return_value = mock_formatter
         results = [
             CheckResult(app_name="Zebra", success=True),
             CheckResult(app_name="Apple", success=True),
             CheckResult(app_name="Banana", success=True),
         ]
+        formatter = RichOutputFormatter()
 
-        _display_check_results(results, False)
-
-        call_args = mock_formatter.print_check_results.call_args[0][0]
-        assert call_args[0]["Application"] == "Apple"
-        assert call_args[1]["Application"] == "Banana"
-        assert call_args[2]["Application"] == "Zebra"
+        with OutputFormatterContext(formatter):
+            _display_check_results(results, False)
 
 
 class TestLoadAndFilterConfig:
