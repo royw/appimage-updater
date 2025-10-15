@@ -9,6 +9,7 @@ from rich.console import Console
 
 from ..config.loader import ConfigLoadError
 from ..config.manager import AppConfigs
+from ..config.models import Config
 from ..ui.display import display_applications_list
 from ..ui.output.context import (
     OutputFormatterContext,
@@ -93,7 +94,7 @@ class ListCommand(Command):
 
         return config
 
-    def _load_config(self) -> Any:
+    def _load_config(self) -> Config:
         """Load the configuration."""
         app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
         return app_configs._config

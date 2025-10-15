@@ -114,12 +114,12 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
             logger.exception("Full exception details")
             raise
 
-    def _load_primary_config(self) -> Any:
+    def _load_primary_config(self) -> Config:
         """Load the primary configuration."""
         app_configs = AppConfigs(config_path=self.params.config_file or self.params.config_dir)
         return app_configs._config
 
-    def _process_and_display_apps(self, config: Any) -> bool:
+    def _process_and_display_apps(self, config: Config) -> bool:
         """Process and display applications from config."""
         found_apps = self._filter_applications(config)
         if found_apps is None:
@@ -148,7 +148,7 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
             # Re-raise for explicit config files or other errors
             raise
 
-    def _filter_applications(self, config: Any) -> Any:
+    def _filter_applications(self, config: Config) -> list[Any] | None:
         """Filter applications by names."""
         return ApplicationService.filter_apps_by_names(config.applications, self.params.app_names or [])
 

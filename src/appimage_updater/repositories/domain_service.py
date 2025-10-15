@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from loguru import logger
 
 from ..config.manager import GlobalConfigManager
+from ..config.models import DomainKnowledge
 from .registry import RepositoryHandler, get_repository_registry
 
 
@@ -39,7 +40,7 @@ class DomainKnowledgeService:
             logger.debug(f"Error loading domain knowledge: {e}")
             return None
 
-    def _load_domain_knowledge(self) -> Any:
+    def _load_domain_knowledge(self) -> DomainKnowledge:
         """Load domain knowledge from configuration."""
         config = self.config_manager.load_config()
         return config.global_config.domain_knowledge

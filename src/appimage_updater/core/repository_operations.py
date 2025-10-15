@@ -117,7 +117,7 @@ def _display_repository_header(app: ApplicationConfig, releases: list[Any]) -> N
     console.print(Panel("\n".join(header_info), title=f"Repository Info: {app.name}", border_style="blue"))
 
 
-def _create_repository_table(show_assets: bool) -> Any:
+def _create_repository_table(show_assets: bool) -> Table:
     """Create the repository releases table with appropriate columns."""
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Tag", style="cyan", no_wrap=True)

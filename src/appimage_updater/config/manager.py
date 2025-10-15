@@ -17,6 +17,7 @@ from .loader import ConfigLoadError
 from .models import (
     ApplicationConfig,
     Config,
+    DefaultsConfig,
     GlobalConfig,
 )
 
@@ -341,7 +342,7 @@ class GlobalConfigManager(Manager):
         self._config.global_config.user_agent = value
 
     @property
-    def defaults(self) -> Any:
+    def defaults(self) -> DefaultsConfig:
         """Access to default settings."""
         return self._config.global_config.defaults
 

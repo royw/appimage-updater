@@ -14,7 +14,7 @@ from loguru import logger
 from rich.console import Console
 
 from appimage_updater.config.models import ApplicationConfig
-from appimage_updater.repositories.base import RepositoryError
+from appimage_updater.repositories.base import RepositoryClient, RepositoryError
 from appimage_updater.repositories.factory import get_repository_client
 from appimage_updater.ui.output.context import get_output_formatter
 from appimage_updater.utils.version_utils import extract_version_from_filename, normalize_version_string
@@ -113,7 +113,7 @@ async def _get_version_from_repository(app_config: ApplicationConfig, current_fi
         return None
 
 
-async def _get_repository_client(url: str) -> Any:
+async def _get_repository_client(url: str) -> RepositoryClient:
     """Get repository client for the given URL."""
     return get_repository_client(url)
 

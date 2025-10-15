@@ -219,7 +219,7 @@ def _display_check_results(check_results: list[Any], dry_run: bool) -> None:
     output_formatter.print_check_results(results_data)
 
 
-def _create_dry_run_result(app_config: Any, version_checker: Any) -> Any:
+def _create_dry_run_result(app_config: ApplicationConfig, version_checker: VersionChecker) -> CheckResult:
     """Create a dry-run result for a single application."""
     try:
         current_version = version_checker._get_current_version(app_config)
@@ -376,7 +376,7 @@ async def _load_and_filter_config(
     return config, enabled_apps, disabled_apps
 
 
-def _load_config_with_fallback(config_file: Path | None, config_dir: Path | None) -> Any:
+def _load_config_with_fallback(config_file: Path | None, config_dir: Path | None) -> Config:
     """Load configuration with fallback to empty config."""
     try:
         app_configs = AppConfigs(config_path=config_file or config_dir)
