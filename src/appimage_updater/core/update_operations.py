@@ -26,7 +26,7 @@ from appimage_updater.core.parallel import ConcurrentProcessor
 from appimage_updater.core.version_checker import VersionChecker
 from appimage_updater.repositories.base import RepositoryError
 from appimage_updater.services.application_service import ApplicationService
-from appimage_updater.ui.display import display_check_results, display_download_results
+from appimage_updater.ui.display import display_download_results
 from appimage_updater.ui.output import OutputFormatterContext, get_output_formatter
 
 
@@ -53,16 +53,7 @@ async def _check_updates(
     _log_check_start(config_file, config_dir, dry_run, app_names)
 
     # Use context manager to make output formatter available throughout the execution
-    if output_formatter:
-        with OutputFormatterContext(output_formatter):
-            try:
-                return await _execute_check_workflow(
-                    config_file, config_dir, app_names, verbose, dry_run, yes, no, no_interactive, info
-                )
-            except (ConfigLoadError, RepositoryError, OSError, ValueError) as e:
-                _handle_check_errors(e)
-                return False
-    else:
+    with OutputFormatterContext(output_formatter):
         try:
             return await _execute_check_workflow(
                 config_file, config_dir, app_names, verbose, dry_run, yes, no, no_interactive, info
@@ -160,20 +151,14 @@ async def _execute_update_workflow(
         if no:
             output_formatter = get_output_formatter()
             message = "Updates found but downloads declined due to --no option"
-            if output_formatter:
-                output_formatter.print_info(message)
-            else:
-                console.print(f"[blue]{message}")
+            output_formatter.print_info(message)
             logger.debug("Downloads declined due to --no option")
         else:
             await _handle_downloads(config, candidates, yes)
     else:
         output_formatter = get_output_formatter()
         message = "Dry run mode - no downloads performed"
-        if output_formatter:
-            output_formatter.print_info(message)
-        else:
-            console.print(f"[blue]{message}")
+        output_formatter.print_info(message)
         logger.debug("Dry run mode enabled, skipping downloads")
 
 
@@ -206,7 +191,7 @@ async def _perform_real_update_checks(enabled_apps: list[Any], no_interactive: b
     progress_callback = None
     if len(enabled_apps) > 1:
         output_formatter = get_output_formatter()
-        if output_formatter and not _should_suppress_console_output(output_formatter):
+        if not _should_suppress_console_output(output_formatter):
 
             def progress_callback(current: int, total: int, description: str) -> None:
                 output_formatter.print_progress(current, total, description)
@@ -229,15 +214,9 @@ def _display_check_results(check_results: list[Any], dry_run: bool) -> None:
     output_formatter = get_output_formatter()
     logger.debug("Output formatter: {}", output_formatter)
 
-    if output_formatter:
-        results_data = _convert_check_results_to_dict(sorted_results)
-        logger.debug("Results data: {}", results_data)
-        # Always use print_check_results for consistent disabled app handling
-        output_formatter.print_check_results(results_data)
-    else:
-        # Fallback to original display function
-        logger.debug("Output formatter not found, using fallback display function")
-        display_check_results(sorted_results, show_urls=dry_run)
+    results_data = _convert_check_results_to_dict(sorted_results)
+    logger.debug("Results data: {}", results_data)
+    output_formatter.print_check_results(results_data)
 
 
 def _create_dry_run_result(app_config: Any, version_checker: Any) -> Any:
@@ -310,32 +289,19 @@ def _convert_check_results_to_dict(check_results: list[Any]) -> list[dict[str, A
 def _handle_check_errors(e: Exception) -> None:
     """Handle errors during check process."""
     if isinstance(e, ConfigLoadError):
-        # Use output formatter if available, otherwise fallback to console
         formatter = get_output_formatter()
-        if formatter:
-            formatter.print_error(f"Configuration error: {e}")
-        else:
-            console.print(f"[red]Configuration error: {e}")
-        # Note: Don't log to stdout as it contaminates JSON output
+        formatter.print_error(f"Configuration error: {e}")
         raise typer.Exit(1) from e
     else:
-        # Use output formatter if available, otherwise fallback to console
         formatter = get_output_formatter()
-        if formatter:
-            formatter.print_error(f"Unexpected error: {e}")
-        else:
-            console.print(f"[red]Unexpected error: {e}")
-        # Note: Don't log to stdout as it contaminates JSON output
+        formatter.print_error(f"Unexpected error: {e}")
         raise typer.Exit(1) from e
 
 
 def _handle_no_enabled_apps() -> None:
     """Handle the case when no enabled applications are found."""
     formatter = get_output_formatter()
-    if formatter:
-        formatter.print_warning("No enabled applications found in configuration")
-    else:
-        console.print("[yellow]No enabled applications found in configuration")
+    formatter.print_warning("No enabled applications found in configuration")
     # Note: Don't log to stdout as it contaminates JSON output
 
 
@@ -633,11 +599,7 @@ def _display_update_summary(candidates: list[Any]) -> None:
     if candidates:
         output_formatter = get_output_formatter()
         message = "1 update available" if len(candidates) == 1 else f"{len(candidates)} updates available"
-
-        if output_formatter:
-            output_formatter.print_warning(message)
-        else:
-            console.print(f"\n[yellow]{message}")
+        output_formatter.print_warning(message)
         logger.debug(f"Found {len(candidates)} updates available")
 
 
@@ -685,12 +647,9 @@ def _display_check_start_message(enabled_apps: list[Any]) -> None:
 
     if not suppress_console:
         message = f"Checking {len(enabled_apps)} applications for updates..."
-        if output_formatter:
-            output_formatter.print_message(message)
-            # Add blank line after the initial message for markdown
-            output_formatter.print_message("")
-        else:
-            console.print(f"[blue]{message}")
+        output_formatter.print_message(message)
+        # Add blank line after the initial message for markdown
+        output_formatter.print_message("")
     logger.debug(f"Starting update checks for {len(enabled_apps)} applications")
 
 

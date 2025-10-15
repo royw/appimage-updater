@@ -6,6 +6,8 @@ from pathlib import Path
 import re
 from unittest.mock import Mock, patch
 
+from appimage_updater.ui.output.context import OutputFormatterContext
+from appimage_updater.ui.output.rich_formatter import RichOutputFormatter
 from appimage_updater.ui.display import (
     _add_checksum_details,
     _add_checksum_status_line,
@@ -336,7 +338,8 @@ class TestDisplayEditSummary:
         """Test displaying edit summary."""
         changes = ["Updated URL", "Changed pattern", "Enabled prerelease"]
 
-        display_edit_summary("TestApp", changes)
+        with OutputFormatterContext(RichOutputFormatter()):
+            display_edit_summary("TestApp", changes)
 
         # Verify console.print was called with expected messages
         assert mock_console.print.call_count == 5  # Header + "Changes made:" + 3 changes

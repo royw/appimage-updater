@@ -13,6 +13,8 @@ import typer
 from appimage_updater.config.loader import ConfigLoadError
 from appimage_updater.config.models import ApplicationConfig, ChecksumConfig, Config
 from appimage_updater.core.models import Asset, CheckResult, InteractiveResult, UpdateCandidate
+from appimage_updater.ui.output.context import OutputFormatterContext
+from appimage_updater.ui.output.rich_formatter import RichOutputFormatter
 from appimage_updater.core.update_operations import (
     _check_updates,
     _convert_check_results_to_dict,
@@ -1175,7 +1177,8 @@ class TestAsyncFunctions:
         """Test execute update workflow with no updates."""
         mock_checks.return_value = []
 
-        await _execute_update_workflow(Mock(), [Mock()], [], False, False, False, False)
+        with OutputFormatterContext(RichOutputFormatter()):
+            await _execute_update_workflow(Mock(), [Mock()], [], False, False, False, False)
 
         mock_no_updates.assert_called_once()
 
@@ -1191,7 +1194,8 @@ class TestAsyncFunctions:
         mock_checks.return_value = [Mock()]
         mock_filter.return_value = [Mock()]
 
-        await _execute_update_workflow(Mock(), [Mock()], [], False, False, False, False)
+        with OutputFormatterContext(RichOutputFormatter()):
+            await _execute_update_workflow(Mock(), [Mock()], [], False, False, False, False)
 
         mock_downloads.assert_called_once()
 
@@ -1201,7 +1205,8 @@ class TestAsyncFunctions:
         """Test performing update checks in dry run mode."""
         mock_dry_run.return_value = []
 
-        result = await _perform_update_checks([Mock()], False, True)
+        with OutputFormatterContext(RichOutputFormatter()):
+            result = await _perform_update_checks([Mock()], False, True)
 
         assert result == []
         mock_dry_run.assert_called_once()
@@ -1212,20 +1217,19 @@ class TestAsyncFunctions:
         """Test performing real update checks."""
         mock_real.return_value = []
 
-        result = await _perform_update_checks([Mock()], False, False)
+        with OutputFormatterContext(RichOutputFormatter()):
+            result = await _perform_update_checks([Mock()], False, False)
 
         assert result == []
         mock_real.assert_called_once()
 
     @pytest.mark.anyio
     @patch("appimage_updater.core.update_operations.VersionChecker")
-    @patch("appimage_updater.core.update_operations.get_output_formatter")
     @patch("appimage_updater.core.update_operations.console")
     async def test_perform_dry_run_checks(
-        self, mock_console: Mock, mock_formatter: Mock, mock_checker_class: Mock, tmp_path: Path
+        self, mock_console: Mock, mock_checker_class: Mock, tmp_path: Path
     ) -> None:
         """Test performing dry run checks."""
-        mock_formatter.return_value = None
         mock_checker = Mock()
         mock_checker._get_current_version.return_value = "1.0.0"
         mock_checker_class.return_value = mock_checker
@@ -1238,7 +1242,8 @@ class TestAsyncFunctions:
             pattern=r".*\.AppImage$",
         )
 
-        result = await _perform_dry_run_checks([app_config], False)
+        with OutputFormatterContext(RichOutputFormatter()):
+            result = await _perform_dry_run_checks([app_config], False)
 
         assert len(result) == 1
         assert result[0].app_name == "TestApp"
