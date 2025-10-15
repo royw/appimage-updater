@@ -237,6 +237,42 @@ def _get_checksum_verification_status(candidate: Any) -> str:
         return " [yellow]unverified[/yellow]"
 
 
+def _strip_rich_formatting(message: str) -> str:
+    """Strip Rich formatting tags from message.
+
+    Args:
+        message: Message with potential Rich formatting tags
+
+    Returns:
+        Clean message without formatting tags
+    """
+    clean_msg = message.replace("[red]", "").replace("[/red]", "")
+    return clean_msg.replace("[yellow]", "").replace("[/yellow]", "")
+
+
+def _build_file_info(file_path: Path) -> dict[str, str]:
+    """Build file information dictionary.
+
+    Args:
+        file_path: Path to file
+
+    Returns:
+        Dictionary with file information
+    """
+    stat_info = file_path.stat()
+    size_mb = stat_info.st_size / (1024 * 1024)
+    mtime = os.path.getmtime(file_path)
+    mtime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(mtime))
+    is_executable = os.access(file_path, os.X_OK)
+
+    return {
+        "name": file_path.name,
+        "size": f"{size_mb:.1f} MB",
+        "modified": mtime_str,
+        "executable": "Yes" if is_executable else "No",
+    }
+
+
 def extract_files_data(app: Any) -> dict[str, Any] | list[dict[str, Any]]:
     """Extract file information as structured data.
 
@@ -253,10 +289,7 @@ def extract_files_data(app: Any) -> dict[str, Any] | list[dict[str, Any]]:
 
     matching_files = find_matching_appimage_files(download_dir, app.pattern)
     if isinstance(matching_files, str):  # Error message
-        # Strip Rich formatting tags from error message
-        clean_msg = matching_files.replace("[red]", "").replace("[/red]", "")
-        clean_msg = clean_msg.replace("[yellow]", "").replace("[/yellow]", "")
-        return {"status": clean_msg}
+        return {"status": _strip_rich_formatting(matching_files)}
 
     if not matching_files:
         return {"status": "No AppImage files found matching the pattern"}
@@ -265,25 +298,7 @@ def extract_files_data(app: Any) -> dict[str, Any] | list[dict[str, Any]]:
     matching_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
 
     # Convert to structured data
-    files_list = []
-    for file_path in matching_files:
-        stat_info = file_path.stat()
-        size_mb = stat_info.st_size / (1024 * 1024)
-        mtime = os.path.getmtime(file_path)
-        mtime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(mtime))
-
-        is_executable = os.access(file_path, os.X_OK)
-
-        files_list.append(
-            {
-                "name": file_path.name,
-                "size": f"{size_mb:.1f} MB",
-                "modified": mtime_str,
-                "executable": "Yes" if is_executable else "No",
-            }
-        )
-
-    return files_list
+    return [_build_file_info(file_path) for file_path in matching_files]
 
 
 def extract_symlinks_data(app: Any) -> dict[str, Any] | list[dict[str, Any]]:
@@ -319,6 +334,26 @@ def extract_symlinks_data(app: Any) -> dict[str, Any] | list[dict[str, Any]]:
     return symlinks_list
 
 
+def _build_checksum_details(checksum: Any) -> dict[str, Any]:
+    """Build checksum details dictionary.
+
+    Args:
+        checksum: Checksum configuration object
+
+    Returns:
+        Dictionary with checksum details
+    """
+    if not checksum.enabled:
+        return {"enabled": False, "algorithm": None, "pattern": None, "required": None}
+
+    return {
+        "enabled": True,
+        "algorithm": checksum.algorithm.upper(),
+        "pattern": checksum.pattern,
+        "required": checksum.required,
+    }
+
+
 def extract_checksum_data(app: Any) -> dict[str, Any] | None:
     """Extract checksum configuration as structured data.
 
@@ -331,12 +366,7 @@ def extract_checksum_data(app: Any) -> dict[str, Any] | None:
     if not hasattr(app, "checksum") or not app.checksum:
         return None
 
-    return {
-        "enabled": app.checksum.enabled,
-        "algorithm": app.checksum.algorithm.upper() if app.checksum.enabled else None,
-        "pattern": app.checksum.pattern if app.checksum.enabled else None,
-        "required": app.checksum.required if app.checksum.enabled else None,
-    }
+    return _build_checksum_details(app.checksum)
 
 
 def extract_rotation_data(app: Any) -> dict[str, Any] | None:

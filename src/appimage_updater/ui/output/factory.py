@@ -26,18 +26,19 @@ def create_output_formatter(format_type: OutputFormat, **kwargs: Any) -> OutputF
     Raises:
         ValueError: If format_type is not supported
     """
-    if format_type == OutputFormat.RICH:
-        return RichOutputFormatter(**kwargs)
-    elif format_type == OutputFormat.PLAIN:
-        return PlainOutputFormatter(**kwargs)
-    elif format_type == OutputFormat.JSON:
-        return JSONOutputFormatter(**kwargs)
-    elif format_type == OutputFormat.HTML:
-        return HTMLOutputFormatter(**kwargs)
-    elif format_type == OutputFormat.MARKDOWN:
-        return MarkdownOutputFormatter(**kwargs)
-    else:
+    formatter_map = {
+        OutputFormat.RICH: RichOutputFormatter,
+        OutputFormat.PLAIN: PlainOutputFormatter,
+        OutputFormat.JSON: JSONOutputFormatter,
+        OutputFormat.HTML: HTMLOutputFormatter,
+        OutputFormat.MARKDOWN: MarkdownOutputFormatter,
+    }
+
+    formatter_class = formatter_map.get(format_type)
+    if formatter_class is None:
         raise ValueError(f"Unsupported output format: {format_type}")
+
+    return formatter_class(**kwargs)
 
 
 def create_output_formatter_from_params(params: Any) -> OutputFormatter:
