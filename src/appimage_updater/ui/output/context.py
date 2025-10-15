@@ -6,21 +6,32 @@ from contextvars import (
 )
 from typing import Any
 
+from .interface import OutputFormatter
+
 
 # Context variable to hold the current output formatter
-_output_formatter: ContextVar[Any] = ContextVar("output_formatter", default=None)
+_output_formatter: ContextVar[OutputFormatter | None] = ContextVar("output_formatter", default=None)
 
 
-def get_output_formatter() -> Any:
+def get_output_formatter() -> OutputFormatter:
     """Get the current output formatter from context.
 
     Returns:
-        Current output formatter or None if not set
+        Current output formatter
+
+    Raises:
+        RuntimeError: If no output formatter has been set in the current context
     """
-    return _output_formatter.get()
+    formatter = _output_formatter.get()
+    if formatter is None:
+        raise RuntimeError(
+            "No output formatter set in current context. "
+            "Ensure code is executed within an OutputFormatterContext."
+        )
+    return formatter
 
 
-def set_output_formatter(formatter: Any) -> None:
+def set_output_formatter(formatter: OutputFormatter) -> None:
     """Set the output formatter in context.
 
     Args:
@@ -32,16 +43,16 @@ def set_output_formatter(formatter: Any) -> None:
 class OutputFormatterContext:
     """Context manager for output formatter."""
 
-    def __init__(self, formatter: Any):
+    def __init__(self, formatter: OutputFormatter):
         """Initialize context manager.
 
         Args:
             formatter: Output formatter to use in this context
         """
         self.formatter = formatter
-        self.token: Token[Any] | None = None
+        self.token: Token[OutputFormatter | None] | None = None
 
-    def __enter__(self) -> Any:
+    def __enter__(self) -> OutputFormatter:
         """Enter context and set formatter."""
         self.token = _output_formatter.set(self.formatter)
         return self.formatter
