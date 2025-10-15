@@ -197,7 +197,22 @@ class MarkdownOutputFormatter(OutputFormatter):
         if header_lower in config_colors:
             return f"$$\\color{{{config_colors[header_lower]}}}{{{value}}}$$"
 
+        # Source column or any URL - wrap in angle brackets
+        if header_lower == "source" or self._is_url(value):
+            return f"<{value}>"
+
         return value
+
+    def _is_url(self, value: str) -> bool:
+        """Check if a value is a URL.
+
+        Args:
+            value: Value to check
+
+        Returns:
+            True if value appears to be a URL
+        """
+        return value.startswith(("http://", "https://", "ftp://"))
 
     def _colorize_status_value(self, value: str) -> str:
         """Colorize status column values.
@@ -245,7 +260,8 @@ class MarkdownOutputFormatter(OutputFormatter):
             description: Optional progress description
         """
         percentage = (current / total * 100) if total > 0 else 0
-        progress_text = f"**Progress:** [{current}/{total}] ({percentage:.1f}%)"
+        # Plain text for progress - coloring doesn't work reliably on GitHub
+        progress_text = f"[{current}/{total}] ({percentage:.1f}%)"
         if description:
             progress_text = f"{description}: {progress_text}"
         print(progress_text)
@@ -287,7 +303,7 @@ class MarkdownOutputFormatter(OutputFormatter):
         Args:
             message: Info message to display
         """
-        formatted = f"$$\\color{{blue}}{{ℹ INFO: {message}}}$$"
+        formatted = f"$$\\color{{blue}}{{{message}}}$$"
         print(formatted)
         self._output_lines.append(formatted)
 
@@ -378,6 +394,9 @@ class MarkdownOutputFormatter(OutputFormatter):
 
         for key, value in config_items:
             if value:
+                # Wrap URLs in angle brackets
+                if key == "URL" and self._is_url(str(value)):
+                    value = f"<{value}>"
                 line = f"- **{key}:** {value}"
                 print(line)
                 self._output_lines.append(line)

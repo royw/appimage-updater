@@ -4,5 +4,5 @@
 #Description: Convert output of unix tree utility to Github flavoured Markdown
 
 tree=$(tree --charset ascii "$@" |
-sed -e 's/| \+/  /g' -e 's/[|`]-\+/ */g' -e 's:\(* \)\(\(.*/\)\([^/]\+\)\):\1[\4](\2):g')
-printf "# Code/Directory Structure:\n\n${tree}"
+sed -e 's/| \+/  /g' -e 's/[|`]-\+/ -/g' -e 's/^ //' -e '1 a\\')
+printf "**Code/Directory Structure:**\n\n${tree}\n"

@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Improved markdown output formatting**
+  - URLs now wrapped in angle brackets (`<URL>`) for better markdown compatibility
+  - Removed "ℹ INFO: " prefix from info messages for cleaner output
+  - Enhanced `tree-to-github-markdown.sh` script:
+    - Uses dash bullets (`-`) instead of asterisks (`*`)
+    - Proper even indentation (0, 2, 4 spaces)
+    - Adds blank line after path for better readability
+    - Removes markdown link formatting from symlinks
+    - Bold header format instead of H1
+
+### Fixed
+
+- **Consistent home path display across all formatters**
+  - Home directory now replaced with `~` in all output formats (rich, plain, markdown, json, html)
+  - Previously only Rich formatter performed this substitution
+  - Moved path replacement logic to data preparation layer for consistency
+
 ## [0.4.19] - 2025-10-14
 
 ### Added

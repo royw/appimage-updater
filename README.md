@@ -176,8 +176,6 @@ Tip: Use 'appimage-updater show FreeCAD_weekly' to view full configuration
 
 ## Application Details: FreeCAD
 
-## Application: FreeCAD
-
 ### Configuration
 
 - **Name:** FreeCAD

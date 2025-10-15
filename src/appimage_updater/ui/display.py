@@ -187,15 +187,16 @@ def _convert_applications_to_dict_format(applications: list[Any]) -> list[dict[s
     """Convert applications to dictionary format for output formatter."""
     apps_data = []
     for app in applications:
+        download_dir = _replace_home_with_tilde(str(app.download_dir))
         app_dict = {
             "Application": app.name,
             "Status": "Enabled" if app.enabled else "Disabled",
             "Source": app.url,
-            "Download Directory": str(app.download_dir),
+            "Download Directory": download_dir,
             # Keep old keys for backward compatibility
             "name": app.name,
             "url": app.url,
-            "download_dir": str(app.download_dir),
+            "download_dir": download_dir,
             "enabled": app.enabled,
             "source_type": app.source_type,
         }

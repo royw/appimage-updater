@@ -139,9 +139,8 @@ class TestPrintProgress:
         """Test printing progress."""
         formatter.print_progress(5, 10)
         output = mock_stdout.output.getvalue()
-        assert "**Progress:**" in output
         assert "[5/10]" in output
-        assert "50.0%" in output
+        assert "(50.0%)" in output
 
     def test_print_progress_with_description(
         self, formatter: MarkdownOutputFormatter, mock_stdout: MagicMock
@@ -149,8 +148,8 @@ class TestPrintProgress:
         """Test progress with description."""
         formatter.print_progress(3, 10, description="Processing")
         output = mock_stdout.output.getvalue()
-        assert "Processing:" in output
-        assert "[3/10]" in output
+        assert "Processing: [3/10]" in output
+        assert "(30.0%)" in output
 
 
 class TestPrintStatusMessages:
