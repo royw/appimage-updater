@@ -176,12 +176,11 @@ class TestPrintStatusMessages:
         assert r"$$\color{gold}{" in output
         assert "WARNING: Be careful" in output
 
-    def test_print_info(self, formatter: MarkdownOutputFormatter, mock_stdout: MagicMock) -> None:
-        """Test info message."""
+    def test_print_info(self, formatter: MarkdownOutputFormatter, capsys: Any) -> None:
+        """Test info message formatting."""
         formatter.print_info("For your information")
-        output = mock_stdout.output.getvalue()
-        assert r"$$\color{blue}{" in output
-        assert "For your information" in output
+        output = capsys.readouterr().out
+        assert r"$$\color{cyan}\text{For your information}$$" in output
 
 
 class TestPrintCheckResults:

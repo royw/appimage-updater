@@ -298,12 +298,12 @@ class MarkdownOutputFormatter(OutputFormatter):
         self._output_lines.append(formatted)
 
     def print_info(self, message: str) -> None:
-        """Display info message with blue color (matching Rich formatter).
+        """Display info message with cyan color (matching Rich formatter).
 
         Args:
             message: Info message to display
         """
-        formatted = f"$$\\color{{blue}}{{{message}}}$$"
+        formatted = f"$$\\color{{cyan}}\\text{{{message}}}$$"
         print(formatted)
         self._output_lines.append(formatted)
 
