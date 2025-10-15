@@ -39,6 +39,32 @@ class MarkdownOutputFormatter(OutputFormatter):
         self._output_lines: list[str] = []
 
     @staticmethod
+    def _apply_placeholders(text: str) -> tuple[str, dict[str, str]]:
+        """Apply placeholders for characters with braces in replacements.
+
+        Args:
+            text: Text to process
+
+        Returns:
+            Tuple of (processed text, placeholder mapping)
+        """
+        # Characters with braces in their replacements need placeholders
+        placeholder_chars = {
+            "\\": ("\x00BACKSLASH\x00", LATEX_SPECIAL_CHARS["\\"]),
+            "~": ("\x00TILDE\x00", LATEX_SPECIAL_CHARS["~"]),
+            "^": ("\x00CARET\x00", LATEX_SPECIAL_CHARS["^"]),
+        }
+
+        result = text
+        placeholders = {}
+        for char, (placeholder, replacement) in placeholder_chars.items():
+            if char in result:
+                placeholders[placeholder] = replacement
+                result = result.replace(char, placeholder)
+
+        return result, placeholders
+
+    @staticmethod
     def _escape_latex(text: str) -> str:
         """Escape LaTeX special characters in text.
 
@@ -48,30 +74,18 @@ class MarkdownOutputFormatter(OutputFormatter):
         Returns:
             Text with LaTeX special characters escaped
         """
-        result = text
-        # Escape in specific order to avoid double-escaping
-        # Characters with braces in their replacements need placeholders
-        placeholders = {}
-        if "\\" in result:
-            placeholders["\x00BACKSLASH\x00"] = LATEX_SPECIAL_CHARS["\\"]
-            result = result.replace("\\", "\x00BACKSLASH\x00")
-        if "~" in result:
-            placeholders["\x00TILDE\x00"] = LATEX_SPECIAL_CHARS["~"]
-            result = result.replace("~", "\x00TILDE\x00")
-        if "^" in result:
-            placeholders["\x00CARET\x00"] = LATEX_SPECIAL_CHARS["^"]
-            result = result.replace("^", "\x00CARET\x00")
+        # Apply placeholders for complex characters
+        result, placeholders = MarkdownOutputFormatter._apply_placeholders(text)
 
         # Escape simple characters (no braces in replacement)
+        skip_chars = {"\\", "~", "^", "{", "}"}
         for char, escaped in LATEX_SPECIAL_CHARS.items():
-            if char not in ["\\", "~", "^", "{", "}"] and char in result:
+            if char not in skip_chars and char in result:
                 result = result.replace(char, escaped)
 
         # Escape braces
-        if "{" in result:
-            result = result.replace("{", LATEX_SPECIAL_CHARS["{"])
-        if "}" in result:
-            result = result.replace("}", LATEX_SPECIAL_CHARS["}"])
+        result = result.replace("{", LATEX_SPECIAL_CHARS.get("{", "{"))
+        result = result.replace("}", LATEX_SPECIAL_CHARS.get("}", "}"))
 
         # Replace placeholders with actual replacements
         for placeholder, replacement in placeholders.items():

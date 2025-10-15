@@ -54,36 +54,55 @@ def show_global_config(config_file: Path | None = None, config_dir: Path | None 
         _handle_config_load_error(e)
 
 
+def _build_basic_config_settings(global_config: Any) -> dict[str, str]:
+    """Build basic configuration settings.
+
+    Args:
+        global_config: Global configuration object
+
+    Returns:
+        Dictionary of setting keys to values
+    """
+    return {
+        "Concurrent Downloads|concurrent-downloads": str(global_config.concurrent_downloads),
+        "Timeout Seconds|timeout-seconds": str(global_config.timeout_seconds),
+        "User Agent|user-agent": global_config.user_agent,
+    }
+
+
+def _build_default_config_settings(defaults: Any) -> dict[str, str]:
+    """Build default configuration settings for new applications.
+
+    Args:
+        defaults: Default configuration object
+
+    Returns:
+        Dictionary of setting keys to values
+    """
+    download_dir_value = str(defaults.download_dir) if defaults.download_dir else "None (use current directory)"
+    symlink_dir_value = str(defaults.symlink_dir) if defaults.symlink_dir else "None"
+
+    return {
+        "Download Directory|download-dir": download_dir_value,
+        "Auto Subdirectory|auto-subdir": "Yes" if defaults.auto_subdir else "No",
+        "Rotation Enabled|rotation": "Yes" if defaults.rotation_enabled else "No",
+        "Retain Count|retain-count": str(defaults.retain_count),
+        "Symlink Enabled|symlink-enabled": "Yes" if defaults.symlink_enabled else "No",
+        "Symlink Directory|symlink-dir": symlink_dir_value,
+        "Symlink Pattern|symlink-pattern": defaults.symlink_pattern,
+        "Checksum Enabled|checksum": "Yes" if defaults.checksum_enabled else "No",
+        "Checksum Algorithm|checksum-algorithm": defaults.checksum_algorithm.upper(),
+        "Checksum Pattern|checksum-pattern": defaults.checksum_pattern,
+        "Checksum Required|checksum-required": "Yes" if defaults.checksum_required else "No",
+        "Prerelease|prerelease": "Yes" if defaults.prerelease else "No",
+    }
+
+
 def _print_config_structured(global_config: Any, defaults: Any, output_formatter: Any) -> None:
     """Print configuration using structured formatter (markdown/plain)."""
-    # Collect all settings into a dictionary with format: "Display Name|setting-name"
-    # The formatter will handle the formatting based on its type
-    settings = {}
-
-    # Helper function to format setting key (display_name|setting_name)
-    def format_key(display_name: str, setting_name: str) -> str:
-        return f"{display_name}|{setting_name}"
-
-    # Basic settings
-    settings[format_key("Concurrent Downloads", "concurrent-downloads")] = str(global_config.concurrent_downloads)
-    settings[format_key("Timeout Seconds", "timeout-seconds")] = str(global_config.timeout_seconds)
-    settings[format_key("User Agent", "user-agent")] = global_config.user_agent
-
-    # Default settings for new applications
-    download_dir_value = str(defaults.download_dir) if defaults.download_dir else "None (use current directory)"
-    settings[format_key("Download Directory", "download-dir")] = download_dir_value
-    settings[format_key("Auto Subdirectory", "auto-subdir")] = "Yes" if defaults.auto_subdir else "No"
-    settings[format_key("Rotation Enabled", "rotation")] = "Yes" if defaults.rotation_enabled else "No"
-    settings[format_key("Retain Count", "retain-count")] = str(defaults.retain_count)
-    settings[format_key("Symlink Enabled", "symlink-enabled")] = "Yes" if defaults.symlink_enabled else "No"
-    symlink_dir_value = str(defaults.symlink_dir) if defaults.symlink_dir else "None"
-    settings[format_key("Symlink Directory", "symlink-dir")] = symlink_dir_value
-    settings[format_key("Symlink Pattern", "symlink-pattern")] = defaults.symlink_pattern
-    settings[format_key("Checksum Enabled", "checksum")] = "Yes" if defaults.checksum_enabled else "No"
-    settings[format_key("Checksum Algorithm", "checksum-algorithm")] = defaults.checksum_algorithm.upper()
-    settings[format_key("Checksum Pattern", "checksum-pattern")] = defaults.checksum_pattern
-    settings[format_key("Checksum Required", "checksum-required")] = "Yes" if defaults.checksum_required else "No"
-    settings[format_key("Prerelease", "prerelease")] = "Yes" if defaults.prerelease else "No"
+    # Build all settings
+    settings = _build_basic_config_settings(global_config)
+    settings.update(_build_default_config_settings(defaults))
 
     # Use the formatter's print_config_settings method
     if hasattr(output_formatter, "print_config_settings"):
