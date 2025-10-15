@@ -231,7 +231,7 @@ To see the two new apps that are being managed:
 | $$\color{cyan}{UltiMaker-Cura}$$ | $$\color{green}{Enabled}$$ | <https://github.com/Ultimaker/Cura> | ~/Applications/UltiMaker-Cura |
 | $$\color{cyan}{YubiKey}$$ | $$\color{green}{Enabled}$$ | <https://developers.yubico.com/yubikey-manager-qt/Releases/yubikey-manager-qt-latest-linux.AppImage> | ~/Applications/YubiKey |
 
-$$\\color{blue}{Total: 17 applications (17 enabled, 0 disabled)}$$
+$$\color{cyan}\text{Total: 17 applications (17 enabled, 0 disabled)}$$
 
 You can manually run `appimage-updater check` or integrate it into crontab or your favorite task scheduler.
 
