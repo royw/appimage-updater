@@ -238,6 +238,20 @@ def _handle_config_load_error(e: ConfigLoadError) -> bool:
     return False
 
 
+def _print_effective_config_rich(app_name: str, effective_config: dict[str, Any], output_formatter: Any) -> None:
+    """Print effective config using Rich formatter.
+
+    Args:
+        app_name: Application name
+        effective_config: Effective configuration
+        output_formatter: Output formatter
+    """
+    rich_console = output_formatter.console if output_formatter and hasattr(output_formatter, "console") else console
+    _print_effective_config_header(app_name, rich_console)
+    _print_main_config_table(effective_config, rich_console)
+    _print_checksum_config_table(effective_config, rich_console)
+
+
 def show_effective_config(app_name: str, config_file: Path | None = None, config_dir: Path | None = None) -> None:
     """Show effective configuration for a specific application."""
     try:
@@ -247,21 +261,14 @@ def show_effective_config(app_name: str, config_file: Path | None = None, config
 
         if effective_config is None:
             _handle_app_not_found(app_name)
-            return  # Error already handled
+            return
 
         output_formatter = get_output_formatter()
 
         if output_formatter and not hasattr(output_formatter, "console"):
-            # Use structured format for non-Rich formatters
             _print_effective_config_structured(app_name, effective_config, output_formatter)
         else:
-            # Use Rich format with formatter's console
-            rich_console = (
-                output_formatter.console if output_formatter and hasattr(output_formatter, "console") else console
-            )
-            _print_effective_config_header(app_name, rich_console)
-            _print_main_config_table(effective_config, rich_console)
-            _print_checksum_config_table(effective_config, rich_console)
+            _print_effective_config_rich(app_name, effective_config, output_formatter)
 
     except ConfigLoadError as e:
         _handle_config_load_error(e)

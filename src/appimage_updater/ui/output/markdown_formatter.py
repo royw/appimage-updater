@@ -591,6 +591,18 @@ class MarkdownOutputFormatter(OutputFormatter):
             print(line)
             self._output_lines.append(line)
 
+    def _print_config_items(self, items: list[tuple[str, Any]]) -> None:
+        """Print configuration items as indented list.
+
+        Args:
+            items: List of (key, value) tuples to print
+        """
+        for key, value in items:
+            if value:
+                line = f"  - {key}: {value}"
+                print(line)
+                self._output_lines.append(line)
+
     def _print_checksum_config(self, app_details: dict[str, Any]) -> None:
         """Print checksum configuration."""
         checksum = app_details.get("checksum")
@@ -603,15 +615,12 @@ class MarkdownOutputFormatter(OutputFormatter):
         self._output_lines.append(line)
 
         if checksum.get("enabled"):
-            for key, value in [
+            items = [
                 ("Algorithm", checksum.get("algorithm")),
                 ("Pattern", checksum.get("pattern")),
                 ("Required", "Yes" if checksum.get("required") else "No"),
-            ]:
-                if value:
-                    line = f"  - {key}: {value}"
-                    print(line)
-                    self._output_lines.append(line)
+            ]
+            self._print_config_items(items)
 
     def _print_rotation_config(self, app_details: dict[str, Any]) -> None:
         """Print rotation configuration."""
