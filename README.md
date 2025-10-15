@@ -213,23 +213,23 @@ To see the two new apps that are being managed:
 
 | $$\\color{cyan}{Application}$$ | $$\\color{magenta}{Status}$$ | Source | Download Directory |
 | --- | --- | --- | --- |
-| $$\\color{cyan}{appimaged}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/probonopd/go-appimage> | ~/Applications/appimaged |
-| $$\\color{cyan}{appimagetool}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/AppImage/appimagetool> | ~/Applications/appimagetool |
-| $$\\color{cyan}{BambuStudio}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/bambulab/BambuStudio> | ~/Applications/BambuStudio |
-| $$\\color{cyan}{EdgeTX_Companion}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/EdgeTX/edgetx> | ~/Applications/EdgeTX |
-| $$\\color{cyan}{FreeCAD}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/FreeCAD/FreeCAD> | ~/Applications/FreeCAD |
-| $$\\color{cyan}{FreeCAD_weekly}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/FreeCAD/FreeCAD> | ~/Applications/FreeCAD_weekly |
-| $$\\color{cyan}{GitHubDesktop}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/shiftkey/desktop> | ~/Applications/GitHubDesktop |
-| $$\\color{cyan}{InkScape}$$ | $$\\color{green}{Enabled}$$ | <https://inkscape.org/release/all/gnulinux/appimage/> | ~/Applications/InkScape |
-| $$\\color{cyan}{Meshlab}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/cnr-isti-vclab/meshlab> | ~/Applications/Meshlab |
-| $$\\color{cyan}{OpenRGB}$$ | $$\\color{green}{Enabled}$$ | <https://codeberg.org/OpenRGB/OpenRGB> | ~/Applications/OpenRGB |
-| $$\\color{cyan}{OpenShot}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/OpenShot/openshot-qt> | ~/Applications/OpenShot |
-| $$\\color{cyan}{OrcaSlicer}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | ~/Applications/OrcaSlicer |
-| $$\\color{cyan}{OrcaSlicerNightly}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | ~/Applications/OrcaSlicerNightly |
-| $$\\color{cyan}{OrcaSlicerRC}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | ~/Applications/OrcaSlicerRC |
-| $$\\color{cyan}{ScribusDev}$$ | $$\\color{green}{Enabled}$$ | <https://sourceforge.net/projects/scribus/files/scribus-devel/1.7.0> | ~/Applications/ScribusDev |
-| $$\\color{cyan}{UltiMaker-Cura}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/Ultimaker/Cura> | ~/Applications/UltiMaker-Cura |
-| $$\\color{cyan}{YubiKey}$$ | $$\\color{green}{Enabled}$$ | <https://developers.yubico.com/yubikey-manager-qt/Releases/yubikey-manager-qt-latest-linux.AppImage> | ~/Applications/YubiKey |
+| $$\color{cyan}{appimaged}$$ | $$\color{green}{Enabled}$$ | <https://github.com/probonopd/go-appimage> | ~/Applications/appimaged |
+| $$\color{cyan}{appimagetool}$$ | $$\color{green}{Enabled}$$ | <https://github.com/AppImage/appimagetool> | ~/Applications/appimagetool |
+| $$\color{cyan}{BambuStudio}$$ | $$\color{green}{Enabled}$$ | <https://github.com/bambulab/BambuStudio> | ~/Applications/BambuStudio |
+| $$\color{cyan}{EdgeTX_Companion}$$ | $$\color{green}{Enabled}$$ | <https://github.com/EdgeTX/edgetx> | ~/Applications/EdgeTX |
+| $$\color{cyan}{FreeCAD}$$ | $$\color{green}{Enabled}$$ | <https://github.com/FreeCAD/FreeCAD> | ~/Applications/FreeCAD |
+| $$\color{cyan}{FreeCAD_weekly}$$ | $$\color{green}{Enabled}$$ | <https://github.com/FreeCAD/FreeCAD> | ~/Applications/FreeCAD_weekly |
+| $$\color{cyan}{GitHubDesktop}$$ | $$\color{green}{Enabled}$$ | <https://github.com/shiftkey/desktop> | ~/Applications/GitHubDesktop |
+| $$\color{cyan}{InkScape}$$ | $$\color{green}{Enabled}$$ | <https://inkscape.org/release/all/gnulinux/appimage/> | ~/Applications/InkScape |
+| $$\color{cyan}{Meshlab}$$ | $$\color{green}{Enabled}$$ | <https://github.com/cnr-isti-vclab/meshlab> | ~/Applications/Meshlab |
+| $$\color{cyan}{OpenRGB}$$ | $$\color{green}{Enabled}$$ | <https://codeberg.org/OpenRGB/OpenRGB> | ~/Applications/OpenRGB |
+| $$\color{cyan}{OpenShot}$$ | $$\color{green}{Enabled}$$ | <https://github.com/OpenShot/openshot-qt> | ~/Applications/OpenShot |
+| $$\color{cyan}{OrcaSlicer}$$ | $$\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | ~/Applications/OrcaSlicer |
+| $$\color{cyan}{OrcaSlicerNightly}$$ | $$\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | ~/Applications/OrcaSlicerNightly |
+| $$\color{cyan}{OrcaSlicerRC}$$ | $$\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | ~/Applications/OrcaSlicerRC |
+| $$\color{cyan}{ScribusDev}$$ | $$\color{green}{Enabled}$$ | <https://sourceforge.net/projects/scribus/files/scribus-devel/1.7.0> | ~/Applications/ScribusDev |
+| $$\color{cyan}{UltiMaker-Cura}$$ | $$\color{green}{Enabled}$$ | <https://github.com/Ultimaker/Cura> | ~/Applications/UltiMaker-Cura |
+| $$\color{cyan}{YubiKey}$$ | $$\color{green}{Enabled}$$ | <https://developers.yubico.com/yubikey-manager-qt/Releases/yubikey-manager-qt-latest-linux.AppImage> | ~/Applications/YubiKey |
 
 $$\\color{blue}{Total: 17 applications (17 enabled, 0 disabled)}$$
 
@@ -239,50 +239,51 @@ You can manually run `appimage-updater check` or integrate it into crontab or yo
 ➤ appimage-updater check -n --format markdown
 ```
 
-$$\\color{cyan}\\text{Checking 17 applications for updates...}$$
-$$\\color{white}\\text{Starting concurrent checks: [0/17] (0.0%)}$$
-$$\\color{white}\\text{Completed appimagetool: [1/17] (5.9%)}$$
-$$\\color{white}\\text{Completed appimaged: [2/17] (11.8%)}$$
-$$\\color{white}\\text{Completed YubiKey: [3/17] (17.6%)}$$
-$$\\color{white}\\text{Completed OpenRGB: [4/17] (23.5%)}$$
-$$\\color{white}\\text{Completed BambuStudio: [5/17] (29.4%)}$$
-$$\\color{white}\\text{Completed GitHubDesktop: [6/17] (35.3%)}$$
-$$\\color{white}\\text{Completed FreeCAD: [7/17] (41.2%)}$$
-$$\\color{white}\\text{Completed EdgeTX_Companion: [8/17] (47.1%)}$$
-$$\\color{white}\\text{Completed FreeCAD_weekly: [9/17] (52.9%)}$$
-$$\\color{white}\\text{Completed OrcaSlicerNightly: [10/17] (58.8%)}$$
-$$\\color{white}\\text{Completed Meshlab: [11/17] (64.7%)}$$
-$$\\color{white}\\text{Completed UltiMaker-Cura: [12/17] (70.6%)}$$
-$$\\color{white}\\text{Completed OrcaSlicer: [13/17] (76.5%)}$$
-$$\\color{white}\\text{Completed OrcaSlicerRC: [14/17] (82.4%)}$$
-$$\\color{white}\\text{Completed OpenShot: [15/17] (88.2%)}$$
-$$\\color{white}\\text{Completed InkScape: [16/17] (94.1%)}$$
-$$\\color{white}\\text{Completed ScribusDev: [17/17] (100.0%)}$$
+Checking 17 applications for updates...
+
+- Starting concurrent checks: [0/17] (0.0\%)
+- Completed appimagetool: [1/17] (5.9\%)
+- Completed appimaged: [2/17] (11.8\%)
+- Completed YubiKey: [3/17] (17.6\%)
+- Completed OpenRGB: [4/17] (23.5\%)
+- Completed BambuStudio: [5/17] (29.4\%)
+- Completed GitHubDesktop: [6/17] (35.3\%)
+- Completed FreeCAD: [7/17] (41.2\%)
+- Completed EdgeTX_Companion: [8/17] (47.1\%)
+- Completed FreeCAD_weekly: [9/17] (52.9\%)
+- Completed OrcaSlicerNightly: [10/17] (58.8\%)
+- Completed Meshlab: [11/17] (64.7\%)
+- Completed UltiMaker-Cura: [12/17] (70.6\%)
+- Completed OrcaSlicer: [13/17] (76.5\%)
+- Completed OrcaSlicerRC: [14/17] (82.4\%)
+- Completed OpenShot: [15/17] (88.2\%)
+- Completed InkScape: [16/17] (94.1\%)
+- Completed ScribusDev: [17/17] (100.0\%)
 
 ## Update Check Results
 
-| $$\\color{cyan}{Application}$$ | $$\\color{magenta}{Status}$$ | $$\\color{gold}{Current Version}$$ | $$\\color{green}{Latest Version}$$ | $$\\color{red}{Update Available}$$ |
+| $$\color{cyan}{Application}$$ | $$\color{magenta}{Status}$$ | $$\color{gold}{Current Version}$$ | $$\color{green}{Latest Version}$$ | $$\color{red}{Update Available}$$ |
 | --- | --- | --- | --- | --- |
-| $$\\color{cyan}{appimaged}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{continuous}$$ | $$\\color{green}{continuous}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{appimagetool}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{continuous}$$ | $$\\color{green}{continuous}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{BambuStudio}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{02.02.02}$$ | $$\\color{green}{02.02.02}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{EdgeTX_Companion}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{2.11.3}$$ | $$\\color{green}{2.11.3}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{FreeCAD}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{1.0.2}$$ | $$\\color{green}{1.0.2}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{FreeCAD_weekly}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{2025.10.08}$$ | $$\\color{green}{2025.10.15}$$ | $$\\color{red}{Yes}$$ |
-| $$\\color{cyan}{GitHubDesktop}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{3.4.13}$$ | $$\\color{green}{3.4.13}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{InkScape}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{1.4.2}$$ | $$\\color{green}{1.4.2}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{Meshlab}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{2025.07}$$ | $$\\color{green}{2025.07}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{OpenRGB}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{0.9}$$ | $$\\color{green}{0.9}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{OpenShot}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{3.3.0}$$ | $$\\color{green}{3.3.0}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{OrcaSlicer}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{2.3.1}$$ | $$\\color{green}{2.3.1}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{OrcaSlicerNightly}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{2025-10-14}$$ | $$\\color{green}{2025-10-14}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{OrcaSlicerRC}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{2.3.1-beta}$$ | $$\\color{green}{2.3.1-beta}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{ScribusDev}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{1.7.0}$$ | $$\\color{green}{1.7.0}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{UltiMaker-Cura}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{5.10.2}$$ | $$\\color{green}{5.10.2}$$ | $$\\color{green}{No}$$ |
-| $$\\color{cyan}{YubiKey}$$ | $$\\color{green}{Success}$$ | $$\\color{gold}{2024-04-18}$$ | $$\\color{green}{2024-04-18}$$ | $$\\color{green}{No}$$ |
+| $$\color{cyan}{appimaged}$$ | $$\color{green}{Success}$$ | $$\color{gold}{continuous}$$ | $$\color{green}{continuous}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{appimagetool}$$ | $$\color{green}{Success}$$ | $$\color{gold}{continuous}$$ | $$\color{green}{continuous}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{BambuStudio}$$ | $$\color{green}{Success}$$ | $$\color{gold}{02.02.02}$$ | $$\color{green}{02.02.02}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{EdgeTX_Companion}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2.11.3}$$ | $$\color{green}{2.11.3}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{FreeCAD}$$ | $$\color{green}{Success}$$ | $$\color{gold}{1.0.2}$$ | $$\color{green}{1.0.2}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{FreeCAD_weekly}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2025.10.08}$$ | $$\color{green}{2025.10.15}$$ | $$\color{red}{Yes}$$ |
+| $$\color{cyan}{GitHubDesktop}$$ | $$\color{green}{Success}$$ | $$\color{gold}{3.4.13}$$ | $$\color{green}{3.4.13}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{InkScape}$$ | $$\color{green}{Success}$$ | $$\color{gold}{1.4.2}$$ | $$\color{green}{1.4.2}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{Meshlab}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2025.07}$$ | $$\color{green}{2025.07}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{OpenRGB}$$ | $$\color{green}{Success}$$ | $$\color{gold}{0.9}$$ | $$\color{green}{0.9}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{OpenShot}$$ | $$\color{green}{Success}$$ | $$\color{gold}{3.3.0}$$ | $$\color{green}{3.3.0}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{OrcaSlicer}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2.3.1}$$ | $$\color{green}{2.3.1}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{OrcaSlicerNightly}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2025-10-14}$$ | $$\color{green}{2025-10-14}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{OrcaSlicerRC}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2.3.1-beta}$$ | $$\color{green}{2.3.1-beta}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{ScribusDev}$$ | $$\color{green}{Success}$$ | $$\color{gold}{1.7.0}$$ | $$\color{green}{1.7.0}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{UltiMaker-Cura}$$ | $$\color{green}{Success}$$ | $$\color{gold}{5.10.2}$$ | $$\color{green}{5.10.2}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{YubiKey}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2024-04-18}$$ | $$\color{green}{2024-04-18}$$ | $$\color{green}{No}$$ |
 
-$$\\color{yellow}\\text{1 update available}$$
-$$\\color{cyan}\\text{Updates found but downloads declined due to --no option}$$
+$$\color{yellow}\text{1 update available}$$
+$$\color{cyan}\text{Updates found but downloads declined due to --no option}$$
 
 ## Usage
 
