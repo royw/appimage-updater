@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **PyPI Publishing Preparation**
+  - Enhanced PyPI metadata with keywords for better discoverability
+  - Added project URLs (homepage, documentation, repository, issues, changelog)
+  - Updated classifiers to Beta status with appropriate audience targeting
+  - Updated LICENSE copyright to 2025 Roy Wright
+  - Version bumped to 0.5.1 for PyPI publication
+  - Updated all documentation version references to 0.5.1
+
 ## [0.5.0] - 2025-01-15
 
 ### Release Notes
