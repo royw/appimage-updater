@@ -284,6 +284,7 @@ Checking 17 applications for updates...
 
 $$\color{yellow}\text{2 updates available}$$
 $$\color{cyan}\text{Updates found but downloads declined due to --no option}$$
+
 ## Usage
 
 **Quick Commands:**
