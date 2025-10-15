@@ -84,7 +84,7 @@ AppImage Updater uses a directory-based structure with separate files:
 {
   "concurrent_downloads": 5,
   "timeout_seconds": 60,
-  "user_agent": "AppImage-Updater/0.5.0",
+  "user_agent": "AppImage-Updater/0.5.1",
   "defaults": {
     "download_dir": null,
     "rotation_enabled": false,

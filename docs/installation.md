@@ -93,7 +93,7 @@ appimage-updater --version
 You should see output similar to:
 
 ```text
-appimage-updater, version 0.5.0
+AppImage Updater 0.5.1
 ```
 
 ## Next Steps
