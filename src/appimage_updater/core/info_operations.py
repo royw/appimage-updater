@@ -16,7 +16,7 @@ from rich.console import Console
 from appimage_updater.config.models import ApplicationConfig
 from appimage_updater.repositories.base import RepositoryError
 from appimage_updater.repositories.factory import get_repository_client
-from appimage_updater.ui.output import get_output_formatter
+from appimage_updater.ui.output.context import get_output_formatter
 from appimage_updater.utils.version_utils import extract_version_from_filename, normalize_version_string
 
 

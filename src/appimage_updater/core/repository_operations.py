@@ -20,7 +20,7 @@ from appimage_updater.config.models import ApplicationConfig
 from appimage_updater.core.update_operations import console
 from appimage_updater.repositories.factory import get_repository_client
 from appimage_updater.services.application_service import ApplicationService
-from appimage_updater.ui.output import get_output_formatter
+from appimage_updater.ui.output.context import get_output_formatter
 
 
 async def _examine_repositories(

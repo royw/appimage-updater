@@ -5,15 +5,3 @@ This package provides GitLab repository support including:
 - Authentication handling for GitLab personal access tokens
 - Repository implementation following the abstract base interface
 """
-
-from .auth import GitLabAuth
-from .client import GitLabClient, GitLabClientError
-from .repository import GitLabRepository
-
-
-__all__ = [
-    "GitLabAuth",
-    "GitLabClient",
-    "GitLabClientError",
-    "GitLabRepository",
-]

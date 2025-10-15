@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Major output formatter refactoring for improved type safety and code quality**
+
   - `get_output_formatter()` now guarantees a valid formatter or raises `RuntimeError`
   - Changed return type from `Any` to `OutputFormatter` for compile-time type checking
   - Eliminated ~30 defensive None checks across 14 files
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved maintainability with fail-fast error detection
 
 - **Improved markdown output formatting**
+
   - URLs now wrapped in angle brackets (`<URL>`) for better markdown compatibility
   - Removed "ℹ INFO: " prefix from info messages for cleaner output
   - Enhanced `tree-to-github-markdown.sh` script:
@@ -40,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dead code elimination**
   - Removed 19 unused functions across multiple modules
   - Removed fallback console.print() calls (formatter now always available)
-  - Removed duplicate command execution methods (_execute_with_formatter_context, _execute_without_formatter)
+  - Removed duplicate command execution methods (\_execute_with_formatter_context, \_execute_without_formatter)
   - Removed obsolete display_check_results and related helper functions
   - Cleaned up 7 unused imports
   - Removed test_table_formatting.py (entire obsolete test file)

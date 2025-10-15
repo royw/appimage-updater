@@ -27,7 +27,7 @@ from appimage_updater.core.version_checker import VersionChecker
 from appimage_updater.repositories.base import RepositoryError
 from appimage_updater.services.application_service import ApplicationService
 from appimage_updater.ui.display import display_download_results
-from appimage_updater.ui.output import OutputFormatterContext, get_output_formatter
+from appimage_updater.ui.output.context import OutputFormatterContext, get_output_formatter
 
 
 async def _check_updates(
