@@ -146,6 +146,44 @@ class MarkdownOutputFormatter(OutputFormatter):
 
         return result
 
+    def _print_table_title(self, title: str) -> None:
+        """Print table title if provided.
+
+        Args:
+            title: Table title
+        """
+        if title:
+            title_line = f"\n## {title}\n"
+            print(title_line)
+            self._output_lines.append(title_line)
+
+    def _build_table_headers(self, headers: list[str]) -> tuple[str, str]:
+        """Build markdown table header and separator rows.
+
+        Args:
+            headers: Table headers
+
+        Returns:
+            Tuple of (header_row, separator_row)
+        """
+        colored_headers = [self._colorize_header(header) for header in headers]
+        header_row = "| " + " | ".join(colored_headers) + " |"
+        separator_row = "| " + " | ".join(["---"] * len(headers)) + " |"
+        return header_row, separator_row
+
+    def _build_table_row(self, row: dict[str, Any], headers: list[str]) -> str:
+        """Build a single table row.
+
+        Args:
+            row: Row data dictionary
+            headers: Table headers
+
+        Returns:
+            Formatted row string
+        """
+        row_values = [self._colorize_cell_value(header, str(row.get(header, ""))) for header in headers]
+        return "| " + " | ".join(row_values) + " |"
+
     def print_table(self, data: list[dict[str, Any]], title: str = "", headers: list[str] | None = None) -> None:
         """Display tabular data as markdown table with colored columns.
 
@@ -157,31 +195,24 @@ class MarkdownOutputFormatter(OutputFormatter):
         if not data:
             return
 
-        # Display title if provided
-        if title:
-            title_line = f"\n## {title}\n"
-            print(title_line)
-            self._output_lines.append(title_line)
+        # Display title
+        self._print_table_title(title)
 
         # Determine headers
-        table_headers = headers or (list(data[0].keys()) if data else [])
+        table_headers = headers or list(data[0].keys())
         if not table_headers:
             return
 
-        # Build markdown table with colored headers (matching Rich formatter)
-        colored_headers = [self._colorize_header(header) for header in table_headers]
-        header_row = "| " + " | ".join(colored_headers) + " |"
-        separator_row = "| " + " | ".join(["---"] * len(table_headers)) + " |"
-
+        # Build and print header rows
+        header_row, separator_row = self._build_table_headers(table_headers)
         print(header_row)
         print(separator_row)
         self._output_lines.append(header_row)
         self._output_lines.append(separator_row)
 
-        # Add data rows with colored values
+        # Add data rows
         for row in data:
-            row_values = [self._colorize_cell_value(header, str(row.get(header, ""))) for header in table_headers]
-            row_line = "| " + " | ".join(row_values) + " |"
+            row_line = self._build_table_row(row, table_headers)
             print(row_line)
             self._output_lines.append(row_line)
 
@@ -267,21 +298,16 @@ class MarkdownOutputFormatter(OutputFormatter):
 
         return None
 
-    def _colorize_cell_value(self, header: str, value: str) -> str:
-        """Apply color to cell value based on column and content.
+    def _try_special_cell_formatting(self, header_lower: str, value: str) -> str | None:
+        """Try to apply special formatting for specific columns.
 
         Args:
-            header: Column header name
+            header_lower: Lowercase header name
             value: Cell value
 
         Returns:
-            Colored cell value
+            Formatted value or None if no special formatting applies
         """
-        if not value or value == "":
-            return value
-
-        header_lower = header.lower()
-
         # Status column - color based on value
         if header_lower == "status":
             return self._colorize_status_value(value)
@@ -293,6 +319,28 @@ class MarkdownOutputFormatter(OutputFormatter):
         # Source column or any URL - wrap in angle brackets
         if header_lower == "source" or self._is_url(value):
             return f"<{value}>"
+
+        return None
+
+    def _colorize_cell_value(self, header: str, value: str) -> str:
+        """Apply color to cell value based on column and content.
+
+        Args:
+            header: Column header name
+            value: Cell value
+
+        Returns:
+            Colored cell value
+        """
+        if not value:
+            return value
+
+        header_lower = header.lower()
+
+        # Try special formatting first
+        special_format = self._try_special_cell_formatting(header_lower, value)
+        if special_format is not None:
+            return special_format
 
         # Static color based on header
         color = self._get_cell_color_for_header(header_lower)

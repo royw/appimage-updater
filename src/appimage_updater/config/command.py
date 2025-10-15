@@ -70,6 +70,18 @@ def _build_basic_config_settings(global_config: Any) -> dict[str, str]:
     }
 
 
+def _format_yes_no(value: bool) -> str:
+    """Format boolean value as Yes/No.
+
+    Args:
+        value: Boolean value
+
+    Returns:
+        'Yes' or 'No'
+    """
+    return "Yes" if value else "No"
+
+
 def _build_default_config_settings(defaults: Any) -> dict[str, str]:
     """Build default configuration settings for new applications.
 
@@ -84,17 +96,17 @@ def _build_default_config_settings(defaults: Any) -> dict[str, str]:
 
     return {
         "Download Directory|download-dir": download_dir_value,
-        "Auto Subdirectory|auto-subdir": "Yes" if defaults.auto_subdir else "No",
-        "Rotation Enabled|rotation": "Yes" if defaults.rotation_enabled else "No",
+        "Auto Subdirectory|auto-subdir": _format_yes_no(defaults.auto_subdir),
+        "Rotation Enabled|rotation": _format_yes_no(defaults.rotation_enabled),
         "Retain Count|retain-count": str(defaults.retain_count),
-        "Symlink Enabled|symlink-enabled": "Yes" if defaults.symlink_enabled else "No",
+        "Symlink Enabled|symlink-enabled": _format_yes_no(defaults.symlink_enabled),
         "Symlink Directory|symlink-dir": symlink_dir_value,
         "Symlink Pattern|symlink-pattern": defaults.symlink_pattern,
-        "Checksum Enabled|checksum": "Yes" if defaults.checksum_enabled else "No",
+        "Checksum Enabled|checksum": _format_yes_no(defaults.checksum_enabled),
         "Checksum Algorithm|checksum-algorithm": defaults.checksum_algorithm.upper(),
         "Checksum Pattern|checksum-pattern": defaults.checksum_pattern,
-        "Checksum Required|checksum-required": "Yes" if defaults.checksum_required else "No",
-        "Prerelease|prerelease": "Yes" if defaults.prerelease else "No",
+        "Checksum Required|checksum-required": _format_yes_no(defaults.checksum_required),
+        "Prerelease|prerelease": _format_yes_no(defaults.prerelease),
     }
 
 
