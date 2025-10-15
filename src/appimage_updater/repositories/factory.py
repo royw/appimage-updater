@@ -146,22 +146,6 @@ async def get_repository_client_async(
     return await get_repository_client_async_impl(url, timeout, user_agent, source_type, enable_probing, **kwargs)
 
 
-async def _validate_client(client: RepositoryClient, url: str) -> None:
-    """Quick health check for repository client."""
-    try:
-        # Try a lightweight operation to verify the API works
-        async with client:
-            await client.get_latest_release(url)
-    except RuntimeError as e:
-        if "Event loop is closed" in str(e):
-            # This is a known issue with Python 3.13 + httpx/anyio
-            # Treat as validation failure to try alternative handlers
-            raise RepositoryError(f"Client validation failed due to event loop issue: {url}") from e
-        raise RepositoryError(f"Client validation failed for {url}: {e}") from e
-    except Exception as e:
-        raise RepositoryError(f"Client validation failed for {url}: {e}") from e
-
-
 def detect_repository_type(url: str) -> str:
     """Detect repository type from URL without creating client.
 
