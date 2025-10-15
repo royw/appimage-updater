@@ -26,7 +26,7 @@ def create_output_formatter(format_type: OutputFormat, **kwargs: Any) -> OutputF
     Raises:
         ValueError: If format_type is not supported
     """
-    formatter_map = {
+    formatter_map: dict[OutputFormat, type[OutputFormatter]] = {
         OutputFormat.RICH: RichOutputFormatter,
         OutputFormat.PLAIN: PlainOutputFormatter,
         OutputFormat.JSON: JSONOutputFormatter,
