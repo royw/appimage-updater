@@ -110,7 +110,7 @@ points to an old release.
 Cool. Works nicely except you have to manually check the github repository, download updates, verify checksums,
 and rotate the extensions and symbolic link. This is where appimage-updater comes in.
 
-Here is an example of FreeCAD AppImages that appimage-updater is currently managing (uses `scripts/tree-to-github-markdown.sh`):
+Here is an example of FreeCAD AppImages that appimage-updater is currently managing (uses [`scripts/tree-to-github-markdown.sh`](scripts/tree-to-github-markdown.sh)):
 
 ```bash
 ➤ scripts/tree-to-github-markdown.sh --noreport -l -P "[fF]r*" -I "[a-eA-Eg-zG-Z]*" -C ~/Applications
