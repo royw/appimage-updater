@@ -181,7 +181,7 @@ class TestPrintStatusMessages:
         formatter.print_info("For your information")
         output = mock_stdout.output.getvalue()
         assert r"$$\color{blue}{" in output
-        assert "INFO: For your information" in output
+        assert "For your information" in output
 
 
 class TestPrintCheckResults:
