@@ -183,9 +183,10 @@ class TestCheckCommand:
         command = CheckCommand(params)
 
         mock_tracker = Mock()
+        mock_formatter = Mock()
 
-        result = command._should_display_tracking_summary(mock_tracker, None)
-        assert result is False
+        result = command._should_display_tracking_summary(mock_tracker, mock_formatter)
+        assert result is True
 
     def test_should_display_tracking_summary_formatter_only(self) -> None:
         """Test tracking summary display check with formatter only."""

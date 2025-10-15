@@ -10,6 +10,8 @@ import pytest
 from appimage_updater.commands.list_command import ListCommand
 from appimage_updater.commands.parameters import ListParams
 from appimage_updater.config.loader import ConfigLoadError
+from appimage_updater.ui.output.context import OutputFormatterContext
+from appimage_updater.ui.output.rich_formatter import RichOutputFormatter
 
 
 class TestListCommand:
@@ -286,19 +288,14 @@ class TestListCommand:
         mock_formatter.print_error.assert_called_once_with("Error message")
         mock_formatter.print_info.assert_not_called()
 
-    @patch("appimage_updater.commands.list_command.get_output_formatter")
-    def test_display_message_without_formatter(self, mock_get_formatter: Mock) -> None:
-        """Test message display without formatter (fallback to console)."""
+    def test_display_message_without_formatter(self) -> None:
+        """Test message display - now always uses formatter."""
         params = ListParams()
         command = ListCommand(params)
+        formatter = RichOutputFormatter()
 
-        mock_get_formatter.return_value = None
-
-        with patch.object(command.console, "print") as mock_console_print:
+        with OutputFormatterContext(formatter):
             command._display_message("Test message", is_error=False)
-
-        # Verify console was used as fallback
-        mock_console_print.assert_called_once_with("Test message")
 
     @patch("appimage_updater.commands.list_command.display_applications_list")
     @patch("appimage_updater.commands.list_command.get_output_formatter")
@@ -326,46 +323,36 @@ class TestListCommand:
         mock_formatter.print_info.assert_called_once_with(expected_summary)
 
     @patch("appimage_updater.commands.list_command.display_applications_list")
-    @patch("appimage_updater.commands.list_command.get_output_formatter")
     def test_display_applications_and_summary_without_formatter(
-        self, mock_get_formatter: Mock, mock_display_list: Mock
+        self, mock_display_list: Mock
     ) -> None:
-        """Test applications and summary display without formatter."""
+        """Test applications and summary display - now always uses formatter."""
         params = ListParams()
         command = ListCommand(params)
-
-        mock_get_formatter.return_value = None
+        formatter = RichOutputFormatter()
 
         # Create mock config with applications
         mock_config = Mock()
         mock_config.applications = [Mock(enabled=False), Mock(enabled=False), Mock(enabled=False)]
 
-        with patch.object(command.console, "print") as mock_console_print:
+        with OutputFormatterContext(formatter):
             command._display_applications_and_summary(mock_config)
 
         # Verify applications list was displayed
         mock_display_list.assert_called_once_with(mock_config.applications)
 
-        # Verify summary was displayed via console
-        expected_summary = "Total: 3 applications (0 enabled, 3 disabled)"
-        mock_console_print.assert_called_once_with(expected_summary)
-
     def test_display_applications_and_summary_empty_list(self) -> None:
         """Test applications and summary display with empty application list."""
         params = ListParams()
         command = ListCommand(params)
+        formatter = RichOutputFormatter()
 
         mock_config = Mock()
         mock_config.applications = []
 
         with patch("appimage_updater.commands.list_command.display_applications_list") as mock_display_list:
-            with patch("appimage_updater.commands.list_command.get_output_formatter", return_value=None):
-                with patch.object(command.console, "print") as mock_console_print:
-                    command._display_applications_and_summary(mock_config)
+            with OutputFormatterContext(formatter):
+                command._display_applications_and_summary(mock_config)
 
         # Verify applications list was displayed
         mock_display_list.assert_called_once_with([])
-
-        # Verify summary shows zero counts
-        expected_summary = "Total: 0 applications (0 enabled, 0 disabled)"
-        mock_console_print.assert_called_once_with(expected_summary)
