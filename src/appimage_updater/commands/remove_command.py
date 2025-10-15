@@ -60,10 +60,7 @@ class RemoveCommand(BaseCommand, FormatterContextMixin, Command):
                 return validation_result
 
             # Use context manager to make output formatter available throughout the execution
-            if output_formatter:
-                with OutputFormatterContext(output_formatter):
-                    success = await self._execute_remove_operation()
-            else:
+            with OutputFormatterContext(output_formatter):
                 success = await self._execute_remove_operation()
 
             return success

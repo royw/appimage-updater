@@ -63,11 +63,9 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
         return await self._execute_show_with_formatter(output_formatter)
 
     async def _execute_show_with_formatter(self, output_formatter: Any) -> bool:
-        """Execute show operation with optional output formatter context."""
-        if output_formatter:
-            with OutputFormatterContext(output_formatter):
-                return await self._execute_show_operation()
-        return await self._execute_show_operation()
+        """Execute show operation with output formatter context."""
+        with OutputFormatterContext(output_formatter):
+            return await self._execute_show_operation()
 
     def _create_result(self, success: bool) -> CommandResult:
         """Create command result based on success status."""

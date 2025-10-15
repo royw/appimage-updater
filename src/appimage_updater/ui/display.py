@@ -168,11 +168,7 @@ def _wrap_single_part_path(display_path: str, max_width: int) -> str:
 def display_applications_list(applications: list[Any]) -> None:
     """Display applications list in a table."""
     output_formatter = get_output_formatter()
-
-    if output_formatter:
-        _display_applications_with_formatter(applications, output_formatter)
-    else:
-        _display_applications_with_rich_table(applications)
+    _display_applications_with_formatter(applications, output_formatter)
 
 
 def _display_applications_with_formatter(applications: list[Any], output_formatter: Any) -> None:
@@ -572,7 +568,7 @@ def display_application_details(app: Any, config_source_info: dict[str, str] | N
     """Display detailed information about a specific application."""
     output_formatter = get_output_formatter()
 
-    if output_formatter and not hasattr(output_formatter, "console"):
+    if not hasattr(output_formatter, "console"):
         # Only use structured format for non-Rich formatters (JSON, Plain, HTML, Markdown)
         # Rich formatter should use the original Rich panel display
 
@@ -628,7 +624,7 @@ def display_edit_summary(app_name: str, changes: list[str]) -> None:
     """Display a summary of changes made during edit operation."""
     output_formatter = get_output_formatter()
 
-    if output_formatter and not hasattr(output_formatter, "console"):
+    if not hasattr(output_formatter, "console"):
         _display_structured_edit_summary(output_formatter, app_name, changes)
     else:
         _display_rich_edit_summary(app_name, changes)

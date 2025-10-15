@@ -74,7 +74,7 @@ class CheckCommand(Command):
     # noinspection PyMethodMayBeStatic
     def _should_display_tracking_summary(self, http_tracker: Any, output_formatter: Any) -> bool:
         """Check if HTTP tracking summary should be displayed."""
-        return bool(http_tracker and output_formatter)
+        return bool(http_tracker)
 
     def _display_tracking_section(self, http_tracker: Any, output_formatter: Any) -> None:
         """Display the HTTP tracking section with request details."""

@@ -47,13 +47,6 @@ class RepositoryCommand(BaseCommand, FormatterContextMixin, Command):
 
     async def _execute_main_repository_workflow(self, output_formatter: Any) -> CommandResult:
         """Execute the main repository command workflow."""
-        if output_formatter:
-            return await self._execute_with_formatter_context(output_formatter)
-        else:
-            return await self._execute_without_formatter()
-
-    async def _execute_with_formatter_context(self, output_formatter: Any) -> CommandResult:
-        """Execute repository command with output formatter context."""
         with OutputFormatterContext(output_formatter):
             validation_result = self._validate_with_formatter_error_display()
             if validation_result:
@@ -61,15 +54,6 @@ class RepositoryCommand(BaseCommand, FormatterContextMixin, Command):
 
             success = await self._execute_repository_operation()
             return self._create_repository_result(success)
-
-    async def _execute_without_formatter(self) -> CommandResult:
-        """Execute repository command without output formatter."""
-        validation_result = self._validate_with_console_error_display()
-        if validation_result:
-            return validation_result
-
-        success = await self._execute_repository_operation()
-        return self._create_repository_result(success)
 
     def _validate_with_formatter_error_display(self) -> CommandResult | None:
         """Validate parameters and display errors using formatter."""

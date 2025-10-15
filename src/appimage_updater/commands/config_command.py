@@ -69,10 +69,7 @@ class ConfigCommand(Command):
                 return validation_result
 
             # Use context manager to make output formatter available throughout the execution
-            if output_formatter:
-                with OutputFormatterContext(output_formatter):
-                    success = await self._execute_config_operation()
-            else:
+            with OutputFormatterContext(output_formatter):
                 success = await self._execute_config_operation()
 
             return self._create_result(success)
