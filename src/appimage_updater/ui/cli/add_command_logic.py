@@ -113,6 +113,49 @@ async def _prepare_add_configuration(
     }
 
 
+def _load_app_configs(config_path: Path | None) -> AppConfigs | None:
+    """Load existing application configurations.
+
+    Args:
+        config_path: Path to configuration file or directory
+
+    Returns:
+        AppConfigs instance or None if loading failed
+    """
+    try:
+        return AppConfigs(config_path=config_path)
+    except Exception as load_error:
+        logger.error(f"Failed to load existing configuration: {load_error}")
+        logger.exception("Full exception details")
+        return None
+
+
+def _save_app_config(app_configs: AppConfigs, app_config: ApplicationConfig) -> bool:
+    """Add and save application configuration.
+
+    Args:
+        app_configs: Existing configurations
+        app_config: New application configuration to add
+
+    Returns:
+        True if successful, False otherwise
+    """
+    # Check for duplicate names
+    if app_config.name in app_configs:
+        logger.error(f"Configuration already exists for application '{app_config.name}'")
+        return False
+
+    # Add new application and save
+    app_configs.add(app_config)
+    try:
+        app_configs.save()
+        return True
+    except Exception as save_error:
+        logger.error(f"Failed to save configuration: {save_error}")
+        logger.exception("Full exception details")
+        return False
+
+
 def _execute_add_operation(
     config_data: dict[str, Any], dry_run: bool, config_file: Path | None, config_dir: Path | None
 ) -> bool:
@@ -123,36 +166,16 @@ def _execute_add_operation(
     try:
         # Create ApplicationConfig from the dict
         app_config = ApplicationConfig(**config_data["app_config"])
-
-        # Use unified API to add and save
         config_path = config_file or config_dir
 
-        # Load existing configurations (this may fail if config doesn't exist)
-        try:
-            app_configs = AppConfigs(config_path=config_path)
-        except Exception as load_error:
-            logger.error(f"Failed to load existing configuration: {load_error}")
-            logger.exception("Full exception details")
+        # Load existing configurations
+        app_configs = _load_app_configs(config_path)
+        if app_configs is None:
             return False
 
-        # Check for duplicate names
-        if app_config.name in app_configs:
-            raise ValueError(f"Configuration already exists for application '{app_config.name}'")
+        # Save the new configuration
+        return _save_app_config(app_configs, app_config)
 
-        # Add new application and save
-        app_configs.add(app_config)
-        try:
-            app_configs.save()
-        except Exception as save_error:
-            logger.error(f"Failed to save configuration: {save_error}")
-            logger.exception("Full exception details")
-            return False
-
-        return True
-    except ValueError as e:
-        # Handle duplicate name error
-        logger.error(f"Configuration error: {e}")
-        return False
     except Exception as e:
         logger.error(f"Failed to add application configuration: {e}")
         logger.exception("Full exception details")
