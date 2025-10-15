@@ -260,12 +260,14 @@ class MarkdownOutputFormatter(OutputFormatter):
             description: Optional progress description
         """
         percentage = (current / total * 100) if total > 0 else 0
-        # Plain text for progress - coloring doesn't work reliably on GitHub
+        # Format as list items for markdown
         progress_text = f"[{current}/{total}] ({percentage:.1f}%)"
         if description:
             progress_text = f"{description}: {progress_text}"
-        print(progress_text)
-        self._output_lines.append(progress_text)
+        # Add list item prefix
+        formatted = f"- {progress_text}"
+        print(formatted)
+        self._output_lines.append(formatted)
 
     def print_success(self, message: str) -> None:
         """Display success message with green color.
@@ -293,7 +295,7 @@ class MarkdownOutputFormatter(OutputFormatter):
         Args:
             message: Warning message to display
         """
-        formatted = f"$$\\color{{gold}}{{⚠ WARNING: {message}}}$$"
+        formatted = f"$$\\color{{yellow}}\\text{{{message}}}$$"
         print(formatted)
         self._output_lines.append(formatted)
 

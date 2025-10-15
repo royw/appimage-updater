@@ -173,8 +173,7 @@ class TestPrintStatusMessages:
         """Test warning message."""
         formatter.print_warning("Be careful")
         output = mock_stdout.output.getvalue()
-        assert r"$$\color{gold}{" in output
-        assert "WARNING: Be careful" in output
+        assert r"$$\color{yellow}\text{Be careful}$$" in output
 
     def test_print_info(self, formatter: MarkdownOutputFormatter, capsys: Any) -> None:
         """Test info message formatting."""

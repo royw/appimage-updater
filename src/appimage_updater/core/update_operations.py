@@ -158,12 +158,22 @@ async def _execute_update_workflow(
 
     if not dry_run:
         if no:
-            console.print("[blue]Updates found but downloads declined due to --no option")
+            output_formatter = get_output_formatter()
+            message = "Updates found but downloads declined due to --no option"
+            if output_formatter:
+                output_formatter.print_info(message)
+            else:
+                console.print(f"[blue]{message}")
             logger.debug("Downloads declined due to --no option")
         else:
             await _handle_downloads(config, candidates, yes)
     else:
-        console.print("[blue]Dry run mode - no downloads performed")
+        output_formatter = get_output_formatter()
+        message = "Dry run mode - no downloads performed"
+        if output_formatter:
+            output_formatter.print_info(message)
+        else:
+            console.print(f"[blue]{message}")
         logger.debug("Dry run mode enabled, skipping downloads")
 
 
@@ -621,10 +631,13 @@ def _log_check_statistics(check_results: list[Any], candidates: list[Any]) -> No
 def _display_update_summary(candidates: list[Any]) -> None:
     """Display summary message about available updates."""
     if candidates:
-        if len(candidates) == 1:
-            console.print("\n[yellow]1 update available")
+        output_formatter = get_output_formatter()
+        message = "1 update available" if len(candidates) == 1 else f"{len(candidates)} updates available"
+
+        if output_formatter:
+            output_formatter.print_warning(message)
         else:
-            console.print(f"\n[yellow]{len(candidates)} updates available")
+            console.print(f"\n[yellow]{message}")
         logger.debug(f"Found {len(candidates)} updates available")
 
 
@@ -671,7 +684,13 @@ def _display_check_start_message(enabled_apps: list[Any]) -> None:
     suppress_console = _should_suppress_console_output(output_formatter)
 
     if not suppress_console:
-        console.print(f"[blue]Checking {len(enabled_apps)} applications for updates...")
+        message = f"Checking {len(enabled_apps)} applications for updates..."
+        if output_formatter:
+            output_formatter.print_message(message)
+            # Add blank line after the initial message for markdown
+            output_formatter.print_message("")
+        else:
+            console.print(f"[blue]{message}")
     logger.debug(f"Starting update checks for {len(enabled_apps)} applications")
 
 
