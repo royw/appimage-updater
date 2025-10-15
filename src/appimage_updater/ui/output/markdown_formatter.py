@@ -5,6 +5,20 @@ from typing import Any
 
 from .interface import OutputFormatter
 
+# LaTeX special characters that need to be escaped in block mode
+LATEX_SPECIAL_CHARS = {
+    "&": r"\&",
+    "%": r"\%",
+    "$": r"\$",
+    "#": r"\#",
+    "_": r"\_",
+    "{": r"\{",
+    "}": r"\}",
+    "~": r"\textasciitilde{}",
+    "^": r"\textasciicircum{}",
+    "\\": r"\textbackslash{}",
+}
+
 
 class MarkdownOutputFormatter(OutputFormatter):
     r"""Markdown output formatter for GitHub-compatible markdown output.
@@ -22,6 +36,47 @@ class MarkdownOutputFormatter(OutputFormatter):
         """
         self._current_section: str | None = None
         self._output_lines: list[str] = []
+
+    @staticmethod
+    def _escape_latex(text: str) -> str:
+        """Escape LaTeX special characters in text.
+
+        Args:
+            text: Text to escape
+
+        Returns:
+            Text with LaTeX special characters escaped
+        """
+        result = text
+        # Escape in specific order to avoid double-escaping
+        # Characters with braces in their replacements need placeholders
+        placeholders = {}
+        if "\\" in result:
+            placeholders["\x00BACKSLASH\x00"] = LATEX_SPECIAL_CHARS["\\"]
+            result = result.replace("\\", "\x00BACKSLASH\x00")
+        if "~" in result:
+            placeholders["\x00TILDE\x00"] = LATEX_SPECIAL_CHARS["~"]
+            result = result.replace("~", "\x00TILDE\x00")
+        if "^" in result:
+            placeholders["\x00CARET\x00"] = LATEX_SPECIAL_CHARS["^"]
+            result = result.replace("^", "\x00CARET\x00")
+
+        # Escape simple characters (no braces in replacement)
+        for char, escaped in LATEX_SPECIAL_CHARS.items():
+            if char not in ["\\", "~", "^", "{", "}"] and char in result:
+                result = result.replace(char, escaped)
+
+        # Escape braces
+        if "{" in result:
+            result = result.replace("{", LATEX_SPECIAL_CHARS["{"])
+        if "}" in result:
+            result = result.replace("}", LATEX_SPECIAL_CHARS["}"])
+
+        # Replace placeholders with actual replacements
+        for placeholder, replacement in placeholders.items():
+            result = result.replace(placeholder, replacement)
+
+        return result
 
     # noinspection PyProtocol
     def print_message(self, message: str, **kwargs: Any) -> None:
@@ -72,7 +127,7 @@ class MarkdownOutputFormatter(OutputFormatter):
                 "bright_yellow": "gold",
             }
             css_color = color_map.get(color, color)
-            result = f"$$\\color{{{css_color}}}{{{result}}}$$"
+            result = f"$$\\color{{{css_color}}}{{{self._escape_latex(result)}}}$$"
 
         return result
 
@@ -131,25 +186,26 @@ class MarkdownOutputFormatter(OutputFormatter):
         header_lower = header.lower()
 
         # Match Rich formatter's column styling
+        escaped_header = self._escape_latex(header)
         if header_lower in ["application", "name"]:
-            return f"$$\\color{{cyan}}{{{header}}}$$"
+            return f"$$\\color{{cyan}}{{{escaped_header}}}$$"
         elif header_lower == "status":
-            return f"$$\\color{{magenta}}{{{header}}}$$"
+            return f"$$\\color{{magenta}}{{{escaped_header}}}$$"
         elif "current" in header_lower and "version" in header_lower:
-            return f"$$\\color{{gold}}{{{header}}}$$"
+            return f"$$\\color{{gold}}{{{escaped_header}}}$$"
         elif "latest" in header_lower and "version" in header_lower:
-            return f"$$\\color{{green}}{{{header}}}$$"
+            return f"$$\\color{{green}}{{{escaped_header}}}$$"
         elif "update" in header_lower and "available" in header_lower:
-            return f"$$\\color{{red}}{{{header}}}$$"
+            return f"$$\\color{{red}}{{{escaped_header}}}$$"
         # Config list columns
         elif header_lower == "setting":
-            return f"$$\\color{{cyan}}{{{header}}}$$"
+            return f"$$\\color{{cyan}}{{{escaped_header}}}$$"
         elif header_lower == "description":
-            return f"$$\\color{{white}}{{{header}}}$$"
+            return f"$$\\color{{white}}{{{escaped_header}}}$$"
         elif header_lower == "valid_values":
-            return f"$$\\color{{gray}}{{{header}}}$$"
+            return f"$$\\color{{gray}}{{{escaped_header}}}$$"
         elif header_lower == "example":
-            return f"$$\\color{{green}}{{{header}}}$$"
+            return f"$$\\color{{green}}{{{escaped_header}}}$$"
 
         return header
 
@@ -170,7 +226,7 @@ class MarkdownOutputFormatter(OutputFormatter):
 
         # Application/Name column - cyan
         if header_lower in ["application", "name"]:
-            return f"$$\\color{{cyan}}{{{value}}}$$"
+            return f"$$\\color{{cyan}}{{{self._escape_latex(value)}}}$$"
 
         # Status column - color based on value
         if header_lower == "status":
@@ -178,11 +234,11 @@ class MarkdownOutputFormatter(OutputFormatter):
 
         # Current Version column - yellow/gold
         if "current" in header_lower and "version" in header_lower:
-            return f"$$\\color{{gold}}{{{value}}}$$"
+            return f"$$\\color{{gold}}{{{self._escape_latex(value)}}}$$"
 
         # Latest Version column - green
         if "latest" in header_lower and "version" in header_lower:
-            return f"$$\\color{{green}}{{{value}}}$$"
+            return f"$$\\color{{green}}{{{self._escape_latex(value)}}}$$"
 
         # Update Available column - color based on value
         if "update" in header_lower and "available" in header_lower:
@@ -195,7 +251,7 @@ class MarkdownOutputFormatter(OutputFormatter):
             "valid_values": "gray",
         }
         if header_lower in config_colors:
-            return f"$$\\color{{{config_colors[header_lower]}}}{{{value}}}$$"
+            return f"$$\\color{{{config_colors[header_lower]}}}{{{self._escape_latex(value)}}}$$"
 
         # Source column or any URL - wrap in angle brackets
         if header_lower == "source" or self._is_url(value):
@@ -224,16 +280,17 @@ class MarkdownOutputFormatter(OutputFormatter):
             Colored status value
         """
         value_lower = value.lower()
+        escaped_value = self._escape_latex(value)
         if "error" in value_lower:
-            return f"$$\\color{{red}}{{{value}}}$$"
+            return f"$$\\color{{red}}{{{escaped_value}}}$$"
         elif "update available" in value_lower:
-            return f"$$\\color{{gold}}{{{value}}}$$"
+            return f"$$\\color{{gold}}{{{escaped_value}}}$$"
         elif "up to date" in value_lower or "success" in value_lower or "enabled" in value_lower:
-            return f"$$\\color{{green}}{{{value}}}$$"
+            return f"$$\\color{{green}}{{{escaped_value}}}$$"
         elif "disabled" in value_lower:
-            return f"$$\\color{{red}}{{{value}}}$$"
+            return f"$$\\color{{red}}{{{escaped_value}}}$$"
         else:
-            return f"$$\\color{{magenta}}{{{value}}}$$"
+            return f"$$\\color{{magenta}}{{{escaped_value}}}$$"
 
     def _colorize_update_available_value(self, value: str) -> str:
         """Colorize update available column values.
@@ -245,9 +302,9 @@ class MarkdownOutputFormatter(OutputFormatter):
             Colored value
         """
         if value.lower() in ["yes", "true"]:
-            return f"$$\\color{{red}}{{{value}}}$$"
+            return f"$$\\color{{red}}{{{self._escape_latex(value)}}}$$"
         elif value.lower() in ["no", "false"]:
-            return f"$$\\color{{green}}{{{value}}}$$"
+            return f"$$\\color{{green}}{{{self._escape_latex(value)}}}$$"
         else:
             return value
 
@@ -275,7 +332,7 @@ class MarkdownOutputFormatter(OutputFormatter):
         Args:
             message: Success message to display
         """
-        formatted = f"$$\\color{{green}}{{✓ {message}}}$$"
+        formatted = f"$$\\color{{green}}{{✓ {self._escape_latex(message)}}}$$"
         print(formatted)
         self._output_lines.append(formatted)
 
@@ -285,7 +342,7 @@ class MarkdownOutputFormatter(OutputFormatter):
         Args:
             message: Error message to display
         """
-        formatted = f"$$\\color{{red}}{{✗ ERROR: {message}}}$$"
+        formatted = f"$$\\color{{red}}{{✗ ERROR: {self._escape_latex(message)}}}$$"
         print(formatted)
         self._output_lines.append(formatted)
 
@@ -295,7 +352,7 @@ class MarkdownOutputFormatter(OutputFormatter):
         Args:
             message: Warning message to display
         """
-        formatted = f"$$\\color{{yellow}}\\text{{{message}}}$$"
+        formatted = f"$$\\color{{yellow}}\\text{{{self._escape_latex(message)}}}$$"
         print(formatted)
         self._output_lines.append(formatted)
 
@@ -305,7 +362,7 @@ class MarkdownOutputFormatter(OutputFormatter):
         Args:
             message: Info message to display
         """
-        formatted = f"$$\\color{{cyan}}\\text{{{message}}}$$"
+        formatted = f"$$\\color{{cyan}}\\text{{{self._escape_latex(message)}}}$$"
         print(formatted)
         self._output_lines.append(formatted)
 

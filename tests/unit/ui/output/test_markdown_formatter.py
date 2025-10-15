@@ -50,6 +50,65 @@ class TestMarkdownFormatterInitialization:
         assert formatter._output_lines == []
 
 
+class TestLatexEscaping:
+    """Tests for LaTeX special character escaping."""
+
+    def test_escape_underscore(self, formatter: MarkdownOutputFormatter) -> None:
+        """Test underscore is escaped."""
+        result = formatter._escape_latex("test_name")
+        assert result == r"test\_name"
+
+    def test_escape_percent(self, formatter: MarkdownOutputFormatter) -> None:
+        """Test percent sign is escaped."""
+        result = formatter._escape_latex("50%")
+        assert result == r"50\%"
+
+    def test_escape_ampersand(self, formatter: MarkdownOutputFormatter) -> None:
+        """Test ampersand is escaped."""
+        result = formatter._escape_latex("A & B")
+        assert result == r"A \& B"
+
+    def test_escape_hash(self, formatter: MarkdownOutputFormatter) -> None:
+        """Test hash is escaped."""
+        result = formatter._escape_latex("#tag")
+        assert result == r"\#tag"
+
+    def test_escape_dollar(self, formatter: MarkdownOutputFormatter) -> None:
+        """Test dollar sign is escaped."""
+        result = formatter._escape_latex("$100")
+        assert result == r"\$100"
+
+    def test_escape_braces(self, formatter: MarkdownOutputFormatter) -> None:
+        """Test curly braces are escaped."""
+        result = formatter._escape_latex("{test}")
+        assert result == r"\{test\}"
+
+    def test_escape_tilde(self, formatter: MarkdownOutputFormatter) -> None:
+        """Test tilde is escaped."""
+        result = formatter._escape_latex("~user")
+        assert result == r"\textasciitilde{}user"
+
+    def test_escape_caret(self, formatter: MarkdownOutputFormatter) -> None:
+        """Test caret is escaped."""
+        result = formatter._escape_latex("x^2")
+        assert result == r"x\textasciicircum{}2"
+
+    def test_escape_backslash(self, formatter: MarkdownOutputFormatter) -> None:
+        """Test backslash is escaped."""
+        result = formatter._escape_latex("path\\to\\file")
+        assert result == r"path\textbackslash{}to\textbackslash{}file"
+
+    def test_escape_multiple_characters(self, formatter: MarkdownOutputFormatter) -> None:
+        """Test multiple special characters are escaped."""
+        result = formatter._escape_latex("test_name & 50% #tag")
+        assert result == r"test\_name \& 50\% \#tag"
+
+    def test_escape_no_special_characters(self, formatter: MarkdownOutputFormatter) -> None:
+        """Test text without special characters is unchanged."""
+        result = formatter._escape_latex("normal text")
+        assert result == "normal text"
+
+
 class TestPrintMessage:
     """Tests for print_message method."""
 
