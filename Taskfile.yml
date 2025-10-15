@@ -86,15 +86,15 @@ tasks:
       - uv run ruff format {{.CLI_ARGS | default .SRC}}  # Format code
 
   format:markdown:
-    desc: Format markdown files with mdformat
+    desc: Format markdown files with mdformat (excludes README.md due to LaTeX syntax)
     cmds:
       - cmd: |
           if ! command -v mdformat &> /dev/null; then
             uv tool install mdformat
           fi
         silent: true
-      - sed -i 's/[[:space:]]*$//' {{.CLI_ARGS | default "*.md docs/*.md"}}
-      - mdformat {{.CLI_ARGS | default "*.md docs/*.md"}}
+      - sed -i 's/[[:space:]]*$//' {{.CLI_ARGS | default "docs/*.md"}}
+      - mdformat {{.CLI_ARGS | default "docs/*.md"}}
 
   format:tests:
     desc: Format tests with ruff (including import sorting)
@@ -253,14 +253,14 @@ tasks:
           SEARCH_PATH: "{{.SCRIPTS}}"
   
   lint:markdown:
-    desc: Lint markdown files with pymarkdownlnt
+    desc: Lint markdown files with pymarkdownlnt (excludes README.md due to LaTeX syntax)
     cmds:
       - cmd: |
           if ! command -v pymarkdownlnt &> /dev/null; then
             uv tool install pymarkdownlnt
           fi
         silent: true
-      - uv run pymarkdownlnt --config .pymarkdown.json scan {{.CLI_ARGS | default "*.md docs/*.md"}} || true
+      - uv run pymarkdownlnt --config .pymarkdown.json scan {{.CLI_ARGS | default "docs/*.md"}} || true
 
   lint:emoji:
     desc: Search for emojis in source code, docs, and configuration files
