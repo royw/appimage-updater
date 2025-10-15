@@ -333,7 +333,7 @@ class MarkdownOutputFormatter(OutputFormatter):
         Args:
             message: Success message to display
         """
-        formatted = f"$$\\color{{green}}{{✓ {self._escape_latex(message)}}}$$"
+        formatted = f"$$\\color{{green}}{{{self._escape_latex(message)}}}$$"
         print(formatted)
         self._output_lines.append(formatted)
 
