@@ -219,40 +219,64 @@ def show_effective_config(app_name: str, config_file: Path | None = None, config
         _handle_config_load_error(e)
 
 
+def _build_main_settings(app_name: str, effective_config: dict[str, Any]) -> dict[str, str]:
+    """Build main configuration settings dictionary.
+
+    Args:
+        app_name: Application name
+        effective_config: Effective configuration dictionary
+
+    Returns:
+        Dictionary of setting names to values
+    """
+    settings = {
+        "Application": app_name,
+        "Enabled": "Yes" if effective_config.get("enabled") else "No",
+        "URL": effective_config.get("url", ""),
+        "Download Directory": effective_config.get("download_dir", ""),
+        "Pattern": effective_config.get("pattern", ""),
+        "Prerelease": "Yes" if effective_config.get("prerelease") else "No",
+        "Auto Subdirectory": "Yes" if effective_config.get("auto_subdir") else "No",
+        "Rotation Enabled": "Yes" if effective_config.get("rotation_enabled") else "No",
+        "Symlink Enabled": "Yes" if effective_config.get("symlink_enabled") else "No",
+    }
+
+    # Optional settings
+    if effective_config.get("retain_count"):
+        settings["Retain Count"] = str(effective_config["retain_count"])
+    if effective_config.get("symlink_path"):
+        settings["Symlink Path"] = effective_config["symlink_path"]
+
+    return settings
+
+
+def _build_checksum_settings(effective_config: dict[str, Any]) -> dict[str, str]:
+    """Build checksum configuration settings dictionary.
+
+    Args:
+        effective_config: Effective configuration dictionary
+
+    Returns:
+        Dictionary of checksum setting names to values
+    """
+    settings = {}
+    checksum = effective_config.get("checksum", {})
+
+    if checksum:
+        settings["Checksum Enabled"] = "Yes" if checksum.get("enabled") else "No"
+        if checksum.get("enabled"):
+            settings["Checksum Algorithm"] = checksum.get("algorithm", "").upper()
+            settings["Checksum Pattern"] = checksum.get("pattern", "")
+            settings["Checksum Required"] = "Yes" if checksum.get("required") else "No"
+
+    return settings
+
+
 def _print_effective_config_structured(app_name: str, effective_config: dict[str, Any], output_formatter: Any) -> None:
     """Print effective configuration using structured formatter (markdown/plain)."""
-    settings = {}
-
-    # Helper function to format setting key
-    def format_key(display_name: str) -> str:
-        return display_name
-
-    # Main configuration
-    settings[format_key("Application")] = app_name
-    settings[format_key("Enabled")] = "Yes" if effective_config.get("enabled") else "No"
-    settings[format_key("URL")] = effective_config.get("url", "")
-    settings[format_key("Download Directory")] = effective_config.get("download_dir", "")
-    settings[format_key("Pattern")] = effective_config.get("pattern", "")
-    settings[format_key("Prerelease")] = "Yes" if effective_config.get("prerelease") else "No"
-    settings[format_key("Auto Subdirectory")] = "Yes" if effective_config.get("auto_subdir") else "No"
-    settings[format_key("Rotation Enabled")] = "Yes" if effective_config.get("rotation_enabled") else "No"
-
-    if effective_config.get("retain_count"):
-        settings[format_key("Retain Count")] = str(effective_config["retain_count"])
-
-    settings[format_key("Symlink Enabled")] = "Yes" if effective_config.get("symlink_enabled") else "No"
-
-    if effective_config.get("symlink_path"):
-        settings[format_key("Symlink Path")] = effective_config["symlink_path"]
-
-    # Checksum settings
-    checksum = effective_config.get("checksum", {})
-    if checksum:
-        settings[format_key("Checksum Enabled")] = "Yes" if checksum.get("enabled") else "No"
-        if checksum.get("enabled"):
-            settings[format_key("Checksum Algorithm")] = checksum.get("algorithm", "").upper()
-            settings[format_key("Checksum Pattern")] = checksum.get("pattern", "")
-            settings[format_key("Checksum Required")] = "Yes" if checksum.get("required") else "No"
+    # Build all settings
+    settings = _build_main_settings(app_name, effective_config)
+    settings.update(_build_checksum_settings(effective_config))
 
     # Use the formatter's print_config_settings method
     if hasattr(output_formatter, "print_config_settings"):
