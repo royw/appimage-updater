@@ -173,11 +173,7 @@ def _handle_repository_examination_error(e: Exception, app_names: list[str]) -> 
 def _handle_config_load_error(e: Exception) -> None:
     """Handle configuration loading errors."""
     formatter = get_output_formatter()
-    if formatter:
-        formatter.print_error(f"Configuration error: {e}")
-    else:
-        console.print(f"[red]Configuration error: {e}")
-    # Note: Don't log to stdout as it contaminates JSON output
+    formatter.print_error(f"Configuration error: {e}")
 
 
 async def _fetch_repository_releases(app: ApplicationConfig, limit: int) -> list[Any]:

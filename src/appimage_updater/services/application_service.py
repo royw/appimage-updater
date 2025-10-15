@@ -116,18 +116,11 @@ class ApplicationService:
         """
         available_apps = [app.name for app in enabled_apps]
 
-        # Use output formatter - should always be available in CLI architecture
+        # Use output formatter
         formatter = get_output_formatter()
-
-        if formatter:
-            formatter.print_error(f"Applications not found: {', '.join(not_found)}")
-            formatter.print_warning("Troubleshooting:")
-            ApplicationService._print_troubleshooting_tips_formatted(formatter, available_apps)
-        else:
-            # Fallback for edge cases - use stderr to avoid interfering with structured output
-            print(f"Applications not found: {', '.join(not_found)}", file=sys.stderr)  # noqa: T201
-            print("Troubleshooting:", file=sys.stderr)  # noqa: T201
-            ApplicationService._print_troubleshooting_tips_plain_stderr(available_apps)
+        formatter.print_error(f"Applications not found: {', '.join(not_found)}")
+        formatter.print_warning("Troubleshooting:")
+        ApplicationService._print_troubleshooting_tips_formatted(formatter, available_apps)
 
         # This is normal user behavior, not an error that needs logging
         logger.debug(f"User requested non-existent applications: {not_found}. Available: {available_apps}")

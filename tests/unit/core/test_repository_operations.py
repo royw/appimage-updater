@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import datetime
 from unittest.mock import Mock, patch
 
+from appimage_updater.ui.output.context import OutputFormatterContext
+from appimage_updater.ui.output.rich_formatter import RichOutputFormatter
 from appimage_updater.core.repository_operations import (
     _create_repository_table,
     _display_dry_run_repository_info,
@@ -264,14 +266,12 @@ class TestHandleConfigLoadError:
             mock_formatter.print_error.assert_called_once()
 
     def test_handle_error_without_formatter(self) -> None:
-        """Test handling config load error without formatter."""
+        """Test handling config load error - now always uses formatter."""
         error = Exception("Config error")
+        formatter = RichOutputFormatter()
 
-        with patch("appimage_updater.core.repository_operations.get_output_formatter", return_value=None):
-            with patch("appimage_updater.core.repository_operations.console") as mock_console:
-                _handle_config_load_error(error)
-
-                mock_console.print.assert_called_once()
+        with OutputFormatterContext(formatter):
+            _handle_config_load_error(error)
 
 
 class TestFormatAssetsDisplay:
@@ -372,10 +372,6 @@ class TestIntegrationScenarios:
             _handle_repository_examination_error(ValueError("Test"), ["App1"])
 
         # Test config load error with formatter
-        with patch("appimage_updater.core.repository_operations.get_output_formatter", return_value=Mock()):
+        formatter = RichOutputFormatter()
+        with OutputFormatterContext(formatter):
             _handle_config_load_error(Exception("Config error"))
-
-        # Test config load error without formatter
-        with patch("appimage_updater.core.repository_operations.get_output_formatter", return_value=None):
-            with patch("appimage_updater.core.repository_operations.console"):
-                _handle_config_load_error(Exception("Config error"))

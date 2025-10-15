@@ -6,6 +6,8 @@ from io import StringIO
 from unittest.mock import Mock, patch
 
 from appimage_updater.services.application_service import ApplicationService
+from appimage_updater.ui.output.context import OutputFormatterContext
+from appimage_updater.ui.output.rich_formatter import RichOutputFormatter
 
 
 class MockApp:
@@ -82,13 +84,12 @@ class TestFilterAppsByNames:
     def test_filter_not_found_returns_none(self) -> None:
         """Test filtering with non-existent app returns None."""
         apps = [MockApp("App1"), MockApp("App2")]
+        formatter = RichOutputFormatter()
 
-        with patch("appimage_updater.services.application_service.get_output_formatter") as mock_formatter:
-            mock_formatter.return_value = None
-
+        with OutputFormatterContext(formatter):
             result = ApplicationService.filter_apps_by_names(apps, ["NonExistent"])
 
-            assert result is None
+        assert result is None
 
     def test_filter_removes_duplicates(self) -> None:
         """Test filtering removes duplicate matches."""
@@ -305,15 +306,15 @@ class TestHandleAppsNotFound:
             mock_formatter.print_info.assert_called()
 
     def test_handle_without_formatter(self) -> None:
-        """Test handling not found apps without formatter."""
+        """Test handling not found apps - now always uses formatter."""
         apps = [MockApp("App1"), MockApp("App2")]
         not_found = ["NonExistent"]
+        formatter = RichOutputFormatter()
 
-        with patch("appimage_updater.services.application_service.get_output_formatter", return_value=None):
-            with patch("sys.stderr", new_callable=StringIO):
-                result = ApplicationService._handle_apps_not_found(not_found, apps)
+        with OutputFormatterContext(formatter):
+            result = ApplicationService._handle_apps_not_found(not_found, apps)
 
-                assert result is False
+        assert result is False
 
     def test_handle_includes_available_apps(self) -> None:
         """Test handling includes available apps in message."""
@@ -420,10 +421,9 @@ class TestIntegrationScenarios:
     def test_error_handling_with_partial_matches(self) -> None:
         """Test error handling when some apps match and some don't."""
         apps = [MockApp("App1"), MockApp("App2")]
+        formatter = RichOutputFormatter()
 
-        with patch("appimage_updater.services.application_service.get_output_formatter") as mock_formatter:
-            mock_formatter.return_value = None
-
+        with OutputFormatterContext(formatter):
             result = ApplicationService.filter_apps_by_names(apps, ["App1", "NonExistent"])
 
-            assert result is None  # Error occurred
+        assert result is None  # Error occurred

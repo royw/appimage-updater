@@ -138,11 +138,8 @@ def _check_release_assets(release: Any, current_file: Path) -> str | None:
 
 def _display_workflow_start(output_formatter: Any, console: Console, app_count: int) -> None:
     """Display the start of the info file update workflow."""
-    if output_formatter:
-        output_formatter.start_section("Info File Update")
-        output_formatter.print_message(f"Updating .info files for {app_count} applications...")
-    else:
-        console.print(f"\n[bold blue]Updating .info files for {app_count} applications...[/bold blue]")
+    output_formatter.start_section("Info File Update")
+    output_formatter.print_message(f"Updating .info files for {app_count} applications...")
 
 
 async def _process_single_app_info_update(
@@ -158,19 +155,13 @@ async def _process_single_app_info_update(
 
 def _display_app_error(app_name: str, error_msg: str, output_formatter: Any, console: Console) -> None:
     """Display error message for a single application."""
-    if output_formatter:
-        output_formatter.print_error(f"Error updating info file for {app_name}: {error_msg}")
-    else:
-        console.print(f"[red]Error updating info file for {app_name}: {error_msg}[/red]")
+    output_formatter.print_error(f"Error updating info file for {app_name}: {error_msg}")
 
 
 def _display_workflow_completion(output_formatter: Any, console: Console) -> None:
     """Display the completion of the info file update workflow."""
-    if output_formatter:
-        output_formatter.print_success("Info file update completed!")
-        output_formatter.end_section()
-    else:
-        console.print("\n[bold green]Info file update completed![/bold green]")
+    output_formatter.print_success("Info file update completed!")
+    output_formatter.end_section()
 
 
 def _files_match(current_filename: str, asset_name: str) -> bool:
