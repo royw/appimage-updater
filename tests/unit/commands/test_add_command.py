@@ -10,6 +10,8 @@ import pytest
 from appimage_updater.commands.add_command import AddCommand
 from appimage_updater.commands.base import CommandResult
 from appimage_updater.commands.parameters import AddParams
+from appimage_updater.ui.output.context import OutputFormatterContext
+from appimage_updater.ui.output.rich_formatter import RichOutputFormatter
 
 
 class TestAddCommand:
@@ -137,82 +139,6 @@ class TestAddCommand:
         assert result.success is False
         assert result.message == "Test error"
         assert result.exit_code == 1
-
-    @pytest.mark.anyio
-    async def test_execute_main_add_workflow_with_formatter(self) -> None:
-        """Test main workflow execution with formatter."""
-        params = AddParams(name="TestApp", url="https://github.com/test/repo")
-        command = AddCommand(params)
-        mock_formatter = Mock()
-
-        with patch.object(command, "_execute_with_formatter_context") as mock_with_context:
-            mock_with_context.return_value = CommandResult(success=True, message="Success")
-
-            result = await command._execute_main_add_workflow(mock_formatter)
-
-        mock_with_context.assert_called_once_with(mock_formatter)
-        assert result.success is True
-
-    @pytest.mark.anyio
-    async def test_execute_main_add_workflow_without_formatter(self) -> None:
-        """Test main workflow execution without formatter."""
-        params = AddParams(name="TestApp", url="https://github.com/test/repo")
-        command = AddCommand(params)
-
-        with patch.object(command, "_execute_without_formatter") as mock_without:
-            mock_without.return_value = CommandResult(success=True, message="Success")
-
-            result = await command._execute_main_add_workflow(None)
-
-        mock_without.assert_called_once()
-        assert result.success is True
-
-    @pytest.mark.anyio
-    async def test_execute_with_formatter_context_success(self) -> None:
-        """Test execution with formatter context - success path."""
-        params = AddParams(name="TestApp", url="https://github.com/test/repo")
-        command = AddCommand(params)
-        mock_formatter = Mock()
-
-        with patch.object(command, "_validate_parameters", return_value=None):
-            with patch.object(command, "_execute_add_operation", return_value=True):
-                with patch.object(command, "_create_execution_result") as mock_create:
-                    mock_create.return_value = CommandResult(success=True, message="Success")
-
-                    result = await command._execute_with_formatter_context(mock_formatter)
-
-        mock_create.assert_called_once_with(True)
-        assert result.success is True
-
-    @pytest.mark.anyio
-    async def test_execute_with_formatter_context_validation_error(self) -> None:
-        """Test execution with formatter context - validation error."""
-        params = AddParams()  # Missing name and URL
-        command = AddCommand(params)
-        mock_formatter = Mock()
-
-        validation_error = CommandResult(success=False, message="Validation failed", exit_code=1)
-        with patch.object(command, "_validate_parameters", return_value=validation_error):
-            result = await command._execute_with_formatter_context(mock_formatter)
-
-        assert result.success is False
-        assert result.message == "Validation failed"
-
-    @pytest.mark.anyio
-    async def test_execute_without_formatter_success(self) -> None:
-        """Test execution without formatter - success path."""
-        params = AddParams(name="TestApp", url="https://github.com/test/repo")
-        command = AddCommand(params)
-
-        with patch.object(command, "_validate_parameters", return_value=None):
-            with patch.object(command, "_execute_add_operation", return_value=True):
-                with patch.object(command, "_create_execution_result") as mock_create:
-                    mock_create.return_value = CommandResult(success=True, message="Success")
-
-                    result = await command._execute_without_formatter()
-
-        mock_create.assert_called_once_with(True)
-        assert result.success is True
 
     def test_handle_special_modes_examples(self) -> None:
         """Test special modes handler for examples mode."""
@@ -361,18 +287,14 @@ class TestAddCommand:
         mock_formatter.print_warning.assert_called_once_with("Try one of these options:")
         assert mock_formatter.print_info.call_count == 3
 
-    @patch("appimage_updater.commands.add_command.get_output_formatter")
-    def test_show_validation_help_without_formatter(self, mock_get_formatter: Mock) -> None:
-        """Test validation help display without formatter."""
+    def test_show_validation_help_without_formatter(self) -> None:
+        """Test validation help display - now always uses formatter."""
         params = AddParams()
         command = AddCommand(params)
+        formatter = RichOutputFormatter()
 
-        mock_get_formatter.return_value = None
-
-        with patch.object(command.console, "print") as mock_console_print:
+        with OutputFormatterContext(formatter):
             command._show_validation_help("Test error")
-
-        assert mock_console_print.call_count == 5
 
     def test_create_execution_result_success(self) -> None:
         """Test execution result creation - success."""
