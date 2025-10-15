@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - All code now enforces formatter availability through `OutputFormatterContext`
   - Improved maintainability with fail-fast error detection
 
+- **Package architecture cleanup - enforced "no code in \_\_init\_\_.py" principle**
+
+  - Cleaned up 6 `__init__.py` files to contain only docstrings
+  - Removed ~80 lines of imports and `__all__` declarations
+  - Updated imports to use direct module paths instead of package imports
+  - Added `lint:packages` task to enforce this principle going forward
+  - All package files now follow clean architecture boundaries
+
 - **Improved markdown output formatting**
 
   - URLs now wrapped in angle brackets (`<URL>`) for better markdown compatibility
@@ -29,6 +37,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Adds blank line after path for better readability
     - Removes markdown link formatting from symlinks
     - Bold header format instead of H1
+
+### Added
+
+- **New lint task: `lint:packages`**
+  - Verifies all `src/**/__init__.py` files only contain docstrings
+  - Uses Python AST parsing to detect code violations
+  - Integrated into main `lint` task for automatic checking
+  - Enforces clean package architecture
 
 ### Fixed
 
