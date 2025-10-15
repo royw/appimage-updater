@@ -110,31 +110,33 @@ points to an old release.
 Cool. Works nicely except you have to manually check the github repository, download updates, verify checksums,
 and rotate the extensions and symbolic link. This is where appimage-updater comes in.
 
-Here is an example of FreeCAD AppImages that appimage-updater is currently managing:
+Here is an example of FreeCAD AppImages that appimage-updater is currently managing (uses `scripts/tree-to-github-markdown.sh`):
 
 ```bash
-➤ tree -l -P "[fF]r*" -I "[a-eA-Eg-zG-z]*" -C ~/Applications
+➤ scripts/tree-to-github-markdown.sh --noreport -l -P "[fF]r*" -I "[a-eA-Eg-zG-Z]*" -C ~/Applications
 ```
 
-$\\color{pink}{\\sim/Applications}$
+**Code/Directory Structure:**
 
-- $\\color{pink}{FreeCAD}$
-  - $\\color{lime}{FreeCAD\\text{-}1.0.0\\text{-}conda\\text{-}Linux\\text{-}x86_64\\text{-}py311.appimage}$
-  - $\\color{lime}{FreeCAD_1.0.2\\text{-}conda\\text{-}Linux\\text{-}x86_64\\text{-}py311.AppImage}$
-  - $\\color{gray}{FreeCAD_1.0.2\\text{-}conda\\text{-}Linux\\text{-}x86_64\\text{-}py311.AppImage.info}$
-- $\\color{gray}{FreeCAD.readme}$
-- $\\color{pink}{FreeCAD_weekly}$
-  - $\\color{lime}{FreeCAD_weekly\\text{-}2025.09.11\\text{-}Linux\\text{-}x86_64\\text{-}py311.AppImage.old}$
-  - $\\color{gray}{FreeCAD_weekly\\text{-}2025.09.11\\text{-}Linux\\text{-}x86_64\\text{-}py311.AppImage.old.info}$
-  - $\\color{lime}{FreeCAD_weekly\\text{-}2025.09.12\\text{-}Linux\\text{-}x86_64\\text{-}py311.AppImage.old}$
-  - $\\color{gray}{FreeCAD_weekly\\text{-}2025.09.12\\text{-}Linux\\text{-}x86_64\\text{-}py311.AppImage.old.info}$
-  - $\\color{lime}{FreeCAD_weekly\\text{-}2025.09.24\\text{-}Linux\\text{-}x86_64\\text{-}py311.AppImage.old}$
-  - $\\color{gray}{FreeCAD_weekly\\text{-}2025.09.24\\text{-}Linux\\text{-}x86_64\\text{-}py311.AppImage.old.info}$
-  - $\\color{lime}{FreeCAD_weekly\\text{-}2025.10.01\\text{-}Linux\\text{-}x86_64\\text{-}py311.AppImage.old}$
-  - $\\color{gray}{FreeCAD_weekly\\text{-}2025.10.01\\text{-}Linux\\text{-}x86_64\\text{-}py311.AppImage.old.info}$
-  - $\\color{lime}{FreeCAD_weekly\\text{-}2025.10.08\\text{-}Linux\\text{-}x86_64\\text{-}py311.AppImage.current}$
-  - $\\color{gray}{FreeCAD_weekly\\text{-}2025.10.08\\text{-}Linux\\text{-}x86_64\\text{-}py311.AppImage.current.info}$
-- $\\color{cyan}{FreeCAD_weekly.AppImage}$ -> $\\color{lime}{FreeCAD_weekly\\text{-}2025.10.08\\text{-}Linux\\text{-}x86_64\\text{-}py311.AppImage.current}$
+/home/royw/Applications
+
+- FreeCAD
+  - FreeCAD-1.0.0-conda-Linux-x86_64-py311.appimage
+  - FreeCAD_1.0.2-conda-Linux-x86_64-py311.AppImage
+  - FreeCAD_1.0.2-conda-Linux-x86_64-py311.AppImage.info
+- FreeCAD.readme
+- FreeCAD_weekly
+  - FreeCAD_weekly-2025.09.11-Linux-x86_64-py311.AppImage.old
+  - FreeCAD_weekly-2025.09.11-Linux-x86_64-py311.AppImage.old.info
+  - FreeCAD_weekly-2025.09.12-Linux-x86_64-py311.AppImage.old
+  - FreeCAD_weekly-2025.09.12-Linux-x86_64-py311.AppImage.old.info
+  - FreeCAD_weekly-2025.09.24-Linux-x86_64-py311.AppImage.old
+  - FreeCAD_weekly-2025.09.24-Linux-x86_64-py311.AppImage.old.info
+  - FreeCAD_weekly-2025.10.01-Linux-x86_64-py311.AppImage.old
+  - FreeCAD_weekly-2025.10.01-Linux-x86_64-py311.AppImage.old.info
+  - FreeCAD_weekly-2025.10.08-Linux-x86_64-py311.AppImage.current
+  - FreeCAD_weekly-2025.10.08-Linux-x86_64-py311.AppImage.current.info
+- FreeCAD_weekly.AppImage -> /home/royw/Applications/FreeCAD_weekly/FreeCAD_weekly-2025.10.08-Linux-x86_64-py311.AppImage.current
 
 To add FreeCAD official releases:
 
@@ -206,78 +208,58 @@ Tip: Use 'appimage-updater show FreeCAD_weekly' to view full configuration
 To see the two new apps that are being managed:
 
 ```bash
-➤ appimage-updater list
+➤ appimage-updater list --format markdown
 ```
 
 ## Configured Applications
 
-| $$\\color{cyan}{Application}$$ | $$\\color{magenta}{Status}$$ | Source | Download Directory |
+| $$\color{cyan}{Application}$$ | $$\color{magenta}{Status}$$ | Source | Download Directory |
 | --- | --- | --- | --- |
-| $$\\color{cyan}{appimaged}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/probonopd/go-appimage> | /home/royw/Applications/appimaged |
-| $$\\color{cyan}{appimagetool}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/AppImage/appimagetool> | /home/royw/Applications/appimagetool |
-| $$\\color{cyan}{BambuStudio}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/bambulab/BambuStudio> | /home/royw/Applications/BambuStudio |
-| $$\\color{cyan}{EdgeTX_Companion}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/EdgeTX/edgetx> | /home/royw/Applications/EdgeTX |
-| $$\\color{cyan}{FreeCAD}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/FreeCAD/FreeCAD> | /home/royw/Applications/FreeCAD |
-| $$\\color{cyan}{FreeCAD_weekly}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/FreeCAD/FreeCAD> | /home/royw/Applications/FreeCAD_weekly |
-| $$\\color{cyan}{GitHubDesktop}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/shiftkey/desktop> | /home/royw/Applications/GitHubDesktop |
-| $$\\color{cyan}{InkScape}$$ | $$\\color{green}{Enabled}$$ | <https://inkscape.org/release/all/gnulinux/appimage/> | /home/royw/Applications/InkScape |
-| $$\\color{cyan}{Meshlab}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/cnr-isti-vclab/meshlab> | /home/royw/Applications/Meshlab |
-| $$\\color{cyan}{OpenRGB}$$ | $$\\color{green}{Enabled}$$ | <https://codeberg.org/OpenRGB/OpenRGB> | /home/royw/Applications/OpenRGB |
-| $$\\color{cyan}{OpenShot}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/OpenShot/openshot-qt> | /home/royw/Applications/OpenShot |
-| $$\\color{cyan}{OrcaSlicer}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | /home/royw/Applications/OrcaSlicer |
-| $$\\color{cyan}{OrcaSlicerNightly}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | /home/royw/Applications/OrcaSlicerNightly |
-| $$\\color{cyan}{OrcaSlicerRC}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | /home/royw/Applications/OrcaSlicerRC |
-| $$\\color{cyan}{ScribusDev}$$ | $$\\color{green}{Enabled}$$ | <https://sourceforge.net/projects/scribus/files/scribus-devel/1.7.0> | /home/royw/Applications/ScribusDev |
-| $$\\color{cyan}{UltiMaker-Cura}$$ | $$\\color{green}{Enabled}$$ | <https://github.com/Ultimaker/Cura> | /home/royw/Applications/UltiMaker-Cura |
-| $$\\color{cyan}{YubiKey}$$ | $$\\color{green}{Enabled}$$ | <https://developers.yubico.com/yubikey-manager-qt/Releases/yubikey-manager-qt-latest-linux.AppImage> | /home/royw/Applications/YubiKey |
+| $$\color{cyan}{appimaged}$$ | $$\color{green}{Enabled}$$ | <https://github.com/probonopd/go-appimage> | /home/royw/Applications/appimaged |
+| $$\color{cyan}{appimagetool}$$ | $$\color{green}{Enabled}$$ | <https://github.com/AppImage/appimagetool> | /home/royw/Applications/appimagetool |
+| $$\color{cyan}{BambuStudio}$$ | $$\color{green}{Enabled}$$ | <https://github.com/bambulab/BambuStudio> | /home/royw/Applications/BambuStudio |
+| $$\color{cyan}{EdgeTX_Companion}$$ | $$\color{green}{Enabled}$$ | <https://github.com/EdgeTX/edgetx> | /home/royw/Applications/EdgeTX |
+| $$\color{cyan}{FreeCAD}$$ | $$\color{green}{Enabled}$$ | <https://github.com/FreeCAD/FreeCAD> | /home/royw/Applications/FreeCAD |
+| $$\color{cyan}{FreeCAD_weekly}$$ | $$\color{green}{Enabled}$$ | <https://github.com/FreeCAD/FreeCAD> | /home/royw/Applications/FreeCAD_weekly |
+| $$\color{cyan}{GitHubDesktop}$$ | $$\color{green}{Enabled}$$ | <https://github.com/shiftkey/desktop> | /home/royw/Applications/GitHubDesktop |
+| $$\color{cyan}{InkScape}$$ | $$\color{green}{Enabled}$$ | <https://inkscape.org/release/all/gnulinux/appimage/> | /home/royw/Applications/InkScape |
+| $$\color{cyan}{Meshlab}$$ | $$\color{green}{Enabled}$$ | <https://github.com/cnr-isti-vclab/meshlab> | /home/royw/Applications/Meshlab |
+| $$\color{cyan}{OpenRGB}$$ | $$\color{green}{Enabled}$$ | <https://codeberg.org/OpenRGB/OpenRGB> | /home/royw/Applications/OpenRGB |
+| $$\color{cyan}{OpenShot}$$ | $$\color{green}{Enabled}$$ | <https://github.com/OpenShot/openshot-qt> | /home/royw/Applications/OpenShot |
+| $$\color{cyan}{OrcaSlicer}$$ | $$\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | /home/royw/Applications/OrcaSlicer |
+| $$\color{cyan}{OrcaSlicerNightly}$$ | $$\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | /home/royw/Applications/OrcaSlicerNightly |
+| $$\color{cyan}{OrcaSlicerRC}$$ | $$\color{green}{Enabled}$$ | <https://github.com/SoftFever/OrcaSlicer> | /home/royw/Applications/OrcaSlicerRC |
+| $$\color{cyan}{ScribusDev}$$ | $$\color{green}{Enabled}$$ | <https://sourceforge.net/projects/scribus/files/scribus-devel/1.7.0> | /home/royw/Applications/ScribusDev |
+| $$\color{cyan}{UltiMaker-Cura}$$ | $$\color{green}{Enabled}$$ | <https://github.com/Ultimaker/Cura> | /home/royw/Applications/UltiMaker-Cura |
+| $$\color{cyan}{YubiKey}$$ | $$\color{green}{Enabled}$$ | <https://developers.yubico.com/yubikey-manager-qt/Releases/yubikey-manager-qt-latest-linux.AppImage> | /home/royw/Applications/YubiKey |
 
-$$\\color{blue}{ℹ INFO: Total: 17 applications (17 enabled, 0 disabled)}$$
+$$\color{blue}{Total: 17 applications (17 enabled, 0 disabled)}$$
 
 You can manually run `appimage-updater check` or integrate it into crontab or your favorite task scheduler.
 
 ```bash
-➤ appimage-updater check -y
+➤ appimage-updater check -n --format markdown
 ```
 
-Checking 17 applications for updates...
-
-$\text{Starting concurrent checks:}\color{cyan}{[0/17] (0.0\%)}$
-
-$\text{Completed YubiKey:}\color{cyan}{[1/17] (5.9\%)}$
-
-$\text{Completed appimaged:}\color{cyan}{[2/17] (11.8\%)}$
-
-$\text{Completed appimagetool:}\color{cyan}{[3/17] (17.6\%)}$
-
-$\text{Completed BambuStudio:}\color{cyan}{[4/17] (23.5\%)}$
-
-$\text{Completed FreeCAD:}\color{cyan}{[5/17] (29.4\%)}$
-
-$\text{Completed GitHubDesktop:}\color{cyan}{[6/17] (35.3\%)}$
-
-$\text{Completed OrcaSlicer:}\color{cyan}{[7/17] (41.2\%)}$
-
-$\text{Completed EdgeTX\_Companion:}\color{cyan}{[8/17] (47.1\%)}$
-
-$\text{Completed OrcaSlicerRC:}\color{cyan}{[9/17] (52.9\%)}$
-
-$\text{Completed FreeCAD\_weekly:}\color{cyan}{[10/17] (58.8\%)}$
-
-$\text{Completed Meshlab:}\color{cyan}{[11/17] (64.7\%)}$
-
-$\text{Completed UltiMaker-Cura:}\color{cyan}{[12/17] (70.6\%)}$
-
-$\text{Completed OpenRGB:}\color{cyan}{[13/17] (76.5\%)}$
-
-$\text{Completed OrcaSlicerNightly:}\color{cyan}{[14/17] (82.4\%)}$
-
-$\text{Completed OpenShot:}\color{cyan}{[15/17] (88.2\%)}$
-
-$\text{Completed ScribusDev:}\color{cyan}{[16/17] (94.1\%)}$
-
-Failed to get releases for https://inkscape.org/release/all/gnulinux/appimage/: 
-
-$\text{Completed InkScape:}\color{cyan}{[17/17] (100.0\%)}$
+$$\color{cyan}{Checking 17 applications for updates...}$$
+$$\color{white}{Starting concurrent checks: [0/17] (0.0%)}$$
+$$\color{white}{Completed appimagetool: [1/17] (5.9%)}$$
+$$\color{white}{Completed appimaged: [2/17] (11.8%)}$$
+$$\color{white}{Completed YubiKey: [3/17] (17.6%)}$$
+$$\color{white}{Completed OpenRGB: [4/17] (23.5%)}$$
+$$\color{white}{Completed BambuStudio: [5/17] (29.4%)}$$
+$$\color{white}{Completed GitHubDesktop: [6/17] (35.3%)}$$
+$$\color{white}{Completed FreeCAD: [7/17] (41.2%)}$$
+$$\color{white}{Completed EdgeTX_Companion: [8/17] (47.1%)}$$
+$$\color{white}{Completed FreeCAD_weekly: [9/17] (52.9%)}$$
+$$\color{white}{Completed OrcaSlicerNightly: [10/17] (58.8%)}$$
+$$\color{white}{Completed Meshlab: [11/17] (64.7%)}$$
+$$\color{white}{Completed UltiMaker-Cura: [12/17] (70.6%)}$$
+$$\color{white}{Completed OrcaSlicer: [13/17] (76.5%)}$$
+$$\color{white}{Completed OrcaSlicerRC: [14/17] (82.4%)}$$
+$$\color{white}{Completed OpenShot: [15/17] (88.2%)}$$
+$$\color{white}{Completed InkScape: [16/17] (94.1%)}$$
+$$\color{white}{Completed ScribusDev: [17/17] (100.0%)}$$
 
 ## Update Check Results
 
@@ -288,9 +270,9 @@ $\text{Completed InkScape:}\color{cyan}{[17/17] (100.0\%)}$
 | $$\color{cyan}{BambuStudio}$$ | $$\color{green}{Success}$$ | $$\color{gold}{02.02.02}$$ | $$\color{green}{02.02.02}$$ | $$\color{green}{No}$$ |
 | $$\color{cyan}{EdgeTX_Companion}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2.11.3}$$ | $$\color{green}{2.11.3}$$ | $$\color{green}{No}$$ |
 | $$\color{cyan}{FreeCAD}$$ | $$\color{green}{Success}$$ | $$\color{gold}{1.0.2}$$ | $$\color{green}{1.0.2}$$ | $$\color{green}{No}$$ |
-| $$\color{cyan}{FreeCAD_weekly}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2025.10.08}$$ | $$\color{green}{2025.10.08}$$ | $$\color{green}{No}$$ |
+| $$\color{cyan}{FreeCAD_weekly}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2025.10.08}$$ | $$\color{green}{2025.10.15}$$ | $$\color{red}{Yes}$$ |
 | $$\color{cyan}{GitHubDesktop}$$ | $$\color{green}{Success}$$ | $$\color{gold}{3.4.13}$$ | $$\color{green}{3.4.13}$$ | $$\color{green}{No}$$ |
-| $$\color{cyan}{InkScape}$$ | $$\color{red}{Error}$$ | $$\color{gold}{N/A}$$ | $$\color{green}{N/A}$$ | Repository error: Failed to fetch release information:  |
+| $$\color{cyan}{InkScape}$$ | $$\color{green}{Success}$$ | $$\color{gold}{1.4.2}$$ | $$\color{green}{1.4.2}$$ | $$\color{green}{No}$$ |
 | $$\color{cyan}{Meshlab}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2025.07}$$ | $$\color{green}{2025.07}$$ | $$\color{green}{No}$$ |
 | $$\color{cyan}{OpenRGB}$$ | $$\color{green}{Success}$$ | $$\color{gold}{0.9}$$ | $$\color{green}{0.9}$$ | $$\color{green}{No}$$ |
 | $$\color{cyan}{OpenShot}$$ | $$\color{green}{Success}$$ | $$\color{gold}{3.3.0}$$ | $$\color{green}{3.3.0}$$ | $$\color{green}{No}$$ |
@@ -301,7 +283,8 @@ $\text{Completed InkScape:}\color{cyan}{[17/17] (100.0\%)}$
 | $$\color{cyan}{UltiMaker-Cura}$$ | $$\color{green}{Success}$$ | $$\color{gold}{5.10.2}$$ | $$\color{green}{5.10.2}$$ | $$\color{green}{No}$$ |
 | $$\color{cyan}{YubiKey}$$ | $$\color{green}{Success}$$ | $$\color{gold}{2024-04-18}$$ | $$\color{green}{2024-04-18}$$ | $$\color{green}{No}$$ |
 
-All applications are up to date!
+$$\color{yellow}{1 update available}$$
+$$\color{cyan}{Updates found but downloads declined due to --no option}$$
 
 ## Usage
 
