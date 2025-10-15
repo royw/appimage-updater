@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from io import StringIO
 from unittest.mock import Mock, patch
 
 from appimage_updater.services.application_service import ApplicationService
@@ -354,32 +353,6 @@ class TestPrintTroubleshootingTipsFormatted:
         assert mock_formatter.print_info.call_count == 4
         calls = [str(call) for call in mock_formatter.print_info.call_args_list]
         assert any("None configured" in call for call in calls)
-
-
-class TestPrintTroubleshootingTipsPlainStderr:
-    """Tests for _print_troubleshooting_tips_plain_stderr method."""
-
-    def test_print_with_available_apps(self) -> None:
-        """Test printing tips to stderr with available apps."""
-        available_apps = ["App1", "App2"]
-
-        with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
-            ApplicationService._print_troubleshooting_tips_plain_stderr(available_apps)
-
-            output = mock_stderr.getvalue()
-            assert "App1" in output
-            assert "App2" in output
-
-    def test_print_without_available_apps(self) -> None:
-        """Test printing tips to stderr without available apps."""
-        available_apps: list[str] = []
-
-        with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
-            ApplicationService._print_troubleshooting_tips_plain_stderr(available_apps)
-
-            output = mock_stderr.getvalue()
-            assert "None configured" in output
-            assert "appimage-updater add" in output
 
 
 class TestIntegrationScenarios:

@@ -59,10 +59,6 @@ class RepositoryCommand(BaseCommand, FormatterContextMixin, Command):
         """Validate parameters and display errors using formatter."""
         return self._handle_validation_errors()
 
-    def _validate_with_console_error_display(self) -> CommandResult | None:
-        """Validate parameters and display errors using console."""
-        return self._handle_validation_errors()
-
     # noinspection PyMethodMayBeStatic
     def _create_repository_result(self, success: bool) -> CommandResult:
         """Create the appropriate CommandResult based on success status."""

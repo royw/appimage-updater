@@ -25,8 +25,7 @@ def get_output_formatter() -> OutputFormatter:
     formatter = _output_formatter.get()
     if formatter is None:
         raise RuntimeError(
-            "No output formatter set in current context. "
-            "Ensure code is executed within an OutputFormatterContext."
+            "No output formatter set in current context. Ensure code is executed within an OutputFormatterContext."
         )
     return formatter
 

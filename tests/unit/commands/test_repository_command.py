@@ -108,31 +108,6 @@ class TestRepositoryCommand:
         assert result.message == "Test error"
         assert result.exit_code == 1
 
-    def test_validate_with_console_error_display_success(self) -> None:
-        """Test validation with console - success."""
-        params = RepositoryParams(app_names=["TestApp"])
-        command = RepositoryCommand(params)
-
-        with patch.object(command, "validate", return_value=[]):
-            result = command._validate_with_console_error_display()
-
-        assert result is None
-
-    def test_validate_with_console_error_display_errors(self) -> None:
-        """Test validation with console - errors."""
-        params = RepositoryParams(app_names=[])
-        command = RepositoryCommand(params)
-
-        with patch.object(command, "validate", return_value=["At least one application name is required"]):
-            with patch.object(command.console, "print") as mock_console_print:
-                result = command._validate_with_console_error_display()
-
-        mock_console_print.assert_called_once()
-        error_call = mock_console_print.call_args[0][0]
-        assert "Validation errors" in error_call
-        assert result is not None
-        assert result.success is False
-
     def test_create_repository_result_success(self) -> None:
         """Test repository result creation - success."""
         params = RepositoryParams(app_names=["TestApp"])

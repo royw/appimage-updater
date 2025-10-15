@@ -105,32 +105,6 @@ class TestEditCommand:
         assert result.message == "Test error"
         assert result.exit_code == 1
 
-    def test_validate_with_console_error_display_success(self) -> None:
-        """Test validation with console - success."""
-        params = EditParams(app_names=["TestApp"])
-        command = EditCommand(params)
-
-        with patch.object(command, "validate", return_value=[]):
-            result = command._validate_with_console_error_display()
-
-        assert result is None
-
-    def test_validate_with_console_error_display_errors(self) -> None:
-        """Test validation with console - errors."""
-        params = EditParams(app_names=[])
-        command = EditCommand(params)
-
-        with patch.object(command, "validate", return_value=["At least one application name is required"]):
-            with patch.object(command.console, "print") as mock_console_print:
-                result = command._validate_with_console_error_display()
-
-        mock_console_print.assert_called_once()
-        error_call = mock_console_print.call_args[0][0]
-        assert "Validation errors" in error_call
-        assert result is not None
-        assert result.success is False
-        assert result.exit_code == 1
-
     def test_process_edit_result_with_result(self) -> None:
         """Test edit result processing with result provided."""
         params = EditParams(app_names=["TestApp"])

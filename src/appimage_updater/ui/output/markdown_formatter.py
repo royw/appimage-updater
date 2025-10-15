@@ -5,6 +5,7 @@ from typing import Any
 
 from .interface import OutputFormatter
 
+
 # LaTeX special characters that need to be escaped in block mode
 LATEX_SPECIAL_CHARS = {
     "&": r"\&",

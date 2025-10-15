@@ -200,15 +200,6 @@ def _convert_applications_to_dict_format(applications: list[Any]) -> list[dict[s
     return apps_data
 
 
-def _display_applications_with_rich_table(applications: list[Any]) -> None:
-    """Display applications using Rich table as fallback."""
-    # Sort applications by name for consistent display
-    sorted_applications = sorted(applications, key=lambda app: app.name.lower())
-    table = _create_applications_table()
-    _populate_applications_table(table, sorted_applications)
-    console.print(table)
-
-
 def _create_applications_table() -> Table:
     """Create the Rich table for applications display."""
     return TableFactory.create_applications_table()

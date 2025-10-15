@@ -78,10 +78,6 @@ class EditCommand(BaseCommand, FormatterContextMixin, Command):
         """Validate parameters and display errors using formatter."""
         return self._handle_validation_errors()
 
-    def _validate_with_console_error_display(self) -> CommandResult | None:
-        """Validate parameters and display errors using console."""
-        return self._handle_validation_errors()
-
     # noinspection PyMethodMayBeStatic
     def _process_edit_result(self, result: CommandResult | None) -> CommandResult:
         """Process the edit operation result."""

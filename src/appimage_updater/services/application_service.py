@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import fnmatch
-import sys
 from typing import Any
 
 from loguru import logger
@@ -145,14 +144,3 @@ class ApplicationService:
         console.print("   • Run 'appimage-updater list' to see all configured applications")
         if not available_apps:
             console.print("   • Run 'appimage-updater add' to configure your first application")
-
-    @staticmethod
-    def _print_troubleshooting_tips_plain_stderr(available_apps: list[str]) -> None:
-        """Print troubleshooting tips for not found apps to stderr."""
-        available_text = ", ".join(available_apps) if available_apps else "None configured"
-        print(f"   • Available applications: {available_text}", file=sys.stderr)  # noqa: T201
-        print("   • Application names are case-insensitive", file=sys.stderr)  # noqa: T201
-        print("   • Use glob patterns like 'Orca*' to match multiple apps", file=sys.stderr)  # noqa: T201
-        print("   • Run 'appimage-updater list' to see all configured applications", file=sys.stderr)  # noqa: T201
-        if not available_apps:
-            print("   • Run 'appimage-updater add' to configure your first application", file=sys.stderr)  # noqa: T201

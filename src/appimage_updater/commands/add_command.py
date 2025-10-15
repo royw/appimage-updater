@@ -126,9 +126,7 @@ class AddCommand(Command):
         formatter = get_output_formatter()
         formatter.print_error(error_msg)
         formatter.print_warning("Try one of these options:")
-        formatter.print_info(
-            "   • Provide both NAME and URL: appimage-updater add MyApp https://github.com/user/repo"
-        )
+        formatter.print_info("   • Provide both NAME and URL: appimage-updater add MyApp https://github.com/user/repo")
         formatter.print_info("   • Use interactive mode: appimage-updater add --interactive")
         formatter.print_info("   • See examples: appimage-updater add --examples")
 
