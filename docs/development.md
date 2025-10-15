@@ -177,23 +177,30 @@ appimage-updater check --instrument-http --http-track-headers
 The HTTP tracker uses dependency injection for configurable logging:
 
 ```python
-from appimage_updater.instrumentation.factory import (
-    create_http_tracker_from_params,
-    create_silent_http_tracker,
-    create_verbose_http_tracker
-)
+from appimage_updater.instrumentation.factory import create_http_tracker_from_params
+from appimage_updater.commands.parameters import CheckParams
 
 # Create tracker based on command parameters
+params = CheckParams(
+    instrument_http=True,
+    trace=False,
+    debug=False,
+    http_stack_depth=3,
+    http_track_headers=False
+)
 tracker = create_http_tracker_from_params(params)
-
-# Create silent tracker for testing
-silent_tracker = create_silent_http_tracker()
-
-# Create verbose tracker for debugging
-verbose_tracker = create_verbose_http_tracker()
 
 # Inject tracker into command execution
 result = await command.execute(http_tracker=tracker)
+
+# For verbose debugging, enable trace mode
+debug_params = CheckParams(
+    instrument_http=True,
+    trace=True,
+    http_stack_depth=5,
+    http_track_headers=True
+)
+debug_tracker = create_http_tracker_from_params(debug_params)
 ```
 
 #### Custom HTTP Loggers

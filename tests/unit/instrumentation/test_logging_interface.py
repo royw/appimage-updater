@@ -9,12 +9,12 @@ import pytest
 from appimage_updater.instrumentation.logging_interface import (
     ConfigurableHTTPLogger,
     LoguruHTTPLogger,
-    SilentHTTPLogger,
     TraceHTTPLogger,
     create_default_http_logger,
-    create_silent_http_logger,
     create_trace_http_logger,
 )
+
+from .test_helpers import SilentHTTPLogger
 
 
 class TestLoguruHTTPLogger:
@@ -421,12 +421,6 @@ class TestFactoryFunctions:
         assert isinstance(logger_instance, ConfigurableHTTPLogger)
         assert logger_instance._tracking_level == "debug"
 
-    def test_create_silent_http_logger(self) -> None:
-        """Test creating silent logger."""
-        logger_instance = create_silent_http_logger()
-
-        assert isinstance(logger_instance, SilentHTTPLogger)
-
     def test_create_trace_http_logger_with_rich(self) -> None:
         """Test creating trace logger with Rich."""
         logger_instance = create_trace_http_logger(use_rich=True)
@@ -478,7 +472,7 @@ class TestIntegrationScenarios:
 
     def test_silent_logger_workflow(self) -> None:
         """Test that silent logger doesn't interfere with workflow."""
-        logger_instance = create_silent_http_logger()
+        logger_instance = SilentHTTPLogger()
 
         # All operations should complete without errors or output
         logger_instance.log_tracking_start("Start")
@@ -517,7 +511,7 @@ class TestIntegrationScenarios:
         verbose_logger.log_request("Request 1")
 
         # Switch to silent logger
-        silent_logger = create_silent_http_logger()
+        silent_logger = SilentHTTPLogger()
         silent_logger.log_request("Request 2")
 
         # Switch to trace logger

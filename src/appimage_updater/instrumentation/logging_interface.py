@@ -109,47 +109,6 @@ class ConfigurableHTTPLogger:
         self._base_logger.warning(message, **kwargs)
 
 
-# noinspection PyProtocol
-class SilentHTTPLogger(HTTPLogger):
-    """Silent HTTP logger for testing or quiet operation."""
-
-    def log(self, level: str, message: str, **kwargs: Any) -> None:
-        """Silent log."""
-        pass
-
-    def debug(self, message: str, **kwargs: Any) -> None:
-        """Silent debug."""
-        pass
-
-    def info(self, message: str, **kwargs: Any) -> None:
-        """Silent info."""
-        pass
-
-    def warning(self, message: str, **kwargs: Any) -> None:
-        """Silent warning."""
-        pass
-
-    def error(self, message: str, **kwargs: Any) -> None:
-        """Silent error."""
-        pass
-
-    def log_tracking_start(self, message: str, **kwargs: Any) -> None:
-        """Silent tracking start."""
-        pass
-
-    def log_tracking_stop(self, message: str, **kwargs: Any) -> None:
-        """Silent tracking stop."""
-        pass
-
-    def log_request(self, message: str, **kwargs: Any) -> None:
-        """Silent request."""
-        pass
-
-    def log_error(self, message: str, **kwargs: Any) -> None:
-        """Silent error."""
-        pass
-
-
 def create_default_http_logger(verbose: bool = False) -> ConfigurableHTTPLogger:
     """Create default HTTP logger with appropriate verbosity.
 
@@ -165,11 +124,6 @@ def create_default_http_logger(verbose: bool = False) -> ConfigurableHTTPLogger:
         return ConfigurableHTTPLogger(base_logger, tracking_level="info", request_level="debug", error_level="warning")
     else:
         return ConfigurableHTTPLogger(base_logger, tracking_level="debug", request_level="debug", error_level="debug")
-
-
-def create_silent_http_logger() -> SilentHTTPLogger:
-    """Create silent HTTP logger for testing."""
-    return SilentHTTPLogger()
 
 
 class TraceHTTPLogger:

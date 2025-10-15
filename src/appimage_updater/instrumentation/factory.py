@@ -9,11 +9,7 @@ if TYPE_CHECKING:
     from ..commands.parameters import CheckParams, RepositoryParams
 
 from .http_tracker import HTTPTracker
-from .logging_interface import (
-    create_default_http_logger,
-    create_silent_http_logger,
-    create_trace_http_logger,
-)
+from .logging_interface import create_default_http_logger, create_trace_http_logger
 
 
 def create_http_tracker_from_params(params: CheckParams | RepositoryParams) -> HTTPTracker | None:
@@ -40,31 +36,3 @@ def create_http_tracker_from_params(params: CheckParams | RepositoryParams) -> H
         verbose = params.debug if hasattr(params, "debug") else False
         logger = create_default_http_logger(verbose=verbose)
         return HTTPTracker(stack_depth=params.http_stack_depth, track_headers=params.http_track_headers, logger=logger)
-
-
-def create_silent_http_tracker(stack_depth: int = 3, track_headers: bool = False) -> HTTPTracker:
-    """Create HTTP tracker with silent logging for testing.
-
-    Args:
-        stack_depth: Number of stack frames to capture
-        track_headers: Whether to track request headers
-
-    Returns:
-        HTTPTracker with silent logging
-    """
-    silent_logger = create_silent_http_logger()
-    return HTTPTracker(stack_depth=stack_depth, track_headers=track_headers, logger=silent_logger)
-
-
-def create_verbose_http_tracker(stack_depth: int = 3, track_headers: bool = False) -> HTTPTracker:
-    """Create HTTP tracker with verbose logging.
-
-    Args:
-        stack_depth: Number of stack frames to capture
-        track_headers: Whether to track request headers
-
-    Returns:
-        HTTPTracker with verbose logging
-    """
-    verbose_logger = create_default_http_logger(verbose=True)
-    return HTTPTracker(stack_depth=stack_depth, track_headers=track_headers, logger=verbose_logger)

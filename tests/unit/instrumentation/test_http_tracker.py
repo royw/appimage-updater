@@ -8,7 +8,8 @@ from unittest.mock import Mock
 import pytest
 
 from appimage_updater.instrumentation.http_tracker import HTTPRequestRecord, HTTPTracker
-from appimage_updater.instrumentation.logging_interface import SilentHTTPLogger
+
+from .test_helpers import SilentHTTPLogger
 
 
 @pytest.fixture

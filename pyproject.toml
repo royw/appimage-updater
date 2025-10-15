@@ -278,7 +278,7 @@ ignore-names = [
     "_handle_edit_preview_modes",
     "_apply_edit_updates_to_apps",
     "supported_domains",
-    # Testing infrastructure (used in tests/e2e/conftest.py)
+    # Testing infrastructure (used in tests/)
     "set_http_client_factory",
     "reset_http_client_factory",
 ]

@@ -1093,17 +1093,14 @@ Core instrumentation component that tracks HTTP requests using monkey patching:
 
 **Factory Pattern (`factory.py`)**
 
-Provides factory functions for easy HTTP tracker creation:
+Provides factory function for easy HTTP tracker creation:
 
 ```python
-def create_http_tracker_from_params(params: CheckParams) -> HTTPTracker | None:
-    """Create tracker based on command parameters."""
+def create_http_tracker_from_params(params: CheckParams | RepositoryParams) -> HTTPTracker | None:
+    """Create tracker based on command parameters.
 
-def create_silent_http_tracker() -> HTTPTracker:
-    """Create tracker with silent logging for testing."""
-
-def create_verbose_http_tracker() -> HTTPTracker:
-    """Create tracker with verbose logging for debugging."""
+    Returns None if instrumentation is disabled, otherwise returns configured HTTPTracker.
+    """
 ```
 
 #### Dependency Injection Benefits
@@ -1184,13 +1181,16 @@ for request in tracker.requests:
 The dependency injection architecture enables clean testing:
 
 ```python
-# Silent tracking for tests
-silent_tracker = create_silent_http_tracker()
-result = await command.execute(http_tracker=silent_tracker)
+# Create tracker from test parameters
+params = CheckParams(instrument_http=True, trace=False, http_stack_depth=3, http_track_headers=False)
+tracker = create_http_tracker_from_params(params)
 
-# Verify HTTP behavior without log noise
-assert len(silent_tracker.requests) == expected_count
-assert silent_tracker.requests[0].url == expected_url
+# Inject tracker into command execution
+result = await command.execute(http_tracker=tracker)
+
+# Verify HTTP behavior
+assert len(tracker.requests) == expected_count
+assert tracker.requests[0].url == expected_url
 ```
 
 ## Monitoring and Observability
