@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2025-10-16
+
+### Added
+
+- **show --add-command Enhancement**: Added newline after each command for better readability
+- **Documentation Improvements**: Added more real-world application examples from show --add-command
+
+### Changed
+
+- **PyPI Publishing Workflow**: Added required contents:read permission for trusted publishing
+- **PyPI Publishing Setup Guide**: Enhanced with practical workflow instructions and testpypi workflow
+- **Documentation**: Updated all version references to 0.5.2
+- **Documentation**: Fixed bare URLs to use angle brackets for markdown compliance
+
 ## [0.5.1] - 2025-10-15
 
 ### Changed
