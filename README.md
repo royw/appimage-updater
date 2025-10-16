@@ -174,7 +174,7 @@ Tip: Use 'appimage-updater show FreeCAD_weekly' to view full configuration
 ➤ appimage-updater show FreeCAD
 ```
 
-## Application Details: FreeCAD
+## Application: FreeCAD
 
 ### Configuration
 
