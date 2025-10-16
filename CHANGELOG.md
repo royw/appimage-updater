@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.2] - 2025-10-16
 
+## [0.5.2] - 2025-10-16
+
 ### Added
 
 - **show --add-command Enhancement**: Added newline after each command for better readability
