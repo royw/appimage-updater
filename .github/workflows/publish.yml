@@ -46,6 +46,7 @@ jobs:
       url: https://pypi.org/p/appimage-updater
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
+      contents: read   # IMPORTANT: mandatory for trusted publishing
       
     steps:
       - name: Download distributions

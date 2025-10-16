@@ -23,8 +23,24 @@ The publishing workflow (`.github/workflows/publish.yml`) automatically publishe
 
 1. **Navigate to Publishing Settings**
 
+The project must exist on PyPI before you can add a publisher.  Use twine to upload a local build (dist/*) to testpypi, examine the create test project, make changes as need, bump version and repeat until satisfied.
+
+```bash
+twine upload --repository testpypi dist/*
+```
+
+When you are satisfied with the test project, you can publish it to PyPI.
+
+```bash
+twine upload --repository pypi dist/*
+```
+
+Now you can add a publisher to the existing project.  I know, the directions say the project doesn't have to exist, but it does.  You cannot add a publisher to a non-existent project no matter how many times you push the Add button (it just doesn't work).
+
+Once the project exists, you can add a publisher to it.
+
    - Go to your account settings: [https://pypi.org/manage/account/publishing/](https://pypi.org/manage/account/publishing/)
-   - Or: Click your username → "Your projects" → "Publishing"
+   - Or: Click your username → "Your projects" → Project Name → "Publishing"
 
 1. **Add a New Pending Publisher**
 
@@ -248,15 +264,15 @@ For testing the workflow without creating a release:
 
 ### PyPI URLs
 
-- Project page: https://pypi.org/project/appimage-updater/
-- Publishing settings: https://pypi.org/manage/account/publishing/
+- Project page: <https://pypi.org/project/appimage-updater/>
+- Publishing settings: <https://pypi.org/manage/account/publishing/>
 
 ### GitHub URLs
 
-- Repository: https://github.com/royw/appimage-updater
-- Actions: https://github.com/royw/appimage-updater/actions
-- Environments: https://github.com/royw/appimage-updater/settings/environments
-- Releases: https://github.com/royw/appimage-updater/releases
+- Repository: <https://github.com/royw/appimage-updater>
+- Actions: <https://github.com/royw/appimage-updater/actions>
+- Environments: <https://github.com/royw/appimage-updater/settings/environments>
+- Releases: <https://github.com/royw/appimage-updater/releases>
 
 ### Commands
 

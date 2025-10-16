@@ -89,6 +89,7 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
             for app in found_apps:
                 command = self._generate_add_command(app)
                 print(command)  # noqa: T201
+                print()  # noqa: T201 - Add blank line after each command
 
             return True
         except ConfigLoadError as e:

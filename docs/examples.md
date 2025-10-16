@@ -25,6 +25,44 @@ appimage-updater add Krita https://github.com/KDE/krita ~/Applications/Krita
 appimage-updater add Kdenlive https://github.com/KDE/kdenlive ~/Applications/Kdenlive
 ```
 
+### Dump of my active applications using `appimage-updater show --add-command`
+
+```bash
+appimage-updater add OpenRGB https://codeberg.org/OpenRGB/OpenRGB ~/Applications/OpenRGB --pattern (?i)OpenRGB_[0-9]+\.[0-9]+(?:\.[0-9]+)?_.*\.(?:zip|AppImage)(\.(|current|old))?$ --version-pattern ^[0-9]+\.[0-9]+$
+
+appimage-updater add Meshlab https://github.com/cnr-isti-vclab/meshlab ~/Applications/Meshlab --rotation --symlink-path ~/Applications/Meshlab.AppImage --pattern (?i)^MeshLab2025\.07\-linux_aarch64.*\.AppImage$
+
+appimage-updater add FreeCAD_weekly https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD_weekly --rotation --prerelease --symlink-path ~/Applications/FreeCAD_weekly.AppImage --pattern (?i)FreeCAD.*\.(zip|AppImage)(\.(|current|old))?$
+
+appimage-updater add OrcaSlicerNightly https://github.com/SoftFever/OrcaSlicer ~/Applications/OrcaSlicerNightly --rotation --prerelease --symlink-path ~/Applications/OrcaSlicerNightly.AppImage --pattern .*nightly.*\.(zip|AppImage)$
+
+appimage-updater add OrcaSlicer https://github.com/SoftFever/OrcaSlicer ~/Applications/OrcaSlicer --rotation --symlink-path ~/Applications/OrcaSlicer.AppImage --pattern (?i)OrcaSlicer.*\.(zip|AppImage)(\.(|current|old))?$
+
+appimage-updater add UltiMaker-Cura https://github.com/Ultimaker/Cura ~/Applications/UltiMaker-Cura --rotation --symlink-path ~/Applications/UltiMaker-Cura.AppImage --pattern (?i)UltiMaker\-Cura\-5\.10\..*\.(zip|AppImage)(\.(|current|old))?$
+
+appimage-updater add YubiKey https://developers.yubico.com/yubikey-manager-qt/Releases/yubikey-manager-qt-latest-linux.AppImage ~/Applications/YubiKey --rotation --prerelease --symlink-path ~/Applications/YubiKey.AppImage --pattern (?i)YubiKey.*\.(?:zip|AppImage)(\.(|current|old))?$
+
+appimage-updater add OrcaSlicerRC https://github.com/SoftFever/OrcaSlicer ~/Applications/OrcaSlicerRC --rotation --prerelease --symlink-path ~/Applications/OrcaSlicerRC.AppImage --pattern (?i)OrcaSlicer.*V[0-9].*\.(zip|AppImage)(\.(|current|old))?$
+
+appimage-updater add InkScape https://inkscape.org/release/all/gnulinux/appimage/ ~/Applications/InkScape --symlink-path ~/Applications/InkScape.AppImage --pattern (?i)^Inkscape.*\.AppImage$
+
+appimage-updater add ScribusDev https://sourceforge.net/projects/scribus/files/scribus-devel/1.7.0 ~/Applications/ScribusDev --rotation --symlink-path ~/Applications/ScribusDev.AppImage --pattern (?i)^scribus.*\.AppImage$
+
+appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Applications/BambuStudio --rotation --symlink-path ~/Applications/Bambu_Studio.AppImage --pattern (?i)Bambu_?Studio_.*\.AppImage(\.(|current|old))?$
+
+appimage-updater add appimaged https://github.com/probonopd/go-appimage ~/Applications/appimaged --rotation --prerelease --symlink-path ~/Applications/appimaged.AppImage --pattern (?i)appimaged.*\.AppImage(\.(|current|old))?$
+
+appimage-updater add EdgeTX_Companion https://github.com/EdgeTX/edgetx ~/Applications/EdgeTX --rotation --symlink-path ~/Applications/EdgeTX_Companion.AppImage --pattern (?i)edgetx\-.*\.(zip|AppImage)(\.(|current|old))?$
+
+appimage-updater add appimagetool https://github.com/AppImage/appimagetool ~/Applications/appimagetool --rotation --symlink-path ~/Applications/appimagetool.AppImage --pattern (?i)appimagetool\-.*\.(zip|AppImage)(\.(|current|old))?$
+
+appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD --pattern (?i)FreeCAD.*\.(zip|AppImage)(\.(|current|old))?$
+
+appimage-updater add GitHubDesktop https://github.com/shiftkey/desktop ~/Applications/GitHubDesktop --rotation --symlink-path ~/Applications/GitHubDesktop.AppImage --pattern GitHubDesktop.*[Ll]inux.*\.AppImage(\.(|current|old))?$
+
+appimage-updater add OpenShot https://github.com/OpenShot/openshot-qt ~/Applications/OpenShot --rotation --symlink-path ~/Applications/OpenShot.AppImage --pattern (?i)OpenShot\-v3\..*\.(zip|AppImage)(\.(|current|old))?$
+```
+
 ### Development and Nightly Builds
 
 ```bash
