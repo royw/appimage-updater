@@ -22,7 +22,7 @@
     "PATH": "/home/royw/src/appimage-updater/.venv/bin:/home/royw/.pyenv/plugins/pyenv-virtualenv/shims:/home/royw/.pyenv/shims:/home/royw/.pyenv/bin:/home/royw/.pyenv/plugins/pyenv-virtualenv/shims:/home/royw/.py..."
   },
   "python_packages": {
-    "uv_version": "uv 0.5.12",
+    "uv_version": "uv 0.5.22",
     "pip_version": "pip 25.0.1 from /home/royw/.pyenv/versions/3.13.3/lib/python3.13/site-packages/pip (python 3.13)",
     "pytest_version": "8.4.1",
     "typer_version": "0.17.3",
