@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- fix LaTeX escaping in README.md (fdb6b5d)
 
 ### Fixed
 - update workflow configuration for new release process (1e3fcab)
