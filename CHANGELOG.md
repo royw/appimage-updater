@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- update workflow configuration for new release process (1e3fcab)
 
 ## [0.5.2] - 2025-10-16
 
@@ -531,9 +532,11 @@ ______________________________________________________________________
 ## Contributing
 
 This project follows [Semantic Versioning](https://semver.org/).
+
 - **Security**: Read-only access to public repositories only - cannot access private data or modify anything
 
 ### TEST **Testing & Quality Assurance**
+
 **Step-by-Step Token Creation**:
 
 1. **Create Classic PAT (Recommended)**:

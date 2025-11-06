@@ -92,7 +92,7 @@ tasks:
       - task: lint:fix:emoji
       - task: format
       - task: lint
-      - task: complexity
+      - task: metrics:complexity
       - task: test:parallel
 
   # === Build ===

@@ -34,7 +34,7 @@ tasks:
     desc: Run tests with pytest (parallel) with coverage
     summary: Runs all core tests (unit, functional, integration, e2e) with coverage reporting
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} -n auto --cov=src/{{.APP_NAME}} --cov-report=term-missing --cov-report=html {{.TEST_CORE}} {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} -n auto --cov=src/{{.APP_NAME}} --cov-report=term-missing --cov-report=html {{.TEST_CORE}} {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"
 
 
   unit:
