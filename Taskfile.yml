@@ -1,594 +1,93 @@
 version: '3'
 
+includes:
+  docs:
+    taskfile: ./taskfiles/Taskfile-docs.yml
+    dir: .
+  env:
+    taskfile: ./taskfiles/Taskfile-env.yml
+    dir: .
+  format:
+    taskfile: ./taskfiles/Taskfile-format.yml
+    dir: .
+  git:
+    taskfile: ./taskfiles/Taskfile-git.yml
+    dir: .
+  lint:
+    taskfile: ./taskfiles/Taskfile-lint.yml
+    dir: .
+  metrics:
+    taskfile: ./taskfiles/Taskfile-metrics.yml
+    dir: .
+  release:
+    taskfile: ./taskfiles/Taskfile-release.yml
+    dir: .
+  test:
+    taskfile: ./taskfiles/Taskfile-test.yml
+    dir: .
+  version:
+    taskfile: ./taskfiles/Taskfile-version.yml
+    dir: .
+  
 vars:
+  # Application name derived from pyproject.toml (hyphens replaced with underscores for Python module name)
+  APP_NAME:
+    sh: python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data['project']['name'].replace('-', '_'))"
+  
+  # Source code directory
   SRC: src/
+  
+  # Root tests directory
   TESTS: tests/
-  TESTS_CORE: tests/unit/ tests/functional/ tests/integration/
+  
+  # Test directories to include in normal test runs (excludes performance, benchmarks, etc.)
+  # Include directories here even if they don't exist yet (e.g., tests/integration/)
+  POSSIBLE_TEST_CORES: tests/unit/ tests/functional/ tests/integration/ tests/e2e/
+  
+  # Subset of POSSIBLE_TEST_CORES that actually exist on disk (auto-detected)
+  TESTS_CORE:
+    sh: |
+      possible="{{.POSSIBLE_TEST_CORES}}"
+      existing=""
+      for dir in $possible; do
+        if [ -d "$dir" ]; then
+          existing="$existing$dir "
+        fi
+      done
+      echo "$existing" | sed 's/[[:space:]]*$//'
+  
+  # Test timeout in seconds
+  TEST_TIMEOUT: 30
+  
+  # Development scripts
   SCRIPTS: scripts/
+
+  # All Python versions from .python-versions file (space-separated)
   PYTHON_VERSIONS:
     sh: cat .python-versions | grep -v '^$' | tr '\n' ' ' | sed 's/[[:space:]]*$//'
+  
+  # Current Python version from .python-version file
   PYTHON_VERSION:
     sh: cat .python-version | head -n1
-  TEST_TIMEOUT: 30
+
   # Global emoji replacements dictionary - single source of truth
   # Format: "emoji:replacement emoji:replacement ..."
   # Used by both lint:emoji (keys) and fix:emoji (full mapping)
   EMOJI_REPLACEMENTS_MAP: '✅:PASS ❌:FAIL ⚠️:WARNING 🔍:SEARCH 📦:PACKAGE 🐧:LINUX 🚀:DEPLOY 🎯:TARGET 🏆:SUCCESS 🎉:COMPLETE 📊:REPORT 🧪:TEST 🔴:HIGH 🟡:MEDIUM 🟢:LOW 📚:DOCS 🌍:SERVER 🏗️:BUILD 📈:BUMP 📝:COMMIT 🐍:PYTHON 📋:LIST ✓:DONE 📁:FOLDER 🌐:NETWORK 🎭:MOCK ⚡:EXECUTE 📤:STDOUT 📥:STDERR 💥:EXCEPTION 🔧:VERSION 📄:FILE 🌳:TREE 🏁:COMPLETE 🔒:LOCK 🔓:UNLOCK 🐛:BUG 🛠️:TOOLS 🚨:0'
 
 tasks:
-# === Default ===
+  # === Default ===
   default:
     desc: Show available tasks
     cmds:
+      - echo "Available tasks:"
       - task --list --sort none
-
-# === Internal ===
-  _output:
-    desc: Internal task to output messages silently
-    cmds:
-      - cmd: echo "{{.MESSAGE}}"
-        silent: true
-
-  # === Setup and Environment ===
-  
-  # Environment validation
-  env:check:
-    desc: Verify development environment setup
-    cmds:
-      - task: _output
-        vars:
-          MESSAGE: "Checking Prerequisite versions..."
-      - uv --version
-      - uv run python --version
-      - git --version
-      - pipx --version
-      - pymarkdownlnt version
-
-  install:
-    desc: Install project dependencies (first-time setup) into .venv/
-    deps:
-      - env:check
-      - sync
-
-  sync:
-    desc: Sync project dependencies with uv into .venv/
-    cmds:
-      - uv sync --extra dev
-
-  resync:
-    desc: Resync project dependencies by first deleting .venv/ and then syncing with uv into .venv/
-    cmds:
-      - rm -rf .venv/
-      - task: sync
-
-  clean:
-    desc: Clean up generated files
-    cmds:
-      - find . -type d -name "__pycache__" -exec rm -rf {} +
-      - find . -type f -name "*.pyc" -delete
-      - rm -rf .mypy_cache/
-      - rm -rf .pytest_cache/
-      - rm -rf dist/
-      - rm -rf build/
-      - rm -rf site/
-
-  # === Code Quality ===
-  format:
-    desc: Format code with ruff (including import sorting) and format markdown files with mdformat
-    deps:
-      - task: format:src
-      - task: format:markdown
-
-  format:src:
-    desc: Format source code with ruff (including import sorting)
-    cmds:
-      - uv run ruff check --fix --select I {{.CLI_ARGS | default .SRC}}  # Fix import sorting
-      - uv run ruff format {{.CLI_ARGS | default .SRC}}  # Format code
-
-  format:markdown:
-    desc: Format markdown files with mdformat (excludes README.md due to LaTeX syntax)
-    cmds:
-      - cmd: |
-          if ! command -v mdformat &> /dev/null; then
-            uv tool install mdformat
-          fi
-        silent: true
-      - sed -i 's/[[:space:]]*$//' {{.CLI_ARGS | default "docs/*.md"}}
-      - mdformat {{.CLI_ARGS | default "docs/*.md"}}
-
-  format:tests:
-    desc: Format tests with ruff (including import sorting)
-    deps:
-      - lint:fix:tests
-    cmds:
-      - uv run ruff format {{.CLI_ARGS | default .TESTS}}  # Format code
-
-  format:scripts:
-    desc: Format scripts with ruff (including import sorting)
-    cmds:
-      - uv run ruff check --fix --select I {{.CLI_ARGS | default .SCRIPTS}}  # Fix import sorting
-      - uv run ruff format {{.CLI_ARGS | default .SCRIPTS}}  # Format code
-
-  fix:emoji:
-    desc: Remove emojis from markdown and test files (*.md, docs/*.md, tests/*.py)
-    cmds:
-      - cmd: |
-          python3 << 'PYTHON_SCRIPT'
-          import os
-          import glob
-          from pathlib import Path
-          
-          # Build emoji replacements map from Taskfile variable
-          EMOJI_MAP = '{{.EMOJI_REPLACEMENTS_MAP}}'
-          
-          # Parse the map into a dictionary
-          replacements = {}
-          for pair in EMOJI_MAP.split():
-              if ':' in pair:
-                  emoji, replacement = pair.split(':', 1)
-                  replacements[emoji] = replacement
-          
-          print("Removing emojis from markdown and test files...")
-          
-          def process_file(filepath):
-              """Process a single file and replace emojis."""
-              try:
-                  with open(filepath, 'r', encoding='utf-8') as f:
-                      content = f.read()
-                  
-                  original_content = content
-                  
-                  # Apply all emoji replacements
-                  for emoji, replacement in replacements.items():
-                      content = content.replace(emoji, replacement)
-                  
-                  # Only write if content changed
-                  if content != original_content:
-                      with open(filepath, 'w', encoding='utf-8') as f:
-                          f.write(content)
-                      print(f"  - Emojis removed from {filepath}")
-              except Exception as e:
-                  print(f"  ! Error processing {filepath}: {e}")
-          
-          print("Processing markdown files...")
-          # Process markdown files in project root (max depth 1)
-          for md_file in glob.glob("*.md"):
-              process_file(md_file)
-          
-          # Process markdown files in docs/ directory
-          if os.path.isdir("docs"):
-              for md_file in Path("docs").rglob("*.md"):
-                  process_file(str(md_file))
-          
-          print("Processing test Python files...")
-          # Process all test python files (including subdirectories)
-          if os.path.isdir("tests"):
-              for py_file in Path("tests").rglob("*.py"):
-                  process_file(str(py_file))
-          
-          print("Emoji removal complete!")
-          PYTHON_SCRIPT
-        silent: true
-
-  # === Linting ===
-  _check_tmp:
-    desc: Internal task to check for hardcoded /tmp/ paths
-    cmds:
-      - cmd: |
-          echo "Checking for hardcoded /tmp/ paths..."
-          TMP_FOUND=0
-          TMP_COUNT=0
-          SEARCH_PATH="{{.SEARCH_PATH}}"
-          
-          # Search for "/tmp/" in all Python files and count occurrences
-          # grep returns exit code 1 if no matches found, so we use || true to prevent script failure
-          TMP_RESULTS=$(grep -rn --include="*.py" '"/tmp/' $SEARCH_PATH 2>/dev/null || true)
-          if [ -n "$TMP_RESULTS" ]; then
-            echo "$TMP_RESULTS"
-            TMP_COUNT=$(echo "$TMP_RESULTS" | wc -l)
-            echo "FAIL Hardcoded /tmp/ paths found - use tmp_path fixture instead"
-            TMP_FOUND=1
-          fi
-          
-          if [ $TMP_FOUND -eq 0 ]; then
-            echo "PASS No hardcoded /tmp/ paths found"
-            exit 0
-          else
-            echo "FAIL Lint failed - $TMP_COUNT hardcoded /tmp/ paths found"
-            echo "Fix: Replace hardcoded /tmp/ paths with pytest's tmp_path fixture"
-            exit 1
-          fi
-        silent: true
-
-  lint:
-    desc: Run all linting tasks
-    cmds:
-      - task: lint:fix
-      - task: lint:ruff
-      - task: lint:mypy
-      - task: lint:markdown
-      - task: lint:emoji
-      - task: lint:deadcode
-      - task: lint:packages
-      - task: _check_tmp
-        vars:
-          SEARCH_PATH: "{{.SRC}}"
-
-  lint:tests:
-    desc: Run linting with ruff and check for hardcoded /tmp/ paths
-    cmds:
-      - uv run ruff check --fix --select I {{.CLI_ARGS | default .TESTS_CORE}}
-      - uv run mypy {{.CLI_ARGS | default .TESTS_CORE}}
-      - task: _check_tmp
-        vars:
-          SEARCH_PATH: "{{.TESTS}}"
-
-  lint:ruff:
-    desc: Run linting with ruff
-    cmds:
-      - uv run ruff check {{.CLI_ARGS | default .SRC}}
-
-  lint:mypy:
-    desc: Run type checking with mypy
-    cmds:
-      - uv run mypy {{.CLI_ARGS | default .SRC}}
-
-  lint:fix:
-    desc: Automatically fix linting issues with ruff
-    cmds:
-      - uv run ruff check --fix --select I {{.CLI_ARGS | default .SRC}}
-
-  lint:fix:tests:
-    desc: Automatically fix linting issues with ruff
-    cmds:
-      - uv run ruff check --fix --select I {{.CLI_ARGS | default .TESTS}}
-
-  lint:scripts:
-    desc: Run linting with ruff and check for hardcoded /tmp/ paths
-    cmds:
-      - uv run ruff check --fix --select I {{.CLI_ARGS | default .SCRIPTS}}
-      - uv run mypy {{.CLI_ARGS | default .SCRIPTS}}
-      - task: _check_tmp
-        vars:
-          SEARCH_PATH: "{{.SCRIPTS}}"
-  
-  lint:markdown:
-    desc: Lint markdown files with pymarkdownlnt (excludes README.md due to LaTeX syntax)
-    cmds:
-      - cmd: |
-          if ! command -v pymarkdownlnt &> /dev/null; then
-            uv tool install pymarkdownlnt
-          fi
-        silent: true
-      - uv run pymarkdownlnt --config .pymarkdown.json scan {{.CLI_ARGS | default "docs/*.md"}} || true
-
-  lint:emoji:
-    desc: Search for emojis in source code, docs, and configuration files
-    cmds:
-      - cmd: |
-          echo "SEARCH Searching for emojis in codebase..."
-          EMOJI_FOUND=0
-          
-          # Extract emoji keys from global EMOJI_REPLACEMENTS_MAP
-          EMOJI_MAP='{{.EMOJI_REPLACEMENTS_MAP}}'
-          
-          # Extract just the emojis (keys before the colon)
-          EMOJI_LIST=$(echo "$EMOJI_MAP" | tr ' ' '\n' | cut -d':' -f1)
-          
-          # Search in source code
-          if echo "$EMOJI_LIST" | xargs -I {} grep -rn --include="*.py" -F {} src/ 2>/dev/null; then
-            echo "FAIL Emojis found in source code (src/)"
-            EMOJI_FOUND=1
-          fi
-          
-          # Search in tests
-          if echo "$EMOJI_LIST" | xargs -I {} grep -rn --include="*.py" -F {} tests/ 2>/dev/null; then
-            echo "FAIL Emojis found in tests (tests/)"
-            EMOJI_FOUND=1
-          fi
-          
-          # Search in docs
-          if echo "$EMOJI_LIST" | xargs -I {} grep -rn --include="*.md" -F {} docs/ 2>/dev/null; then
-            echo "FAIL Emojis found in documentation (docs/)"
-            EMOJI_FOUND=1
-          fi
-          
-          # Search in README.md
-          if echo "$EMOJI_LIST" | xargs -I {} grep -rn -F {} README.md 2>/dev/null; then
-            echo "FAIL Emojis found in README.md"
-            EMOJI_FOUND=1
-          fi
-          
-          # Search in mkdocs.yml
-          if echo "$EMOJI_LIST" | xargs -I {} grep -rn -F {} mkdocs.yml 2>/dev/null; then
-            echo "FAIL Emojis found in mkdocs.yml"
-            EMOJI_FOUND=1
-          fi
-          
-          if [ $EMOJI_FOUND -eq 0 ]; then
-            echo "PASS No emojis found in codebase"
-          else
-            echo "FAIL Emoji check failed - emojis found in codebase"
-            exit 1
-          fi
-        silent: true
-
-  lint:deadcode:
-    desc: Find dead (unreachable/unused) code with deadcode (config in pyproject.toml)
-    cmds:
-      - cmd: echo "Checking deadcode..."
-        silent: true
-      - uv run deadcode {{.CLI_ARGS | default .SRC}}
     silent: true
-
-  lint:packages:
-    desc: Verify that __init__.py files only contain docstrings (no code)
-    cmds:
-      - cmd: |
-          echo "Checking __init__.py files for code violations..."
-          VIOLATIONS=0
-          
-          # Find all __init__.py files in src/
-          while IFS= read -r file; do
-            # Skip if file doesn't exist or is empty
-            if [ ! -f "$file" ] || [ ! -s "$file" ]; then
-              continue
-            fi
-            
-            # Use Python to check if file contains only docstrings and comments
-            if ! python3 << PYTHON_SCRIPT
-          import ast
-          import sys
-          
-          try:
-              with open('$file', 'r') as f:
-                  content = f.read()
-              
-              # Parse the file
-              tree = ast.parse(content)
-              
-              # Check if there are any statements other than docstrings
-              has_code = False
-              for node in tree.body:
-                  # Allow module docstrings (Expr node with a Constant value)
-                  if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant):
-                      continue
-                  # Everything else is considered code
-                  has_code = True
-                  break
-              
-              if has_code:
-                  print(f"FAIL: $file contains code beyond docstrings", file=sys.stderr)
-                  sys.exit(1)
-              
-              sys.exit(0)
-          except SyntaxError as e:
-              print(f"ERROR: $file has syntax error: {e}", file=sys.stderr)
-              sys.exit(1)
-          PYTHON_SCRIPT
-            then
-              VIOLATIONS=$((VIOLATIONS + 1))
-            fi
-          done < <(find src -name "__init__.py" -type f)
-          
-          if [ $VIOLATIONS -eq 0 ]; then
-            echo "PASS All __init__.py files are clean (docstrings only)"
-          else
-            echo "FAIL Found $VIOLATIONS __init__.py file(s) with code violations"
-            exit 1
-          fi
-        silent: true
-
-  lint:duplication:
-    desc: Check for duplicate code using pylint
-    cmds:
-      - cmd: echo "Checking for code duplication..."
-        silent: true
-      - uv run pylint --disable=all --enable=duplicate-code {{.CLI_ARGS | default .SRC}}
-
-  # === Metrics ===
-  metrics:
-    desc: Display comprehensive project metrics summary (config in pyproject.toml)
-    cmds:
-      - uv run python scripts/dev-metrics.py
-
-  complexity:
-    desc: Analyze code complexity with radon
-    cmds:
-      - cmd: echo "Checking complexity..."
-        silent: true
-      - cmd: |
-          # Read exclusion list from pyproject.toml
-          EXCLUDED=$(uv run --quiet python -c "
-          import sys
-          import tomllib
-          try:
-              with open('pyproject.toml', 'rb') as f:
-                  data = tomllib.load(f)
-              project_name = data.get('project', {}).get('name')
-              if not project_name:
-                  print('', file=sys.stderr)
-                  sys.exit(0)
-              excludes = data.get('tool', {}).get(project_name, {}).get('complexity', {}).get('exclude', [])
-              if not excludes:
-                  print('', file=sys.stderr)
-                  sys.exit(0)
-              # Escape dots and underscores for regex
-              pattern = '|'.join(e.replace('.', r'\.').replace('_', r'_') for e in excludes)
-              print(pattern)
-          except Exception as e:
-              print(f'Warning: Could not read exclusion list from pyproject.toml: {e}', file=sys.stderr)
-              sys.exit(0)
-          " 2>/dev/null)
-          
-          if [ -z "$EXCLUDED" ]; then
-            # No exclusion list, show all results
-            uv run radon cc --show-complexity {{.CLI_ARGS | default .SRC}} --min B
-          else
-            OUTPUT=$(uv run radon cc --show-complexity {{.CLI_ARGS | default .SRC}} --min B | \
-            grep -vE "($EXCLUDED)")
-            
-            if [ -z "$OUTPUT" ] || echo "$OUTPUT" | grep -qE "^src/.*\.py$" && ! echo "$OUTPUT" | grep -qE "^\s+[MFC]"; then
-              echo "✅ No complexity issues found (all B-rated functions are in exclusion list)"
-            else
-              echo "$OUTPUT"
-            fi
-          fi
-        silent: true
-
-  # === Testing ===
-  test:_check:
-    desc: Internal task to check for misplaced config.json in apps directory
-    internal: true
-    cmds:
-      - cmd: |
-          if [ -f ~/.config/appimage-updater/apps/config.json ]; then
-            echo "ERROR: Found config.json in apps/ directory!"
-            echo "This file should be at ~/.config/appimage-updater/config.json, not in apps/"
-            echo "A test is writing to the real config directory instead of using temp directories."
-            echo "Please remove it with: rm ~/.config/appimage-updater/apps/config.json"
-            exit 1
-          fi
-        silent: true
-
-  test:
-    desc: Run tests with pytest (sequential) - excludes regression tests - full coverage reporting
-    cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e {{.CLI_ARGS}}
-      - task: test:_check
-
-  test:parallel:
-    desc: Run tests with pytest - unit/functional/integration in parallel, E2E serially - excludes regression tests - summary coverage reporting
-    cmds:
-      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e -n auto {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
-      - task: test:_check
-
-  test:unit:
-    desc: Run unit tests only - summary coverage reporting
-    cmds:
-      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
-      - task: test:_check
-
-  test:functional:
-    desc: Run functional tests only - summary coverage reporting
-    cmds:
-      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/functional/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
-      - task: test:_check
-
-  test:integration:
-    desc: Run integration tests only - summary coverage reporting
-    cmds:
-      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/integration/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
-      - task: test:_check
-
-  test:e2e:
-    desc: Run end-to-end tests to validate core functionality (serially for test isolation) - summary coverage reporting
-    cmds:
-      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/ -v --tb=short --color=yes --no-cov 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
-      - task: test:_check
-
-  test:pattern-matching:
-    desc: Test pattern matching functionality specifically - summary coverage reporting
-    cmds:
-      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/test_pattern_matching.py -v 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
-      - task: test:_check
-      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit/test_intelligent_pattern_generation.py -v 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
-      - task: test:_check
-
-  test:regression:
-    desc: Run regression tests to validate fixed issues (uses network) - full coverage reporting
-    cmds:
-    # do not use timeout here as it will cause the test to fail
-      - uv run pytest tests/regression/ -v --tb=short --color=yes
-      - task: test:_check
-      - task: _output
-        vars:
-          MESSAGE: "✅ Regression tests passed - fixed issues remain resolved!"
-
-  test:all:
-    desc: Run all tests against all Python versions (excludes regression) - summary coverage reporting
-    cmds:
-      - cmd: echo "🐍 Running tests against all Python versions..."
-        silent: true
-      - for:
-          var: PYTHON_VERSIONS
-          split: ' '
-        cmd: |
-          echo "📋 Testing with Python {{.ITEM}}"
-          bash -c 'set -o pipefail; uv run --python {{.ITEM}} pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e --tb=short --color=yes 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
-      - cmd: echo "✅ All Python versions tested successfully!"
-        silent: true
-
-  test:coverage:
-    desc: Run all tests with coverage reporting (excludes regression tests) - full coverage reporting
-    cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} tests/unit tests/functional tests/integration tests/e2e --cov={{.SRC}}appimage_updater --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
-      - task: test:_check
-      - task: _output
-        vars:
-          MESSAGE: "📊 Coverage report saved to htmlcov/index.html"
-
-  # === Documentation ===
-  docs:build:
-    desc: Build documentation with MkDocs
-    cmds:
-      - task: _output
-        vars:
-          MESSAGE: "📚 Building documentation..."
-      - uv run mkdocs build {{.CLI_ARGS}} 2>&1 | grep -v "MERMAID2.*Found superfences config" | grep -v "MERMAID2.*Initialization arguments" | grep -v "MERMAID2.*Using javascript library" || true
-      - task: _output
-        vars:
-          MESSAGE: "✅ Documentation built successfully in site/"
-
-  docs:serve:
-    desc: Serve documentation locally for development
-    cmds:
-      - task: _output
-        vars:
-          MESSAGE: "🌍 Starting documentation server..."
-      - uv run mkdocs serve {{.CLI_ARGS}}
-
-  docs:
-    desc: Build and serve documentation locally
-    deps:
-      - docs:build
-      - docs:serve
-
-  # === Version ===
-  version:pyproject:
-    desc: Extract version from pyproject.toml (internal task)
-    cmds:
-      - python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data['project']['version'])"
-    silent: true
-
-  version:
-    desc: Display the current project version
-    cmds:
-      - task: _output
-        vars:
-          MESSAGE: "v$(task version:pyproject)"
-
-  # === Build Packages ===
-
-  build:
-    desc: Build distribution packages
-    deps:
-      - clean
-    cmds:
-      - task: _output
-        vars:
-          MESSAGE: "🏗️  Building AppImage Updater distribution packages..."
-      - uv build {{.CLI_ARGS}}
-      - task: _output
-        vars:
-          MESSAGE: "✅ Build complete! Packages created in dist/"
-      - ls -la dist/
-
-# === Development Workflow ===
 
   # === Quality Checks ===
   check:
     desc: Run all code quality checks including end-to-end tests
+    summary: Runs formatting, linting, complexity checks, and all tests
     cmds:
       - task: fix:emoji
       - task: format
@@ -596,138 +95,94 @@ tasks:
       - task: complexity
       - task: test:parallel
 
-  # === Build and Release ===
+  # === Build ===
+  build:
+    desc: Build distribution packages
+    summary: Creates wheel and source distribution packages in dist/
+    deps:
+      - env:clean
+    cmds:
+      - cmd: echo "🏗️  Building distribution packages..."
+        silent: true
+      - uv build {{.CLI_ARGS}}
+      - cmd: echo "✅ Build complete! Packages created in dist/"
+        silent: true
+      - ls -la dist/
+
   make:
     desc: Complete build pipeline - run all checks, build, docs, and show version
+    summary: Full CI/CD pipeline - quality checks, build packages, generate docs
     cmds:
-      - task: _output
-        vars:
-          MESSAGE: "🚀 Starting build pipeline..."
+      - cmd: echo "🚀 Starting build pipeline..."
+        silent: true
       - task: check
       - task: build
       - task: docs:build
-      - task: version
-      - task: _output
-        vars:
-          MESSAGE: "✅ Build pipeline completed successfully! Ready to push to GitHub 🎉"
-
-  version:bump:
-    desc: Bump the patch version, update changelog, build, and commit changes
-    cmds:
-      - task: _output
-        vars:
-          MESSAGE: "🔍 Checking for uncommitted changes..."
-      - |
-        if [ -n "$(git status --porcelain)" ]; then
-          task _output MESSAGE="❌ Error: There are uncommitted changes. Please commit or stash them first."
-          git status --short
-          exit 1
-        else
-          task _output MESSAGE="✅ Working directory is clean"
-        fi
-      - task: _output
-        vars:
-          MESSAGE: "📝 Checking CHANGELOG.md..."
-      - |
-        # Check if there are unreleased changes in CHANGELOG
-        if ! grep -q "## \[Unreleased\]" CHANGELOG.md; then
-          task _output MESSAGE="❌ Error: No [Unreleased] section found in CHANGELOG.md"
-          exit 1
-        fi
-        
-        # Show current unreleased section to user (limit to first 30 lines)
-        task _output MESSAGE="📋 Current [Unreleased] section:"
-        echo "----------------------------------------"
-        awk '/## \[Unreleased\]/,/^## \[[0-9]/ {if (/^## \[[0-9]/) exit; print}' CHANGELOG.md | head -30
-        echo "----------------------------------------"
-        
-        # Check if unreleased section has content
-        if ! grep -A 5 "## \[Unreleased\]" CHANGELOG.md | grep -q "^- \|^### "; then
-          task _output MESSAGE="❌ Error: [Unreleased] section is empty"
-          task _output MESSAGE="💡 Please add release notes to CHANGELOG.md before bumping version"
-          exit 1
-        fi
-        
-        # Always ask user to confirm the changelog is complete
-        echo ""
-        printf "Is the CHANGELOG.md complete for this release? (y/N): "
-        read REPLY
-        case "$REPLY" in
-          [Yy]* ) task _output MESSAGE="✅ CHANGELOG.md confirmed ready for release";;
-          * ) task _output MESSAGE="❌ Aborted. Please update CHANGELOG.md and try again."; exit 1;;
-        esac
-      - task: _output
-        vars:
-          MESSAGE: "📈 Bumping version..."
-      - uv run version_bumper bump patch
-      - task: _output
-        vars:
-          MESSAGE: "✅ Version bumped! New version:"
-      - task: version
-      - task: _output
-        vars:
-          MESSAGE: "📝 Updating CHANGELOG.md..."
-      - |
-        NEW_VERSION=$(task version:pyproject)
-        TODAY=$(date +%Y-%m-%d)
-        
-        # Replace [Unreleased] header with new version and add new [Unreleased] section
-        # This preserves all content under [Unreleased] and moves it to the new version
-        sed -i.bak "s/## \[Unreleased\]/## [Unreleased]\n\n## [$NEW_VERSION] - $TODAY/" CHANGELOG.md
-        
-        rm CHANGELOG.md.bak
-        task _output MESSAGE="✅ Updated CHANGELOG.md with version $NEW_VERSION"
-      - task: _output
-        vars:
-          MESSAGE: "🏗️  Building package..."
-      - task: build
-      - task: _output
-        vars:
-          MESSAGE: "📝 Committing version bump and changelog..."
-      - |
-        NEW_VERSION=$(task version:pyproject)
-        git add pyproject.toml CHANGELOG.md
-        git commit -m "chore: bump version to v$NEW_VERSION"
-        task _output MESSAGE="✅ Committed version bump to v$NEW_VERSION"
-    silent: true
-
-  deploy:
-    desc: Deploy the built package locally with pipx
-    deps:
-      - build
-    cmds:
-      - task: _output
-        vars:
-          MESSAGE: "🚀 Installing locally with pipx..."
-      - pipx install --force dist/*.whl
-      - task: _output
-        vars:
-          MESSAGE: "✅ Successfully deployed appimage-updater v$(task version) locally!"
-
-  version:tag:
-    desc: Create and push a git tag for the current version
-    deps:
-      - version
-    cmds:
-      - cmd:  VERSION=$(task version:pyproject)
+      - task: version:current
+      - cmd: echo "✅ Build pipeline completed successfully! Ready to push to GitHub 🎉"
         silent: true
-      - task: _output
-        vars:
-          MESSAGE: "Creating tag v$VERSION..."
-      - cmd:  git tag "v$VERSION"
-      - cmd:  git push origin "v$VERSION"
-      - task: _output
-        vars:
-          MESSAGE: "✅ Tag v$VERSION created and pushed to origin!"
 
   # === CI/CD Pipeline ===
   ci:
     desc: Run GitHub CI build locally using scripts/ci-local.sh.  This is the same pipeline that runs on GitHub Actions.
+    summary: Simulates GitHub Actions CI pipeline locally for testing
     cmds:
       - bash scripts/ci-local.sh
 
-  # === Development and Running ===
+    # === Deploy ===
+  deploy:local:
+    desc: Install the built package locally using pipx
+    summary: Builds and installs the package locally for testing
+    aliases:
+      - deploy
+    deps:
+      - build
+    cmds:
+      - cmd: echo "🚀 Installing locally with pipx..."
+        silent: true
+      - pipx install --force dist/*.whl
+      - cmd: echo "✅ Successfully deployed  {{.APP_NAME}} v$(task version) locally!"
+        silent: true
+
+  # === Running ===
   run:
     desc: Run the application
+    summary: Executes the application with optional CLI arguments
     cmds:
-      - uv run python -m appimage_updater {{.CLI_ARGS}}
+      - uv run python -m {{.APP_NAME}} {{.CLI_ARGS}}
+
+
+  # === Help ===
+  help:
+    desc: Show available tasks from a namespace (defaults to main)
+    summary: Displays tasks from the given namespace (defaults to main)
+    cmd: taskfile-help namespace {{.CLI_ARGS}}
+    silent: true  # Suppress task command echo
+
+  help:*:
+    desc: Show available tasks for "all" or the given namespace or for "?" list available namespaces
+    summary: |
+      Displays tasks for "all" or the given namespace or list available namespaces if "?" is specified
+      help:<namespace>    - Displays tasks from the given namespace
+      help:all            - Displays tasks from all Taskfiles
+      help:?              - Lists available namespaces
+    vars:
+      NAMESPACE: '{{index .MATCH 0}}'
+    cmd: taskfile-help namespace {{.NAMESPACE}}
+    silent: true  # Suppress task command echo
+
+  # === Search ===
+  search:
+    desc: Search for tasks
+    summary: Search for tasks in all Taskfiles
+    cmd: taskfile-help search {{.CLI_ARGS}}
+    silent: true  # Suppress task command echo
+
+  search:*:
+    desc: Search for tasks
+    summary: Search for tasks in all Taskfiles
+    vars:
+      PATTERN: '{{index .MATCH 0}}'
+    cmd: taskfile-help search {{.PATTERN}}
+    silent: true  # Suppress task command echo
+    

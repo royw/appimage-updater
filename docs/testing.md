@@ -217,26 +217,34 @@ task ci
 - Version display
 - Prepares for GitHub deployment
 
-### Version Management
+### Version Management and Release
 
 ```bash
 # Display current project version
 task version
 
-# Bump patch version, build, commit, and deploy locally
+# Bump patch version (e.g., 0.2.0 → 0.2.1)
 task version:bump
 
-# Create and push git tag for current version
-task version:tag
+# Bump minor version (e.g., 0.2.0 → 0.3.0)
+task version:bump:minor
+
+# Bump major version (e.g., 0.2.0 → 1.0.0)
+task version:bump:major
+
+# Prepare and build release (run after version:bump)
+task release
+
+# Create and push git tag (triggers GitHub Actions)
+task release:tag
 ```
 
-**task version:bump** workflow:
+**Release workflow**:
 
-1. Increments patch version (e.g., 0.2.0 → 0.2.1)
-1. Runs complete CI pipeline
-1. Builds distribution packages
-1. Commits version changes
-1. Performs local deployment verification
+1. **task version:bump**: Increments patch version and commits to pyproject.toml
+1. **task release**: Validates readiness, runs tests, updates CHANGELOG, builds packages, commits changes
+1. **task release:tag**: Creates git tag and pushes to GitHub
+1. **GitHub Actions**: Automatically creates release and publishes to PyPI
 
 ## Test Coverage
 

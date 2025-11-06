@@ -132,8 +132,14 @@ task build
 task deploy
 
 # Version management
-task version:show                                # Show current version
-task version:bump                                # Bump version and deploy
+task version                                     # Show current version
+task version:bump                                # Bump patch version (0.2.0 → 0.2.1)
+task version:bump:minor                          # Bump minor version (0.2.0 → 0.3.0)
+task version:bump:major                          # Bump major version (0.2.0 → 1.0.0)
+
+# Release workflow
+task release                                     # Prepare and build release
+task release:tag                                 # Create and push git tag
 ```
 
 #### CI/CD
@@ -276,14 +282,18 @@ git commit -m "feat: your descriptive commit message"
 # 6. Verify no pending changes
 git status
 
-# 7. Bump version and deploy locally using pipx
+# 7. Bump version (updates pyproject.toml and commits)
 task version:bump
 
-# 8. Verify the application
-appimage-updater --help
+# 8. Prepare release (validates, tests, updates CHANGELOG, builds)
+task release
 
-# 9. Push to remote
-git push
+# 9. Create and push git tag (triggers GitHub Actions)
+task release:tag
+
+# GitHub Actions will automatically:
+# - Create GitHub release with artifacts
+# - Publish to PyPI
 ```
 
 For detailed development guidelines including error handling, adding features, performance optimization, and debugging, see the [Architecture Guide](architecture.md).
@@ -297,7 +307,7 @@ Tasks are organized into logical categories for better maintainability:
 - **Code Quality**: `typecheck`, `lint`, `lint:fix`, `format`, `complexity`, `deadcode`
 - **Testing**: `test`, `test:all`, `test:e2e`, `test:e2e:coverage`, `test:regression`
 - **Documentation**: `docs`, `docs:build`, `docs:serve`
-- **Build/Release**: `build`, `deploy`, `version:show`, `version:bump`
+- **Build/Release**: `build`, `deploy:local`, `version`, `version:bump`, `release`, `release:tag`
 - **CI/CD**: `ci`, `check`
 
 ### Internal Tasks
@@ -317,7 +327,9 @@ task check          # Run all quality checks
 task test           # Run unit and functional tests
 task test:all       # Test all Python versions
 task ci             # Complete CI pipeline
-task version:bump   # Bump version and deploy
+task version:bump   # Bump patch version
+task release        # Prepare and build release
+task release:tag    # Create and push git tag
 ```
 
 ### Quick Code Quality Commands

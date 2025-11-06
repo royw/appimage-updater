@@ -66,20 +66,29 @@ task typecheck
 ### Build and Release Commands
 
 ```bash
-# Build the project
+# Build distribution packages
 task build
 
 # Clean build artifacts
 task clean
 
-# Bump version
-task version:bump
-
-# Tag version
-task version:tag
-
 # Show current version
 task version
+
+# Bump patch version
+task version:bump
+
+# Bump minor version
+task version:bump:minor
+
+# Bump major version
+task version:bump:major
+
+# Prepare and build release
+task release
+
+# Create and push git tag
+task release:tag
 ```
 
 ### Development Environment
@@ -160,18 +169,19 @@ task typecheck
 ### Release Process
 
 ```bash
-# 1. Bump version
+# 1. Bump version (updates pyproject.toml and commits)
 task version:bump
 
-# 2. Run full test suite
-task test:all
+# 2. Prepare release (validates, tests, updates CHANGELOG, builds)
+task release
 
-# 3. Tag release
-task version:tag
+# 3. Create and push git tag (triggers GitHub Actions)
+task release:tag
 
-# 4. Build and deploy
-task build
-task docs:deploy
+# GitHub Actions will automatically:
+# - Create GitHub release with artifacts
+# - Publish to PyPI
+# - Deploy documentation
 ```
 
 ## Other Developer Tools

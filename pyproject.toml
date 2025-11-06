@@ -46,27 +46,9 @@ Repository = "https://github.com/royw/appimage-updater"
 Issues = "https://github.com/royw/appimage-updater/issues"
 Changelog = "https://github.com/royw/appimage-updater/blob/main/CHANGELOG.md"
 
-[project.optional-dependencies]
-dev = [
-    "deadcode>=2.4.0",
-    "mkdocs>=1.6.1",
-    "mkdocs-gen-files>=0.5.0",
-    "mkdocs-git-revision-date-localized-plugin>=1.4.7",
-    "mkdocs-git-revision-date-plugin>=0.3.2",
-    "mkdocs-literate-nav>=0.6.2",
-    "mkdocs-material>=9.6.18",
-    "mkdocs-mermaid2-plugin>=1.2.2",
-    "mkdocstrings[python]>=0.30.0",
-    "mypy>=1.17.1",
-    "pytest>=8.4.1",
-    "pytest-anyio>=0.0.0",
-    "pytest-cov>=6.2.1",
-    "radon>=6.0.1",
-    "ruff>=0.12.11",
-    "trio>=0.30.0",
-    "version-bumper>=0.1.2",
-    "watchdog>=6.0.0",
-]
+# Using [dependency-groups] instead of [project.optional-dependencies] for modern uv support
+# [project.optional-dependencies]
+# dev = [...]
 
 [project.scripts]
 appimage-updater = "appimage_updater.main:cli_main"
@@ -239,6 +221,7 @@ dev = [
     "pytest-xdist>=3.8.0",
     "radon>=6.0.1",
     "ruff>=0.12.11",
+    "taskfile-help>=0.4.1",
     "trio>=0.30.0",
     "twine>=6.2.0",
     "version-bumper>=0.1.2",

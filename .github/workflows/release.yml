@@ -1,0 +1,78 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for changelog extraction
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          
+      - name: Install dependencies
+        run: uv sync --all-extras
+        
+      - name: Run tests
+        run: uv run pytest --timeout 30
+        
+      - name: Build package
+        run: uv build
+        
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+          
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          
+          # Extract the section for this version from CHANGELOG.md
+          # Look for ## [VERSION] and capture until the next ## [ or end of file
+          NOTES=$(awk "/## \[$VERSION\]/,/^## \[/ {
+            if (/^## \[/ && !/\[$VERSION\]/) exit;
+            if (!/^## \[$VERSION\]/) print
+          }" CHANGELOG.md)
+          
+          if [ -z "$NOTES" ]; then
+            echo "⚠️  No release notes found for version $VERSION in CHANGELOG.md"
+            NOTES="Release v$VERSION"
+          fi
+          
+          # Save to file to handle multiline content
+          echo "$NOTES" > release_notes.md
+          echo "Release notes extracted for v$VERSION"
+          
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release v${{ steps.get_version.outputs.version }}
+          body_path: release_notes.md
+          files: dist/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true  # Adds auto-generated notes from commits
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
