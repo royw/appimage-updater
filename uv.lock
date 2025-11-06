@@ -46,28 +46,6 @@ dependencies = [
     { name = "typer" },
 ]
 
-[package.optional-dependencies]
-dev = [
-    { name = "deadcode" },
-    { name = "mkdocs" },
-    { name = "mkdocs-gen-files" },
-    { name = "mkdocs-git-revision-date-localized-plugin" },
-    { name = "mkdocs-git-revision-date-plugin" },
-    { name = "mkdocs-literate-nav" },
-    { name = "mkdocs-material" },
-    { name = "mkdocs-mermaid2-plugin" },
-    { name = "mkdocstrings", extra = ["python"] },
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "pytest-anyio" },
-    { name = "pytest-cov" },
-    { name = "radon" },
-    { name = "ruff" },
-    { name = "trio" },
-    { name = "version-bumper" },
-    { name = "watchdog" },
-]
-
 [package.dev-dependencies]
 dev = [
     { name = "autotyping" },
@@ -100,33 +78,14 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "deadcode", marker = "extra == 'dev'", specifier = ">=2.4.0" },
     { name = "httpx", specifier = ">=0.25.0" },
     { name = "importlib-metadata", specifier = ">=8.7.0" },
     { name = "loguru", specifier = ">=0.7.0" },
-    { name = "mkdocs", marker = "extra == 'dev'", specifier = ">=1.6.1" },
-    { name = "mkdocs-gen-files", marker = "extra == 'dev'", specifier = ">=0.5.0" },
-    { name = "mkdocs-git-revision-date-localized-plugin", marker = "extra == 'dev'", specifier = ">=1.4.7" },
-    { name = "mkdocs-git-revision-date-plugin", marker = "extra == 'dev'", specifier = ">=0.3.2" },
-    { name = "mkdocs-literate-nav", marker = "extra == 'dev'", specifier = ">=0.6.2" },
-    { name = "mkdocs-material", marker = "extra == 'dev'", specifier = ">=9.6.18" },
-    { name = "mkdocs-mermaid2-plugin", marker = "extra == 'dev'", specifier = ">=1.2.2" },
-    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'dev'", specifier = ">=0.30.0" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.17.1" },
     { name = "packaging", specifier = ">=23.0" },
     { name = "pydantic", specifier = ">=2.5.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
-    { name = "pytest-anyio", marker = "extra == 'dev'", specifier = ">=0.0.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.2.1" },
-    { name = "radon", marker = "extra == 'dev'", specifier = ">=6.0.1" },
     { name = "rich", specifier = ">=13.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12.11" },
-    { name = "trio", marker = "extra == 'dev'", specifier = ">=0.30.0" },
     { name = "typer", specifier = ">=0.9.0" },
-    { name = "version-bumper", marker = "extra == 'dev'", specifier = ">=0.1.2" },
-    { name = "watchdog", marker = "extra == 'dev'", specifier = ">=6.0.0" },
 ]
-provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [
