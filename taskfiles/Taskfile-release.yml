@@ -58,7 +58,7 @@ tasks:
         awk '/## \[Unreleased\]/,/^## \[[0-9]/ {if (/^## \[[0-9]/) exit; print}' CHANGELOG.md | head -30
         echo "----------------------------------------"
       - echo "🧪 Running full test suite..."
-      - task: make
+      - task: :make
       - echo "✅ All tests passed!"
       - |
         # Check if test documentation was regenerated and needs to be committed

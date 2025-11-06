@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - rename release:build to release:prepare for clarity (8f94640)
 
 ### Fixed
+- call root make task from release:prepare using :make syntax (f9f052a)
 
 ## [0.5.3] - 2025-11-06
 
