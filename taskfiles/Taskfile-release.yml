@@ -2,16 +2,16 @@ version: '3'
 
 tasks:
 
-  # `task env` is equivalent to `task env:check`
-  # intentionally not using a desc:, instead the check: task has the description and indicates it is the default task
+  # `task release` is equivalent to `task release:prepare`
+  # intentionally not using a desc:, instead the prepare: task has the description and indicates it is the default task
   default:
     cmds:
-      - task: build
+      - task: prepare
     silent: true
 
   # === Release Management ===
 
-  build:
+  prepare:
     desc: Prepare and build a release, run after version:bump (default release task)
     summary: Validates readiness, runs tests, updates CHANGELOG, builds packages
     vars:
@@ -58,14 +58,14 @@ tasks:
         awk '/## \[Unreleased\]/,/^## \[[0-9]/ {if (/^## \[[0-9]/) exit; print}' CHANGELOG.md | head -30
         echo "----------------------------------------"
       - echo "🧪 Running full test suite..."
-      - task make
+      - task: make
       - echo "✅ All tests passed!"
       - |
         # Check if test documentation was regenerated and needs to be committed
         if [ -n "$(git status --porcelain docs/tests.md)" ]; then
           echo "❌ Error: Test documentation (docs/tests.md) has changed"
           echo "💡 The test suite regenerated docs/tests.md with updated test counts or descriptions"
-          echo "📝 Please commit the changes and re-run 'task release'"
+          echo "📝 Please commit the changes and re-run 'task release:prepare'"
           echo ""
           echo "Changed file:"
           git status --short docs/tests.md
@@ -88,7 +88,7 @@ tasks:
         git commit -m "chore: prepare release v{{.NEW_VERSION}}" --no-verify
         echo "✅ Committed release preparation for v{{.NEW_VERSION}}"
       - echo "🏗️  Building release package..."
-      - task: build
+      - task: :build
       - |
         # Commit uv.lock if it was changed by the build
         if [ -n "$(git status --porcelain uv.lock)" ]; then
