@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- remove compact mapping syntax from all Taskfiles to prevent YAML parsing errors (12907a8)
 
 ## [0.5.3] - 2025-11-06
 

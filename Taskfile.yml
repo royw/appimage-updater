@@ -102,25 +102,23 @@ tasks:
     deps:
       - env:clean
     cmds:
-      - cmd: echo "🏗️  Building distribution packages..."
-        silent: true
+      - echo "🏗️  Building distribution packages..."
       - uv build {{.CLI_ARGS}}
-      - cmd: echo "✅ Build complete! Packages created in dist/"
-        silent: true
+      - echo "✅ Build complete! Packages created in dist/"
       - ls -la dist/
+    silent: true
 
   make:
     desc: Complete build pipeline - run all checks, build, docs, and show version
     summary: Full CI/CD pipeline - quality checks, build packages, generate docs
     cmds:
-      - cmd: echo "🚀 Starting build pipeline..."
-        silent: true
+      - echo "🚀 Starting build pipeline..."
       - task: check
       - task: build
       - task: docs:build
       - task: version:current
-      - cmd: echo "✅ Build pipeline completed successfully! Ready to push to GitHub 🎉"
-        silent: true
+      - echo "✅ Build pipeline completed successfully! Ready to push to GitHub 🎉"
+    silent: true
 
   # === CI/CD Pipeline ===
   ci:
@@ -138,11 +136,10 @@ tasks:
     deps:
       - build
     cmds:
-      - cmd: echo "🚀 Installing locally with pipx..."
-        silent: true
+      - echo "🚀 Installing locally with pipx..."
       - pipx install --force dist/*.whl
-      - cmd: echo "✅ Successfully deployed  {{.APP_NAME}} v$(task version) locally!"
-        silent: true
+      - echo "✅ Successfully deployed  {{.APP_NAME}} v$(task version) locally!"
+    silent: true
 
   # === Running ===
   run:

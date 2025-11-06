@@ -116,8 +116,7 @@ tasks:
     desc: Find dead (unreachable/unused) code with deadcode (config in pyproject.toml)
     summary: Detects unused functions, classes, and imports
     cmds:
-      - cmd: echo "Checking deadcode..."
-        silent: true
+      - echo "Checking deadcode..."
       - uv run deadcode {{.CLI_ARGS | default .SRC}}
     silent: true
 
@@ -184,9 +183,9 @@ tasks:
     desc: Check for duplicate code using pylint
     summary: Finds similar code blocks that could be refactored
     cmds:
-      - cmd: echo "Checking for code duplication..."
-        silent: true
+      - echo "Checking for code duplication..."
       - uv run pylint --disable=all --enable=duplicate-code {{.CLI_ARGS | default .SRC}}
+    silent: true
 
   emoji:
     desc: Search for emojis in source code, docs, and configuration files

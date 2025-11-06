@@ -15,8 +15,8 @@ tasks:
     desc: Display the current project version (default version task)
     summary: Shows the version from pyproject.toml with 'v' prefix
     cmds:
-      - cmd: echo "v$(task version:pyproject)"
-        silent: true
+      - echo "v$(task version:pyproject)"
+    silent: true
 
   pyproject:
     desc: Extract version from pyproject.toml (internal task)
@@ -30,26 +30,21 @@ tasks:
     summary: Validates clean git state, bumps version, commits changes
     internal: true
     cmds:
-      - cmd: |
+      - |
           if [ -n "$(git status --porcelain)" ]; then
             echo "❌ Error: There are uncommitted changes. Please commit or stash them first."
             exit 1
           fi
-        silent: true
-      - cmd: echo "📈 Bumping {{.LEVEL}} version..."
-        silent: true
+      - echo "📈 Bumping {{.LEVEL}} version..."
       - uv run version_bumper bump {{.LEVEL}}
-      - cmd: echo "✅ Version bumped! New version:"
-        silent: true
+      - echo "✅ Version bumped! New version:"
       - task: current
-      - cmd: |
+      - |
           NEW_VERSION=$(task version:pyproject)
           git add pyproject.toml
           git commit -m "chore: bump version to ${NEW_VERSION}"
           echo "✅ Changes committed"
-        silent: true
-      - cmd: echo "💡 Run 'task release' to prepare and build the release"
-        silent: true
+      - echo "💡 Run 'task release' to prepare and build the release"
     silent: true
 
   bump:

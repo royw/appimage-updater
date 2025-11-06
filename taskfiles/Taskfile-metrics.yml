@@ -25,9 +25,8 @@ tasks:
     desc: Analyze code complexity with radon
     summary: Reports cyclomatic complexity for all functions and classes
     cmds:
-      - cmd: echo "Checking complexity..."
-        silent: true
-      - cmd: |
+      - echo "Checking complexity..."
+      - |
           # Read exclusion list from pyproject.toml
           EXCLUDED=$(uv run --quiet python -c "
           import sys
@@ -64,4 +63,4 @@ tasks:
               echo "$OUTPUT"
             fi
           fi
-        silent: true
+    silent: true

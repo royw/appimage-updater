@@ -18,7 +18,7 @@ tasks:
       NEW_VERSION:
         sh: task version:pyproject
     cmds:
-      - cmd: echo "🔍 Verifying release readiness..."
+      - echo "🔍 Verifying release readiness..."
       - |
         # Check for uncommitted changes
         if [ -n "$(git status --porcelain)" ]; then
@@ -57,9 +57,9 @@ tasks:
         echo "----------------------------------------"
         awk '/## \[Unreleased\]/,/^## \[[0-9]/ {if (/^## \[[0-9]/) exit; print}' CHANGELOG.md | head -30
         echo "----------------------------------------"
-      - cmd: echo "🧪 Running full test suite..."
-      - cmd: task make
-      - cmd: echo "✅ All tests passed!"
+      - echo "🧪 Running full test suite..."
+      - task make
+      - echo "✅ All tests passed!"
       - |
         # Check if test documentation was regenerated and needs to be committed
         if [ -n "$(git status --porcelain docs/tests.md)" ]; then
@@ -72,7 +72,7 @@ tasks:
           exit 1
         fi
         echo "✅ Test documentation is up to date"
-      - cmd: echo "📝 Preparing CHANGELOG for release..."
+      - echo "📝 Preparing CHANGELOG for release..."
       - |
         TODAY=$(date +%Y-%m-%d)
         
@@ -82,13 +82,13 @@ tasks:
         
         rm CHANGELOG.md.bak
         echo "✅ CHANGELOG.md prepared for v{{.NEW_VERSION}}"
-      - cmd: echo "📝 Committing release preparation..."
+      - echo "📝 Committing release preparation..."
       - |
         git add pyproject.toml CHANGELOG.md
         git commit -m "chore: prepare release v{{.NEW_VERSION}}" --no-verify
         echo "✅ Committed release preparation for v{{.NEW_VERSION}}"
-      - cmd: echo "🏗️  Building release package..."
-      - cmd: task build
+      - echo "🏗️  Building release package..."
+      - task: build
       - |
         # Commit uv.lock if it was changed by the build
         if [ -n "$(git status --porcelain uv.lock)" ]; then
@@ -112,40 +112,42 @@ tasks:
       - Run tests
       - Create a GitHub release with assets
       - Publish to PyPI automatically
+    vars:
+      DEFAULT_BRANCH:
+        sh: git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'
+      VERSION:
+        sh: task version:pyproject
     cmds:
-      - |
-        echo "Pushing changes to master..."
-        git push origin master
-        VERSION=$(task version:pyproject)
-        echo "Creating tag v$VERSION..."
-        git tag "v$VERSION"
-        git push origin "v$VERSION"
-        echo "✅ Tag v$VERSION created and pushed to origin!"
-        echo ""
-        echo "🤖 GitHub Actions will now:"
-        echo "   1. Build the package"
-        echo "   2. Run tests"
-        echo "   3. Create GitHub release with assets"
-        echo "   4. Publish to PyPI"
-        echo ""
-        echo "📊 Monitor progress at: https://github.com/royw/taskfile_help/actions"
+      - echo "Pushing changes to {{.DEFAULT_BRANCH}}..."
+      - git push origin {{.DEFAULT_BRANCH}}
+      - echo "Creating tag v{{.VERSION}}..."
+      - git tag "v{{.VERSION}}"
+      - git push origin "v{{.VERSION}}"
+      - echo "✅ Tag v{{.VERSION}} created and pushed to origin!"
+      - echo ""
+      - echo "🤖 GitHub Actions will now:"
+      - echo "   1. Build the package"
+      - echo "   2. Run tests"
+      - echo "   3. Create GitHub release with assets"
+      - echo "   4. Publish to PyPI"
+      - echo ""
+      - echo "Monitor progress at https://github.com/royw/appimage-updater/actions"
+    silent: true
 
   pypi-test:
     desc: Test PyPI upload
     summary: Uploads the package to PyPI for testing
     cmds:
-      - cmd: echo "Uploading package to PyPI for testing..."
-        silent: true
-      - cmd: twine upload --repository testpypi dist/*
-      - cmd: echo "✅ Package uploaded to PyPI for testing!"
-        silent: true
+      - echo "Uploading package to PyPI for testing..."
+      - twine upload --repository testpypi dist/*
+      - echo "✅ Package uploaded to PyPI for testing!"
+    silent: true
 
   pypi:
     desc: PyPI upload
     summary: Uploads the package to PyPI
     cmds:
-      - cmd: echo "Uploading package to PyPI..."
-        silent: true
-      - cmd: twine upload dist/*
-      - cmd: echo "✅ Package uploaded to PyPI!"
-        silent: true
+      - echo "Uploading package to PyPI..."
+      - twine upload dist/*
+      - echo "✅ Package uploaded to PyPI!"
+    silent: true

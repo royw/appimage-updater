@@ -83,8 +83,7 @@ tasks:
     desc: Run all tests against all Python versions without coverage
     summary: Tests against multiple Python versions using uv.  This rebuilds .venv for each Python version, restoring to the .python-version at the end.
     cmds:
-      - cmd: echo "🐍 Running tests against all Python versions..."
-        silent: true
+      - echo "🐍 Running tests against all Python versions..."
       - for:
           var: PYTHON_VERSIONS
           split: ' '
@@ -92,8 +91,8 @@ tasks:
           echo "📋 Testing with Python {{.ITEM}}"
           bash -c 'set -o pipefail; uv run --python {{.ITEM}} pytest --timeout {{.TEST_TIMEOUT}} {{.TEST_CORE}} --tb=short --color=yes 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
       - task: env:sync
-      - cmd: echo "✅ All Python versions tested successfully!"
-        silent: true
+      - echo "✅ All Python versions tested successfully!"
+    silent: true
 
   coverage:
     desc: Run all tests with detailed coverage reporting (XML, HTML, terminal)
@@ -101,5 +100,5 @@ tasks:
     cmds:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} {{.TEST_CORE}} --cov=src/{{.APP_NAME}} --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
       - task: _check
-      - cmd: echo "📊 Coverage report saved to htmlcov/index.html"
-        silent: true
+      - echo "📊 Coverage report saved to htmlcov/index.html"
+    silent: true
