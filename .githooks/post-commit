@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# Post-commit hook to automatically update CHANGELOG.md with the latest commit
+
+set -e
+
+# Prevent infinite loop - check if we're already updating CHANGELOG
+if [[ -n "$UPDATING_CHANGELOG" ]]; then
+    exit 0
+fi
+
+CHANGELOG="CHANGELOG.md"
+LAST_COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+LAST_COMMIT_HASH=$(git log -1 --pretty=format:"%h")
+
+# Check if CHANGELOG was modified in this commit (avoid re-running on amend)
+if git diff-tree --no-commit-id --name-only -r HEAD | grep -q "^CHANGELOG.md$"; then
+    exit 0
+fi
+
+# Only update for conventional commit types
+if [[ ! "$LAST_COMMIT_MSG" =~ ^(feat|fix|docs|refactor|test|chore|perf|style|ci|build|revert): ]]; then
+    echo "Skipping CHANGELOG update: not a conventional commit"
+    exit 0
+fi
+
+# Check if CHANGELOG exists
+if [[ ! -f "$CHANGELOG" ]]; then
+    echo "CHANGELOG.md not found, skipping update"
+    exit 0
+fi
+
+# Extract commit type and message
+COMMIT_TYPE=$(echo "$LAST_COMMIT_MSG" | cut -d: -f1)
+COMMIT_DESC=$(echo "$LAST_COMMIT_MSG" | cut -d: -f2- | sed 's/^ //')
+
+# Map commit type to CHANGELOG section
+case "$COMMIT_TYPE" in
+    feat)
+        SECTION="Added"
+        ;;
+    fix)
+        SECTION="Fixed"
+        ;;
+    docs)
+        SECTION="Changed"
+        ;;
+    refactor|perf)
+        SECTION="Changed"
+        ;;
+    *)
+        # Skip other types (test, chore, style, ci, build)
+        echo "Skipping CHANGELOG update for commit type: $COMMIT_TYPE"
+        exit 0
+        ;;
+esac
+
+# Create temp file
+TEMP_FILE=$(mktemp)
+
+# Flag to track if we're in the Unreleased section
+IN_UNRELEASED=false
+SECTION_FOUND=false
+ADDED_ENTRY=false
+
+while IFS= read -r line; do
+    echo "$line" >> "$TEMP_FILE"
+    
+    # Detect Unreleased section
+    if [[ "$line" == "## [Unreleased]" ]]; then
+        IN_UNRELEASED=true
+        continue
+    fi
+    
+    # Exit Unreleased section when we hit the next version
+    if [[ "$IN_UNRELEASED" == true ]] && [[ "$line" =~ ^##\ \[.*\]\ -\  ]]; then
+        IN_UNRELEASED=false
+    fi
+    
+    # Look for the appropriate section within Unreleased
+    if [[ "$IN_UNRELEASED" == true ]] && [[ "$line" == "### $SECTION" ]]; then
+        SECTION_FOUND=true
+        # Add the new entry after the section header
+        echo "- $COMMIT_DESC ($LAST_COMMIT_HASH)" >> "$TEMP_FILE"
+        ADDED_ENTRY=true
+        # Skip the next line (empty line after section header)
+        read -r line
+        echo "$line" >> "$TEMP_FILE"
+        continue
+    fi
+    
+done < "$CHANGELOG"
+
+# If we added an entry, update the CHANGELOG
+if [[ "$ADDED_ENTRY" == true ]]; then
+    mv "$TEMP_FILE" "$CHANGELOG"
+    
+    # Stage and amend the commit to include CHANGELOG
+    # Set environment variable to prevent infinite loop
+    git add "$CHANGELOG"
+    UPDATING_CHANGELOG=1 git commit --amend --no-edit --no-verify
+    
+    echo "✓ CHANGELOG.md updated with: $COMMIT_DESC"
+else
+    rm "$TEMP_FILE"
+    
+    # If section wasn't found, we might need to create it
+    if [[ "$SECTION_FOUND" == false ]]; then
+        echo "⚠ Could not find '### $SECTION' in [Unreleased] section"
+        echo "  Please add the entry manually or update CHANGELOG structure"
+    fi
+fi
+
+exit 0
