@@ -89,7 +89,7 @@ tasks:
     desc: Run all code quality checks including end-to-end tests
     summary: Runs formatting, linting, complexity checks, and all tests
     cmds:
-      - task: fix:emoji
+      - task: lint:fix:emoji
       - task: format
       - task: lint
       - task: complexity
