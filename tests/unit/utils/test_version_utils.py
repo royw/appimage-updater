@@ -40,6 +40,10 @@ class TestNormalizeVersionString:
         """Test dash-separated release candidate."""
         assert normalize_version_string("2.3.1-rc") == "2.3.1-rc"
 
+    def test_dash_separated_rc_with_number(self) -> None:
+        """Test dash-separated release candidate with numeric suffix (rc1)."""
+        assert normalize_version_string("1.1-rc1") == "1.1-rc1"
+
     def test_dash_separated_uppercase_beta(self) -> None:
         """Test dash-separated uppercase beta."""
         assert normalize_version_string("2.3.1-BETA") == "2.3.1-beta"
@@ -47,6 +51,10 @@ class TestNormalizeVersionString:
     def test_dash_separated_mixed_case(self) -> None:
         """Test dash-separated mixed case."""
         assert normalize_version_string("2.3.1-Beta") == "2.3.1-beta"
+
+    def test_dash_separated_beta_with_number(self) -> None:
+        """Test dash-separated beta with numeric suffix (beta2)."""
+        assert normalize_version_string("1.1-beta2") == "1.1-beta2"
 
     def test_architecture_suffix_x86(self) -> None:
         """Test stripping x86 architecture suffix."""
@@ -140,6 +148,10 @@ class TestNormalizeVersionString:
     def test_unknown_suffix_stripped(self) -> None:
         """Test unknown suffix is stripped."""
         assert normalize_version_string("2.3.1-unknown") == "2.3.1"
+
+    def test_unknown_suffix_stripped_two_part(self) -> None:
+        """Test unknown suffix on two-part version is stripped (1.1-foo2 -> 1.1)."""
+        assert normalize_version_string("1.1-foo2") == "1.1"
 
     def test_empty_string(self) -> None:
         """Test empty string."""

@@ -60,13 +60,21 @@ def _remove_version_prefix(version: str) -> str:
 
 
 def _handle_dash_separated_suffix(version: str, core_version: str, suffix: str) -> str:
-    """Handle dash-separated version suffix processing."""
-    # Keep pre-release identifiers
-    if suffix.lower() in ["beta", "alpha", "rc"]:
-        return f"{core_version}-{suffix.lower()}"
+    """Handle dash-separated version suffix processing.
+
+    This function is responsible for deciding whether to keep or strip
+    dash-separated suffixes. Pre-release identifiers like rc1, beta2,
+    alpha3 must be preserved so that versions such as "1.1-rc1" do not
+    get normalized to "1.1".
+    """
+    normalized_suffix = suffix.lower()
+
+    # Keep pre-release identifiers, including numbered variants like rc1, beta2, alpha3
+    if re.match(r"^(alpha|beta|rc)\d*$", normalized_suffix):
+        return f"{core_version}-{normalized_suffix}"
 
     # Strip architecture identifiers and other non-version suffixes
-    if _is_architecture_suffix(suffix):
+    if _is_architecture_suffix(normalized_suffix):
         return core_version
 
     # For unknown suffixes, return just the core version to be safe

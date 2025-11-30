@@ -190,3 +190,4 @@ github_token.txt
 /verify_*.py
 /recreate_*.py
 /normalize_*.py
+examples/
