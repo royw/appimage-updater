@@ -54,13 +54,24 @@ def _print_global_config_rich(global_config: Any, defaults: Any, output_formatte
     _print_defaults_settings_table(defaults, rich_console)
 
 
-def show_global_config(config_file: Path | None = None, config_dir: Path | None = None) -> None:
-    """Show current global configuration."""
+def show_global_config(
+    config_file: Path | None = None,
+    config_dir: Path | None = None,
+    app_configs_factory: Any = AppConfigs,
+    formatter_factory: Callable[[], Any] = get_output_formatter,
+) -> None:
+    """Show current global configuration.
+
+    The additional parameters are primarily for testing, allowing injection of
+    factories for configuration loading and output formatting without touching
+    the actual file system or global formatter state.
+    """
     try:
-        app_configs = AppConfigs(config_path=config_file or config_dir)
+        config_path = config_file or config_dir
+        app_configs = app_configs_factory(config_path)
         config = app_configs._config
         defaults = config.global_config.defaults
-        output_formatter = get_output_formatter()
+        output_formatter = formatter_factory()
 
         if output_formatter and not hasattr(output_formatter, "console"):
             _print_global_config_structured(config.global_config, defaults, output_formatter)
@@ -227,14 +238,18 @@ def _add_misc_rows(defaults_table: Table, defaults: Any) -> None:
     defaults_table.add_row("Prerelease", "[dim](prerelease)[/dim]", "Yes" if defaults.prerelease else "No")
 
 
-def _handle_config_load_error(e: ConfigLoadError) -> bool:
+def _handle_config_load_error(e: ConfigLoadError, err_console: Any = console) -> bool:
     """Handle configuration load errors.
+
+    Args:
+        e: The configuration load error that occurred
+        err_console: Console-like object to use for output; defaults to module console.
 
     Returns:
         False to indicate error occurred
     """
-    console.print(f"[red]Error loading configuration: {e}")
-    console.print("[yellow]Run 'appimage-updater init' to create a configuration.")
+    err_console.print(f"[red]Error loading configuration: {e}")
+    err_console.print("[yellow]Run 'appimage-updater init' to create a configuration.")
     return False
 
 
@@ -252,10 +267,22 @@ def _print_effective_config_rich(app_name: str, effective_config: dict[str, Any]
     _print_checksum_config_table(effective_config, rich_console)
 
 
-def show_effective_config(app_name: str, config_file: Path | None = None, config_dir: Path | None = None) -> None:
-    """Show effective configuration for a specific application."""
+def show_effective_config(
+    app_name: str,
+    config_file: Path | None = None,
+    config_dir: Path | None = None,
+    app_configs_factory: Any = AppConfigs,
+    formatter_factory: Callable[[], Any] = get_output_formatter,
+) -> None:
+    """Show effective configuration for a specific application.
+
+    The additional parameters are primarily for testing, allowing injection of
+    factories for configuration loading and output formatting without touching
+    the actual file system or global formatter state.
+    """
     try:
-        app_configs = AppConfigs(config_path=config_file or config_dir)
+        config_path = config_file or config_dir
+        app_configs = app_configs_factory(config_path)
         config = app_configs._config
         effective_config = config.get_effective_config_for_app(app_name)
 
@@ -263,7 +290,7 @@ def show_effective_config(app_name: str, config_file: Path | None = None, config
             _handle_app_not_found(app_name)
             return
 
-        output_formatter = get_output_formatter()
+        output_formatter = formatter_factory()
 
         if output_formatter and not hasattr(output_formatter, "console"):
             _print_effective_config_structured(app_name, effective_config, output_formatter)
@@ -420,18 +447,16 @@ def set_global_config_value(
     value: str,
     config_file: Path | None = None,
     config_dir: Path | None = None,
+    global_manager_factory: Any = GlobalConfigManager,
 ) -> bool:
     """Set a global configuration value.
 
     Returns:
         True if the setting was applied successfully, False otherwise.
     """
-    try:
-        global_manager = GlobalConfigManager(config_file or config_dir)
-        config = global_manager._config
-    except ConfigLoadError:
-        # Create new configuration if none exists
-        config = Config()
+    target_path = config_file or config_dir
+    global_manager = global_manager_factory(target_path)
+    config = global_manager.config
 
     # Apply the setting change
     if not _apply_setting_change(config, setting, value):
@@ -449,7 +474,10 @@ def _apply_setting_change(config: Config, setting: str, value: str) -> bool:
         True if the setting was applied successfully, False otherwise.
     """
     # Define setting type mappings
-    setting_handlers = {
+    setting_handlers: dict[
+        str,
+        tuple[Callable[[str], bool], Callable[[Config, str, str], object]],
+    ] = {
         "path": (_is_path_setting, _apply_path_setting),
         "string": (_is_string_setting, _apply_string_setting),
         "boolean": (_is_boolean_setting, _apply_boolean_setting),
@@ -499,25 +527,25 @@ def _is_numeric_setting(setting: str) -> bool:
     return setting in ("retain-count", "concurrent-downloads", "timeout-seconds", "process-pool-size")
 
 
-def _apply_path_setting(config: Config, setting: str, value: str) -> None:
+def _apply_path_setting(config: Config, setting: str, value: str, console_to_use: Any = console) -> None:
     """Apply path-based setting changes."""
     path_value = Path(value).expanduser() if value != "none" else None
     if setting == "download-dir":
         config.global_config.defaults.download_dir = path_value
-        console.print(f"[green]Set default download directory to: {value}")
+        console_to_use.print(f"[green]Set default download directory to: {value}")
     elif setting == "symlink-dir":
         config.global_config.defaults.symlink_dir = path_value
-        console.print(f"[green]Set default symlink directory to: {value}")
+        console_to_use.print(f"[green]Set default symlink directory to: {value}")
 
 
-def _apply_string_setting(config: Config, setting: str, value: str) -> None:
+def _apply_string_setting(config: Config, setting: str, value: str, console_to_use: Any = console) -> None:
     """Apply string-based setting changes."""
     if setting == "symlink-pattern":
         config.global_config.defaults.symlink_pattern = value
-        console.print(f"[green]Set default symlink pattern to: {value}")
+        console_to_use.print(f"[green]Set default symlink pattern to: {value}")
     elif setting == "checksum-pattern":
         config.global_config.defaults.checksum_pattern = value
-        console.print(f"[green]Set default checksum pattern to: {value}")
+        console_to_use.print(f"[green]Set default checksum pattern to: {value}")
 
 
 def _parse_boolean_value(value: str) -> bool:
@@ -525,40 +553,40 @@ def _parse_boolean_value(value: str) -> bool:
     return value.lower() in ("true", "yes", "1")
 
 
-def _apply_rotation_enabled_setting(config: Config, bool_value: bool) -> None:
+def _apply_rotation_enabled_setting(config: Config, bool_value: bool, console_to_use: Any = console) -> None:
     """Apply rotation enabled setting."""
     config.global_config.defaults.rotation_enabled = bool_value
-    console.print(f"[green]Set default rotation enabled to: {bool_value}")
+    console_to_use.print(f"[green]Set default rotation enabled to: {bool_value}")
 
 
-def _apply_symlink_enabled_setting(config: Config, bool_value: bool) -> None:
+def _apply_symlink_enabled_setting(config: Config, bool_value: bool, console_to_use: Any = console) -> None:
     """Apply symlink enabled setting."""
     config.global_config.defaults.symlink_enabled = bool_value
-    console.print(f"[green]Set default symlink enabled to: {bool_value}")
+    console_to_use.print(f"[green]Set default symlink enabled to: {bool_value}")
 
 
-def _apply_checksum_enabled_setting(config: Config, bool_value: bool) -> None:
+def _apply_checksum_enabled_setting(config: Config, bool_value: bool, console_to_use: Any = console) -> None:
     """Apply checksum enabled setting."""
     config.global_config.defaults.checksum_enabled = bool_value
-    console.print(f"[green]Set default checksum enabled to: {bool_value}")
+    console_to_use.print(f"[green]Set default checksum enabled to: {bool_value}")
 
 
-def _apply_checksum_required_setting(config: Config, bool_value: bool) -> None:
+def _apply_checksum_required_setting(config: Config, bool_value: bool, console_to_use: Any = console) -> None:
     """Apply checksum required setting."""
     config.global_config.defaults.checksum_required = bool_value
-    console.print(f"[green]Set default checksum required to: {bool_value}")
+    console_to_use.print(f"[green]Set default checksum required to: {bool_value}")
 
 
-def _apply_prerelease_setting(config: Config, bool_value: bool) -> None:
+def _apply_prerelease_setting(config: Config, bool_value: bool, console_to_use: Any = console) -> None:
     """Apply prerelease setting."""
     config.global_config.defaults.prerelease = bool_value
-    console.print(f"[green]Set default prerelease to: {bool_value}")
+    console_to_use.print(f"[green]Set default prerelease to: {bool_value}")
 
 
-def _apply_auto_subdir_setting(config: Config, bool_value: bool) -> None:
+def _apply_auto_subdir_setting(config: Config, bool_value: bool, console_to_use: Any = console) -> None:
     """Apply auto-subdir setting."""
     config.global_config.defaults.auto_subdir = bool_value
-    console.print(f"[green]Set automatic subdirectory creation to: {bool_value}")
+    console_to_use.print(f"[green]Set automatic subdirectory creation to: {bool_value}")
 
 
 def _get_boolean_setting_handler(setting: str) -> Callable[[Config, bool], None] | None:

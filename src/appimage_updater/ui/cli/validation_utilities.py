@@ -11,33 +11,55 @@ from rich.console import Console
 console = Console()
 
 
-def _check_rotation_warning(app_config: dict[str, Any], warnings: list[str]) -> None:
-    """Check if rotation is enabled but no symlink is configured."""
+def _check_rotation_warning(app_config: dict[str, Any], warnings: list[str]) -> bool:
+    """Check if rotation is enabled but no symlink is configured.
+
+    Returns True if a warning was added, False otherwise.
+    """
     if app_config.get("rotation", False) and not app_config.get("symlink"):
         warnings.append(
             "Rotation is enabled but no symlink path is configured. "
             "Files will be rotated but no symlink will be created."
         )
+        return True
+    return False
 
 
-def _check_download_directory_warning(download_dir: str, warnings: list[str]) -> None:
-    """Check if download directory doesn't exist."""
+def _check_download_directory_warning(download_dir: str, warnings: list[str]) -> bool:
+    """Check if download directory doesn't exist.
+
+    Returns True if a warning was added, False otherwise.
+    """
 
     if not Path(download_dir).exists():
         warnings.append(f"Download directory '{download_dir}' does not exist. You may need to create it manually.")
+        return True
+    return False
 
 
-def _check_checksum_warning(app_config: dict[str, Any], warnings: list[str]) -> None:
-    """Check if checksum verification is disabled."""
+def _check_checksum_warning(app_config: dict[str, Any], warnings: list[str]) -> bool:
+    """Check if checksum verification is disabled.
+
+    Returns True if a warning was added, False otherwise.
+    """
+
     if not app_config.get("checksum", True):
         warnings.append("Checksum verification is disabled. Downloaded files will not be verified for integrity.")
+        return True
+    return False
 
 
-def _check_pattern_warning(app_config: dict[str, Any], warnings: list[str]) -> None:
-    """Check for potentially problematic patterns."""
+def _check_pattern_warning(app_config: dict[str, Any], warnings: list[str]) -> bool:
+    """Check for potentially problematic patterns.
+
+    Returns True if a warning was added, False otherwise.
+    """
+
     pattern = app_config.get("pattern", "")
     if ".*" in pattern and not pattern.endswith("$"):
         warnings.append(f"Pattern '{pattern}' contains '.*' but doesn't end with '$'. This may match unintended files.")
+        return True
+    return False
 
 
 def _display_warnings(warnings: list[str]) -> None:

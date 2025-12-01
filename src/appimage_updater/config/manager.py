@@ -313,6 +313,16 @@ class GlobalConfigManager(Manager):
         self.save_global_config_only(self._config_path)
         logger.debug("Global configuration saved")
 
+    @property
+    def config(self) -> Config:
+        """Public accessor for the underlying Config object.
+
+        This exposes the configuration in a supported way for callers that
+        need to work with the full Config model, rather than just the
+        convenience properties defined on GlobalConfigManager.
+        """
+        return self._config
+
     # Global settings properties
     @property
     def concurrent_downloads(self) -> int:
