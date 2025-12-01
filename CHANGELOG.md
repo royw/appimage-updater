@@ -13,6 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+## [0.5.4] - 2025-11-30
+
+### Added
+
+### Changed
+
+### Fixed
+
 - preserve rc prerelease suffix in version normalization (b4ee937)
 
 ## [0.5.3] - 2025-11-06
