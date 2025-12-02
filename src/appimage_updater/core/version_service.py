@@ -8,19 +8,15 @@ across the entire application.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from packaging import version
 
+from appimage_updater.config.models import ApplicationConfig
 from appimage_updater.core.info_file_service import InfoFileService
 from appimage_updater.core.local_version_service import LocalVersionService
+from appimage_updater.core.models import Asset
 from appimage_updater.core.repository_version_service import RepositoryVersionService
 from appimage_updater.core.version_parser import VersionParser
-
-
-if TYPE_CHECKING:
-    from appimage_updater.config.models import ApplicationConfig
-    from appimage_updater.core.models import Asset
 
 
 class VersionService:

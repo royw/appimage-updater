@@ -7,20 +7,16 @@ of an installed application using multiple strategies in priority order.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from loguru import logger
 
+from appimage_updater.config.models import ApplicationConfig
 from appimage_updater.core.info_file_service import InfoFileService
 from appimage_updater.core.version_parser import VersionParser
 from appimage_updater.utils.version_file_utils import (
     extract_versions_from_files,
     select_newest_version,
 )
-
-
-if TYPE_CHECKING:
-    from appimage_updater.config.models import ApplicationConfig
 
 
 class LocalVersionService:
@@ -75,8 +71,8 @@ class LocalVersionService:
 
     def _get_version_from_current_file(self, app_config: ApplicationConfig) -> str | None:
         """Extract version from .current file by parsing the filename."""
-        download_dir = self._get_download_directory(app_config)
-        if not download_dir or not download_dir.exists():
+        download_dir = app_config.download_dir
+        if not download_dir.exists():
             return None
 
         # Look for .current files
@@ -98,8 +94,8 @@ class LocalVersionService:
 
     def _get_version_from_files(self, app_config: ApplicationConfig) -> str | None:
         """Determine current version by analyzing existing files in download directory."""
-        download_dir = self._get_download_directory(app_config)
-        if not download_dir or not download_dir.exists():
+        download_dir = app_config.download_dir
+        if not download_dir.exists():
             return None
 
         app_files = self._find_appimage_files(download_dir)
@@ -111,10 +107,6 @@ class LocalVersionService:
             return None
 
         return self._select_newest_version(version_files)
-
-    def _get_download_directory(self, app_config: ApplicationConfig) -> Path | None:
-        """Get the download directory for the application."""
-        return getattr(app_config, "download_dir", None) or Path.home() / "Downloads"
 
     def _find_appimage_files(self, download_dir: Path) -> list[Path]:
         """Find all AppImage files in the directory."""

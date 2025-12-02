@@ -2,12 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-
-if TYPE_CHECKING:
-    from ..commands.parameters import CheckParams, RepositoryParams
-
+from ..commands.parameters import CheckParams, RepositoryParams
 from .http_tracker import HTTPTracker
 from .logging_interface import create_default_http_logger, create_trace_http_logger
 

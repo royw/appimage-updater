@@ -7,11 +7,8 @@ utilities to ensure consistent version handling across the application.
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
 
-
-if TYPE_CHECKING:
-    from ..core.models import Asset
+from ..core.models import Asset
 
 
 def normalize_version_string(version: str) -> str:

@@ -17,9 +17,6 @@ from typer.testing import CliRunner
 from appimage_updater.core.http_service import reset_http_client_factory, set_http_client_factory
 from appimage_updater.core.models import Asset, Release
 
-# Export MockHTTPResponse for use in tests
-__all__ = ["MockHTTPResponse", "MockHTTPClient"]
-
 
 def pytest_configure(config: pytest.Config) -> None:
     """Configure E2E tests to restore original httpx.AsyncClient.

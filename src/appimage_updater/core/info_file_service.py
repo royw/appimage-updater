@@ -8,13 +8,10 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-from typing import TYPE_CHECKING
 
 from loguru import logger
 
-
-if TYPE_CHECKING:
-    from appimage_updater.config.models import ApplicationConfig
+from appimage_updater.config.models import ApplicationConfig
 
 
 class InfoFileService:
@@ -31,8 +28,7 @@ class InfoFileService:
         Returns:
             Path to .info file if found, None if no suitable file exists
         """
-        download_dir = getattr(app_config, "download_dir", None) or Path.home() / "Downloads"
-
+        download_dir = app_config.download_dir
         if not download_dir.exists():
             return None
 

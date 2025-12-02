@@ -9,26 +9,10 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-import sys
 import tempfile
 import urllib.parse
 
 from loguru import logger
-
-
-# Python 3.13+ has warnings.deprecated, for older versions use a no-op decorator
-if sys.version_info >= (3, 13):
-    from warnings import deprecated
-else:
-
-    def deprecated(msg: str):  # type: ignore
-        """No-op decorator for Python < 3.13."""
-
-        def decorator(func):  # type: ignore
-            return func
-
-        return decorator
-
 
 from appimage_updater.config.models import ApplicationConfig
 from appimage_updater.core.models import Release
@@ -141,9 +125,9 @@ async def _legacy_fetch_pattern(url: str) -> str | None:
                 logger.debug("No AppImage or ZIP files found in any releases")
                 return None
 
-            if target_files:
-                return version_service.generate_pattern_from_filename(target_files[0])
-            return create_pattern_from_filenames(target_files, include_both_formats=True)
+            # For legacy fallback, use the centralized version service to
+            # generate a flexible pattern from the first target filename.
+            return version_service.generate_pattern_from_filename(target_files[0])
     except (RepositoryError, ValueError, AttributeError) as e:
         logger.debug(f"Error fetching releases: {e}")
         return None
@@ -214,22 +198,6 @@ def _select_target_files(groups: dict[str, list[str]]) -> list[str] | None:
 
     # Fall back to prerelease files
     return _select_prerelease_files(groups)
-
-
-@deprecated("Use repository-specific pattern generation methods instead")
-def create_pattern_from_filenames(filenames: list[str], include_both_formats: bool = False) -> str:
-    """Create a regex pattern from actual AppImage/ZIP filenames."""
-    if not filenames:
-        return _build_pattern("", include_both_formats, empty_ok=True)
-
-    base_filenames = _strip_extensions_list(filenames)
-    common_prefix = _derive_common_prefix(base_filenames, filenames)
-    common_prefix = _generalize_pattern_prefix(common_prefix)
-    pattern = _build_pattern(common_prefix, include_both_formats)
-
-    fmt = "both ZIP and AppImage" if include_both_formats else "AppImage"
-    logger.debug(f"Created {fmt} pattern '{pattern}' from {len(filenames)} files: {filenames[:3]}...")
-    return pattern
 
 
 def _strip_extensions_list(filenames: list[str]) -> list[str]:

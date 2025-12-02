@@ -7,17 +7,13 @@ through the Repository Protocol to get latest versions and assets.
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
 
 from loguru import logger
 
+from appimage_updater.config.models import ApplicationConfig
+from appimage_updater.core.models import Asset, Release
 from appimage_updater.core.version_parser import VersionParser
 from appimage_updater.repositories.factory import get_repository_client_async
-
-
-if TYPE_CHECKING:
-    from appimage_updater.config.models import ApplicationConfig
-    from appimage_updater.core.models import Asset, Release
 
 
 class RepositoryVersionService:

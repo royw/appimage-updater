@@ -6,7 +6,6 @@ from datetime import datetime
 from pathlib import Path
 import re
 from typing import (
-    TYPE_CHECKING,
     Annotated,
     Any,
 )
@@ -17,23 +16,13 @@ from pydantic import (
     Field,
 )
 
+from ..config.models import ApplicationConfig
 from .system_info import (
     get_system_info,
     is_compatible_architecture,
     is_compatible_platform,
     is_supported_format,
 )
-
-
-if TYPE_CHECKING:
-    from ..config.models import ApplicationConfig
-else:
-    # Import at runtime for model rebuilding
-    try:
-        from ..config.models import ApplicationConfig
-    except ImportError:
-        # Handle circular import by deferring
-        ApplicationConfig = None
 
 
 def _parse_datetime(v: datetime | str) -> datetime:
@@ -313,13 +302,6 @@ class DownloadResult(BaseModel):
     )
 
 
-def rebuild_models() -> None:
-    """Rebuild models after all imports are resolved."""
-    if not TYPE_CHECKING and ApplicationConfig is not None:
-        UpdateCandidate.model_rebuild()
-        CheckResult.model_rebuild()
-
-
 class InteractiveResult(BaseModel):
     """Result from interactive operations."""
 
@@ -337,17 +319,3 @@ class InteractiveResult(BaseModel):
     def cancelled_result(cls, reason: str) -> InteractiveResult:
         """Create a cancelled result."""
         return cls(success=False, cancelled=True, reason=reason)
-
-
-# Export all models for proper type checking
-__all__ = [
-    "Asset",
-    "Release",
-    "UpdateCandidate",
-    "CheckResult",
-    "ChecksumResult",
-    "DownloadResult",
-    "InteractiveResult",
-    "ApplicationConfig",
-    "rebuild_models",
-]

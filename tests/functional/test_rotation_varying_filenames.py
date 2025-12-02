@@ -10,15 +10,12 @@ import pytest
 
 from appimage_updater.config.models import ApplicationConfig, ChecksumConfig
 from appimage_updater.core.downloader import Downloader
-from appimage_updater.core.models import Asset, UpdateCandidate, rebuild_models
+from appimage_updater.core.models import Asset, UpdateCandidate
 
 
 # from appimage_updater.config import ApplicationConfig, ChecksumConfig
 # from appimage_updater.downloader import Downloader
 # from appimage_updater.models import Asset, UpdateCandidate, rebuild_models
-
-# Rebuild models to resolve forward references
-rebuild_models()
 
 # Configure anyio to use only asyncio backend
 pytest_plugins = ("anyio",)
