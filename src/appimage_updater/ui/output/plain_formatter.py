@@ -224,7 +224,7 @@ class PlainOutputFormatter(OutputFormatter):
     def _print_plain_optional_config(self, app_details: dict[str, Any]) -> None:
         """Print optional configuration for plain format."""
         if "prerelease" in app_details:
-            print(f"  Prerelease: {'Yes' if app_details['prerelease'] else 'No'}")
+            print(f"  Prerelease: {self._bool_to_str(app_details['prerelease'], 'Yes', 'No')}")
 
         if app_details.get("symlink_path"):
             print(f"  Symlink Path: {app_details['symlink_path']}")
@@ -239,19 +239,23 @@ class PlainOutputFormatter(OutputFormatter):
             if value is not None:
                 print(f"    {key}: {value}")
 
+    def _bool_to_str(self, value: bool, true_str: str, false_str: str) -> str:
+        """Convert boolean to string."""
+        return true_str if value else false_str
+
     def _print_plain_checksum_config(self, app_details: dict[str, Any]) -> None:
         """Print checksum configuration for plain format."""
         checksum = app_details.get("checksum")
         if not checksum:
             return
 
-        status = "Enabled" if checksum.get("enabled") else "Disabled"
+        status = self._bool_to_str(checksum.get("enabled"), "Enabled", "Disabled")
         print(f"  Checksum Verification: {status}")
 
         if checksum.get("enabled"):
             required_value = None
             if checksum.get("required") is not None:
-                required_value = "Yes" if checksum.get("required") else "No"
+                required_value = self._bool_to_str(checksum.get("required"), "Yes", "No")
 
             items = [
                 ("Algorithm", checksum.get("algorithm")),
@@ -266,10 +270,17 @@ class PlainOutputFormatter(OutputFormatter):
         if not rotation:
             return
 
-        status = "Enabled" if rotation.get("enabled") else "Disabled"
+        status = self._bool_to_str(rotation.get("enabled"), "Enabled", "Disabled")
         print(f"  File Rotation: {status}")
         if rotation.get("enabled") and rotation.get("retain_count"):
             print(f"    Retain Count: {rotation['retain_count']}")
+
+    def _print_plain_files_list(self, files_info: list[dict[str, Any]]) -> None:
+        """Print list of files for plain format."""
+        for file_info in files_info:
+            print(f"  {file_info.get('name')}")
+            if file_info.get("size"):
+                print(f"    Size: {file_info['size']}")
 
     def _print_plain_files_section(self, app_details: dict[str, Any]) -> None:
         """Print files section for plain format."""
@@ -280,10 +291,7 @@ class PlainOutputFormatter(OutputFormatter):
         if isinstance(files_info, dict) and "status" in files_info:
             print(f"  {files_info['status']}")
         elif isinstance(files_info, list):
-            for file_info in files_info:
-                print(f"  {file_info.get('name')}")
-                if file_info.get("size"):
-                    print(f"    Size: {file_info['size']}")
+            self._print_plain_files_list(files_info)
 
     def _print_plain_symlinks_section(self, app_details: dict[str, Any]) -> None:
         """Print symlinks section for plain format."""

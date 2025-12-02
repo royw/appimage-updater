@@ -7,7 +7,7 @@ import pytest
 from appimage_updater.events.event_bus import Event, EventBus, get_event_bus
 
 
-class TestEvent(Event):
+class SampleEvent(Event):
     def __init__(self, source: str | None = None, **kwargs: Any) -> None:  # type: ignore[override]
         super().__init__(source, **kwargs)
 
@@ -26,12 +26,12 @@ class TestEventBus:
         def handler(event: Event) -> None:
             received.append(event)
 
-        bus._subscribers[TestEvent].append(handler)  # type: ignore[attr-defined]
+        bus._subscribers[SampleEvent].append(handler)  # type: ignore[attr-defined]
 
-        bus.publish(TestEvent(source="test"))
+        bus.publish(SampleEvent(source="test"))
 
         assert len(received) == 1
-        assert isinstance(received[0], TestEvent)
+        assert isinstance(received[0], SampleEvent)
 
     def test_publish_triggers_async_subscribers(self) -> None:
         bus = EventBus()
@@ -40,14 +40,14 @@ class TestEventBus:
         async def async_handler(event: Event) -> None:
             received.append(event)
 
-        bus._async_subscribers[TestEvent].append(async_handler)  # type: ignore[attr-defined]
+        bus._async_subscribers[SampleEvent].append(async_handler)  # type: ignore[attr-defined]
 
         async def runner() -> None:
-            bus.publish(TestEvent(source="async-test"))
+            bus.publish(SampleEvent(source="async-test"))
             # Let the scheduled task run
             await asyncio.sleep(0)
 
         asyncio.run(runner())
 
         assert len(received) == 1
-        assert isinstance(received[0], TestEvent)
+        assert isinstance(received[0], SampleEvent)

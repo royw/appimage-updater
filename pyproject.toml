@@ -248,6 +248,7 @@ ignore-names = [
     "validate_symlink_path",
     "model_post_init",
     "validate_paths",
+    "validate_target_dir",
     "apply_global_defaults_to_config",
     # Pydantic model fields
     "checked_at",

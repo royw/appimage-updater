@@ -285,6 +285,27 @@ class MarkdownOutputFormatter(OutputFormatter):
 
         return header
 
+    def _pattern_based_colors(self, header_lower: str) -> str | None:
+        """Get color for header based on pattern matching.
+
+        Args:
+            header_lower: Lowercase header name
+
+        Returns:
+            Color name or None if no pattern matches
+        """
+        patterns = [
+            (("current", "version"), "gold"),
+            (("latest", "version"), "green"),
+            (("update", "available"), "red"),
+        ]
+
+        for words, color in patterns:
+            if all(word in header_lower for word in words):
+                return color
+
+        return None
+
     def _get_cell_color_for_header(self, header_lower: str) -> str | None:
         """Get static color for a cell based on header name.
 
@@ -305,11 +326,8 @@ class MarkdownOutputFormatter(OutputFormatter):
         if header_lower in exact_colors:
             return exact_colors[header_lower]
 
-        # Pattern-based colors
-        if "current" in header_lower and "version" in header_lower:
-            return "gold"
-        if "latest" in header_lower and "version" in header_lower:
-            return "green"
+        if self._pattern_based_colors(header_lower):
+            return self._pattern_based_colors(header_lower)
 
         return None
 
@@ -328,8 +346,8 @@ class MarkdownOutputFormatter(OutputFormatter):
             return self._colorize_status_value(value)
 
         # Update Available column - color based on value
-        if "update" in header_lower and "available" in header_lower:
-            return self._colorize_update_available_value(value)
+        if self._pattern_based_colors(header_lower):
+            return self._pattern_based_colors(header_lower)
 
         # Source column or any URL - wrap in angle brackets
         if header_lower == "source" or self._is_url(value):
@@ -401,22 +419,6 @@ class MarkdownOutputFormatter(OutputFormatter):
 
         # Default color
         return f"$$\\color{{magenta}}{{{escaped_value}}}$$"
-
-    def _colorize_update_available_value(self, value: str) -> str:
-        """Colorize update available column values.
-
-        Args:
-            value: Update available value
-
-        Returns:
-            Colored value
-        """
-        if value.lower() in ["yes", "true"]:
-            return f"$$\\color{{red}}{{{self._escape_latex(value)}}}$$"
-        elif value.lower() in ["no", "false"]:
-            return f"$$\\color{{green}}{{{self._escape_latex(value)}}}$$"
-        else:
-            return value
 
     def print_progress(self, current: int, total: int, description: str = "") -> None:
         """Display progress information as markdown.
@@ -550,11 +552,15 @@ class MarkdownOutputFormatter(OutputFormatter):
         print()
         self._output_lines.append("")
 
+    def _bool_to_str(self, value: Any, true_str: str, false_str: str) -> str:
+        """Convert boolean to string."""
+        return true_str if value else false_str
+
     def _print_basic_config_items(self, app_details: dict[str, Any]) -> None:
         """Print basic configuration items."""
         config_items = [
             ("Name", app_details.get("name")),
-            ("Status", "Enabled" if app_details.get("enabled") else "Disabled"),
+            ("Status", self._bool_to_str(app_details.get("enabled"), "Enabled", "Disabled")),
             ("Source", app_details.get("source_type", "").title()),
             ("URL", app_details.get("url")),
             ("Download Directory", app_details.get("download_dir")),
@@ -582,7 +588,7 @@ class MarkdownOutputFormatter(OutputFormatter):
     def _print_optional_config_items(self, app_details: dict[str, Any]) -> None:
         """Print optional configuration items."""
         if "prerelease" in app_details:
-            line = f"- **Prerelease:** {'Yes' if app_details['prerelease'] else 'No'}"
+            line = f"- **Prerelease:** {self._bool_to_str(app_details['prerelease'], 'Yes', 'No')}"
             print(line)
             self._output_lines.append(line)
 
@@ -618,7 +624,7 @@ class MarkdownOutputFormatter(OutputFormatter):
             items = [
                 ("Algorithm", checksum.get("algorithm")),
                 ("Pattern", checksum.get("pattern")),
-                ("Required", "Yes" if checksum.get("required") else "No"),
+                ("Required", self._bool_to_str(checksum.get("required"), "Yes", "No")),
             ]
             self._print_config_items(items)
 
@@ -650,14 +656,21 @@ class MarkdownOutputFormatter(OutputFormatter):
             print(line)
             self._output_lines.append(line)
         elif isinstance(files_info, list):
-            for file_info in files_info:
-                file_line = f"- **{file_info.get('name')}**"
-                print(file_line)
-                self._output_lines.append(file_line)
-                if file_info.get("size"):
-                    size_line = f"  - Size: {file_info['size']}"
-                    print(size_line)
-                    self._output_lines.append(size_line)
+            self._print_files_list(files_info)
+
+        print()
+        self._output_lines.append("")
+
+    def _print_files_list(self, files_info: list[dict[str, Any]]) -> None:
+        """Print files list."""
+        for file_info in files_info:
+            file_line = f"- **{file_info.get('name')}**"
+            print(file_line)
+            self._output_lines.append(file_line)
+            if file_info.get("size"):
+                size_line = f"  - Size: {file_info['size']}"
+                print(size_line)
+                self._output_lines.append(size_line)
 
         print()
         self._output_lines.append("")
@@ -674,13 +687,17 @@ class MarkdownOutputFormatter(OutputFormatter):
             print(line)
             self._output_lines.append(line)
         elif isinstance(symlinks_info, list):
-            for symlink_info in symlinks_info:
-                symlink_line = f"- {symlink_info.get('link')} → {symlink_info.get('target')}"
-                print(symlink_line)
-                self._output_lines.append(symlink_line)
+            self._print_symlinks_list(symlinks_info)
 
         print()
         self._output_lines.append("")
+
+    def _print_symlinks_list(self, symlinks_info: list[dict[str, Any]]) -> None:
+        """Print symlinks list."""
+        for symlink_info in symlinks_info:
+            symlink_line = f"- {symlink_info.get('link')} → {symlink_info.get('target')}"
+            print(symlink_line)
+            self._output_lines.append(symlink_line)
 
     def start_section(self, title: str) -> None:
         """Start a new output section with markdown heading.
