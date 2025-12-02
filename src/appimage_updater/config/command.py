@@ -267,6 +267,20 @@ def _print_effective_config_rich(app_name: str, effective_config: dict[str, Any]
     _print_checksum_config_table(effective_config, rich_console)
 
 
+def _display_effective_config(
+    app_name: str,
+    effective_config: dict[str, Any],
+    formatter_factory: Callable[[], Any],
+) -> None:
+    """Display effective configuration using the appropriate formatter."""
+    output_formatter = formatter_factory()
+
+    if output_formatter and not hasattr(output_formatter, "console"):
+        _print_effective_config_structured(app_name, effective_config, output_formatter)
+    else:
+        _print_effective_config_rich(app_name, effective_config, output_formatter)
+
+
 def show_effective_config(
     app_name: str,
     config_file: Path | None = None,
@@ -290,12 +304,7 @@ def show_effective_config(
             _handle_app_not_found(app_name)
             return
 
-        output_formatter = formatter_factory()
-
-        if output_formatter and not hasattr(output_formatter, "console"):
-            _print_effective_config_structured(app_name, effective_config, output_formatter)
-        else:
-            _print_effective_config_rich(app_name, effective_config, output_formatter)
+        _display_effective_config(app_name, effective_config, formatter_factory)
 
     except ConfigLoadError as e:
         _handle_config_load_error(e)
@@ -501,7 +510,7 @@ def _apply_setting_change(config: Config, setting: str, value: str) -> bool:
 
 def _is_path_setting(setting: str) -> bool:
     """Check if setting is a path-based setting."""
-    return setting in ("download-dir", "symlink-dir")
+    return setting in ("download-dir", "symlink-dir", "target-dir")
 
 
 def _is_string_setting(setting: str) -> bool:
@@ -536,6 +545,9 @@ def _apply_path_setting(config: Config, setting: str, value: str, console_to_use
     elif setting == "symlink-dir":
         config.global_config.defaults.symlink_dir = path_value
         console_to_use.print(f"[green]Set default symlink directory to: {value}")
+    elif setting == "target-dir":
+        config.global_config.target_dir = path_value
+        console_to_use.print(f"[green]Set target directory to: {value}")
 
 
 def _apply_string_setting(config: Config, setting: str, value: str, console_to_use: Any = console) -> None:
@@ -763,6 +775,12 @@ def _list_settings_structured(formatter: Any) -> None:
             "description": "Default symlink directory",
             "valid_values": "path or 'none'",
             "example": "config set symlink-dir ~/bin",
+        },
+        {
+            "setting": "target-dir",
+            "description": "Base directory for relative download and symlink paths",
+            "valid_values": "path or 'none'",
+            "example": "config set target-dir ~/Applications",
         },
         {
             "setting": "symlink-pattern",

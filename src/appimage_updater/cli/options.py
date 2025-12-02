@@ -167,6 +167,12 @@ class CLIOptions:
         ),
     )
 
+    ADD_TARGET_DIR_OPTION = typer.Option(
+        None,
+        "--target-dir",
+        help="Base directory for resolving relative download and symlink paths",
+    )
+
     ADD_ROTATION_OPTION = typer.Option(
         None,
         "--rotation/--no-rotation",
@@ -268,6 +274,11 @@ class CLIOptions:
 
     EDIT_URL_OPTION = typer.Option(None, "--url", help="Update the repository URL")
     EDIT_DOWNLOAD_DIR_OPTION = typer.Option(None, "--download-dir", help="Update the download directory")
+    EDIT_TARGET_DIR_OPTION = typer.Option(
+        None,
+        "--target-dir",
+        help="Base directory for resolving relative download and symlink paths",
+    )
     EDIT_BASENAME_OPTION = typer.Option(None, "--basename", help="Update the base name for file matching")
     EDIT_PATTERN_OPTION = typer.Option(None, "--pattern", help="Update the file pattern (regex)")
     EDIT_VERSION_PATTERN_OPTION = typer.Option(

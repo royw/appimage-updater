@@ -217,6 +217,7 @@ async def generate_default_config(
     rotation: bool | None = None,
     retain: int | None = None,
     symlink: str | None = None,
+    effective_symlink: str | None = None,
     prerelease: bool | None = None,
     checksum: bool | None = None,
     checksum_algorithm: str | None = None,

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from loguru import logger
@@ -41,6 +42,31 @@ class EditCommand(BaseCommand, FormatterContextMixin, Command):
     def __init__(self, params: EditParams):
         super().__init__()
         self.params = params
+
+    def _get_effective_target_dir(self) -> Path | None:
+        """Resolve effective target directory from CLI or global config."""
+        if self.params.target_dir:
+            return Path(self.params.target_dir).expanduser()
+
+        config_path = self.params.config_file or self.params.config_dir
+        global_manager = GlobalConfigManager(config_path)
+        target = getattr(global_manager.config.global_config, "target_dir", None)
+        return target
+
+    @staticmethod
+    def _apply_target_dir_to_path(value: str | None, target_dir: Path | None) -> str | None:
+        """Apply target_dir to a relative path, leaving absolute and ~ paths unchanged."""
+        if not value or target_dir is None:
+            return value
+
+        if str(value).startswith(("~", "./", "../")):
+            return value
+
+        path = Path(value).expanduser()
+        if path.is_absolute():
+            return str(path)
+
+        return str(target_dir / value)
 
     def validate(self) -> list[str]:
         """Validate command parameters."""
@@ -168,15 +194,19 @@ class EditCommand(BaseCommand, FormatterContextMixin, Command):
     def _collect_updates_from_parameters(self) -> dict[str, Any]:
         """Collect updates from command parameters."""
 
+        effective_target_dir = self._get_effective_target_dir()
+        download_dir = self._apply_target_dir_to_path(self.params.download_dir, effective_target_dir)
+        symlink_path = self._apply_target_dir_to_path(self.params.symlink_path, effective_target_dir)
+
         return collect_edit_updates(
             url=self.params.url,
-            download_dir=self.params.download_dir,
+            download_dir=download_dir,
             basename=self.params.basename,
             pattern=self.params.pattern,
             enable=self.params.enable,
             prerelease=self.params.prerelease,
             rotation=self.params.rotation,
-            symlink_path=self.params.symlink_path,
+            symlink_path=symlink_path,
             retain_count=self.params.retain_count,
             checksum=self.params.checksum,
             checksum_algorithm=self.params.checksum_algorithm,
