@@ -469,7 +469,7 @@ class TestSettingHandlers:
         assert "numeric" in handlers
         assert len(handlers) == 4
 
-    @patch("appimage_updater.config.cmd.setting_operations._show_available_settings")
+    @patch("appimage_updater.config.cmd.setting_operations.show_available_settings")
     def test_handle_unknown_setting(self, mock_show: MagicMock) -> None:
         """Test handling unknown setting."""
         mock_show.return_value = False
@@ -511,7 +511,7 @@ class TestApplySettingChange:
         assert result is True
         assert mock_config.global_config.defaults.checksum_algorithm == "sha1"
 
-    @patch("appimage_updater.config.cmd.setting_operations._show_available_settings")
+    @patch("appimage_updater.config.cmd.setting_operations.show_available_settings")
     def test_apply_setting_change_unknown(
         self, mock_show: MagicMock, mock_config: Config, mock_console: MagicMock
     ) -> None:

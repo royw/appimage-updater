@@ -1,7 +1,7 @@
 # Test Documentation
 
-> **Auto-generated** on 2025-11-06 16:35:32
-> **Total Tests**: 297
+> **Auto-generated** on 2025-12-02 03:37:09
+> **Total Tests**: 319
 
 This page provides a comprehensive overview of all tests in the project, automatically extracted from test docstrings.
 
@@ -106,6 +106,8 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestBuildPathFromParts | `test_build_path_from_parts_single_part_too_long` | Test building path from single part that's too long. |
 | TestCheckCommand | `test_check_command_execution` | Test check command execution. |
 | TestCheckCommand | `test_check_command_validation` | Test check command validation (no required parameters). |
+| TestCollectEditUpdateHelpers | `test_collect_checksum_edit_updates_includes_only_provided_fields` | collect_checksum_edit_updates should only include non-None fields. |
+| TestCollectEditUpdateHelpers | `test_collect_rotation_edit_updates_includes_only_provided_fields` | collect_rotation_edit_updates should only include non-None fields. |
 | TestCollectEditUpdates | `test_collect_edit_updates_force_default_false` | Test that force defaults to False in collect_edit_updates. |
 | TestCollectEditUpdates | `test_collect_edit_updates_passes_force_to_basic` | Test that collect_edit_updates passes force parameter to basic updates. |
 | TestCommandFactory | `test_create_add_command` | Test creating an add command. |
@@ -179,6 +181,11 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestGetChecksumStatus | `test_get_checksum_status_no_verified_attribute` | Test checksum status when verified attribute is missing. |
 | TestGetChecksumStatus | `test_get_checksum_status_not_verified` | Test checksum status when checksum is not verified. |
 | TestGetChecksumStatus | `test_get_checksum_status_verified` | Test checksum status when checksum is verified. |
+| TestGetEffectiveChecksumConfig | `test_defaults_when_all_values_none_and_no_defaults` | Without explicit values or defaults, built-in checksum defaults are used. |
+| TestGetEffectiveChecksumConfig | `test_explicit_values_override_defaults` | Explicit checksum parameters should override defaults when provided. |
+| TestGetEffectiveDownloadDir | `test_current_working_directory_used_when_no_defaults` | Without download_dir or defaults, use Path.cwd() / name. |
+| TestGetEffectiveDownloadDir | `test_defaults_used_when_no_download_dir` | When no download_dir is given, use defaults.get_default_download_dir(name). |
+| TestGetEffectiveDownloadDir | `test_explicit_download_dir_is_used_as_is` | If download_dir is provided, it should be returned unchanged. |
 | TestGetRotationIndicator | `test_current_indicator` | Test filename with current indicator. |
 | TestGetRotationIndicator | `test_no_indicator` | Test filename without rotation indicator. |
 | TestGetRotationIndicator | `test_old_indicator` | Test filename with old indicator. |
@@ -269,6 +276,13 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestRepositoryFactoryIntegration | `test_mixed_configuration_scenarios` | Test various configuration scenarios that might occur in practice. |
 | TestResultsDisplayIntegration | `test_console_initialization` | Test that console is properly initialized. |
 | TestResultsDisplayIntegration | `test_console_no_color_environment` | Test console respects NO_COLOR environment variable. |
+| TestSymlinkPathValidators | `test_validate_symlink_path_characters_accepts_normal_paths` | Regular filesystem paths should be accepted. |
+| TestSymlinkPathValidators | `test_validate_symlink_path_characters_rejects_invalid_chars` | Paths containing NUL or newline characters should be rejected. |
+| TestSymlinkPathValidators | `test_validate_symlink_path_exists_allows_non_empty` | Non-empty paths should pass existence check. |
+| TestSymlinkPathValidators | `test_validate_symlink_path_exists_rejects_empty_or_whitespace` | Empty or whitespace-only symlink paths should raise ValueError. |
+| TestSymlinkPathValidators | `test_validate_symlink_path_noop_when_missing_key` | If 'symlink_path' is not present, validate_symlink_path should be a no-op. |
+| TestSymlinkPathValidators | `test_validate_symlink_path_rejects_non_appimage_extension` | Non-.AppImage symlink paths should be rejected by the full validator. |
+| TestSymlinkPathValidators | `test_validate_symlink_path_updates_to_normalized_absolute` | validate_symlink_path should normalize and store an absolute .AppImage path. |
 | TestSystemDetector | `test_architecture_detection` | Test architecture detection and aliasing. |
 | TestSystemDetector | `test_format_detection_darwin_raises_error` | Test that non-Linux platforms raise RuntimeError. |
 | TestSystemDetector | `test_format_detection_linux` | Test supported format detection for Linux. |
@@ -286,6 +300,14 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestUnifiedRepositoryInterface | `test_unified_interface_legacy_path_direct` | Test unified interface uses legacy path for direct URLs with probing disabled. |
 | TestUnifiedRepositoryInterface | `test_unified_interface_legacy_path_github` | Test unified interface uses legacy path for GitHub with probing disabled. |
 | TestUnifiedRepositoryInterface | `test_unified_interface_performance_optimization` | Test performance optimization scenarios. |
+| TestValidateAddRotationConfig | `test_rotation_none_or_false_is_allowed` | Rotation disabled or unspecified should pass validation. |
+| TestValidateAddRotationConfig | `test_rotation_true_without_symlink_shows_error_and_returns_false` | --rotation without symlink should be rejected with helpful messaging. |
+| TestValidateBasicFieldUpdates | `test_invalid_checksum_algorithm_raises_value_error` | An unsupported checksum_algorithm should raise ValueError. |
+| TestValidateBasicFieldUpdates | `test_invalid_regex_pattern_raises_value_error` | An invalid regex pattern in updates['pattern'] should raise ValueError. |
+| TestValidateBasicFieldUpdates | `test_valid_pattern_and_checksum_algorithm_pass_validation` | Valid regex pattern and checksum algorithm should not raise. |
+| TestValidateBasicFieldUpdates | `test_validate_direct_url_handles_exceptions` | Non-string or malformed inputs should be caught and return None with details. |
+| TestValidateDirectUrl | `test_validate_direct_url_accepts_well_formed_url` | A well-formed URL with scheme and host should be returned unchanged. |
+| TestValidateDirectUrl | `test_validate_direct_url_rejects_missing_scheme_or_host` | URLs without scheme or host should be rejected with an error message. |
 | TestValidateUrlUpdate | `test_validate_url_update_force_bypasses_validation_errors` | Test that force flag bypasses validation errors completely. |
 | TestValidateUrlUpdate | `test_validate_url_update_force_removes_flag_from_updates` | Test that force flag is removed from updates after processing. |
 | TestValidateUrlUpdate | `test_validate_url_update_no_url_returns_early` | Test that validate_url_update returns early when no URL is provided. |

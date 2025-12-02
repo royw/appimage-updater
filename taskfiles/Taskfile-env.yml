@@ -59,3 +59,9 @@ tasks:
       - rm -rf site/
     silent: true
 
+  clean:bytecodes:
+    desc: Clean up bytecodes
+    summary: Removes __pycache__, .pyc
+    cmds:
+      - find . -type d -name "__pycache__" -exec rm -rf {} +
+      - find . -type f -name "*.pyc" -delete

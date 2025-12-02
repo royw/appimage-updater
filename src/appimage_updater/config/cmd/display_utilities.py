@@ -165,7 +165,7 @@ def _print_checksum_config_table(effective_config: dict[str, Any]) -> None:
     console.print(checksum_table)
 
 
-def _show_available_settings(setting: str) -> bool:
+def show_available_settings(setting: str) -> bool:
     """Show available settings and return False to indicate error."""
     console.print(f"[red]Unknown setting: {setting}")
     console.print("[yellow]Available settings:")

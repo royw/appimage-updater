@@ -15,7 +15,7 @@ from typing import (
 from rich.console import Console
 
 from ..models import Config
-from .display_utilities import _show_available_settings
+from .display_utilities import show_available_settings
 
 
 # Console instance for all display operations
@@ -78,7 +78,7 @@ def _handle_numeric_setting(config: Config, setting: str, value: str) -> bool:
 
 def _handle_unknown_setting(setting: str) -> bool:
     """Handle unknown settings by showing available options."""
-    return _show_available_settings(setting)
+    return show_available_settings(setting)
 
 
 def _is_path_setting(setting: str) -> bool:

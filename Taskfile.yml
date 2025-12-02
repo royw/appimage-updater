@@ -88,6 +88,8 @@ tasks:
   check:
     desc: Run all code quality checks including end-to-end tests
     summary: Runs formatting, linting, complexity checks, and all tests
+    deps:
+      - env:clean:bytecodes
     cmds:
       - task: lint:fix:emoji
       - task: format
