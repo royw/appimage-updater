@@ -294,6 +294,11 @@ $$\\color{cyan}\\text{Updates found but downloads declined due to --no option}$$
 appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
 appimage-updater add --prerelease --rotation VSCode https://github.com/microsoft/vscode ~/Apps/VSCode
 
+# Use a base target directory for relative paths
+appimage-updater config set target-dir ~/Applications
+appimage-updater add MyApp https://github.com/user/repo MyApp \
+  --symlink-path MyApp.AppImage  # both paths resolved under ~/Applications
+
 # Check for updates
 appimage-updater check                    # All applications
 appimage-updater check --dry-run          # Check only, no downloads

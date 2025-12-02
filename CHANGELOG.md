@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add --target-dir support for add and edit commands (4d1f4f3)
 
 ### Changed
+- document --target-dir option and behavior (7e4bcfa)
 
 ### Fixed
 
