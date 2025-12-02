@@ -59,7 +59,6 @@ class AddParams(BaseParams):
     interactive: bool = False
     examples: bool = False
     output_format: Any = None  # OutputFormat, avoiding circular import
-    target_dir: str | None = None
 
 
 @dataclass
@@ -108,7 +107,6 @@ class EditParams(BaseParams):
     auto_subdir: bool | None = None
     dry_run: bool = False
     output_format: Any = None  # OutputFormat, avoiding circular import
-    target_dir: str | None = None
 
 
 @dataclass

@@ -28,21 +28,6 @@ from .parameter_resolution import _resolve_add_parameters
 from .validation_utilities import _check_configuration_warnings
 
 
-def _apply_target_dir_to_symlink(symlink: str | None, target_dir: Path | None) -> str | None:
-    """Apply target_dir to a relative symlink path."""
-    if not symlink or target_dir is None:
-        return symlink
-
-    # Keep ~ and absolute paths unchanged
-    if str(symlink).startswith(("~", "./", "../")):
-        return symlink
-    symlink_path = Path(symlink).expanduser()
-    if symlink_path.is_absolute():
-        return str(symlink_path)
-
-    return str(target_dir / symlink)
-
-
 def _validate_add_inputs(url: str, rotation: bool | None, symlink: str | None, direct: bool | None = None) -> bool:
     """Validate add command inputs."""
     validated_url = validate_and_normalize_add_url(url, direct)
@@ -73,7 +58,6 @@ async def _prepare_add_configuration(
     yes: bool,
     no: bool,
     dry_run: bool,
-    target_dir: str | None,
 ) -> dict[str, Any] | None:
     """Prepare configuration data for add operation."""
     validated_url = validate_and_normalize_add_url(url, direct)
@@ -91,11 +75,8 @@ async def _prepare_add_configuration(
         config_file,
         config_dir,
         name,
-        target_dir,
     )
-
-    effective_target_dir = resolved_params.get("target_dir")
-    effective_symlink = _apply_target_dir_to_symlink(symlink, effective_target_dir)
+    effective_symlink = symlink
 
     # Handle download directory creation
     resolved_download_dir = resolved_params["download_dir"]
@@ -226,7 +207,6 @@ async def _add(
     no: bool,
     dry_run: bool,
     verbose: bool,
-    target_dir: str | None,
 ) -> bool:
     """Execute the add command logic."""
     try:
@@ -244,7 +224,6 @@ async def _add(
             config_file,
             config_dir,
             name,
-            target_dir,
         )
 
         _handle_add_verbose_logging(
@@ -285,7 +264,6 @@ async def _add(
             yes,
             no,
             dry_run,
-            target_dir,
         )
 
         if config_data is None:
@@ -315,7 +293,6 @@ def _prepare_add_parameters(
     config_file: Path | None,
     config_dir: Path | None,
     name: str,
-    target_dir: str | None,
 ) -> Any:
     """Prepare and resolve add command parameters."""
     return _resolve_add_parameters(
@@ -328,7 +305,6 @@ def _prepare_add_parameters(
         config_file,
         config_dir,
         name,
-        target_dir,
     )
 
 
@@ -386,7 +362,6 @@ async def _process_add_configuration(
     yes: bool,
     no: bool,
     dry_run: bool,
-    target_dir: str | None,
 ) -> dict[str, Any] | None:
     """Process and prepare add configuration data."""
     return await _prepare_add_configuration(
@@ -410,7 +385,6 @@ async def _process_add_configuration(
         yes,
         no,
         dry_run,
-        target_dir,
     )
 
 

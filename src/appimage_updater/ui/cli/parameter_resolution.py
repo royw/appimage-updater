@@ -27,9 +27,17 @@ def _resolve_download_directory(
     download_dir: str | None,
     global_config: Any,
     name: str,
-    target_dir: Path | None,
 ) -> str:
-    """Resolve download directory with global defaults, auto-subdir, and target_dir."""
+    """Resolve download directory with global defaults and auto-subdir.
+
+    Behavior:
+    - If a download_dir is provided:
+        - Expand ~ and absolute paths and use them directly
+        - Leave relative paths unchanged (relative to current working directory)
+    - If no download_dir is provided:
+        - Use global defaults.download_dir when set, otherwise ~/Applications
+        - Apply auto-subdir when enabled
+    """
     if download_dir:
         # Respect ~ and absolute paths as-is (expanded)
         if str(download_dir).startswith("~"):
@@ -39,24 +47,11 @@ def _resolve_download_directory(
         if download_path.is_absolute():
             return str(download_path)
 
-        # Relative path with effective target_dir
-        if target_dir is not None:
-            return str(target_dir / download_dir)
-
-        # No target_dir: keep original behavior (relative as given)
+        # Keep relative paths as provided (no target-dir semantics)
         return download_dir
 
     base_dir = _get_base_download_directory(global_config)
     return _apply_auto_subdir(base_dir, global_config, name)
-
-
-def _get_effective_target_dir(target_dir: str | None, global_config: Any) -> Path | None:
-    """Resolve effective target directory from CLI or global config."""
-    if target_dir:
-        return Path(target_dir).expanduser()
-    if global_config and getattr(global_config.config.global_config, "target_dir", None):
-        return Path(global_config.config.global_config.target_dir)
-    return None
 
 
 def _get_base_download_directory(global_config: Any) -> Path:
@@ -110,14 +105,12 @@ def _resolve_add_parameters(
     config_file: Path | None,
     config_dir: Path | None,
     name: str,
-    target_dir: str | None,
 ) -> dict[str, Any]:
     """Resolve all add command parameters using global defaults."""
     config_path = config_file or config_dir
     global_config = GlobalConfigManager(config_path)
 
-    effective_target_dir = _get_effective_target_dir(target_dir, global_config)
-    resolved_download_dir = _resolve_download_directory(download_dir, global_config, name, effective_target_dir)
+    resolved_download_dir = _resolve_download_directory(download_dir, global_config, name)
     resolved_rotation = _resolve_rotation_parameter(rotation, global_config)
     resolved_prerelease = _resolve_prerelease_parameter(prerelease, global_config)
     resolved_checksum, resolved_checksum_required = _resolve_checksum_parameters(

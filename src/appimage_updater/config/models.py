@@ -209,11 +209,6 @@ class GlobalConfig(BaseModel):
         default_factory=lambda: _get_default_user_agent(),
         description="User agent for HTTP requests",
     )
-    # New: base directory for resolving relative download/symlink paths
-    target_dir: Path | None = Field(
-        default=None,
-        description="Base directory for resolving relative download and symlink paths",
-    )
     defaults: DefaultsConfig = Field(
         default_factory=DefaultsConfig,
         description="Default settings for new applications",
@@ -221,13 +216,6 @@ class GlobalConfig(BaseModel):
     domain_knowledge: DomainKnowledge = Field(
         default_factory=DomainKnowledge, description="Learned domain knowledge for repository detection"
     )
-
-    @field_validator("target_dir")
-    @classmethod
-    def validate_target_dir(cls, v: Path | None) -> Path | None:
-        if v is not None:
-            return v.expanduser()
-        return v
 
 
 class Config(BaseModel):

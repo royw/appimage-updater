@@ -510,7 +510,7 @@ def _apply_setting_change(config: Config, setting: str, value: str) -> bool:
 
 def _is_path_setting(setting: str) -> bool:
     """Check if setting is a path-based setting."""
-    return setting in ("download-dir", "symlink-dir", "target-dir")
+    return setting in ("download-dir", "symlink-dir")
 
 
 def _is_string_setting(setting: str) -> bool:
@@ -545,9 +545,6 @@ def _apply_path_setting(config: Config, setting: str, value: str, console_to_use
     elif setting == "symlink-dir":
         config.global_config.defaults.symlink_dir = path_value
         console_to_use.print(f"[green]Set default symlink directory to: {value}")
-    elif setting == "target-dir":
-        config.global_config.target_dir = path_value
-        console_to_use.print(f"[green]Set target directory to: {value}")
 
 
 def _apply_string_setting(config: Config, setting: str, value: str, console_to_use: Any = console) -> None:
@@ -775,12 +772,6 @@ def _list_settings_structured(formatter: Any) -> None:
             "description": "Default symlink directory",
             "valid_values": "path or 'none'",
             "example": "config set symlink-dir ~/bin",
-        },
-        {
-            "setting": "target-dir",
-            "description": "Base directory for relative download and symlink paths",
-            "valid_values": "path or 'none'",
-            "example": "config set target-dir ~/Applications",
         },
         {
             "setting": "symlink-pattern",

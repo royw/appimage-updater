@@ -36,7 +36,6 @@ class CommandFactory:
         name: str | None = None,
         url: str | None = None,
         download_dir: str | None = None,
-        target_dir: str | None = None,
         create_dir: bool = False,
         yes: bool = False,
         no: bool = False,
@@ -91,7 +90,6 @@ class CommandFactory:
             examples=examples,
             debug=debug,
             output_format=output_format,
-            target_dir=target_dir,
         )
         return AddCommand(params)
 
@@ -180,7 +178,6 @@ class CommandFactory:
         dry_run: bool = False,
         debug: bool = False,
         output_format: Any = None,
-        target_dir: str | None = None,
     ) -> EditCommand:
         """Create an EditCommand instance."""
         params = EditParams(
@@ -211,7 +208,6 @@ class CommandFactory:
             dry_run=dry_run,
             debug=debug,
             output_format=output_format,
-            target_dir=target_dir,
         )
         return EditCommand(params)
 

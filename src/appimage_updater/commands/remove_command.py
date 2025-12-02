@@ -14,8 +14,7 @@ from ..config.manager import (
     GlobalConfigManager,
     Manager,
 )
-from ..config.models import Config
-from ..core.models import ApplicationConfig
+from ..config.models import ApplicationConfig, Config
 from ..services.application_service import ApplicationService
 from ..ui.display import _replace_home_with_tilde
 from ..ui.error_display import display_error

@@ -98,7 +98,6 @@ AppImage Updater uses consistent naming across all commands for the same functio
 | **Auto Subdir** | `--auto-subdir` | `--auto-subdir` | `auto-subdir` |
 | **Checksum** | `--checksum` | `--checksum` | `checksum` |
 | **Download Dir** | `--download-dir` | `--download-dir` | `download-dir` |
-| **Target Dir** | `--target-dir` | `--target-dir` | `target-dir` |
 | **Prerelease** | `--prerelease` | `--prerelease` | `prerelease` |
 | **Version Pattern** | `--version-pattern` | `--version-pattern` | `version-pattern` |
 
@@ -245,7 +244,6 @@ appimage-updater add [OPTIONS] NAME URL [DOWNLOAD_DIR]
 
 - `--config-dir, -d PATH`: Configuration directory path
 - `--yes, -y`: Auto-confirm prompts (non-interactive mode)
-- `--target-dir PATH`: Base directory for resolving relative download and symlink paths. Relative `DOWNLOAD_DIR` and `--symlink-path` values are joined to this directory.
 - `--rotation/--no-rotation`: Enable/disable file rotation
 - `--retain INTEGER`: Number of old files to retain (1-10, default: 3)
 - `--symlink TEXT`: Path for managed symlink
@@ -353,7 +351,6 @@ appimage-updater edit [OPTIONS] APP_NAMES...
 - `--config-dir, -d PATH`: Configuration directory path
 - `--url TEXT`: Update repository URL
 - `--download-dir TEXT`: Update download directory
-- `--target-dir TEXT`: Base directory for resolving relative download and symlink paths
 - `--pattern TEXT`: Update file pattern (regex)
 - `--enable/--disable`: Enable or disable the application (disabled apps are excluded from update checks but still visible in list/check output)
 - `--prerelease/--no-prerelease`: Enable/disable prereleases
@@ -534,7 +531,6 @@ appimage-updater config [OPTIONS] ACTION [SETTING] [VALUE]
 - `prerelease`: Include prerelease versions by default (true/false)
 - `concurrent-downloads`: Number of simultaneous downloads (1-10)
 - `timeout-seconds`: HTTP request timeout in seconds (5-300)
-  - `target-dir`: Base directory for resolving relative download and symlink paths (path or `none`)
 
 **Examples:**
 

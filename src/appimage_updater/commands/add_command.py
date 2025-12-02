@@ -188,7 +188,6 @@ class AddCommand(Command):
             no=self.params.no,
             dry_run=self.params.dry_run,
             verbose=self.params.verbose,
-            target_dir=self.params.target_dir,
         )
         return success
 

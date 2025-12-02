@@ -391,7 +391,6 @@ class TestAddCommand:
             no=False,
             dry_run=True,
             verbose=True,
-            target_dir=None,
         )
         command = AddCommand(params)
 
@@ -422,7 +421,6 @@ class TestAddCommand:
             no=False,
             dry_run=True,
             verbose=True,
-            target_dir=None,
         )
 
         assert result is True
@@ -462,7 +460,6 @@ class TestAddCommand:
             no=False,  # Default value
             dry_run=False,  # Default value
             verbose=False,  # Default value
-            target_dir=None,
         )
 
         assert result is False
