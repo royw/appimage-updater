@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - support show --add-command path flags with full test coverage (1aa964f)
 
 ### Changed
+- reduce cyclomatic complexity in command and display modules (0bb7d16)
 - reduce cyclomatic complexity by extracting helper methods (a07de4b)
 
 ### Fixed

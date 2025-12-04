@@ -542,22 +542,40 @@ def get_basic_config_lines(app: Any) -> list[str]:
 
 def add_optional_config_lines(app: Any, config_lines: list[str]) -> None:
     """Add optional configuration lines (prerelease, symlink_path)."""
+    _add_prerelease_line(app, config_lines)
+    _add_symlink_path_line(app, config_lines)
+
+
+def _add_prerelease_line(app: Any, config_lines: list[str]) -> None:
+    """Add prerelease configuration line if applicable."""
     if hasattr(app, "prerelease"):
         config_lines.append(f"[bold]Prerelease:[/bold] {'Yes' if app.prerelease else 'No'}")
 
+
+def _add_symlink_path_line(app: Any, config_lines: list[str]) -> None:
+    """Add symlink path configuration line if applicable."""
     if hasattr(app, "symlink_path") and app.symlink_path:
-        # Prefer the actual symlink location discovered by our symlink scanner,
-        # falling back to the configured symlink_path if nothing is found.
-        download_dir = Path(app.download_dir)
-        found_symlinks = find_appimage_symlinks(download_dir, getattr(app, "symlink_path", None))
-
-        if found_symlinks:
-            symlink_path, _target = found_symlinks[0]
-            display_symlink = _replace_home_with_tilde(str(symlink_path))
-        else:
-            display_symlink = _replace_home_with_tilde(str(app.symlink_path))
-
+        display_symlink = _resolve_display_symlink_path(app)
         config_lines.append(f"[bold]Symlink Path:[/bold] {display_symlink}")
+
+
+def _resolve_display_symlink_path(app: Any) -> str:
+    """Resolve the symlink path for display.
+
+    Prefer the actual symlink location discovered by our symlink scanner,
+    falling back to the configured symlink_path if nothing is found.
+
+    Returns:
+        Formatted symlink path for display.
+    """
+    download_dir = Path(app.download_dir)
+    found_symlinks = find_appimage_symlinks(download_dir, getattr(app, "symlink_path", None))
+
+    if found_symlinks:
+        symlink_path, _target = found_symlinks[0]
+        return _replace_home_with_tilde(str(symlink_path))
+    else:
+        return _replace_home_with_tilde(str(app.symlink_path))
 
 
 def add_checksum_config_lines(app: Any, config_lines: list[str]) -> None:

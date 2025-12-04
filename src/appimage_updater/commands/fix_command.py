@@ -19,6 +19,8 @@ from ..services.application_service import ApplicationService
 from ..ui.display import _replace_home_with_tilde
 from ..ui.error_display import display_error
 from ..ui.output.context import OutputFormatterContext
+from ..ui.output.factory import create_output_formatter
+from ..ui.output.interface import OutputFormat
 from ..utils.logging_config import configure_logging
 from .base import Command, CommandResult
 from .base_command import BaseCommand
@@ -54,9 +56,7 @@ class FixCommand(BaseCommand, FormatterContextMixin, Command):
             if validation_result:
                 return validation_result
 
-            # Use context manager to make output formatter available throughout the execution
-            with OutputFormatterContext(output_formatter):
-                success = await self._execute_fix_operation()
+            success = await self._execute_fix_operation()
 
             return CommandResult(success=success, exit_code=0 if success else 1)
 
@@ -81,7 +81,10 @@ class FixCommand(BaseCommand, FormatterContextMixin, Command):
                 display_error(f"Application '{app.name}' does not have rotation/symlink enabled; nothing to fix")
                 return False
 
-            return await self._repair_app(app)
+            # Use context manager to make output formatter available throughout the execution
+            output_formatter = create_output_formatter(OutputFormat.RICH)
+            with OutputFormatterContext(output_formatter):
+                return await self._repair_app(app)
 
         except ConfigLoadError:
             return self._handle_config_load_error()
@@ -207,11 +210,15 @@ class FixCommand(BaseCommand, FormatterContextMixin, Command):
             except OSError as e:
                 logger.warning(f"Failed to remove orphaned info file {info_file}: {e}")
 
-    async def _repair_app(self, app: ApplicationConfig) -> bool:
-        """Repair symlink and .info file for a single application."""
-        download_dir = Path(app.download_dir).expanduser()
-        symlink_path = Path(app.symlink_path).expanduser() if app.symlink_path else None
+    # noinspection PyMethodMayBeStatic
+    def _validate_fix_prerequisites(
+        self, app: ApplicationConfig, download_dir: Path, symlink_path: Path | None
+    ) -> bool:
+        """Validate prerequisites for fixing an application.
 
+        Returns:
+            True if prerequisites are valid, False otherwise.
+        """
         if symlink_path is None:
             display_error(f"Application '{app.name}' does not have a symlink configured")
             return False
@@ -221,22 +228,36 @@ class FixCommand(BaseCommand, FormatterContextMixin, Command):
             display_error(f"Download directory does not exist for '{app.name}': {display_dir}")
             return False
 
-        # 1. Try to resolve current file from existing symlink
+        return True
+
+    # noinspection PyMethodMayBeStatic
+    async def _find_current_file(self, app: ApplicationConfig, download_dir: Path, symlink_path: Path) -> Path | None:
+        """Find the current AppImage file for repair.
+
+        Returns:
+            Path to current file if found, None otherwise.
+        """
+        # Try to resolve current file from existing symlink
         current_file = self._resolve_current_file_from_symlink(symlink_path)
 
-        # 2. If no valid symlink target, fall back to scanning download dir
+        # If no valid symlink target, fall back to scanning download dir
         if current_file is None:
             current_file = self._find_current_appimage_file_for_fix(app, download_dir)
 
         if not current_file:
             display_dir = _replace_home_with_tilde(str(download_dir))
             display_error(f"No current AppImage file found for '{app.name}' in {display_dir}")
-            return False
+            return None
 
-        # 3. Clean up orphaned .current.info files before regenerating
-        self._cleanup_orphaned_info_files(download_dir, current_file)
+        return current_file
 
-        # 4. Regenerate .info file
+    # noinspection PyMethodMayBeStatic
+    async def _regenerate_info_file(self, app: ApplicationConfig, current_file: Path) -> bool:
+        """Regenerate the .info file for the current AppImage.
+
+        Returns:
+            True if successful, False otherwise.
+        """
         version = await _extract_version_from_current_file(app, current_file)
         if not version:
             display_error(f"Could not determine version from {current_file.name} for '{app.name}'")
@@ -244,19 +265,72 @@ class FixCommand(BaseCommand, FormatterContextMixin, Command):
 
         info_file = current_file.with_suffix(current_file.suffix + ".info")
         _write_info_file(info_file, version)
+        return True
 
-        # 5. Recreate symlink safely
+    # noinspection PyMethodMayBeStatic
+    def _create_symlink_safely(self, app: ApplicationConfig, symlink_path: Path, current_file: Path) -> bool:
+        """Create symlink safely with error handling.
+
+        Returns:
+            True if successful, False otherwise.
+        """
         try:
             self._recreate_symlink(symlink_path, current_file)
+            return True
         except (OSError, PermissionError, RuntimeError) as e:
             display_error(f"Failed to update symlink {symlink_path} -> {current_file}: {e}")
             logger.error(f"Failed to update symlink for '{app.name}': {e}")
             logger.exception("Full exception details")
             return False
 
-        # 6. Success message
+    # noinspection PyMethodMayBeStatic
+    def _display_success_message(self, app: ApplicationConfig, symlink_path: Path, current_file: Path) -> None:
+        """Display success message for the repair operation."""
         display_symlink = _replace_home_with_tilde(str(symlink_path))
         display_target = _replace_home_with_tilde(str(current_file))
         self.console.print(f"Repaired symlink for [bold]{app.name}[/bold]: {display_symlink} -> {display_target}")
 
+    # noinspection PyMethodMayBeStatic
+    async def _perform_repair_operations(
+        self, app: ApplicationConfig, download_dir: Path, current_file: Path, symlink_path: Path
+    ) -> bool:
+        """Perform the core repair operations.
+
+        Returns:
+            True if successful, False otherwise.
+        """
+        # Clean up orphaned .current.info files before regenerating
+        self._cleanup_orphaned_info_files(download_dir, current_file)
+
+        # Regenerate .info file
+        if not await self._regenerate_info_file(app, current_file):
+            return False
+
+        # Create symlink safely
+        if not self._create_symlink_safely(app, symlink_path, current_file):
+            return False
+
+        # Display success message
+        self._display_success_message(app, symlink_path, current_file)
+
         return True
+
+    async def _repair_app(self, app: ApplicationConfig) -> bool:
+        """Repair symlink and .info file for a single application."""
+        download_dir = Path(app.download_dir).expanduser()
+        symlink_path = Path(app.symlink_path).expanduser() if app.symlink_path else None
+
+        # Validate prerequisites
+        if not self._validate_fix_prerequisites(app, download_dir, symlink_path):
+            return False
+
+        # Find current file
+        if symlink_path is None:
+            display_error(f"Application '{app.name}' does not have a symlink configured")
+            return False
+        current_file = await self._find_current_file(app, download_dir, symlink_path)
+        if current_file is None:
+            return False
+
+        # Perform repair operations
+        return await self._perform_repair_operations(app, download_dir, current_file, symlink_path)

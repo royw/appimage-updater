@@ -38,16 +38,24 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
         errors: list[str] = []
 
         # If no app_names provided, show all applications
+        self._validate_path_format_flags(errors)
 
-        # Path-format flags only make sense together with --add-command
+        return errors
+
+    def _validate_path_format_flags(self, errors: list[str]) -> None:
+        """Validate path format flag combinations."""
+        self._validate_path_flags_require_add_command(errors)
+        self._validate_mutually_exclusive_path_flags(errors)
+
+    def _validate_path_flags_require_add_command(self, errors: list[str]) -> None:
+        """Validate that path-format flags are used with --add-command."""
         if (self.params.full_paths or self.params.absolute_paths) and not self.params.add_command:
             errors.append("--full-paths and --absolute-paths can only be used together with --add-command")
 
-        # Path-format flags must be mutually exclusive
+    def _validate_mutually_exclusive_path_flags(self, errors: list[str]) -> None:
+        """Validate that path-format flags are mutually exclusive."""
         if self.params.full_paths and self.params.absolute_paths:
             errors.append("--full-paths and --absolute-paths cannot be used together")
-
-        return errors
 
     async def execute(self, output_formatter: Any = None) -> CommandResult:
         """Execute the show command."""
@@ -227,30 +235,52 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
 
     def _add_file_parameters(self, parts: list[str], app: Any) -> None:
         """Add file and path-related parameters."""
+        self._add_retain_count_parameter(parts, app)
+        self._add_symlink_path_parameter(parts, app)
+
+    def _add_retain_count_parameter(self, parts: list[str], app: Any) -> None:
+        """Add retain count parameter if not default."""
         if app.retain_count != 3:  # Default is 3
             parts.extend(["--retain", str(app.retain_count)])
-        if app.symlink_path:
-            if self.params.absolute_paths:
-                symlink_arg = str(Path(app.symlink_path).resolve())
-            elif self.params.full_paths:
-                symlink_arg = self._to_home_relative_path(app.symlink_path)
-            else:
-                # For relative mode, prefer config-relative form when under global defaults
-                # and fall back to home-relative formatting otherwise.
-                defaults = GlobalConfigManager().config.global_config.defaults
-                base = defaults.symlink_dir or defaults.download_dir
-                path_obj = Path(app.symlink_path)
-                if base is not None:
-                    try:
-                        base_resolved = base.expanduser().resolve()
-                        rel = path_obj.expanduser().resolve().relative_to(base_resolved)
-                        symlink_arg = str(rel)
-                    except (ValueError, OSError):
-                        symlink_arg = self._to_home_relative_path(path_obj)
-                else:
-                    symlink_arg = self._to_home_relative_path(path_obj)
 
+    def _add_symlink_path_parameter(self, parts: list[str], app: Any) -> None:
+        """Add symlink path parameter with appropriate formatting."""
+        if app.symlink_path:
+            symlink_arg = self._format_symlink_path(app.symlink_path)
             parts.extend(["--symlink-path", symlink_arg])
+
+    def _format_symlink_path(self, symlink_path: str) -> str:
+        """Format symlink path based on path mode parameters.
+
+        Returns:
+            Formatted path string based on absolute/full/relative mode.
+        """
+        if self.params.absolute_paths:
+            return str(Path(symlink_path).resolve())
+        elif self.params.full_paths:
+            return self._to_home_relative_path(symlink_path)
+        else:
+            return self._format_relative_symlink_path(symlink_path)
+
+    def _format_relative_symlink_path(self, symlink_path: str) -> str:
+        """Format symlink path in relative mode.
+
+        For relative mode, prefer config-relative form when under global defaults
+        and fall back to home-relative formatting otherwise.
+        """
+        defaults = GlobalConfigManager().config.global_config.defaults
+        base = defaults.symlink_dir or defaults.download_dir
+        path_obj = Path(symlink_path)
+
+        if base is not None:
+            try:
+                base_resolved = base.expanduser().resolve()
+                rel = path_obj.expanduser().resolve().relative_to(base_resolved)
+                return str(rel)
+            except (ValueError, OSError):
+                return self._to_home_relative_path(path_obj)
+        else:
+            return self._to_home_relative_path(path_obj)
 
     def _add_checksum_parameters(self, parts: list[str], app: Any) -> None:
         """Add checksum-related value parameters."""
