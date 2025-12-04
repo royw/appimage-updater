@@ -7,6 +7,7 @@ from pathlib import Path
 import tempfile
 import time
 
+from conftest import MockHTTPResponse
 import pytest
 
 from appimage_updater.commands.fix_command import FixCommand
@@ -18,8 +19,6 @@ from appimage_updater.ui.output.rich_formatter import RichOutputFormatter
 
 def configure_mock_github_releases(mock_http_client, tag_name="v1.0.0", app_name="TestApp"):
     """Configure mock GitHub releases API response."""
-    from conftest import MockHTTPResponse
-    
     mock_releases_response = MockHTTPResponse(
         status_code=200,
         json_data=[
