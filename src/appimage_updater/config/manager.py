@@ -25,36 +25,50 @@ from .models import (
 class Manager:
     """Base configuration manager class with common functionality."""
 
-    def _load_config_from_directory(self, config_path: Path) -> Config:
-        """Load configuration from directory of JSON files.
+    def _parse_global_config_data(self, config_data: dict[str, Any]) -> GlobalConfig:
+        """Parse global config data supporting both legacy and new formats.
 
-        Loads applications from *.json files in the directory, and global_config
-        from ../config.json if it exists.
+        Returns:
+            GlobalConfig instance.
         """
-        applications: list[ApplicationConfig] = []
-        json_files = list(config_path.glob("*.json"))
+        # Support both legacy wrapped format {"global_config": {...}}
+        # and newer bare GlobalConfig dumps {...} for robustness.
+        if "global_config" in config_data and isinstance(config_data["global_config"], dict):
+            return GlobalConfig(**config_data["global_config"])
+        elif isinstance(config_data, dict):
+            return GlobalConfig(**config_data)
+        else:
+            raise ValueError("Invalid config data format")
 
-        # Load global config from parent directory's config.json if it exists
+    def _load_global_config_from_directory(self, config_path: Path) -> GlobalConfig:
+        """Load global configuration from parent directory's config.json.
+
+        Returns:
+            GlobalConfig instance ( defaults if file doesn't exist or fails to load.
+        """
         global_config: GlobalConfig | None = None
         global_config_file = config_path.parent / "config.json"
         if global_config_file.exists():
             try:
                 with global_config_file.open(encoding="utf-8") as f:
                     config_data = json.load(f)
-
-                # Support both legacy wrapped format {"global_config": {...}}
-                # and newer bare GlobalConfig dumps {...} for robustness.
-                if "global_config" in config_data and isinstance(config_data["global_config"], dict):
-                    global_config = GlobalConfig(**config_data["global_config"])
-                elif isinstance(config_data, dict):
-                    global_config = GlobalConfig(**config_data)
+                global_config = self._parse_global_config_data(config_data)
             except (json.JSONDecodeError, OSError, TypeError, ValueError) as e:
                 logger.warning(f"Failed to load global config from {global_config_file}: {e}, using defaults")
 
         if global_config is None:
             global_config = GlobalConfig()
 
-        defaults = global_config.defaults
+        return global_config
+
+    def _load_applications_from_directory(self, config_path: Path, defaults: DefaultsConfig) -> list[ApplicationConfig]:
+        """Load all applications from JSON files in the directory.
+
+        Returns:
+            List of ApplicationConfig instances.
+        """
+        applications: list[ApplicationConfig] = []
+        json_files = list(config_path.glob("*.json"))
 
         for json_file in json_files:
             file_applications = self._load_applications_from_json_file(
@@ -64,6 +78,21 @@ class Manager:
                 defaults,
             )
             applications.extend(file_applications)
+
+        return applications
+
+    def _load_config_from_directory(self, config_path: Path) -> Config:
+        """Load configuration from directory of JSON files.
+
+        Loads applications from *.json files in the directory, and global_config
+        from ../config.json if it exists.
+        """
+        # Load global configuration
+        global_config = self._load_global_config_from_directory(config_path)
+        defaults = global_config.defaults
+
+        # Load applications from directory
+        applications = self._load_applications_from_directory(config_path, defaults)
 
         return Config(global_config=global_config, applications=applications)
 
@@ -88,6 +117,38 @@ class Manager:
             return cast(dict[str, Any], json_module.load(f))
 
     # noinspection PyMethodMayBeStatic
+    def _resolve_download_dir_relative(self, app_dict: dict[str, Any], defaults: DefaultsConfig) -> None:
+        """Resolve download directory relative to global default if needed.
+
+        Modifies app_dict in-place with resolved download_dir.
+        """
+        download_dir_value = app_dict.get("download_dir")
+        if download_dir_value is not None and defaults.download_dir is not None:
+            download_dir_path = Path(str(download_dir_value))
+            if not download_dir_path.is_absolute():
+                base_download_dir = defaults.download_dir.expanduser().resolve()
+                app_dict["download_dir"] = str(base_download_dir / download_dir_path)
+
+    def _resolve_symlink_path_relative(self, app_dict: dict[str, Any], defaults: DefaultsConfig) -> None:
+        """Resolve symlink path relative to global default symlink_dir if needed.
+
+        Modifies app_dict in-place with resolved symlink_path.
+        """
+        symlink_value = app_dict.get("symlink_path")
+        if symlink_value is not None and defaults.symlink_dir is not None:
+            symlink_path = Path(str(symlink_value))
+            if not symlink_path.is_absolute():
+                base_symlink_dir = defaults.symlink_dir.expanduser().resolve()
+                app_dict["symlink_path"] = str(base_symlink_dir / symlink_path)
+
+    def _create_application_config(self, app_dict: dict[str, Any]) -> ApplicationConfig:
+        """Create ApplicationConfig from resolved dictionary.
+
+        Returns:
+            ApplicationConfig instance.
+        """
+        return ApplicationConfig(**app_dict)
+
     def _extract_applications_from_data(
         self,
         data: dict[str, Any],
@@ -105,23 +166,12 @@ class Manager:
             for app_data in data["applications"]:
                 app_dict = dict(app_data)
 
-                # Resolve download_dir relative to global default if needed
-                download_dir_value = app_dict.get("download_dir")
-                if download_dir_value is not None and defaults.download_dir is not None:
-                    download_dir_path = Path(str(download_dir_value))
-                    if not download_dir_path.is_absolute():
-                        base_download_dir = defaults.download_dir.expanduser().resolve()
-                        app_dict["download_dir"] = str(base_download_dir / download_dir_path)
+                # Resolve paths relative to global defaults
+                self._resolve_download_dir_relative(app_dict, defaults)
+                self._resolve_symlink_path_relative(app_dict, defaults)
 
-                # Resolve symlink_path relative to global default symlink_dir if needed
-                symlink_value = app_dict.get("symlink_path")
-                if symlink_value is not None and defaults.symlink_dir is not None:
-                    symlink_path = Path(str(symlink_value))
-                    if not symlink_path.is_absolute():
-                        base_symlink_dir = defaults.symlink_dir.expanduser().resolve()
-                        app_dict["symlink_path"] = str(base_symlink_dir / symlink_path)
-
-                applications.append(ApplicationConfig(**app_dict))
+                # Create application configuration
+                applications.append(self._create_application_config(app_dict))
 
         return applications
 
@@ -192,22 +242,30 @@ class Manager:
 
         return path_str
 
+    def _normalize_default_path(self, defaults: dict[str, Any], path_key: str) -> None:
+        """Normalize a specific path in defaults dictionary to home-relative format.
+
+        Modifies defaults in-place with shortened path.
+
+        Args:
+            defaults: Dictionary containing default configuration
+            path_key: Key of the path to normalize ('download_dir' or 'symlink_dir')
+        """
+        if path_key in defaults and defaults[path_key] is not None:
+            defaults[path_key] = self._shorten_home_relative(defaults[path_key])
+
     def _normalize_global_config_paths(self, global_config: GlobalConfig) -> dict[str, Any]:
         """Normalize global_config paths before serialization.
 
         Ensures that defaults.download_dir and defaults.symlink_dir are stored
         using '~/...' when they are located under the user's home directory.
         """
-
         data = global_config.model_dump()
         defaults = data.get("defaults")
 
         if isinstance(defaults, dict):
-            if "download_dir" in defaults and defaults["download_dir"] is not None:
-                defaults["download_dir"] = self._shorten_home_relative(defaults["download_dir"])
-
-            if "symlink_dir" in defaults and defaults["symlink_dir"] is not None:
-                defaults["symlink_dir"] = self._shorten_home_relative(defaults["symlink_dir"])
+            self._normalize_default_path(defaults, "download_dir")
+            self._normalize_default_path(defaults, "symlink_dir")
 
         return data
 

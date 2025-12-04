@@ -13,6 +13,8 @@ from loguru import logger
 from rich.console import Console
 import typer
 
+from appimage_updater.config.manager import GlobalConfigManager
+from appimage_updater.config.models import DefaultsConfig
 from appimage_updater.core.pattern_generator import (
     detect_source_type,
     generate_appimage_pattern_async,
@@ -225,7 +227,7 @@ async def generate_default_config(
     checksum_required: bool | None = None,
     pattern: str | None = None,
     direct: bool | None = None,
-    global_config: Any = None,
+    global_config: GlobalConfigManager | None = None,
 ) -> tuple[dict[str, Any], bool]:
     """Generate a default application configuration.
 
@@ -235,7 +237,7 @@ async def generate_default_config(
     defaults = global_config.defaults if global_config else None
 
     # Apply global defaults for basic settings
-    download_dir = _get_effective_download_dir(download_dir, defaults, name)
+    download_dir = _get_effective_download_dir(Path(download_dir) if download_dir else None, defaults, name)
     checksum_config = _get_effective_checksum_config(
         checksum, checksum_algorithm, checksum_pattern, checksum_required, defaults
     )
@@ -264,45 +266,98 @@ async def generate_default_config(
     return config, prerelease_auto_enabled
 
 
-def _apply_symlink_config(config: dict[str, Any], symlink: str | None, defaults: Any, name: str) -> None:
+def _apply_symlink_config(
+    config: dict[str, Any], symlink: str | None, defaults: DefaultsConfig | None, name: str
+) -> None:
     """Apply symlink configuration to config dict."""
     if symlink:
-        symlink_path = Path(symlink).expanduser()
-
-        # When a global default symlink_dir is configured, interpret a
-        # relative symlink path as being under that directory so that CLI
-        # commands can specify paths relative to global defaults.
-        base_dir: Path | None = None
-        if defaults is not None and getattr(defaults, "symlink_dir", None) is not None:
-            base_dir = defaults.symlink_dir.expanduser()
-        elif defaults is not None and getattr(defaults, "download_dir", None) is not None:
-            # Fallback: use global default download_dir when no explicit symlink_dir
-            base_dir = defaults.download_dir.expanduser()
-
-        if base_dir is not None and not symlink_path.is_absolute():
-            symlink_path = base_dir / symlink_path
-
-        config["symlink_path"] = str(symlink_path)
+        resolved_path = _resolve_explicit_symlink_path(symlink, defaults)
+        config["symlink_path"] = str(resolved_path)
     elif defaults:
-        default_symlink = defaults.get_default_symlink_path(name)
-        if default_symlink is not None:
-            config["symlink_path"] = str(default_symlink)
+        _apply_default_symlink_path(config, defaults, name)
 
 
-def _get_effective_download_dir(download_dir: str | None, defaults: Any, name: str) -> str:
+def _resolve_explicit_symlink_path(symlink: str, defaults: DefaultsConfig | None) -> Path:
+    """Resolve explicit symlink path with global default handling.
+
+    When a global default symlink_dir is configured, interpret a
+    relative symlink path as being under that directory so that CLI
+    commands can specify paths relative to global defaults.
+
+    Returns:
+        Resolved symlink path.
+    """
+    symlink_path = Path(symlink).expanduser()
+    base_dir = _determine_symlink_base_dir(defaults)
+
+    if base_dir is not None and not symlink_path.is_absolute():
+        symlink_path = base_dir / symlink_path
+
+    return symlink_path
+
+
+def _determine_symlink_base_dir(defaults: DefaultsConfig | None) -> Path | None:
+    """Determine the base directory for relative symlink paths.
+
+    Returns:
+        Base directory path or None if no defaults configured.
+    """
+    if defaults is not None and defaults.symlink_dir is not None:
+        return defaults.symlink_dir.expanduser()
+    elif defaults is not None and defaults.download_dir is not None:
+        # Fallback: use global default download_dir when no explicit symlink_dir
+        return defaults.download_dir.expanduser()
+
+    return None
+
+
+def _apply_default_symlink_path(config: dict[str, Any], defaults: DefaultsConfig, name: str) -> None:
+    """Apply default symlink path from global defaults."""
+    default_symlink = defaults.get_default_symlink_path(name)
+    if default_symlink is not None:
+        config["symlink_path"] = str(default_symlink)
+
+
+def _resolve_explicit_download_dir(download_dir: Path, defaults: DefaultsConfig | None) -> str:
+    """Resolve explicit download directory with global default handling.
+
+    When a global default download_dir is configured, interpret a
+    relative download_dir as being under that directory so that CLI
+    commands can specify paths relative to the global default.
+
+    Returns:
+        Resolved download directory path.
+    """
+    if defaults is not None and defaults.download_dir is not None and not download_dir.is_absolute():
+        return str(defaults.download_dir / download_dir)
+    return str(download_dir)
+
+
+def _resolve_default_download_dir(defaults: DefaultsConfig, name: str) -> str:
+    """Resolve download directory from global defaults.
+
+    Returns:
+        Default download directory path.
+    """
+    return str(defaults.get_default_download_dir(name))
+
+
+def _resolve_fallback_download_dir(name: str) -> str:
+    """Resolve fallback download directory when no defaults available.
+
+    Returns:
+        Fallback download directory path.
+    """
+    return str(Path.cwd() / name)
+
+
+def _get_effective_download_dir(download_dir: Path | None, defaults: DefaultsConfig | None, name: str) -> str:
     """Get effective download directory with global defaults."""
     if download_dir is not None:
-        # When a global default download_dir is configured, interpret a
-        # relative download_dir as being under that directory so that CLI
-        # commands can specify paths relative to the global default.
-        if defaults is not None and getattr(defaults, "download_dir", None) is not None:
-            candidate = Path(download_dir)
-            if not candidate.is_absolute():
-                return str(defaults.download_dir / candidate)
-        return download_dir
+        return _resolve_explicit_download_dir(download_dir, defaults)
     if defaults:
-        return str(defaults.get_default_download_dir(name))
-    return str(Path.cwd() / name)
+        return _resolve_default_download_dir(defaults, name)
+    return _resolve_fallback_download_dir(name)
 
 
 def _get_checksum_enabled(checksum: bool | None, defaults: Any) -> bool:

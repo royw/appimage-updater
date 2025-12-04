@@ -3,9 +3,21 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from ...config.manager import GlobalConfigManager
+
+
+class ResolvedAddParameters(TypedDict):
+    """TypedDict for resolved add command parameters."""
+
+    download_dir: str
+    rotation: bool
+    prerelease: bool
+    checksum: bool
+    checksum_required: bool
+    direct: bool
+    global_config: GlobalConfigManager
 
 
 def _get_parameter_status(original_value: Any, resolved_value: Any) -> str:
@@ -105,7 +117,7 @@ def _resolve_add_parameters(
     config_file: Path | None,
     config_dir: Path | None,
     name: str,
-) -> dict[str, Any]:
+) -> ResolvedAddParameters:
     """Resolve all add command parameters using global defaults."""
     config_path = config_file or config_dir
     global_config = GlobalConfigManager(config_path)
