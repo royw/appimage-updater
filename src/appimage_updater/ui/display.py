@@ -546,7 +546,17 @@ def add_optional_config_lines(app: Any, config_lines: list[str]) -> None:
         config_lines.append(f"[bold]Prerelease:[/bold] {'Yes' if app.prerelease else 'No'}")
 
     if hasattr(app, "symlink_path") and app.symlink_path:
-        display_symlink = _replace_home_with_tilde(str(app.symlink_path))
+        # Prefer the actual symlink location discovered by our symlink scanner,
+        # falling back to the configured symlink_path if nothing is found.
+        download_dir = Path(app.download_dir)
+        found_symlinks = find_appimage_symlinks(download_dir, getattr(app, "symlink_path", None))
+
+        if found_symlinks:
+            symlink_path, _target = found_symlinks[0]
+            display_symlink = _replace_home_with_tilde(str(symlink_path))
+        else:
+            display_symlink = _replace_home_with_tilde(str(app.symlink_path))
+
         config_lines.append(f"[bold]Symlink Path:[/bold] {display_symlink}")
 
 
@@ -590,10 +600,24 @@ def _add_retain_count_line(app: Any, config_lines: list[str]) -> None:
 
 
 def _add_managed_symlink_line(app: Any, config_lines: list[str]) -> None:
-    """Add managed symlink line if applicable."""
+    """Add managed symlink target line if applicable.
+
+    The configured "Symlink Path" (symlink-path) is shown separately via
+    add_optional_config_lines. Here we show where that managed symlink
+    currently points, when we can determine it.
+    """
     if hasattr(app, "symlink_path") and app.symlink_path:
-        display_symlink = _replace_home_with_tilde(str(app.symlink_path))
-        config_lines.append(f"  [dim]Managed Symlink:[/dim] {display_symlink}")
+        download_dir = Path(app.download_dir)
+        found_symlinks = find_appimage_symlinks(download_dir, getattr(app, "symlink_path", None))
+
+        if not found_symlinks:
+            return
+
+        _symlink_path, target_path = found_symlinks[0]
+        display_target = _replace_home_with_tilde(str(target_path))
+
+        # Use a clearer label so users understand this is the target file
+        config_lines.append(f"  [dim]Symlink Points To:[/dim] {display_target}")
 
 
 def add_rotation_config_lines(app: Any, config_lines: list[str]) -> None:
