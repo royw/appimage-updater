@@ -586,7 +586,7 @@ Global Configuration
 Basic Settings:
 Concurrent Downloads        (concurrent-downloads)    3
 Timeout (seconds)           (timeout-seconds)         30
-User Agent                                            AppImage-Updater/0.5.2
+User Agent                                            AppImage-Updater/{{VERSION}}
 
 Default Settings for New Applications:
 Download Directory          (download-dir)            /home/user/Applications
@@ -764,7 +764,7 @@ This command is particularly useful for:
 {
   "concurrent_downloads": 3,
   "timeout_seconds": 30,
-  "user_agent": "AppImage-Updater/0.5.2",
+  "user_agent": "AppImage-Updater/{{VERSION}}",
   "defaults": {
     "download_dir": null,
     "rotation_enabled": false,

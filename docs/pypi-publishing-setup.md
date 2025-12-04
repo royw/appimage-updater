@@ -124,22 +124,22 @@ The `publish-to-pypi` job should be removed from `.github/workflows/ci.yml` sinc
 
    ```bash
    git add .
-   git commit -m "release: prepare v0.5.2"
+   git commit -m "release: prepare v{{VERSION}}"
    git push origin main
    ```
 
 1. **Create Git Tag**
 
    ```bash
-   git tag -a v0.5.2 -m "Release v0.5.2"
-   git push origin v0.5.2
+   git tag -a v{{VERSION}} -m "Release v{{VERSION}}"
+   git push origin {{VERSION}}
    ```
 
 1. **Create GitHub Release**
 
    - Go to [https://github.com/royw/appimage-updater/releases/new](https://github.com/royw/appimage-updater/releases/new)
-   - Choose tag: `v0.5.2`
-   - Release title: `v0.5.2`
+   - Choose tag: `v{{VERSION}}`
+   - Release title: `v{{VERSION}}`
    - Description: Copy relevant section from CHANGELOG.md
    - Check "Set as the latest release"
    - Click "Publish release"
@@ -244,7 +244,7 @@ For testing the workflow without creating a release:
 
    - Review PyPI project page after each publish
    - Verify package metadata is correct
-   - Test installation: `pip install appimage-updater==0.5.2`
+   - Test installation: `pip install appimage-updater=={{VERSION}}`
 
 1. **Trusted Publishing Benefits**
 
@@ -284,9 +284,9 @@ uv build
 twine check dist/*
 
 # Test installation
-pip install --user appimage-updater==0.5.2
+pip install --user appimage-updater=={{VERSION}}
 
 # Create and push tag
-git tag -a v0.5.2 -m "Release v0.5.2"
-git push origin v0.5.2
+git tag -a v{{VERSION}} -m "Release v{{VERSION}}"
+git push origin v{{VERSION}}
 ```

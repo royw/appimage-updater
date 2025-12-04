@@ -159,12 +159,17 @@ nav:
     - Developer Commands: commands.md
     - Development Setup: development.md
     - Testing: testing.md
+    - Tests: tests.md
     - Test Analysis: test_analysis.md
+    - PyPI Publishing: pypi-publishing-setup.md
     - Project Metrics: metrics.md
     - CI Debugging: ci-debugging.md
     - Contributing: contributing.md
   - API Reference: reference/
   - Repository on GitHub: https://github.com/royw/appimage-updater
+
+hooks:
+  - docs/version_hook.py
 
 watch:
   - src/appimage_updater
