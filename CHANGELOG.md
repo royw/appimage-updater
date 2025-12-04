@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add fix command with orphaned .current.info file cleanup (a203a8d)
 
 - support show --add-command path flags with full test coverage (1aa964f)
 

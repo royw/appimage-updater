@@ -590,6 +590,27 @@ else
 fi
 ```
 
+### Maintenance and Repair
+
+Regular maintenance to keep applications running smoothly:
+
+```bash
+# Monthly maintenance script
+#!/bin/bash
+
+# Check all applications
+appimage-updater check
+
+# Repair any applications showing "Current: N/A"
+for app in $(appimage-updater list --format json | jq -r '.applications[] | select(.current_version == "N/A") | .name'); do
+    echo "Repairing $app..."
+    appimage-updater fix "$app"
+done
+
+# Verify repairs worked
+appimage-updater check
+```
+
 ## Next Steps
 
 - Learn about [Configuration](configuration.md) options in detail

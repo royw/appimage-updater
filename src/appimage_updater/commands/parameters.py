@@ -141,6 +141,14 @@ class RemoveParams(BaseParams):
 
 
 @dataclass
+class FixParams(BaseParams):
+    """Parameters for fix command."""
+
+    app_name: str = ""
+    output_format: Any = None  # OutputFormat, avoiding circular import
+
+
+@dataclass
 class RepositoryParams(BaseParams):
     """Parameters for repository command."""
 

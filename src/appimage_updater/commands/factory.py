@@ -9,6 +9,7 @@ from .add_command import AddCommand
 from .check_command import CheckCommand
 from .config_command import ConfigCommand
 from .edit_command import EditCommand
+from .fix_command import FixCommand
 
 # InitCommand removed
 from .list_command import ListCommand
@@ -17,6 +18,7 @@ from .parameters import (
     CheckParams,
     ConfigParams,
     EditParams,
+    FixParams,
     InstrumentationParams,
     ListParams,
     RemoveParams,
@@ -276,6 +278,24 @@ class CommandFactory:
             output_format=output_format,
         )
         return RemoveCommand(params)
+
+    @staticmethod
+    def create_fix_command(
+        app_name: str,
+        config_file: Path | None = None,
+        config_dir: Path | None = None,
+        debug: bool = False,
+        output_format: Any = None,
+    ) -> FixCommand:
+        """Create a FixCommand instance."""
+        params = FixParams(
+            app_name=app_name,
+            config_file=config_file,
+            config_dir=config_dir,
+            debug=debug,
+            output_format=output_format,
+        )
+        return FixCommand(params)
 
     @staticmethod
     def create_repository_command_with_instrumentation(

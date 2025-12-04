@@ -460,4 +460,94 @@ appimage-updater list > status-report.txt
 appimage-updater check --dry-run >> status-report.txt
 ```
 
+## Troubleshooting Examples
+
+### Repair Broken Applications
+
+```bash
+# Check which applications need repair
+appimage-updater check | grep "N/A"
+
+# Repair specific application showing "Current: N/A"
+appimage-updater fix FreeCAD
+
+# Repair multiple applications with debug output
+for app in FreeCAD OrcaSlicer BambuStudio; do
+    echo "Repairing $app..."
+    appimage-updater fix --debug "$app"
+done
+
+# Verify repairs worked
+appimage-updater check
+```
+
+### Fix Symlink Issues
+
+```bash
+# Check symlink status
+ls -la ~/Applications/*.AppImage
+
+# Repair broken symlinks
+appimage-updater fix Meshlab
+
+# Verify symlink is correct
+ls -la ~/Applications/Meshlab.AppImage
+# Should show: ~/Applications/Meshlab.AppImage -> ~/Applications/Meshlab/MeshLab-*.AppImage.current
+
+# Fix multiple applications at once
+appimage-updater fix FreeCAD_weekly
+appimage-updater fix OrcaSlicerNightly
+appimage-updater fix UltiMaker-Cura
+```
+
+### Debug Version Detection
+
+```bash
+# Debug why version detection is failing
+appimage-updater fix --debug MyApp
+
+# Check what files are available in download directory
+ls -la ~/Applications/MyApp/*.AppImage*
+
+# Manually inspect .info file
+cat ~/Applications/MyApp/*.AppImage.info
+
+# After fix, verify version is detected correctly
+appimage-updater show MyApp
+appimage-updater check MyApp
+```
+
+### Maintenance Script
+
+```bash
+#!/bin/bash
+# Monthly maintenance script
+
+echo "=== AppImage Updater Maintenance ==="
+
+# Check all applications
+echo "Checking all applications..."
+appimage-updater check
+
+# Find and repair broken applications
+echo "Finding applications that need repair..."
+broken_apps=$(appimage-updater list --format json | jq -r '.applications[] | select(.current_version == "N/A") | .name')
+
+if [ -n "$broken_apps" ]; then
+    echo "Repairing broken applications: $broken_apps"
+    for app in $broken_apps; do
+        echo "Repairing $app..."
+        appimage-updater fix "$app"
+    done
+else
+    echo "No applications need repair."
+fi
+
+# Final verification
+echo "Final verification..."
+appimage-updater check
+
+echo "=== Maintenance complete ==="
+```
+
 These examples should help you get started with various AppImage Updater configurations and workflows!

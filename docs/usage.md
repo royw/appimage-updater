@@ -32,6 +32,12 @@ For installation instructions, see the [Installation Guide](installation.md).
    appimage-updater list
    ```
 
+1. **Repair broken symlinks** (if applications show "Current: N/A"):
+
+   ```bash
+   appimage-updater fix FreeCAD
+   ```
+
 ## User-Friendly Help System
 
 AppImage Updater provides helpful usage information when you run commands without required arguments, making it easy to explore available options:
@@ -599,6 +605,93 @@ Prerelease                  (prerelease)              No
 
 The setting names in parentheses (e.g., `(download-dir)`) are what you use with the `config set` command.
 
+### `fix`
+
+Repair managed symlinks and .info files for a specific application.
+
+```bash
+appimage-updater fix [OPTIONS] APP_NAME
+```
+
+**Arguments:**
+
+- `APP_NAME`: Name of the application to repair (case-insensitive).
+
+**Options:**
+
+- `--config-dir, -d PATH`: Configuration directory path
+- `--debug`: Enable debug logging for troubleshooting
+
+**What it does:**
+
+The fix command repairs the symlink and .info file for a single application by:
+
+1. **Inspects the existing symlink** at the configured `symlink_path`
+1. **Removes broken symlinks** that point to non-existent files
+1. **Finds the current AppImage file** in the download directory
+1. **Regenerates the .info file** with version metadata
+1. **Recreates the symlink** to point to the current file
+
+**When to use fix:**
+
+- After manual file management that may have broken symlinks
+- When applications show "Current: N/A" in check results
+- After moving or renaming AppImage files
+- When symlinks are broken due to system changes
+- To repair .info file corruption or missing version data
+
+**Examples:**
+
+```bash
+# Repair a single application
+appimage-updater fix FreeCAD
+
+# Repair with debug logging to see detailed process
+appimage-updater fix --debug OrcaSlicer
+
+# Repair application with custom config
+appimage-updater fix MyApp --config-dir /path/to/config/apps
+```
+
+**How it works:**
+
+1. **Symlink Inspection**: Checks if the configured symlink exists and is valid
+1. **Broken Link Removal**: Automatically removes symlinks pointing to non-existent files
+1. **Current File Discovery**: Scans download directory for \*.AppImage.current files, falling back to most recent \*.AppImage
+1. **Info File Regeneration**: Creates or updates the .info file with current version information
+1. **Symlink Recreation**: Safely recreates the symlink to point to the identified current file
+
+**Safety Features:**
+
+- **Regular file protection**: Will not delete regular files if symlink_path points to one
+- **Directory creation**: Automatically creates parent directories for symlinks if needed
+- **Error handling**: Provides clear error messages for common issues
+- **Debug support**: Use --debug to see detailed repair process
+
+**Common scenarios:**
+
+```bash
+# After manual file cleanup broke symlinks
+appimage-updater fix Meshlab
+
+# When check command shows "Current: N/A"
+appimage-updater fix OrcaSlicerNightly
+
+# After moving AppImage files to new location
+appimage-updater fix FreeCAD
+
+# Repair multiple applications one by one
+appimage-updater fix App1
+appimage-updater fix App2
+appimage-updater fix App3
+```
+
+**Related commands:**
+
+- `check` - Verify fix worked and applications show correct versions
+- `show` - Check symlink status and current file information
+- `edit` - Update symlink_path if configuration is incorrect
+
 ### `repository`
 
 Examine repository information for configured applications.
@@ -901,7 +994,10 @@ chmod 755 ~/Applications/MyApp
 # Check symlink status
 ls -la ~/bin/myapp.AppImage
 
-# Recreate symlink
+# Repair broken symlinks and regenerate .info files
+appimage-updater fix MyApp
+
+# Recreate symlink with edit command
 appimage-updater edit MyApp --symlink ~/bin/myapp.AppImage
 
 # Ensure symlink directory exists
@@ -941,6 +1037,9 @@ appimage-updater edit MyApp --checksum-pattern "{filename}.sha256"
 # Some projects use non-standard versioning
 # Check debug output for version detection
 appimage-updater --debug check MyApp --dry-run
+
+# If showing "Current: N/A", repair .info file and symlink
+appimage-updater fix MyApp
 ```
 
 ### Debug Information

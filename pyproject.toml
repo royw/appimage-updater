@@ -242,6 +242,7 @@ ignore-names = [
     "add",
     "remove",
     "config",
+    "fix",
     # Pydantic validators (decorated with @field_validator)
     "validate_pattern",
     "validate_download_dir",

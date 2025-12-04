@@ -19,6 +19,7 @@ from .handlers.base import CommandHandler
 from .handlers.check_handler import CheckCommandHandler
 from .handlers.config_handler import ConfigCommandHandler
 from .handlers.edit_handler import EditCommandHandler
+from .handlers.fix_handler import FixCommandHandler
 from .handlers.list_handler import ListCommandHandler
 from .handlers.remove_handler import RemoveCommandHandler
 from .handlers.repository_handler import RepositoryCommandHandler
@@ -136,6 +137,7 @@ class AppImageUpdaterCLI:
             RemoveCommandHandler(),
             RepositoryCommandHandler(),
             ConfigCommandHandler(),
+            FixCommandHandler(),
         ]
 
         for handler in handlers:
