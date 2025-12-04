@@ -116,6 +116,8 @@ class ShowParams(BaseParams):
 
     app_names: list[str] | None = None
     add_command: bool = False
+    full_paths: bool = False
+    absolute_paths: bool = False
     output_format: Any = None  # OutputFormat, avoiding circular import
 
 

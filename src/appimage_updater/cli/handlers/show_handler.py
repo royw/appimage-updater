@@ -32,6 +32,22 @@ class ShowCommandHandler(CommandHandler):
             add_command: bool = typer.Option(
                 False, "--add-command", help="Output the add command needed to recreate each application configuration"
             ),
+            full_paths: bool = typer.Option(
+                False,
+                "--full-paths",
+                help=(
+                    "When used with --add-command, output full resolved paths instead of paths "
+                    "relative to global defaults"
+                ),
+            ),
+            absolute_paths: bool = typer.Option(
+                False,
+                "--absolute-paths",
+                help=(
+                    "When used with --add-command, output strict absolute paths (implies --full-paths) "
+                    "instead of home- or config-relative paths"
+                ),
+            ),
             config_dir: Path | None = CLIOptions.CONFIG_DIR_OPTION,
             debug: bool = CLIOptions.debug_option(),
             output_format: OutputFormat = CLIOptions.FORMAT_OPTION,
@@ -50,6 +66,8 @@ class ShowCommandHandler(CommandHandler):
             self._execute_show_command(
                 app_names=app_names,
                 add_command=add_command,
+                full_paths=full_paths,
+                absolute_paths=absolute_paths,
                 config_dir=config_dir,
                 debug=debug,
                 output_format=output_format,
@@ -67,6 +85,8 @@ class ShowCommandHandler(CommandHandler):
         self,
         app_names: list[str] | None,
         add_command: bool,
+        full_paths: bool,
+        absolute_paths: bool,
         config_dir: Path | None,
         debug: bool,
         output_format: OutputFormat,
@@ -78,6 +98,8 @@ class ShowCommandHandler(CommandHandler):
         command = CommandFactory.create_show_command(
             app_names=app_names,
             add_command=add_command,
+            full_paths=full_paths,
+            absolute_paths=absolute_paths,
             config_dir=config_dir,
             debug=debug,
             output_format=output_format,

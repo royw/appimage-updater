@@ -329,6 +329,185 @@ class TestAddRegression:
 
         return True
 
+
+class TestShowAddCommandPathModes:
+    """Tests for show --add-command path formatting modes and validation."""
+
+    def _create_config_with_globals(self, tmp_path: Path) -> tuple[Path, Path, Path, Path]:
+        """Create a minimal directory-based config with global defaults.
+
+        Returns (config_root, apps_dir, download_dir, app_download_dir).
+        """
+        config_root = tmp_path / "configroot"
+        apps_dir = config_root / "apps"
+        download_root = config_root / "downloads"
+        app_download_dir = download_root / "TestApp"
+        symlink_path = app_download_dir / "TestApp.AppImage.current"
+
+        apps_dir.mkdir(parents=True)
+        app_download_dir.mkdir(parents=True)
+
+        # Global config with defaults.download_dir pointing at download_root
+        global_config = {
+            "global_config": {
+                "concurrent_downloads": 3,
+                "timeout_seconds": 30,
+                "user_agent": "AppImage-Updater/Test",
+                "defaults": {
+                    "download_dir": str(download_root),
+                    "rotation_enabled": False,
+                    "retain_count": 3,
+                    "symlink_enabled": False,
+                    "symlink_dir": None,
+                    "symlink_pattern": "{appname}.AppImage",
+                    "auto_subdir": False,
+                    "checksum_enabled": True,
+                    "checksum_algorithm": "sha256",
+                    "checksum_pattern": "{filename}-SHA256.txt",
+                    "checksum_required": False,
+                    "prerelease": False,
+                },
+                "domain_knowledge": {
+                    "github_domains": ["github.com"],
+                    "gitlab_domains": ["gitlab.com"],
+                    "direct_domains": [],
+                    "dynamic_domains": [],
+                },
+            }
+        }
+
+        with (config_root / "config.json").open("w") as f:
+            json.dump(global_config, f, indent=2)
+
+        # Single app config whose paths live under download_root
+        app_config = {
+            "applications": [
+                {
+                    "name": "TestApp",
+                    "source_type": "github",
+                    "url": "https://github.com/test/repo",
+                    "download_dir": str(app_download_dir),
+                    "pattern": "*.AppImage",
+                    "enabled": True,
+                    "rotation_enabled": True,
+                    "retain_count": 3,
+                    "symlink_path": str(symlink_path),
+                    "checksum": {
+                        "enabled": True,
+                        "algorithm": "sha256",
+                        "pattern": "{filename}-SHA256.txt",
+                        "required": False,
+                    },
+                }
+            ]
+        }
+
+        with (apps_dir / "testapp.json").open("w") as f:
+            json.dump(app_config, f, indent=2)
+
+        return config_root, apps_dir, download_root, app_download_dir
+
+    def test_show_add_command_path_modes(self, tmp_path: Path) -> None:
+        """Verify default, --full-paths, and --absolute-paths output modes."""
+        runner = CliRunner()
+        _, apps_dir, download_root, app_download_dir = self._create_config_with_globals(tmp_path)
+
+        # Default mode: paths should be relative to global defaults when under download_root
+        result_default = runner.invoke(app, [
+            "show",
+            "--add-command",
+            "TestApp",
+            "--config-dir",
+            str(apps_dir),
+        ])
+
+        assert result_default.exit_code == 0
+        default_line = result_default.stdout.strip().splitlines()[0]
+        # Expect: appimage-updater add TestApp https://github.com/test/repo TestApp ...
+        assert default_line.startswith(
+            "appimage-updater add TestApp https://github.com/test/repo TestApp "
+        )
+        # Symlink path should be relative to the default download_dir
+        assert "--symlink-path TestApp/TestApp.AppImage.current" in default_line
+
+        # Full paths: use effective paths (under download_root), home-relative if applicable
+        result_full = runner.invoke(app, [
+            "show",
+            "--add-command",
+            "--full-paths",
+            "TestApp",
+            "--config-dir",
+            str(apps_dir),
+        ])
+
+        assert result_full.exit_code == 0
+        full_line = result_full.stdout.strip().splitlines()[0]
+        assert str(app_download_dir) in full_line
+        assert str(app_download_dir / "TestApp.AppImage.current") in full_line
+
+        # Absolute paths: strict absolute paths with no home-relativization
+        result_abs = runner.invoke(app, [
+            "show",
+            "--add-command",
+            "--absolute-paths",
+            "TestApp",
+            "--config-dir",
+            str(apps_dir),
+        ])
+
+        assert result_abs.exit_code == 0
+        abs_line = result_abs.stdout.strip().splitlines()[0]
+        assert str(app_download_dir.resolve()) in abs_line
+        assert str((app_download_dir / "TestApp.AppImage.current").resolve()) in abs_line
+
+    def test_show_add_command_path_flag_validation(self, tmp_path: Path) -> None:
+        """Validate misuse of --full-paths/--absolute-paths flags."""
+        runner = CliRunner()
+        _, apps_dir, _, _ = self._create_config_with_globals(tmp_path)
+
+        # Using path flags without --add-command should fail validation
+        result_full_only = runner.invoke(
+            app,
+            [
+                "show",
+                "--full-paths",
+                "TestApp",
+                "--config-dir",
+                str(apps_dir),
+            ],
+        )
+        assert result_full_only.exit_code != 0
+        assert "only be used together with --add-command" in result_full_only.stdout
+
+        result_abs_only = runner.invoke(
+            app,
+            [
+                "show",
+                "--absolute-paths",
+                "TestApp",
+                "--config-dir",
+                str(apps_dir),
+            ],
+        )
+        assert result_abs_only.exit_code != 0
+        assert "only be used together with --add-command" in result_abs_only.stdout
+
+        # Using both flags together should fail even with --add-command
+        result_both = runner.invoke(
+            app,
+            [
+                "show",
+                "--add-command",
+                "--full-paths",
+                "--absolute-paths",
+                "TestApp",
+                "--config-dir",
+                str(apps_dir),
+            ],
+        )
+        assert result_both.exit_code != 0
+        assert "cannot be used together" in result_both.stdout
+
     def _patterns_are_equivalent(self, original: str, generated: str) -> bool:
         """Check if patterns are functionally equivalent."""
         if original == generated:

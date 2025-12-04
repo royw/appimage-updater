@@ -89,6 +89,8 @@ class TestShowCommandHandler:
         handler._execute_show_command(
             app_names=["TestApp"],
             add_command=False,
+            full_paths=False,
+            absolute_paths=False,
             config_dir=Path("/test/config"),
             debug=False,
             output_format=OutputFormat.RICH,
@@ -98,6 +100,8 @@ class TestShowCommandHandler:
         mock_factory.assert_called_once_with(
             app_names=["TestApp"],
             add_command=False,
+            full_paths=False,
+            absolute_paths=False,
             config_dir=Path("/test/config"),
             debug=False,
             output_format=OutputFormat.RICH,
@@ -107,6 +111,8 @@ class TestShowCommandHandler:
         handler._execute_show_command(
             app_names=["TestApp"],
             add_command=False,
+            full_paths=False,
+            absolute_paths=False,
             config_dir=None,
             debug=False,
             output_format=OutputFormat.JSON,
@@ -139,6 +145,8 @@ class TestShowCommandHandler:
         handler._execute_show_command(
             app_names=["TestApp"],
             add_command=False,
+            full_paths=False,
+            absolute_paths=False,
             config_dir=None,
             debug=False,
             output_format=OutputFormat.HTML,
@@ -171,6 +179,8 @@ class TestShowCommandHandler:
         handler._execute_show_command(
             app_names=["TestApp"],
             add_command=False,
+            full_paths=False,
+            absolute_paths=False,
             config_dir=None,
             debug=False,
             output_format=OutputFormat.RICH,
@@ -205,6 +215,8 @@ class TestShowCommandHandler:
             handler._execute_show_command(
                 app_names=["TestApp"],
                 add_command=False,
+                full_paths=False,
+                absolute_paths=False,
                 config_dir=None,
                 debug=False,
                 output_format=OutputFormat.RICH,
@@ -237,6 +249,8 @@ class TestShowCommandHandler:
         handler._execute_show_command(
             app_names=None,
             add_command=False,
+            full_paths=False,
+            absolute_paths=False,
             config_dir=None,
             debug=False,
             output_format=OutputFormat.RICH,
@@ -246,6 +260,8 @@ class TestShowCommandHandler:
         mock_factory.assert_called_once_with(
             app_names=None,
             add_command=False,
+            full_paths=False,
+            absolute_paths=False,
             config_dir=None,
             debug=False,
             output_format=OutputFormat.RICH,
@@ -269,6 +285,8 @@ class TestShowCommandHandler:
                     handler._execute_show_command(
                         app_names=["TestApp"],
                         add_command=False,
+                        full_paths=False,
+                        absolute_paths=False,
                         config_dir=None,
                         debug=False,
                         output_format=OutputFormat.RICH,
@@ -278,6 +296,8 @@ class TestShowCommandHandler:
                     mock_factory.assert_called_once_with(
                         app_names=["TestApp"],
                         add_command=False,
+                        full_paths=False,
+                        absolute_paths=False,
                         config_dir=None,
                         debug=False,
                         output_format=OutputFormat.RICH,

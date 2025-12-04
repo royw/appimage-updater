@@ -35,9 +35,19 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
 
     def validate(self) -> list[str]:
         """Validate command parameters."""
-        # No validation errors - app_names is optional
+        errors: list[str] = []
+
         # If no app_names provided, show all applications
-        return []
+
+        # Path-format flags only make sense together with --add-command
+        if (self.params.full_paths or self.params.absolute_paths) and not self.params.add_command:
+            errors.append("--full-paths and --absolute-paths can only be used together with --add-command")
+
+        # Path-format flags must be mutually exclusive
+        if self.params.full_paths and self.params.absolute_paths:
+            errors.append("--full-paths and --absolute-paths cannot be used together")
+
+        return errors
 
     async def execute(self, output_formatter: Any = None) -> CommandResult:
         """Execute the show command."""
@@ -172,9 +182,17 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
         # Add URL
         parts.append(app.url)
 
-        # Add download directory, preferring a form relative to global defaults
+        # Determine path output mode for download_dir
         defaults = config.global_config.defaults
-        parts.append(self._to_config_relative_download_dir(app.download_dir, defaults))
+        if self.params.absolute_paths:
+            download_arg = str(app.download_dir.resolve())
+        elif self.params.full_paths:
+            download_arg = self._to_home_relative_path(app.download_dir)
+        else:
+            download_arg = self._to_config_relative_download_dir(app.download_dir, defaults)
+
+        # Add download directory argument
+        parts.append(download_arg)
 
         # Add optional parameters if they differ from defaults
         self._add_boolean_flags(parts, app)
@@ -212,7 +230,27 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
         if app.retain_count != 3:  # Default is 3
             parts.extend(["--retain", str(app.retain_count)])
         if app.symlink_path:
-            parts.extend(["--symlink-path", self._to_home_relative_path(app.symlink_path)])
+            if self.params.absolute_paths:
+                symlink_arg = str(Path(app.symlink_path).resolve())
+            elif self.params.full_paths:
+                symlink_arg = self._to_home_relative_path(app.symlink_path)
+            else:
+                # For relative mode, prefer config-relative form when under global defaults
+                # and fall back to home-relative formatting otherwise.
+                defaults = GlobalConfigManager().config.global_config.defaults
+                base = defaults.symlink_dir or defaults.download_dir
+                path_obj = Path(app.symlink_path)
+                if base is not None:
+                    try:
+                        base_resolved = base.expanduser().resolve()
+                        rel = path_obj.expanduser().resolve().relative_to(base_resolved)
+                        symlink_arg = str(rel)
+                    except (ValueError, OSError):
+                        symlink_arg = self._to_home_relative_path(path_obj)
+                else:
+                    symlink_arg = self._to_home_relative_path(path_obj)
+
+            parts.extend(["--symlink-path", symlink_arg])
 
     def _add_checksum_parameters(self, parts: list[str], app: Any) -> None:
         """Add checksum-related value parameters."""
