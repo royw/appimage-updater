@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - reduce cyclomatic complexity by extracting helper methods (a07de4b)
 
 ### Fixed
+- resolve e2e test HTTP mocking issues (34e1ed5)
 
 ## [0.5.4] - 2025-11-30
 

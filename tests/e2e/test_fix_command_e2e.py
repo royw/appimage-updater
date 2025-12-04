@@ -5,11 +5,36 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 from appimage_updater.config.models import ApplicationConfig, ChecksumConfig
+
+
+def configure_mock_github_releases(mock_http_client, tag_name="v1.0.0", app_name="TestApp"):
+    """Configure mock GitHub releases API response."""
+    from tests.e2e.conftest import MockHTTPResponse
+    
+    mock_releases_response = MockHTTPResponse(
+        status_code=200,
+        json_data=[{
+            "tag_name": tag_name,
+            "name": f"{app_name} {tag_name.lstrip('v')}",
+            "prerelease": False,
+            "published_at": "2024-01-01T00:00:00Z",
+            "assets": [{
+                "name": f"{app_name}-{tag_name.lstrip('v')}.AppImage",
+                "browser_download_url": f"https://github.com/test/{app_name.lower()}/releases/download/{tag_name}/{app_name}-{tag_name.lstrip('v')}.AppImage",
+                "size": 1000000,
+                "content_type": "application/octet-stream"
+            }]
+        }]
+    )
+    
+    mock_http_client.configure_response(
+        f"https://api.github.com/repos/test/{app_name.lower()}/releases",
+        mock_releases_response
+    )
 
 
 @pytest.fixture
@@ -70,8 +95,16 @@ def config_file(temp_app_dir: Path, app_config: ApplicationConfig):
 
 
 @pytest.mark.anyio
-async def test_fix_command_e2e_basic_repair(temp_app_dir: Path, app_config: ApplicationConfig, config_file: Path):
+async def test_fix_command_e2e_basic_repair(
+    mock_http_client,  # This is the autouse fixture from conftest.py
+    temp_app_dir: Path,
+    app_config: ApplicationConfig,
+    config_file: Path,
+):
     """Test basic fix command functionality - repairs broken symlink."""
+    # Configure mock HTTP responses
+    configure_mock_github_releases(mock_http_client)
+    
     # Create AppImage file but no symlink
     appimage_file = temp_app_dir / "TestApp-1.0.0.AppImage.current"
     appimage_file.write_bytes(b"fake appimage content")
@@ -105,8 +138,15 @@ async def test_fix_command_e2e_basic_repair(temp_app_dir: Path, app_config: Appl
 
 
 @pytest.mark.anyio
-async def test_fix_command_e2e_orphaned_info_cleanup(temp_app_dir: Path, app_config: ApplicationConfig, config_file: Path):
+async def test_fix_command_e2e_orphaned_info_cleanup(
+    mock_http_client,  # This is the autouse fixture from conftest.py
+    temp_app_dir: Path,
+    app_config: ApplicationConfig,
+    config_file: Path,
+):
     """Test fix command cleans up orphaned .current.info files."""
+    # Configure mock HTTP responses
+    configure_mock_github_releases(mock_http_client)
     # Create current AppImage file with matching .info file
     current_file = temp_app_dir / "TestApp-1.0.0.AppImage.current"
     current_file.write_bytes(b"fake appimage content")
@@ -166,8 +206,16 @@ async def test_fix_command_e2e_orphaned_info_cleanup(temp_app_dir: Path, app_con
 
 
 @pytest.mark.anyio
-async def test_fix_command_e2e_broken_symlink_repair(temp_app_dir: Path, app_config: ApplicationConfig, config_file: Path):
+async def test_fix_command_e2e_broken_symlink_repair(
+    mock_http_client,  # This is the autouse fixture from conftest.py
+    temp_app_dir: Path,
+    app_config: ApplicationConfig,
+    config_file: Path,
+):
     """Test fix command repairs broken symlinks."""
+    # Configure mock HTTP responses
+    configure_mock_github_releases(mock_http_client)
+    
     # Create AppImage file
     appimage_file = temp_app_dir / "TestApp-1.0.0.AppImage.current"
     appimage_file.write_bytes(b"fake appimage content")
@@ -200,8 +248,16 @@ async def test_fix_command_e2e_broken_symlink_repair(temp_app_dir: Path, app_con
 
 
 @pytest.mark.anyio
-async def test_fix_command_e2e_fallback_to_recent_file(temp_app_dir: Path, app_config: ApplicationConfig, config_file: Path):
+async def test_fix_command_e2e_fallback_to_recent_file(
+    mock_http_client,  # This is the autouse fixture from conftest.py
+    temp_app_dir: Path,
+    app_config: ApplicationConfig,
+    config_file: Path,
+):
     """Test fix command falls back to most recent AppImage when no .current file exists."""
+    # Configure mock HTTP responses
+    configure_mock_github_releases(mock_http_client)
+    
     # Create regular AppImage files (no .current files)
     old_file = temp_app_dir / "TestApp-0.9.0.AppImage"
     old_file.write_bytes(b"old version")
@@ -244,8 +300,16 @@ async def test_fix_command_e2e_fallback_to_recent_file(temp_app_dir: Path, app_c
 
 
 @pytest.mark.anyio
-async def test_fix_command_e2e_no_appimage_files(temp_app_dir: Path, app_config: ApplicationConfig, config_file: Path):
+async def test_fix_command_e2e_no_appimage_files(
+    mock_http_client,  # This is the autouse fixture from conftest.py
+    temp_app_dir: Path,
+    app_config: ApplicationConfig,
+    config_file: Path,
+):
     """Test fix command fails gracefully when no AppImage files exist."""
+    # Configure mock HTTP responses
+    configure_mock_github_releases(mock_http_client)
+    
     # Verify directory is empty
     appimage_files = list(temp_app_dir.glob("*.AppImage*"))
     assert len(appimage_files) == 0
@@ -268,8 +332,15 @@ async def test_fix_command_e2e_no_appimage_files(temp_app_dir: Path, app_config:
 
 
 @pytest.mark.anyio
-async def test_fix_command_e2e_no_symlink_configured(temp_app_dir: Path, config_file: Path):
+async def test_fix_command_e2e_no_symlink_configured(
+    mock_http_client,  # This is the autouse fixture from conftest.py
+    temp_app_dir: Path,
+    config_file: Path,
+):
     """Test fix command fails when no symlink is configured."""
+    # Configure mock HTTP responses
+    configure_mock_github_releases(mock_http_client)
+    
     # Create config without symlink
     config_data = {
         "applications": [
