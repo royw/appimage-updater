@@ -1,7 +1,7 @@
 # Test Documentation
 
-> **Auto-generated** on 2025-12-04 01:31:39
-> **Total Tests**: 321
+> **Auto-generated** on 2025-12-04 05:05:43
+> **Total Tests**: 326
 
 This page provides a comprehensive overview of all tests in the project, automatically extracted from test docstrings.
 
@@ -168,6 +168,11 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestExtractFormatInfo | `test_appimage_format` | Test extracting AppImage format. |
 | TestExtractFormatInfo | `test_no_match` | Test filename with no format match. |
 | TestExtractFormatInfo | `test_zip_format` | Test extracting ZIP format. |
+| TestFixCommandOrphanedInfo | `test_cleanup_orphaned_info_files_empty_directory` | Test cleanup works correctly in empty directory. |
+| TestFixCommandOrphanedInfo | `test_cleanup_orphaned_info_files_no_orphaned_files` | Test cleanup works when no orphaned files exist. |
+| TestFixCommandOrphanedInfo | `test_cleanup_orphaned_info_files_preserves_valid_files` | Test that valid .current.info files are preserved. |
+| TestFixCommandOrphanedInfo | `test_cleanup_orphaned_info_files_removes_orphaned_files` | Test that orphaned .current.info files are removed. |
+| TestFixCommandOrphanedInfo | `test_cleanup_orphaned_info_files_with_different_extensions` | Test cleanup only processes .current.info files, not other .info files. |
 | TestGetAppConfigPath | `test_directory_config` | Test getting config path for directory-based config. |
 | TestGetAppConfigPath | `test_file_config` | Test getting config path for file-based config. |
 | TestGetAppConfigPath | `test_unknown_config_type` | Test getting config path for unknown config type. |
