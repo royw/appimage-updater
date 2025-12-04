@@ -585,11 +585,11 @@ class MockHTTPResponse:
         self._json_data = json_data or []
         self.text = text
 
-    async def json(self):
+    def json(self):
         """Return JSON data."""
         return self._json_data
 
-    async def raise_for_status(self):
+    def raise_for_status(self):
         """Raise for HTTP errors."""
         if self.status_code >= 400:
             raise RuntimeError(f"HTTP {self.status_code}")
