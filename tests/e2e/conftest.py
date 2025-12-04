@@ -1,15 +1,15 @@
 # type: ignore
 """Shared fixtures for e2e tests."""
 
-import contextlib
-from datetime import datetime
 import os
-from pathlib import Path
 import shutil
 import socket
 import sys
 import tempfile
 import threading
+from datetime import datetime
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 from typer.testing import CliRunner
@@ -49,7 +49,6 @@ class NetworkBlockingSocket:
     def __init__(self, family=socket.AF_INET, type=socket.SOCK_STREAM, proto: int = 0, fileno=None) -> None:
         """Initialize socket with selective blocking."""
         import inspect
-        from unittest.mock import AsyncMock, MagicMock, Mock
 
         # Allow Unix domain sockets and local operations for asyncio
         if family == socket.AF_UNIX or family == socket.AF_UNSPEC:
