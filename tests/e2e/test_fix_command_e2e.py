@@ -14,12 +14,12 @@ from appimage_updater.commands.parameters import FixParams
 from appimage_updater.config.models import ApplicationConfig, ChecksumConfig
 from appimage_updater.ui.output.context import OutputFormatterContext
 from appimage_updater.ui.output.rich_formatter import RichOutputFormatter
-from tests.e2e.conftest import MockHTTPResponse
 
 
 def configure_mock_github_releases(mock_http_client, tag_name="v1.0.0", app_name="TestApp"):
     """Configure mock GitHub releases API response."""
-
+    from conftest import MockHTTPResponse
+    
     mock_releases_response = MockHTTPResponse(
         status_code=200,
         json_data=[
@@ -41,7 +41,8 @@ def configure_mock_github_releases(mock_http_client, tag_name="v1.0.0", app_name
     )
 
     mock_http_client.configure_response(
-        f"https://api.github.com/repos/test/{app_name.lower()}/releases", mock_releases_response
+        f"https://api.github.com/repos/test/{app_name.lower()}/releases",
+        mock_releases_response,
     )
 
 
