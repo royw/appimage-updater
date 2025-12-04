@@ -64,6 +64,14 @@ class TestConfigCommand:
         errors = command._validate_action()
         assert errors == []
 
+    def test_validate_action_valid_update(self) -> None:
+        """Test action validation with valid 'update' action."""
+        params = ConfigParams(action="update")
+        command = ConfigCommand(params)
+
+        errors = command._validate_action()
+        assert errors == []
+
     def test_validate_action_invalid(self) -> None:
         """Test action validation with invalid action."""
         params = ConfigParams(action="invalid")
@@ -74,7 +82,7 @@ class TestConfigCommand:
         assert "Invalid action 'invalid'" in errors[0]
         assert "Valid actions:" in errors[0]
         # Check that all expected actions are mentioned
-        for action in ["show", "set", "reset", "show-effective", "list"]:
+        for action in ["show", "set", "reset", "show-effective", "list", "update"]:
             assert action in errors[0]
 
     def test_validate_set_action_parameters_valid(self) -> None:
@@ -328,7 +336,7 @@ class TestConfigCommand:
 
         mock_console_print.assert_called_once()
         help_message = mock_console_print.call_args[0][0]
-        assert "Available actions: show, set, reset, show-effective, list" in help_message
+        assert "Available actions: show, set, reset, show-effective, list, update" in help_message
 
     def test_create_result_success(self) -> None:
         """Test result creation for success case."""
@@ -475,6 +483,19 @@ class TestConfigCommand:
 
         mock_list_settings.assert_called_once()
 
+    @patch("appimage_updater.commands.config_command.update_config_from_defaults")
+    def test_get_action_handlers_update(self, mock_update_config_from_defaults: Mock) -> None:
+        """Test action handler for update action."""
+        params = ConfigParams(action="update", config_file=Path("/test/config.json"), config_dir=Path("/test/config"))
+        command = ConfigCommand(params)
+
+        handlers = command._get_action_handlers()
+
+        # Execute the update handler
+        handlers["update"]()
+
+        mock_update_config_from_defaults.assert_called_once_with(Path("/test/config.json"), Path("/test/config"))
+
     def test_get_action_handlers_all_actions_present(self) -> None:
         """Test that all expected actions have handlers."""
         params = ConfigParams(action="show")
@@ -482,5 +503,5 @@ class TestConfigCommand:
 
         handlers = command._get_action_handlers()
 
-        expected_actions = {"show", "set", "reset", "show-effective", "list"}
+        expected_actions = {"show", "set", "reset", "show-effective", "list", "update"}
         assert set(handlers.keys()) == expected_actions

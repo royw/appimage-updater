@@ -16,6 +16,7 @@ from .loader import ConfigLoadError
 from .manager import (
     AppConfigs,
     GlobalConfigManager,
+    Manager,
 )
 from .models import (
     Config,
@@ -80,6 +81,43 @@ def show_global_config(
 
     except ConfigLoadError as e:
         _handle_config_load_error(e)
+
+
+def update_config_from_defaults(
+    config_file: Path | None = None,
+    config_dir: Path | None = None,
+    app_configs_factory: Any = AppConfigs,
+    manager_factory: Any = Manager,
+) -> bool:
+    """Rewrite configuration files based on current global defaults.
+
+    This action reloads the full directory-based configuration (global +
+    applications) and then saves it back out using the same directory-based
+    serializer used by edit --update. The primary purpose is to ensure that
+    all application configs and the global config reflect the latest default
+    path rules (e.g. relative paths, home-shortened globals).
+    """
+
+    try:
+        # Determine the apps directory used for directory-based configs.
+        apps_dir = config_dir or GlobalConfigManager.get_default_config_dir()
+
+        # Load the current configuration (global + applications) using the
+        # directory-based layout rooted at apps_dir.
+        app_configs = app_configs_factory(apps_dir)
+        config: Config = app_configs._config
+
+        # Use the same manager used by EditCommand._save_config to persist the
+        # directory-based configuration, including rewriting config.json and
+        # apps/*.json with the latest serialization rules.
+        manager: Manager = manager_factory()
+        manager.save_directory_config(config, apps_dir)
+
+        return True
+
+    except ConfigLoadError as e:
+        _handle_config_load_error(e)
+        return False
 
 
 def _build_basic_config_settings(global_config: Any) -> dict[str, str]:

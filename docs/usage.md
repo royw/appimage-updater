@@ -509,6 +509,7 @@ appimage-updater config [OPTIONS] ACTION [SETTING] [VALUE]
 - `set`: Update a configuration setting
 - `reset`: Reset all settings to defaults
 - `show-effective`: Show effective configuration for a specific application
+- `update`: Rewrite configuration files based on current rules and defaults
 
 **Options:**
 
@@ -564,6 +565,9 @@ appimage-updater config reset
 
 # Show effective configuration for a specific application
 appimage-updater config show-effective --app FreeCAD
+
+# Rewrite configuration files (global + apps) using current rules and defaults
+appimage-updater config update
 ```
 
 **Configuration Display Format:**

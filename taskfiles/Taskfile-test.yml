@@ -10,7 +10,7 @@ tasks:
     silent: true
 
   # === Testing ===
-  test:_check:
+  _check:
     desc: Internal task to check for misplaced config.json in apps directory
     internal: true
     cmds:

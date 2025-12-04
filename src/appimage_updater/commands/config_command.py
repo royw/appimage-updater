@@ -14,6 +14,7 @@ from ..config.command import (
     set_global_config_value,
     show_effective_config,
     show_global_config,
+    update_config_from_defaults,
 )
 from ..ui.output.context import OutputFormatterContext
 from ..utils.logging_config import configure_logging
@@ -33,7 +34,7 @@ class ConfigCommand(Command):
 
     def _validate_action(self) -> list[str]:
         """Validate the action parameter."""
-        valid_actions = {"show", "set", "reset", "show-effective", "list"}
+        valid_actions = {"show", "set", "reset", "show-effective", "list", "update"}
         if self.params.action not in valid_actions:
             return [f"Invalid action '{self.params.action}'. Valid actions: {', '.join(valid_actions)}"]
         return []
@@ -97,7 +98,7 @@ class ConfigCommand(Command):
         elif self.params.action == "show-effective":
             self.console.print("[yellow]Usage: appimage-updater config show-effective --app <app-name>")
         else:
-            self.console.print("[yellow]Available actions: show, set, reset, show-effective, list")
+            self.console.print("[yellow]Available actions: show, set, reset, show-effective, list, update")
 
     # noinspection PyMethodMayBeStatic
     def _create_result(self, success: bool) -> CommandResult:
@@ -134,4 +135,5 @@ class ConfigCommand(Command):
                 self.params.app_name, self.params.config_file, self.params.config_dir
             ),
             "list": lambda: list_settings(),
+            "update": lambda: update_config_from_defaults(self.params.config_file, self.params.config_dir),
         }

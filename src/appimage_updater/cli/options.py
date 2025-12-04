@@ -296,15 +296,6 @@ class CLIOptions:
         None, "--auto-subdir/--no-auto-subdir", help="Enable or disable automatic subdirectory creation"
     )
 
-    EDIT_UPDATE_OPTION = typer.Option(
-        False,
-        "--update",
-        help=(
-            "Rewrite application download and symlink paths so they are stored "
-            "relative to global defaults when applicable"
-        ),
-    )
-
     EDIT_DRY_RUN_OPTION = typer.Option(
         False,
         "--dry-run",

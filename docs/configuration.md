@@ -106,6 +106,9 @@ appimage-updater config set timeout-seconds 60
 
 # Reset all settings to defaults
 appimage-updater config reset
+
+# Rewrite configuration files (global + apps) using current rules and defaults
+appimage-updater config update
 ```
 
 ### Configuration Display

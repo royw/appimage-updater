@@ -169,6 +169,48 @@ class Manager:
         return config_dict
 
     # Directory Operations
+    def _shorten_home_relative(self, path: Path | str | None) -> str | None:
+        """Return a string path, shortening home directory to '~' when applicable.
+
+        This is used when serializing global default paths so that values under
+        the user's home directory are stored as '~/...'.
+        """
+
+        if path is None:
+            return None
+
+        path_str = str(path) if isinstance(path, Path) else str(path)
+
+        home_str = str(Path.home())
+
+        if path_str == home_str:
+            return "~"
+
+        home_prefix = home_str + "/"
+        if path_str.startswith(home_prefix):
+            return "~" + path_str[len(home_str) :]
+
+        return path_str
+
+    def _normalize_global_config_paths(self, global_config: GlobalConfig) -> dict[str, Any]:
+        """Normalize global_config paths before serialization.
+
+        Ensures that defaults.download_dir and defaults.symlink_dir are stored
+        using '~/...' when they are located under the user's home directory.
+        """
+
+        data = global_config.model_dump()
+        defaults = data.get("defaults")
+
+        if isinstance(defaults, dict):
+            if "download_dir" in defaults and defaults["download_dir"] is not None:
+                defaults["download_dir"] = self._shorten_home_relative(defaults["download_dir"])
+
+            if "symlink_dir" in defaults and defaults["symlink_dir"] is not None:
+                defaults["symlink_dir"] = self._shorten_home_relative(defaults["symlink_dir"])
+
+        return data
+
     def _make_path_relative(self, path: Path, base_dir: Path | None) -> str:
         """Make path relative to base_dir when possible, otherwise return absolute.
 
@@ -248,7 +290,9 @@ class Manager:
 
         # Always write wrapped format {"global_config": {...}} to match
         # GlobalConfigManager.save_global_config_only and existing configs.
-        global_config_dict = {"global_config": config.global_config.model_dump()}
+        # Normalize home-relative paths when serializing.
+        normalized_global = self._normalize_global_config_paths(config.global_config)
+        global_config_dict = {"global_config": normalized_global}
 
         with global_config_file.open("w") as f:
             json.dump(global_config_dict, f, indent=2, default=str)
@@ -335,8 +379,9 @@ class GlobalConfigManager(Manager):
         target_file = self.get_target_config_path(config_file, config_dir)
 
         # Build global config dict
+        normalized_global = self._normalize_global_config_paths(self._config.global_config)
         global_config_dict = {
-            "global_config": self._config.global_config.model_dump(),
+            "global_config": normalized_global,
         }
 
         # Preserve existing applications

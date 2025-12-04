@@ -12,19 +12,28 @@ from pathlib import Path
 
 import pytest
 
-from appimage_updater.config.manager import AppConfigs, Manager
-from appimage_updater.config.models import Config
+from appimage_updater.config.manager import AppConfigs, GlobalConfigManager, Manager
+from appimage_updater.config.models import Config, DefaultsConfig, GlobalConfig
 from appimage_updater.core.update_operations import _load_config_with_fallback
 
 
 class TestDirectoryConfigLoading:
     """Test loading configuration from directory structure with separate config.json."""
 
-    def test_load_config_from_directory_with_global_config(self, tmp_path: Path) -> None:
+    @pytest.mark.parametrize("global_config_format", ["wrapped", "bare"])
+    def test_load_config_from_directory_with_global_config(
+        self,
+        tmp_path: Path,
+        global_config_format: str,
+    ) -> None:
         """Test that _load_config_from_directory loads both apps and global_config.
 
         This is the critical test that would have caught the bug where global_config
         was not being loaded from config.json when using apps/ directory.
+
+        It also verifies that we support both legacy wrapped format
+        {"global_config": {...}} and newer bare GlobalConfig dumps {...} using the
+        same inner global_config payload for both formats.
         """
         # Create directory structure
         config_dir = tmp_path / "appimage-updater"
@@ -33,33 +42,37 @@ class TestDirectoryConfigLoading:
 
         # Create config.json with custom global_config
         config_json = config_dir / "config.json"
-        global_config_data = {
-            "global_config": {
-                "concurrent_downloads": 5,
-                "timeout_seconds": 60,
-                "user_agent": "TestAgent/1.0",
-                "defaults": {
-                    "download_dir": None,
-                    "rotation_enabled": True,
-                    "retain_count": 7,  # Custom value
-                    "symlink_enabled": True,
-                    "symlink_dir": None,
-                    "symlink_pattern": "{appname}.AppImage",
-                    "auto_subdir": True,
-                    "checksum_enabled": False,
-                    "checksum_algorithm": "sha256",
-                    "checksum_pattern": "{filename}-SHA256.txt",
-                    "checksum_required": False,
-                    "prerelease": True,
-                },
-                "domain_knowledge": {
-                    "github_domains": ["github.com"],
-                    "gitlab_domains": ["gitlab.com"],
-                    "direct_domains": [],
-                    "dynamic_domains": [],
-                },
-            }
+        inner_global_config = {
+            "concurrent_downloads": 5,
+            "timeout_seconds": 60,
+            "user_agent": "TestAgent/1.0",
+            "defaults": {
+                "download_dir": None,
+                "rotation_enabled": True,
+                "retain_count": 7,  # Custom value
+                "symlink_enabled": True,
+                "symlink_dir": None,
+                "symlink_pattern": "{appname}.AppImage",
+                "auto_subdir": True,
+                "checksum_enabled": False,
+                "checksum_algorithm": "sha256",
+                "checksum_pattern": "{filename}-SHA256.txt",
+                "checksum_required": False,
+                "prerelease": True,
+            },
+            "domain_knowledge": {
+                "github_domains": ["github.com"],
+                "gitlab_domains": ["gitlab.com"],
+                "direct_domains": [],
+                "dynamic_domains": [],
+            },
         }
+
+        if global_config_format == "wrapped":
+            global_config_data: dict[str, dict[str, object]|object] = {"global_config": inner_global_config}
+        else:
+            # Newer bare GlobalConfig dumps use the inner structure directly
+            global_config_data = inner_global_config
         with config_json.open("w") as f:
             json.dump(global_config_data, f, indent=2)
 
@@ -225,7 +238,8 @@ class TestDirectoryConfigLoading:
         # Verify default global_config is used (fallback)
         assert config.global_config.defaults.retain_count == 3  # default
 
-    def test_load_config_with_fallback_uses_global_config_env(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_load_config_with_fallback_uses_global_config_env(self, tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch) -> None:
         """Test _load_config_with_fallback reading global config via env.
 
         This simulates the real check workflow, where no explicit config_file or
@@ -305,3 +319,58 @@ class TestDirectoryConfigLoading:
         # Verify that our custom global defaults were loaded (retain_count=9)
         assert isinstance(config, Config)
         assert config.global_config.defaults.retain_count == 9
+
+    def test_global_defaults_paths_saved_with_tilde_when_under_home(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Global defaults download_dir and symlink_dir should be stored as ~/ paths.
+
+        This ensures that when the defaults live under the user's home directory,
+        the serialized config.json uses shortened paths like "~/Downloads" instead
+        of absolute "/home/user/Downloads".
+        """
+
+        # Simulate a custom home directory for this test
+        fake_home = tmp_path / "home" / "user"
+        fake_home.mkdir(parents=True)
+        monkeypatch.setattr("pathlib.Path.home", lambda: fake_home)
+
+        # Construct a GlobalConfig with defaults under the fake home
+        defaults = DefaultsConfig(
+            download_dir=fake_home / "Downloads",
+            symlink_dir=fake_home / ".local" / "bin",
+        )
+        global_config = GlobalConfig(defaults=defaults)
+        config = Config(global_config=global_config, applications=[])
+
+        # Save via Manager.update_global_config_in_directory (directory-based path)
+        config_root = fake_home / ".config" / "appimage-updater"
+        apps_dir = config_root / "apps"
+        apps_dir.mkdir(parents=True)
+
+        manager = Manager()
+        manager.update_global_config_in_directory(config, apps_dir)
+
+        # Verify config.json uses ~/ paths
+        config_json = config_root / "config.json"
+        assert config_json.exists()
+
+        with config_json.open() as f:
+            saved = json.load(f)
+
+        saved_defaults = saved["global_config"]["defaults"]
+        assert saved_defaults["download_dir"].startswith("~/")
+        assert saved_defaults["symlink_dir"].startswith("~/")
+
+        # Also verify GlobalConfigManager.save_global_config_only uses the same normalization
+        gcm = GlobalConfigManager(config_path=config_json)
+        gcm.defaults.download_dir = fake_home / "Downloads"
+        gcm.defaults.symlink_dir = fake_home / ".local" / "bin"
+        gcm.save_global_config_only()
+
+        with config_json.open() as f:
+            saved_again = json.load(f)
+
+        saved_defaults_again = saved_again["global_config"]["defaults"]
+        assert saved_defaults_again["download_dir"].startswith("~/")
+        assert saved_defaults_again["symlink_dir"].startswith("~/")

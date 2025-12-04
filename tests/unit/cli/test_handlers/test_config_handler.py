@@ -345,7 +345,7 @@ class TestConfigCommandHandler:
         with patch("appimage_updater.cli.handlers.config_handler.Console"):
             handler = ConfigCommandHandler()
 
-            actions = ["show", "set", "reset", "show-effective", "list"]
+            actions = ["show", "set", "reset", "show-effective", "list", "update"]
 
             for action in actions:
                 with patch(
