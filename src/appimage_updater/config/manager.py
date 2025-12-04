@@ -31,34 +31,53 @@ class Manager:
         Loads applications from *.json files in the directory, and global_config
         from ../config.json if it exists.
         """
-        applications = []
+        applications: list[ApplicationConfig] = []
         json_files = list(config_path.glob("*.json"))
 
-        for json_file in json_files:
-            file_applications = self._load_applications_from_json_file(json_file, json, ConfigLoadError)
-            applications.extend(file_applications)
-
         # Load global config from parent directory's config.json if it exists
+        global_config: GlobalConfig | None = None
         global_config_file = config_path.parent / "config.json"
         if global_config_file.exists():
             try:
                 with global_config_file.open(encoding="utf-8") as f:
                     config_data = json.load(f)
-                    if "global_config" in config_data:
-                        global_config = GlobalConfig(**config_data["global_config"])
-                        return Config(global_config=global_config, applications=applications)
+
+                # Support both legacy wrapped format {"global_config": {...}}
+                # and newer bare GlobalConfig dumps {...} for robustness.
+                if "global_config" in config_data and isinstance(config_data["global_config"], dict):
+                    global_config = GlobalConfig(**config_data["global_config"])
+                elif isinstance(config_data, dict):
+                    global_config = GlobalConfig(**config_data)
             except (json.JSONDecodeError, OSError, TypeError, ValueError) as e:
                 logger.warning(f"Failed to load global config from {global_config_file}: {e}, using defaults")
 
-        return Config(applications=applications)
+        if global_config is None:
+            global_config = GlobalConfig()
+
+        defaults = global_config.defaults
+
+        for json_file in json_files:
+            file_applications = self._load_applications_from_json_file(
+                json_file,
+                json,
+                ConfigLoadError,
+                defaults,
+            )
+            applications.extend(file_applications)
+
+        return Config(global_config=global_config, applications=applications)
 
     def _load_applications_from_json_file(
-        self, json_file: Path, json_module: Any, config_load_error_class: Any
+        self,
+        json_file: Path,
+        json_module: Any,
+        config_load_error_class: Any,
+        defaults: DefaultsConfig,
     ) -> list[ApplicationConfig]:
         """Load applications from a single JSON file."""
         try:
             data = self._read_json_file(json_file, json_module)
-            return self._extract_applications_from_data(data)
+            return self._extract_applications_from_data(data, defaults)
         except (json_module.JSONDecodeError, OSError, TypeError) as e:
             raise config_load_error_class(f"Invalid JSON in {json_file}: {e}") from e
 
@@ -69,13 +88,41 @@ class Manager:
             return cast(dict[str, Any], json_module.load(f))
 
     # noinspection PyMethodMayBeStatic
-    def _extract_applications_from_data(self, data: dict[str, Any]) -> list[ApplicationConfig]:
-        """Extract applications from JSON data."""
-        applications = []
+    def _extract_applications_from_data(
+        self,
+        data: dict[str, Any],
+        defaults: DefaultsConfig,
+    ) -> list[ApplicationConfig]:
+        """Extract applications from JSON data, resolving relative paths.
+
+        When a global default download_dir or symlink_dir is configured, any
+        relative per-application download_dir or symlink_path values are
+        interpreted as being relative to those global directories. Absolute
+        paths are preserved as-is.
+        """
+        applications: list[ApplicationConfig] = []
         if isinstance(data, dict) and "applications" in data:
-            # Convert dict applications to ApplicationConfig objects
             for app_data in data["applications"]:
-                applications.append(ApplicationConfig(**app_data))
+                app_dict = dict(app_data)
+
+                # Resolve download_dir relative to global default if needed
+                download_dir_value = app_dict.get("download_dir")
+                if download_dir_value is not None and defaults.download_dir is not None:
+                    download_dir_path = Path(str(download_dir_value))
+                    if not download_dir_path.is_absolute():
+                        base_download_dir = defaults.download_dir.expanduser().resolve()
+                        app_dict["download_dir"] = str(base_download_dir / download_dir_path)
+
+                # Resolve symlink_path relative to global default symlink_dir if needed
+                symlink_value = app_dict.get("symlink_path")
+                if symlink_value is not None and defaults.symlink_dir is not None:
+                    symlink_path = Path(str(symlink_value))
+                    if not symlink_path.is_absolute():
+                        base_symlink_dir = defaults.symlink_dir.expanduser().resolve()
+                        app_dict["symlink_path"] = str(base_symlink_dir / symlink_path)
+
+                applications.append(ApplicationConfig(**app_dict))
+
         return applications
 
     # Single-file config format has been removed - we only support directory-based config now
@@ -122,6 +169,47 @@ class Manager:
         return config_dict
 
     # Directory Operations
+    def _make_path_relative(self, path: Path, base_dir: Path | None) -> str:
+        """Make path relative to base_dir when possible, otherwise return absolute.
+
+        This is used when serializing application configurations so that
+        per-app download_dir and symlink_path are stored relative to the
+        corresponding global defaults when they share the same base
+        directory.
+        """
+        if base_dir is None:
+            return str(path)
+
+        try:
+            base = base_dir.expanduser().resolve()
+            return str(path.resolve().relative_to(base))
+        except ValueError:
+            # Path is not under the base directory; keep it absolute
+            return str(path)
+
+        except OSError:
+            # In case resolve() fails for some reason, fall back to absolute string
+            return str(path)
+
+    def _serialize_application_config(self, app: ApplicationConfig, defaults: DefaultsConfig) -> dict[str, Any]:
+        """Serialize an ApplicationConfig to a dict with relative paths when possible."""
+        app_dict = app.model_dump()
+
+        # Store download_dir relative to global default download_dir when set
+        if defaults.download_dir is not None:
+            app_dict["download_dir"] = self._make_path_relative(app.download_dir, defaults.download_dir)
+        else:
+            app_dict["download_dir"] = str(app.download_dir)
+
+        # Store symlink_path relative to global default symlink_dir when set
+        if app.symlink_path is not None:
+            if defaults.symlink_dir is not None:
+                app_dict["symlink_path"] = self._make_path_relative(app.symlink_path, defaults.symlink_dir)
+            else:
+                app_dict["symlink_path"] = str(app.symlink_path)
+
+        return {"applications": [app_dict]}
+
     def save_directory_config(self, config: Config, config_dir: Path) -> None:
         """Save config to directory-based structure with separate files per app."""
         # Ensure directory exists
@@ -130,13 +218,15 @@ class Manager:
         # Save global config
         self.update_global_config_in_directory(config, config_dir)
 
+        defaults = config.global_config.defaults
+
         # Save each application as a separate file
         for app in config.applications:
             app_filename = f"{app.name.lower()}.json"
             app_file_path = config_dir / app_filename
 
-            # Create application config structure
-            app_config_dict = {"applications": [app.model_dump()]}
+            # Create application config structure with relative paths when appropriate
+            app_config_dict = self._serialize_application_config(app, defaults)
 
             with app_file_path.open("w") as f:
                 json.dump(app_config_dict, f, indent=2, default=str)
@@ -147,9 +237,21 @@ class Manager:
     def update_global_config_in_directory(self, config: Config, config_dir: Path) -> None:
         """Update global config file in directory."""
 
-        global_config_file = config_dir / "config.json"
+        # For directory-based configs, the applications live in apps/ and the
+        # global configuration lives one level up in config.json. This matches
+        # the loader behavior in _load_config_from_directory, which reads
+        # ../config.json when given the apps/ directory.
+        global_config_file = config_dir.parent / "config.json"
+
+        # Ensure parent directory exists before writing
+        global_config_file.parent.mkdir(parents=True, exist_ok=True)
+
+        # Always write wrapped format {"global_config": {...}} to match
+        # GlobalConfigManager.save_global_config_only and existing configs.
+        global_config_dict = {"global_config": config.global_config.model_dump()}
+
         with global_config_file.open("w") as f:
-            json.dump(config.global_config.model_dump(), f, indent=2, default=str)
+            json.dump(global_config_dict, f, indent=2, default=str)
 
         logger.debug(f"Updated global config in: {global_config_file}")
 
@@ -501,13 +603,15 @@ class AppConfigs(Manager):
         # Ensure directory exists
         self._config_path.mkdir(parents=True, exist_ok=True)
 
+        defaults = self._config.global_config.defaults
+
         # Save each application as a separate file
         for app in self._config.applications:
             app_filename = f"{app.name.lower()}.json"
             app_file_path = self._config_path / app_filename
 
-            # Create application config structure
-            app_config_dict = {"applications": [app.model_dump()]}
+            # Create application config structure with relative paths when appropriate
+            app_config_dict = self._serialize_application_config(app, defaults)
 
             with app_file_path.open("w") as f:
                 json.dump(app_config_dict, f, indent=2, default=str)

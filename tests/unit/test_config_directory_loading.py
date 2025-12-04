@@ -13,7 +13,8 @@ from pathlib import Path
 import pytest
 
 from appimage_updater.config.manager import AppConfigs, Manager
-from appimage_updater.config.models import ApplicationConfig, Config, GlobalConfig
+from appimage_updater.config.models import Config
+from appimage_updater.core.update_operations import _load_config_with_fallback
 
 
 class TestDirectoryConfigLoading:
@@ -223,3 +224,84 @@ class TestDirectoryConfigLoading:
 
         # Verify default global_config is used (fallback)
         assert config.global_config.defaults.retain_count == 3  # default
+
+    def test_load_config_with_fallback_uses_global_config_env(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test _load_config_with_fallback reading global config via env.
+
+        This simulates the real check workflow, where no explicit config_file or
+        config_dir are provided and the default locations (driven by the
+        APPIMAGE_UPDATER_TEST_CONFIG_DIR environment variable in tests) should
+        be used. The test ensures that global_config from config.json is
+        actually loaded and exposed through the Config returned by
+        _load_config_with_fallback.
+        """
+        # Create directory structure matching GlobalConfigManager expectations
+        config_root = tmp_path / "appimage-updater"
+        apps_dir = config_root / "apps"
+        apps_dir.mkdir(parents=True)
+
+        # Point APPIMAGE_UPDATER_TEST_CONFIG_DIR at our config_root so that
+        # GlobalConfigManager.get_default_config_dir() uses config_root / "apps".
+        monkeypatch.setenv("APPIMAGE_UPDATER_TEST_CONFIG_DIR", str(config_root))
+
+        # Create config.json with a distinctive default retain_count
+        config_json = config_root / "config.json"
+        global_config_data = {
+            "global_config": {
+                "concurrent_downloads": 3,
+                "timeout_seconds": 30,
+                "user_agent": "AppImage-Updater/Test",
+                "defaults": {
+                    "download_dir": None,
+                    "rotation_enabled": False,
+                    "retain_count": 9,  # Non-default to verify it is loaded
+                    "symlink_enabled": False,
+                    "symlink_dir": None,
+                    "symlink_pattern": "{appname}.AppImage",
+                    "auto_subdir": False,
+                    "checksum_enabled": True,
+                    "checksum_algorithm": "sha256",
+                    "checksum_pattern": "{filename}-SHA256.txt",
+                    "checksum_required": False,
+                    "prerelease": False,
+                },
+                "domain_knowledge": {
+                    "github_domains": ["github.com"],
+                    "gitlab_domains": ["gitlab.com"],
+                    "direct_domains": [],
+                    "dynamic_domains": [],
+                },
+            }
+        }
+        with config_json.open("w") as f:
+            json.dump(global_config_data, f, indent=2)
+
+        # Create at least one app config in apps/ so that AppConfigs has
+        # something to load
+        app_json = apps_dir / "testapp.json"
+        app_data = {
+            "applications": [
+                {
+                    "name": "TestApp",
+                    "source_type": "github",
+                    "url": "https://github.com/test/app",
+                    "download_dir": str(tmp_path / "downloads"),
+                    "pattern": "test.*\\.AppImage$",
+                    "enabled": True,
+                    "prerelease": False,
+                    "checksum": {"enabled": True},
+                }
+            ]
+        }
+        with app_json.open("w") as f:
+            json.dump(app_data, f, indent=2)
+
+        # When no explicit config_file or config_dir are provided, the check
+        # workflow calls _load_config_with_fallback(None, None). This should
+        # resolve to our apps_dir via GlobalConfigManager and load the
+        # global_config from config_root/config.json.
+        config = _load_config_with_fallback(config_file=None, config_dir=None)
+
+        # Verify that our custom global defaults were loaded (retain_count=9)
+        assert isinstance(config, Config)
+        assert config.global_config.defaults.retain_count == 9

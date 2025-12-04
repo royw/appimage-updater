@@ -267,7 +267,22 @@ async def generate_default_config(
 def _apply_symlink_config(config: dict[str, Any], symlink: str | None, defaults: Any, name: str) -> None:
     """Apply symlink configuration to config dict."""
     if symlink:
-        config["symlink_path"] = str(Path(symlink).expanduser())
+        symlink_path = Path(symlink).expanduser()
+
+        # When a global default symlink_dir is configured, interpret a
+        # relative symlink path as being under that directory so that CLI
+        # commands can specify paths relative to global defaults.
+        base_dir: Path | None = None
+        if defaults is not None and getattr(defaults, "symlink_dir", None) is not None:
+            base_dir = defaults.symlink_dir.expanduser()
+        elif defaults is not None and getattr(defaults, "download_dir", None) is not None:
+            # Fallback: use global default download_dir when no explicit symlink_dir
+            base_dir = defaults.download_dir.expanduser()
+
+        if base_dir is not None and not symlink_path.is_absolute():
+            symlink_path = base_dir / symlink_path
+
+        config["symlink_path"] = str(symlink_path)
     elif defaults:
         default_symlink = defaults.get_default_symlink_path(name)
         if default_symlink is not None:
@@ -277,6 +292,13 @@ def _apply_symlink_config(config: dict[str, Any], symlink: str | None, defaults:
 def _get_effective_download_dir(download_dir: str | None, defaults: Any, name: str) -> str:
     """Get effective download directory with global defaults."""
     if download_dir is not None:
+        # When a global default download_dir is configured, interpret a
+        # relative download_dir as being under that directory so that CLI
+        # commands can specify paths relative to the global default.
+        if defaults is not None and getattr(defaults, "download_dir", None) is not None:
+            candidate = Path(download_dir)
+            if not candidate.is_absolute():
+                return str(defaults.download_dir / candidate)
         return download_dir
     if defaults:
         return str(defaults.get_default_download_dir(name))

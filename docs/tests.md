@@ -1,7 +1,7 @@
 # Test Documentation
 
-> **Auto-generated** on 2025-12-02 03:37:09
-> **Total Tests**: 319
+> **Auto-generated** on 2025-12-03 18:22:55
+> **Total Tests**: 320
 
 This page provides a comprehensive overview of all tests in the project, automatically extracted from test docstrings.
 
@@ -124,6 +124,7 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestDirectoryConfigLoading | `test_app_configs_loads_global_config` | Test that AppConfigs properly loads global_config from config.json. |
 | TestDirectoryConfigLoading | `test_load_config_from_directory_with_global_config` | Test that \_load_config_from_directory loads both apps and global_config. |
 | TestDirectoryConfigLoading | `test_load_config_from_directory_without_global_config` | Test that \_load_config_from_directory uses defaults when config.json missing. |
+| TestDirectoryConfigLoading | `test_load_config_with_fallback_uses_global_config_env` | Test \_load_config_with_fallback reading global config via env. |
 | TestDirectoryConfigLoading | `test_load_config_with_invalid_global_config_json` | Test that invalid config.json falls back to defaults gracefully. |
 | TestDisplayDownloadResults | `test_display_download_results_all_failed` | Test displaying all failed results. |
 | TestDisplayDownloadResults | `test_display_download_results_all_successful` | Test displaying all successful results. |

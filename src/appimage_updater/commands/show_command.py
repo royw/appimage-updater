@@ -12,7 +12,7 @@ from ..config.manager import (
     AppConfigs,
     GlobalConfigManager,
 )
-from ..config.models import Config
+from ..config.models import Config, DefaultsConfig
 from ..services.application_service import ApplicationService
 from ..ui.display import display_application_details
 from ..ui.output.context import OutputFormatterContext
@@ -87,7 +87,7 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
 
             # Output add commands directly to stdout
             for app in found_apps:
-                command = self._generate_add_command(app)
+                command = self._generate_add_command(app, config)
                 print(command)  # noqa: T201
                 print()  # noqa: T201 - Add blank line after each command
 
@@ -161,7 +161,7 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
                 self.console.print()  # Add spacing between multiple apps
             display_application_details(app, config_source_info)
 
-    def _generate_add_command(self, app: Any) -> str:
+    def _generate_add_command(self, app: Any, config: Config) -> str:
         """Generate an add command string from an application configuration."""
         # Start with basic command
         parts = ["appimage-updater", "add"]
@@ -172,8 +172,9 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
         # Add URL
         parts.append(app.url)
 
-        # Add download directory (home-relative)
-        parts.append(self._to_home_relative_path(app.download_dir))
+        # Add download directory, preferring a form relative to global defaults
+        defaults = config.global_config.defaults
+        parts.append(self._to_config_relative_download_dir(app.download_dir, defaults))
 
         # Add optional parameters if they differ from defaults
         self._add_boolean_flags(parts, app)
@@ -253,6 +254,28 @@ class ShowCommand(BaseCommand, FormatterContextMixin, Command):
         except ValueError:
             # Path is not under home directory, return as-is
             return str(path_obj)
+
+    def _to_config_relative_download_dir(self, path: Path | str, defaults: DefaultsConfig) -> str:
+        """Convert download_dir to a form relative to global defaults when possible.
+
+        If a global default download_dir is configured and the application's
+        download_dir lives underneath it, return the relative path segment so
+        that CLI commands use the same relative structure as stored configs.
+        Otherwise, fall back to a home-relative absolute path.
+        """
+        base = defaults.download_dir
+        path_obj = Path(path) if isinstance(path, str) else path
+
+        if base is not None:
+            try:
+                base_resolved = base.expanduser().resolve()
+                rel = path_obj.expanduser().resolve().relative_to(base_resolved)
+                return str(rel)
+            except (ValueError, OSError):
+                # Not under base or resolution failed; fall back to home-relative
+                return self._to_home_relative_path(path_obj)
+
+        return self._to_home_relative_path(path_obj)
 
     def _get_config_source_info(self) -> dict[str, str]:
         """Get configuration source information for display."""

@@ -111,11 +111,17 @@ class EditCommand(BaseCommand, FormatterContextMixin, Command):
             return self._create_error_result("Applications not found")
 
         updates = self._collect_updates_from_parameters()
-        if not updates:
+        if not updates and not self.params.update:
             self.console.print("[yellow]No changes specified. Use --help to see available options.[/yellow]")
             return None
 
-        self._apply_and_save_updates(config, found_apps, updates)
+        if updates:
+            self._apply_and_save_updates(config, found_apps, updates)
+        else:
+            # --update requested with no explicit field changes: force a save so that
+            # configuration serialization can rewrite paths relative to global
+            # defaults where appropriate.
+            self._save_config(config)
         return None
 
     def _load_config_safely(self) -> Any | CommandResult:

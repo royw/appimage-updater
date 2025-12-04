@@ -178,6 +178,7 @@ class CommandFactory:
         dry_run: bool = False,
         debug: bool = False,
         output_format: Any = None,
+        update: bool = False,
     ) -> EditCommand:
         """Create an EditCommand instance."""
         params = EditParams(
@@ -208,6 +209,7 @@ class CommandFactory:
             dry_run=dry_run,
             debug=debug,
             output_format=output_format,
+            update=update,
         )
         return EditCommand(params)
 
