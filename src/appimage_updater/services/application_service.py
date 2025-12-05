@@ -138,7 +138,7 @@ class ApplicationService:
         available_text = ", ".join(available_apps) if available_apps else "None configured"
         formatter.print_info(f"   • Available applications: {available_text}")
         formatter.print_info("   • Application names are case-insensitive")
-        formatter.print_info("   • Use glob patterns like 'Orca*' to match multiple apps")
+        formatter.print_info("   • Use quoted glob patterns like 'Orca*' to match multiple apps")
         formatter.print_info("   • Run 'appimage-updater list' to see all configured applications")
 
     @staticmethod
@@ -147,7 +147,7 @@ class ApplicationService:
         available_text = ", ".join(available_apps) if available_apps else "None configured"
         console.print(f"   • Available applications: {available_text}")
         console.print("   • Application names are case-insensitive")
-        console.print("   • Use glob patterns like 'Orca*' to match multiple apps")
+        console.print("   • Use quoted glob patterns like 'Orca*' to match multiple apps")
         console.print("   • Run 'appimage-updater list' to see all configured applications")
         if not available_apps:
             console.print("   • Run 'appimage-updater add' to configure your first application")
@@ -158,7 +158,7 @@ class ApplicationService:
         available_text = ", ".join(available_apps) if available_apps else "None configured"
         print(f"   • Available applications: {available_text}", file=sys.stderr)
         print("   • Application names are case-insensitive", file=sys.stderr)
-        print("   • Use glob patterns like 'Orca*' to match multiple apps", file=sys.stderr)
+        print("   • Use quoted glob patterns like 'Orca*' to match multiple apps", file=sys.stderr)
         print("   • Run 'appimage-updater list' to see all configured applications", file=sys.stderr)
         if not available_apps:
             print("   • Run 'appimage-updater add' to configure your first application", file=sys.stderr)
