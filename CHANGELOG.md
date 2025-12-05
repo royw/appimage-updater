@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - implement dynamic version injection for documentation (43717ff)
 
 - Add fix command with orphaned .current.info file cleanup (a203a8d)
@@ -15,19 +16,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - support show --add-command path flags with full test coverage (1aa964f)
 
 ### Changed
+
 - enhance getting-started guide with comprehensive path resolution and real-world examples (4aee99e)
 
 - reduce cyclomatic complexity in command and display modules (0bb7d16)
+
 - reduce cyclomatic complexity by extracting helper methods (a07de4b)
 
 ### Fixed
+- resolve --auto-subdir command line option creating directories in wrong location (cd6f14e)
+
 - generate flexible version patterns for v-prefixed versions (64a8783)
+
 - improve troubleshooting message clarity for wildcard usage (05dfdd4)
+
 - show graceful error message for wildcard expansion without quotes (e180828)
 
 - resolve e2e test import error (494c526)
+
 - partially address conftest linting issues (9bea216)
+
 - eliminate async warnings in e2e tests (da253df)
+
 - resolve e2e test HTTP mocking issues (34e1ed5)
 
 ## [0.5.4] - 2025-11-30

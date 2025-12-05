@@ -58,6 +58,7 @@ async def _prepare_add_configuration(
     yes: bool,
     no: bool,
     dry_run: bool,
+    auto_subdir: bool | None = None,
 ) -> dict[str, Any] | None:
     """Prepare configuration data for add operation."""
     validated_url = validate_and_normalize_add_url(url, direct)
@@ -75,6 +76,7 @@ async def _prepare_add_configuration(
         config_file,
         config_dir,
         name,
+        auto_subdir,
     )
     effective_symlink = symlink
 
@@ -224,6 +226,7 @@ async def _add(
             config_file,
             config_dir,
             name,
+            auto_subdir,
         )
 
         _handle_add_verbose_logging(
@@ -264,6 +267,7 @@ async def _add(
             yes,
             no,
             dry_run,
+            auto_subdir,
         )
 
         if config_data is None:
@@ -293,6 +297,7 @@ def _prepare_add_parameters(
     config_file: Path | None,
     config_dir: Path | None,
     name: str,
+    auto_subdir: bool | None = None,
 ) -> Any:
     """Prepare and resolve add command parameters."""
     return _resolve_add_parameters(
@@ -305,6 +310,7 @@ def _prepare_add_parameters(
         config_file,
         config_dir,
         name,
+        auto_subdir,
     )
 
 
@@ -362,6 +368,7 @@ async def _process_add_configuration(
     yes: bool,
     no: bool,
     dry_run: bool,
+    auto_subdir: bool | None = None,
 ) -> dict[str, Any] | None:
     """Process and prepare add configuration data."""
     return await _prepare_add_configuration(
@@ -385,6 +392,7 @@ async def _process_add_configuration(
         yes,
         no,
         dry_run,
+        auto_subdir,
     )
 
 
