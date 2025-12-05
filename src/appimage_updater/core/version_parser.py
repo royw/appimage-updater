@@ -83,8 +83,8 @@ class VersionParser:
         # Eliminate platform identifiers
         base_name = re.sub(r"-(linux|win32|win64|windows|macos|darwin)(?=-|$)", "", base_name, flags=re.IGNORECASE)
 
-        # Eliminate version numbers (semantic versions)
-        base_name = re.sub(r"-\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?(?=-|$)", "", base_name)
+        # Eliminate version numbers (semantic versions) including v-prefixed versions
+        base_name = re.sub(r"-(?:v?\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?)(?=-|$)", "", base_name)
 
         # Clean up any double hyphens or trailing hyphens
         base_name = re.sub(r"-+", "-", base_name)

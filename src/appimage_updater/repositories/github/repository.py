@@ -363,8 +363,9 @@ class GitHubRepository(RepositoryClient):
         if len(common) >= 2:
             return common
         first_file = original[0] if original else ""
-        match = re.match(r"^([^-_]+)", first_file)
-        return match.group(1) if match else first_file.split("-")[0]
+        # Extract just the app name (letters only) from the beginning
+        match = re.match(r"^([A-Za-z]+)", first_file)
+        return match.group(1) if match else first_file.split("-")[0].split("_")[0]
 
     # noinspection PyMethodMayBeStatic
     def _build_pattern(self, prefix: str, include_both_formats: bool, empty_ok: bool = False) -> str:
@@ -391,7 +392,7 @@ class GitHubRepository(RepositoryClient):
     # noinspection PyMethodMayBeStatic
     def _remove_version_and_date_patterns(self, prefix: str) -> str:
         """Remove version numbers and date patterns from prefix."""
-        # Handle standard versions: "_1.0.2" or "_v1.0.2" or "-1.0.2"
+        # Handle standard versions: "_1.0.2" or "_v1.0.2" or "-1.0.2" or "-v3.3.0"
         prefix = re.sub(r"[_-]v?\d+(\.\d+)*", "", prefix)
 
         # Handle date patterns: "_2023-01-15" or "-20230115"

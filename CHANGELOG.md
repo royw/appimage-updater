@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - reduce cyclomatic complexity by extracting helper methods (a07de4b)
 
 ### Fixed
+- generate flexible version patterns for v-prefixed versions (64a8783)
 - improve troubleshooting message clarity for wildcard usage (05dfdd4)
 - show graceful error message for wildcard expansion without quotes (e180828)
 
