@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - reduce cyclomatic complexity by extracting helper methods (a07de4b)
 
 ### Fixed
+- show graceful error message for wildcard expansion without quotes (e180828)
 
 - resolve e2e test import error (494c526)
 - partially address conftest linting issues (9bea216)

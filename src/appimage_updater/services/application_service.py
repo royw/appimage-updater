@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import fnmatch
+import sys
 from typing import Any
 
 from loguru import logger
@@ -115,11 +116,17 @@ class ApplicationService:
         """
         available_apps = [app.name for app in enabled_apps]
 
-        # Use output formatter
-        formatter = get_output_formatter()
-        formatter.print_error(f"Applications not found: {', '.join(not_found)}")
-        formatter.print_warning("Troubleshooting:")
-        ApplicationService._print_troubleshooting_tips_formatted(formatter, available_apps)
+        # Try to use output formatter, fallback to print if not available
+        try:
+            formatter = get_output_formatter()
+            formatter.print_error(f"Applications not found: {', '.join(not_found)}")
+            formatter.print_warning("Troubleshooting:")
+            ApplicationService._print_troubleshooting_tips_formatted(formatter, available_apps)
+        except RuntimeError:
+            # Fallback when no output formatter is available in context
+            print(f"❌ Applications not found: {', '.join(not_found)}", file=sys.stderr)
+            print("⚠️  Troubleshooting:", file=sys.stderr)
+            ApplicationService._print_troubleshooting_tips_plain(available_apps)
 
         # This is normal user behavior, not an error that needs logging
         logger.debug(f"User requested non-existent applications: {not_found}. Available: {available_apps}")
@@ -144,3 +151,14 @@ class ApplicationService:
         console.print("   • Run 'appimage-updater list' to see all configured applications")
         if not available_apps:
             console.print("   • Run 'appimage-updater add' to configure your first application")
+
+    @staticmethod
+    def _print_troubleshooting_tips_plain(available_apps: list[str]) -> None:
+        """Print troubleshooting tips using plain print statements."""
+        available_text = ", ".join(available_apps) if available_apps else "None configured"
+        print(f"   • Available applications: {available_text}", file=sys.stderr)
+        print("   • Application names are case-insensitive", file=sys.stderr)
+        print("   • Use glob patterns like 'Orca*' to match multiple apps", file=sys.stderr)
+        print("   • Run 'appimage-updater list' to see all configured applications", file=sys.stderr)
+        if not available_apps:
+            print("   • Run 'appimage-updater add' to configure your first application", file=sys.stderr)
