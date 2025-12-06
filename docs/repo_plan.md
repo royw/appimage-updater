@@ -44,14 +44,13 @@ flowchart TB
     end
     
     subgraph Cache["Local Cache (~/.cache)"]
-        CACHE_JSON["cache.json<br/>(last_asset, repo_hash)"]
-        CACHE_INDEX["index.json"]
+        CACHE_INDEX["index.json<br/>(repo_hash, generated_at, app hashes)"]
         CACHE_CONFIGS["configs/"]
         CACHE_SCHEMAS["schemas/"]
     end
     
     subgraph Config["User Config (~/.config)"]
-        GLOBAL_CFG["config.json<br/>(global settings)"]
+        GLOBAL_CFG["config.json<br/>(global settings + repo_cache)"]
         APP_CFGS["apps/<br/>(local app configs)"]
     end
     
@@ -59,8 +58,8 @@ flowchart TB
     TARBALL -->|extract| CACHE_INDEX
     TARBALL -->|extract| CACHE_CONFIGS
     TARBALL -->|extract| CACHE_SCHEMAS
-    TARBALL -->|metadata| CACHE_JSON
     
+    CACHE_INDEX -->|"last_asset, repo_hash"| GLOBAL_CFG
     CACHE_INDEX -->|hash lookup| APP_CFGS
     CACHE_CONFIGS -->|merge + defaults| APP_CFGS
     GLOBAL_CFG -->|defaults| APP_CFGS
@@ -178,8 +177,7 @@ ______________________________________________________________________
 
 ```text
 ~/.cache/appimage-updater/repo/
-├── cache.json          # Cache metadata
-├── index.json          # Extracted from tarball
+├── index.json          # Extracted from tarball (contains repo_hash, generated_at)
 ├── configs/            # Extracted config files
 │   ├── OrcaSlicer.json
 │   ├── FreeCAD.json
@@ -188,23 +186,26 @@ ______________________________________________________________________
     └── app-config.schema.json
 ```
 
-**Cache metadata** (`cache.json`):
+**Cache metadata in `config.json`** (`repo_cache` section):
 
 ```json
 {
-  "last_asset": "appimage-configs-20251206-020000.tar.gz",
-  "last_checked": "2025-12-06T00:00:00Z",
-  "repo_hash": "sha256:..."
+  "global_config": { ... },
+  "repo_cache": {
+    "last_asset": "appimage-configs-20251206-020000.tar.gz",
+    "last_checked": "2025-12-06T00:00:00Z",
+    "repo_hash": "sha256:..."
+  }
 }
 ```
 
 ### Cache Operations
 
 - [ ] On `update --check`: fetch latest release metadata from GitHub API
-  - Compare asset name vs cached `last_asset`
+  - Compare asset name vs cached `last_asset` in `config.json`
   - If same → "No updates available"
-  - If different → download new tarball, extract, update cache
-- [ ] Update `cache.json` after successful download
+  - If different → download new tarball, extract, update `repo_cache`
+- [ ] Update `repo_cache` in `config.json` after successful download
 - [ ] `--force` flag to bypass cache and force re-download
 - [ ] Verify downloaded config hash matches index
 
