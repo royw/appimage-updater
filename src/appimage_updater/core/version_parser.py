@@ -66,33 +66,122 @@ class VersionParser:
         """Normalize version strings consistently."""
         return normalize_version_string(version)
 
-    def generate_flexible_pattern_from_filename(self, filename: str) -> str:
-        """Generate a flexible regex pattern from a filename by eliminating variable identifiers."""
+    def generate_flexible_pattern_from_filename(self, filename: str, app_name: str | None = None) -> str:
+        """Generate a flexible regex pattern from a filename by eliminating variable identifiers.
+
+        The goal is to create a general pattern that matches the application name
+        while being agnostic to architecture, distribution, version, and build type.
+
+        Args:
+            filename: The asset filename to generate pattern from
+            app_name: Optional app name - if ends with release qualifiers (rc, alpha,
+                      beta, weekly, nightly), include them in the pattern
+
+        Pattern suffix (\\.(|current|old))?$ matches rotation suffixes for downloaded files.
+        """
         # Start with the filename
         pattern = filename
 
-        # Remove file extension to work with base name
-        base_name = re.sub(r"\.AppImage$", "", pattern, flags=re.IGNORECASE)
+        # Check if this is a zip-wrapped AppImage (affects extension pattern)
+        has_zip = ".zip" in filename.lower()
 
-        # Eliminate git commit hashes (6-8 hex characters, typically 7)
-        base_name = re.sub(r"-[a-fA-F0-9]{6,8}(?=-|$)", "", base_name)
+        # Detect release type qualifier from app name (if provided)
+        release_qualifier = self._detect_release_qualifier(app_name) if app_name else None
 
-        # Eliminate architecture identifiers
-        base_name = re.sub(r"-(x86_64|amd64|i386|i686|arm64|armv7|armhf)(?=-|$)", "", base_name)
+        # Remove file extension(s) to work with base name (handles .zip.AppImage too)
+        base_name = re.sub(r"(\.zip)?\.AppImage$", "", pattern, flags=re.IGNORECASE)
 
-        # Eliminate platform identifiers
-        base_name = re.sub(r"-(linux|win32|win64|windows|macos|darwin)(?=-|$)", "", base_name, flags=re.IGNORECASE)
+        # Eliminate git commit hashes (6-8+ hex characters)
+        # Match with any separator and followed by any non-word char or end
+        base_name = re.sub(r"[-_][a-fA-F0-9]{6,12}(?=[-_.]|$)", "", base_name)
 
-        # Eliminate version numbers (semantic versions) including v-prefixed versions
-        base_name = re.sub(r"-(?:v?\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?)(?=-|$)", "", base_name)
+        # Eliminate architecture identifiers (with - or _ separator)
+        arch_pattern = r"[-_](x86_64|x86-64|amd64|i386|i686|arm64|aarch64|armv7|armhf|X64|x64)(?=[-_.]|$)"
+        base_name = re.sub(arch_pattern, "", base_name, flags=re.IGNORECASE)
 
-        # Clean up any double hyphens or trailing hyphens
-        base_name = re.sub(r"-+", "-", base_name)
-        base_name = base_name.strip("-")
+        # Eliminate platform/OS identifiers (with - or _ separator)
+        # Include optional build number suffix like linux1, linux2
+        platform_pattern = r"[-_](linux\d*|win32|win64|windows|macos|darwin)(?=[-_.]|$)"
+        base_name = re.sub(platform_pattern, "", base_name, flags=re.IGNORECASE)
+
+        # Eliminate distribution identifiers (with - or _ separator)
+        # Includes versioned distros like Ubuntu2404
+        distro_pattern = r"[-_](fedora|ubuntu\d*|debian|centos|rhel|arch|manjaro|opensuse|appimage)(?=[-_.]|$)"
+        base_name = re.sub(distro_pattern, "", base_name, flags=re.IGNORECASE)
+
+        # Eliminate build type identifiers (nightly, weekly, daily, etc.)
+        # These are stripped to create general patterns - differentiation between
+        # stable/prerelease is done via the prerelease flag, not pattern matching
+        build_types = r"nightly|weekly|daily|beta|alpha|dev|snapshot|test|debug|rc\d*|latest|stable|release"
+        build_pattern = rf"[-_]({build_types})(?=[-_.]|$)"
+        base_name = re.sub(build_pattern, "", base_name, flags=re.IGNORECASE)
+
+        # Eliminate Python version identifiers (py311, py39, etc.)
+        base_name = re.sub(r"[-_]py\d+(?=[-_.]|$)", "", base_name, flags=re.IGNORECASE)
+
+        # Eliminate version numbers - handle multiple formats:
+        # -v02.04.00.70, -1.0rc2, _V2.3.1, -928, etc.
+        # Be aggressive: match versions with - or _ prefix
+        # Order matters: more specific patterns first
+        version_patterns = [
+            r"[-_]v?\d+\.\d+\.\d+\.\d+",  # 4-part: v02.04.00.70
+            r"[-_]v?\d+\.\d+\.\d+(?:rc\d*|beta\d*|alpha\d*)?",  # 3-part with optional suffix
+            r"[-_]v?\d+\.\d+(?:rc\d*|beta\d*|alpha\d*)?",  # 2-part with optional suffix: 1.0rc2
+            r"[-_]\d{3,}(?=[-_.]|$)",  # Build numbers: -928
+        ]
+        for vp in version_patterns:
+            base_name = re.sub(vp, "", base_name, flags=re.IGNORECASE)
+
+        # Clean up any double separators or trailing separators
+        base_name = re.sub(r"[-_]+", "-", base_name)
+        base_name = base_name.strip("-_")
 
         # Create flexible pattern that matches the cleaned base name with any suffixes
+        # - No ^ anchor for flexibility in matching
+        # - Include release qualifier pattern if app name indicates specific release type
+        # - Include .zip extension if source had zip assets
+        # - Always include rotation suffix pattern for downloaded file matching
         escaped_base = re.escape(base_name)
-        return f"(?i)^{escaped_base}.*\\.AppImage$"
+        # Make hyphens and underscores flexible - match either separator or none
+        # This handles variations like "Bambu-Studio" vs "Bambu_Studio" vs "BambuStudio"
+        escaped_base = re.sub(r"\\[-_]", "[-_]?", escaped_base)
+        qualifier_pattern = release_qualifier if release_qualifier else ".*"
+        ext_pattern = r"\.(zip|AppImage)" if has_zip else r"\.AppImage"
+        return f"(?i){escaped_base}{qualifier_pattern}{ext_pattern}(\\.(|current|old))?$"
+
+    def _detect_release_qualifier(self, app_name: str) -> str | None:
+        """Detect release type qualifier from app name and return corresponding regex pattern.
+
+        Args:
+            app_name: The application name to check
+
+        Returns:
+            Regex pattern for the qualifier, or None if no qualifier detected
+        """
+        app_lower = app_name.lower()
+
+        # Check for RC (release candidate) pattern: app_rc, appRC, app_rc1, etc.
+        # Separator is optional to handle both "OrcaSlicerRC" and "freecad_rc"
+        if re.search(r"[_-]?rc\d*$", app_lower):
+            return ".*[Rr][Cc][0-9]+"
+
+        # Check for alpha pattern (with optional separator)
+        if re.search(r"[_-]?alpha\d*$", app_lower):
+            return ".*[Aa]lpha"
+
+        # Check for beta pattern (with optional separator)
+        if re.search(r"[_-]?beta\d*$", app_lower):
+            return ".*[Bb]eta"
+
+        # Check for weekly pattern (with optional separator)
+        if re.search(r"[_-]?weekly$", app_lower):
+            return ".*[Ww]eekly"
+
+        # Check for nightly pattern (with optional separator)
+        if re.search(r"[_-]?nightly$", app_lower):
+            return ".*[Nn]ightly"
+
+        return None
 
     def _extract_prerelease_version(self, filename: str) -> str | None:
         """Extract pre-release versions like '2.3.1-alpha'."""

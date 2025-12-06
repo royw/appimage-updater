@@ -332,6 +332,9 @@ class SourceForgeRepository(RepositoryClient):
     async def should_enable_prerelease(self, url: str) -> bool:
         """Check if prerelease should be automatically enabled for a repository.
 
+        Uses progressive fetching: starts with 100 releases and doubles the limit
+        if no stable release is found but more releases may exist.
+
         Args:
             url: Repository URL
 
@@ -339,40 +342,39 @@ class SourceForgeRepository(RepositoryClient):
             True if only prereleases are found, False if stable releases exist
         """
         try:
-            releases = await self.get_releases(url, limit=20)
+            limit = 100
+            max_limit = 1600  # Cap to avoid excessive API calls
 
-            if not releases:
-                logger.debug(f"No releases found for {url}, prerelease detection inconclusive")
-                return False
+            while limit <= max_limit:
+                releases = await self.get_releases(url, limit=limit)
 
-            return self._should_enable_prerelease(url, releases)
+                if not releases:
+                    logger.debug(f"No releases found for {url}, prerelease detection inconclusive")
+                    return False
+
+                stable_count = sum(1 for r in releases if not r.is_prerelease)
+                prerelease_count = sum(1 for r in releases if r.is_prerelease)
+
+                if stable_count > 0:
+                    logger.debug(f"Found {stable_count} stable releases for {url}")
+                    return False
+
+                # If we got fewer releases than requested, we've fetched all - no stable exists
+                if len(releases) < limit - 1:
+                    logger.debug(f"No stable releases found in all {len(releases)} releases for {url}")
+                    return prerelease_count > 0
+
+                # More releases may exist, double the limit and try again
+                logger.debug(f"No stable in first {len(releases)} releases, expanding search for {url}")
+                limit *= 2
+
+            # Hit max limit without finding stable release
+            logger.debug(f"No stable releases found in first {max_limit} releases for {url}")
+            return True
 
         except Exception as e:
             logger.debug(f"Could not determine prerelease status for {url}: {e}")
             return False
-
-    def _should_enable_prerelease(self, url: str, releases: list[Release]) -> bool:
-        """Determine if prerelease should be automatically enabled based on release data.
-
-        Args:
-            url: Repository URL
-            releases: List of Release objects
-
-        Returns:
-            True if only prereleases are found, False if stable releases exist
-        """
-        stable_count = sum(1 for r in releases if not r.is_prerelease)
-        prerelease_count = sum(1 for r in releases if r.is_prerelease)
-
-        should_enable = prerelease_count > 0 and stable_count == 0
-
-        logger.debug(
-            f"Prerelease analysis for {url}: "
-            f"stable={stable_count}, prerelease={prerelease_count}, "
-            f"should_enable={should_enable}"
-        )
-
-        return should_enable
 
     async def get_latest_release_including_prerelease(self, repo_url: str) -> Release:
         """Get the latest release including prereleases.

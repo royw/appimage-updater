@@ -59,9 +59,9 @@ class VersionService:
         """Extract version from filename."""
         return self.parser.extract_version_from_filename(filename)
 
-    def generate_pattern_from_filename(self, filename: str) -> str:
+    def generate_pattern_from_filename(self, filename: str, app_name: str | None = None) -> str:
         """Generate flexible pattern from filename."""
-        return self.parser.generate_flexible_pattern_from_filename(filename)
+        return self.parser.generate_flexible_pattern_from_filename(filename, app_name)
 
     # Info File Operations
     def find_info_file(self, app_config: ApplicationConfig) -> Path | None:

@@ -234,9 +234,9 @@ class GitLabClient:
     async def should_enable_prerelease(self, owner: str, repo: str, base_url: str = "https://gitlab.com") -> bool:
         """Check if prerelease should be automatically enabled for a repository.
 
-        This method examines recent releases to determine if only prereleases exist.
-        If no stable releases are found in the recent history, it suggests enabling
-        prerelease mode.
+        This method examines releases to determine if only prereleases exist.
+        Uses progressive fetching: starts with 100 releases and doubles the limit
+        if no stable release is found but more releases may exist.
 
         Args:
             owner: Project owner/namespace
@@ -250,22 +250,34 @@ class GitLabClient:
             GitLabClientError: If the API request fails
         """
         try:
-            releases = await self.get_releases(owner, repo, base_url, limit=20)
+            limit = 100
+            max_limit = 1600  # Cap to avoid excessive API calls
 
-            if not releases:
-                logger.debug(f"No releases found for {owner}/{repo}, prerelease detection inconclusive")
-                return False
+            while limit <= max_limit:
+                releases = await self.get_releases(owner, repo, base_url, limit=limit)
 
-            stable_count, prerelease_count = self._count_release_types(releases)
-            should_enable = prerelease_count > 0 and stable_count == 0
+                if not releases:
+                    logger.debug(f"No releases found for {owner}/{repo}, prerelease detection inconclusive")
+                    return False
 
-            logger.debug(
-                f"Prerelease analysis for {owner}/{repo}: "
-                f"stable={stable_count}, prerelease={prerelease_count}, "
-                f"should_enable={should_enable}"
-            )
+                stable_count, prerelease_count = self._count_release_types(releases)
 
-            return should_enable
+                if stable_count > 0:
+                    logger.debug(f"Found {stable_count} stable releases for {owner}/{repo}")
+                    return False
+
+                # If we got fewer releases than requested, we've fetched all - no stable exists
+                if len(releases) < limit - 1:
+                    logger.debug(f"No stable releases found in all {len(releases)} releases for {owner}/{repo}")
+                    return prerelease_count > 0
+
+                # More releases may exist, double the limit and try again
+                logger.debug(f"No stable in first {len(releases)} releases, expanding search for {owner}/{repo}")
+                limit *= 2
+
+            # Hit max limit without finding stable release
+            logger.debug(f"No stable releases found in first {max_limit} releases for {owner}/{repo}")
+            return True
 
         except GitLabClientError:
             logger.debug(f"Could not analyze releases for {owner}/{repo}, defaulting prerelease=False")

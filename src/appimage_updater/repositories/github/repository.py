@@ -228,6 +228,11 @@ class GitHubRepository(RepositoryClient):
         Returns True if the repository only has prerelease versions (like continuous builds)
         and no stable releases, indicating that prerelease support should be enabled.
 
+        Uses progressive fetching: starts with 100 releases and doubles the limit
+        if no stable release is found but more releases may exist. This handles
+        repositories with many prereleases (e.g., weekly builds) that may push
+        stable releases far back in the release history.
+
         Args:
             url: Repository URL
 
@@ -235,15 +240,36 @@ class GitHubRepository(RepositoryClient):
             bool: True if only prereleases are found, False if stable releases exist or on error
         """
         try:
-            releases = await self.get_releases(url, limit=20)
-            if not releases:
-                return False
+            limit = 100
+            max_limit = 1600  # Cap to avoid excessive API calls
 
-            valid_releases = self._filter_valid_releases(releases, url)
-            if not valid_releases:
-                return False
+            while limit <= max_limit:
+                releases = await self.get_releases(url, limit=limit)
+                if not releases:
+                    return False
 
-            return self._analyze_prerelease_status(valid_releases, url)
+                valid_releases = self._filter_valid_releases(releases, url)
+                if not valid_releases:
+                    return False
+
+                # Check if any stable releases exist
+                stable_releases = [r for r in valid_releases if not r.is_prerelease]
+                if stable_releases:
+                    logger.debug(f"Found {len(stable_releases)} stable releases for {url}")
+                    return False
+
+                # If we got fewer releases than requested, we've fetched all - no stable exists
+                if len(releases) < limit - 1:
+                    logger.debug(f"No stable releases found in all {len(releases)} releases for {url}")
+                    return True
+
+                # More releases may exist, double the limit and try again
+                logger.debug(f"No stable in first {len(releases)} releases, expanding search for {url}")
+                limit *= 2
+
+            # Hit max limit without finding stable release
+            logger.debug(f"No stable releases found in first {max_limit} releases for {url}")
+            return True
 
         except (RepositoryError, ValueError, AttributeError) as e:
             # Don't fail the add command if prerelease detection fails

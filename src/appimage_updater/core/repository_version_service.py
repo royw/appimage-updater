@@ -122,7 +122,8 @@ class RepositoryVersionService:
                     return None
 
                 # Generate pattern from the first AppImage file found
-                return self.version_parser.generate_flexible_pattern_from_filename(appimage_files[0])
+                # Pass app_name so patterns can include release qualifiers (rc, alpha, weekly, etc.)
+                return self.version_parser.generate_flexible_pattern_from_filename(appimage_files[0], app_config.name)
 
         except Exception as e:
             logger.debug(f"Failed to generate pattern from {app_config.url}: {e}")
