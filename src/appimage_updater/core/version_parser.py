@@ -145,7 +145,9 @@ class VersionParser:
         # Make hyphens and underscores flexible - match either separator or none
         # This handles variations like "Bambu-Studio" vs "Bambu_Studio" vs "BambuStudio"
         escaped_base = re.sub(r"\\[-_]", "[-_]?", escaped_base)
-        qualifier_pattern = release_qualifier if release_qualifier else ".*"
+        # Qualifier pattern includes .* after to allow content between qualifier and extension
+        # e.g., FreeCAD_weekly-2025.12.03-Linux-x86_64.AppImage needs .*[Ww]eekly.*
+        qualifier_pattern = release_qualifier + ".*" if release_qualifier else ".*"
         ext_pattern = r"\.(zip|AppImage)" if has_zip else r"\.AppImage"
         return f"(?i){escaped_base}{qualifier_pattern}{ext_pattern}(\\.(|current|old))?$"
 
