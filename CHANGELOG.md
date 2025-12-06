@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.6.0] - 2025-12-05
+
+### Added
+
 - implement dynamic version injection for documentation (43717ff)
 
 - Add fix command with orphaned .current.info file cleanup (a203a8d)
@@ -16,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - support show --add-command path flags with full test coverage (1aa964f)
 
 ### Changed
+
 - document recreate.sh auto-detection validation script (d59ab61)
 
 ### Improved
@@ -33,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - reduce cyclomatic complexity by extracting helper methods (a07de4b)
 
 ### Fixed
+
 - CI build failures (824eb03)
 
 - resolve --auto-subdir command line option creating directories in wrong location (cd6f14e)
