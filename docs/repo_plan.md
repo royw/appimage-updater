@@ -141,7 +141,7 @@ ______________________________________________________________________
 - [ ] Document expected repo structure: `configs/{name}.json`
 - [x] Define config JSON schema requirements (`schemas/app-config.schema.json`) ✓
 - [x] Configs must use relative paths (enforced by schema and validate_configs.py) ✓
-- [ ] Create template/example config file
+- [x] Existing configs serve as examples (19 configs in `configs/`) ✓
 
 ### Index File (`index.json`)
 
@@ -272,6 +272,17 @@ as manually-created configs. This means:
 - Default: `~/.config/appimage-updater/apps/{name}.json`
 - Overridable via `--config-dir` CLI option
 
+### Protected Fields
+
+These fields are **never overwritten** from the repo - they represent user preferences:
+
+- `enabled` - user's enabled/disabled state
+- `rotation_enabled` - user's rotation preference
+- `retain_count` - user's retention count
+- `symlink_path` - user's symlink location
+
+All other fields (`name`, `url`, `pattern`, `download_dir`, `prerelease`, etc.) come from repo.
+
 **On initial `add` from repo** (no existing local config):
 
 - Repo fields: `name`, `url`, `pattern`, `download_dir`, `prerelease`, etc.
@@ -309,7 +320,7 @@ ______________________________________________________________________
 - [ ] Lookup `{NAME}.json` in configured repo
 - [ ] If not found: display "App '{NAME}' not available in repository"
 - [ ] If found: download and save to local apps directory
-- [ ] Apply path variable substitution during save
+- [ ] Merge with protected fields (see below)
 - [ ] Display success message with app details
 - [ ] Preserve existing `add {NAME} {URL}` behavior for manual configs
   - URL provided → manual config (existing behavior)
@@ -326,6 +337,8 @@ ______________________________________________________________________
   - Exit code 0 if updates available, 1 if up-to-date (for scripting)
 - [ ] Skip local configs not in repo (manual configs)
 - [ ] If NAME not in repo: display "App '{NAME}' not available in repository"
+- [ ] Merge with protected fields (see below)
+- [ ] Display success message with app details
 - [ ] Show summary: updated, skipped (not in repo), skipped (unchanged), failed
 
 ### `diff` Command (New)
@@ -334,6 +347,7 @@ ______________________________________________________________________
 - [ ] `--config-dir` option - Override config directory
 - [ ] If NAME not in repo: display "App '{NAME}' not available in repository"
 - [ ] If NAME not local: display "App '{NAME}' not installed locally"
+- [ ] Exclude protected fields from diff (enabled, rotation_enabled, retain_count, symlink_path)
 - [ ] `--format` option - Output format (rich|plain|json|html|markdown)
 - [ ] Extend formatters with `print_diff()` method:
   - rich/plain/html/markdown: unified diff output (similar to git diff)
@@ -461,25 +475,9 @@ ______________________________________________________________________
 
 ## Design Decisions (Resolved)
 
-1. **Conflict resolution**: Merge with protected fields (see below)
+1. **Conflict resolution**: Merge with protected fields (see Local Config Management → Protected Fields)
 2. **Metadata tracking**: None needed - compare local hash (computed on-the-fly) vs `index.json` hash
 3. **Path variables**: Not needed - configs use relative paths resolved against global config paths
 4. **Offline mode**: Cached - tarball extracted locally, works offline until next update
 5. **Authentication**: Deferred - private repos listed in Future Enhancements
 6. **Branch field**: Not needed - releases are discovered via GitHub API `/releases/latest`
-
-### Conflict Resolution Details
-
-When updating an existing config from repo, **preserve these local fields**:
-
-- `enabled` - user's enabled/disabled state
-- `rotation_enabled` - user's rotation preference
-- `retain_count` - user's retention count
-- `symlink_path` - user's symlink location
-
-All other fields (name, url, pattern, download_dir, prerelease, etc.) come from repo.
-
-**On initial `add` from repo** (no existing local config):
-
-- `rotation_enabled`, `retain_count` → from global `config.json` defaults
-- `symlink_path` → derived from global defaults (`symlink_enabled`, `symlink_dir`, `symlink_pattern`, `auto_subdir`) using same logic as existing `add` command
