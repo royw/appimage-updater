@@ -29,9 +29,35 @@
 # CLEANUP:
 #   After testing, either:
 #   - Restore baseline: rm -rf ~/.config/appimage-updater && mv ~/.config/appimage-updater.old ~/.config/appimage-updater
-#   - Accept new baseline: rm -rf ~/.config/appimage-updater.old && rm app_config_diffs.txt
+#   - Accept new baseline: rm -rf ~/.config/appimage-updater.old
+#   - Remove diffs: rm app_config_diffs.txt
 #
 # =============================================================================
+
+# Verify prerequisites exist
+echo "Checking prerequisites..."
+
+if [ ! -f ~/.config/appimage-updater.old/config.json ]; then
+    echo "ERROR: ~/.config/appimage-updater.old/config.json not found"
+    echo "Create baseline by renaming existing config directory"
+    exit 1
+fi
+
+if [ ! -f ~/.config/appimage-updater/config.json ]; then
+    echo "ERROR: ~/.config/appimage-updater/config.json not found"
+    echo "Run 'appimage-updater list' to create initial config"
+    exit 1
+fi
+
+baseline_count=$(ls ~/.config/appimage-updater.old/apps/*.json 2>/dev/null | wc -l)
+if [ "$baseline_count" -lt 2 ]; then
+    echo "ERROR: Need at least 2 baseline app configs in ~/.config/appimage-updater.old/apps/"
+    echo "Found: $baseline_count"
+    exit 1
+fi
+
+echo "Prerequisites OK (found $baseline_count baseline app configs)"
+echo ""
 
 # Remove existing app configs to start fresh
 rm ~/.config/appimage-updater/apps/*.json
