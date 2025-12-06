@@ -285,7 +285,7 @@ def extract_files_data(app: Any) -> dict[str, Any] | list[dict[str, Any]]:
     download_dir = Path(app.download_dir)
 
     if not download_dir.exists():
-        return {"status": "Download directory does not exist"}
+        return {"status": f"Download directory does not exist: {download_dir}"}
 
     matching_files = find_matching_appimage_files(download_dir, app.pattern)
     if isinstance(matching_files, str):  # Error message
@@ -313,7 +313,7 @@ def extract_symlinks_data(app: Any) -> dict[str, Any] | list[dict[str, Any]]:
     download_dir = Path(app.download_dir)
 
     if not download_dir.exists():
-        return {"status": "Download directory does not exist"}
+        return {"status": f"Download directory does not exist: {download_dir}"}
 
     # Find symlinks including configured symlink_path
     found_symlinks = find_appimage_symlinks(download_dir, getattr(app, "symlink_path", None))
