@@ -54,13 +54,20 @@ EdgeTX-Companion-2.9.4-x64.AppImage.info (version metadata)
 
 ### Universal Pattern Support
 
-**All patterns now support both formats automatically:**
+**All patterns now support both formats automatically with flexible separators:**
 
 ```regex
 # Modern universal patterns (generated automatically)
-(?i)EdgeTX[_-]Companion.*\.(zip|AppImage)(\.(|current|old))?$
-(?i)BambuStudio.*\.(zip|AppImage)(\.(|current|old))?$
+# - [-_]? allows matching hyphen, underscore, or no separator
+# - Handles naming variations like "Bambu-Studio" vs "Bambu_Studio" vs "BambuStudio"
+(?i)EdgeTX[-_]?Companion.*\.(zip|AppImage)(\.(|current|old))?$
+(?i)Bambu[-_]?Studio.*\.(zip|AppImage)(\.(|current|old))?$
 (?i)FreeCAD.*\.(zip|AppImage)(\.(|current|old))?$
+
+# Release qualifier patterns (for apps with rc, weekly, nightly suffixes)
+(?i)FreeCAD.*[Rr][Cc][0-9]+.*\.AppImage(\.(|current|old))?$    # FreeCAD_rc
+(?i)FreeCAD.*[Ww]eekly.*\.AppImage(\.(|current|old))?$         # FreeCAD_weekly
+(?i)OrcaSlicer.*[Nn]ightly.*\.AppImage(\.(|current|old))?$     # OrcaSlicerNightly
 
 # Legacy AppImage-only patterns (no longer generated)
 (?i)EdgeTX_Companion.*\.AppImage(\.(|current|old))?$

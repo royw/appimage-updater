@@ -82,23 +82,27 @@ appimage-updater add --dry-run FreeCAD https://github.com/FreeCAD/FreeCAD --form
 #### How Path Resolution Works
 
 1. **Tilde Expansion (`~`)**: Automatically expands to your home directory
+
    - `~/Applications` → `/home/username/Applications`
 
-2. **Absolute Paths**: Used as-is, starting from root (`/`)
+1. **Absolute Paths**: Used as-is, starting from root (`/`)
+
    - `/opt/apps` → `/opt/apps` (exact location)
 
-3. **Relative Paths**: Resolved from your current working directory
+1. **Relative Paths**: Resolved from your current working directory
+
    - `./apps` → `{current_directory}/apps`
    - `apps` → `{current_directory}/apps`
 
-4. **Directory Creation**: AppImage Updater automatically creates the directory if it doesn't exist
+1. **Directory Creation**: AppImage Updater automatically creates the directory if it doesn't exist
+
    - No need to create directories manually
    - Proper permissions are set automatically
 
 #### Path Recommendations
 
 - **User Applications**: Use `~/Applications/app-name` (most common)
-- **Portable Apps**: Use `~/apps/app-name` for portable installations  
+- **Portable Apps**: Use `~/apps/app-name` for portable installations
 - **System-wide**: Use `/opt/app-name` (requires sudo for system access)
 - **Development**: Use `./dev-apps` for temporary/testing installations
 
@@ -112,24 +116,24 @@ appimage-updater config show --format plain
 
 # Output:
 # Global Configuration
-# 
+#
 # Basic Settings:
-# Concurrent Downloads        (concurrent-downloa…  3                      
-# Timeout (seconds)           (timeout-seconds)     30                     
+# Concurrent Downloads        (concurrent-downloa…  3
+# Timeout (seconds)           (timeout-seconds)     30
 # User Agent                                        AppImage-Updater/0.4.18
-# 
+#
 # Default Settings for New Applications:
 # Download Directory          (download-dir)        /home/royw/Applications
-# Auto Subdirectory           (auto-subdir)         Yes                    
-# Rotation Enabled            (rotation)            No                     
-# Retain Count                (retain-count)        3                      
-# Symlink Enabled             (symlink-enabled)     No                     
+# Auto Subdirectory           (auto-subdir)         Yes
+# Rotation Enabled            (rotation)            No
+# Retain Count                (retain-count)        3
+# Symlink Enabled             (symlink-enabled)     No
 # Symlink Directory           (symlink-dir)         /home/royw/Applications
-# Symlink Pattern             (symlink-pattern)     {appname}.AppImage     
-# Checksum Enabled            (checksum)            Yes                    
-# Checksum Algorithm          (checksum-algorithm)  SHA256                 
-# Checksum Pattern            (checksum-pattern)    {filename}-SHA256.txt  
-# Checksum Required           (checksum-required)   No                     
+# Symlink Pattern             (symlink-pattern)     {appname}.AppImage
+# Checksum Enabled            (checksum)            Yes
+# Checksum Algorithm          (checksum-algorithm)  SHA256
+# Checksum Pattern            (checksum-pattern)    {filename}-SHA256.txt
+# Checksum Required           (checksum-required)   No
 # Prerelease                  (prerelease)          No
 ```
 
@@ -157,8 +161,8 @@ appimage-updater config reset download-dir
 When using `config set download-dir`, path resolution works as follows:
 
 1. **Tilde Expansion**: `~/Applications` → `/home/username/Applications`
-2. **Absolute Paths**: Used exactly as specified (e.g., `/opt/apps`)
-3. **Relative Paths**: Always relative to your current working directory (even when global directory is set)
+1. **Absolute Paths**: Used exactly as specified (e.g., `/opt/apps`)
+1. **Relative Paths**: Always relative to your current working directory (even when global directory is set)
    - If you're in `/home/user/projects`:
      - `./MyApp` → `/home/user/projects/MyApp`
      - `MyApp` → `/home/user/projects/MyApp`
@@ -215,19 +219,19 @@ appimage-updater add OrcaSlicer https://github.com/SoftFever/OrcaSlicer
 
 **Real Example (OpenShot with auto-subdir and rotation enabled, and symlink):**
 
-```bash
+````bash
 # Global config: download-dir=/home/royw/Applications, auto-subdir=true
 # Add OpenShot with:
 appimage-updater add OpenShot https://github.com/openshot/openshot-qt --rotation --symlink-path OpenShot.AppImage
 # Download directory does not exist: ~/Applications/OpenShot
 # Create this directory? [y/N]: y
 # Created directory: ~/Applications/OpenShot
-# 
+#
 # Successfully added application 'OpenShot'
 # URL: https://github.com/openshot/openshot-qt
 # Download Directory: ~/Applications/OpenShot
 # Pattern: (?i)^OpenShot\-v3\.3\.0.*\.AppImage$
-# 
+#
 # Tip: Use 'appimage-updater show OpenShot' to view full configuration
 
 # Effective download directory:
@@ -237,17 +241,17 @@ appimage-updater config --app OpenShot show-effective download-dir
 # Download and install:
 appimage-updater check OpenShot --format plain --yes
 # Checking 1 applications for updates...
-# 
+#
 # Update Check Results
 # ====================
 # Application | Status  | Current Version | Latest Version | Update Available
 # ---------------------------------------------------------------------------
-# OpenShot    | Success | N/A             | 3.3.0          | Yes             
+# OpenShot    | Success | N/A             | 3.3.0          | Yes
 # WARNING: 1 update available
-# 
+#
 # Downloading 1 updates...
 # OpenShot ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100.0% • 241.6/241.6 MB • 29.8 MB/s • 0:00:00
-# 
+#
 # Successfully downloaded 1 updates:
 #   Downloaded: OpenShot (230.4 MB)
 
@@ -257,7 +261,7 @@ tree ~/Applications/OpenShot*
 # ├── OpenShot-v3.3.0-x86_64.AppImage.current
 # └── OpenShot-v3.3.0-x86_64.AppImage.current.info
 # /home/royw/Applications/OpenShot.AppImage  [error opening dir]```
-# 
+#
 # 1 directory, 3 files
 
 # Verify works:
@@ -276,13 +280,13 @@ tree ~/Applications/OpenShot*
 
 #### Global Directory Recommendations
 
-**Why ~/Applications** 
+**Why ~/Applications**
 The `~/Applications` recommendation comes from [appimaged](https://github.com/probonopd/appimaged) (the AppImage daemon), which automatically monitors these directories for new AppImages:
 
 - `/usr/local/bin` - Local system binaries
 - `/opt` - Optional system software
 - `~/Applications` - User\'s personal applications
-- `~/.local/bin` - User executable binaries 
+- `~/.local/bin` - User executable binaries
 - `~/Downloads` - Downloaded applications
 - $PATH, which frequently includes /bin, /sbin, /usr/bin, /usr/sbin, /usr/local/bin, /usr/local/sbin, and other locations
 
@@ -303,7 +307,7 @@ When you place AppImages in one of these directories, `appimaged` will automatic
 # GitHub repositories (automatic detection)
 appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Applications/FreeCAD
 
-# GitLab repositories  
+# GitLab repositories
 appimage-updater add Inkscape https://gitlab.com/inkscape/inkscape ~/Applications/Inkscape
 
 # ZIP file handling (automatic extraction)
@@ -311,7 +315,7 @@ appimage-updater add BambuStudio https://github.com/bambulab/BambuStudio ~/Appli
 
 # Add direct download URL (nightly builds, CI artifacts)
 appimage-updater add --direct OrcaSlicer-Nightly https://github.com/SoftFever/OrcaSlicer/releases/download/nightly-builds/OrcaSlicer_Linux_V2.2.0_dev.AppImage ~/Applications/OrcaSlicer
-```
+````
 
 ### What the `add` Command Does
 
@@ -321,7 +325,7 @@ When you run `add`, it automatically:
 - **Detects prerelease requirements** - analyzes repositories and auto-enables prerelease for continuous builds
 - **Handles ZIP files automatically** - detects and extracts AppImages from ZIP archives (perfect for BambuStudio, etc.)
 - **Selects compatible distributions** - automatically chooses the best match for your Linux distribution
-- **Generates smart file patterns** based on the repository name
+- **Generates smart file patterns** with flexible separators and release qualifier detection
 - **Sets up checksum verification** with SHA256 validation
 - **Enables the application** immediately
 - **Creates the download directory** if needed
@@ -407,6 +411,8 @@ appimage-updater add FreeCAD https://github.com/FreeCAD/FreeCAD ~/Apps/FreeCAD
 
 **How it works:**
 
+- **Progressive fetching** → Examines up to 1600 releases to find stable versions
+- **Handles frequent prereleases** → Correctly detects stable releases even when buried under many prereleases (e.g., FreeCAD's weekly builds)
 - **Continuous builds only** → Automatically enables `prerelease: true`
 - **Stable releases available** → Keeps `prerelease: false`
 - **Your choice matters** → `--prerelease` or `--no-prerelease` always override detection
@@ -815,7 +821,7 @@ Each application file contains:
       "source_type": "github",
       "url": "https://github.com/FreeCAD/FreeCAD",
       "download_dir": "/home/user/Applications/FreeCAD",
-      "pattern": "(?i)FreeCAD.*\\.(zip|AppImage)(\\.(|current|old))?$",
+      "pattern": "(?i)FreeCAD.*\\.AppImage(\\.(|current|old))?$",
       "enabled": true,
       "prerelease": false,
       "checksum": {

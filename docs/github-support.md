@@ -343,11 +343,34 @@ appimage-updater update
 
 ### Pattern Generation
 
-AppImage Updater can automatically generate patterns from existing releases:
+AppImage Updater automatically generates intelligent patterns from existing releases:
 
 ```bash
-# Let AppImage Updater analyze releases and suggest a pattern
-appimage-updater add MyApp https://github.com/owner/repo --auto-pattern
+# Automatic pattern generation (default behavior)
+appimage-updater add MyApp https://github.com/owner/repo
+```
+
+**Pattern generation features:**
+
+- **Flexible separators** → `[-_]?` matches hyphen, underscore, or no separator
+- **Release qualifiers** → Detects app names ending with `rc`, `weekly`, `nightly`, etc.
+- **ZIP support** → Includes `.(zip|AppImage)` when repository has ZIP assets
+- **Rotation suffix** → Always includes `(\.(|current|old))?$` for file rotation
+
+**Examples of generated patterns:**
+
+```regex
+# Standard app
+(?i)MyApp.*\.AppImage(\.(|current|old))?$
+
+# App with flexible separators (BambuStudio)
+(?i)Bambu[-_]?Studio.*\.AppImage(\.(|current|old))?$
+
+# RC builds (FreeCAD_rc)
+(?i)FreeCAD.*[Rr][Cc][0-9]+.*\.AppImage(\.(|current|old))?$
+
+# Weekly builds (FreeCAD_weekly)
+(?i)FreeCAD.*[Ww]eekly.*\.AppImage(\.(|current|old))?$
 ```
 
 ## Migration Between Repository Types

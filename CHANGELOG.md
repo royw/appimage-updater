@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+### Improved
+
+- Pattern generation now uses flexible separators `[-_]?` to match hyphen, underscore, or no separator (handles naming variations like "Bambu-Studio" vs "Bambu_Studio")
+
+- Pattern generation detects release qualifiers from app names (rc, alpha, beta, weekly, nightly) and includes them in patterns
+
+- Prerelease auto-detection uses progressive fetching (100 → 200 → 400 → 800 → 1600 releases) to correctly identify stable releases even when buried under many prereleases
+
 - enhance getting-started guide with comprehensive path resolution and real-world examples (4aee99e)
 
 - reduce cyclomatic complexity in command and display modules (0bb7d16)
@@ -24,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - reduce cyclomatic complexity by extracting helper methods (a07de4b)
 
 ### Fixed
+
 - resolve --auto-subdir command line option creating directories in wrong location (cd6f14e)
 
 - generate flexible version patterns for v-prefixed versions (64a8783)
