@@ -245,43 +245,47 @@ class GitLabClient:
 
         Returns:
             True if only prereleases are found, False if stable releases exist
-
-        Raises:
-            GitLabClientError: If the API request fails
         """
         try:
-            limit = 100
-            max_limit = 1600  # Cap to avoid excessive API calls
-
-            while limit <= max_limit:
-                releases = await self.get_releases(owner, repo, base_url, limit=limit)
-
-                if not releases:
-                    logger.debug(f"No releases found for {owner}/{repo}, prerelease detection inconclusive")
-                    return False
-
-                stable_count, prerelease_count = self._count_release_types(releases)
-
-                if stable_count > 0:
-                    logger.debug(f"Found {stable_count} stable releases for {owner}/{repo}")
-                    return False
-
-                # If we got fewer releases than requested, we've fetched all - no stable exists
-                if len(releases) < limit - 1:
-                    logger.debug(f"No stable releases found in all {len(releases)} releases for {owner}/{repo}")
-                    return prerelease_count > 0
-
-                # More releases may exist, double the limit and try again
-                logger.debug(f"No stable in first {len(releases)} releases, expanding search for {owner}/{repo}")
-                limit *= 2
-
-            # Hit max limit without finding stable release
-            logger.debug(f"No stable releases found in first {max_limit} releases for {owner}/{repo}")
-            return True
-
+            return await self._progressive_prerelease_check(owner, repo, base_url)
         except GitLabClientError:
             logger.debug(f"Could not analyze releases for {owner}/{repo}, defaulting prerelease=False")
             return False
+
+    async def _progressive_prerelease_check(self, owner: str, repo: str, base_url: str) -> bool:
+        """Progressively fetch releases to check for stable versions."""
+        limit = 100
+        max_limit = 1600
+
+        while limit <= max_limit:
+            result = await self._check_releases_for_stable(owner, repo, base_url, limit)
+            if result is not None:
+                return result
+            limit *= 2
+
+        logger.debug(f"No stable releases found in first {max_limit} releases for {owner}/{repo}")
+        return True
+
+    async def _check_releases_for_stable(self, owner: str, repo: str, base_url: str, limit: int) -> bool | None:
+        """Check a batch of releases for stable versions. Returns None to continue searching."""
+        releases = await self.get_releases(owner, repo, base_url, limit=limit)
+
+        if not releases:
+            logger.debug(f"No releases found for {owner}/{repo}, prerelease detection inconclusive")
+            return False
+
+        stable_count, prerelease_count = self._count_release_types(releases)
+
+        if stable_count > 0:
+            logger.debug(f"Found {stable_count} stable releases for {owner}/{repo}")
+            return False
+
+        if len(releases) < limit - 1:
+            logger.debug(f"No stable releases found in all {len(releases)} releases for {owner}/{repo}")
+            return prerelease_count > 0
+
+        logger.debug(f"No stable in first {len(releases)} releases, expanding search for {owner}/{repo}")
+        return None  # Continue searching
 
     def _count_release_types(self, releases: list[dict[str, Any]]) -> tuple[int, int]:
         """Count stable and prerelease versions in releases.

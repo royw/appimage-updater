@@ -342,39 +342,52 @@ class SourceForgeRepository(RepositoryClient):
             True if only prereleases are found, False if stable releases exist
         """
         try:
-            limit = 100
-            max_limit = 1600  # Cap to avoid excessive API calls
-
-            while limit <= max_limit:
-                releases = await self.get_releases(url, limit=limit)
-
-                if not releases:
-                    logger.debug(f"No releases found for {url}, prerelease detection inconclusive")
-                    return False
-
-                stable_count = sum(1 for r in releases if not r.is_prerelease)
-                prerelease_count = sum(1 for r in releases if r.is_prerelease)
-
-                if stable_count > 0:
-                    logger.debug(f"Found {stable_count} stable releases for {url}")
-                    return False
-
-                # If we got fewer releases than requested, we've fetched all - no stable exists
-                if len(releases) < limit - 1:
-                    logger.debug(f"No stable releases found in all {len(releases)} releases for {url}")
-                    return prerelease_count > 0
-
-                # More releases may exist, double the limit and try again
-                logger.debug(f"No stable in first {len(releases)} releases, expanding search for {url}")
-                limit *= 2
-
-            # Hit max limit without finding stable release
-            logger.debug(f"No stable releases found in first {max_limit} releases for {url}")
-            return True
-
+            return await self._progressive_prerelease_check(url)
         except Exception as e:
             logger.debug(f"Could not determine prerelease status for {url}: {e}")
             return False
+
+    async def _progressive_prerelease_check(self, url: str) -> bool:
+        """Progressively fetch releases to check for stable versions."""
+        limit = 100
+        max_limit = 1600
+
+        while limit <= max_limit:
+            result = await self._check_releases_for_stable(url, limit)
+            if result is not None:
+                return result
+            limit *= 2
+
+        logger.debug(f"No stable releases found in first {max_limit} releases for {url}")
+        return True
+
+    async def _check_releases_for_stable(self, url: str, limit: int) -> bool | None:
+        """Check a batch of releases for stable versions. Returns None to continue searching."""
+        releases = await self.get_releases(url, limit=limit)
+        return self._evaluate_release_batch(releases, limit, url)
+
+    def _evaluate_release_batch(self, releases: list[Release] | None, limit: int, url: str) -> bool | None:
+        """Evaluate a batch of releases and determine next action."""
+        if not releases:
+            logger.debug(f"No releases found for {url}, prerelease detection inconclusive")
+            return False
+
+        stable_count = self._count_stable_releases(releases)
+        if stable_count > 0:
+            logger.debug(f"Found {stable_count} stable releases for {url}")
+            return False
+
+        return self._determine_next_action(releases, limit, url)
+
+    def _count_stable_releases(self, releases: list[Release]) -> int:
+        """Count non-prerelease releases."""
+        return sum(1 for r in releases if not r.is_prerelease)
+
+    def _determine_next_action(self, releases: list[Release], limit: int, url: str) -> bool | None:
+        """Determine whether to return True (only prereleases) or None (continue searching)."""
+        all_fetched = len(releases) < limit - 1
+        logger.debug(f"No stable in {len(releases)} releases for {url}, {'done' if all_fetched else 'expanding'}")
+        return any(r.is_prerelease for r in releases) if all_fetched else None
 
     async def get_latest_release_including_prerelease(self, repo_url: str) -> Release:
         """Get the latest release including prereleases.

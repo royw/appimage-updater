@@ -75,18 +75,19 @@ def _get_base_download_directory(global_config: Any) -> Path:
         return Path.home() / "Applications"
 
 
+def _is_auto_subdir_enabled(auto_subdir: bool | None, global_config: Any) -> bool:
+    """Determine if auto-subdir is enabled from command line or global config."""
+    if auto_subdir is not None:
+        return auto_subdir
+    return global_config.defaults.auto_subdir if global_config else False
+
+
 def _apply_auto_subdir(base_dir: Path, global_config: Any, name: str, auto_subdir: bool | None = None) -> str:
     """Apply auto-subdir logic if enabled."""
-    # Command line auto_subdir parameter overrides global setting
-    effective_auto_subdir = (
-        auto_subdir if auto_subdir is not None else (global_config.defaults.auto_subdir if global_config else False)
-    )
-
-    if effective_auto_subdir and name:
-        # Ensure we return an absolute path for directory creation
-        result_path = base_dir / name
-        return str(result_path.resolve()) if not result_path.is_absolute() else str(result_path)
-    return str(base_dir)
+    if not _is_auto_subdir_enabled(auto_subdir, global_config) or not name:
+        return str(base_dir)
+    result_path = base_dir / name
+    return str(result_path.resolve()) if not result_path.is_absolute() else str(result_path)
 
 
 def _resolve_rotation_parameter(rotation: bool | None, global_config: GlobalConfigManager) -> bool:

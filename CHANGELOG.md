@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- reduce cyclomatic complexity to A rating (<=5) (8180d87)
 
 ### Fixed
 

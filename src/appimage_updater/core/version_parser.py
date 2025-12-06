@@ -151,6 +151,16 @@ class VersionParser:
         ext_pattern = r"\.(zip|AppImage)" if has_zip else r"\.AppImage"
         return f"(?i){escaped_base}{qualifier_pattern}{ext_pattern}(\\.(|current|old))?$"
 
+    # Release qualifier patterns: (app_name_pattern, output_regex_pattern)
+    # Separator is optional to handle both "OrcaSlicerRC" and "freecad_rc"
+    _RELEASE_QUALIFIER_PATTERNS: list[tuple[str, str]] = [
+        (r"[_-]?rc\d*$", ".*[Rr][Cc][0-9]+"),  # RC (release candidate)
+        (r"[_-]?alpha\d*$", ".*[Aa]lpha"),  # Alpha
+        (r"[_-]?beta\d*$", ".*[Bb]eta"),  # Beta
+        (r"[_-]?weekly$", ".*[Ww]eekly"),  # Weekly
+        (r"[_-]?nightly$", ".*[Nn]ightly"),  # Nightly
+    ]
+
     def _detect_release_qualifier(self, app_name: str) -> str | None:
         """Detect release type qualifier from app name and return corresponding regex pattern.
 
@@ -161,28 +171,9 @@ class VersionParser:
             Regex pattern for the qualifier, or None if no qualifier detected
         """
         app_lower = app_name.lower()
-
-        # Check for RC (release candidate) pattern: app_rc, appRC, app_rc1, etc.
-        # Separator is optional to handle both "OrcaSlicerRC" and "freecad_rc"
-        if re.search(r"[_-]?rc\d*$", app_lower):
-            return ".*[Rr][Cc][0-9]+"
-
-        # Check for alpha pattern (with optional separator)
-        if re.search(r"[_-]?alpha\d*$", app_lower):
-            return ".*[Aa]lpha"
-
-        # Check for beta pattern (with optional separator)
-        if re.search(r"[_-]?beta\d*$", app_lower):
-            return ".*[Bb]eta"
-
-        # Check for weekly pattern (with optional separator)
-        if re.search(r"[_-]?weekly$", app_lower):
-            return ".*[Ww]eekly"
-
-        # Check for nightly pattern (with optional separator)
-        if re.search(r"[_-]?nightly$", app_lower):
-            return ".*[Nn]ightly"
-
+        for pattern, result in self._RELEASE_QUALIFIER_PATTERNS:
+            if re.search(pattern, app_lower):
+                return result
         return None
 
     def _extract_prerelease_version(self, filename: str) -> str | None:

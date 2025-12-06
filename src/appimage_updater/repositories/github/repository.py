@@ -229,9 +229,7 @@ class GitHubRepository(RepositoryClient):
         and no stable releases, indicating that prerelease support should be enabled.
 
         Uses progressive fetching: starts with 100 releases and doubles the limit
-        if no stable release is found but more releases may exist. This handles
-        repositories with many prereleases (e.g., weekly builds) that may push
-        stable releases far back in the release history.
+        if no stable release is found but more releases may exist.
 
         Args:
             url: Repository URL
@@ -240,41 +238,54 @@ class GitHubRepository(RepositoryClient):
             bool: True if only prereleases are found, False if stable releases exist or on error
         """
         try:
-            limit = 100
-            max_limit = 1600  # Cap to avoid excessive API calls
-
-            while limit <= max_limit:
-                releases = await self.get_releases(url, limit=limit)
-                if not releases:
-                    return False
-
-                valid_releases = self._filter_valid_releases(releases, url)
-                if not valid_releases:
-                    return False
-
-                # Check if any stable releases exist
-                stable_releases = [r for r in valid_releases if not r.is_prerelease]
-                if stable_releases:
-                    logger.debug(f"Found {len(stable_releases)} stable releases for {url}")
-                    return False
-
-                # If we got fewer releases than requested, we've fetched all - no stable exists
-                if len(releases) < limit - 1:
-                    logger.debug(f"No stable releases found in all {len(releases)} releases for {url}")
-                    return True
-
-                # More releases may exist, double the limit and try again
-                logger.debug(f"No stable in first {len(releases)} releases, expanding search for {url}")
-                limit *= 2
-
-            # Hit max limit without finding stable release
-            logger.debug(f"No stable releases found in first {max_limit} releases for {url}")
-            return True
-
+            return await self._progressive_prerelease_check(url)
         except (RepositoryError, ValueError, AttributeError) as e:
-            # Don't fail the add command if prerelease detection fails
             logger.debug(f"Error checking prerelease status for {url}: {e}")
             return False
+
+    async def _progressive_prerelease_check(self, url: str) -> bool:
+        """Progressively fetch releases to check for stable versions."""
+        limit = 100
+        max_limit = 1600
+
+        while limit <= max_limit:
+            result = await self._check_releases_for_stable(url, limit)
+            if result is not None:
+                return result
+            limit *= 2
+
+        logger.debug(f"No stable releases found in first {max_limit} releases for {url}")
+        return True
+
+    async def _check_releases_for_stable(self, url: str, limit: int) -> bool | None:
+        """Check a batch of releases for stable versions. Returns None to continue searching."""
+        releases = await self.get_releases(url, limit=limit)
+        valid_releases = self._filter_valid_releases(releases, url) if releases else []
+        return self._evaluate_release_batch(valid_releases, len(releases) if releases else 0, limit, url)
+
+    def _evaluate_release_batch(
+        self, valid_releases: list[Release], total_count: int, limit: int, url: str
+    ) -> bool | None:
+        """Evaluate a batch of releases and determine next action."""
+        if not valid_releases:
+            return False
+
+        stable_count = self._count_stable_releases(valid_releases)
+        if stable_count > 0:
+            logger.debug(f"Found {stable_count} stable releases for {url}")
+            return False
+
+        return self._determine_next_action(total_count, limit, url)
+
+    def _count_stable_releases(self, releases: list[Release]) -> int:
+        """Count non-prerelease releases."""
+        return sum(1 for r in releases if not r.is_prerelease)
+
+    def _determine_next_action(self, total_count: int, limit: int, url: str) -> bool | None:
+        """Determine whether to return True (only prereleases) or None (continue searching)."""
+        all_fetched = total_count < limit - 1
+        logger.debug(f"No stable in {total_count} releases for {url}, {'done' if all_fetched else 'expanding'}")
+        return True if all_fetched else None
 
     def _collect_release_files(self, releases: list[Release]) -> dict[str, list[str]]:
         """Collect filenames grouped by stability and extension."""
