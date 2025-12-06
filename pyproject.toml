@@ -53,6 +53,37 @@ Changelog = "https://github.com/royw/appimage-updater/blob/main/CHANGELOG.md"
 [project.scripts]
 appimage-updater = "appimage_updater.main:cli_main"
 
+[dependency-groups]
+dev = [
+    "autotyping>=24.9.0",
+    "deadcode>=2.4.0",
+    "infer-types>=1.0.0",
+    "isort>=6.0.1",
+    "mkdocs>=1.6.1",
+    "mkdocs-gen-files>=0.5.0",
+    "mkdocs-git-revision-date-localized-plugin>=1.4.7",
+    "mkdocs-git-revision-date-plugin>=0.3.2",
+    "mkdocs-literate-nav>=0.6.2",
+    "mkdocs-material>=9.6.18",
+    "mkdocs-mermaid2-plugin>=1.2.2",
+    "mkdocstrings[python]>=0.30.0",
+    "mypy>=1.17.1",
+    "pylint>=3.3.8",
+    "pytest>=8.4.1",
+    "pytest-anyio>=0.0.0",
+    "pytest-cov>=6.2.1",
+    "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.8.0",
+    "radon>=6.0.1",
+    "ruff>=0.12.11",
+    "taskfile-help>=0.4.1",
+    "trio>=0.30.0",
+    "twine>=6.2.0",
+    "version-bumper>=0.1.2",
+    "watchdog>=6.0.0",
+]
+
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/appimage_updater"]
 
@@ -196,36 +227,6 @@ exclude_lines = [
     "raise AssertionError",
     "raise NotImplementedError",
     "if __name__ == .__main__.:",
-]
-
-[dependency-groups]
-dev = [
-    "autotyping>=24.9.0",
-    "deadcode>=2.4.0",
-    "infer-types>=1.0.0",
-    "isort>=6.0.1",
-    "mkdocs>=1.6.1",
-    "mkdocs-gen-files>=0.5.0",
-    "mkdocs-git-revision-date-localized-plugin>=1.4.7",
-    "mkdocs-git-revision-date-plugin>=0.3.2",
-    "mkdocs-literate-nav>=0.6.2",
-    "mkdocs-material>=9.6.18",
-    "mkdocs-mermaid2-plugin>=1.2.2",
-    "mkdocstrings[python]>=0.30.0",
-    "mypy>=1.17.1",
-    "pylint>=3.3.8",
-    "pytest>=8.4.1",
-    "pytest-anyio>=0.0.0",
-    "pytest-cov>=6.2.1",
-    "pytest-timeout>=2.4.0",
-    "pytest-xdist>=3.8.0",
-    "radon>=6.0.1",
-    "ruff>=0.12.11",
-    "taskfile-help>=0.4.1",
-    "trio>=0.30.0",
-    "twine>=6.2.0",
-    "version-bumper>=0.1.2",
-    "watchdog>=6.0.0",
 ]
 
 [tool.deadcode]

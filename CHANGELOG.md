@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - reduce cyclomatic complexity by extracting helper methods (a07de4b)
 
 ### Fixed
+- CI build failures (824eb03)
 
 - resolve --auto-subdir command line option creating directories in wrong location (cd6f14e)
 

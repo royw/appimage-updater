@@ -53,7 +53,7 @@ run_ci_step() {
 cd "$(dirname "$0")/.."
 
 echo -e "${BLUE}📦 Installing dependencies...${NC}"
-uv sync --extra dev
+uv sync --group dev
 
 echo -e "\n${PURPLE}🚀 Running CI Pipeline${NC}"
 echo -e "${PURPLE}=====================${NC}"

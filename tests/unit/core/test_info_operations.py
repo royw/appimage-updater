@@ -1,5 +1,7 @@
 import asyncio
+import os
 from pathlib import Path
+import time
 from typing import Any
 
 import pytest
@@ -77,6 +79,12 @@ def test_find_current_appimage_file_uses_latest_mtime(tmp_path: Path, app_config
     newer = download_dir / "TestApp-1.0.AppImage"
     older.touch()
     newer.touch()
+
+    # Explicitly set different modification times to ensure reliable ordering
+    # (files created in quick succession may have identical mtime in CI)
+    now = time.time()
+    os.utime(older, (now - 10, now - 10))  # 10 seconds older
+    os.utime(newer, (now, now))  # current time
 
     result = io._find_current_appimage_file(app_config, download_dir)
 
