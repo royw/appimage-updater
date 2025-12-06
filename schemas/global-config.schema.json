@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/royw/appimage-updater/schemas/global-config.schema.json",
+  "title": "AppImage Updater Global Configuration",
+  "description": "Global configuration file for appimage-updater",
+  "type": "object",
+  "required": ["global_config"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this schema for IDE validation"
+    },
+    "global_config": {
+      "type": "object",
+      "description": "Global settings for appimage-updater",
+      "properties": {
+        "concurrent_downloads": {
+          "type": "integer",
+          "description": "Maximum number of concurrent downloads",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 3
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "description": "HTTP request timeout in seconds",
+          "minimum": 5,
+          "maximum": 300,
+          "default": 30
+        },
+        "user_agent": {
+          "type": "string",
+          "description": "User-Agent header for HTTP requests"
+        },
+        "app_repo_url": {
+          "type": "string",
+          "description": "URL of the app configs repository",
+          "format": "uri",
+          "default": "https://github.com/royw/appimage-configs"
+        },
+        "app_repo_branch": {
+          "type": "string",
+          "description": "Branch of the app configs repository",
+          "default": "main"
+        },
+        "defaults": {
+          "$ref": "#/definitions/defaults"
+        },
+        "domain_knowledge": {
+          "$ref": "#/definitions/domain_knowledge"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "definitions": {
+    "defaults": {
+      "type": "object",
+      "description": "Default values for app configurations",
+      "properties": {
+        "download_dir": {
+          "type": "string",
+          "description": "Default download directory (supports ~ expansion)"
+        },
+        "rotation_enabled": {
+          "type": "boolean",
+          "description": "Default rotation setting",
+          "default": false
+        },
+        "retain_count": {
+          "type": "integer",
+          "description": "Default number of old versions to keep",
+          "minimum": 0,
+          "default": 3
+        },
+        "symlink_enabled": {
+          "type": "boolean",
+          "description": "Enable symlink creation by default",
+          "default": false
+        },
+        "symlink_dir": {
+          "type": "string",
+          "description": "Default directory for symlinks (supports ~ expansion)"
+        },
+        "symlink_pattern": {
+          "type": "string",
+          "description": "Pattern for symlink names, use {appname} placeholder",
+          "default": "{appname}.AppImage"
+        },
+        "auto_subdir": {
+          "type": "boolean",
+          "description": "Automatically create subdirectories per app",
+          "default": false
+        },
+        "checksum_enabled": {
+          "type": "boolean",
+          "description": "Enable checksum verification by default",
+          "default": true
+        },
+        "checksum_algorithm": {
+          "type": "string",
+          "description": "Default hash algorithm",
+          "enum": ["sha256", "sha512", "md5"],
+          "default": "sha256"
+        },
+        "checksum_pattern": {
+          "type": "string",
+          "description": "Default pattern for checksum files",
+          "default": "{filename}-SHA256.txt"
+        },
+        "checksum_required": {
+          "type": "boolean",
+          "description": "Fail if checksum not found",
+          "default": false
+        },
+        "prerelease": {
+          "type": "boolean",
+          "description": "Include prereleases by default",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "domain_knowledge": {
+      "type": "object",
+      "description": "Domain-to-handler mappings",
+      "properties": {
+        "github_domains": {
+          "type": "array",
+          "description": "Domains to treat as GitHub",
+          "items": { "type": "string" },
+          "default": ["github.com"]
+        },
+        "gitlab_domains": {
+          "type": "array",
+          "description": "Domains to treat as GitLab",
+          "items": { "type": "string" },
+          "default": ["gitlab.com"]
+        },
+        "direct_domains": {
+          "type": "array",
+          "description": "Domains to treat as direct download",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "dynamic_domains": {
+          "type": "array",
+          "description": "Domains requiring dynamic download detection",
+          "items": { "type": "string" },
+          "default": []
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
